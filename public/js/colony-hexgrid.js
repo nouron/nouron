@@ -108,15 +108,12 @@ function colonyHexView(config) {
         activeHint: config.activeHint ?? null,
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
-        uplinkBuildingId: config.uplinkBuildingId ?? 54,
-        compoundImportPrice: config.compoundImportPrice ?? 90,
         exploreCostPerRing: config.exploreCostPerRing ?? { 1: 1, 2: 2, 3: 3 },
         exploreCostDefault: config.exploreCostDefault ?? 1,
         tileYields: config.tileYields ?? {},
         repairDisplayThreshold: config.repairDisplayThreshold ?? 0.7,
         relocateApPerHex: config.relocateApPerHex ?? 2,
         phaseProgress: config.phaseProgress ?? null,
-        nexusImportAmount: 10,
         selectedTile: null,
         buildMode: false,
         pendingBuilding: null,
@@ -404,28 +401,6 @@ function colonyHexView(config) {
             } else {
                 const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
-            }
-        },
-
-        // ── Nexus compound import ─────────────────────────────────────────────
-
-        // Current Uplink-Station level (0 if not built). Gates the Nexus import panel.
-        uplinkLevel() {
-            const uplink = this.buildings.find((b) => b.building_id === this.uplinkBuildingId);
-            return uplink ? uplink.level : 0;
-        },
-
-        async doNexusImport() {
-            const amount = parseInt(this.nexusImportAmount, 10);
-            if (!amount || amount < 1) return;
-            const res = await this.post(this.routes.nexusImport, { amount });
-            if (res.ok) {
-                this.showToast(
-                    (this.i18n.nexusImportSuccess ?? '').replace(':amount', res.amount).replace(':cost', res.cost),
-                    'info',
-                );
-            } else {
-                this.showToast(res.message ?? res.error ?? this.i18n.nexusImportError, 'error');
             }
         },
 

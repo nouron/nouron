@@ -13,6 +13,8 @@
 - Content/Fix: AP-Typ-Namen (Navigations-AP/Forschungs-AP/Bau-AP/Wirtschafts-AP) aus Spielertext entfernt — AP-Pool ist seit der Konsolidierung ein einziger gemeinsamer Pool, Text vereinheitlicht auf generisches "AP". Techtree-Sidebar für Berater zeigt jetzt eine Beschreibung statt Status/AP-Typ/Einstellungskosten (gehören in den Berater-Screen); Berater-Screen selbst bekam Ressourcen-Chips statt Fließtext, durchgehend ohne "/Tick"-/"/Sol"-Suffix im Chip.
 
 - Fix: Kolonie-Sidebar (Hexview) — Gebäude-Detailansicht bekam `required_list` (Voraussetzungen, gleiches Format wie im Techtree) und Hex-Tiles mit aktivem Harvester bekommen `regolith_remaining`/`regolith_max`, damit die sinkende Ertragskurve (GameTick-Depletion) nicht wie ein Bug wirkt. Nur Controller-/Service-Daten, Blade-Anbindung folgt separat.
+- Fix: Sol-Report-Modal (Owner-Playtest-Fund) — lange Ereignistexte (z.B. Sturm-Aggregat "5 abgewehrt, 3 beschädigt, 0 kritisch") wurden mitten im Satz abgeschnitten statt umzubrechen, dazu horizontaler Scrollbalken; `.sol-report__value` bricht jetzt um, `.sol-report__groups` hat `overflow-x: hidden`. Die "automatisch überspringen"-Checkbox war durch `width: auto` auf fast 0px kollabiert (sah wie ein durchgestrichener Rest aus) — feste Checkbox-Größe (1.25em) wiederhergestellt.
+- Redesign: Nexus-Import-Widget aus dem Bau-Sidebar-Panel der Kolonieansicht (nur sichtbar ab Uplink-Station Lv1) ins Kommandozentrale-Dashboard verschoben — dort immer sichtbar, aber ausgegraut mit Hinweistext solange die Uplink-Station fehlt. Serverseitiges Level-Gate (`ColonyController::nexusImportCompounds()`) unverändert.
 
 ## 2026-09-03
 

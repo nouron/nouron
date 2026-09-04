@@ -1321,60 +1321,6 @@ button.btn-sol:hover,
     border-color: #a8cfe6;
 }
 
-/* ── Nexus compound import (build panel, Uplink Lv1+) ───────────────────────── */
-
-.nexus-import {
-    margin-top: 0.9rem;
-    padding: 0.7rem;
-    border: 1px solid var(--color-border, #e8e8ec);
-    border-radius: 8px;
-    background: var(--color-surface, #f7f7f5);
-}
-
-.nexus-import-title {
-    margin: 0 0 0.2rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--color-anthracite, #2b2b33);
-}
-
-.nexus-import-hint {
-    margin: 0 0 0.5rem;
-    font-size: 0.72rem;
-    color: var(--color-text-secondary, #6b6b7a);
-}
-
-.nexus-import-controls {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.nexus-import-amount {
-    width: 5rem;
-    padding: 0.25rem 0.4rem;
-    font-size: 0.8rem;
-}
-
-.nexus-import-total {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--color-anthracite, #2b2b33);
-}
-
-.nexus-import-btn {
-    margin-left: auto;
-    padding: 0.25rem 0.7rem;
-    font-size: 0.78rem;
-    cursor: pointer;
-}
-
-.nexus-import-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 /* ── Signal chip ─────────────────────────────────────────────────────────── */
 
 .chip--signal {
@@ -2257,6 +2203,7 @@ dialog[x-ref="discoveryDialog"] {
 .sol-report__groups {
     padding: 0.5rem 2rem;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1 1 auto;
 }
 .sol-report__group {
@@ -2323,7 +2270,9 @@ dialog[x-ref="discoveryDialog"] {
     display: inline-flex;
     align-items: baseline;
     gap: 0.4rem;
-    white-space: nowrap;
+    max-width: 60%;
+    white-space: normal;
+    text-align: right;
     font-variant-numeric: tabular-nums;
 }
 .sol-report__counter {
@@ -2414,8 +2363,10 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0;
 }
 .sol-report__skip-setting input {
-    width: auto;
+    width: 1.25em;
+    height: 1.25em;
     margin: 0;
+    flex-shrink: 0;
 }
 .sol-report__continue {
     align-self: stretch;

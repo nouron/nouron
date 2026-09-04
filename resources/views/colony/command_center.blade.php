@@ -15,11 +15,15 @@
         window.__commandCenterData = {
             routes: {
                 stipend: "{{ route("colony.stipend") }}",
+                nexusImport: "{{ route("colony.nexus.import") }}",
             },
             i18n: {
                 stipendSuccess: @json(__("colony.stipend_success")),
                 stipendError: @json(__("colony.stipend_error")),
+                nexusImportSuccess: @json(__("colony.nexus_import_success")),
+                nexusImportError: @json(__("colony.nexus_import_error")),
             },
+            compoundImportPrice: {{ (int) $compoundImportPrice }},
         };
     </script>
 
@@ -218,6 +222,26 @@
                     @endforeach
                 </ul>
             @endif
+        </article>
+
+        {{-- Widget 8: Nexus-Import — Werkstoffe gegen Credits, ab Uplink-Station Lv1.
+         Garantierte Werkstoff-Quelle (GDD §3) — verhindert Bau-Deadlock. Always shown
+         (not build-gated) so the player knows the option exists before Uplink Lv1. --}}
+        <article class="cc-card">
+            <h3 class="cc-card-title">{{ __("colony.nexus_import_title") }}</h3>
+            <p class="cc-card-hint">{{ __("colony.nexus_import_hint") }}</p>
+            @if ($uplinkLevel < 1)
+                <p class="cc-card-hint cc-card-hint--warning">{{ __("colony.nexus_import_uplink_required") }}</p>
+            @endif
+            <div class="nexus-import-controls">
+                <input type="number" min="1" max="9999" x-model.number="nexusImportAmount"
+                    class="nexus-import-amount" @if ($uplinkLevel < 1) disabled @endif
+                    aria-label="{{ __("colony.nexus_import_amount") }}">
+                <span class="nexus-import-total" x-text="`${(nexusImportAmount || 0) * compoundImportPrice} Cr`"></span>
+                <button class="nexus-import-btn"
+                    :disabled="{{ $uplinkLevel < 1 ? "true" : "!nexusImportAmount || nexusImportAmount < 1" }}"
+                    @click="doNexusImport()">{{ __("colony.nexus_import_confirm") }}</button>
+            </div>
         </article>
 
         {{-- Action / feedback toast (mirrors colony-hexgrid.js's .colony-toast) --}}

@@ -41,8 +41,6 @@
             activeHint: @json($activeHint),
             merchantVisit: @json($merchantVisit ?? null),
             merchantItems: @json($merchantItems ?? []),
-            uplinkBuildingId: {{ (int) config("buildings.uplinkStation.id", 54) }},
-            compoundImportPrice: {{ (int) config("game.economy.compound_import_price", 90) }},
             exploreCostPerRing: @json(config("game.colony.explore_cost_per_ring")),
             exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
             tileYields: @json(collect(config("tile_types"))->map(fn($t) => $t["base_yield"])->filter()),
@@ -56,7 +54,6 @@
                 placeBuilding: '{{ route("colony.building.place") }}',
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
-                nexusImport: '{{ route("colony.nexus.import") }}',
             },
             i18n: {
                 explore: '{{ __("colony.explore") }}',
@@ -78,8 +75,6 @@
                 harvesterMoveNoTargets: @json(__("colony.harvester_move_no_targets")),
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
                 networkError: @json(__("colony.network_error")),
-                nexusImportSuccess: @json(__("colony.nexus_import_success")),
-                nexusImportError: @json(__("colony.nexus_import_error")),
             },
         };
     </script>
@@ -429,23 +424,6 @@
                                     </li>
                                 </template>
                             </ul>
-
-                            {{-- Nexus-Import: Werkstoffe gegen Credits, ab Uplink-Station Lv1.
-                             Garantierte Werkstoff-Quelle (GDD §3) — verhindert Bau-Deadlock. --}}
-                            <div class="nexus-import" x-show="uplinkLevel() >= 1" x-cloak>
-                                <h4 class="nexus-import-title">{{ __("colony.nexus_import_title") }}</h4>
-                                <p class="nexus-import-hint">{{ __("colony.nexus_import_hint") }}</p>
-                                <div class="nexus-import-controls">
-                                    <input type="number" min="1" max="9999"
-                                        x-model.number="nexusImportAmount" class="nexus-import-amount"
-                                        aria-label="{{ __("colony.nexus_import_amount") }}">
-                                    <span class="nexus-import-total"
-                                        x-text="`${(nexusImportAmount || 0) * compoundImportPrice} Cr`"></span>
-                                    <button class="nexus-import-btn"
-                                        :disabled="!nexusImportAmount || nexusImportAmount < 1"
-                                        @click="doNexusImport()">{{ __("colony.nexus_import_confirm") }}</button>
-                                </div>
-                            </div>
                         </div>
                     </template>
 
