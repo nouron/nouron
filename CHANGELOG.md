@@ -11,6 +11,8 @@
 - Fix: Onboarding-Hint "Berater-Slot 2 ist offen" war unspezifisch — nennt jetzt das konkret fertiggestellte Pfadgebäude (Analytik-Labor/Hangar/Cantina) und den passenden Berater namentlich.
 - Content/Fix: AP-Typ-Namen (Navigations-AP/Forschungs-AP/Bau-AP/Wirtschafts-AP) aus Spielertext entfernt — AP-Pool ist seit der Konsolidierung ein einziger gemeinsamer Pool, Text vereinheitlicht auf generisches "AP". Techtree-Sidebar für Berater zeigt jetzt eine Beschreibung statt Status/AP-Typ/Einstellungskosten (gehören in den Berater-Screen); Berater-Screen selbst bekam Ressourcen-Chips statt Fließtext, durchgehend ohne "/Tick"-/"/Sol"-Suffix im Chip.
 
+- Fix: Kolonie-Sidebar (Hexview) — Gebäude-Detailansicht bekam `required_list` (Voraussetzungen, gleiches Format wie im Techtree) und Hex-Tiles mit aktivem Harvester bekommen `regolith_remaining`/`regolith_max`, damit die sinkende Ertragskurve (GameTick-Depletion) nicht wie ein Bug wirkt. Nur Controller-/Service-Daten, Blade-Anbindung folgt separat.
+
 ## 2026-09-03
 
 - Design/Feat: Encounter-Events Zwei-Scope-Modell (Einzelgebäude vs. koloniweit) entworfen und für Sturm umgesetzt (GDD §9) — Sturm trifft jetzt alle Kolonie-Zone-Gebäude (Harvester ausgeschlossen), jedes mit eigener SP-basierter Outcome-Berechnung; Trust-Event feuert genau einmal pro Sturm (schlechtestes Tier); ein aggregierter `colony_log`-Eintrag statt N Einzelmeldungen, im Sol-Report als eine Zeile sichtbar. Geologische Instabilität bleibt Einzelgebäude-Scope (fest auf Harvester). Owner-Fund: Sturm-Warnung/Auflösung wirkte unsimuliert, weil das Ergebnis nie im Sol-Report auftauchte.
