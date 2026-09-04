@@ -27,7 +27,7 @@ return [
         'supply_cost' => 0,          // unmanned — no crew, no supply upkeep
         'trust_per_unit' => 0,
         'nexus_cost' => 300,        // cheapest — unmanned, no crew
-        'nexus_delivery_ticks' => 2,          // fast delivery
+        'nexus_delivery_ticks' => 1,          // fast delivery
         'wear_per_sol' => 1.5,
     ],
 
@@ -39,7 +39,7 @@ return [
         'supply_cost' => 0,
         'trust_per_unit' => 0,          // neutral — colonists welcome protection, not a military threat
         'nexus_cost' => 800,        // expensive — military hardware
-        'nexus_delivery_ticks' => 5,
+        'nexus_delivery_ticks' => 3,
         'wear_per_sol' => 0.75,
     ],
 
@@ -51,7 +51,7 @@ return [
         'supply_cost' => 0,
         'trust_per_unit' => 1,
         'nexus_cost' => 500,
-        'nexus_delivery_ticks' => 3,
+        'nexus_delivery_ticks' => 2,
         'wear_per_sol' => 1.0,
     ],
 
