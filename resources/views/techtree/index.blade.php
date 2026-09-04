@@ -161,19 +161,7 @@
                          this popup — single-pool consolidation made "AP-type" meaningless anyway (see Fix 1). --}}
                         <template x-if="selectedTech.type === 'personell'">
                             <div>
-                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list detail-list--chips">
-                                            <template x-for="(part, idx) in selectedTech.required_list"
-                                                :key="idx">
-                                                <li>
-                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </template>
+                                @include("partials.required-list-chips", ["expr" => "selectedTech"])
                                 <a href="{{ route("advisors.index") }}" class="detail-cta-link">
                                     {{ __("techtree.detail_advisor_link") }} &rarr;
                                 </a>
@@ -193,19 +181,7 @@
                                             x-text="selectedTech.instance_count + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
                                     </div>
                                 </template>
-                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list detail-list--chips">
-                                            <template x-for="(part, idx) in selectedTech.required_list"
-                                                :key="idx">
-                                                <li>
-                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </template>
+                                @include("partials.required-list-chips", ["expr" => "selectedTech"])
                                 {{-- What the CURRENT level already delivers (Owner-Fund
                                  2026-09-02: sidebar only ever showed the next level's
                                  effect, never the active one) — see
@@ -227,8 +203,7 @@
                                                         </span>
                                                     </template>
                                                     <template x-if="!line.chip">
-                                                        <span class="res-chip res-chip--neutral"
-                                                            x-text="line.text"></span>
+                                                        <span class="res-chip res-chip--neutral" x-text="line.text"></span>
                                                     </template>
                                                 </li>
                                             </template>
@@ -275,19 +250,7 @@
                             <div>
                                 {{-- Level moved to .detail-subhead right under the title,
                                  see above. --}}
-                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list detail-list--chips">
-                                            <template x-for="(part, idx) in selectedTech.required_list"
-                                                :key="idx">
-                                                <li>
-                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </template>
+                                @include("partials.required-list-chips", ["expr" => "selectedTech"])
                                 {{-- What the CURRENT level's effect curve already delivers
                                  (Owner-Fund 2026-09-02: sidebar only ever showed the next
                                  level's effect, never the active one) — see
@@ -381,19 +344,7 @@
                                             x-text="selectedTech.level + (selectedTech.hangar_cap ? ' / ' + selectedTech.hangar_cap : '')"></span>
                                     </div>
                                 </template>
-                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list detail-list--chips">
-                                            <template x-for="(part, idx) in selectedTech.required_list"
-                                                :key="idx">
-                                                <li>
-                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </template>
+                                @include("partials.required-list-chips", ["expr" => "selectedTech"])
                             </div>
                         </template>
 

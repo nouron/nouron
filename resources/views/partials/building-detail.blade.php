@@ -34,7 +34,8 @@
 
     <div class="building-detail-img-wrap">
         <img class="building-detail-img" :src="'/img/buildings/' + {{ $expr }}.image_slug + '.webp'"
-            :alt="{{ $expr }}.{{ $nameField }}">
+            :alt="{{ $expr }}.{{ $nameField }}"
+            x-on:error="$el.onerror = null; $el.src = buildingPlaceholderSrc()">
     </div>
 
     @if ($showHeader)

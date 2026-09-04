@@ -20,6 +20,13 @@ function techtreeView(config) {
             this.isMobile = window.innerWidth < 600;
         },
 
+        // Fallback for building types without artwork under public/img/buildings/
+        // (e.g. uplinkStation) — used by the shared partials/building-detail.blade.php
+        // <img x-on:error> handler, same placeholder SVG as advisors.js/colony-hexgrid.js.
+        buildingPlaceholderSrc() {
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
+        },
+
         prevPhase() {
             if (this.activePhase > 1) {
                 this.activePhase--;

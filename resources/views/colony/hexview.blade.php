@@ -466,6 +466,10 @@
                                         "show_header" => false,
                                     ])
 
+                                    @include("partials.required-list-chips", [
+                                        "expr" => "selectedBuilding",
+                                    ])
+
                                     <template
                                         x-if="buildingCanLevelUp(selectedBuilding) && (selectedBuilding.levelup_cost ?? 0) > 0">
                                         <p class="tile-building-levelup-cost">
@@ -492,6 +496,24 @@
                                         <div class="tile-under-construction">
                                             {{ __("colony.under_construction") }}
                                         </div>
+                                    </template>
+
+                                    {{-- Remaining Regolith yield of this Harvester's tile
+                                     (Owner-Playtest-Fund 2026-09-04: the depleting amount
+                                     already existed as selectedTile.resource_amount, but
+                                     was only ever visible inside the collapsed "Terrain &
+                                     Standort" disclosure below — surfaced here, always
+                                     visible, for the one building whose output actually
+                                     shrinks over time). --}}
+                                    <template x-if="selectedTile.regolith_remaining !== undefined">
+                                        <p class="tile-building-regolith-remaining">
+                                            <span>{{ __("colony.harvester_regolith_remaining_label") }}</span>
+                                            <span class="res-chip res-RG">
+                                                <span class="res-abbr">RG</span>
+                                                <span class="res-amount"
+                                                    x-text="`${selectedTile.regolith_remaining} / ${selectedTile.regolith_max}`"></span>
+                                            </span>
+                                        </p>
                                     </template>
 
                                     {{-- Terrain is secondary on a built tile → closed

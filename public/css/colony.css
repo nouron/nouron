@@ -912,9 +912,17 @@ button.btn-sol:hover,
     overflow: hidden;
 }
 
+/* Square building artwork (public/img/buildings/*.webp are all 1:1) — a fixed
+ * aspect-ratio reserves the container's height up front so a 404'd image
+ * (missing artwork, e.g. uplinkStation) never collapses to 0px and shoves
+ * the title/button below it (Owner-Playtest-Fund 2026-09-04). */
+.building-detail-img-wrap {
+    aspect-ratio: 1 / 1;
+}
+
 .building-detail-img {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     object-fit: cover;
 }
@@ -953,6 +961,57 @@ button.btn-sol:hover,
     border: 1px solid #a5d6a7;
 }
 
+/* ── Shared "Voraussetzungen" chip row (partials/required-list-chips) ────── */
+/* PicoCSS's bare aside li/ul rules beat unscoped chip-list classes, so this
+   mirrors .tech-panel's equivalent block in techtree-view.css scoped to
+   .tile-panel instead — see docs/design-system for the res-chip component
+   these list items wrap (.res-chip--neutral lives in resources.css). */
+.tile-panel .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: var(--color-text-primary, #333);
+    padding: 0;
+    margin: 0 0 0.5rem;
+}
+
+.tile-panel .detail-row-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
+}
+
+.tile-panel .detail-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.tile-panel .detail-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tile-panel .detail-list--chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.tile-panel .detail-list--chips li {
+    display: inline-flex;
+}
+
 .tile-building-levelup-cost {
     margin: 0.3rem 0 0.5rem;
     font-size: 0.75rem;
@@ -963,6 +1022,15 @@ button.btn-sol:hover,
     margin: 0 0 0.5rem;
     font-size: 0.75rem;
     color: #6b6b7a;
+}
+
+.tile-building-regolith-remaining {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 .tile-under-construction {

@@ -729,6 +729,14 @@ function colonyHexView(config) {
             return this.buildingCatalog?.[key]?.label ?? key;
         },
 
+        // Fallback for building types without artwork under public/img/buildings/
+        // (e.g. uplinkStation) — same placeholder SVG as advisors.js's
+        // buildingPlaceholderSrc(), duplicated here since it's a small self-
+        // contained helper and the two screens don't share a JS module.
+        buildingPlaceholderSrc() {
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
+        },
+
         // Roman numeral for building tier display (design-spec.md "Namensmuster":
         // Basisname + Stufe (röm. Zahl) + Beiname). Building levels never exceed 8
         // in this project, so a simple lookup array is sufficient.
