@@ -12,6 +12,13 @@
 /** Maps ship_id from the slot payload to the config ship key used in the mission catalog. */
 const HANGAR_SHIP_ID_TO_KEY = { 85: 'drone', 47: 'freighter', 37: 'corvette' };
 
+/**
+ * Minimum hangar level required to request a given ship class from the Nexus.
+ * Frontend mirror of HangarService::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL — kept in
+ * sync manually; the server is the source of truth and validates this too.
+ */
+const HANGAR_SHIP_ID_TO_REQUIRED_LEVEL = { 85: 1, 47: 2, 37: 3 };
+
 function hangarCarousel(config) {
     return {
         ...carouselMixin(config.slots.length),
@@ -31,6 +38,7 @@ function hangarCarousel(config) {
         verfuegbareVerhandlungsAP: config.verfuegbareVerhandlungsAP ?? 0,
         pendingShips: config.pendingShips ?? [],
         missionCatalog: config.missionCatalog ?? [],
+        hangarMaxLevel: config.hangarMaxLevel ?? 0,
 
         // Per-instance UI state: keyed by instance_id
         loading: {},
@@ -121,6 +129,26 @@ function hangarCarousel(config) {
             if (!entry) return 0;
             const discount = (this.requestModal.consulApSpent ?? 0) * 50;
             return Math.max(0, entry.cost - discount);
+        },
+
+        /**
+         * Minimum hangar level required to request the given ship type.
+         * @param {number} shipId
+         * @returns {number}
+         */
+        shipRequiredLevel(shipId) {
+            return HANGAR_SHIP_ID_TO_REQUIRED_LEVEL[shipId] ?? 1;
+        },
+
+        /**
+         * Whether the current hangar level is high enough to request this ship
+         * type from the Nexus. Mirrors the server-side gate in
+         * HangarService::requestShip() — server still validates on submit.
+         * @param {number} shipId
+         * @returns {boolean}
+         */
+        isShipLevelUnlocked(shipId) {
+            return this.hangarMaxLevel >= this.shipRequiredLevel(shipId);
         },
 
         /**
@@ -290,6 +318,10 @@ function hangarCarousel(config) {
          * Called directly from each ship button — no separate confirm step.
          * Endpoint: POST /colony/hangar/request
          * Payload: { instance_id, ship_id, use_nexus_credit, consul_ap_spent }
+         * Response: { ok, slots, pending } — the ordered ship lands in the
+         * "pending" list, not directly in a bay (bay stays empty until the
+         * player assigns the delivered ship via assignShip()), so only
+         * `pending` needs to be applied here.
          * @param {number} shipId
          */
         async submitRequestFor(shipId) {
@@ -304,7 +336,7 @@ function hangarCarousel(config) {
                     consul_ap_spent: this.requestModal.consulApSpent ?? 0,
                 });
                 if (res.ok) {
-                    this._updateSlot(this.requestModal.instanceId, res.slot);
+                    this.pendingShips = res.pending;
                     this.closeRequestModal();
                 } else {
                     this.requestModal.error = res.error ?? 'Error.';
