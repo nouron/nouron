@@ -6,6 +6,10 @@
 - Fix: Techtree-Sidebar zeigte für Schiffe keine Beschreibung (`desc_techs_drone/corvette/freighter` in `lang/de/techtree.php` existierten bereits, waren aber nie verdrahtet) — `TechtreeController::index()` befüllt `description` jetzt auch für `ship`-Einträge.
 - Refactor: `BuildingUnlockService::unlocksAtLevel()` liefert jetzt strukturierte `{text, chip}`-Einträge statt reiner Strings — gleiches Format wie `KnowledgeEffectDescriptionService::effectsAtLevel()`. `chip` ist für Gebäude-Unlocks immer `null` (reine Entity-Namen, keine Ressourcenwerte).
 - Fix/Design: Techtree-Sidebar "Voraussetzungen"/"Effekte der nächsten Stufe" (Owner-Playtest-Fund) zeigten reinen Fließtext statt Chips außer bei Ressourcen-Effekten — neuer `.res-chip--neutral`-Fallback für nicht-Ressourcen-Einträge, einheitlich über Berater/Gebäude/Kenntnis/Schiff-Blöcke angewendet.
+- Fix: Kommandozentrale-Dashboard zeigte an zwei Stellen (Berater-Widget, Wartungsstau-Widget) rohen Blade/PHP-Code statt der Berater-/Gebäude-Beschreibung — Quote-Kollision im `:tooltip`-Attribut, Tooltip-Array jetzt vorab in `@php` berechnet statt inline mit kollidierenden Anführungszeichen.
+- Fix: Gebäude-Ausbaustufen-Kosten wurden bisher erst bei Fertigstellung abgezogen, obwohl die Sidebar korrekt "bei Baubeginn" ankündigte — Regolith wird jetzt beim ersten AP-Invest eines Level-Up-Zyklus abgezogen, kein erneuter Abzug bei weiteren Invest-Schritten; Kostenanzeige zusätzlich als Ressourcen-Chip.
+- Fix: Onboarding-Hint "Berater-Slot 2 ist offen" war unspezifisch — nennt jetzt das konkret fertiggestellte Pfadgebäude (Analytik-Labor/Hangar/Cantina) und den passenden Berater namentlich.
+- Content/Fix: AP-Typ-Namen (Navigations-AP/Forschungs-AP/Bau-AP/Wirtschafts-AP) aus Spielertext entfernt — AP-Pool ist seit der Konsolidierung ein einziger gemeinsamer Pool, Text vereinheitlicht auf generisches "AP". Techtree-Sidebar für Berater zeigt jetzt eine Beschreibung statt Status/AP-Typ/Einstellungskosten (gehören in den Berater-Screen); Berater-Screen selbst bekam Ressourcen-Chips statt Fließtext, durchgehend ohne "/Tick"-/"/Sol"-Suffix im Chip.
 
 ## 2026-09-03
 
