@@ -614,16 +614,17 @@ class ColonyController extends BaseController
 
         // Construction/trade knowledge additively discounts the AP
         // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
-        // and-encounters-design.md §2). Level-up Regolith is charged only on the click
-        // that completes the level — checked BEFORE spending the AP so a shortfall
-        // never burns the final Construction-AP.
+        // and-encounters-design.md §2). Level-up Regolith is charged on the click that
+        // STARTS the cycle (ap_spend 0 → >0) — mirrors the erect-cost pattern (paid at
+        // build start, not completion) so the sidebar's "Kosten bei Baubeginn" copy is
+        // accurate. A shortfall blocks the invest entirely, before any AP is spent.
         $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $building->ap_for_levelup);
-        $willLevelUp = ($row->ap_spend + 1) >= $effectiveApForLevelup;
-        $levelupRegolith = $willLevelUp
+        $isCycleStart = (int) $row->ap_spend === 0;
+        $levelupRegolith = $isCycleStart
             ? $this->levelupRegolithFor($buildingId, (int) $row->level + 1)
             : 0;
 
-        if ($willLevelUp && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
+        if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
             && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]], $colony->id)) {
             return $this->fail('resource_limit', __('colony.error_insufficient_resources'), [
                 'cost' => [self::RES_REGOLITH => $levelupRegolith],
@@ -642,14 +643,15 @@ class ColonyController extends BaseController
             $this->advisorService->lockActionPoints($colony->id, 1);
         }
 
+        if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
+            $this->resourcesService->payCosts(
+                [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
+                $colony->id
+            );
+        }
+
         $leveledUp = false;
         if ($newApSpend >= $effectiveApForLevelup) {
-            if ($levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
-                $this->resourcesService->payCosts(
-                    [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
-                    $colony->id
-                );
-            }
             DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $buildingId)

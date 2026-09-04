@@ -149,15 +149,26 @@ class BuildResourceSinkTest extends TestCase
 
     // ── Level-up costs ───────────────────────────────────────────────────────
 
-    public function test_cc_levelup_deducts_scaled_regolith(): void
+    public function test_cc_levelup_deducts_scaled_regolith_on_cycle_start(): void
     {
-        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2 → 2×30 = 60 Rg
+        $this->setCc(['level' => 1, 'ap_spend' => 0, 'status_points' => 20]);   // Lv1 → Lv2 = 2×30 = 60 Rg
+        $before = $this->colonyRes(self::RES_REGOLITH);
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
+            ->assertOk()->assertJsonPath('leveled_up', false);
+
+        $this->assertSame($before - 60, $this->colonyRes(self::RES_REGOLITH), 'Regolith deducted on the first invest of the cycle');
+    }
+
+    public function test_cc_levelup_does_not_deduct_regolith_again_on_completion(): void
+    {
+        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2, cycle already started
         $before = $this->colonyRes(self::RES_REGOLITH);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertOk()->assertJsonPath('leveled_up', true);
 
-        $this->assertSame($before - 60, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($before, $this->colonyRes(self::RES_REGOLITH), 'no second deduction on the completing click');
     }
 
     public function test_construction_knowledge_reduces_ap_needed_for_levelup(): void
@@ -174,32 +185,45 @@ class BuildResourceSinkTest extends TestCase
             ->assertOk()->assertJsonPath('leveled_up', true);
     }
 
-    public function test_non_cc_levelup_deducts_flat_regolith_regardless_of_build_cost(): void
+    public function test_non_cc_levelup_deducts_flat_regolith_on_cycle_start_regardless_of_build_cost(): void
     {
         // Sciencelab build_cost[3]=95 (25% would be 24) — GDD §13.7 flat 25 applies
         // regardless of the erect cost.
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 31)
-            ->update(['level' => 1, 'ap_spend' => 9, 'status_points' => 10]);
+            ->update(['level' => 1, 'ap_spend' => 0, 'status_points' => 20]);
         $before = $this->colonyRes(self::RES_REGOLITH);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 31])
-            ->assertOk()->assertJsonPath('leveled_up', true);
+            ->assertOk()->assertJsonPath('leveled_up', false);
 
-        $this->assertSame($before - 25, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($before - 25, $this->colonyRes(self::RES_REGOLITH), 'Regolith deducted on the first invest of the cycle');
     }
 
-    public function test_levelup_blocked_without_regolith_keeps_ap(): void
+    public function test_levelup_start_blocked_without_regolith(): void
     {
-        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);
+        $this->setCc(['level' => 1, 'ap_spend' => 0, 'status_points' => 20]);
         $this->setColonyRes(self::RES_REGOLITH, 10);   // < 60 needed for CC Lv2
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
 
         $row = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->first();
-        $this->assertSame(9, (int) $row->ap_spend, 'AP must not be burned on a blocked level-up');
+        $this->assertSame(0, (int) $row->ap_spend, 'AP must not be burned when the cycle cannot start');
         $this->assertSame(1, (int) $row->level);
         $this->assertSame(10, $this->colonyRes(self::RES_REGOLITH));
+    }
+
+    public function test_levelup_mid_cycle_invest_not_blocked_by_regolith_shortfall(): void
+    {
+        // Cost was already paid at cycle start; a shortfall now must not block progress.
+        $this->setCc(['level' => 1, 'ap_spend' => 5, 'status_points' => 16]);
+        $this->setColonyRes(self::RES_REGOLITH, 0);
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
+            ->assertOk()->assertJsonPath('ok', true);
+
+        $row = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->first();
+        $this->assertSame(6, (int) $row->ap_spend);
     }
 
     // ── Repair costs ─────────────────────────────────────────────────────────
