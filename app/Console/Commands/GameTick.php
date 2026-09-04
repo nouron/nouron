@@ -359,7 +359,7 @@ class GameTick extends Command
                         $tick,
                         $rewardMultiplier
                     );
-                } elseif ($difficulty === 'schwer') {
+                } elseif ($difficulty === 'hard') {
                     $extraWear = (float) config('game.missions.difficulty.hard_fail_extra_wear', 1.0);
                     $spAfterHardFail = max(0.0, (float) $newSp - $extraWear);
                     DB::table('colony_ships')->where('id', $mission->colony_ship_id)

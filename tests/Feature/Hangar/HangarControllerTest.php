@@ -413,13 +413,13 @@ class HangarControllerTest extends TestCase
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
                 'mission_key' => 'mission_courier_run',
-                'difficulty' => 'leicht',
+                'difficulty' => 'easy',
             ]);
 
         $response->assertOk()->assertJson(['ok' => true]);
 
         $this->assertSame(
-            'leicht',
+            'easy',
             DB::table('colony_hangar_missions')
                 ->where('colony_id', self::COLONY_ID_BART)
                 ->orderByDesc('id')

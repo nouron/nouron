@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * Adds the difficulty column to colony_hangar_missions (GDD §8b Erfolgschance +
  * Schwierigkeitsgrad, docs/superpowers/specs/2026-09-02-hangar-mission-success-chance-design.md).
  *
- * Values: 'leicht' | 'normal' | 'schwer'. default('normal') so pre-existing
+ * Values: 'easy' | 'normal' | 'hard'. default('normal') so pre-existing
  * dispatch code paths and test fixtures that don't set it explicitly keep
  * working unchanged (reward_multiplier['normal'] = 1.0, i.e. today's behavior).
  */

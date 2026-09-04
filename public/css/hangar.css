@@ -1008,6 +1008,11 @@ details[open] .hangar-pending-summary::before {
     color: #fff;
 }
 
+.hangar-difficulty-chip-reward {
+    font-weight: 400;
+    opacity: 0.75;
+}
+
 .hangar-mission-card-footer {
     display: flex;
     justify-content: space-between;

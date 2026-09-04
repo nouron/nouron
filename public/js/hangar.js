@@ -222,7 +222,7 @@ function hangarCarousel(config) {
             if (mission.availability !== 'ok' || this.missionModal.loading) return;
             if (this.missionModal.selectedKey !== mission.key) {
                 this.selectMission(mission);
-                if (this.missionRequiresTarget(mission)) return; // let the player pick a target first
+                return; // let the player see the difficulty (and target, if any) picker first
             }
             if (this.missionRequiresTarget(mission) && this.missionModal.targetIndex === '') return;
             if (!this.missionModal.selectedDifficulty) return;

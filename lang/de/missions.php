@@ -84,9 +84,9 @@ return [
 
     // ── Difficulty ───────────────────────────────────────────────────────────
 
-    'difficulty_leicht' => 'Leicht',
+    'difficulty_easy' => 'Leicht',
     'difficulty_normal' => 'Normal',
-    'difficulty_schwer' => 'Schwer',
+    'difficulty_hard' => 'Schwer',
     'difficulty_chance_label' => 'Erfolgschance: :chance%',
     'difficulty_reward_label' => 'Belohnung ×:multiplier',
 

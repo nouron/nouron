@@ -255,7 +255,7 @@ class SolReportTest extends TestCase
                 'mission_key' => 'mission_courier_run',
                 'ship_id' => 85,
                 'colony_id' => self::COLONY_ID,
-                'difficulty' => 'schwer',
+                'difficulty' => 'hard',
             ]),
             'created_at' => now(),
             'is_read' => 1,

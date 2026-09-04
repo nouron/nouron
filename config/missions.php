@@ -46,7 +46,7 @@ return [
             // (nexus_subsidy + relay bonus) — not worth the ship/Nav-AP cost.
             'reward' => ['credits' => 90],
             'repeatable' => true,
-            'difficulties' => ['leicht', 'normal'],
+            'difficulties' => ['easy', 'normal'],
         ],
         'mission_recon_flight' => [
             'ships' => ['drone'],
@@ -54,7 +54,7 @@ return [
             'requires' => [],
             'reward' => ['reveal_tiles' => 2],
             'repeatable' => true,
-            'difficulties' => ['leicht', 'normal'],
+            'difficulties' => ['easy', 'normal'],
         ],
         'mission_deep_survey' => [
             'ships' => ['drone'],
@@ -63,7 +63,7 @@ return [
             'target_type' => 'signal_tile',
             'reward' => ['deep_scan' => 1],
             'repeatable' => true, // consumes one signal tile per run
-            'difficulties' => ['leicht', 'normal'],
+            'difficulties' => ['easy', 'normal'],
         ],
         'mission_prospecting_flight' => [
             'ships' => ['drone'],
@@ -71,7 +71,7 @@ return [
             'requires' => ['knowledge' => ['geology' => 1]],
             'reward' => ['regolith' => [20, 30]],
             'repeatable' => true,
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
         'mission_data_sweep' => [
             'ships' => ['drone'],
@@ -80,7 +80,7 @@ return [
             'target_type' => 'knowledge',
             'reward' => ['research_ap' => 8], // invested into player-chosen knowledge, capped at levelup threshold
             'repeatable' => true,
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
         'mission_long_range_expedition' => [
             'ships' => ['drone'],
@@ -94,7 +94,7 @@ return [
                 ['regolith' => [30, 45]],
             ]],
             'repeatable' => true,
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
 
         // ── Freighter — goods ────────────────────────────────────────────────
@@ -105,7 +105,7 @@ return [
             'requires' => [],
             'reward' => ['regolith' => 25, 'organics' => 10],
             'repeatable' => true,
-            'difficulties' => ['leicht', 'normal'],
+            'difficulties' => ['easy', 'normal'],
         ],
         'mission_trade_convoy' => [
             'ships' => ['freighter'],
@@ -114,7 +114,7 @@ return [
             // 180 → 260 (2026-08-17), see mission_courier_run comment.
             'reward' => ['credits' => 260, 'trust_event' => 'trade_success'],
             'repeatable' => true,
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
         'mission_aid_transport' => [
             'ships' => ['freighter'],
@@ -124,7 +124,7 @@ return [
             // 60 → 90 (2026-08-17), see mission_courier_run comment.
             'reward' => ['credits' => 90, 'trust_event' => 'encounter_won'],
             'repeatable' => true,
-            'difficulties' => ['leicht', 'normal'],
+            'difficulties' => ['easy', 'normal'],
         ],
 
         // ── Freighter or corvette — salvage ──────────────────────────────────
@@ -135,7 +135,7 @@ return [
             'requires' => ['knowledge' => ['construction' => 1]],
             'reward' => ['compounds' => [6, 10]],
             'repeatable' => true,
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
         'mission_ruin_expedition' => [
             'ships' => ['freighter', 'corvette'],
@@ -146,7 +146,7 @@ return [
             // 150 → 220 (2026-08-17), see mission_courier_run comment.
             'reward' => ['credits' => 220],
             'repeatable' => false, // once per revealed ruin tile
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
 
         'mission_harvester_salvage' => [
@@ -163,7 +163,7 @@ return [
             'target_type' => 'ruin_tile',
             'reward' => ['harvester_instance' => true],
             'repeatable' => false, // once per revealed ruin tile
-            'difficulties' => ['leicht', 'normal'],
+            'difficulties' => ['easy', 'normal'],
         ],
 
         // ── Corvette — protection ────────────────────────────────────────────
@@ -175,7 +175,7 @@ return [
             // 200 → 280 (2026-08-17), see mission_courier_run comment.
             'reward' => ['credits' => 280],
             'repeatable' => true,
-            'difficulties' => ['normal', 'schwer'],
+            'difficulties' => ['normal', 'hard'],
         ],
 
         // 'mission_perimeter_patrol' (corvette, defense Lv1, encounter_prep reward)

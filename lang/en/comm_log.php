@@ -38,6 +38,7 @@ return [
         'hangar' => [
             'mission_completed' => 'Mission completed',
             'mission_aborted' => 'Mission aborted',
+            'mission_failed' => 'Mission failed',
         ],
         'encounter_won' => 'Encounter resolved',
         'encounter_lost' => 'Encounter lost',

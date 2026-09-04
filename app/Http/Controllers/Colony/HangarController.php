@@ -162,7 +162,7 @@ class HangarController extends BaseController
     {
         $validated = $request->validate([
             'mission_key' => 'required|string|max:80',
-            'difficulty' => 'required|string|in:leicht,normal,schwer',
+            'difficulty' => 'required|string|in:easy,normal,hard',
             'target' => 'nullable|array',
             'target.q' => 'sometimes|integer',
             'target.r' => 'sometimes|integer',

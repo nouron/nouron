@@ -173,16 +173,16 @@ Werte aus `config/game.php` → `missions.difficulty` (Platzhalter-Größenordnu
 
 | Stufe | Basis-Erfolgschance | Reward-Multiplikator |
 |---|---|---|
-| leicht | 85% | ×0.7 |
+| easy | 85% | ×0.7 |
 | normal | 70% | ×1.0 |
-| schwer | 60% | ×1.4 |
+| hard | 60% | ×1.4 |
 
 | Globaler Wert | Wert |
 |---|---|
 | Pilot-Rang-Bonus (pro Raumfahrer-Rang) | +5% |
 | Kenntnis-Bonus (pro Level über Gate) | +3% |
 | Chance-Cap | 95% |
-| Hard-Fail-Extra-Wear (nur Stufe "schwer") | 1.0 SP |
+| Hard-Fail-Extra-Wear (nur Stufe "hard") | 1.0 SP |
 
 ### Mission → Schwierigkeitsstufen
 
@@ -190,19 +190,19 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 
 | Key | Name | Schiff | Verfügbare Stufen |
 |---|---|---|---|
-| `mission_courier_run` | Botenflug | Drohne | leicht / normal |
-| `mission_recon_flight` | Erkundungsflug | Drohne | leicht / normal |
-| `mission_deep_survey` | Signalvermessung | Drohne | leicht / normal |
-| `mission_prospecting_flight` | Prospektionsflug | Drohne | normal / schwer |
-| `mission_data_sweep` | Datensammelflug | Drohne | normal / schwer |
-| `mission_long_range_expedition` | Fernexpedition | Drohne | normal / schwer |
-| `mission_supply_run` | Versorgungsfahrt | Frachter | leicht / normal |
-| `mission_trade_convoy` | Handelsfahrt | Frachter | normal / schwer |
-| `mission_aid_transport` | Hilfsgütertransport | Frachter | leicht / normal |
-| `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | normal / schwer |
-| `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | normal / schwer |
-| `mission_harvester_salvage` | Bergungsauftrag: Förderanlage | Frachter o. Korvette | leicht / normal |
-| `mission_escort_convoy` | Konvoi-Begleitung | Korvette | normal / schwer |
+| `mission_courier_run` | Botenflug | Drohne | easy / normal |
+| `mission_recon_flight` | Erkundungsflug | Drohne | easy / normal |
+| `mission_deep_survey` | Signalvermessung | Drohne | easy / normal |
+| `mission_prospecting_flight` | Prospektionsflug | Drohne | normal / hard |
+| `mission_data_sweep` | Datensammelflug | Drohne | normal / hard |
+| `mission_long_range_expedition` | Fernexpedition | Drohne | normal / hard |
+| `mission_supply_run` | Versorgungsfahrt | Frachter | easy / normal |
+| `mission_trade_convoy` | Handelsfahrt | Frachter | normal / hard |
+| `mission_aid_transport` | Hilfsgütertransport | Frachter | easy / normal |
+| `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | normal / hard |
+| `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | normal / hard |
+| `mission_harvester_salvage` | Bergungsauftrag: Förderanlage | Frachter o. Korvette | easy / normal |
+| `mission_escort_convoy` | Konvoi-Begleitung | Korvette | normal / hard |
 
 `mission_perimeter_patrol` ist zurückgestellt (kein Katalogeintrag, siehe GDD §8b) und trägt daher keine `difficulties`-Zuordnung.
 

@@ -29,7 +29,7 @@ class HangarServiceTest extends TestCase
         $mission = config('missions.catalog.mission_courier_run'); // ungegatet
         $service = $this->app->make(HangarService::class);
 
-        $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'leicht');
+        $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'easy');
 
         $this->assertSame(0.85, $chance, 'no pilot, no knowledge gate => base_chance only');
     }
@@ -48,7 +48,7 @@ class HangarServiceTest extends TestCase
         $mission = config('missions.catalog.mission_courier_run');
         $service = $this->app->make(HangarService::class);
 
-        $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'leicht');
+        $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'easy');
 
         $this->assertEqualsWithDelta(0.85 + 2 * 0.05, $chance, 0.0001, 'rank 2 => +0.10 on top of base_chance');
     }
@@ -84,10 +84,10 @@ class HangarServiceTest extends TestCase
         $mission = config('missions.catalog.mission_prospecting_flight');
         $service = $this->app->make(HangarService::class);
 
-        // leicht base_chance 0.85 + rank3*0.05=0.15 + 4 levels above gate*0.03=0.12 = 1.12 uncapped,
-        // must clamp to chance_cap 0.95. ('schwer' base 0.60 would only reach 0.87 here — not high
-        // enough to ever hit the cap with realistic level 5 knowledge, so this must use 'leicht'.)
-        $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'leicht');
+        // easy base_chance 0.85 + rank3*0.05=0.15 + 4 levels above gate*0.03=0.12 = 1.12 uncapped,
+        // must clamp to chance_cap 0.95. ('hard' base 0.60 would only reach 0.87 here — not high
+        // enough to ever hit the cap with realistic level 5 knowledge, so this must use 'easy'.)
+        $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'easy');
 
         $this->assertSame(0.95, $chance, 'must clamp at chance_cap even with max pilot rank + knowledge overshoot');
     }
@@ -99,24 +99,24 @@ class HangarServiceTest extends TestCase
         // seeded drone sits dispatched there instead — see HangarMissionResolutionTest
         // fixture comment), so mission_escort_convoy (ships => ['corvette'], no
         // knowledge/target gate) is the compatible catalog mission here, not
-        // mission_courier_run (drone-only). Its difficulties are ['normal', 'schwer']
-        // (config/missions.php) — 'leicht' must be rejected.
+        // mission_courier_run (drone-only). Its difficulties are ['normal', 'hard']
+        // (config/missions.php) — 'easy' must be rejected.
         $this->expectException(\RuntimeException::class);
 
-        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'leicht');
+        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'easy');
     }
 
     public function test_dispatch_persists_the_chosen_difficulty(): void
     {
         $service = $this->app->make(HangarService::class);
 
-        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'schwer');
+        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'hard');
 
         // TestSeeder already seeds a (recalled/inactive-irrelevant) mission row for
         // colony 1 / instance 1 (mission_recon_flight, default difficulty 'normal') —
         // scope to the freshly dispatched row via destination + state to avoid picking
         // that stale fixture row up instead.
-        $this->assertSame('schwer', DB::table('colony_hangar_missions')
+        $this->assertSame('hard', DB::table('colony_hangar_missions')
             ->where('colony_id', self::COLONY_ID)->where('instance_id', self::HANGAR_INSTANCE)
             ->where('destination', 'mission_escort_convoy')->where('state', 'active')
             ->value('difficulty'));
@@ -134,10 +134,10 @@ class HangarServiceTest extends TestCase
         $courierRun = collect($entries)->firstWhere('key', 'mission_courier_run');
 
         $this->assertNotNull($courierRun['difficulty_options']);
-        $this->assertCount(2, $courierRun['difficulty_options'], 'mission_courier_run offers leicht + normal');
-        $leicht = collect($courierRun['difficulty_options'])->firstWhere('key', 'leicht');
-        $this->assertSame('Leicht', $leicht['label']);
-        $this->assertSame(85, $leicht['chance_pct'], 'base_chance 0.85, no bonuses => 85%');
-        $this->assertSame(0.7, $leicht['reward_multiplier']);
+        $this->assertCount(2, $courierRun['difficulty_options'], 'mission_courier_run offers easy + normal');
+        $easy = collect($courierRun['difficulty_options'])->firstWhere('key', 'easy');
+        $this->assertSame('Leicht', $easy['label']);
+        $this->assertSame(85, $easy['chance_pct'], 'base_chance 0.85, no bonuses => 85%');
+        $this->assertSame(0.7, $easy['reward_multiplier']);
     }
 }
