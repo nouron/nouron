@@ -266,6 +266,7 @@ return [
     'hangar_dispatch' => 'Entsenden',
     'hangar_dispatch_no_nav_ap' => 'Nicht genug Navigations-AP für diese Mission.',
     'hangar_dispatch_no_organika' => 'Nicht genug Organika für die Crew-Verpflegung dieser Mission.',
+    'hangar_request_level_too_low' => 'Dieser Schiffstyp erfordert einen höheren Hangar-Ausbau.',
     'hangar_recall' => 'Zurückrufen',
     'hangar_repair' => 'Reparieren',
     'hangar_destination' => 'Ziel',
