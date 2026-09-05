@@ -360,8 +360,6 @@ return [
     'sol_report_screen3_starts' => 'starts',
     'sol_report_screen3_begin' => 'Continue mission',
 
-    'sol_report_skip_hint' => 'Tap to skip',
-    'sol_report_skip_setting' => 'Skip Sol report automatically in future',
     'sol_report_finale_win_cta' => 'Complete run',
     'sol_report_finale_lose_cta' => 'End run',
 

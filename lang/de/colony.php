@@ -380,8 +380,6 @@ return [
     'sol_report_screen3_starts' => 'startet',
     'sol_report_screen3_begin' => 'Mission fortsetzen',
 
-    'sol_report_skip_hint' => 'Tippen zum Überspringen',
-    'sol_report_skip_setting' => 'Sol-Report künftig automatisch überspringen',
     'sol_report_finale_win_cta' => 'Run abschließen',
     'sol_report_finale_lose_cta' => 'Run beenden',
 

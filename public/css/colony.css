@@ -2363,28 +2363,6 @@ dialog[x-ref="discoveryDialog"] {
     flex-direction: column;
     gap: 0.75rem;
 }
-.sol-report__skip-hint {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary, #6b6b7a);
-    text-align: center;
-    margin: 0;
-    opacity: 0.8;
-}
-.sol-report__skip-setting {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--color-text-secondary, #6b6b7a);
-    cursor: pointer;
-    margin: 0;
-}
-.sol-report__skip-setting input {
-    width: 1.25em;
-    height: 1.25em;
-    margin: 0;
-    flex-shrink: 0;
-}
 .sol-report__continue {
     align-self: stretch;
     text-align: center;
