@@ -395,13 +395,6 @@ function colonyHexView(config) {
             return Math.round(100 / maxSp);
         },
 
-        // Current condition as a whole-number percent (status_points / max_status_points).
-        conditionPct(building) {
-            if (!building) return 100;
-            const maxSp = building.max_status_points ?? 20;
-            return Math.round((100 * building.status_points) / maxSp);
-        },
-
         // Condition tier tone, reusing the same thresholds as EncounterService::resolveOutcome()
         // (game.encounter.damaged_threshold_pct / critical_threshold_pct) — Owner-Fund
         // 2026-09-05: wear should be visible everywhere the building is shown, with the

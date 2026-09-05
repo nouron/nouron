@@ -644,19 +644,6 @@ button.btn-sol:hover,
     }
 }
 
-/* Current-condition chip above the Reparieren button. Owner correction
-   2026-09-05: kept neutral — the only persistent condition color-coding is
-   the in-tile hex-grid label text (conditionLabelColor() in colony-hexgrid.js). */
-.tile-condition-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.35em;
-    margin: 0 0 0.4rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-anthracite);
-}
-
 /* Terrain detail demoted to a closed disclosure on a built tile. PicoCSS styles
    <details>/<summary> natively; this only tunes spacing + the summary label. */
 .tile-terrain-disclosure {
@@ -879,12 +866,29 @@ button.btn-sol:hover,
     transition: background 0.15s ease;
 }
 
-/* On the red Reparieren button: white fill, faint white empty track. */
+/* On the red Reparieren button: white fill, faint white empty track. Healthy
+   condition (tone === 'neutral') keeps this default. Damaged/critical tones
+   override the filled-segment color below — same thresholds as
+   conditionTone()/conditionLabelColor() in colony-hexgrid.js. */
 .btn-segbar--status .btn-seg {
     background: rgba(255, 255, 255, 0.28);
 }
 .btn-segbar--status .btn-seg--filled {
     background: #fff;
+}
+
+/* Damaged: amber fill, same tone as the hex-tile label warning color
+   (conditionLabelColor() 'warning' — #facc15). */
+.btn-segbar--status--warning .btn-seg--filled {
+    background: #facc15;
+}
+
+/* Critical: red segments would be invisible on the red button background, so
+   this uses a dark fill with a light outline instead — reads as clearly worse
+   than the amber warning state, still legible on the red button. */
+.btn-segbar--status--danger .btn-seg--filled {
+    background: #1a1a1a;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
 }
 
 /* On the Ausbauen button (secondary white, or red primary when no repair is

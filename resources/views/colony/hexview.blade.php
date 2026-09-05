@@ -218,20 +218,6 @@
                                     @include("partials.ap-cost-chip", ["amount" => 2, "type" => "nav"])
                                 </button>
                             </template>
-                            {{-- Current condition — Owner-Fund 2026-09-05: the repair
-                             button only ever showed "+X% per repair", never the actual
-                             current status. Neutral text (Owner correction 2026-09-05:
-                             the only persistent condition color-coding lives on the
-                             hex-tile label itself, see conditionLabelColor() in
-                             colony-hexgrid.js). Shown for any built building regardless
-                             of repair availability. --}}
-                            <template x-if="selectedBuilding.level > 0">
-                                <p class="tile-condition-chip">
-                                    <span>{{ __("colony.condition_label") }}:</span>
-                                    <span x-text="`${conditionPct(selectedBuilding)}%`"></span>
-                                </p>
-                            </template>
-
                             {{-- Repair: the condition bar is embedded as a segmented
                              footer strip inside the button. Local hover flag drives the
                              desktop-only +1 SP ghost segment; CSS gates the ghost to
