@@ -3,6 +3,7 @@
 ## 2026-09-05
 
 - Fix: Owner-Korrektur zur Gebäude-Zustandsanzeige (nach 585fc5e) — Hex-Tile-Ring und Farbcodierung an Sidebar-Titel/Zustand-Chip waren zu viel des Guten, komplett entfernt. Einziger verbleibender Zustands-Hinweis ist jetzt die Textfarbe des Gebäude-Labels direkt auf dem Hex-Tile (z.B. "CA 1"), gelb/rot bei denselben Schwellen wie zuvor.
+- Fix: Owner-Feinschliff zur Gebäude-Zustandsanzeige — redundanter "Zustand: X%"-Text über dem Reparieren-Button entfernt (in der Sidebar nicht mehr nötig, siehe Segment-Balken); der Segment-Balken im Reparieren-Button färbt sich jetzt selbst nach Zustand (weiß gesund, Amber beschädigt, dunkel mit hellem Outline kritisch — Rot wäre auf dem roten Button unlesbar gewesen).
 
 ## 2026-09-04
 
