@@ -523,15 +523,19 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotNull($found, 'bar/cantina (building ID 52) must be in phase 2');
     }
 
-    public function test_knowledge_geology_is_in_phase3(): void
+    public function test_knowledge_geology_is_in_phase2(): void
     {
+        // Owner-Playtest-Fund 2026-09-05: geology was shown in the Phase 3 (CC Lv3)
+        // column even though its real gate — sciencelab Lv2 + harvester Lv1 — has no
+        // CC-Lv3 requirement at all, misleading players into deferring the science
+        // path. Moved to phase 2 alongside its actual prerequisite (sciencelab).
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        $found = collect($pageData['phases'][3]['items'])
+        $found = collect($pageData['phases'][2]['items'])
             ->first(fn ($t) => $t['id'] === 92 && $t['type'] === 'research');
 
-        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3');
+        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 2 (matches its real gate: sciencelab Lv2 + harvester Lv1, no CC-Lv3 requirement)');
     }
 
     // ── order('add'): auto-levelup in the same request (no page reload) ───────

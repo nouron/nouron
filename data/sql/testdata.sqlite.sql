@@ -199,7 +199,8 @@ UPDATE "buildings"  SET phase=1, "row"=1, "column"=2 WHERE id=27; -- harvester
 UPDATE "buildings"  SET phase=1, "row"=2, "column"=2 WHERE id=41; -- bioFacility
 UPDATE "personell"  SET phase=1, "row"=2, "column"=3 WHERE id=35; -- engineer
 -- Phase 2 (CC Lv2): depot, sciencelab, infirmary, bar, scientist, trader,
---                   knowledge_construction, knowledge_agronomy, knowledge_health, knowledge_trade
+--                   knowledge_construction, knowledge_agronomy, knowledge_health, knowledge_trade,
+--                   knowledge_geology
 UPDATE "buildings"  SET phase=2, "row"=1, "column"=1 WHERE id=30; -- depot
 UPDATE "buildings"  SET phase=2, "row"=1, "column"=2 WHERE id=31; -- sciencelab
 UPDATE "buildings"  SET phase=2, "row"=1, "column"=3 WHERE id=46; -- infirmary
@@ -210,13 +211,16 @@ UPDATE "researches" SET phase=2, "row"=4, "column"=3 WHERE id=90; -- knowledge_c
 UPDATE "researches" SET phase=2, "row"=5, "column"=3 WHERE id=93; -- knowledge_agronomy
 UPDATE "researches" SET phase=2, "row"=6, "column"=1 WHERE id=94; -- knowledge_health
 UPDATE "researches" SET phase=2, "row"=6, "column"=3 WHERE id=95; -- knowledge_trade
--- Phase 3 (CC Lv3): hangar, strategist, drone, pilot, knowledge_geology,
+-- Owner-Playtest-Fund 2026-09-05: geology showed in the Phase 3 (CC Lv3) column
+-- even though its real gate (sciencelab Lv2 + harvester Lv1) has no CC-Lv3
+-- requirement — moved next to sciencelab in phase 2, its actual prerequisite.
+UPDATE "researches" SET phase=2, "row"=3, "column"=1 WHERE id=92; -- knowledge_geology
+-- Phase 3 (CC Lv3): hangar, strategist, drone, pilot,
 --                   freighter, knowledge_cartography, corvette, knowledge_defense
 UPDATE "buildings"  SET phase=3, "row"=1, "column"=2 WHERE id=44; -- hangar
 UPDATE "personell"  SET phase=3, "row"=1, "column"=3 WHERE id=93; -- strategist
 UPDATE "ships"      SET phase=3, "row"=2, "column"=2 WHERE id=85; -- drone
 UPDATE "personell"  SET phase=3, "row"=2, "column"=3 WHERE id=89; -- pilot
-UPDATE "researches" SET phase=3, "row"=3, "column"=1 WHERE id=92; -- knowledge_geology
 UPDATE "ships"      SET phase=3, "row"=3, "column"=2 WHERE id=47; -- freighter
 UPDATE "researches" SET phase=3, "row"=3, "column"=3 WHERE id=91; -- knowledge_cartography
 UPDATE "ships"      SET phase=3, "row"=4, "column"=2 WHERE id=37; -- corvette
