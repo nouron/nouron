@@ -11,6 +11,12 @@ return [
     'levelup_cost_suffix' => 'bei Baubeginn',
     'repair' => 'Reparieren',
     'ap_per_tile' => '1 AP/Feld',
+    // Owner-Fund 2026-09-05: sichtbare Zustandsanzeige über dem Reparieren-Button.
+    // Wert "Zustand" bereits an anderer Stelle exakt für dasselbe Konzept etabliert
+    // (onboarding_hint_encounter, run.task_engineering_output, comm_log.building_repaired)
+    // — hier direkt wiederverwendet statt TODO-Platzhalter, content-writer bitte
+    // gegenprüfen falls ein anderer Begriff gewünscht ist.
+    'condition_label' => 'Zustand',
 
     // ── Repair errors ─────────────────────────────────────────────────────────
 

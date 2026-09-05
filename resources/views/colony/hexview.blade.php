@@ -45,6 +45,8 @@
             exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
             tileYields: @json(collect(config("tile_types"))->map(fn($t) => $t["base_yield"])->filter()),
             repairDisplayThreshold: {{ (float) config("game.repair.display_threshold", 0.7) }},
+            damagedThresholdPct: {{ (float) config("game.encounter.damaged_threshold_pct", 0.66) }},
+            criticalThresholdPct: {{ (float) config("game.encounter.critical_threshold_pct", 0.33) }},
             relocateApPerHex: {{ (int) config("game.harvester.relocate_ap_per_hex", 2) }},
             phaseProgress: @json($phaseProgress),
             routes: {
@@ -165,6 +167,7 @@
                     <template x-if="selectedBuilding">
                         <div class="tile-panel-title__row" x-data="{ hoverLevel: false }">
                             <span class="tile-panel-title__name tile-panel-title__name--hoverable"
+                                :class="`tile-panel-title__name--${conditionTone(selectedBuilding)}`"
                                 @mouseenter="hoverLevel = true" @mouseleave="hoverLevel = false">
                                 <span x-text="buildingLabel(selectedBuilding.building_key)"></span>
                                 <template x-if="selectedBuilding.level > 0">
@@ -216,6 +219,20 @@
                                     @include("partials.ap-cost-chip", ["amount" => 2, "type" => "nav"])
                                 </button>
                             </template>
+                            {{-- Current condition — Owner-Fund 2026-09-05: the repair
+                             button only ever showed "+X% per repair", never the actual
+                             current status. Same color tiers as the hex-grid ring /
+                             sidebar title (conditionTone()). Shown for any built building
+                             regardless of repair availability, so a fully-repaired
+                             building still reads its (neutral) condition. --}}
+                            <template x-if="selectedBuilding.level > 0">
+                                <p class="tile-condition-chip"
+                                    :class="`tile-condition-chip--${conditionTone(selectedBuilding)}`">
+                                    <span>{{ __("colony.condition_label") }}:</span>
+                                    <span x-text="`${conditionPct(selectedBuilding)}%`"></span>
+                                </p>
+                            </template>
+
                             {{-- Repair: the condition bar is embedded as a segmented
                              footer strip inside the button. Local hover flag drives the
                              desktop-only +1 SP ghost segment; CSS gates the ghost to

@@ -112,6 +112,10 @@ function colonyHexView(config) {
         exploreCostDefault: config.exploreCostDefault ?? 1,
         tileYields: config.tileYields ?? {},
         repairDisplayThreshold: config.repairDisplayThreshold ?? 0.7,
+        // Same tier thresholds as EncounterService::resolveOutcome() (game.encounter.*),
+        // reused here so a storm-damaged building reads the same color on the hex grid.
+        damagedThresholdPct: config.damagedThresholdPct ?? 0.66,
+        criticalThresholdPct: config.criticalThresholdPct ?? 0.33,
         relocateApPerHex: config.relocateApPerHex ?? 2,
         phaseProgress: config.phaseProgress ?? null,
         selectedTile: null,
@@ -181,6 +185,8 @@ function colonyHexView(config) {
                 harvesterBuilding: this.harvesterMoveMode ? this.harvesterBuilding() : null,
                 tileYields: this.tileYields,
                 repairDisplayThreshold: this.repairDisplayThreshold,
+                damagedThresholdPct: this.damagedThresholdPct,
+                criticalThresholdPct: this.criticalThresholdPct,
                 relocateApPerHex: this.relocateApPerHex,
                 panState: this._panState,
             });
@@ -386,6 +392,26 @@ function colonyHexView(config) {
         repairStepPct(building) {
             const maxSp = building?.max_status_points ?? 20;
             return Math.round(100 / maxSp);
+        },
+
+        // Current condition as a whole-number percent (status_points / max_status_points).
+        conditionPct(building) {
+            if (!building) return 100;
+            const maxSp = building.max_status_points ?? 20;
+            return Math.round((100 * building.status_points) / maxSp);
+        },
+
+        // Condition tier tone, reusing the same thresholds as EncounterService::resolveOutcome()
+        // (game.encounter.damaged_threshold_pct / critical_threshold_pct) — Owner-Fund
+        // 2026-09-05: wear should be visible everywhere the building is shown, with the
+        // same color mapping the storm/encounter outcome already uses.
+        conditionTone(building) {
+            if (!building || building.level < 1) return 'neutral';
+            const maxSp = building.max_status_points ?? 20;
+            const pct = building.status_points / maxSp;
+            if (pct < (this.criticalThresholdPct ?? 0.33)) return 'danger';
+            if (pct < (this.damagedThresholdPct ?? 0.66)) return 'warning';
+            return 'neutral';
         },
 
         async doRepair(building) {
@@ -1208,6 +1234,35 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     if (opts.polygonMap) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
+    }
+
+    // Persistent building-condition ring (Owner-Fund 2026-09-05): wear should be
+    // visible on the grid at a glance, not only via the transient onboarding-hint
+    // pulse below. Reuses the same tier thresholds as EncounterService::resolveOutcome()
+    // (game.encounter.damaged_threshold_pct / critical_threshold_pct) so a storm-damaged
+    // building reads the same color here as in the encounter result. Drawn as an outer
+    // ring on top of the fill so it stays visible alongside the selection stroke.
+    if (building && building.level > 0) {
+        const maxSp = building.max_status_points ?? 20;
+        const condPct = building.status_points / maxSp;
+        const damagedPct = opts.damagedThresholdPct ?? 0.66;
+        const criticalPct = opts.criticalThresholdPct ?? 0.33;
+        let conditionColor = null;
+        if (condPct < criticalPct) {
+            conditionColor = '#dc2626'; // red-600 — critical
+        } else if (condPct < damagedPct) {
+            conditionColor = '#eab308'; // yellow-500 — damaged
+        }
+        if (conditionColor) {
+            const conditionRing = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            conditionRing.setAttribute('points', points.join(' '));
+            conditionRing.setAttribute('fill', 'none');
+            conditionRing.setAttribute('stroke', conditionColor);
+            conditionRing.setAttribute('stroke-width', '3');
+            conditionRing.setAttribute('pointer-events', 'none');
+            conditionRing.setAttribute('class', 'building-condition-ring');
+            g.appendChild(conditionRing);
+        }
     }
 
     // Fog overlay + glyph (states 3 + 4). Skipped while this tile is an active
