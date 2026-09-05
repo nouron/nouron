@@ -4,6 +4,9 @@
 
 - Fix: Owner-Korrektur zur Gebäude-Zustandsanzeige (nach 585fc5e) — Hex-Tile-Ring und Farbcodierung an Sidebar-Titel/Zustand-Chip waren zu viel des Guten, komplett entfernt. Einziger verbleibender Zustands-Hinweis ist jetzt die Textfarbe des Gebäude-Labels direkt auf dem Hex-Tile (z.B. "CA 1"), gelb/rot bei denselben Schwellen wie zuvor.
 - Fix: Owner-Feinschliff zur Gebäude-Zustandsanzeige — redundanter "Zustand: X%"-Text über dem Reparieren-Button entfernt (in der Sidebar nicht mehr nötig, siehe Segment-Balken); der Segment-Balken im Reparieren-Button färbt sich jetzt selbst nach Zustand (weiß gesund, Amber beschädigt, dunkel mit hellem Outline kritisch — Rot wäre auf dem roten Button unlesbar gewesen).
+- Removed: "Sol-Report künftig automatisch überspringen" — Sol-Report muss laut Owner immer angezeigt werden. Checkbox, Präferenz-Endpoint (`POST /sol/report-skip`) und die Skip-Logik in `SolReportService::buildReport()` komplett entfernt; `user_preferences.sol_report_skip`-Spalte bleibt unangetastet (ungenutzter Rest, kein Migrationsrisiko für eine reine Aufräumaktion). Tote Lang-Keys/CSS-Regeln der Checkbox mitentfernt.
+- Fix: Geologie-Kenntnis wurde im Techtree fälschlich in der Phase-3-Spalte (CC Lv3) gezeigt, obwohl ihr echtes Gate (Analytik-Labor Lv2 + Harvester Lv1) keine CC-Lv3-Anforderung hat (game-designer-Analyse: reines Anzeige-Grouping-Problem, kein Code-Gate) — auf Phase 2 verschoben, direkt neben ihre echte Voraussetzung.
+- Balance: Regolith-Ertrag-Sorge (+8 Rg/Sol bei Sol 13) geprüft — Formel arbeitet wie kalibriert (Bodenkurve eines kargen, depletierten Tiles), keine Baukosten-Änderung vorgenommen. Empfehlung dokumentiert (GDD §4c): mehr Playtest-Samples vor jeder Zahlenänderung, Umzugs-Timing bleibt der eigentliche Hebel.
 
 ## 2026-09-04
 
