@@ -167,7 +167,6 @@
                     <template x-if="selectedBuilding">
                         <div class="tile-panel-title__row" x-data="{ hoverLevel: false }">
                             <span class="tile-panel-title__name tile-panel-title__name--hoverable"
-                                :class="`tile-panel-title__name--${conditionTone(selectedBuilding)}`"
                                 @mouseenter="hoverLevel = true" @mouseleave="hoverLevel = false">
                                 <span x-text="buildingLabel(selectedBuilding.building_key)"></span>
                                 <template x-if="selectedBuilding.level > 0">
@@ -221,13 +220,13 @@
                             </template>
                             {{-- Current condition — Owner-Fund 2026-09-05: the repair
                              button only ever showed "+X% per repair", never the actual
-                             current status. Same color tiers as the hex-grid ring /
-                             sidebar title (conditionTone()). Shown for any built building
-                             regardless of repair availability, so a fully-repaired
-                             building still reads its (neutral) condition. --}}
+                             current status. Neutral text (Owner correction 2026-09-05:
+                             the only persistent condition color-coding lives on the
+                             hex-tile label itself, see conditionLabelColor() in
+                             colony-hexgrid.js). Shown for any built building regardless
+                             of repair availability. --}}
                             <template x-if="selectedBuilding.level > 0">
-                                <p class="tile-condition-chip"
-                                    :class="`tile-condition-chip--${conditionTone(selectedBuilding)}`">
+                                <p class="tile-condition-chip">
                                     <span>{{ __("colony.condition_label") }}:</span>
                                     <span x-text="`${conditionPct(selectedBuilding)}%`"></span>
                                 </p>

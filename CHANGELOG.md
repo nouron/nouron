@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-05
+
+- Fix: Owner-Korrektur zur Gebäude-Zustandsanzeige (nach 585fc5e) — Hex-Tile-Ring und Farbcodierung an Sidebar-Titel/Zustand-Chip waren zu viel des Guten, komplett entfernt. Einziger verbleibender Zustands-Hinweis ist jetzt die Textfarbe des Gebäude-Labels direkt auf dem Hex-Tile (z.B. "CA 1"), gelb/rot bei denselben Schwellen wie zuvor.
+
 ## 2026-09-04
 
 - Fix: Hangar-Nexus-Anfrage (Owner-Playtest-Fund) — Schiffs-Reihenfolge im Bestell-Modal korrigiert (Drohne/Frachter/Korvette statt PK-Reihenfolge), fehlendes Hangar-Level-Gate ergänzt (Frachter erfordert Hangar-Lv2, Korvette Lv3 — serverseitig erzwungen + UI zeigt gesperrte Typen ausgegraut), Kosten/Lieferzeit als Ressourcen-Chips statt Fließtext, kaputten Response-Handler gefixt (`res.slot` existierte bei diesem Endpoint nie — Pending-Ships-Liste blieb nach Bestellung bis zum Reload leer). Nexus-Lieferzeiten verkürzt (Drohne 2→1, Frachter 3→2, Korvette 5→3 Sole).

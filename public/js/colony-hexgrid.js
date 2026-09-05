@@ -187,6 +187,7 @@ function colonyHexView(config) {
                 repairDisplayThreshold: this.repairDisplayThreshold,
                 damagedThresholdPct: this.damagedThresholdPct,
                 criticalThresholdPct: this.criticalThresholdPct,
+                conditionTone: (building) => this.conditionTone(building),
                 relocateApPerHex: this.relocateApPerHex,
                 panState: this._panState,
             });
@@ -1236,35 +1237,6 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
     }
 
-    // Persistent building-condition ring (Owner-Fund 2026-09-05): wear should be
-    // visible on the grid at a glance, not only via the transient onboarding-hint
-    // pulse below. Reuses the same tier thresholds as EncounterService::resolveOutcome()
-    // (game.encounter.damaged_threshold_pct / critical_threshold_pct) so a storm-damaged
-    // building reads the same color here as in the encounter result. Drawn as an outer
-    // ring on top of the fill so it stays visible alongside the selection stroke.
-    if (building && building.level > 0) {
-        const maxSp = building.max_status_points ?? 20;
-        const condPct = building.status_points / maxSp;
-        const damagedPct = opts.damagedThresholdPct ?? 0.66;
-        const criticalPct = opts.criticalThresholdPct ?? 0.33;
-        let conditionColor = null;
-        if (condPct < criticalPct) {
-            conditionColor = '#dc2626'; // red-600 — critical
-        } else if (condPct < damagedPct) {
-            conditionColor = '#eab308'; // yellow-500 — damaged
-        }
-        if (conditionColor) {
-            const conditionRing = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-            conditionRing.setAttribute('points', points.join(' '));
-            conditionRing.setAttribute('fill', 'none');
-            conditionRing.setAttribute('stroke', conditionColor);
-            conditionRing.setAttribute('stroke-width', '3');
-            conditionRing.setAttribute('pointer-events', 'none');
-            conditionRing.setAttribute('class', 'building-condition-ring');
-            g.appendChild(conditionRing);
-        }
-    }
-
     // Fog overlay + glyph (states 3 + 4). Skipped while this tile is an active
     // build/move target, so the highlight stays clean. The concrete tile_type is
     // never revealed under fog — only the fog kind (scout vs. buildable) shows.
@@ -1420,7 +1392,12 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         rect.setAttribute('pointer-events', 'none');
         g.appendChild(rect);
 
-        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, badgeText, 8, '#fff', 700));
+        // Label text color is the only persistent condition indicator on the grid
+        // (Owner correction 2026-09-05: the earlier tile ring + sidebar title color
+        // were too much — only the in-tile label reads condition now). Same tier
+        // thresholds as EncounterService::resolveOutcome() (game.encounter.*).
+        const labelColor = isBuilt ? conditionLabelColor(building, opts) : '#fff';
+        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, badgeText, 8, labelColor, 700));
 
         // Red warning dot (top-right of badge) when condition < 10%
         if (isBuilt) {
@@ -1524,6 +1501,21 @@ function getTileStroke(tile, isCC) {
     }
 
     return [TILE_STROKES[tile.tile_type] ?? '#8a9aaa', '1.5'];
+}
+
+// Building-condition label tone (Owner correction 2026-09-05): the sole persistent
+// wear indicator on the grid is the color of the in-tile "CA 1"-style label text.
+// Reuses conditionTone() (passed through opts.conditionTone, bound to the Alpine
+// component) so the tier logic has a single source of truth.
+const CONDITION_LABEL_COLORS = {
+    danger: '#f87171', // red-400 — critical, readable on the dark badge fill
+    warning: '#facc15', // yellow-400 — damaged, readable on the dark badge fill
+    neutral: '#fff',
+};
+
+function conditionLabelColor(building, opts) {
+    const tone = opts.conditionTone ? opts.conditionTone(building) : 'neutral';
+    return CONDITION_LABEL_COLORS[tone] ?? '#fff';
 }
 
 function svgText(x, y, text, size, fill, weight) {

@@ -644,19 +644,9 @@ button.btn-sol:hover,
     }
 }
 
-/* Building-condition tone (Owner-Fund 2026-09-05) — same tier thresholds as
-   EncounterService::resolveOutcome() (game.encounter.damaged_threshold_pct /
-   critical_threshold_pct), driven by conditionTone() in colony-hexgrid.js.
-   --neutral intentionally left uncolored (inherits the default title color). */
-.tile-panel-title__name--warning {
-    color: var(--color-warning, #d4a017);
-}
-
-.tile-panel-title__name--danger {
-    color: var(--color-danger, #c0392b);
-}
-
-/* Current-condition chip above the Reparieren button — same tone classes. */
+/* Current-condition chip above the Reparieren button. Owner correction
+   2026-09-05: kept neutral — the only persistent condition color-coding is
+   the in-tile hex-grid label text (conditionLabelColor() in colony-hexgrid.js). */
 .tile-condition-chip {
     display: flex;
     align-items: center;
@@ -665,14 +655,6 @@ button.btn-sol:hover,
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--color-anthracite);
-}
-
-.tile-condition-chip--warning {
-    color: var(--color-warning, #d4a017);
-}
-
-.tile-condition-chip--danger {
-    color: var(--color-danger, #c0392b);
 }
 
 /* Terrain detail demoted to a closed disclosure on a built tile. PicoCSS styles
