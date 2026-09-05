@@ -9,12 +9,15 @@ namespace Tests\Feature;
  * Scenarios:
  *   1. Service base shape for an active run (groups, sol counters, status, finale/url null).
  *   2. Production delta: a grown resource yields a "+N" good line with from < to.
- *   3. Level-down beat: a techtree.level_down event produces a danger+beat decay line, force_show.
+ *   3. Level-down beat: a techtree.level_down event produces a danger+beat decay line.
  *   4. Wear without level-down: lost status → single neutral decay line; no change → no decay group.
  *   5. Trust/credits lines: colony group always carries trust + credits with correct signs/tones.
- *   6. Finale on run end: win/lose finale, result_url set, force_show, run group replaced.
+ *   6. Finale on run end: win/lose finale, result_url set, run group replaced.
  *   7. HTTP: POST sol.next returns report JSON + increments runs.current_tick.
- *   8. Skip-pref toggle: POST sol.report-skip persists the pref; buildReport echoes skip_pref.
+ *
+ * The Sol-Report has no skip/suppress mechanism — it is always returned in full
+ * (Owner decision 2026-09-05); the former sol_report_skip preference and
+ * force_show override were removed.
  *
  * Fixture: Bart (user_id=3) owns colony_id=1 (Springfield) with a seeded active run (id=1).
  * Resource IDs: 3=Regolith, 12=Trust. Credits/supply live in user_resources columns.
@@ -120,14 +123,13 @@ class SolReportTest extends TestCase
         $run = $this->setRunTick(1);
         $before = $this->snapshot($run);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $this->assertSame(1, $report['completed_sol']);
         $this->assertSame(2, $report['next_sol']);
         $this->assertSame('active', $report['run_status']);
         $this->assertNull($report['finale']);
         $this->assertNull($report['result_url']);
-        $this->assertFalse($report['force_show']);
 
         $keys = array_column($report['groups'], 'key');
         $this->assertContains('production', $keys);
@@ -144,7 +146,7 @@ class SolReportTest extends TestCase
         $before = $this->snapshot($run);
         $this->setResource(self::RES_REGOLITH, 142);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
         $production = $this->groupByKey($report, 'production');
         $this->assertNotNull($production);
 
@@ -159,7 +161,7 @@ class SolReportTest extends TestCase
         $this->assertSame('good', $regolithLine['tone']);
     }
 
-    public function test_level_down_event_produces_danger_beat_and_forces_show(): void
+    public function test_level_down_event_produces_danger_beat_line(): void
     {
         $run = $this->setRunTick(7);
         $before = $this->snapshot($run);
@@ -178,14 +180,13 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $decay = $this->groupByKey($report, 'decay');
         $this->assertNotNull($decay, 'Expected a decay group when a level-down occurred');
         $this->assertCount(1, $decay['lines']);
         $this->assertSame('danger', $decay['lines'][0]['tone']);
         $this->assertTrue($decay['lines'][0]['beat']);
-        $this->assertTrue($report['force_show']);
     }
 
     public function test_stipend_purchase_shows_in_events_group(): void
@@ -203,7 +204,7 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $events = $this->groupByKey($report, 'events');
         $this->assertNotNull($events, 'Expected an events group when a stipend was purchased');
@@ -231,7 +232,7 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $events = $this->groupByKey($report, 'events');
         $this->assertNotNull($events, 'Expected an events group when an advisor was hired');
@@ -271,7 +272,7 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $events = $this->groupByKey($report, 'events');
         $this->assertNotNull($events, 'Expected an events group when a storm resolved');
@@ -312,7 +313,7 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
         $events = $this->groupByKey($report, 'events');
         $this->assertNotNull($events, 'Expected an events group when a storm resolved');
         $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_storm'));
@@ -340,7 +341,7 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
         $events = $this->groupByKey($report, 'events');
         $this->assertNotNull($events, 'Expected an events group when a storm resolved');
         $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_storm'));
@@ -360,14 +361,13 @@ class SolReportTest extends TestCase
             ->where('building_id', 25)
             ->update(['status_points' => DB::raw('status_points - 5')]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $decay = $this->groupByKey($report, 'decay');
         $this->assertNotNull($decay, 'Expected a decay group when a building lost status');
         $this->assertCount(1, $decay['lines']);
         $this->assertSame('neutral', $decay['lines'][0]['tone']);
         $this->assertFalse($decay['lines'][0]['beat']);
-        $this->assertFalse($report['force_show']);
     }
 
     public function test_no_decay_when_nothing_changed(): void
@@ -376,7 +376,7 @@ class SolReportTest extends TestCase
         $before = $this->snapshot($run);
 
         // No event, no status loss → decay group must be omitted entirely.
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $this->assertNull($this->groupByKey($report, 'decay'));
     }
@@ -392,7 +392,7 @@ class SolReportTest extends TestCase
         // After: trust drops to 38 (-12), credits unchanged.
         $this->setResource(self::RES_TRUST, 38);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
         $colony = $this->groupByKey($report, 'colony');
         $this->assertNotNull($colony);
 
@@ -425,7 +425,7 @@ class SolReportTest extends TestCase
             'is_read' => 1,
         ]);
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
         $colony = $this->groupByKey($report, 'colony');
 
         $line = collect($colony['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_passive_credits'));
@@ -441,13 +441,12 @@ class SolReportTest extends TestCase
         $run->update(['status' => 'completed']);
         $run->refresh();
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $this->assertNotNull($report['finale']);
         $this->assertSame('win', $report['finale']['outcome']);
         $this->assertNotNull($report['result_url']);
         $this->assertStringContainsString('/run/'.$run->id.'/result', $report['result_url']);
-        $this->assertTrue($report['force_show']);
         $this->assertNull($this->groupByKey($report, 'run'), 'Run group must be replaced by the finale');
     }
 
@@ -458,13 +457,12 @@ class SolReportTest extends TestCase
         $run->update(['status' => 'failed', 'fail_reason' => 'trust_collapse']);
         $run->refresh();
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $this->assertNotNull($report['finale']);
         $this->assertSame('lose', $report['finale']['outcome']);
         $this->assertSame(__('run.run_failed_trust'), $report['finale']['body']);
         $this->assertNotNull($report['result_url']);
-        $this->assertTrue($report['force_show']);
         $this->assertNull($this->groupByKey($report, 'run'));
     }
 
@@ -475,13 +473,12 @@ class SolReportTest extends TestCase
         $run->update(['status' => 'failed', 'fail_reason' => 'phase1_deadline']);
         $run->refresh();
 
-        $report = $this->service()->buildReport($run, $before, false);
+        $report = $this->service()->buildReport($run, $before);
 
         $this->assertNotNull($report['finale']);
         $this->assertSame('lose', $report['finale']['outcome']);
         $this->assertSame(__('run.run_failed_phase1_deadline'), $report['finale']['body']);
         $this->assertNotNull($report['result_url']);
-        $this->assertTrue($report['force_show']);
         $this->assertNull($this->groupByKey($report, 'run'));
     }
 
@@ -498,27 +495,32 @@ class SolReportTest extends TestCase
             'next_sol',
             'run_status',
             'groups',
-            'skip_pref',
-            'force_show',
         ]);
 
         $this->assertDatabaseHas('runs', ['id' => $run->id, 'current_tick' => 3]);
     }
 
-    public function test_report_skip_endpoint_persists_preference(): void
+    /**
+     * Regression: the Sol-Report must always be returned in full, even if a
+     * stale sol_report_skip=true row lingers in user_preferences from before
+     * the skip feature was removed (Owner decision 2026-09-05). The column
+     * is intentionally kept in the schema; the app must simply never read it.
+     */
+    public function test_sol_next_endpoint_ignores_stale_skip_preference_row(): void
     {
-        $response = $this->actingAs($this->bart())->postJson(route('sol.report-skip'), ['skip' => true]);
+        $this->fakeGameTick();
+        $run = $this->setRunTick(2);
+
+        DB::table('user_preferences')->updateOrInsert(
+            ['user_id' => self::BART_ID],
+            ['sol_report_skip' => 1, 'updated_at' => now()],
+        );
+
+        $response = $this->actingAs($this->bart())->postJson(route('sol.next'));
 
         $response->assertOk();
-        $this->assertDatabaseHas('user_preferences', [
-            'user_id' => self::BART_ID,
-            'sol_report_skip' => 1,
-        ]);
-
-        $run = $this->setRunTick(1);
-        $before = $this->snapshot($run);
-        $report = $this->service()->buildReport($run, $before, true);
-
-        $this->assertTrue($report['skip_pref']);
+        $this->assertNotEmpty($response->json('groups'));
+        $this->assertArrayNotHasKey('skip_pref', $response->json());
+        $this->assertArrayNotHasKey('force_show', $response->json());
     }
 }

@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 /**
  * SolController — handles player-triggered Sol (tick) advancement.
@@ -68,28 +67,7 @@ class SolController extends Controller
             'parameters' => json_encode(['colony_id' => $run->colony_id, 'sol' => $run->current_tick]),
         ]);
 
-        $skipPref = (bool) (DB::table('user_preferences')
-            ->where('user_id', Auth::id())
-            ->value('sol_report_skip') ?? false);
-
-        return response()->json($this->solReportService->buildReport($run, $before, $skipPref));
-    }
-
-    /**
-     * Persist the player's "skip Sol-Report" preference (toggled from the report screen).
-     */
-    public function updateReportSkip(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'skip' => ['required', 'boolean'],
-        ]);
-
-        DB::table('user_preferences')->updateOrInsert(
-            ['user_id' => Auth::id()],
-            ['sol_report_skip' => $data['skip'], 'updated_at' => now()],
-        );
-
-        return response()->json(['skip' => (bool) $data['skip']]);
+        return response()->json($this->solReportService->buildReport($run, $before));
     }
 
     /**
