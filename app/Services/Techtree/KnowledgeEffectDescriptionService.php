@@ -29,10 +29,10 @@ class KnowledgeEffectDescriptionService
      */
     private const EFFECTS = [
         'construction' => [
-            ['config' => 'knowledge.construction.ap_cost_reduction_per_lv', 'label' => 'Bau-AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
+            ['config' => 'knowledge.construction.ap_cost_reduction_per_lv', 'label' => 'AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
         ],
         'cartography' => [
-            ['config' => 'knowledge.cartography.nav_ap_reduction_per_lv', 'label' => 'Navigations-AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
+            ['config' => 'knowledge.cartography.nav_ap_reduction_per_lv', 'label' => 'AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
         ],
         'geology' => [
             ['config' => 'game.geology_harvester_bonus_per_level', 'label' => 'Harvester-Ertrag', 'unit' => 'Rg/Sol', 'direction' => self::DIRECTION_INCREASE, 'resAbbr' => 'RG', 'resCls' => 'Rg'],
@@ -45,7 +45,7 @@ class KnowledgeEffectDescriptionService
             ['config' => 'game.health_plague_risk_reduction_per_lv', 'label' => 'Seuchenausbruch-Risiko', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
         ],
         'trade' => [
-            ['config' => 'knowledge.trade.ap_cost_reduction_per_lv', 'label' => 'Bau-AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
+            ['config' => 'knowledge.trade.ap_cost_reduction_per_lv', 'label' => 'AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
             ['config' => 'knowledge.trade.bar_offer_boost_per_lv', 'label' => 'Bar-Angebotsslot', 'unit' => '', 'direction' => self::DIRECTION_INCREASE],
             ['config' => 'knowledge.trade.trade_price_bonus_per_lv', 'label' => 'Handelspreis-Bonus', 'unit' => '%', 'direction' => self::DIRECTION_INCREASE],
         ],

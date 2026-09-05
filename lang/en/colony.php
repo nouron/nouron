@@ -92,6 +92,9 @@ return [
     'onboarding_hint_2' => 'The Harvester is running empty laps — it is still inside the colony zone. Relocate it to an explored Regolith tile outside the zone so it actually produces.',
     'onboarding_hint_3' => 'Agrarian Dome and the second building are up — now upgrade the Command Center to Level 2. That expands the colony zone and unlocks the second advisor slot.',
     'onboarding_hint_advisor_slot2' => 'Advisor slot 2 is open and the building it requires is up — hire the matching advisor in the Advisor screen.',
+    'onboarding_hint_advisor_slot2_analytik' => 'The Analytics Lab is finished — now you can hire an Analyst!',
+    'onboarding_hint_advisor_slot2_hangar' => 'The Hangar is finished — now you can hire a Pilot!',
+    'onboarding_hint_advisor_slot2_cantina' => 'The Cantina is finished — now you can hire a Trader!',
     'onboarding_hint_4' => 'No knowledge at Level 1 yet — assign Research AP to a field in the tech tree. Results build up Sol by Sol.',
     'onboarding_hint_5' => 'Colony mood is turning — stabilise Trust: build or repair a civil structure before it drops further.',
     'onboarding_hint_build_priority' => 'Several buildings are available to build right now, but resources won\'t stretch to all of them at once — pick one to finish first. The rest follows when the colony is on steadier footing.',
@@ -357,8 +360,6 @@ return [
     'sol_report_screen3_starts' => 'starts',
     'sol_report_screen3_begin' => 'Continue mission',
 
-    'sol_report_skip_hint' => 'Tap to skip',
-    'sol_report_skip_setting' => 'Skip Sol report automatically in future',
     'sol_report_finale_win_cta' => 'Complete run',
     'sol_report_finale_lose_cta' => 'End run',
 

@@ -21,7 +21,7 @@ return [
 
     'mission_data_sweep_name' => 'Datensammelflug',
     'mission_data_sweep_desc' => 'Auf weiter Schleife sammelt die Drohne Messdaten, die den Analytikern daheim Wochen an Feldarbeit ersparen.',
-    'mission_data_sweep_reward' => '+8 Forschungs-AP',
+    'mission_data_sweep_reward' => '+8 AP',
 
     'mission_long_range_expedition_name' => 'Fernexpedition',
     'mission_long_range_expedition_desc' => 'Fünf Sole hin, fünf zurück — niemand weiß, was die Drohne am Rand ihrer Reichweite findet, aber leer kommt sie selten heim.',
@@ -64,7 +64,7 @@ return [
     'dialog_no_missions' => 'Für diesen Schiffstyp liegt gerade kein Auftrag vor.',
     'gate_knowledge_hint' => 'Erfordert :name Stufe :level',
     'gate_target_hint' => 'Kein gültiges Ziel verfügbar',
-    'gate_nav_ap_hint' => 'Nicht genug Navigations-AP (:available/:required verfügbar)',
+    'gate_nav_ap_hint' => 'Nicht genug AP (:available/:required verfügbar)',
     'gate_organika_hint' => 'Nicht genug Organika (:available/:required verfügbar)',
     'select_target' => 'Ziel wählen',
     'chip_duration' => 'Dauer: :sols Sole',

@@ -97,6 +97,17 @@
     box-shadow: none !important;
 }
 
+/* Neutral fallback chip: text-only info with no resource identity (e.g.
+ * building level requirements, percentage bonuses) — same chip shape as
+ * resource chips, but the AP-neutral tone instead of a resource accent
+ * colour, so it doesn't get mistaken for an actual resource. */
+.res-chip--neutral {
+    background: var(--ap-neutral-bg, #f3f4f6);
+    border-color: var(--color-border-strong, #d0d0dc);
+    color: var(--ap-neutral-fg, #374151);
+    font-weight: 600;
+}
+
 /* Warning / danger state */
 .res-chip--warning {
     background: #fef9e7 !important;

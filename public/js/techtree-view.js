@@ -20,6 +20,13 @@ function techtreeView(config) {
             this.isMobile = window.innerWidth < 600;
         },
 
+        // Fallback for building types without artwork under public/img/buildings/
+        // (e.g. uplinkStation) — used by the shared partials/building-detail.blade.php
+        // <img x-on:error> handler, same placeholder SVG as advisors.js/colony-hexgrid.js.
+        buildingPlaceholderSrc() {
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
+        },
+
         prevPhase() {
             if (this.activePhase > 1) {
                 this.activePhase--;
@@ -319,11 +326,40 @@ function techtreeView(config) {
                 this.syncApChip(json.ap_available);
             }
 
+            if (json.phases_update) this.applyPhasesUpdate(json.phases_update);
+
             if (json.leveled_up) {
                 this.showToast(`${tech.name ?? this.typeLabel(type)}: Level ${tech.level} erreicht!`, 'info');
             } else if (json.levelup_blocked_message) {
                 this.showToast(json.levelup_blocked_message, 'error');
             }
+        },
+
+        // Owner-Playtest-Fund 2026-09-04: a levelup can flip a DIFFERENT (dependent)
+        // tech's locked/available status and its dependency-arrow 'met' flags —
+        // investAp() above only patched the one invested tech, so the rest of the
+        // graph stayed stale until a full page reload. TechtreeController::order()
+        // now re-derives the same gate logic server-side and ships it as
+        // 'phases_update' (see phasesUpdatePayload() there); mutate the existing
+        // item objects in place (not a wholesale replace) so Alpine reactivity picks
+        // it up and the open detail panel (selectedTech, same object reference)
+        // updates too.
+        applyPhasesUpdate(phasesUpdate) {
+            for (const [phaseNum, phaseUpdate] of Object.entries(phasesUpdate)) {
+                const phase = this.phases[phaseNum];
+                if (!phase) continue;
+
+                if (phaseUpdate.lines) phase.lines = phaseUpdate.lines;
+
+                if (phaseUpdate.items) {
+                    for (const itemUpdate of phaseUpdate.items) {
+                        const item = phase.items.find((i) => i.id === itemUpdate.id && i.type === itemUpdate.type);
+                        if (item) Object.assign(item, itemUpdate);
+                    }
+                }
+            }
+
+            this.$nextTick(() => this.drawAllLines());
         },
 
         // The AP chip lives in the resource bar (layout header), outside this Alpine

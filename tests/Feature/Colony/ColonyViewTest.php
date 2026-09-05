@@ -23,6 +23,8 @@ class ColonyViewTest extends TestCase
 
     private const BART_USER_ID = 3;
 
+    private const COLONY_ID_FOR_REGOLITH = 1;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -140,7 +142,62 @@ class ColonyViewTest extends TestCase
 
         $this->assertNotNull($hangar);
         $this->assertSame(1, (int) $hangar->level, 'Testdaten-Annahme: Hangar steht auf Level 1');
-        $this->assertContains(__('techtree.ship_freighter'), $hangar->unlocks_next_level);
+        $this->assertContains(
+            __('techtree.ship_freighter'),
+            array_column($hangar->unlocks_next_level, 'text')
+        );
+    }
+
+    // Regression (Owner-Playtest 2026-09-04): the sidebar showed "Effekte der
+    // nächsten Stufe" but never the gate a building itself sits behind — same
+    // format as TechtreeController::computeRequiredList() so both screens agree.
+    // Infirmary (46) is seeded gated behind CommandCenter (25) Lv3.
+    public function test_hexview_buildings_include_required_list(): void
+    {
+        $this->app->setLocale('de');
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $buildings = $response->viewData('buildings');
+        $infirmary = $buildings->firstWhere('building_id', 46);
+
+        $this->assertNotNull($infirmary);
+        $this->assertSame([__('techtree.building_commandCenter').' Lv3'], $infirmary->required_list);
+    }
+
+    // Regression (Owner-Playtest 2026-09-04): resource_amount on the tile depletes
+    // every Sol a Harvester produces (GameTick::generateHarvesterYield()), but the
+    // player never saw the remaining amount — a shrinking yield looked like a bug.
+    public function test_hexview_tiles_include_regolith_remaining_for_placed_harvester(): void
+    {
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID_FOR_REGOLITH,
+            'q' => 5,
+            'r' => 5,
+            'ring' => 3,
+            'tile_type' => 'regolith_normal',
+            'is_colony_zone' => 0,
+            'is_explored' => 1,
+            'is_deep_scanned' => 0,
+            'resource_amount' => 111,
+            'resource_max' => 300,
+        ]);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID_FOR_REGOLITH)
+            ->where('building_id', 27)
+            ->update(['tile_x' => 5, 'tile_y' => 5]);
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $tiles = $response->viewData('tiles');
+        $tile = $tiles->first(fn ($t) => $t['q'] === 5 && $t['r'] === 5);
+
+        $this->assertNotNull($tile);
+        $this->assertSame(111, $tile['regolith_remaining']);
+        $this->assertSame(300, $tile['regolith_max']);
     }
 
     public function test_pending_run_redirects_to_lobby(): void

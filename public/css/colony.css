@@ -866,12 +866,29 @@ button.btn-sol:hover,
     transition: background 0.15s ease;
 }
 
-/* On the red Reparieren button: white fill, faint white empty track. */
+/* On the red Reparieren button: white fill, faint white empty track. Healthy
+   condition (tone === 'neutral') keeps this default. Damaged/critical tones
+   override the filled-segment color below — same thresholds as
+   conditionTone()/conditionLabelColor() in colony-hexgrid.js. */
 .btn-segbar--status .btn-seg {
     background: rgba(255, 255, 255, 0.28);
 }
 .btn-segbar--status .btn-seg--filled {
     background: #fff;
+}
+
+/* Damaged: amber fill, same tone as the hex-tile label warning color
+   (conditionLabelColor() 'warning' — #facc15). */
+.btn-segbar--status--warning .btn-seg--filled {
+    background: #facc15;
+}
+
+/* Critical: red segments would be invisible on the red button background, so
+   this uses a dark fill with a light outline instead — reads as clearly worse
+   than the amber warning state, still legible on the red button. */
+.btn-segbar--status--danger .btn-seg--filled {
+    background: #1a1a1a;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
 }
 
 /* On the Ausbauen button (secondary white, or red primary when no repair is
@@ -912,9 +929,17 @@ button.btn-sol:hover,
     overflow: hidden;
 }
 
+/* Square building artwork (public/img/buildings/*.webp are all 1:1) — a fixed
+ * aspect-ratio reserves the container's height up front so a 404'd image
+ * (missing artwork, e.g. uplinkStation) never collapses to 0px and shoves
+ * the title/button below it (Owner-Playtest-Fund 2026-09-04). */
+.building-detail-img-wrap {
+    aspect-ratio: 1 / 1;
+}
+
 .building-detail-img {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     object-fit: cover;
 }
@@ -953,6 +978,57 @@ button.btn-sol:hover,
     border: 1px solid #a5d6a7;
 }
 
+/* ── Shared "Voraussetzungen" chip row (partials/required-list-chips) ────── */
+/* PicoCSS's bare aside li/ul rules beat unscoped chip-list classes, so this
+   mirrors .tech-panel's equivalent block in techtree-view.css scoped to
+   .tile-panel instead — see docs/design-system for the res-chip component
+   these list items wrap (.res-chip--neutral lives in resources.css). */
+.tile-panel .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: var(--color-text-primary, #333);
+    padding: 0;
+    margin: 0 0 0.5rem;
+}
+
+.tile-panel .detail-row-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
+}
+
+.tile-panel .detail-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.tile-panel .detail-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tile-panel .detail-list--chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.tile-panel .detail-list--chips li {
+    display: inline-flex;
+}
+
 .tile-building-levelup-cost {
     margin: 0.3rem 0 0.5rem;
     font-size: 0.75rem;
@@ -963,6 +1039,15 @@ button.btn-sol:hover,
     margin: 0 0 0.5rem;
     font-size: 0.75rem;
     color: #6b6b7a;
+}
+
+.tile-building-regolith-remaining {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 .tile-under-construction {
@@ -1251,60 +1336,6 @@ button.btn-sol:hover,
     color: #2a5a6b;
     background: #e8f3fb;
     border-color: #a8cfe6;
-}
-
-/* ── Nexus compound import (build panel, Uplink Lv1+) ───────────────────────── */
-
-.nexus-import {
-    margin-top: 0.9rem;
-    padding: 0.7rem;
-    border: 1px solid var(--color-border, #e8e8ec);
-    border-radius: 8px;
-    background: var(--color-surface, #f7f7f5);
-}
-
-.nexus-import-title {
-    margin: 0 0 0.2rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--color-anthracite, #2b2b33);
-}
-
-.nexus-import-hint {
-    margin: 0 0 0.5rem;
-    font-size: 0.72rem;
-    color: var(--color-text-secondary, #6b6b7a);
-}
-
-.nexus-import-controls {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.nexus-import-amount {
-    width: 5rem;
-    padding: 0.25rem 0.4rem;
-    font-size: 0.8rem;
-}
-
-.nexus-import-total {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--color-anthracite, #2b2b33);
-}
-
-.nexus-import-btn {
-    margin-left: auto;
-    padding: 0.25rem 0.7rem;
-    font-size: 0.78rem;
-    cursor: pointer;
-}
-
-.nexus-import-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 /* ── Signal chip ─────────────────────────────────────────────────────────── */
@@ -2189,6 +2220,7 @@ dialog[x-ref="discoveryDialog"] {
 .sol-report__groups {
     padding: 0.5rem 2rem;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1 1 auto;
 }
 .sol-report__group {
@@ -2255,7 +2287,9 @@ dialog[x-ref="discoveryDialog"] {
     display: inline-flex;
     align-items: baseline;
     gap: 0.4rem;
-    white-space: nowrap;
+    max-width: 60%;
+    white-space: normal;
+    text-align: right;
     font-variant-numeric: tabular-nums;
 }
 .sol-report__counter {
@@ -2328,26 +2362,6 @@ dialog[x-ref="discoveryDialog"] {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-}
-.sol-report__skip-hint {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary, #6b6b7a);
-    text-align: center;
-    margin: 0;
-    opacity: 0.8;
-}
-.sol-report__skip-setting {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--color-text-secondary, #6b6b7a);
-    cursor: pointer;
-    margin: 0;
-}
-.sol-report__skip-setting input {
-    width: auto;
-    margin: 0;
 }
 .sol-report__continue {
     align-self: stretch;

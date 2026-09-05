@@ -164,8 +164,6 @@
             result_url: null,
             groups: [],
             next_sol: data.report?.next_sol ?? '—',
-            skip_pref: false,
-            force_show: true,
         };
         data.loading = false;
         data.reportOpen = true;

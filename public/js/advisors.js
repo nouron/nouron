@@ -136,11 +136,14 @@ function advisorCarousel(config) {
         },
 
         advisorEffects(key, isPathOpen) {
+            // Domain-specific "Bau-AP"/"Forschungs-AP"/etc. prefixes dropped
+            // (single-pool AP consolidation, see apTypeLabel() above) — the
+            // effect area itself still communicates the advisor's role.
             const map = {
-                engineer: 'Bau-AP · Gebäudeausbau · Reparatur',
-                scientist: 'Forschungs-AP · Techtree · Kenntnisforschung',
-                pilot: 'Navigations-AP · Missionen · Hangar-Events',
-                trader: 'Wirtschafts-AP · Handel · Cantina-Events',
+                engineer: 'AP · Gebäudeausbau · Reparatur',
+                scientist: 'AP · Techtree · Kenntnisforschung',
+                pilot: 'AP · Missionen · Hangar-Events',
+                trader: 'AP · Handel · Cantina-Events',
             };
             if (isPathOpen) {
                 // Use preview advisor key (path_open_2 → scientist, etc.)

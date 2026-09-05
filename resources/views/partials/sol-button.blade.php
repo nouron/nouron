@@ -2,14 +2,13 @@
     Sol-Button partial — Alpine.js component.
     Checks remaining AP before ending the Sol, then plays the animated Sol-Report.
     Keeps the trigger button + confirm dialog; the former loading overlay is now a
-    short spinner that hands off to the report (or auto-dismisses on skip_pref).
+    short spinner that hands off to the report. The report is always shown in full
+    (Owner decision 2026-09-05) — there is no skip/suppress preference anymore.
 --}}
 <div x-data="solButton({
     i18n: {
         title: @js(__("colony.sol_report_title")),
         continue: @js(__("colony.sol_report_continue")),
-        skipHint: @js(__("colony.sol_report_skip_hint")),
-        skipSetting: @js(__("colony.sol_report_skip_setting")),
         finaleWinCta: @js(__("colony.sol_report_finale_win_cta")),
         finaleLoseCta: @js(__("colony.sol_report_finale_lose_cta")),
         computing: @js(__("colony.next_sol_button")),
@@ -24,7 +23,6 @@
     routes: {
         remainingAp: @js(route("sol.remaining-ap")),
         next: @js(route("sol.next")),
-        reportSkip: @js(route("sol.report-skip")),
         colony: @js(route("colony.view")),
     },
     csrf: @js(csrf_token()),
@@ -121,11 +119,6 @@
                 </div>
 
                 <footer class="sol-report__footer">
-                    <p class="sol-report__skip-hint" x-show="!finished" x-cloak x-text="i18n.skipHint"></p>
-                    <label class="sol-report__skip-setting">
-                        <input type="checkbox" x-model="skipPref" @change="persistSkipPref()" />
-                        <span x-text="i18n.skipSetting"></span>
-                    </label>
                     <button type="button" class="sol-btn sol-btn--primary sol-report__continue" x-show="finished"
                         x-cloak @click.stop="goScreen2()" x-text="i18n.nextScreen"></button>
                 </footer>
@@ -224,7 +217,6 @@
             csrf: config.csrf,
 
             report: null,
-            skipPref: false,
             visibleGroup: -1,
             finished: false,
             counters: {}, // key `${groupKey}:${lineIndex}` -> current displayed value
@@ -288,13 +280,6 @@
                     });
                     const report = await resp.json();
                     this.report = report;
-                    this.skipPref = !!report.skip_pref;
-
-                    // Auto-dismiss: user opted out and this is not a forced beat.
-                    if (report.skip_pref && !report.force_show && !report.finale) {
-                        window.location.href = this.routes.colony;
-                        return;
-                    }
 
                     this.loading = false;
                     this.reportOpen = true;
@@ -426,26 +411,6 @@
             clearTimers() {
                 this._timers.forEach((t) => clearTimeout(t));
                 this._timers = [];
-            },
-
-            async persistSkipPref() {
-                try {
-                    await fetch(this.routes.reportSkip, {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            Accept: 'application/json',
-                            'X-CSRF-TOKEN': this.csrf,
-                        },
-                        body: JSON.stringify({
-                            skip: this.skipPref
-                        }),
-                    });
-                } catch (e) {
-                    // Non-critical; preference simply won't persist this time.
-                }
             },
 
             goScreen2() {

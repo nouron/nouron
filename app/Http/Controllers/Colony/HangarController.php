@@ -33,9 +33,12 @@ class HangarController extends BaseController
         $slots = $this->hangarService->getHangarSlots($colony->id);
         $pendingShips = $this->hangarService->getPendingShips($colony->id);
 
+        // Ordered by ascending ship class (Drohne, Frachter, Korvette), not PK —
+        // whereIn() does not guarantee result order.
         $shipTypes = DB::table('ships')
             ->whereIn('id', [37, 47, 85])
             ->where('is_active', 1)
+            ->orderByRaw('CASE id WHEN 85 THEN 1 WHEN 47 THEN 2 WHEN 37 THEN 3 END')
             ->get(['id', 'name']);
 
         $hasPilot = DB::table('advisors')
@@ -81,6 +84,10 @@ class HangarController extends BaseController
 
         $missionCatalog = $this->hangarService->getMissionCatalogFor($colony->id);
 
+        // Gates which ship classes the request modal can offer (Lv1 Drohne,
+        // Lv2 Frachter, Lv3 Korvette) — see HangarService::requestShip().
+        $hangarMaxLevel = $this->hangarService->hangarMaxLevel($colony->id);
+
         return view('colony.hangar', compact(
             'slots',
             'pendingShips',
@@ -93,6 +100,7 @@ class HangarController extends BaseController
             'commissionedShipIds',
             'firstVisit',
             'missionCatalog',
+            'hangarMaxLevel',
         ));
     }
 

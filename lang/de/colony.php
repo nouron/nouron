@@ -11,6 +11,12 @@ return [
     'levelup_cost_suffix' => 'bei Baubeginn',
     'repair' => 'Reparieren',
     'ap_per_tile' => '1 AP/Feld',
+    // Owner-Fund 2026-09-05: sichtbare Zustandsanzeige über dem Reparieren-Button.
+    // Wert "Zustand" bereits an anderer Stelle exakt für dasselbe Konzept etabliert
+    // (onboarding_hint_encounter, run.task_engineering_output, comm_log.building_repaired)
+    // — hier direkt wiederverwendet statt TODO-Platzhalter, content-writer bitte
+    // gegenprüfen falls ein anderer Begriff gewünscht ist.
+    'condition_label' => 'Zustand',
 
     // ── Repair errors ─────────────────────────────────────────────────────────
 
@@ -33,7 +39,7 @@ return [
     'legend_buildable' => 'Baubares Feld',
     'legend_soon_buildable' => 'Bald bebaubar (mit CC-Ausbau)',
     'legend_zone_fog' => 'Baubar, noch unerkundet — Bauen deckt auf',
-    'legend_explore_fog' => 'Erkundungsziel — mit Navigations-AP aufdecken',
+    'legend_explore_fog' => 'Erkundungsziel — mit AP aufdecken',
     'legend_regolith' => 'Regolith-Vorkommen',
     'legend_cc' => 'Kommandozentrale',
     'legend_hazard' => 'Gefahrenzone',
@@ -44,7 +50,7 @@ return [
     'zone_buildable' => 'Koloniezone — bebaubar',
     'zone_soon' => 'Bald bebaubar (nächster Kommandozentralen-Ausbau)',
     'zone_outside' => 'Außerhalb der Koloniezone',
-    'zone_unexplored' => 'Unerforscht — erkunden (Nav-AP)',
+    'zone_unexplored' => 'Unerforscht — erkunden (AP)',
     'terrain_label' => 'Terrain',
     'event_label' => 'Phänomen',
     'coords_label' => 'Koordinaten',
@@ -58,6 +64,7 @@ return [
     'construction_site' => 'Baustelle',
     'under_construction' => 'Im Bau',
     'resource_regolith' => 'Regolith',
+    'harvester_regolith_remaining_label' => 'Regolith-Vorkommen (Feld):',
 
     // ── Status chips ──────────────────────────────────────────────────────────
 
@@ -86,21 +93,24 @@ return [
 
     'hint_suggestion_label' => 'Vorschlag',
     'hint_not_mandatory' => 'Vorschlag, kein Zwang — andere Baureihenfolgen sind möglich.',
-    'onboarding_hint_1' => 'Kein Baumeister an Bord — Bau-AP läuft auf Minimum. Im Berater-Screen nachbessern, bevor der nächste Sol verpufft.',
-    'onboarding_hint_repair' => 'Ein Gebäude zeigt deutlichen Verschleiß — reparieren, bevor der Verfall teurer wird. Gebäude antippen, dann „Reparieren" wählen (1 Bau-AP + 2 Regolith pro Punkt).',
+    'onboarding_hint_1' => 'Kein Baumeister an Bord — AP läuft auf Minimum. Im Berater-Screen nachbessern, bevor der nächste Sol verpufft.',
+    'onboarding_hint_repair' => 'Ein Gebäude zeigt deutlichen Verschleiß — reparieren, bevor der Verfall teurer wird. Gebäude antippen, dann „Reparieren" wählen (1 AP + 2 Regolith pro Punkt).',
     'onboarding_hint_repair_urgent' => 'Warnung: ein Gebäude steht kurz vor dem Stufenverlust. Jetzt reparieren — bevor der nächste Sol die Entscheidung abnimmt.',
     'onboarding_hint_2' => 'Der Harvester dreht Leerrunden — er steht noch in der Koloniezone. Auf ein erkundetes Regolith-Tile außerhalb verlegen, damit er wirklich fördert.',
     'onboarding_hint_3' => 'Agrardom und zweites Gebäude stehen — jetzt die Kommandozentrale auf Level 2 ausbauen. Das erweitert die Koloniezone und schaltet den zweiten Beraterslot frei.',
     'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 ist offen und das dafür nötige Gebäude steht — im Berater-Screen den passenden Berater einstellen.',
-    'onboarding_hint_4' => 'Noch keine Kenntnis auf Level 1 — im Techtree Forschungs-AP einer Kenntnis zuweisen. Ergebnisse kommen Sol für Sol.',
+    'onboarding_hint_advisor_slot2_analytik' => 'Das Analytik-Labor wurde fertiggestellt — jetzt kannst du einen Analytiker anheuern!',
+    'onboarding_hint_advisor_slot2_hangar' => 'Der Hangar wurde fertiggestellt — jetzt kannst du einen Raumfahrer anheuern!',
+    'onboarding_hint_advisor_slot2_cantina' => 'Die Cantina wurde fertiggestellt — jetzt kannst du einen Konsul anheuern!',
+    'onboarding_hint_4' => 'Noch keine Kenntnis auf Level 1 — im Techtree AP einer Kenntnis zuweisen. Ergebnisse kommen Sol für Sol.',
     'onboarding_hint_5' => 'Die Stimmung in der Kolonie kippt — Vertrauen stabilisieren: Zivilgebäude bauen oder reparieren, bevor es weiter fällt.',
     'onboarding_hint_build_priority' => 'Cantina, Analytik-Labor und Hangar stehen zur Wahl — aber nicht gleichzeitig: alle drei brauchen zusätzlich Kommandozentrale Lv2, und die Ressourcen reichen ohnehin nicht für alle auf einmal. Schon jetzt überlegen, welches zuerst drankommt.',
     'onboarding_hint_6' => 'Keine Cantina gebaut — Händler und Gäste legen nicht an. Tauschangebote und Einmal-Items passieren die Kolonie einfach.',
-    'onboarding_hint_agrardome' => 'Erstes Bauprojekt der Kolonie: der Agrardom. Ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null — heute platzieren, restliche Bau-AP hineinstecken. Investierte Bau-AP bleiben über Sol-Grenzen erhalten, auch wenn ein Sol nicht reicht.',
-    'onboarding_hint_analytik' => 'Kein Analytik-Labor — Forschungs-AP können nirgendwo landen. Die Kolonie bleibt wissenschaftlich auf der Stelle.',
-    'onboarding_hint_hangar_path' => 'Erst den Hangar bauen, dann einen Raumfahrer einstellen — erst dann stehen Missionen und Navigations-AP richtig zur Verfügung.',
-    'onboarding_hint_invest_site' => 'Bau-AP nicht verfallen lassen — in die laufende Baustelle investieren. Was eingezahlt ist, bleibt; der Abschluss rückt damit näher.',
-    'onboarding_hint_explore' => 'Navigations-AP für Erkundung einsetzen (1 AP pro Feld) — jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
+    'onboarding_hint_agrardome' => 'Erstes Bauprojekt der Kolonie: der Agrardom. Ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null — heute platzieren, restliche AP hineinstecken. Investierte AP bleiben über Sol-Grenzen erhalten, auch wenn ein Sol nicht reicht.',
+    'onboarding_hint_analytik' => 'Kein Analytik-Labor — AP können nirgendwo landen. Die Kolonie bleibt wissenschaftlich auf der Stelle.',
+    'onboarding_hint_hangar_path' => 'Erst den Hangar bauen, dann einen Raumfahrer einstellen — erst dann stehen Missionen und AP für Erkundung richtig zur Verfügung.',
+    'onboarding_hint_invest_site' => 'AP nicht verfallen lassen — in die laufende Baustelle investieren. Was eingezahlt ist, bleibt; der Abschluss rückt damit näher.',
+    'onboarding_hint_explore' => 'AP für Erkundung einsetzen (1 AP pro Feld) — jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
     'onboarding_hint_encounter' => 'Gebäude mit niedrigem Zustand sind anfälliger für Zwischenfälle — regelmäßige Reparatur zahlt sich doppelt aus.',
     'onboarding_end_sol' => 'Sol beenden — alle sinnvollen Aktionen getätigt. Nächster Sol bringt frische Aktionspunkte und neue Entwicklungen.',
     'onboarding_hint_spend_ap_construction' => 'Es sind noch AP übrig — in ein Gebäude investieren oder CC-Ausbau vorfinanzieren. AP verfallen am Sol-Ende.',
@@ -114,7 +124,7 @@ return [
 
     'first_visit_dismiss' => 'Verstanden',
     'first_visit_techtree_title' => 'Techtree',
-    'first_visit_techtree_text' => 'Hier weist du Forschungs-AP einer Kenntnis zu. Kenntnisse wachsen Sol für Sol — was einmal eingezahlt ist, bleibt erhalten, auch wenn ein Sol nicht reicht.',
+    'first_visit_techtree_text' => 'Hier weist du AP einer Kenntnis zu. Kenntnisse wachsen Sol für Sol — was einmal eingezahlt ist, bleibt erhalten, auch wenn ein Sol nicht reicht.',
     'first_visit_cantina_title' => 'Cantina',
     'first_visit_cantina_text' => 'Die Cantina ist der einzige Ort, wo Kolonisten für einen Moment vergessen dürfen, wie dünn die Luft draußen ist. Fremde aus dem Transit bringen Nachrichten, Waren — und manchmal Angebote, die man besser nicht verpasst. Wer selten vorbeischaut, merkt es erst, wenn das Angebot schon weg ist.',
     'first_visit_hangar_title' => 'Hangar',
@@ -133,10 +143,10 @@ return [
     'onboarding_trigger_supply_full' => 'Versorgungskapazität erschöpft — weitere Gebäude oder Schiffe können nicht zugewiesen werden. Wohnhabitat ausbauen oder Verbraucher abbauen.',
 
     // Trigger 4 — AP-Limit (Tooltip)
-    'onboarding_trigger_ap_limit' => 'Keine Bau-AP mehr in diesem Sol verfügbar.',
+    'onboarding_trigger_ap_limit' => 'Keine AP mehr in diesem Sol verfügbar.',
 
     // Trigger 5 — Harvester-Verlagerung (Tooltip)
-    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP pro Tile-Distanz — lohnt nur, wenn das Ziel spürbar ergiebiger ist. Bau-AP sind knapp.',
+    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 AP pro Tile-Distanz — lohnt nur, wenn das Ziel spürbar ergiebiger ist. AP sind knapp.',
 
     // ── Error messages ────────────────────────────────────────────────────────
 
@@ -148,8 +158,8 @@ return [
     'error_not_explored' => 'Tile muss zuerst erkundet werden.',
     'error_no_signal' => 'Kein Signal auf diesem Tile.',
     'error_already_scanned' => 'Tile bereits sondiert.',
-    'error_no_nav_ap' => 'Nicht genug Navigations-AP.',
-    'error_no_nav_ap_2' => 'Nicht genug Navigations-AP (2 benötigt).',
+    'error_no_nav_ap' => 'Nicht genug AP.',
+    'error_no_nav_ap_2' => 'Nicht genug AP (2 benötigt).',
     'error_tile_not_buildable' => 'Nur bebaubare Terrain-Tiles erlaubt.',
     'error_tile_outside_colony' => 'Dieses Tile liegt außerhalb der Koloniezone.',
     'error_harvester_needs_regolith' => 'Harvester kann nur auf Regolith-Tiles platziert werden.',
@@ -158,13 +168,13 @@ return [
     'harvester_move' => 'Verlegen',
     'harvester_place_second' => 'Harvester platzieren',
     'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone anklicken — zeigt Vorschaupfeil mit AP-Kosten. Gedrückt halten zum Verlegen.',
-    'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (Nav-AP).',
+    'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (AP).',
     'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
     'network_error' => 'Netzwerkfehler — bitte erneut versuchen.',
     'error_harvester_in_transit' => 'Der Harvester ist noch unterwegs — Verlegen erst nach Ankunft möglich.',
     'harvester_in_transit' => 'Unterwegs — Ankunft nächsten Sol.',
     'error_tile_occupied' => 'Tile bereits belegt.',
-    'error_no_construction_ap' => 'Nicht genug Bau-AP.',
+    'error_no_construction_ap' => 'Nicht genug AP.',
     'error_building_not_found' => 'Gebäude nicht gefunden.',
     'error_max_level_reached' => 'Maximales Level bereits erreicht.',
     'error_insufficient_resources' => 'Nicht genug Ressourcen für den Bau.',
@@ -240,7 +250,7 @@ return [
     'bar_offer_already_accepted' => 'Angebot bereits angenommen.',
     'bar_offer_expired' => 'Angebot ist abgelaufen.',
     'bar_offer_insufficient_resources' => 'Nicht genügend Ressourcen.',
-    'bar_offer_insufficient_ap' => 'Nicht genügend Wirtschafts-AP.',
+    'bar_offer_insufficient_ap' => 'Nicht genügend AP.',
     'bar_offer_negotiate' => 'Verhandeln',
     'bar_offer_no_consul' => 'Kein verfügbarer Konsul zugewiesen.',
     'bar_offer_already_negotiated' => 'Angebot wurde bereits verhandelt.',
@@ -264,8 +274,10 @@ return [
     'hangar_empty' => 'Leer',
     'hangar_build_ship' => 'Schiff bauen',
     'hangar_dispatch' => 'Entsenden',
-    'hangar_dispatch_no_nav_ap' => 'Nicht genug Navigations-AP für diese Mission.',
+    'hangar_dispatch_no_nav_ap' => 'Nicht genug AP für diese Mission.',
     'hangar_dispatch_no_organika' => 'Nicht genug Organika für die Crew-Verpflegung dieser Mission.',
+    'hangar_request_level_too_low' => 'Dieser Schiffstyp erfordert einen höheren Hangar-Ausbau.',
+    'hangar_request_min_level' => 'Erfordert Hangar-Ausbaustufe :level',
     'hangar_recall' => 'Zurückrufen',
     'hangar_repair' => 'Reparieren',
     'hangar_destination' => 'Ziel',
@@ -368,8 +380,6 @@ return [
     'sol_report_screen3_starts' => 'startet',
     'sol_report_screen3_begin' => 'Mission fortsetzen',
 
-    'sol_report_skip_hint' => 'Tippen zum Überspringen',
-    'sol_report_skip_setting' => 'Sol-Report künftig automatisch überspringen',
     'sol_report_finale_win_cta' => 'Run abschließen',
     'sol_report_finale_lose_cta' => 'Run beenden',
 

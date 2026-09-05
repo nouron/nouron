@@ -108,15 +108,16 @@ function colonyHexView(config) {
         activeHint: config.activeHint ?? null,
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
-        uplinkBuildingId: config.uplinkBuildingId ?? 54,
-        compoundImportPrice: config.compoundImportPrice ?? 90,
         exploreCostPerRing: config.exploreCostPerRing ?? { 1: 1, 2: 2, 3: 3 },
         exploreCostDefault: config.exploreCostDefault ?? 1,
         tileYields: config.tileYields ?? {},
         repairDisplayThreshold: config.repairDisplayThreshold ?? 0.7,
+        // Same tier thresholds as EncounterService::resolveOutcome() (game.encounter.*),
+        // reused here so a storm-damaged building reads the same color on the hex grid.
+        damagedThresholdPct: config.damagedThresholdPct ?? 0.66,
+        criticalThresholdPct: config.criticalThresholdPct ?? 0.33,
         relocateApPerHex: config.relocateApPerHex ?? 2,
         phaseProgress: config.phaseProgress ?? null,
-        nexusImportAmount: 10,
         selectedTile: null,
         buildMode: false,
         pendingBuilding: null,
@@ -184,6 +185,9 @@ function colonyHexView(config) {
                 harvesterBuilding: this.harvesterMoveMode ? this.harvesterBuilding() : null,
                 tileYields: this.tileYields,
                 repairDisplayThreshold: this.repairDisplayThreshold,
+                damagedThresholdPct: this.damagedThresholdPct,
+                criticalThresholdPct: this.criticalThresholdPct,
+                conditionTone: (building) => this.conditionTone(building),
                 relocateApPerHex: this.relocateApPerHex,
                 panState: this._panState,
             });
@@ -391,6 +395,19 @@ function colonyHexView(config) {
             return Math.round(100 / maxSp);
         },
 
+        // Condition tier tone, reusing the same thresholds as EncounterService::resolveOutcome()
+        // (game.encounter.damaged_threshold_pct / critical_threshold_pct) — Owner-Fund
+        // 2026-09-05: wear should be visible everywhere the building is shown, with the
+        // same color mapping the storm/encounter outcome already uses.
+        conditionTone(building) {
+            if (!building || building.level < 1) return 'neutral';
+            const maxSp = building.max_status_points ?? 20;
+            const pct = building.status_points / maxSp;
+            if (pct < (this.criticalThresholdPct ?? 0.33)) return 'danger';
+            if (pct < (this.damagedThresholdPct ?? 0.66)) return 'warning';
+            return 'neutral';
+        },
+
         async doRepair(building) {
             const res = await this.post(this.routes.repairBuilding, {
                 building_id: building.building_id,
@@ -404,28 +421,6 @@ function colonyHexView(config) {
             } else {
                 const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
-            }
-        },
-
-        // ── Nexus compound import ─────────────────────────────────────────────
-
-        // Current Uplink-Station level (0 if not built). Gates the Nexus import panel.
-        uplinkLevel() {
-            const uplink = this.buildings.find((b) => b.building_id === this.uplinkBuildingId);
-            return uplink ? uplink.level : 0;
-        },
-
-        async doNexusImport() {
-            const amount = parseInt(this.nexusImportAmount, 10);
-            if (!amount || amount < 1) return;
-            const res = await this.post(this.routes.nexusImport, { amount });
-            if (res.ok) {
-                this.showToast(
-                    (this.i18n.nexusImportSuccess ?? '').replace(':amount', res.amount).replace(':cost', res.cost),
-                    'info',
-                );
-            } else {
-                this.showToast(res.message ?? res.error ?? this.i18n.nexusImportError, 'error');
             }
         },
 
@@ -727,6 +722,14 @@ function colonyHexView(config) {
 
         buildingLabel(key) {
             return this.buildingCatalog?.[key]?.label ?? key;
+        },
+
+        // Fallback for building types without artwork under public/img/buildings/
+        // (e.g. uplinkStation) — same placeholder SVG as advisors.js's
+        // buildingPlaceholderSrc(), duplicated here since it's a small self-
+        // contained helper and the two screens don't share a JS module.
+        buildingPlaceholderSrc() {
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
         },
 
         // Roman numeral for building tier display (design-spec.md "Namensmuster":
@@ -1382,7 +1385,12 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         rect.setAttribute('pointer-events', 'none');
         g.appendChild(rect);
 
-        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, badgeText, 8, '#fff', 700));
+        // Label text color is the only persistent condition indicator on the grid
+        // (Owner correction 2026-09-05: the earlier tile ring + sidebar title color
+        // were too much — only the in-tile label reads condition now). Same tier
+        // thresholds as EncounterService::resolveOutcome() (game.encounter.*).
+        const labelColor = isBuilt ? conditionLabelColor(building, opts) : '#fff';
+        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, badgeText, 8, labelColor, 700));
 
         // Red warning dot (top-right of badge) when condition < 10%
         if (isBuilt) {
@@ -1486,6 +1494,21 @@ function getTileStroke(tile, isCC) {
     }
 
     return [TILE_STROKES[tile.tile_type] ?? '#8a9aaa', '1.5'];
+}
+
+// Building-condition label tone (Owner correction 2026-09-05): the sole persistent
+// wear indicator on the grid is the color of the in-tile "CA 1"-style label text.
+// Reuses conditionTone() (passed through opts.conditionTone, bound to the Alpine
+// component) so the tier logic has a single source of truth.
+const CONDITION_LABEL_COLORS = {
+    danger: '#f87171', // red-400 — critical, readable on the dark badge fill
+    warning: '#facc15', // yellow-400 — damaged, readable on the dark badge fill
+    neutral: '#fff',
+};
+
+function conditionLabelColor(building, opts) {
+    const tone = opts.conditionTone ? opts.conditionTone(building) : 'neutral';
+    return CONDITION_LABEL_COLORS[tone] ?? '#fff';
 }
 
 function svgText(x, y, text, size, fill, weight) {

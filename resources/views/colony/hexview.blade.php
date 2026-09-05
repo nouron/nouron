@@ -41,12 +41,12 @@
             activeHint: @json($activeHint),
             merchantVisit: @json($merchantVisit ?? null),
             merchantItems: @json($merchantItems ?? []),
-            uplinkBuildingId: {{ (int) config("buildings.uplinkStation.id", 54) }},
-            compoundImportPrice: {{ (int) config("game.economy.compound_import_price", 90) }},
             exploreCostPerRing: @json(config("game.colony.explore_cost_per_ring")),
             exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
             tileYields: @json(collect(config("tile_types"))->map(fn($t) => $t["base_yield"])->filter()),
             repairDisplayThreshold: {{ (float) config("game.repair.display_threshold", 0.7) }},
+            damagedThresholdPct: {{ (float) config("game.encounter.damaged_threshold_pct", 0.66) }},
+            criticalThresholdPct: {{ (float) config("game.encounter.critical_threshold_pct", 0.33) }},
             relocateApPerHex: {{ (int) config("game.harvester.relocate_ap_per_hex", 2) }},
             phaseProgress: @json($phaseProgress),
             routes: {
@@ -56,7 +56,6 @@
                 placeBuilding: '{{ route("colony.building.place") }}',
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
-                nexusImport: '{{ route("colony.nexus.import") }}',
             },
             i18n: {
                 explore: '{{ __("colony.explore") }}',
@@ -78,8 +77,6 @@
                 harvesterMoveNoTargets: @json(__("colony.harvester_move_no_targets")),
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
                 networkError: @json(__("colony.network_error")),
-                nexusImportSuccess: @json(__("colony.nexus_import_success")),
-                nexusImportError: @json(__("colony.nexus_import_error")),
             },
         };
     </script>
@@ -429,23 +426,6 @@
                                     </li>
                                 </template>
                             </ul>
-
-                            {{-- Nexus-Import: Werkstoffe gegen Credits, ab Uplink-Station Lv1.
-                             Garantierte Werkstoff-Quelle (GDD §3) — verhindert Bau-Deadlock. --}}
-                            <div class="nexus-import" x-show="uplinkLevel() >= 1" x-cloak>
-                                <h4 class="nexus-import-title">{{ __("colony.nexus_import_title") }}</h4>
-                                <p class="nexus-import-hint">{{ __("colony.nexus_import_hint") }}</p>
-                                <div class="nexus-import-controls">
-                                    <input type="number" min="1" max="9999"
-                                        x-model.number="nexusImportAmount" class="nexus-import-amount"
-                                        aria-label="{{ __("colony.nexus_import_amount") }}">
-                                    <span class="nexus-import-total"
-                                        x-text="`${(nexusImportAmount || 0) * compoundImportPrice} Cr`"></span>
-                                    <button class="nexus-import-btn"
-                                        :disabled="!nexusImportAmount || nexusImportAmount < 1"
-                                        @click="doNexusImport()">{{ __("colony.nexus_import_confirm") }}</button>
-                                </div>
-                            </div>
                         </div>
                     </template>
 
@@ -466,10 +446,19 @@
                                         "show_header" => false,
                                     ])
 
+                                    @include("partials.required-list-chips", [
+                                        "expr" => "selectedBuilding",
+                                    ])
+
                                     <template
                                         x-if="buildingCanLevelUp(selectedBuilding) && (selectedBuilding.levelup_cost ?? 0) > 0">
-                                        <p class="tile-building-levelup-cost"
-                                            x-text="`{{ __("colony.levelup_cost_label") }} ${selectedBuilding.levelup_cost} RG {{ __("colony.levelup_cost_suffix") }}`">
+                                        <p class="tile-building-levelup-cost">
+                                            <span>{{ __("colony.levelup_cost_label") }}</span>
+                                            <span class="res-chip res-RG">
+                                                <span class="res-abbr">RG</span>
+                                                <span class="res-amount" x-text="selectedBuilding.levelup_cost"></span>
+                                            </span>
+                                            <span>{{ __("colony.levelup_cost_suffix") }}</span>
                                         </p>
                                     </template>
 
@@ -479,7 +468,7 @@
                                     <template
                                         x-if="buildingCanLevelUp(selectedBuilding) && selectedBuilding.unlocks_next_level && selectedBuilding.unlocks_next_level.length > 0">
                                         <p class="tile-building-unlocks"
-                                            x-text="`{{ __("techtree.detail_unlocks_next_level") }}: ${selectedBuilding.unlocks_next_level.join(', ')}`">
+                                            x-text="`{{ __("techtree.detail_unlocks_next_level") }}: ${selectedBuilding.unlocks_next_level.map((l) => l.text).join(', ')}`">
                                         </p>
                                     </template>
 
@@ -487,6 +476,24 @@
                                         <div class="tile-under-construction">
                                             {{ __("colony.under_construction") }}
                                         </div>
+                                    </template>
+
+                                    {{-- Remaining Regolith yield of this Harvester's tile
+                                     (Owner-Playtest-Fund 2026-09-04: the depleting amount
+                                     already existed as selectedTile.resource_amount, but
+                                     was only ever visible inside the collapsed "Terrain &
+                                     Standort" disclosure below — surfaced here, always
+                                     visible, for the one building whose output actually
+                                     shrinks over time). --}}
+                                    <template x-if="selectedTile.regolith_remaining !== undefined">
+                                        <p class="tile-building-regolith-remaining">
+                                            <span>{{ __("colony.harvester_regolith_remaining_label") }}</span>
+                                            <span class="res-chip res-RG">
+                                                <span class="res-abbr">RG</span>
+                                                <span class="res-amount"
+                                                    x-text="`${selectedTile.regolith_remaining} / ${selectedTile.regolith_max}`"></span>
+                                            </span>
+                                        </p>
                                     </template>
 
                                     {{-- Terrain is secondary on a built tile → closed

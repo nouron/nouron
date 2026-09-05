@@ -229,6 +229,22 @@ class HangarControllerTest extends TestCase
         $this->assertCount(2, $slots);
     }
 
+    public function test_index_view_ship_types_ordered_drone_freighter_corvette(): void
+    {
+        $this->insertHangar(1);
+
+        $response = $this->actingAs($this->bart())
+            ->get(route('colony.hangar'));
+
+        $response->assertOk();
+        $shipTypes = $response->viewData('shipTypes');
+
+        $this->assertSame(
+            [self::SHIP_DRONE, self::SHIP_FREIGHTER, self::SHIP_CORVETTE],
+            collect($shipTypes)->pluck('id')->map(fn ($id) => (int) $id)->all(),
+        );
+    }
+
     // ── REQUEST SHIP ──────────────────────────────────────────────────────────
 
     public function test_request_ship_returns_ok_with_slots_and_pending(): void

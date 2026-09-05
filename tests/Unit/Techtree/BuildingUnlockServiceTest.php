@@ -35,15 +35,16 @@ class BuildingUnlockServiceTest extends TestCase
         // ships.required_building_id=44 (hangar), required_building_level=2 → ship_freighter.
         $unlocks = $this->service->unlocksAtLevel(44, 2);
 
-        $this->assertContains(__('techtree.ship_freighter'), $unlocks);
+        $this->assertContains(__('techtree.ship_freighter'), array_column($unlocks, 'text'));
     }
 
     public function test_hangar_level3_unlocks_the_corvette_ship(): void
     {
         $unlocks = $this->service->unlocksAtLevel(44, 3);
 
-        $this->assertContains(__('techtree.ship_corvette'), $unlocks);
-        $this->assertNotContains(__('techtree.ship_freighter'), $unlocks, 'freighter unlocks at level 2, not 3');
+        $texts = array_column($unlocks, 'text');
+        $this->assertContains(__('techtree.ship_corvette'), $texts);
+        $this->assertNotContains(__('techtree.ship_freighter'), $texts, 'freighter unlocks at level 2, not 3');
     }
 
     public function test_hangar_level2_also_unlocks_the_defense_knowledge_via_secondary_requirement(): void
@@ -52,7 +53,7 @@ class BuildingUnlockServiceTest extends TestCase
         // AND required_building2_id=44 (hangar) Lv2 — must be reachable via EITHER slot.
         $unlocks = $this->service->unlocksAtLevel(44, 2);
 
-        $this->assertContains(__('techtree.knowledge_defense'), $unlocks);
+        $this->assertContains(__('techtree.knowledge_defense'), array_column($unlocks, 'text'));
     }
 
     public function test_level_with_nothing_gated_returns_empty(): void
@@ -71,5 +72,25 @@ class BuildingUnlockServiceTest extends TestCase
         $unlocks = $this->service->unlocksAtLevel(25, 1); // CommandCenter Lv1 gates nothing new directly
 
         $this->assertIsArray($unlocks);
+    }
+
+    /**
+     * Building-gated unlocks are always entity names (ships/buildings/knowledge),
+     * never a resource-valued curve like knowledge's per-level effects — so the
+     * chip slot has no resource to fill. Still returned in the SAME {text, chip}
+     * shape as KnowledgeEffectDescriptionService::effectsAtLevel() so the sidebar
+     * partial can render both with one code path (chip: null → neutral fallback chip).
+     */
+    public function test_entries_use_the_text_chip_shape_with_a_null_chip(): void
+    {
+        $unlocks = $this->service->unlocksAtLevel(44, 2);
+
+        $this->assertNotEmpty($unlocks);
+        foreach ($unlocks as $entry) {
+            $this->assertArrayHasKey('text', $entry);
+            $this->assertArrayHasKey('chip', $entry);
+            $this->assertIsString($entry['text']);
+            $this->assertNull($entry['chip']);
+        }
     }
 }

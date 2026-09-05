@@ -151,7 +151,10 @@
                                 </div>
 
                                 <template x-if="slot.advisor !== null">
-                                    <span class="advisor-subtitle" x-text="slot.advisor.ap_per_tick + ' AP/Tick'">
+                                    <span class="advisor-subtitle">
+                                        <span class="ap-chip ap-chip--neutral">
+                                            <span class="res-amount" x-text="slot.advisor.ap_per_tick"></span> AP
+                                        </span>
                                     </span>
                                 </template>
                                 <template x-if="slot.advisor === null && slot.state === 'empty' && !slot.is_path_open">
@@ -178,7 +181,10 @@
 
                                             <div class="stat-row">
                                                 <span class="stat-label">Unterhalt</span>
-                                                <span class="stat-value" x-text="slot.advisor.upkeep + ' Cr/Tick'"></span>
+                                                <span class="res-chip res-Cr">
+                                                    <span class="res-abbr">CR</span>
+                                                    <span class="res-amount" x-text="slot.advisor.upkeep"></span>
+                                                </span>
                                             </div>
 
                                             <div class="advisor-progress-wrap">
@@ -223,17 +229,25 @@
 
                                             <div class="stat-row">
                                                 <span class="stat-label">Einstellungskosten</span>
-                                                <span class="stat-value" x-text="slot.hire_cost + ' Cr'"></span>
+                                                <span class="res-chip res-Cr">
+                                                    <span class="res-abbr">CR</span>
+                                                    <span class="res-amount" x-text="slot.hire_cost"></span>
+                                                </span>
                                             </div>
 
                                             <div class="stat-row">
                                                 <span class="stat-label">AP/Tick (Junior)</span>
-                                                <span class="stat-value">4</span>
+                                                <span class="ap-chip ap-chip--neutral">
+                                                    <span class="res-amount">4</span> AP
+                                                </span>
                                             </div>
 
                                             <div class="stat-row">
                                                 <span class="stat-label">Unterhalt</span>
-                                                <span class="stat-value" x-text="juniorUpkeep + ' Cr/Tick'"></span>
+                                                <span class="res-chip res-Cr">
+                                                    <span class="res-abbr">CR</span>
+                                                    <span class="res-amount" x-text="juniorUpkeep"></span>
+                                                </span>
                                             </div>
 
                                             <div class="advisor-card-footer">
@@ -326,11 +340,21 @@
                         </div>
                         <div class="dialog-stat">
                             <dt>{{ __("advisors.dialog_cost_once") }}</dt>
-                            <dd x-text="dialogSlot.hire_cost + ' Cr'"></dd>
+                            <dd>
+                                <span class="res-chip res-Cr">
+                                    <span class="res-abbr">CR</span>
+                                    <span class="res-amount" x-text="dialogSlot.hire_cost"></span>
+                                </span>
+                            </dd>
                         </div>
                         <div class="dialog-stat">
                             <dt>{{ __("advisors.dialog_upkeep") }}</dt>
-                            <dd x-text="dialogSlot.junior_upkeep + ' {{ __("advisors.dialog_per_sol") }}'"></dd>
+                            <dd>
+                                <span class="res-chip res-Cr">
+                                    <span class="res-abbr">CR</span>
+                                    <span class="res-amount" x-text="dialogSlot.junior_upkeep"></span>
+                                </span>
+                            </dd>
                         </div>
                     </dl>
 

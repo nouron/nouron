@@ -687,6 +687,7 @@
 
 .hangar-ship-btn {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     width: 100%;
@@ -724,6 +725,19 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     margin-left: 0.75rem;
+}
+
+.hangar-ship-btn-chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.hangar-ship-btn-locked-hint {
+    flex-basis: 100%;
+    font-size: 0.78rem;
+    color: var(--pico-muted-color, #888);
+    margin-top: 0.35rem;
 }
 
 /* ── Dialog error + cancel footer ─────────────────────────────────────────── */

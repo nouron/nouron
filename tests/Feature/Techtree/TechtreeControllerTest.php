@@ -246,6 +246,25 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotEmpty($sciencelab['description']);
     }
 
+    // Regression (Owner-Playtest 2026-09-04): ships were excluded from the
+    // description wiring above even though desc_techs_drone/corvette/freighter
+    // already existed in lang/de/techtree.php, unused.
+    public function test_index_ship_items_include_description(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $drone = null;
+        foreach ($pageData['phases'] as $phase) {
+            $drone ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'ship' && $t['id'] === 85);
+        }
+
+        $this->assertNotNull($drone, 'ship_drone (id=85) must be present in the phases');
+        $this->assertSame(__('techtree.desc_techs_drone'), $drone['description']);
+        $this->assertNotEmpty($drone['description']);
+    }
+
     // Regression (Owner-Playtest 2026-08-31, follow-up): reverse of
     // required_desc — what leveling up a building unlocks (e.g. "Hangar
     // Lv1→2 unlocks Frachter"). Colony 1's hangar (id=44) is seeded at Lv1.
@@ -262,7 +281,10 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($hangar, 'hangar building must be present in the phases');
         $this->assertSame(1, $hangar['level'], 'Testdaten-Annahme: Hangar steht auf Level 1');
-        $this->assertContains(__('techtree.ship_freighter'), $hangar['unlocks_next_level']);
+        $this->assertContains(
+            __('techtree.ship_freighter'),
+            array_column($hangar['unlocks_next_level'], 'text')
+        );
     }
 
     // Regression (Owner-Playtest 2026-08-31, follow-up to
@@ -290,7 +312,7 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($construction);
         $this->assertTrue(
-            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% Bau-AP-Kosten' && $l['chip'] === null)
+            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% AP-Kosten' && $l['chip'] === null)
         );
     }
 
@@ -501,15 +523,19 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotNull($found, 'bar/cantina (building ID 52) must be in phase 2');
     }
 
-    public function test_knowledge_geology_is_in_phase3(): void
+    public function test_knowledge_geology_is_in_phase2(): void
     {
+        // Owner-Playtest-Fund 2026-09-05: geology was shown in the Phase 3 (CC Lv3)
+        // column even though its real gate — sciencelab Lv2 + harvester Lv1 — has no
+        // CC-Lv3 requirement at all, misleading players into deferring the science
+        // path. Moved to phase 2 alongside its actual prerequisite (sciencelab).
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        $found = collect($pageData['phases'][3]['items'])
+        $found = collect($pageData['phases'][2]['items'])
             ->first(fn ($t) => $t['id'] === 92 && $t['type'] === 'research');
 
-        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3');
+        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 2 (matches its real gate: sciencelab Lv2 + harvester Lv1, no CC-Lv3 requirement)');
     }
 
     // ── order('add'): auto-levelup in the same request (no page reload) ───────
@@ -560,6 +586,50 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertSame(1, DB::table('colony_researches')
             ->where('colony_id', $this->colonyIdBart)->where('research_id', 91)->value('level'));
+    }
+
+    // ── order(): cross-node status refresh (phases_update) ────────────────────
+
+    /**
+     * Owner-Playtest-Fund 2026-09-04: a levelup used to only patch the ONE invested
+     * tech client-side — a dependent tech elsewhere in the tree stayed 'locked' in
+     * the UI until a full page reload, even though the server-side gate had already
+     * flipped. knowledge_geology (research id=92) requires sciencelab (building
+     * id=31) at Lv2 — colony 1's sciencelab starts at Lv1 (locked) and building 27
+     * (its secondary Lv1 requirement) is already met. Leveling sciencelab to Lv2
+     * must report geology's fresh status via 'phases_update' in the same response.
+     */
+    public function test_order_response_includes_phases_update_for_a_newly_unlocked_dependent_tech(): void
+    {
+        // Precondition: geology is locked while sciencelab is still Lv1.
+        $before = $this->actingAs(User::find($this->userIdBart))
+            ->get(route('techtree.index'))->viewData('pageData');
+        $geologyBefore = null;
+        foreach ($before['phases'] as $phase) {
+            $geologyBefore ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
+        }
+        $this->assertSame('locked', $geologyBefore['status'], 'precondition: geology must start locked');
+
+        // sciencelab (building 31): ap_spend=0, ap_for_levelup=10 → invest exactly enough to auto-levelup to Lv2.
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 31]), ['order' => 'add', 'ap' => 10]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('leveled_up', true);
+        $response->assertJsonPath('tech.level', 2);
+
+        $phasesUpdate = $response->json('phases_update');
+        $this->assertIsArray($phasesUpdate, 'response must carry a phases_update payload');
+
+        $geologyUpdate = null;
+        foreach ($phasesUpdate as $phase) {
+            $geologyUpdate ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
+        }
+
+        $this->assertNotNull($geologyUpdate, 'phases_update must include geology (research id=92)');
+        $this->assertSame('available', $geologyUpdate['status'],
+            'geology must flip to available in the same response that unlocks it, without a page reload');
     }
 
     /**

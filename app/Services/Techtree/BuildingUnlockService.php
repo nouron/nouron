@@ -18,7 +18,16 @@ class BuildingUnlockService
      * Entities that become available specifically at $buildingId reaching $level
      * (not "at or below" — the level a player is about to invest AP into).
      *
-     * @return list<string>
+     * Returned in the same {text, chip} shape as
+     * KnowledgeEffectDescriptionService::effectsAtLevel() — Owner-Playtest-Fund
+     * 2026-09-04: the sidebar renders both "Voraussetzungen" and "Effekte der
+     * nächsten Stufe" as chips, and a shared shape lets the Blade partial handle
+     * buildings and knowledge with one code path. A gate unlock is always an
+     * entity NAME (ship/building/knowledge), never a resource-valued curve like
+     * knowledge's per-level effects, so `chip` is always null here — the caller
+     * renders the neutral fallback chip for every entry.
+     *
+     * @return list<array{text: string, chip: null}>
      */
     public function unlocksAtLevel(int $buildingId, int $level): array
     {
@@ -32,7 +41,7 @@ class BuildingUnlockService
                 ->pluck('name');
 
             foreach ($names as $name) {
-                $labels[] = __('techtree.'.$name);
+                $labels[] = ['text' => __('techtree.'.$name), 'chip' => null];
             }
         }
 
@@ -53,7 +62,7 @@ class BuildingUnlockService
             ->pluck('name');
 
         foreach ($researchNames as $name) {
-            $labels[] = __('techtree.'.$name);
+            $labels[] = ['text' => __('techtree.'.$name), 'chip' => null];
         }
 
         return $labels;

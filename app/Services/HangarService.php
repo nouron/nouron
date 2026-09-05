@@ -33,6 +33,17 @@ class HangarService
         47 => 'freighter',
     ];
 
+    /**
+     * Minimum hangar level required to request a given ship class from the Nexus.
+     * Level IS the ship class (config/buildings.php 'hangar' comment): Lv1 Drohne,
+     * Lv2 Frachter, Lv3 Korvette.
+     */
+    private const SHIP_ID_TO_REQUIRED_HANGAR_LEVEL = [
+        85 => 1,
+        47 => 2,
+        37 => 3,
+    ];
+
     public function __construct(
         private readonly TickService $tickService,
         private readonly TrustService $trustService,
@@ -161,6 +172,18 @@ class HangarService
             ->all();
     }
 
+    /**
+     * Highest hangar building level in the colony (0 when no hangar is built),
+     * which gates which ship classes are orderable from the Nexus.
+     */
+    public function hangarMaxLevel(int $colonyId): int
+    {
+        return (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', self::HANGAR_BUILDING_ID)
+            ->max('level') ?? 0);
+    }
+
     // ── Write ─────────────────────────────────────────────────────────────────
 
     /**
@@ -188,6 +211,11 @@ class HangarService
     ): void {
         if (! in_array($shipId, self::ALLOWED_SHIP_IDS, true)) {
             throw new RuntimeException("Ship type {$shipId} is not orderable from the Nexus.");
+        }
+
+        $requiredLevel = self::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL[$shipId];
+        if ($this->hangarMaxLevel($colonyId) < $requiredLevel) {
+            throw new RuntimeException(__('colony.hangar_request_level_too_low'));
         }
 
         if ($consulApSpent < 0) {

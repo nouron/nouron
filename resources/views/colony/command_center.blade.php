@@ -15,11 +15,15 @@
         window.__commandCenterData = {
             routes: {
                 stipend: "{{ route("colony.stipend") }}",
+                nexusImport: "{{ route("colony.nexus.import") }}",
             },
             i18n: {
                 stipendSuccess: @json(__("colony.stipend_success")),
                 stipendError: @json(__("colony.stipend_error")),
+                nexusImportSuccess: @json(__("colony.nexus_import_success")),
+                nexusImportError: @json(__("colony.nexus_import_error")),
             },
+            compoundImportPrice: {{ (int) $compoundImportPrice }},
         };
     </script>
 
@@ -114,12 +118,19 @@
                 </p>
                 <ul class="cc-list">
                     @foreach ($damagedBuildings as $b)
+                        @php
+                            $buildingKey = $b["building_key"];
+                            $buildingLabel = $b["label"];
+                            $buildingTooltip = [
+                                "description" => __(
+                                    "buildings." . str_replace("building_", "", $buildingKey) . "_desc",
+                                ),
+                            ];
+                        @endphp
                         <li class="cc-list-item">
                             <span>
-                                <x-entity-chip type="building" entity-key="{{ $b["building_key"] }}"
-                                    label="{{ $b["label"] }}" :tooltip="["description"=> __("buildings." .
-                                    str_replace("building_", "", $b["building_key"]) . "_desc")]" />
-                                    ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})
+                                <x-entity-chip type="building" :entity-key="$buildingKey" :label="$buildingLabel" :tooltip="$buildingTooltip" />
+                                ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})
                             </span>
                             <span class="cc-list-item-danger">
                                 {{ __("command_center.widget_maintenance_status", ["sp" => $b["status_points"], "max" => $b["max_status_points"]]) }}
@@ -170,12 +181,17 @@
                         ];
                     @endphp
                     @foreach ($advisors as $a)
+                        @php
+                            $advisorEntityKey = "advisor_" . $a["type_key"];
+                            $advisorLabel = $a["name"];
+                            $advisorTooltip = [
+                                "description" => $a["type_key"] ? __("advisors." . $a["type_key"] . "_desc") : null,
+                            ];
+                        @endphp
                         <li class="cc-list-item">
                             <span>
-                                <x-entity-chip type="advisor" entity-key="advisor_{{ $a["type_key"] }}"
-                                    label="{{ $a["name"] }}" :tooltip="["description"=> $a["type_key"] ?
-                                    __("advisors." . $a["type_key"] . "_desc") : null]" />
-                                    ({{ $a["rank_name"] }})
+                                <x-entity-chip type="advisor" :entity-key="$advisorEntityKey" :label="$advisorLabel" :tooltip="$advisorTooltip" />
+                                ({{ $a["rank_name"] }})
                             </span>
                             <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}
                                 AP</span>
@@ -206,6 +222,26 @@
                     @endforeach
                 </ul>
             @endif
+        </article>
+
+        {{-- Widget 8: Nexus-Import — Werkstoffe gegen Credits, ab Uplink-Station Lv1.
+         Garantierte Werkstoff-Quelle (GDD §3) — verhindert Bau-Deadlock. Always shown
+         (not build-gated) so the player knows the option exists before Uplink Lv1. --}}
+        <article class="cc-card">
+            <h3 class="cc-card-title">{{ __("colony.nexus_import_title") }}</h3>
+            <p class="cc-card-hint">{{ __("colony.nexus_import_hint") }}</p>
+            @if ($uplinkLevel < 1)
+                <p class="cc-card-hint cc-card-hint--warning">{{ __("colony.nexus_import_uplink_required") }}</p>
+            @endif
+            <div class="nexus-import-controls">
+                <input type="number" min="1" max="9999" x-model.number="nexusImportAmount"
+                    class="nexus-import-amount" @if ($uplinkLevel < 1) disabled @endif
+                    aria-label="{{ __("colony.nexus_import_amount") }}">
+                <span class="nexus-import-total" x-text="`${(nexusImportAmount || 0) * compoundImportPrice} Cr`"></span>
+                <button class="nexus-import-btn"
+                    :disabled="{{ $uplinkLevel < 1 ? "true" : "!nexusImportAmount || nexusImportAmount < 1" }}"
+                    @click="doNexusImport()">{{ __("colony.nexus_import_confirm") }}</button>
+            </div>
         </article>
 
         {{-- Action / feedback toast (mirrors colony-hexgrid.js's .colony-toast) --}}

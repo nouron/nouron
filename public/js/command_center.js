@@ -8,11 +8,8 @@ function commandCenter(config = {}) {
     return {
         routes: config.routes ?? {},
         i18n: config.i18n ?? {},
-
-        toastMessage: '',
-        toastVisible: false,
-        toastType: 'error', // 'error' | 'info'
-        _toastTimer: null,
+        compoundImportPrice: config.compoundImportPrice ?? 90,
+        nexusImportAmount: 10,
 
         // Kolonisten-Zulage (GDD §14) — trust effect only applies from the next
         // Sol onward (TrustService writes the stored trust value only during
@@ -27,6 +24,31 @@ function commandCenter(config = {}) {
                 this.showToast(res.message ?? res.error ?? this.i18n.stipendError, 'error');
             }
         },
+
+        // Nexus compound import (GDD §3) — Werkstoffe against Credits, ab Uplink Lv1.
+        // Server re-checks the Uplink gate; the widget is only disabled client-side.
+        async doNexusImport() {
+            const amount = parseInt(this.nexusImportAmount, 10);
+            if (!amount || amount < 1) return;
+            const res = await this.post(this.routes.nexusImport, { amount });
+            if (res.ok) {
+                this.syncResbarAmount('.res-Cr', res.credits);
+                this.flashResChip('.res-Cr');
+                this.syncResbarAmount('.res-Co', res.compounds);
+                this.flashResChip('.res-Co');
+                this.showToast(
+                    (this.i18n.nexusImportSuccess ?? '').replace(':amount', res.amount).replace(':cost', res.cost),
+                    'info',
+                );
+            } else {
+                this.showToast(res.message ?? res.error ?? this.i18n.nexusImportError, 'error');
+            }
+        },
+
+        toastMessage: '',
+        toastVisible: false,
+        toastType: 'error', // 'error' | 'info'
+        _toastTimer: null,
 
         // ── Toast notifications ───────────────────────────────────────────────
 

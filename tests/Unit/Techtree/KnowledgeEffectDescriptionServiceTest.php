@@ -13,7 +13,7 @@ use Tests\TestCase;
  * (config/knowledge.php, config/game.php `*_per_lv`/`*_per_level` arrays,
  * from the Kenntnis-Effekte-Redesign series). This translates the curve
  * VALUE AT a given level into a short readable line, e.g. "construction Lv3"
- * → "-4% Bau-AP-Kosten" (config/knowledge.php: ap_cost_reduction_per_lv[3]=4).
+ * → "-4% AP-Kosten" (config/knowledge.php: ap_cost_reduction_per_lv[3]=4).
  * Levels whose curve entry is 0 (no change at that level) produce no line.
  *
  * Each line is ['text' => string, 'chip' => null|array{abbr,value,cls}] —
@@ -45,7 +45,7 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         // config/knowledge.php: construction.ap_cost_reduction_per_lv[3] = 4
         $lines = $this->service->effectsAtLevel('construction', 3);
 
-        $this->assertHasTextLine($lines, '-4% Bau-AP-Kosten');
+        $this->assertHasTextLine($lines, '-4% AP-Kosten');
     }
 
     public function test_geology_level1_has_two_distinct_effects(): void
@@ -67,7 +67,7 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         // bar_offer_boost_per_lv[4]=0 (must be OMITTED), trade_price_bonus_per_lv[4]=2
         $lines = $this->service->effectsAtLevel('trade', 4);
 
-        $this->assertHasTextLine($lines, '-3% Bau-AP-Kosten');
+        $this->assertHasTextLine($lines, '-3% AP-Kosten');
         $this->assertHasTextLine($lines, '+2% Handelspreis-Bonus');
         $this->assertCount(2, $lines, 'bar_offer_boost_per_lv[4]=0 must not produce a line');
     }
@@ -107,7 +107,7 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
     {
         $lines = $this->service->effectsAtLevel('cartography', 1);
 
-        $this->assertHasTextLine($lines, '-4% Navigations-AP-Kosten');
+        $this->assertHasTextLine($lines, '-4% AP-Kosten');
     }
 
     public function test_unknown_knowledge_key_returns_empty(): void

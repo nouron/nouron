@@ -22,6 +22,8 @@ namespace Tests\Unit;
  *    - test_request_ship_deducts_credits_on_success
  *    - test_request_ship_second_of_same_type_is_allowed
  *    - test_request_ship_creates_pending_when_no_free_slot
+ *    - test_request_ship_throws_when_hangar_level_too_low_for_ship_class
+ *    - test_request_ship_succeeds_when_hangar_level_matches_ship_class
  *
  *  dispatchShip (mission catalog, GDD §8b)
  *    - test_dispatch_ship_sets_dispatched_state_and_creates_mission
@@ -313,8 +315,33 @@ class HangarServiceTest extends TestCase
         $this->assertNotNull($row, 'colony_ships row must be created after requestShip');
         $this->assertSame('building', $row->ship_state);
         $this->assertSame(1, (int) $row->hangar_instance_id);
-        // deliver_at_tick = currentTick + delivery_ticks (drone = 2)
-        $this->assertSame(self::FIXED_TICK + 2, (int) $row->deliver_at_tick);
+        // deliver_at_tick = currentTick + delivery_ticks (drone = 1)
+        $this->assertSame(self::FIXED_TICK + 1, (int) $row->deliver_at_tick);
+    }
+
+    public function test_request_ship_throws_when_hangar_level_too_low_for_ship_class(): void
+    {
+        // Hangar level 1 only unlocks the drone class — corvette requires level 3.
+        $this->insertHangar(1, 1);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_CORVETTE, false, 0);
+    }
+
+    public function test_request_ship_succeeds_when_hangar_level_matches_ship_class(): void
+    {
+        $this->insertHangar(1, 3);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_CORVETTE, false, 0);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_CORVETTE)
+            ->first();
+
+        $this->assertNotNull($row, 'colony_ships row must be created once hangar level requirement is met');
+        $this->assertSame('building', $row->ship_state);
     }
 
     public function test_request_ship_throws_for_invalid_ship_id(): void

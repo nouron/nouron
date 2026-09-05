@@ -20,6 +20,7 @@ use App\Services\TrustService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -119,6 +120,36 @@ class ColonyController extends BaseController
 
         $globalTick = $this->getTick();
 
+        // Same activity gate GameTick::generateHarvesterYield() uses to decide whether
+        // a Harvester instance produces this Sol (Owner-Playtest-Fund 2026-09-04: the
+        // depleting resource_amount was invisible to the player, a shrinking yield
+        // looked like a bug instead of the intended depletion mechanic).
+        $activeHarvesterTileKeys = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('level', '>', 0)
+            ->whereNotNull('tile_x')
+            ->whereNotNull('tile_y')
+            ->where(fn ($q) => $q->whereNull('pending_until_tick')->orWhere('pending_until_tick', '<', $globalTick))
+            ->get(['tile_x', 'tile_y'])
+            ->map(fn ($row) => $row->tile_x.','.$row->tile_y)
+            ->flip();
+
+        $regolithMaxCfg = config('game.harvester.resource_max', []);
+        $tiles = $tiles->map(function ($tile) use ($activeHarvesterTileKeys, $regolithMaxCfg) {
+            $configMax = (int) ($regolithMaxCfg[$tile['tile_type']] ?? 0);
+            if ($configMax > 0 && isset($activeHarvesterTileKeys[$tile['q'].','.$tile['r']])) {
+                $tile['regolith_remaining'] = min((int) ($tile['resource_amount'] ?? $configMax), $configMax);
+                $tile['regolith_max'] = $configMax;
+            }
+
+            return $tile;
+        });
+
+        // Name lookup for computeRequiredList() — buildings only ever carry a
+        // single required_building_id (no required_building2_id, unlike researches).
+        $buildingNames = DB::table('buildings')->pluck('name', 'id');
+
         $buildings = DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colony->id)
@@ -135,13 +166,20 @@ class ColonyController extends BaseController
                 'buildings.max_level',
                 'buildings.ap_for_levelup',
                 'buildings.max_status_points',
+                'buildings.required_building_id',
+                'buildings.required_building_level',
             )
             ->get()
-            ->map(function ($b) use ($globalTick, $colony) {
+            ->map(function ($b) use ($globalTick, $colony, $buildingNames) {
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
                 $b->description = __('buildings.'.preg_replace('/^building_/', '', $b->building_key).'_desc');
                 $b->unlocks_next_level = $this->buildingUnlockService->unlocksAtLevel((int) $b->building_id, (int) $b->level + 1);
+                $b->required_list = $this->computeRequiredList(
+                    $b->required_building_id !== null ? (int) $b->required_building_id : null,
+                    $b->required_building_level !== null ? (int) $b->required_building_level : null,
+                    $buildingNames
+                );
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
                 $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
@@ -614,16 +652,17 @@ class ColonyController extends BaseController
 
         // Construction/trade knowledge additively discounts the AP
         // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
-        // and-encounters-design.md §2). Level-up Regolith is charged only on the click
-        // that completes the level — checked BEFORE spending the AP so a shortfall
-        // never burns the final Construction-AP.
+        // and-encounters-design.md §2). Level-up Regolith is charged on the click that
+        // STARTS the cycle (ap_spend 0 → >0) — mirrors the erect-cost pattern (paid at
+        // build start, not completion) so the sidebar's "Kosten bei Baubeginn" copy is
+        // accurate. A shortfall blocks the invest entirely, before any AP is spent.
         $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $building->ap_for_levelup);
-        $willLevelUp = ($row->ap_spend + 1) >= $effectiveApForLevelup;
-        $levelupRegolith = $willLevelUp
+        $isCycleStart = (int) $row->ap_spend === 0;
+        $levelupRegolith = $isCycleStart
             ? $this->levelupRegolithFor($buildingId, (int) $row->level + 1)
             : 0;
 
-        if ($willLevelUp && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
+        if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
             && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]], $colony->id)) {
             return $this->fail('resource_limit', __('colony.error_insufficient_resources'), [
                 'cost' => [self::RES_REGOLITH => $levelupRegolith],
@@ -642,14 +681,15 @@ class ColonyController extends BaseController
             $this->advisorService->lockActionPoints($colony->id, 1);
         }
 
+        if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
+            $this->resourcesService->payCosts(
+                [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
+                $colony->id
+            );
+        }
+
         $leveledUp = false;
         if ($newApSpend >= $effectiveApForLevelup) {
-            if ($levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
-                $this->resourcesService->payCosts(
-                    [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
-                    $colony->id
-                );
-            }
             DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $buildingId)
@@ -1005,6 +1045,29 @@ class ColonyController extends BaseController
         ];
     }
 
+    /**
+     * Same requirement format as TechtreeController::computeRequiredList() —
+     * Owner-Playtest-Fund 2026-09-04: the hexview sidebar showed unlocks_next_level
+     * but never what the building itself is gated behind. Buildings only ever carry
+     * a single required_building_id/level pair (no required_building2_id, unlike
+     * researches), so this is always 0 or 1 entries.
+     *
+     * @return list<string>
+     */
+    private function computeRequiredList(?int $reqBuildingId, ?int $reqLevel, Collection $buildingNames): array
+    {
+        if (! $reqBuildingId) {
+            return [];
+        }
+
+        $reqName = $buildingNames[$reqBuildingId] ?? null;
+        if (! $reqName) {
+            return [];
+        }
+
+        return [__('techtree.'.$reqName).' Lv'.($reqLevel ?? 1)];
+    }
+
     private function hexDistance(int $q1, int $r1, int $q2, int $r2): int
     {
         $dq = $q2 - $q1;
@@ -1055,6 +1118,8 @@ class ColonyController extends BaseController
                 'buildings.max_instances',
                 'buildings.ap_for_levelup',
                 'buildings.max_status_points',
+                'buildings.required_building_id',
+                'buildings.required_building_level',
             )
             ->first();
 
@@ -1062,6 +1127,11 @@ class ColonyController extends BaseController
         $row->image_slug = self::buildingImageSlug($row->building_key);
         $row->description = __('buildings.'.preg_replace('/^building_/', '', $row->building_key).'_desc');
         $row->unlocks_next_level = $this->buildingUnlockService->unlocksAtLevel((int) $row->building_id, (int) $row->level + 1);
+        $row->required_list = $this->computeRequiredList(
+            $row->required_building_id !== null ? (int) $row->required_building_id : null,
+            $row->required_building_level !== null ? (int) $row->required_building_level : null,
+            DB::table('buildings')->pluck('name', 'id')
+        );
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);

@@ -24,6 +24,7 @@
             verfuegbareVerhandlungsAP: @json($verfuegbareVerhandlungsAP ?? 0),
             pendingShips: @json($pendingShips ?? []),
             missionCatalog: @json($missionCatalog ?? []),
+            hangarMaxLevel: @json($hangarMaxLevel ?? 0),
 
             routes: {
                 dispatch: @json(route("colony.hangar.dispatch", ["instanceId" => "__ID__"])),
@@ -48,6 +49,7 @@
                 nexusRequest: @json(__("colony.hangar_nexus_request")),
                 nexusRequestTitle: @json(__("colony.hangar_nexus_request_title")),
                 nexusRequestSubmit: @json(__("colony.hangar_nexus_request_submit")),
+                requestMinLevel: @json(__("colony.hangar_request_min_level")),
                 shipType: @json(__("colony.hangar_ship_type")),
                 paymentMethod: @json(__("colony.hangar_payment_method")),
                 standardPurchase: @json(__("colony.hangar_standard_purchase")),
@@ -426,13 +428,25 @@
                 <div class="hangar-ship-btn-list">
                     <template x-for="type in shipTypes" :key="type.id">
                         <button class="hangar-ship-btn" @click="submitRequestFor(type.id)"
-                            :disabled="requestModal.loading">
+                            :disabled="requestModal.loading || !isShipLevelUnlocked(type.id)">
                             <span class="hangar-ship-btn-name" x-text="shipLabel(type.name)"></span>
-                            <span class="hangar-ship-btn-meta" x-show="shipCosts[type.id]"
-                                x-text="shipCosts[type.id]
-                                  ? effectiveCostFor(type.id) + ' Cr · Sol +' + shipCosts[type.id].delivery_ticks
-                                  : ''">
+                            <span class="hangar-ship-btn-meta" x-show="shipCosts[type.id]">
+                                <template x-if="shipCosts[type.id]">
+                                    <span class="hangar-ship-btn-chips">
+                                        <span class="res-chip res-Cr">
+                                            <span class="res-abbr">CR</span>
+                                            <span class="res-amount" x-text="effectiveCostFor(type.id)"></span>
+                                        </span>
+                                        <span class="res-chip res-Sol">
+                                            <span class="res-abbr">Sol</span>
+                                            <span class="res-amount"
+                                                x-text="'+' + shipCosts[type.id].delivery_ticks"></span>
+                                        </span>
+                                    </span>
+                                </template>
                             </span>
+                            <span class="hangar-ship-btn-locked-hint" x-show="!isShipLevelUnlocked(type.id)"
+                                x-text="i18n.requestMinLevel.replace(':level', shipRequiredLevel(type.id))"></span>
                         </button>
                     </template>
                 </div>

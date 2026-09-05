@@ -427,9 +427,47 @@ class OnboardingHintServiceTest extends TestCase
 
         $this->assertNotNull($hint);
         $this->assertSame(7, $hint['rank']);
+        // suppressLateHints() places all three path buildings (Sciencelab, Cantina,
+        // Hangar); Cantina has the earliest placed_at_tick (1), so it wins.
         $this->assertSame('hint_advisor_slot2', $hint['key']);
-        $this->assertSame('colony.onboarding_hint_advisor_slot2', $hint['text_key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_cantina', $hint['text_key']);
         $this->assertSame('/advisors', $hint['target_url']);
+    }
+
+    public function test_advisor_slot2_hint_names_hangar_when_only_hangar_built(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeAgrardome();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 44,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 8, 'tile_y' => 5, 'placed_at_tick' => 1,
+        ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_advisor_slot2', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_hangar', $hint['text_key']);
+    }
+
+    public function test_advisor_slot2_hint_names_analytik_when_only_sciencelab_built(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeAgrardome();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 31,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 7, 'tile_y' => 5, 'placed_at_tick' => 1,
+        ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_advisor_slot2', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_analytik', $hint['text_key']);
     }
 
     public function test_advisor_slot2_hint_silent_when_cc_below_level2(): void

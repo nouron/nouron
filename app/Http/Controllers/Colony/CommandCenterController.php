@@ -117,6 +117,15 @@ class CommandCenterController extends BaseController
             ])
             ->values();
 
+        // Nexus-Import widget (GDD §3) — gated by Uplink-Station Lv1, checked server-side
+        // in ColonyController::nexusImportCompounds() too; here only for the disabled UI state.
+        $uplinkId = (int) config('buildings.uplinkStation.id', 54);
+        $uplinkLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $uplinkId)
+            ->value('level') ?? 0);
+        $compoundImportPrice = (int) config('game.economy.compound_import_price', 90);
+
         return view('colony.command_center', compact(
             'phaseProgress',
             'stipendTiers',
@@ -130,6 +139,8 @@ class CommandCenterController extends BaseController
             'lastSolDeltas',
             'advisors',
             'trustEvents',
+            'uplinkLevel',
+            'compoundImportPrice',
         ));
     }
 }

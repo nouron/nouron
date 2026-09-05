@@ -176,7 +176,7 @@ class OnboardingHintService
                 'rank' => 7,
                 'key' => 'hint_advisor_slot2',
                 'active' => $this->checkHintAdvisorSlot2($colonyId),
-                'text_key' => 'colony.onboarding_hint_advisor_slot2',
+                'text_key' => $this->advisorSlot2TextKey($colonyId),
                 'target_url' => '/advisors',
             ],
             [
@@ -539,6 +539,56 @@ class OnboardingHintService
             ->whereIn('building_id', [31, 44, 52])
             ->where('level', '>=', 1)
             ->exists();
+    }
+
+    /** Path buildings that unlock advisor slots 2-4, mapped to their slot2-hint lang suffix. */
+    private const ADVISOR_SLOT2_PATH_BUILDING_SUFFIXES = [31 => 'analytik', 44 => 'hangar', 52 => 'cantina'];
+
+    /**
+     * Resolves the slot2-hint text key naming the actual path building the player
+     * built (playtest feedback: the generic "Berater-Slot 2 offen" text didn't say
+     * which building/advisor was meant, even though it's always known — see
+     * checkHintAdvisorSlot2()). Falls back to the generic key only if somehow none
+     * of the three path buildings is at level >= 1, which checkHintAdvisorSlot2()
+     * already guards against before this hint fires at all.
+     */
+    private function advisorSlot2TextKey(int $colonyId): string
+    {
+        $buildingId = $this->resolveAdvisorSlot2PathBuilding($colonyId);
+
+        return $buildingId === null
+            ? 'colony.onboarding_hint_advisor_slot2'
+            : 'colony.onboarding_hint_advisor_slot2_'.self::ADVISOR_SLOT2_PATH_BUILDING_SUFFIXES[$buildingId];
+    }
+
+    /**
+     * Picks which path building to credit when more than one is built: earliest
+     * placed_at_tick wins (the one the player associates with unlocking the slot).
+     * Ties or a null placed_at_tick fall back to the fixed priority
+     * Analytik-Labor(31) → Hangar(44) → Cantina(52).
+     */
+    private function resolveAdvisorSlot2PathBuilding(int $colonyId): ?int
+    {
+        $rows = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->whereIn('building_id', array_keys(self::ADVISOR_SLOT2_PATH_BUILDING_SUFFIXES))
+            ->where('level', '>=', 1)
+            ->get(['building_id', 'placed_at_tick']);
+
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $fixedOrder = [31 => 0, 44 => 1, 52 => 2];
+
+        $sorted = $rows->sort(function ($a, $b) use ($fixedOrder) {
+            $tickA = $a->placed_at_tick ?? PHP_INT_MAX;
+            $tickB = $b->placed_at_tick ?? PHP_INT_MAX;
+
+            return $tickA <=> $tickB ?: $fixedOrder[$a->building_id] <=> $fixedOrder[$b->building_id];
+        });
+
+        return $sorted->first()->building_id;
     }
 
     /**

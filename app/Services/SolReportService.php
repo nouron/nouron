@@ -30,8 +30,9 @@ use Illuminate\Support\Facades\DB;
  * groups (production/colony/run) are always shown so the report stays honest.
  *
  * Line tones: neutral | good | warning | danger. A line flagged `beat => true`
- * is an emotional beat (level-down, promotion, phase change) and forces the
- * report to stay visible even when sol_report_skip is set.
+ * is an emotional beat (level-down, promotion, phase change) — the front-end
+ * uses this to give the line extra visual emphasis. The Sol-Report itself is
+ * always shown to the player; there is no skip/suppress mechanism.
  */
 class SolReportService
 {
@@ -133,7 +134,7 @@ class SolReportService
      *
      * @param  array  $before  Snapshot taken before the tick (see snapshot()).
      */
-    public function buildReport(Run $run, array $before, bool $skipPref): array
+    public function buildReport(Run $run, array $before): array
     {
         $colonyId = (int) $run->colony_id;
         $userId = (int) $run->user_id;
@@ -146,9 +147,8 @@ class SolReportService
         $events = $this->eventsAtTick($userId, $tick);
 
         $groups = [];
-        $forceShow = false;
 
-        $decay = $this->decayGroup($colonyId, $before, $events, $forceShow);
+        $decay = $this->decayGroup($colonyId, $before, $events);
         if ($decay !== null) {
             $groups[] = $decay;
         }
@@ -159,13 +159,11 @@ class SolReportService
         }
 
         $groups[] = $this->productionGroup($colonyId, $userId, $before);
-        $groups[] = $this->colonyGroup($colonyId, $userId, $before, $events, $forceShow);
+        $groups[] = $this->colonyGroup($colonyId, $userId, $before, $events);
 
         $finale = $this->finale($run);
         if ($finale === null) {
-            $groups[] = $this->runGroup($run, $before, $completedSol, $solLimit, $forceShow);
-        } else {
-            $forceShow = true;
+            $groups[] = $this->runGroup($run, $before, $completedSol, $solLimit);
         }
 
         return [
@@ -173,8 +171,6 @@ class SolReportService
             'next_sol' => $nextSol,
             'run_status' => $run->status,
             'result_url' => $finale !== null ? route('run.result', $run->id) : null,
-            'skip_pref' => $skipPref,
-            'force_show' => $forceShow,
             'finale' => $finale,
             'groups' => $groups,
             'phase_progress' => $this->phaseProgress($run),
@@ -183,7 +179,7 @@ class SolReportService
 
     // ── Group 1: decay ────────────────────────────────────────────────────────
 
-    private function decayGroup(int $colonyId, array $before, array $events, bool &$forceShow): ?array
+    private function decayGroup(int $colonyId, array $before, array $events): ?array
     {
         $lines = [];
 
@@ -207,7 +203,6 @@ class SolReportService
                 'tone' => 'danger',
                 'beat' => true,
             ];
-            $forceShow = true;
         }
 
         // General wear: buildings that lost status this Sol without levelling down.
@@ -420,7 +415,7 @@ class SolReportService
 
     // ── Group 4: colony & personnel ───────────────────────────────────────────
 
-    private function colonyGroup(int $colonyId, int $userId, array $before, array $events, bool &$forceShow): array
+    private function colonyGroup(int $colonyId, int $userId, array $before, array $events): array
     {
         $lines = [];
 
@@ -478,7 +473,6 @@ class SolReportService
                     'tone' => 'good',
                     'beat' => true,
                 ];
-                $forceShow = true;
             }
         }
 
@@ -492,7 +486,7 @@ class SolReportService
 
     // ── Group 5: run progress ───────────────────────────────────────────────────
 
-    private function runGroup(Run $run, array $before, int $completedSol, int $solLimit, bool &$forceShow): array
+    private function runGroup(Run $run, array $before, int $completedSol, int $solLimit): array
     {
         $lines = [];
 
@@ -505,7 +499,6 @@ class SolReportService
                 'tone' => 'good',
                 'beat' => true,
             ];
-            $forceShow = true;
         }
 
         // Objective progress (Phase 2 only).
