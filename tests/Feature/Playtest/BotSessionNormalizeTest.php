@@ -52,6 +52,7 @@ class BotSessionNormalizeTest extends TestCase
 
         $res = $bot->act('dispatch_mission', 'POST', '/colony/hangar/1/dispatch', [
             'mission_key' => 'mission_recon_flight',
+            'difficulty' => 'easy',
         ]);
 
         $this->assertFalse($res['ok']);

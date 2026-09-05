@@ -266,6 +266,16 @@ class SolReportService
             ];
         }
 
+        foreach ($events['hangar.mission_failed'] ?? [] as $params) {
+            $missionKey = $params['mission_key'] ?? '';
+            $lines[] = [
+                'label' => __('missions.sol_report_failed'),
+                'detail' => __("missions.{$missionKey}_name"),
+                'tone' => 'warning',
+                'beat' => true,
+            ];
+        }
+
         // Kolonisten-Zulage (GDD §14) — logged at its target tick (see
         // ColonyController::purchaseStipend), so it lands in the Sol-Report of
         // the Sol it actually takes effect on.

@@ -1324,6 +1324,16 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 
 > **⚠️ Neu zu kalibrieren (2026-08-02):** Mit dem gemeinsamen AP-Pool (§13.1) gibt es keinen eigenen Navigations-Grundpool mehr, gegen den diese Staffel gemessen werden könnte. Die Absicht bleibt gültig — lange Expeditionen sollen über Opportunitätskosten an die Raumfahrer-Progression gekoppelt sein, ohne hartes Gate — aber die konkreten Werte müssen gegen den neuen Grundwert und die Projektkosten neu gesetzt werden (§13.5).
 
+#### Schwierigkeit & Erfolgschance
+
+> **Status: Implementiert (2026-09-03)** — Werte in `config/game.php` → `missions.difficulty` und `config/missions.php` → `difficulties` pro Katalogeintrag.
+
+Eine Außenmission hat keinen garantierten Ausgang mehr, sondern eine Erfolgschance. Beim Dispatch wählt der Spieler zwischen zwei der drei Schwierigkeitsstufen — leicht, normal, schwer — die für die jeweilige Mission im Katalog hinterlegt sind. Eine höhere Stufe senkt die Basis-Erfolgschance, hebt aber im Erfolgsfall die Belohnung an: der Spieler tauscht Sicherheit gegen Ertrag, statt dass die Mission selbst über den Ertrag entscheidet.
+
+Zur Basis-Chance der gewählten Stufe addieren sich zwei Bonusquellen: der Rang des Raumfahrers (§12, koloniedeckt, unabhängig von der konkreten Mission) und — nur falls die Mission ein Kenntnis-Gate hat — jedes Kenntnis-Level oberhalb des Gate-Mindestlevels. Ungegatete Missionen profitieren nur vom Raumfahrer-Bonus. Die resultierende Gesamtchance ist nach oben gedeckelt, ein risikoloser Erfolg bleibt also auch bei hohem Rang und hoher Kenntnis ausgeschlossen.
+
+Scheitert eine Mission, entfällt die Belohnung vollständig — das Schiff kehrt ohne Ertrag zurück. Auf der höchsten Schwierigkeitsstufe (schwer) kostet ein Fehlschlag das Schiff zusätzlich Verschleiß (Status-Points, §7): Dort ist das Risiko nicht nur entgangener Ertrag, sondern eine echte Materialkonsequenz. Konkrete Werte (Basis-Chancen, Reward-Multiplikatoren, Bonushöhen, Chance-Cap, Hard-Fail-Verschleiß sowie die Stufen-Zuordnung je Mission): siehe `docs/game-reference.md#hangar-missionen-schwierigkeit`.
+
 #### Katalog
 
 > **Korrektur (2026-08-18):** Credit-Belohnungen angehoben (game-designer-Review, PlaytestBot zeigte chronischen Credits-Mangel — die aktive Missionsschiene lag effektiv unter dem passiven Einkommenssockel aus `nexus_subsidy` + Relaisvergütung). Tabelle unten zeigt die aktuellen Werte aus `config/missions.php`.

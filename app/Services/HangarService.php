@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Models\Advisor;
 use App\Models\Colony;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -405,6 +406,32 @@ class HangarService
     }
 
     /**
+     * Success chance for a catalog mission at a given difficulty (Spec: docs/
+     * superpowers/specs/2026-09-02-hangar-mission-success-chance-design.md).
+     * base_chance[$difficulty] + generic Pilot-Rang bonus + missionsspezifischer
+     * Kenntnis-Bonus (nur falls die Mission ein requires.knowledge-Gate hat,
+     * pro Level über dem Gate), gecappt bei chance_cap.
+     */
+    public function successChanceFor(int $colonyId, array $mission, string $difficulty): float
+    {
+        $base = (float) config("game.missions.difficulty.base_chance.{$difficulty}", 0.70);
+
+        $pilotRank = (int) (Advisor::where('colony_id', $colonyId)
+            ->where('personell_id', config('advisors.pilot.id'))
+            ->value('rank') ?? 0);
+        $chance = $base + $pilotRank * (float) config('game.missions.difficulty.pilot_rank_bonus_pct', 0.05);
+
+        $gate = $mission['requires']['knowledge'] ?? null;
+        if ($gate !== null) {
+            [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
+            $levelsAbove = max(0, $this->knowledgeLevel($colonyId, $knowledgeKey) - $requiredLevel);
+            $chance += $levelsAbove * (float) config('game.missions.difficulty.knowledge_bonus_pct_per_level', 0.03);
+        }
+
+        return min((float) config('game.missions.difficulty.chance_cap', 0.95), $chance);
+    }
+
+    /**
      * Dispatch a docked ship on a catalog mission (GDD §8b).
      *
      * Validates the mission key against config/missions.php: allowed ship type,
@@ -415,14 +442,18 @@ class HangarService
      *
      * @param  array{q?: int, r?: int, research_id?: int}|null  $target
      */
-    public function dispatchShip(int $colonyId, int $instanceId, string $missionKey, ?array $target = null): void
+    public function dispatchShip(int $colonyId, int $instanceId, string $missionKey, ?array $target = null, string $difficulty = 'normal'): void
     {
         $mission = config("missions.catalog.{$missionKey}");
         if ($mission === null) {
             throw new RuntimeException("Unknown mission key: {$missionKey}.");
         }
 
-        DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target): void {
+        if (! in_array($difficulty, $mission['difficulties'] ?? [], true)) {
+            throw new RuntimeException(__('missions.error_invalid_difficulty'));
+        }
+
+        DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target, $difficulty): void {
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('hangar_instance_id', $instanceId)
@@ -528,6 +559,7 @@ class HangarService
                 'destination' => $missionKey,
                 'sol_distance' => $solDistance,
                 'target' => $targetJson,
+                'difficulty' => $difficulty,
                 'dispatch_tick' => $currentTick,
                 'recall_tick' => null,
                 'state' => 'active',
@@ -691,6 +723,16 @@ class HangarService
                 $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
             }
 
+            $difficultyOptions = [];
+            foreach ($mission['difficulties'] ?? [] as $difficultyKey) {
+                $difficultyOptions[] = [
+                    'key' => $difficultyKey,
+                    'label' => __("missions.difficulty_{$difficultyKey}"),
+                    'chance_pct' => (int) round($this->successChanceFor($colonyId, $mission, $difficultyKey) * 100),
+                    'reward_multiplier' => (float) config("game.missions.difficulty.reward_multiplier.{$difficultyKey}", 1.0),
+                ];
+            }
+
             $entries[] = [
                 'key' => $key,
                 'name' => __("missions.{$key}_name"),
@@ -708,6 +750,7 @@ class HangarService
                 'gate' => $gateInfo,
                 'target_type' => $targetType,
                 'targets' => $targets,
+                'difficulty_options' => $difficultyOptions,
             ];
         }
 

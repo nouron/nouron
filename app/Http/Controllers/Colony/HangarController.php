@@ -170,6 +170,7 @@ class HangarController extends BaseController
     {
         $validated = $request->validate([
             'mission_key' => 'required|string|max:80',
+            'difficulty' => 'required|string|in:easy,normal,hard',
             'target' => 'nullable|array',
             'target.q' => 'sometimes|integer',
             'target.r' => 'sometimes|integer',
@@ -184,6 +185,7 @@ class HangarController extends BaseController
                 $instanceId,
                 $validated['mission_key'],
                 $validated['target'] ?? null,
+                $validated['difficulty'],
             );
         } catch (\RuntimeException $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);

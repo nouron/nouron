@@ -50,6 +50,7 @@ function hangarCarousel(config) {
             instanceId: null,
             shipKey: null,
             selectedKey: null,
+            selectedDifficulty: null,
             targetIndex: '',
             loading: false,
             error: null,
@@ -172,6 +173,7 @@ function hangarCarousel(config) {
                 instanceId,
                 shipKey,
                 selectedKey: null,
+                selectedDifficulty: null,
                 targetIndex: '',
                 loading: false,
                 error: null,
@@ -195,8 +197,17 @@ function hangarCarousel(config) {
             if (mission.availability !== 'ok') return;
             if (this.missionModal.selectedKey === mission.key) return;
             this.missionModal.selectedKey = mission.key;
+            this.missionModal.selectedDifficulty = mission.difficulty_options?.[0]?.key ?? null;
             this.missionModal.targetIndex = '';
             this.missionModal.error = null;
+        },
+
+        /**
+         * Marks a difficulty tier as selected for the currently chosen mission.
+         * @param {string} difficultyKey
+         */
+        selectDifficulty(difficultyKey) {
+            this.missionModal.selectedDifficulty = difficultyKey;
         },
 
         /**
@@ -239,9 +250,10 @@ function hangarCarousel(config) {
             if (mission.availability !== 'ok' || this.missionModal.loading) return;
             if (this.missionModal.selectedKey !== mission.key) {
                 this.selectMission(mission);
-                if (this.missionRequiresTarget(mission)) return; // let the player pick a target first
+                return; // let the player see the difficulty (and target, if any) picker first
             }
             if (this.missionRequiresTarget(mission) && this.missionModal.targetIndex === '') return;
+            if (!this.missionModal.selectedDifficulty) return;
             this.submitMission(mission);
         },
 
@@ -273,6 +285,7 @@ function hangarCarousel(config) {
                 const url = this.routes.dispatch.replace('__ID__', this.missionModal.instanceId);
                 const res = await this._post(url, {
                     mission_key: mission.key,
+                    difficulty: this.missionModal.selectedDifficulty,
                     target: this.missionRequiresTarget(mission) ? this._missionTargetPayload(mission) : null,
                 });
                 if (res.ok) {

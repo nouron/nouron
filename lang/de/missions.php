@@ -80,9 +80,19 @@ return [
     'error_invalid_target' => 'Kein gültiges Ziel für diese Mission gewählt.',
     'error_target_consumed' => 'Diese Ruine wurde bereits geborgen.',
     'error_harvester_instance_full' => 'Die Kolonie hat bereits die maximale Anzahl Harvester — eine Bergung würde nichts bringen.',
+    'error_invalid_difficulty' => 'Diese Schwierigkeitsstufe ist für diese Mission nicht verfügbar.',
+
+    // ── Difficulty ───────────────────────────────────────────────────────────
+
+    'difficulty_easy' => 'Leicht',
+    'difficulty_normal' => 'Normal',
+    'difficulty_hard' => 'Schwer',
+    'difficulty_chance_label' => 'Erfolgschance: :chance%',
+    'difficulty_reward_label' => 'Belohnung ×:multiplier',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 
     'sol_report_completed' => 'Mission abgeschlossen',
     'sol_report_aborted' => 'Mission abgebrochen — Schiff kehrte flugunfähig zurück',
+    'sol_report_failed' => 'Mission fehlgeschlagen — kein Fund',
 ];

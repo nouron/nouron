@@ -340,6 +340,7 @@ class HangarControllerTest extends TestCase
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
                 'mission_key' => 'mission_escort_convoy',
+                'difficulty' => 'normal',
             ]);
 
         $response->assertOk()
@@ -371,6 +372,7 @@ class HangarControllerTest extends TestCase
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
                 'mission_key' => 'mission_does_not_exist',
+                'difficulty' => 'normal',
             ]);
 
         $response->assertStatus(422)->assertJson(['ok' => false]);
@@ -385,10 +387,60 @@ class HangarControllerTest extends TestCase
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
                 'mission_key' => 'mission_courier_run',
+                'difficulty' => 'normal',
             ]);
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false]);
+    }
+
+    public function test_dispatch_returns_422_missing_difficulty(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+                'mission_key' => 'mission_courier_run',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_dispatch_returns_422_for_invalid_difficulty(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+                'mission_key' => 'mission_courier_run',
+                'difficulty' => 'nightmare',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_dispatch_forwards_difficulty_to_the_service(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+                'mission_key' => 'mission_courier_run',
+                'difficulty' => 'easy',
+            ]);
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertSame(
+            'easy',
+            DB::table('colony_hangar_missions')
+                ->where('colony_id', self::COLONY_ID_BART)
+                ->orderByDesc('id')
+                ->value('difficulty')
+        );
     }
 
     // ── RECALL ────────────────────────────────────────────────────────────────

@@ -76,6 +76,8 @@
                 missionChipWear: @json(__("missions.chip_wear")),
                 missionReturnLabel: @json(__("missions.return_label")),
                 missionStart: @json(__("missions.start_button")),
+                missionDifficultyChance: @json(__("missions.difficulty_chance_label")),
+                missionDifficultyReward: @json(__("missions.difficulty_reward_label")),
             },
         };
     </script>
@@ -521,6 +523,26 @@
                                         </template>
                                     </select>
                                 </label>
+                            </template>
+
+                            {{-- Difficulty picker — only for the selected mission --}}
+                            <template x-if="missionModal.selectedKey === mission.key">
+                                <div class="hangar-mission-difficulty" @click.stop>
+                                    <template x-for="option in mission.difficulty_options" :key="option.key">
+                                        <button type="button" class="hangar-difficulty-chip"
+                                            :class="{
+                                                'hangar-difficulty-chip--selected': missionModal.selectedDifficulty ===
+                                                    option.key
+                                            }"
+                                            :aria-label="i18n.missionDifficultyChance.replace(':chance', option.chance_pct)"
+                                            @click="selectDifficulty(option.key)">
+                                            <span x-text="option.label"></span>
+                                            <span x-text="option.chance_pct + '%'"></span>
+                                            <span class="hangar-difficulty-chip-reward"
+                                                x-text="i18n.missionDifficultyReward.replace(':multiplier', option.reward_multiplier)"></span>
+                                        </button>
+                                    </template>
+                                </div>
                             </template>
 
                             <div class="hangar-mission-card-footer">
