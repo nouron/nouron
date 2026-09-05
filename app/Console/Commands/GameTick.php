@@ -14,6 +14,7 @@ use App\Models\UserResource;
 use App\Services\BarService;
 use App\Services\EncounterService;
 use App\Services\EventService;
+use App\Services\HangarService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
@@ -72,6 +73,7 @@ class GameTick extends Command
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
+        private readonly HangarService $hangarService,
     ) {
         parent::__construct();
     }
@@ -335,18 +337,34 @@ class GameTick extends Command
                 continue; // still under way
             }
 
-            // Mission complete: pay rewards, dock the ship.
+            // Mission complete: roll success, pay rewards or fail.
             $catalogEntry = config("missions.catalog.{$mission->destination}");
+            $difficulty = DB::table('colony_hangar_missions')->where('id', $mission->mission_id)->value('difficulty') ?? 'normal';
             $rewardDetails = [];
+            $success = true;
+
             if ($catalogEntry !== null) {
-                $rewardDetails = $this->payMissionRewards(
-                    (int) $mission->colony_id,
-                    $userId,
-                    $catalogEntry['reward'],
-                    $mission->target !== null ? json_decode($mission->target, true) : null,
-                    $rngSeed + (int) $mission->mission_id,
-                    $tick
-                );
+                $successChance = $this->hangarService->successChanceFor((int) $mission->colony_id, $catalogEntry, $difficulty);
+                $roll = $this->seededRoll($rngSeed + (int) $mission->mission_id + 1, 0, 9999) / 10000;
+                $success = $roll <= $successChance;
+
+                if ($success) {
+                    $rewardMultiplier = (float) config("game.missions.difficulty.reward_multiplier.{$difficulty}", 1.0);
+                    $rewardDetails = $this->payMissionRewards(
+                        (int) $mission->colony_id,
+                        $userId,
+                        $catalogEntry['reward'],
+                        $mission->target !== null ? json_decode($mission->target, true) : null,
+                        $rngSeed + (int) $mission->mission_id,
+                        $tick,
+                        $rewardMultiplier
+                    );
+                } elseif ($difficulty === 'hard') {
+                    $extraWear = (float) config('game.missions.difficulty.hard_fail_extra_wear', 1.0);
+                    $spAfterHardFail = max(0.0, (float) $newSp - $extraWear);
+                    DB::table('colony_ships')->where('id', $mission->colony_ship_id)
+                        ->update(['status_points' => $spAfterHardFail]);
+                }
             }
 
             DB::table('colony_ships')->where('id', $mission->colony_ship_id)
@@ -358,13 +376,18 @@ class GameTick extends Command
                 $this->eventService->createEvent([
                     'user' => $userId,
                     'tick' => $tick,
-                    'event' => 'hangar.mission_completed',
+                    'event' => $success ? 'hangar.mission_completed' : 'hangar.mission_failed',
                     'area' => 'colony',
-                    'parameters' => json_encode([
+                    'parameters' => json_encode($success ? [
                         'mission_key' => $mission->destination,
                         'ship_id' => (int) $mission->ship_id,
                         'colony_id' => (int) $mission->colony_id,
                         'rewards' => $rewardDetails,
+                    ] : [
+                        'mission_key' => $mission->destination,
+                        'ship_id' => (int) $mission->ship_id,
+                        'colony_id' => (int) $mission->colony_id,
+                        'difficulty' => $difficulty,
                     ]),
                 ]);
             }
@@ -387,7 +410,8 @@ class GameTick extends Command
         array $reward,
         ?array $target,
         int $seed,
-        int $tick
+        int $tick,
+        float $rewardMultiplier = 1.0
     ): array {
         // loot_table: seeded pick of one entry, then resolve that entry's rewards.
         if (isset($reward['loot_table'])) {
@@ -396,11 +420,18 @@ class GameTick extends Command
         }
 
         $resourceIds = ['regolith' => 3, 'compounds' => 4, 'organics' => 5];
+        // Only quantity-shaped reward types scale with difficulty — flags/unlocks
+        // (trust_event, harvester_instance, deep_scan) stay binary regardless of difficulty.
+        $scalableTypes = ['credits', 'regolith', 'compounds', 'organics', 'research_ap', 'reveal_tiles'];
         $details = [];
 
         foreach ($reward as $type => $value) {
             if (is_array($value) && count($value) === 2 && isset($value[0], $value[1])) {
                 $value = $this->seededRoll($seed + crc32($type), (int) $value[0], (int) $value[1]);
+            }
+
+            if (in_array($type, $scalableTypes, true)) {
+                $value = (int) round((int) $value * $rewardMultiplier);
             }
 
             if ($type === 'credits') {

@@ -111,6 +111,7 @@ class BotStrategy
                 'when' => fn (BotSession $b) => self::salvageDispatchCandidate($b),
                 'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_salvage_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
                     'mission_key' => 'mission_harvester_salvage',
+                    'difficulty' => 'easy',
                     'target' => ['q' => $candidate['tile']->q, 'r' => $candidate['tile']->r],
                 ]),
             ],
@@ -187,6 +188,7 @@ class BotStrategy
                 'when' => fn (BotSession $b) => self::dispatchCandidate($b),
                 'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
                     'mission_key' => 'mission_recon_flight',
+                    'difficulty' => 'easy',
                 ]),
             ],
             [

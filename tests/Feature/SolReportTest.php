@@ -241,6 +241,38 @@ class SolReportTest extends TestCase
         $this->assertStringContainsString(__('advisors.engineer'), $line['detail']);
     }
 
+    public function test_hangar_mission_failed_shows_a_warning_line_in_events_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'hangar.mission_failed',
+            'area' => 'colony',
+            'parameters' => json_encode([
+                'mission_key' => 'mission_courier_run',
+                'ship_id' => 85,
+                'colony_id' => self::COLONY_ID,
+                'difficulty' => 'hard',
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when a mission failed');
+
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('missions.sol_report_failed'));
+        $this->assertNotNull($line, 'Expected a mission-failed line in the events group');
+        $this->assertSame(__('missions.mission_courier_run_name'), $line['detail']);
+        $this->assertSame('warning', $line['tone']);
+        $this->assertTrue($line['beat']);
+    }
+
     // ── Storm outcome (GDD §9, colony-wide scope, Owner-Entscheidung 2026-09-03) ──
 
     /**
