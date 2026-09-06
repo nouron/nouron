@@ -2,6 +2,7 @@
 
 ## 2026-09-06
 
+- Docs: Implementierungsstand-Audit `docs/audit-implementierungsstand-2026-09-06.md` — GDD (inkl. `docs/gdd/*`), ROADMAP, CHANGELOG, Anhänge und CLAUDE.md gegen Config/Code abgeglichen; ~45 Abweichungen in vier Kategorien (Design ohne Code, Code ohne Doku-Update, inhaltliche Widersprüche, Doku-Hygiene) plus 8 Owner-Entscheidungsfragen und Task-Cluster-Vorschlag. Ersetzt inhaltlich das veraltete `docs/gdd-config-audit.md` (Stand 08-21), das noch nicht angepasst wurde.
 - Feature: proaktiver Onboarding-Hinweis, wenn das Regolith-Vorkommen des aktiven Harvester-Tiles unter `game.harvester.low_regolith_warning_pct` (30%) fällt (`OnboardingHintService::checkHintHarvesterLowRegolith()`, GDD §4c BALANCE CONCERN, Owner-Playtest-Fund 2026-09-04). Gemeinsame Query mit der Hex-Grid-Anzeige in `ColonyTileService::activeHarvesterRegolithTiles()` extrahiert, damit Hint und Kartenanzeige nie auseinanderlaufen.
 - Backend: `ColonyController::hexview()` liefert neu `regolithFallbackTiles` (erkundete, nicht erschöpfte Regolith-Ausweich-Tiles außer dem aktiven Harvester-Tile) für eine kommende Kartenmarkierung (UI-Folge-Task).
 - UI: Kolonie-Hex-Karte markiert jedes Tile aus `regolithFallbackTiles` zusätzlich zum blauen Ressourcen-Punkt mit einem violetten Pfeil-Badge (`isRegolithFallbackTile()` in `colony-hexgrid.js`) inkl. Tooltip "Ausweichziel für Harvester-Verlegung" — schließt den zweiten Teil der GDD §4c-BALANCE-CONCERN-Empfehlung ab.
