@@ -22,8 +22,8 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [ ] **A1 Kommandozentrale-Dashboard** (§13.4, Stufe 4): Restzeit je Baustelle, AP-Zufluss/-Verwendung, Instandhaltungsanteil, Restertrag bis Run-Ende, Regolith-Bilanz, Over-Cap-Warnung, Konzessions-Prognose — **Hoch**
 - [ ] **A2 Bonusquellen Berater-Rang + Koloniereife** (§13.3, Stufe 3) + `config('game.project_cost_bonus')` anlegen — Mittel
 - [ ] **A3 f(L)-Kostenkurve** statt flacher `ap_for_levelup`, `f(1) = 0.5` fürs Errichten (§13.6, Stufe 3) — Mittel
-- [ ] **A4** `decay.overcap_factor` 2.0 → 1.5 (§13.1) — Klein
-- [ ] **A5** `bar.ap_cost_accept` 1 → 2, `ap_cost_negotiate` 3 → 4 (Stufe 3) — Klein
+- [x] **A4** ✅ 2026-09-06 — `decay.overcap_factor` 2.0 → 1.5 (§13.1) — Klein
+- [x] **A5** ✅ 2026-09-06 — `bar.ap_cost_accept` 1 → 2, `ap_cost_negotiate` 3 → 4 (Stufe 3) — Klein
 - [ ] **A6 Trust-Warnstufen** < −10 (roter Chip) und < −18 (Nexus-Warnung) (§18.2) — Mittel
 - [ ] **A7 Nexus-Milestones**: Sol-90-Letzte-Warnung, Fristverkürzung auf Sol 95 nach Sanktion (§15); toten Config-Block `run.nexus_milestones` verdrahten oder entfernen — Mittel
 - [ ] **A8 Nexus-Schulden**: 95 %-Warnmeldung + manuelle Rückzahlung (§18.2) — Mittel, nach F3
@@ -56,7 +56,7 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [x] **C13** ✅ 2026-09-06 (GDD-Konsolidierung) — Terminologie-Pass „INNN" → Kolonieprotokoll/Nexus-Funk (29 Stellen im GDD)
 - [ ] **C14** ADR-0004-Zahlen aus §14/§18.2/§6-Prosa entfernen
 - [ ] **C16** §4 „Agrardom ist Pflicht-Gate für CC Lv2": Config-Kommentar und GDD behaupten eine Prüfung am CC-Levelup, `ColonyController::investBuilding()` prüft sie nicht (nur `placeBuilding()` vor Pfadgebäuden). Owner-Frage: Gate implementieren oder Text streichen
-- [ ] **C15** `docs/gdd/techtree.md`: Max-Level-Spalte, `strategist`-Zeile 166, Bio-Anlage-Gate
+- [x] **C15** ✅ 2026-09-06 — `docs/gdd/techtree.md`: Max-Level-Spalte, `strategist`-Zeile 166, Bio-Anlage-Gate
 - [ ] **Stufe 6** `docs/gdd/onboarding.md` §16.5 Budget-Rechnung auf einen Pool und `ap.base = 12` umrechnen
 
 ---

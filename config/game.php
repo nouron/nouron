@@ -276,7 +276,7 @@ return [
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
-        'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
+        'overcap_factor' => 1.5,  // decay multiplier when colony is over supply cap (GDD §13.1: 2.0 doubled the maintenance share of the AP pool; 1.5 keeps over-cap painful but not paralysing)
     ],
 
     // GDD §9 "Begegnungen & Gefahren" — first-pass calibration figures (Richtwerte),
@@ -422,7 +422,7 @@ return [
         'trader_discount' => [0 => 0.00, 1 => 0.10, 2 => 0.20, 3 => 0.30],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'offer_duration' => 2,  // fallback when bar level unknown
-        'ap_cost_accept' => 1,
+        'ap_cost_accept' => 2,  // 1→2 with the shared AP pool (GDD §13.6 Handlungs-AP): trades compete with build/knowledge projects
         'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],
         'level_max_concurrent' => [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
 
@@ -430,7 +430,7 @@ return [
         // muss zugewiesen und verfügbar sein (kein Rang-Minimum über Rang 1 hinaus).
         // AP ist bewusst NICHT der eigentliche Deckel (siehe GDD): der Preis ist der
         // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf.
-        'ap_cost_negotiate' => 3,
+        'ap_cost_negotiate' => 4,  // 3→4, same reason as ap_cost_accept
         'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
         'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
     ],

@@ -1517,7 +1517,7 @@ Der Konsul trägt zum gemeinsamen AP-Pool bei (Beitrag steigt mit Rang), verbess
 
 **Cantina-Verhandlung (Risiko-Handel):**
 
-Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, 1 AP) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
+Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
 
 > **Nicht zu verwechseln** mit der "Konsul-Verhandlung" beim Schiffskauf (§8b, Hangar-Screen): dort ist der niedrigere Preis garantiert, hier nicht. Diese Mechanik heißt bewusst anders.
 
@@ -1654,7 +1654,7 @@ Eine Untergrenze würde genau den Allokationsschmerz entfernen, der der Zweck de
 
 > **Die reale Gefahr ist die fehlende Obergrenze, nicht die fehlende Untergrenze.** Ein Spieler, der jeden Sol den ganzen Pool in Reparaturen kippt, verliert den Run langsam, ohne es zu merken. Dagegen hilft keine Bodengarantie — nur die Instandhaltungsanzeige im Dashboard (13.4). Sie ist der Ersatz für die Bodengarantie und darf deshalb nicht als Komfort-Feature wegpriorisiert werden.
 
-> **Geplant (ROADMAP A4): `decay.overcap_factor` 2.0 → 1.5.** Bei Überschreitung des Supply-Caps verdoppelt sich die Instandhaltung — bei ~7 AP/Sol Basislast springt der Anteil von 32 % auf 64 % des Pools. **Das** ist der „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Fall; er entsteht nicht aus dem Verfall, sondern aus diesem Multiplikator. Zusätzlich muss Over-Cap ein **sichtbarer Zustand** sein (Dashboard + Protokoll-Meldung), nicht ein stiller Faktor, und es muss einen Gegenzug geben — zu prüfen ist, ob freiwilliger Abriss über die UI erreichbar ist (§13 „AP-Verbrauch" nennt „Reparatur/Abbau").
+> **`decay.overcap_factor` = 1.5.** Bei Überschreitung des Supply-Caps steigt die Instandhaltung um die Hälfte — spürbar, aber nicht lähmend (eine Verdopplung hätte den Anteil bei ~7 AP/Sol Basislast von 32 % auf 64 % des Pools getrieben). **Das** ist der „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Fall; er entsteht nicht aus dem Verfall, sondern aus diesem Multiplikator. Zusätzlich muss Over-Cap ein **sichtbarer Zustand** sein (Dashboard + Protokoll-Meldung), nicht ein stiller Faktor, und es muss einen Gegenzug geben — zu prüfen ist, ob freiwilliger Abriss über die UI erreichbar ist (§13 „AP-Verbrauch" nennt „Reparatur/Abbau").
 
 ---
 
@@ -1789,7 +1789,7 @@ Das Errichten (Level 1) kostet bewusst weniger als Level-Ups — Anreiz für bre
 
 #### Handlungs-AP
 
-Sofort-Handlungen (Handel, Erkundung, Dispatch) sind gegen den gemeinsamen Pool kalibriert: deutlich billiger als Projekte, aber nicht kostenlos — sie konkurrieren um denselben Pool. Lange Missionen kosten einen nennenswerten Anteil des Pools; Ring-Erkundungen skalieren mit der Entfernung, damit die Karte nicht zu schnell aufgedeckt wird. Werte: `config/game.php` (Handel, Erkundung), `config/missions.php` (Navigation-AP pro Sol). *Geplant (Stufe 3):* Handels-AP (`bar.ap_cost_accept`/`ap_cost_negotiate`) an den gemeinsamen Pool nachziehen.
+Sofort-Handlungen (Handel, Erkundung, Dispatch) sind gegen den gemeinsamen Pool kalibriert: deutlich billiger als Projekte, aber nicht kostenlos — sie konkurrieren um denselben Pool. Lange Missionen kosten einen nennenswerten Anteil des Pools; Ring-Erkundungen skalieren mit der Entfernung, damit die Karte nicht zu schnell aufgedeckt wird. Werte: `config/game.php` (Handel, Erkundung), `config/missions.php` (Navigation-AP pro Sol). Handels-AP (`bar.ap_cost_accept`/`ap_cost_negotiate`) sind gegen den gemeinsamen Pool gesetzt.
 
 > **Die Regel „Gelegenheiten sind durch Verfügbarkeit begrenzt" (13.2) ist ohne neue Mechanik erfüllt.** Missionen sind durch Schiffszahl und Rundlaufzeit begrenzt, Bar-Angebote durch `guest_count` und `level_max_concurrent`. Zusammen binden sie einen kleinen Teil des Pools — genau der beabsichtigte Deckel.
 

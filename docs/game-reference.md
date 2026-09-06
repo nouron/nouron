@@ -54,7 +54,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 
 ## 4. Gebäude: Decay-Raten & Status-Points
 
-Decay-Rate = **Status Points pro Tick** verloren (multipliciert ggü. Supply-Overcap ×2).
+Decay-Rate = **Status Points pro Tick** verloren (multipliziert ggü. Supply-Overcap ×1,5, `game.decay.overcap_factor`).
 
 | Gebäude | Klasse | Decay-Rate | Max SP | Tage bis Level-Down |
 |---|---|---|---|---|
@@ -225,8 +225,8 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | Gebäude-Levelup | construction | *Individuell; Rabatt via construction/trade* |
 | Kenntnis-Levelup | research | *20–52 je Ziel-Level* |
 | Feld erkunden | navigation | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3); Rabatt via cartography |
-| Handel annehmen | economy | 1 |
-| Handel verhandeln | economy | 3 (+ risk) |
+| Handel annehmen | economy | 2 |
+| Handel verhandeln | economy | 4 (+ risk) |
 
 ---
 
