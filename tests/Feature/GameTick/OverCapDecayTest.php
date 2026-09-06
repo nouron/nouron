@@ -13,7 +13,7 @@ use Tests\TestCase;
  * Supply over-cap penalty tests.
  *
  * Rule (GDD §6): When a colony's owner has consumed more supply than their cap
- * (getFreeSupply() < 0), buildings and researches decay at 2× the normal rate.
+ * (getFreeSupply() < 0), buildings and researches decay at overcap_factor × the normal rate (config).
  * Ships are fleet-scoped and are not affected.
  *
  * Over-cap setup used throughout:
@@ -163,10 +163,10 @@ class OverCapDecayTest extends TestCase
     // ── Building decay with overcap ───────────────────────────────────────────
 
     /**
-     * Building status_points must decrease at 2× decay_rate when colony is over cap.
+     * Building status_points must decrease at decay_rate × overcap_factor when colony is over cap.
      *
-     * oremine (id 27): decay_rate=0.17, overcap_factor=2.0
-     * Expected: SP = 10.0 - (0.17 × 2.0) = 9.66
+     * oremine (id 27): decay_rate=0.17, overcap_factor from config (1.5)
+     * Expected: SP = 10.0 - (0.17 × 1.5) = 9.745
      */
     public function test_building_decays_faster_when_colony_is_over_cap(): void
     {
@@ -185,7 +185,8 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->value('status_points');
 
-        $this->assertEqualsWithDelta(10.0 - (0.17 * 2.0), $sp, 0.001,
+        $factor = (float) config('game.decay.overcap_factor');
+        $this->assertEqualsWithDelta(10.0 - (0.17 * $factor), $sp, 0.001,
             'Building SP must decrease by rate × overcap_factor when over cap');
     }
 
@@ -216,10 +217,10 @@ class OverCapDecayTest extends TestCase
     // ── Research decay with overcap ───────────────────────────────────────────
 
     /**
-     * Research status_points must decrease at 2× decay_rate when colony is over cap.
+     * Research status_points must decrease at decay_rate × overcap_factor when colony is over cap.
      *
-     * test_decay_placeholder (research_id=9901): decay_rate=0.13, overcap_factor=2.0
-     * Expected: SP = 15.0 - (0.13 × 2.0) = 14.74
+     * test_decay_placeholder (research_id=9901): decay_rate=0.13, overcap_factor from config (1.5)
+     * Expected: SP = 15.0 - (0.13 × 1.5) = 14.805
      */
     public function test_research_decays_faster_when_colony_is_over_cap(): void
     {
@@ -241,7 +242,8 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('research_id', 9901)
             ->value('status_points');
 
-        $this->assertEqualsWithDelta(15.0 - (0.13 * 2.0), $sp, 0.001,
+        $factor = (float) config('game.decay.overcap_factor');
+        $this->assertEqualsWithDelta(15.0 - (0.13 * $factor), $sp, 0.001,
             'Research SP must decrease by rate × overcap_factor when over cap');
     }
 
