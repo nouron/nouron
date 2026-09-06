@@ -4,6 +4,7 @@
 
 - Feature: proaktiver Onboarding-Hinweis, wenn das Regolith-Vorkommen des aktiven Harvester-Tiles unter `game.harvester.low_regolith_warning_pct` (30%) fällt (`OnboardingHintService::checkHintHarvesterLowRegolith()`, GDD §4c BALANCE CONCERN, Owner-Playtest-Fund 2026-09-04). Gemeinsame Query mit der Hex-Grid-Anzeige in `ColonyTileService::activeHarvesterRegolithTiles()` extrahiert, damit Hint und Kartenanzeige nie auseinanderlaufen.
 - Backend: `ColonyController::hexview()` liefert neu `regolithFallbackTiles` (erkundete, nicht erschöpfte Regolith-Ausweich-Tiles außer dem aktiven Harvester-Tile) für eine kommende Kartenmarkierung (UI-Folge-Task).
+- UI: Kolonie-Hex-Karte markiert jedes Tile aus `regolithFallbackTiles` zusätzlich zum blauen Ressourcen-Punkt mit einem violetten Pfeil-Badge (`isRegolithFallbackTile()` in `colony-hexgrid.js`) inkl. Tooltip "Ausweichziel für Harvester-Verlegung" — schließt den zweiten Teil der GDD §4c-BALANCE-CONCERN-Empfehlung ab.
 
 ## 2026-09-05
 

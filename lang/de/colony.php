@@ -171,6 +171,7 @@ return [
     'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone anklicken — zeigt Vorschaupfeil mit AP-Kosten. Gedrückt halten zum Verlegen.',
     'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (AP).',
     'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
+    'regolith_fallback_tile_hint' => 'Erkundetes Regolith-Vorkommen — Ausweichziel für Harvester-Verlegung.',
     'network_error' => 'Netzwerkfehler — bitte erneut versuchen.',
     'error_harvester_in_transit' => 'Der Harvester ist noch unterwegs — Verlegen erst nach Ankunft möglich.',
     'harvester_in_transit' => 'Unterwegs — Ankunft nächsten Sol.',
