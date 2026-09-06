@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-06
+
+- Feature: proaktiver Onboarding-Hinweis, wenn das Regolith-Vorkommen des aktiven Harvester-Tiles unter `game.harvester.low_regolith_warning_pct` (30%) fällt (`OnboardingHintService::checkHintHarvesterLowRegolith()`, GDD §4c BALANCE CONCERN, Owner-Playtest-Fund 2026-09-04). Gemeinsame Query mit der Hex-Grid-Anzeige in `ColonyTileService::activeHarvesterRegolithTiles()` extrahiert, damit Hint und Kartenanzeige nie auseinanderlaufen.
+- Backend: `ColonyController::hexview()` liefert neu `regolithFallbackTiles` (erkundete, nicht erschöpfte Regolith-Ausweich-Tiles außer dem aktiven Harvester-Tile) für eine kommende Kartenmarkierung (UI-Folge-Task).
+
 ## 2026-09-05
 
 - Fix: Owner-Korrektur zur Gebäude-Zustandsanzeige (nach 585fc5e) — Hex-Tile-Ring und Farbcodierung an Sidebar-Titel/Zustand-Chip waren zu viel des Guten, komplett entfernt. Einziger verbleibender Zustands-Hinweis ist jetzt die Textfarbe des Gebäude-Labels direkt auf dem Hex-Tile (z.B. "CA 1"), gelb/rot bei denselben Schwellen wie zuvor.

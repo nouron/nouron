@@ -382,6 +382,51 @@ class ColonyTileService
         return $rows;
     }
 
+    /**
+     * Tiles currently occupied by an active Harvester instance (level > 0, placed,
+     * not mid-relocation) that carry a regolith resource_max — i.e. the tiles the
+     * hex-grid regolith badge and the low-regolith onboarding hint both read.
+     * Single source of truth for "which tile is the active Harvester on, and how
+     * much regolith does it have left" — kept here so ColonyController::hexview()
+     * (tile display) and OnboardingHintService (warning hint) can never disagree
+     * on the underlying numbers (see Owner-Playtest-Fund 2026-09-04, GDD §4c).
+     *
+     * @return Collection<int, \stdClass> each with q, r, tile_type, resource_amount, resource_max
+     */
+    public function activeHarvesterRegolithTiles(int $colonyId, int $globalTick): Collection
+    {
+        $activeHarvesterTileKeys = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('level', '>', 0)
+            ->whereNotNull('tile_x')
+            ->whereNotNull('tile_y')
+            ->where(fn ($q) => $q->whereNull('pending_until_tick')->orWhere('pending_until_tick', '<', $globalTick))
+            ->get(['tile_x', 'tile_y'])
+            ->map(fn ($row) => $row->tile_x.','.$row->tile_y)
+            ->flip();
+
+        if ($activeHarvesterTileKeys->isEmpty()) {
+            return collect();
+        }
+
+        $regolithMaxCfg = config('game.harvester.resource_max', []);
+
+        return DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->get(['q', 'r', 'tile_type', 'resource_amount'])
+            ->filter(fn ($tile) => $activeHarvesterTileKeys->has($tile->q.','.$tile->r))
+            ->map(function ($tile) use ($regolithMaxCfg) {
+                $configMax = (int) ($regolithMaxCfg[$tile->tile_type] ?? 0);
+                $tile->resource_max = $configMax;
+                $tile->resource_amount = min((int) ($tile->resource_amount ?? $configMax), $configMax);
+
+                return $tile;
+            })
+            ->filter(fn ($tile) => $tile->resource_max > 0)
+            ->values();
+    }
+
     private function ringCoords(int $ring): array
     {
         if ($ring === 0) {

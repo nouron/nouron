@@ -1386,6 +1386,77 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('colony.onboarding_hint_encounter', $hint['text_key']);
     }
 
+    // ── Harvester low-regolith warning (Owner-Playtest-Fund 2026-09-04, GDD §4c) ──
+
+    /**
+     * Rank 19 (lowest — appended after hint_encounter rather than renumbering
+     * hint_2's neighbourhood, so the many hardcoded rank assertions above stay
+     * stable): an active Harvester's tile has dropped below the configured
+     * low-regolith warning threshold. Mirrors ColonyController::hexview()'s
+     * regolith_remaining/regolith_max computation exactly (both read
+     * ColonyTileService::activeHarvesterRegolithTiles()) so the hint and the
+     * hex-grid tile display can never disagree on the underlying numbers.
+     */
+    public function test_harvester_low_regolith_hint_fires_below_threshold(): void
+    {
+        $this->moveHarvesterOutside();
+        DB::table('colony_tiles')
+            ->where('colony_id', $this->colonyId)->where('q', 3)->where('r', 0)
+            ->update(['resource_amount' => 50, 'resource_max' => 300]); // 16.7% — below default 30%
+
+        foreach ([
+            'hint_1', 'hint_repair_urgent', 'hint_2', 'hint_3', 'hint_advisor_slot2',
+            'hint_agrardome', 'hint_repair', 'hint_invest_site', 'hint_build_priority',
+            'hint_6', 'hint_analytik', 'hint_hangar_path', 'hint_explore', 'hint_4',
+            'hint_5', 'hint_spend_remaining_ap', 'hint_end_sol', 'hint_encounter',
+        ] as $key) {
+            $this->service->dismissHint($this->userId, $key);
+        }
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_harvester_low_regolith', $hint['key']);
+        $this->assertSame(19, $hint['rank']);
+        $this->assertSame('colony.onboarding_hint_harvester_low_regolith', $hint['text_key']);
+        $this->assertSame('/colony/view', $hint['target_url']);
+    }
+
+    public function test_harvester_low_regolith_hint_silent_above_threshold(): void
+    {
+        $this->moveHarvesterOutside();
+        DB::table('colony_tiles')
+            ->where('colony_id', $this->colonyId)->where('q', 3)->where('r', 0)
+            ->update(['resource_amount' => 240, 'resource_max' => 300]); // 80% — above threshold
+
+        foreach ([
+            'hint_1', 'hint_repair_urgent', 'hint_2', 'hint_3', 'hint_advisor_slot2',
+            'hint_agrardome', 'hint_repair', 'hint_invest_site', 'hint_build_priority',
+            'hint_6', 'hint_analytik', 'hint_hangar_path', 'hint_explore', 'hint_4',
+            'hint_5', 'hint_spend_remaining_ap', 'hint_end_sol', 'hint_encounter',
+        ] as $key) {
+            $this->service->dismissHint($this->userId, $key);
+        }
+
+        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+    }
+
+    public function test_harvester_low_regolith_hint_silent_without_active_harvester(): void
+    {
+        // Harvester stays in the colony zone (never relocated) — no regolith tile
+        // is associated with it at all, so the hint must not crash or fire.
+        foreach ([
+            'hint_1', 'hint_repair_urgent', 'hint_2', 'hint_3', 'hint_advisor_slot2',
+            'hint_agrardome', 'hint_repair', 'hint_invest_site', 'hint_build_priority',
+            'hint_6', 'hint_analytik', 'hint_hangar_path', 'hint_explore', 'hint_4',
+            'hint_5', 'hint_spend_remaining_ap', 'hint_end_sol', 'hint_encounter',
+        ] as $key) {
+            $this->service->dismissHint($this->userId, $key);
+        }
+
+        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function moveHarvesterOutside(): void

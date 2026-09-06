@@ -19,6 +19,8 @@ class OnboardingHintService
         private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
+        private readonly ColonyTileService $colonyTileService,
+        private readonly TickService $tickService,
     ) {}
 
     /**
@@ -256,6 +258,13 @@ class OnboardingHintService
                 'text_key' => 'colony.onboarding_hint_encounter',
                 'target_url' => '/colony/view',
             ],
+            [
+                'rank' => 19,
+                'key' => 'hint_harvester_low_regolith',
+                'active' => $this->checkHintHarvesterLowRegolith($colonyId),
+                'text_key' => 'colony.onboarding_hint_harvester_low_regolith',
+                'target_url' => '/colony/view',
+            ],
         ];
     }
 
@@ -463,6 +472,30 @@ class OnboardingHintService
             ->where('r', $harvester->tile_y)
             ->where('is_colony_zone', 1)
             ->exists();
+    }
+
+    /**
+     * Harvester low-regolith warning (rank 19 — appended after hint_encounter rather
+     * than renumbered into hint_2's neighbourhood, to keep the many existing rank
+     * assertions in OnboardingHintServiceTest stable; thematically it belongs here,
+     * next to hint_2's "move the Harvester" guidance). Owner-Playtest-Fund
+     * 2026-09-04 (GDD §4c BALANCE CONCERN): declining yield from tile depletion
+     * read as a bug because nothing told the player their active tile was running
+     * low, or that a pre-scouted Ring-3 fallback (ColonyTileService::
+     * randomizeOuterRingRows()) was already available to relocate to.
+     *
+     * Reuses ColonyTileService::activeHarvesterRegolithTiles() — the exact same
+     * query ColonyController::hexview() uses for the tile's regolith_remaining/
+     * regolith_max display — so the hint and the hex-grid badge can never disagree
+     * on whether a tile counts as "low".
+     */
+    private function checkHintHarvesterLowRegolith(int $colonyId): bool
+    {
+        $threshold = (float) config('game.harvester.low_regolith_warning_pct', 0.30);
+        $globalTick = $this->tickService->getTickCount();
+
+        return $this->colonyTileService->activeHarvesterRegolithTiles($colonyId, $globalTick)
+            ->contains(fn ($tile) => ($tile->resource_amount / $tile->resource_max) < $threshold);
     }
 
     /**
