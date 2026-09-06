@@ -1,6 +1,6 @@
 # Handoff — AP-Ratenmodell und Ressourcen-Zahlensatz
 
-**Stand:** 2026-08-03 · **Vorarbeit:** PR #231, #232, #233 · **Status:** Design steht und ist **freigegeben**, nichts ist implementiert
+**Stand:** 2026-08-03 · **Vorarbeit:** PR #231, #232, #233 · **Status:** historisch — Stufen 0, 1, 1c und 2 sind umgesetzt (siehe ROADMAP Phase 3o); offen sind Stufen 1b/1d, 3, 4, 6. Aktueller Abgleich: `docs/audit-implementierungsstand-2026-09-06.md`
 
 Dieses Dokument ist die Übergabe an einen Agenten, der die Umsetzung beginnt. Es enthält den Kontext, der nicht aus dem Code hervorgeht — die Details stehen im GDD und in der ROADMAP, hier steht, was man wissen muss, um sie richtig zu lesen.
 

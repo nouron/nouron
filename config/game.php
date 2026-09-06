@@ -245,13 +245,13 @@ return [
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
-    // Formula: CC-Level × cap_commandcenter + housing_units × cap_housingcomplex + Σ(knowledge_cap_per_level)
+    // Formula: CC-Level × cap_commandcenter + Σ(housing instance levels) × cap_housingcomplex + Σ(knowledge_cap_per_level)
     // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
         'cap_max' => 200,   // absolute hard cap across the whole colony
         'cap_commandcenter' => 10,    // supply cap per CC level (max Lv5 → 50)
-        'cap_housingcomplex' => 8,     // supply cap per housing unit (max 6 units → 48)
+        'cap_housingcomplex' => 8,     // supply cap per housing LEVEL, summed over instances (6 instances × Lv3 → 144 theoretical; see GDD §6 / Audit C6)
         'knowledge_cap_per_level' => [  // non-linear cap bonus per knowledge level (bell curve)
             1 => 3,
             2 => 5,
@@ -497,9 +497,7 @@ return [
     // CC-Level gate for knowledge research levels 4 and 5.
     // A colony must have CommandCenter (ID 25) at this level before a Kenntnis
     // can be levelled to the corresponding level.
-    // Enforcement logic (invest/levelup guard) is not yet implemented — this
-    // entry documents the design rule and will be read by the service in a
-    // future sprint.
+    // Enforced in ResearchService::levelupBlocker() (returns 'knowledge_cc_gate').
     //
     // Format: knowledge_level => required_cc_level
     'knowledge_cc_level_cap' => [
@@ -542,6 +540,8 @@ return [
         'playbymailmode' => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
 
         // Nexus intervention milestones (tick numbers, GDD §15 "Nexus-Eingriffe").
+        // NOTE (Audit 2026-09-06, A7): this block is currently NOT read anywhere —
+        // RunProgressService hard-codes Phase-2-Sol 30/50/65/80. Wire up or remove.
         'nexus_milestones' => [
             30 => 'warn_progress',   // at tick 30: at least 1 task must be >50% done, else INNN warning
             50 => 'warn_none_done',  // at tick 50: if 0 tasks fully done, second INNN warning

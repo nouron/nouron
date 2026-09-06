@@ -1,6 +1,6 @@
 # Entity-Chip-System — GDD-Spezifikation
 
-**Status:** Design-Entwurf (Stand: 2026-06-07)
+**Status:** Implementiert (Phase 3j/3k, ADR 0002) — Spezifikation vom 2026-06-07, als Referenz behalten
 **Betrifft:** Kolonieprotokoll (CommLog), alle Screens mit Entity-Referenzen in Fliesstext
 **Prioritat:** Phase 3k (nach Phase 3j CommLog-Redesign)
 

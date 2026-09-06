@@ -6,6 +6,8 @@
 
 **Methode:** Für jedes Kapitel des GDD wurde geprüft, ob die beschriebene Mechanik in Config/Code existiert, und umgekehrt, ob als „offen" markierte Punkte in ROADMAP/Anhängen inzwischen umgesetzt sind. Tests wurden nicht ausgeführt — `composer install` scheiterte im Audit-Container an der GitHub-Authentifizierung (kein `vendor/`); letzter dokumentierter Stand laut CHANGELOG: Suite grün (~1147 Testmethoden). Vor Task-Start lokal `bin/phpunit` laufen lassen.
 
+**Status 2026-09-06 (Owner-Entscheidung):** Kategorien **B** und **D** wurden noch am selben Tag behoben (GDD §9/§15/§18.6/§4c, ROADMAP, CLAUDE.md, `game-reference.md`, `gdd-balance-checklist.md`, `gdd-config-audit.md` → Stub, `handoff-ap-ratenmodell.md`, `entity-chips.md`, `onboarding.md`-Terminologie, Config-Kommentare). Kategorien **A** und **C** sowie die acht Owner-Fragen sind als primäre Aufgaben der Woche ab 2026-09-07 in `ROADMAP.md` („Nächste Woche") festgehalten. Nicht behoben in D: Budget-Rechnung `onboarding.md` §16.5 (Design-Arbeit, → Stufe 6) und D7 (Schema-Reste, nur Sammelliste).
+
 Gliederung: **A** = Design vorhanden, Code fehlt · **B** = Code vorhanden, Doku sagt „offen" · **C** = Doku widerspricht Code inhaltlich · **D** = Doku-Hygiene (veraltete Status-/Referenzangaben) · **E** = Diskussionsfragen / Task-Vorschlag.
 
 ---

@@ -8,13 +8,13 @@
 - Frontend-Migration: jQuery vollständig entfernt (Mai 2026). Bootstrap-5-Migration ebenfalls abgeschlossen — inkl. `techtree/technology.blade.php` (2026-08-22 als toter Code entfernt, ersetzt durch das Alpine-Detailpanel in `techtree/index.blade.php`). Kein Bootstrap-CSS/JS mehr eingebunden (nur `bootstrap-icons`-Font, unabhängig vom Framework).
 - Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3 (UI) abgeschlossen (Mai 2026, siehe ROADMAP.md)
 
-## Aktueller Stand (Stand: 2026-08-22)
+## Aktueller Stand (Stand: 2026-09-06)
 
 **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 
-**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Trust-System (Vertrauen), Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Bootstrap-5-Migration (vollständig, kein Rest mehr), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
+**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System (ein gemeinsamer Pool), Berater-System, Decay-System, Trust-System (Vertrauen), Supply-System, Kolonieprotokoll + Nexus-Funk (`/comm-log`, ersetzt INNN), Hex-Grid Kolonieansicht, Reisender Händler (Corvan), Corporate Contact (Orin), jQuery-Migration (vollständig), Bootstrap-5-Migration (vollständig, kein Rest mehr), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System (2 Phasen, 8 Objectives, 4 Fail-States), Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Hangar + Außenmissionen (13 Missionen, Erfolgschance/Schwierigkeit), Encounters (Sturm/Instabilität/Seuche), Kenntnis-Effekte (6 von 7), Gebäude-Ausbaustufen (Tier-System), Harvester-Erschöpfung + Zweitinstanz, PlaytestBot + Dashboard, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt). **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Fleet-Overlay, Kommandanten-Zuweisung, INNN-Messaging — siehe `docs/gdd/archiv-flotten-systemkarte.md`.
 
-**Laufend:** GDD-Cleanup (Balance-TODOs nach Playtest, siehe `docs/gdd-config-audit.md`), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow). Cantina-Redesign abgeschlossen (Bar-Hintergrund `cantina-interior.webp` + NPC-Charaktere via `config('characters')` + Hotspot-Portraits).
+**Laufend:** Phase 3o AP-Ratenmodell (Stufen 3/4/6 offen) und Bot-Kalibrierung; Abarbeitung des Implementierungsstand-Audits — offene Punkte (Kategorie A/C + Owner-Fragen) stehen in `docs/audit-implementierungsstand-2026-09-06.md` und ROADMAP „Nächste Woche". Onboarding: Triggers + Hints implementiert, kein dedizierter New-Player-Flow.
 
 ## Wichtige Korrekturen
 
