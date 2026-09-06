@@ -4,7 +4,7 @@ Stand: 2026-09-06
 
 ## Nächste Woche (ab 2026-09-07): Primäre Aufgaben aus dem Implementierungsstand-Audit
 
-Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Abschnitt E). Kategorien B und D (Doku-Hygiene) wurden am 2026-09-06 direkt behoben. Owner-Entscheidung 2026-09-06: A, C und die acht Fragen sind die primären Aufgaben der kommenden Woche.
+Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Abschnitt E). Kategorien B und D (Doku-Hygiene) wurden am 2026-09-06 direkt behoben; das GDD wurde am selben Tag von gestapelten Nachträgen/Korrekturen auf Ist-/Soll-Zustand konsolidiert (3640 → ~2990 Zeilen), dabei C3/C5/C7/C8/C10–C13 miterledigt. Owner-Entscheidung 2026-09-06: A, C und die acht Fragen sind die primären Aufgaben der kommenden Woche.
 
 ### Owner-Fragen (zuerst klären, blockieren Tasks)
 
@@ -43,18 +43,19 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 
 - [ ] **C1** §13.1 „Upkeep-Verlust läuft über `nexus_debt`" — nach F3
 - [ ] **C2** §7 Instanz-Zerstörung vs. Level-0-Ruine — nach F2
-- [ ] **C3** §4 Uplink Lv2 „Tiefenscan 1 Sol weniger" → Code: Scan-AP 2 → 1; Text angleichen
+- [x] **C3** ✅ 2026-09-06 (GDD-Konsolidierung) — §4 Uplink Lv2 „Tiefenscan 1 Sol weniger" → Code: Scan-AP 2 → 1; Text angleichen
 - [ ] **C4** §15/§18.4 Phase-1-Bedingung — nach F7
-- [ ] **C5** §15 Fail States / Gnadenfrist auf Phase-2-Sol-Basis und Instant-Trust-Fail umschreiben (§18.5-TODO seit 06-28) — zusammen mit A7
+- [x] **C5** ✅ 2026-09-06 (GDD-Konsolidierung) — §15 Fail States / Gnadenfrist auf Phase-2-Sol-Basis und Instant-Trust-Fail umschreiben (§18.5-TODO seit 06-28) — zusammen mit A7
 - [ ] **C6** §6 Supply-Cap Wohnhabitat: „pro Einheit" vs. Σ Level × 8; Ziel-Cap nach Tier-System neu prüfen (Stufe 1d, `cap_max` 200)
-- [ ] **C7** §8b Missionstabelle: `mission_aid_transport` ungegatet, `mission_harvester_salvage` ergänzen, Lieferzeiten 1/2/3
-- [ ] **C8** §4 Gebäudetabelle: Max-Level-Spalte (alle 13 gedeckelt), Wohnhabitat Lv3 × 6 Instanzen, „11 aktive + 3 im Design" → 13 implementiert
+- [x] **C7** ✅ 2026-09-06 (GDD-Konsolidierung) — §8b Missionstabelle: `mission_aid_transport` ungegatet, `mission_harvester_salvage` ergänzen, Lieferzeiten 1/2/3
+- [x] **C8** ✅ 2026-09-06 (GDD-Konsolidierung) — §4 Gebäudetabelle: Max-Level-Spalte (alle 13 gedeckelt), Wohnhabitat Lv3 × 6 Instanzen, „11 aktive + 3 im Design" → 13 implementiert
 - [ ] **C9** §4c Zuordnungstabelle — nach F1
-- [ ] **C10** §10 Liste implementierter Kenntnis-Effekte vervollständigen (geology, agronomy-Organika, health-Seuche, defense-Sturm, trade-Preisbonus, Analytik Lv4/5)
-- [ ] **C11** §13 „Implementierung": `PersonellService` → `AdvisorService`, `FleetService` entfernen
-- [ ] **C12** Tick-Schrittnummern in §8b/§13/§14 auf die 1–15-Nummerierung von `GameTick.php` (Stufe 6)
-- [ ] **C13** Terminologie-Pass „INNN" → Kolonieprotokoll/Nexus-Funk (29 Stellen im GDD)
+- [x] **C10** ✅ 2026-09-06 (GDD-Konsolidierung) — §10 Liste implementierter Kenntnis-Effekte vervollständigen (geology, agronomy-Organika, health-Seuche, defense-Sturm, trade-Preisbonus, Analytik Lv4/5)
+- [x] **C11** ✅ 2026-09-06 (GDD-Konsolidierung) — §13 „Implementierung": `PersonellService` → `AdvisorService`, `FleetService` entfernen
+- [x] **C12** ✅ 2026-09-06 (GDD-Konsolidierung) — Tick-Schrittnummern in §8b/§13/§14 auf die 1–15-Nummerierung von `GameTick.php` (Stufe 6)
+- [x] **C13** ✅ 2026-09-06 (GDD-Konsolidierung) — Terminologie-Pass „INNN" → Kolonieprotokoll/Nexus-Funk (29 Stellen im GDD)
 - [ ] **C14** ADR-0004-Zahlen aus §14/§18.2/§6-Prosa entfernen
+- [ ] **C16** §4 „Agrardom ist Pflicht-Gate für CC Lv2": Config-Kommentar und GDD behaupten eine Prüfung am CC-Levelup, `ColonyController::investBuilding()` prüft sie nicht (nur `placeBuilding()` vor Pfadgebäuden). Owner-Frage: Gate implementieren oder Text streichen
 - [ ] **C15** `docs/gdd/techtree.md`: Max-Level-Spalte, `strategist`-Zeile 166, Bio-Anlage-Gate
 - [ ] **Stufe 6** `docs/gdd/onboarding.md` §16.5 Budget-Rechnung auf einen Pool und `ap.base = 12` umrechnen
 
