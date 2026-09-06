@@ -123,28 +123,37 @@ class ColonyController extends BaseController
         // Same activity gate GameTick::generateHarvesterYield() uses to decide whether
         // a Harvester instance produces this Sol (Owner-Playtest-Fund 2026-09-04: the
         // depleting resource_amount was invisible to the player, a shrinking yield
-        // looked like a bug instead of the intended depletion mechanic).
-        $activeHarvesterTileKeys = DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)
-            ->where('building_id', BuildingId::Harvester->value)
-            ->where('level', '>', 0)
-            ->whereNotNull('tile_x')
-            ->whereNotNull('tile_y')
-            ->where(fn ($q) => $q->whereNull('pending_until_tick')->orWhere('pending_until_tick', '<', $globalTick))
-            ->get(['tile_x', 'tile_y'])
-            ->map(fn ($row) => $row->tile_x.','.$row->tile_y)
-            ->flip();
+        // looked like a bug instead of the intended depletion mechanic). Shared with
+        // OnboardingHintService — see ColonyTileService::activeHarvesterRegolithTiles().
+        $activeRegolithTiles = $this->tileService->activeHarvesterRegolithTiles($colony->id, $globalTick)
+            ->keyBy(fn ($tile) => $tile->q.','.$tile->r);
 
-        $regolithMaxCfg = config('game.harvester.resource_max', []);
-        $tiles = $tiles->map(function ($tile) use ($activeHarvesterTileKeys, $regolithMaxCfg) {
-            $configMax = (int) ($regolithMaxCfg[$tile['tile_type']] ?? 0);
-            if ($configMax > 0 && isset($activeHarvesterTileKeys[$tile['q'].','.$tile['r']])) {
-                $tile['regolith_remaining'] = min((int) ($tile['resource_amount'] ?? $configMax), $configMax);
-                $tile['regolith_max'] = $configMax;
+        $tiles = $tiles->map(function ($tile) use ($activeRegolithTiles) {
+            $active = $activeRegolithTiles->get($tile['q'].','.$tile['r']);
+            if ($active !== null) {
+                $tile['regolith_remaining'] = $active->resource_amount;
+                $tile['regolith_max'] = $active->resource_max;
             }
 
             return $tile;
         });
+
+        // Ausweich-Tiles (GDD §4c BALANCE CONCERN, Owner-Playtest-Fund 2026-09-04):
+        // explored, not-yet-depleted regolith tiles other than the currently active
+        // Harvester tile(s) — the pre-scouted Ring-3 relocation targets the map should
+        // highlight once the active tile runs low. Pure data for the map UI (see
+        // OnboardingHintService::checkHintHarvesterLowRegolith() for the accompanying
+        // hint bar warning).
+        $activeRegolithKeys = $activeRegolithTiles->keys();
+        $regolithFallbackTiles = DB::table('colony_tiles')
+            ->where('colony_id', $colony->id)
+            ->where('is_explored', 1)
+            ->where('resource_max', '>', 0)
+            ->where('resource_amount', '>', 0)
+            ->get(['q', 'r'])
+            ->reject(fn ($tile) => $activeRegolithKeys->contains($tile->q.','.$tile->r))
+            ->map(fn ($tile) => ['q' => (int) $tile->q, 'r' => (int) $tile->r])
+            ->values();
 
         // Name lookup for computeRequiredList() — buildings only ever carry a
         // single required_building_id (no required_building2_id, unlike researches).
@@ -209,7 +218,7 @@ class ColonyController extends BaseController
 
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────

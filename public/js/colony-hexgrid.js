@@ -118,6 +118,9 @@ function colonyHexView(config) {
         criticalThresholdPct: config.criticalThresholdPct ?? 0.33,
         relocateApPerHex: config.relocateApPerHex ?? 2,
         phaseProgress: config.phaseProgress ?? null,
+        // Explored, non-depleted regolith tiles other than the active harvester
+        // tile — flagged on the grid as relocation alternatives (GDD §4c).
+        regolithFallbackTiles: config.regolithFallbackTiles ?? [],
         selectedTile: null,
         buildMode: false,
         pendingBuilding: null,
@@ -190,6 +193,8 @@ function colonyHexView(config) {
                 conditionTone: (building) => this.conditionTone(building),
                 relocateApPerHex: this.relocateApPerHex,
                 panState: this._panState,
+                regolithFallbackTiles: this.regolithFallbackTiles,
+                regolithFallbackTileHint: this.i18n.regolithFallbackTileHint ?? '',
             });
         },
 
@@ -810,6 +815,14 @@ function isHarvesterTargetTile(tile, buildingsByTile) {
     return tile.is_explored && tile.tile_type.startsWith('regolith_') && !buildingsByTile?.has(`${tile.q},${tile.r}`);
 }
 
+// Explored, non-depleted regolith tile flagged server-side as a harvester
+// relocation alternative (ColonyTileService::activeHarvesterRegolithTiles()),
+// excluding the currently-worked tile. Small list, linear scan is fine.
+function isRegolithFallbackTile(tile, regolithFallbackTiles) {
+    if (!regolithFallbackTiles || regolithFallbackTiles.length === 0) return false;
+    return regolithFallbackTiles.some((t) => t.q === tile.q && t.r === tile.r);
+}
+
 // Rounds fractional cube coordinates to the nearest valid hex (Red Blob Games
 // "cube_round") — needed because linear interpolation between two hex centers
 // rarely lands exactly on a third hex's center.
@@ -1358,6 +1371,23 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     if (tile.is_explored && tile.resource_max > 0) {
         const dot = svgCircle(cx + size * 0.38, cy - size * 0.38, 4, '#2196f3', '#fff');
         g.appendChild(dot);
+    }
+
+    // Harvester-relocation fallback badge (bottom-right, purple arrow). Deliberately
+    // distinct from the blue resource dot above — shape (arrow glyph, not a plain
+    // dot), color (purple — unused elsewhere on the grid), and position (bottom vs.
+    // top corner) so "has a resource" and "is a viable relocation target" never
+    // read as the same signal (GDD §4c BALANCE CONCERN follow-up).
+    if (isRegolithFallbackTile(tile, opts.regolithFallbackTiles)) {
+        const bx = cx + size * 0.38;
+        const by = cy + size * 0.38;
+        const badge = svgCircle(bx, by, 5, '#7c65cc', '#fff');
+        badge.setAttribute('pointer-events', 'auto'); // keep hoverable for the native tooltip
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = opts.regolithFallbackTileHint ?? '';
+        badge.appendChild(title);
+        g.appendChild(badge);
+        g.appendChild(svgText(bx, by, '→', 7, '#fff', 700));
     }
 
     // Building badge (center-bottom, skip CC — already labeled)

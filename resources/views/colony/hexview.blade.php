@@ -49,6 +49,7 @@
             criticalThresholdPct: {{ (float) config("game.encounter.critical_threshold_pct", 0.33) }},
             relocateApPerHex: {{ (int) config("game.harvester.relocate_ap_per_hex", 2) }},
             phaseProgress: @json($phaseProgress),
+            regolithFallbackTiles: @json($regolithFallbackTiles ?? []),
             routes: {
                 explore: '{{ route("colony.tile.explore") }}',
                 deepScan: '{{ route("colony.tile.deep-scan") }}',
@@ -76,6 +77,7 @@
                 harvesterMoveModeHint: @json(__("colony.harvester_move_mode_hint")),
                 harvesterMoveNoTargets: @json(__("colony.harvester_move_no_targets")),
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
+                regolithFallbackTileHint: @json(__("colony.regolith_fallback_tile_hint")),
                 networkError: @json(__("colony.network_error")),
             },
         };

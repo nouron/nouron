@@ -200,6 +200,65 @@ class ColonyViewTest extends TestCase
         $this->assertSame(300, $tile['regolith_max']);
     }
 
+    // Teil 2 (Owner-Playtest-Fund 2026-09-04, GDD §4c BALANCE CONCERN): the map
+    // needs data about pre-scouted regolith relocation targets so the ui-specialist
+    // follow-up task can highlight them once the active Harvester tile runs low.
+    public function test_hexview_exposes_regolith_fallback_tiles_excluding_active_harvester_tile(): void
+    {
+        // Currently-used Harvester tile — must NOT appear in the fallback list.
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID_FOR_REGOLITH,
+            'q' => 5, 'r' => 5, 'ring' => 3,
+            'tile_type' => 'regolith_normal',
+            'is_colony_zone' => 0, 'is_explored' => 1, 'is_deep_scanned' => 0,
+            'resource_amount' => 111, 'resource_max' => 300,
+        ]);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID_FOR_REGOLITH)
+            ->where('building_id', 27)
+            ->update(['tile_x' => 5, 'tile_y' => 5]);
+
+        // Explored, not-yet-depleted fallback tile — must appear.
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID_FOR_REGOLITH,
+            'q' => 7, 'r' => 2, 'ring' => 3,
+            'tile_type' => 'regolith_poor',
+            'is_colony_zone' => 0, 'is_explored' => 1, 'is_deep_scanned' => 0,
+            'resource_amount' => 160, 'resource_max' => 160,
+        ]);
+
+        // Fully-depleted regolith tile — must NOT appear (nothing left to relocate to).
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID_FOR_REGOLITH,
+            'q' => 8, 'r' => 2, 'ring' => 3,
+            'tile_type' => 'regolith_poor',
+            'is_colony_zone' => 0, 'is_explored' => 1, 'is_deep_scanned' => 0,
+            'resource_amount' => 0, 'resource_max' => 160,
+        ]);
+
+        // Unexplored regolith tile — must NOT appear (player hasn't scouted it).
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID_FOR_REGOLITH,
+            'q' => 9, 'r' => 2, 'ring' => 3,
+            'tile_type' => 'regolith_rich',
+            'is_colony_zone' => 0, 'is_explored' => 0, 'is_deep_scanned' => 0,
+            'resource_amount' => 500, 'resource_max' => 500,
+        ]);
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+        $fallbackTiles = $response->viewData('regolithFallbackTiles')
+            ->map(fn ($t) => [$t['q'], $t['r']])
+            ->all();
+
+        $this->assertContains([7, 2], $fallbackTiles);
+        $this->assertNotContains([5, 5], $fallbackTiles);
+        $this->assertNotContains([8, 2], $fallbackTiles);
+        $this->assertNotContains([9, 2], $fallbackTiles);
+    }
+
     public function test_pending_run_redirects_to_lobby(): void
     {
         // A pending run is active but not yet started (started_at = null).

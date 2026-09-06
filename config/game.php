@@ -126,6 +126,13 @@ return [
         // against buildings.max_status_points at placement time. Full-health placement
         // (Weg A / Orin) does not use this value.
         'salvage_arrival_sp_pct' => 0.25,
+
+        // Onboarding warning threshold (Owner-Playtest-Fund 2026-09-04, GDD §4c
+        // BALANCE CONCERN): resource_amount / resource_max ratio below which
+        // OnboardingHintService::checkHintHarvesterLowRegolith() surfaces the
+        // "relocate soon" hint. Placeholder calibration like other balance
+        // values in this file — revisit after playtest.
+        'low_regolith_warning_pct' => 0.30,
     ],
 
     // Orin (`corporate_rep`, config('characters').corporate_contact) — Weg A for the
