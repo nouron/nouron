@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-07
+
+- Docs: Owner-Fragen F1-F3 aus dem Implementierungsstand-Audit entschieden und im GDD nachgetragen (§3, §4b, §4c, §7, §12, §13, §15, §18.2, §18.5) — Agrardom bleibt Level-Gebäude (F1/C9), Decay-Instanzen werden nie gelöscht, Effekte kehren erst ab ~50% Reparatur zurück (F2/C2), Nexus-Schulden bleiben eigenes `nexus_debt`-Ledger und Berater-Upkeep-Defizit fließt künftig hinein statt zu klemmen (F3/C1), Konsul-Handelsvertrag ersatzlos gestrichen (Pfad-Paritätsverletzung), Berater-Beförderung wird von automatisch auf manuell umgestellt. ROADMAP.md entsprechend markiert (A8 obsolet, neue Umsetzungs-Tasks A19-A23). Reine Doku-Änderung, Umsetzung folgt separat.
+
 ## 2026-09-06
 
 - Docs: Implementierungsstand-Audit `docs/audit-implementierungsstand-2026-09-06.md` — GDD (inkl. `docs/gdd/*`), ROADMAP, CHANGELOG, Anhänge und CLAUDE.md gegen Config/Code abgeglichen; ~45 Abweichungen in vier Kategorien (Design ohne Code, Code ohne Doku-Update, inhaltliche Widersprüche, Doku-Hygiene) plus 8 Owner-Entscheidungsfragen und Task-Cluster-Vorschlag. Ersetzt `docs/gdd-config-audit.md` (jetzt Stub mit Verweis).
