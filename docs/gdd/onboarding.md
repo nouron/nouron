@@ -80,23 +80,23 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Überarbeitet (Playtest-Review 2026-07-14) — neue Rangfolge für die Sol-1→4-Rampe.** Owner-Befund: Die Hints führten in der falschen Reihenfolge (CC-Invest auf Sol 1, Pfadgebäude erst Sol 3, Beraterslot-Hint lief in die Sackgasse `path_building_missing`). Neue Ziellinie: **Sol 1 Agrardom → Sol 2/3 Pfadgebäude → Sol 3/4 CC Lv2 → sofort Berater 2** (Budget-Rechnung in §16.5). Tabelle entspricht dem implementierten Stand (`OnboardingHintService::buildHintList`).
 
-> **⚠️ Nachzuziehen nach der AP-Zusammenlegung (2026-08-02):** Mehrere Hinweistexte und Bedingungen in dieser Tabelle sprechen von domänenspezifischen AP-Pools („Bau-AP bleibt beim Grundwert von 6", „Bau-AP nicht verfallen lassen", „Navigations-AP in Erkundung"). Mit dem gemeinsamen Pool (§13.1) gibt es diese Pools nicht mehr — AP verfallen nur noch als Ganzes, und die Formulierung „dein Bau-AP verfällt" ist sachlich falsch. Die Texte sind **noch nicht** angepasst; das gehört in eine Onboarding-Überarbeitung zusammen mit den neuen Grundwerten. Betroffen: `hint_1`, `hint_agrardome`, `hint_invest_site`, `hint_explore` sowie die zugehörigen Designentscheidungs-Blöcke weiter unten. Auch die Sol-1–4-Budget-Rechnung in §16.5 rechnet noch mit getrennten Pools und muss neu aufgestellt werden.
+> **⚠️ Nachzuziehen nach der AP-Zusammenlegung (2026-08-02) — Terminologie in den Hint-Texten am 2026-09-06 auf „AP" vereinheitlicht (Spieltexte bereits 08-31/09-04); die Budget-Rechnung §16.5 rechnet weiterhin mit getrennten Pools und alten Grundwerten (offener Task, ROADMAP Stufe 6):** Mehrere Hinweistexte und Bedingungen in dieser Tabelle sprechen von domänenspezifischen AP-Pools („Bau-AP bleibt beim Grundwert von 6", „Bau-AP nicht verfallen lassen", „Navigations-AP in Erkundung"). Mit dem gemeinsamen Pool (§13.1) gibt es diese Pools nicht mehr — AP verfallen nur noch als Ganzes, und die Formulierung „dein Bau-AP verfällt" ist sachlich falsch. Die Texte sind **noch nicht** angepasst; das gehört in eine Onboarding-Überarbeitung zusammen mit den neuen Grundwerten. Betroffen: `hint_1`, `hint_agrardome`, `hint_invest_site`, `hint_explore` sowie die zugehörigen Designentscheidungs-Blöcke weiter unten. Auch die Sol-1–4-Budget-Rechnung in §16.5 rechnet noch mit getrennten Pools und muss neu aufgestellt werden.
 
 | Rang | Key | Bedingung | Hinweistext (Kurzfassung) | Ziel-Link | Sol-Schwelle |
 |------|-----|-----------|---------------------------|-----------|--------------|
 | 1 | `hint_1` | Kein Baumeister-Berater aktiv | "Noch kein Baumeister eingestellt — die Kolonie arbeitet mit dem Grundwert." ⚠️ Text nachzuziehen, s. u. | `/advisors` | — (siehe Designentscheidung unten — bewusst ohne Schwelle/Alternative) |
 | 2 | `hint_repair_urgent` | Gebäude (Level ≥ 1) auf/unter `hint_repair_urgent_sp` (3 von 20) — Leveldown-Gefahr | "Ein Gebäude steht kurz vor dem Stufenverlust — jetzt reparieren." | Colony-Screen | — |
 | 3 | `hint_2` | Harvester steht auf `is_colony_zone=1`-Tile (Ring 1) | "Harvester steht noch in der Kolonie-Zone — verlegen." | Colony-Screen | — |
-| 4 | `hint_agrardome` | Harvester ≥ Lv1, kein Agrardom platziert, bezahlbar — **erstes Bauprojekt der Kolonie**, Pflicht-Gate für CC Lv2 | "Erstes Bauprojekt: Agrardom — heute platzieren, restliche Bau-AP hineinstecken." | `/colony/view?build=41` | **Sol 1** (`hint_no_agrardome_after_tick=0`) |
+| 4 | `hint_agrardome` | Harvester ≥ Lv1, kein Agrardom platziert, bezahlbar — **erstes Bauprojekt der Kolonie**, Pflicht-Gate für CC Lv2 | "Erstes Bauprojekt: Agrardom — heute platzieren, restliche AP hineinstecken." | `/colony/view?build=41` | **Sol 1** (`hint_no_agrardome_after_tick=0`) |
 | 5 | `hint_repair` | Gebäude (Level ≥ 1) **unter der Sichtbarkeits-Schwelle** (`game.repair.display_threshold`, 70 % der Max-SP) | "Ein Gebäude zeigt deutlichen Verschleiß — reparieren, bevor der Verfall teurer wird." | Colony-Screen | — (zustandsbasiert; greift durch Decay faktisch ab ~Sol 4, siehe §16.5) |
-| 6 | `hint_invest_site` | Aktive Baustelle (platziertes Level-0-Gebäude oder begonnener CC-Ausbau `ap_spend>0`), Bau-AP übrig, CC < Lv2 (danach Rente) | "Bau-AP nicht verfallen lassen — in die laufende Baustelle investieren." | Colony-Screen | — (ersetzt das CC-fixierte `hint_cc_invest`) |
+| 6 | `hint_invest_site` | Aktive Baustelle (platziertes Level-0-Gebäude oder begonnener CC-Ausbau `ap_spend>0`), AP übrig, CC < Lv2 (danach Rente) | "AP nicht verfallen lassen — in die laufende Baustelle investieren." | Colony-Screen | — (ersetzt das CC-fixierte `hint_cc_invest`) |
 | 7 | `hint_advisor_slot2` | CC ≥ Lv2, freier Slot **und** Pfadgebäude ≥ Lv1 (sonst liefe der Hire in `path_building_missing`) — bewusst **vor** den Pfad-Hints, damit nach CC Lv2 zuerst "Berater einstellen" kommt | "Berater-Slot 2 ist offen und das Pfadgebäude steht — Berater einstellen." | `/advisors` | — (sofort nach CC2) |
 | 8 | `hint_build_priority` | ≥ 2 von (Sciencelab/Hangar/Cantina) gleichzeitig baubar (Pfadwahl offen, s. u., bezahlbar) | "Mehrere Gebäude bereit — eines auswählen." | Colony-Screen | — |
 | 9 | `hint_6` | Pfadwahl offen, Housing ≥ Lv1, keine Cantina, bezahlbar | "Cantina noch nicht gebaut." | `/colony/view?build=52` | **Sol 2** (`hint_no_cantina_after_tick=1`) — gleichrangig mit `hint_analytik` und `hint_hangar_path` |
 | 10 | `hint_analytik` | Pfadwahl offen, kein Analytik-Labor, bezahlbar | "Analytik-Labor noch nicht gebaut." | `/colony/view?build=31` | **Sol 2** (`hint_no_analytik_after_tick=1`) |
 | 11 | `hint_hangar_path` | Pfadwahl offen, kein Hangar, bezahlbar | "Hangar noch nicht gebaut." | `/colony/view?build=44` | **Sol 2** (`hint_no_hangar_after_tick=1`) |
 | 12 | `hint_3` | **Zustandsbasiert:** Agrardom ≥ Lv1 **und** ein Pfadgebäude ≥ Lv1, CC < Lv2, CC-Ausbau noch nicht begonnen (`ap_spend=0` — sonst führt `hint_invest_site`) | "Agrardom und Pfadgebäude stehen — jetzt CC auf Level 2." | Colony-Screen | Sol 3 als Floor (`hint_cc_upgrade_after_tick=2`) |
-| 13 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — Navigations-AP nutzen." | Colony-Screen | nur Sol 1 |
+| 13 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — AP nutzen." | Colony-Screen | nur Sol 1 |
 | 14 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
 | 15 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5`) |
 | 16 | `hint_spend_remaining_ap` | Mindestens ein **nutzbarer** AP-Pool ungenutzt (Forschung zählt nur mit gebautem Sciencelab, Wirtschaft nur mit gebauter Cantina, Navigation nur mit bezahlbarem Fog-Tile) — Pool mit den meisten Rest-AP gewinnt | "Noch AP übrig — investieren." | poolabhängig | — |
@@ -107,7 +107,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 **Ergänzende Hinweise zur Tabelle:**
 - `hint_advisor_slot2` (Rang 7): Direktes Feedback auf den CC-Lv2-Ausbau — feuert garantiert in einen sofort besetzbaren Slot und **vor** den Pfad-Hints (sonst würde nach CC Lv2 zuerst "zweites Pfadgebäude bauen" genagt statt "Berater einstellen").
 - **"Pfadwahl offen"** (Gate der Ränge 8–11): Agrardom platziert **und** (noch kein Pfadgebäude platziert **oder** CC ≥ Lv2). Die Rampe will genau EIN Pfadgebäude vor CC Lv2 — solange das erste gebaut wird oder der CC-Ausbau aussteht, schweigen die anderen Pfad-Hints (Playtest-Befund 2026-07-14: "Kein Analytik-Labor"-Nag bei fertiger Cantina). Ab CC Lv2 dürfen sie wieder feuern.
-- `hint_invest_site` (Rang 6) und `hint_explore` (Rang 13): lenken verbleibende Bau-AP in die aktive Baustelle bzw. Navigations-AP in Erkundung, statt sie verfallen zu lassen (siehe Punkt "Kein Leerlauf" unten).
+- `hint_invest_site` (Rang 6) und `hint_explore` (Rang 13): lenken verbleibende AP in die aktive Baustelle bzw. in Erkundung, statt sie verfallen zu lassen (siehe Punkt "Kein Leerlauf" unten).
 - `hint_build_priority` (Rang 8): Reine Strategie-Hinweisebene, kein Aktionslink zu einem einzelnen Gebäude — signalisiert nur, dass eine Wahl zwischen mehreren gleichwertig bereiten Gebäuden besteht.
 - `hint_end_sol` (Rang 17): Universeller Fallback, der verhindert, dass die Hint-Leiste je leer bleibt.
 - `canAffordBuildingPlacement()`-Gate auf den Bau-Hints (Ränge 4, 9–11): Alle Bau-Hints prüfen tatsächliche Bezahlbarkeit (AP, Regolith, Werkstoffe, Supply) bevor sie feuern — verhindert, dass der Hint auf ein Gebäude zeigt, das der Spieler in diesem Sol gar nicht bauen kann.
@@ -260,7 +260,7 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 
 > ⚠️ BALANCE CONCERN: Repair-Mechanik fehlt noch. Gebäude bei 80% sind 5–10 Sole lang funktionsfähig; sobald Verfall sie unter ~30% bringt, wirken sich Statusmalus-Effekte aus. Die Schwelle für "kritisch beschädigt" (aktuell: `80%`-Trigger in OnboardingTriggersService) soll nach erstem Playtest kalibriert werden.
 >
-> **Korrektur (2026-06-21):** Repair-Mechanik ist inzwischen implementiert (`hint_repair`, `hint_repair_urgent`, Reparieren-Button kostet 1 Bau-AP/Klick, `hint_repair_urgent_sp=3` von 20). Dieser Concern ist erledigt — verbleibt nur als Hinweis, dass die Schwelle `3/20` nach Playtest noch validiert werden sollte (siehe Designentscheidung zu Rang 2 in § 16.2).
+> **Korrektur (2026-06-21):** Repair-Mechanik ist inzwischen implementiert (`hint_repair`, `hint_repair_urgent`, Reparieren-Button kostet 1 AP/Klick, `hint_repair_urgent_sp=3` von 20). Dieser Concern ist erledigt — verbleibt nur als Hinweis, dass die Schwelle `3/20` nach Playtest noch validiert werden sollte (siehe Designentscheidung zu Rang 2 in § 16.2).
 
 ---
 
@@ -299,7 +299,7 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 > Ursprüngliche Empfehlungen (1, 2, 4 zurückgezogen — siehe oben; 3 weiterhin gültig als Bestandsbeschreibung):
 > 1. ~~`hint_1` so erweitern, dass er nicht zwingend "Baumeister" verlangt~~ — verworfen, Baumeister-zuerst bleibt Designentscheidung.
 > 2. ~~Alternativ: explizit als Designentscheidung dokumentieren~~ — umgesetzt, siehe § 16.2.
-> 3. `hint_cc_invest`/`hint_explore` setzen den Engineer-Pfad nicht voraus, prüfen nur verbleibende Bau-AP bzw. Nav-AP — weiterhin korrekt, kein Änderungsbedarf.
+> 3. `hint_cc_invest`/`hint_explore` setzen den Engineer-Pfad nicht voraus, prüfen nur verbleibende AP — weiterhin korrekt, kein Änderungsbedarf.
 > 4. ~~Ränge 1–8 (Sol 1–2) zu einer Wahlgruppe umbauen~~ — verworfen. Sol 1/2 bleiben linear (Bau + Erkundung); die Wahlgruppe wird stattdessen ab Sol 3 (Cantina vs. Analytik) eingeführt, siehe § 16.2.
 
 ---
@@ -366,7 +366,7 @@ Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anz
 | Supply-Cap erreicht | `freies_supply` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Supply-Cap erreicht — kein neues Schiff oder Berater baubar." |
 | Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | INNN-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
 | Erstes AP-Limit | Spieler versucht Aktion aber AP = 0 | Tooltip am Button: "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." |
-| Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet 1 Bau-AP pro Hex Distanz — er kommt nächsten Sol an und produziert unterwegs nichts." |
+| Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet AP pro Hex Distanz — er kommt nächsten Sol an und produziert unterwegs nichts." |
 
 **Format:** INNN-Ereignisse für narrative Konzepte (Verfall, Vertrauen), Inline-Banner für kritische Systemgrenzen (Supply-Cap), Tooltips für Aktions-Mechaniken. Kein Modal, kein Overlay.
 

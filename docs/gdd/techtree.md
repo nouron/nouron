@@ -25,18 +25,18 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | Key (intern) | Name (DE) | Voraussetzung | Max-Level |
 |---|---|---|---|
 | `commandCenter` | Kommandozentrale | — | 5 |
-| `housingComplex` | Wohnhabitat | CC Lv 1 | 6 Instanzen |
-| `harvester` | Harvester | CC Lv 1 | supply-limitiert |
-| `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert |
-| `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert |
-| `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
-| `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
-| `hangar` | Hangar | CC Lv 2 (Pfadwahl) | supply-limitiert |
+| `housingComplex` | Wohnhabitat | CC Lv 1 | Lv 3 je Instanz, max. 6 Instanzen |
+| `harvester` | Harvester | CC Lv 1 | Lv 1, max. 2 Instanzen |
+| `bioFacility` | Agrardom | CC Lv 1 + Harvester Lv 1 (Pflicht vor CC Lv 2) | max. Lv 3 |
+| `sciencelab` | Analytik-Labor | CC Lv 2 (Pfadwahl) | max. Lv 5 |
+| `bar` | Cantina | CC Lv 2 (Pfadwahl) | max. Lv 3 |
+| `infirmary` | Krankenstation | CC Lv 2 | max. Lv 3 |
+| `hangar` | Hangar | CC Lv 2 (Pfadwahl) | max. Lv 3, Instanzen ungedeckelt |
 | `securityHub` | Sicherheits-Hub | CC Lv 3 | max. Lv 3 |
 | `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 |
-| `temple` | Religiöse Stätte | CC Lv 4 | supply-limitiert |
-| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz |
-| `monument` | Kolonialdenkmal | CC Lv 5 | supply-limitiert |
+| `temple` | Religiöse Stätte | CC Lv 4 | Lv 1 |
+| `tradingPost` | Handelsposten | CC Lv 4 | max. Lv 3 |
+| `monument` | Kolonialdenkmal | CC Lv 5 | Lv 1 |
 
 Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
@@ -79,7 +79,7 @@ Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungs
 | `pilot` | Raumfahrer | navigation | Hangar Lv 1 | 2–4 (generisch) |
 | `trader` | Konsul | economy | Bar Lv 1 | 2–4 (generisch) |
 
-> `strategist` (Stratege, `strategy`, Slot 5) ist mit der Zurückstellung des Strategen (2026-08-02) aus dem Techtree entfernt — siehe §13 „Die vier Berater-Typen". Die Spalte „AP-Typ" bezeichnet seit der AP-Zusammenlegung (§13.1) die **Domäne** des Beraters, nicht mehr einen eigenen Pool.
+> Es gibt keinen `strategist`-Berater im Techtree (Stratege zurückgestellt, §13 „Die vier Berater-Typen"). Die Spalte „AP-Typ" bezeichnet seit der AP-Zusammenlegung (§13.1) die **Domäne** des Beraters, nicht mehr einen eigenen Pool.
 
 ---
 
@@ -163,10 +163,9 @@ Der Techtree ist in **5 Phasen** aufgeteilt, jede entspricht einem CC-Level-Meil
 | 2 | 2 | knowledge_health | research | 6 | 1 |
 | 2 | 2 | knowledge_trade | research | 6 | 3 |
 | 3 | 3 | securityHub | building | 1 | 1 |
-| 3 | 3 | strategist | personell | 1 | 2 |
 | 3 | 3 | drone | ship | 2 | 1 |
 | 3 | 3 | freighter | ship | 2 | 2 |
-| 3 | 3 | knowledge_geology | research | 3 | 1 |
+| 2 | 2 | knowledge_geology | research | 3 | 1 |
 | 3 | 3 | knowledge_cartography | research | 3 | 3 |
 | 3 | 3 | corvette | ship | 4 | 2 |
 | 3 | 3 | knowledge_defense | research | 4 | 3 |

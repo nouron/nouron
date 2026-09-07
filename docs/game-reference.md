@@ -1,4 +1,4 @@
-# Nouron — Spielreferenz: Zahlen-Lookup (Stand 2026-08-21)
+# Nouron — Spielreferenz: Zahlen-Lookup (Stand 2026-09-06)
 
 Vollständige Referenztabellen für Coding-Aufgaben. Wird von ADR 0004 und CLAUDE.md referenziert.
 Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generierung. Bei Änderungen in `config/*.php` aktualisieren.
@@ -22,14 +22,13 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 
 | Gebäude | CC-Gate | Build-Kosten (Rg / Wk) | Supply-Kosten | Max Level | Max Instanzen |
 |---|---|---|---|---|---|
-| **Commandenter (CC)** | — | — | 0 | 5 | 1 |
-| **Wohnhabitat** | Lv1 | 40 Rg | 0 | 6 | 6 |
+| **Commandcenter (CC)** | — | — | 0 | 5 | 1 |
+| **Wohnhabitat** | Lv1 | 40 Rg | 0 | 3 | 6 |
 | **Harvester** | Lv1 | — | 2 | 1 | 2 |
-| **Agrardom** | 1 + Harv | 70 Rg | 2 | 8 | 1 |
-| **Analytik-Labor** | Lv2 | 95 Rg | 6 | ∞ | 1 |
-| **Lagerhalle** | Lv2 | ? | ? | ∞ | 1 |
-| **Krankenstation** | Lv2 | 60 Rg / 25 Wk | 10 | ∞ | 1 |
-| **Cantina** | Lv2 | 95 Rg | 6 | ∞ | 1 |
+| **Agrardom** | 1 + Harv | 70 Rg | 2 | 3 | 1 |
+| **Analytik-Labor** | Lv2 | 95 Rg | 6 | 5 | 1 |
+| **Krankenstation** | Lv2 | 60 Rg / 25 Wk | 10 | 3 | 1 |
+| **Cantina** | Lv2 | 95 Rg | 6 | 3 | 1 |
 | **Hangar** | Lv2 | 95 Rg | 6 | 3 | ∞ |
 | **Religiöse Stätte** | Lv4 | 50 Rg / 15 Wk | 4 | 1 | 1 |
 | **Kolonialdenkmal** | Lv5 | 60 Rg / 25 Wk | 2 | 1 | 1 |
@@ -38,7 +37,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Trading Post** | Lv4 | 100 Rg / 25 Wk | 6 | 3 | 1 |
 
 > **Rg** = Regolith, **Wk** = Werkstoffe (compounds)
-> Nicht eingetragen: Lagerhalle (Depot, config fehlt explizit)
+> Max Level für alle Nicht-CC-Gebäude seit dem Ausbaustufen-System (2026-08-26, `config/buildings.php`). Wohnhabitat: Level 3 **pro Instanz**, 6 Instanzen. Depot/Lagerhalle ist seit 2026-06-22 entfernt.
 
 ---
 
@@ -55,7 +54,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 
 ## 4. Gebäude: Decay-Raten & Status-Points
 
-Decay-Rate = **Status Points pro Tick** verloren (multipliciert ggü. Supply-Overcap ×2).
+Decay-Rate = **Status Points pro Tick** verloren (multipliziert ggü. Supply-Overcap ×1,5, `game.decay.overcap_factor`).
 
 | Gebäude | Klasse | Decay-Rate | Max SP | Tage bis Level-Down |
 |---|---|---|---|---|
@@ -226,8 +225,8 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | Gebäude-Levelup | construction | *Individuell; Rabatt via construction/trade* |
 | Kenntnis-Levelup | research | *20–52 je Ziel-Level* |
 | Feld erkunden | navigation | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3); Rabatt via cartography |
-| Handel annehmen | economy | 1 |
-| Handel verhandeln | economy | 3 (+ risk) |
+| Handel annehmen | economy | 2 |
+| Handel verhandeln | economy | 4 (+ risk) |
 
 ---
 

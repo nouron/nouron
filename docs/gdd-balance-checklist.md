@@ -6,8 +6,8 @@ Sammelübersicht aller offenen Balance- und Designfragen im GDD, damit nach eine
 
 | Thema | Stand | Ort |
 |---|---|---|
-| **`max_level` in `max_instances` + `max_level` aufteilen** — für den Harvester kollidieren „kein Level-Up" und „Deckel 2 Instanzen" in einem Feld; der Hangar braucht beide Achsen | **entschieden, Umsetzung offen — blockiert §13.7 und §4c** | §4c |
-| **Instanz-Decay-Verdacht verifizieren** — `processBuildingDecay()` schreibt ohne Instanz-Unterscheidung. Bestraft sonst jede Umstellung auf Instanzen sofort | **offen, blockierend, vor der Umstellung** | §4c |
+| **`max_level` in `max_instances` + `max_level` aufteilen** — für den Harvester kollidieren „kein Level-Up" und „Deckel 2 Instanzen" in einem Feld; der Hangar braucht beide Achsen | ✅ umgesetzt (PR #234, Stufe 1c: `max_instances`-Spalte + Config) | §4c |
+| **Instanz-Decay-Verdacht verifizieren** — `processBuildingDecay()` schreibt ohne Instanz-Unterscheidung. Bestraft sonst jede Umstellung auf Instanzen sofort | ✅ verifiziert und gefixt (Stufe 1c, `processBuildingDecay()` filtert nach `instance_id`) | §4c |
 | **Regolith-Zahlensatz** (Sockel, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten) | ✅ vollständig freigegeben — Bau-/Level-Up-Kosten + Erschöpfungskurve (08-03), Sockel-Bilanz + G6/G2-Metrik-Umstellung (2026-08-06) | §13.7 |
 | **Harvester-Erschöpfungsrate** | ✅ freigegeben 2026-08-03 (Kurve, `resource_max` 500/300/160, 2 AP/Hex) — **Vertrauensgrad niedrig-mittel, als Erstes messen.** Instanz-2-Bezugsweg „CC Lv3 + 100 Rg" ist überholt durch Owner-Entscheidung 2026-08-05 (zweite Runde): 2. Instanz ist jetzt Bonus statt Sockel-Baseline, Bezugsweg = Cantina-Händler-Item (Weg A, AP+Cr) oder Ruinen-Bergung (Weg B, nur AP, 0 Rg — korrigiert 2026-08-06), beide nicht garantiert — CC-Lv3-Gate bleibt als fiktionale Untergrenze. **Sockelrechnung (§13.7) auf 1-Instanz-Baseline neu hergeleitet und freigegeben (2026-08-06):** Sockel-Anteil ~57,5 %, G6-Formulierung + `decay_rate`-G2-Konflikt entschieden | §4c |
 | Regolith-Parität der drei Pfade | **entschärft** — löst sich weitgehend auf, wenn Wachstum über Harvester-Instanzen läuft | §4b, §4c |
@@ -61,9 +61,9 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | Thema | Ort |
 |---|---|
 | **Supply-Achse unconstrained neu herleiten** — `supply_cost` je Gebäude, Cap-Quellen, Zielkolonie gegen erreichbaren Cap | §6, §13.7 |
-| **Level-Deckel für Cantina und Krankenstation** — beide heute `NULL` (unbegrenzt), was dem „kleine Kolonie"-Prinzip widerspricht | §4c, §1 |
-| **Instanz-Deckel für den Agrardom** — mit der Umstellung auf Instanzen offen; hängt am Organika-Rennen und am Tile-Budget | §4c, §3 |
-| **`max_level = NULL` bei sieben Gebäuden** (Sciencelab, Temple, Agrardom, Hangar, Krankenstation, Monument, Cantina) — die `f(L)`-Kostenkurve läuft dort ohne natürlichen Endpunkt weiter | §4c, §13.6 |
+| ~~Level-Deckel für Cantina und Krankenstation~~ — ✅ erledigt 2026-08-26 (Ausbaustufen-System, beide `max_level = 3`) | §4c, §1 |
+| **Agrardom: Level oder Instanz?** — Config ist seit 2026-08-26 Level (`max_level = 3`, nicht instanziert), GDD §4c sagt Instanz. Owner-Entscheidung (Audit-Frage 1) | §4c, §3 |
+| ~~`max_level = NULL` bei sieben Gebäuden~~ — ✅ erledigt 2026-08-26: alle 13 Gebäude gedeckelt (`config/buildings.php`, `docs/game-reference.md#2`) | §4c, §13.6 |
 | Stratege — neu bewerten und designen (eigener Pfad oder Modifikator?) | §13 |
 | Cantina: verlässlicher Credits→Regolith-Kanal (heute nur Verkaufsrichtung garantiert) | §13.5, §12 |
 | Pfad-C-Regolith-Hebel neu denken | **✅ beantwortet** (§4b, freigegeben 2026-08-05; bestätigt durch die §13.7-Neuherleitung 2026-08-06: Pfad A + B schließen die Regolith-Lücke gemeinsam, 18,25 ≥ 14,1 Rg/Sol reif, ohne Pfad-C-Beitrag) | §13.7, §4b |

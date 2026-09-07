@@ -245,13 +245,13 @@ return [
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
-    // Formula: CC-Level × cap_commandcenter + housing_units × cap_housingcomplex + Σ(knowledge_cap_per_level)
+    // Formula: CC-Level × cap_commandcenter + Σ(housing instance levels) × cap_housingcomplex + Σ(knowledge_cap_per_level)
     // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
         'cap_max' => 200,   // absolute hard cap across the whole colony
         'cap_commandcenter' => 10,    // supply cap per CC level (max Lv5 → 50)
-        'cap_housingcomplex' => 8,     // supply cap per housing unit (max 6 units → 48)
+        'cap_housingcomplex' => 8,     // supply cap per housing LEVEL, summed over instances (6 instances × Lv3 → 144 theoretical; see GDD §6 / Audit C6)
         'knowledge_cap_per_level' => [  // non-linear cap bonus per knowledge level (bell curve)
             1 => 3,
             2 => 5,
@@ -276,7 +276,7 @@ return [
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
-        'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
+        'overcap_factor' => 1.5,  // decay multiplier when colony is over supply cap (GDD §13.1: 2.0 doubled the maintenance share of the AP pool; 1.5 keeps over-cap painful but not paralysing)
     ],
 
     // GDD §9 "Begegnungen & Gefahren" — first-pass calibration figures (Richtwerte),
@@ -422,7 +422,7 @@ return [
         'trader_discount' => [0 => 0.00, 1 => 0.10, 2 => 0.20, 3 => 0.30],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'offer_duration' => 2,  // fallback when bar level unknown
-        'ap_cost_accept' => 1,
+        'ap_cost_accept' => 2,  // 1→2 with the shared AP pool (GDD §13.6 Handlungs-AP): trades compete with build/knowledge projects
         'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],
         'level_max_concurrent' => [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
 
@@ -430,7 +430,7 @@ return [
         // muss zugewiesen und verfügbar sein (kein Rang-Minimum über Rang 1 hinaus).
         // AP ist bewusst NICHT der eigentliche Deckel (siehe GDD): der Preis ist der
         // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf.
-        'ap_cost_negotiate' => 3,
+        'ap_cost_negotiate' => 4,  // 3→4, same reason as ap_cost_accept
         'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
         'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
     ],
@@ -497,9 +497,7 @@ return [
     // CC-Level gate for knowledge research levels 4 and 5.
     // A colony must have CommandCenter (ID 25) at this level before a Kenntnis
     // can be levelled to the corresponding level.
-    // Enforcement logic (invest/levelup guard) is not yet implemented — this
-    // entry documents the design rule and will be read by the service in a
-    // future sprint.
+    // Enforced in ResearchService::levelupBlocker() (returns 'knowledge_cc_gate').
     //
     // Format: knowledge_level => required_cc_level
     'knowledge_cc_level_cap' => [
@@ -542,6 +540,8 @@ return [
         'playbymailmode' => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
 
         // Nexus intervention milestones (tick numbers, GDD §15 "Nexus-Eingriffe").
+        // NOTE (Audit 2026-09-06, A7): this block is currently NOT read anywhere —
+        // RunProgressService hard-codes Phase-2-Sol 30/50/65/80. Wire up or remove.
         'nexus_milestones' => [
             30 => 'warn_progress',   // at tick 30: at least 1 task must be >50% done, else INNN warning
             50 => 'warn_none_done',  // at tick 50: if 0 tasks fully done, second INNN warning

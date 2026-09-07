@@ -1,6 +1,66 @@
 # Nouron — Roadmap
 
-Stand: 2026-08-16
+Stand: 2026-09-06
+
+## Nächste Woche (ab 2026-09-07): Primäre Aufgaben aus dem Implementierungsstand-Audit
+
+Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Abschnitt E). Kategorien B und D (Doku-Hygiene) wurden am 2026-09-06 direkt behoben; das GDD wurde am selben Tag von gestapelten Nachträgen/Korrekturen auf Ist-/Soll-Zustand konsolidiert (3640 → ~2990 Zeilen), dabei C3/C5/C7/C8/C10–C13 miterledigt. Owner-Entscheidung 2026-09-06: A, C und die acht Fragen sind die primären Aufgaben der kommenden Woche.
+
+### Owner-Fragen (zuerst klären, blockieren Tasks)
+
+- [ ] **F1 Agrardom: Level oder Instanz?** (C9) — Config ist Level/3, GDD §4c sagt Instanz. Bleibt Level → GDD-Korrektur; sonst Umstellung inkl. Instanz-Deckel (Stufe 1d)
+- [ ] **F2 Instanz-Zerstörung bei Decay** (C2) — Ruine auf Level 0 (heute) oder Löschung + Hangar-Schiff deaktivieren (GDD §7)?
+- [ ] **F3 Upkeep-Defizit → Nexus-Schulden?** (C1) — Feature oder GDD-Text streichen; hängt an A8 (Rückzahlung)
+- [ ] **F4 Harvester Konstant-Yield-Spec** (A16) — zurückziehen oder umsetzen? Betrifft §13.7-Sockelrechnung
+- [ ] **F5 Kanal 2 Nexus-Handelsschiffe** (A12) — streichen zugunsten Werkstoff-Direktimport?
+- [ ] **F6 Roguelike-Kenntnis-Teilmenge pro Run** (A10) — noch gewollt? §8b-Argumentation hängt daran
+- [ ] **F7 Phase-1-Bedingung** „2 Produktionsgebäude" vs. „2 Nicht-CC-Gebäude" (C4) — seit 08-13 offen
+- [ ] **F8 Playtest-Instrumentierung** (A17) — `docs/playtest-instrumentation-plan.md` freigeben?
+
+### A — Design vorhanden, Implementierung fehlt (TDD-Pflicht)
+
+- [ ] **A1 Kommandozentrale-Dashboard** (§13.4, Stufe 4): Restzeit je Baustelle, AP-Zufluss/-Verwendung, Instandhaltungsanteil, Restertrag bis Run-Ende, Regolith-Bilanz, Over-Cap-Warnung, Konzessions-Prognose — **Hoch**
+- [ ] **A2 Bonusquellen Berater-Rang + Koloniereife** (§13.3, Stufe 3) + `config('game.project_cost_bonus')` anlegen — Mittel
+- [ ] **A3 f(L)-Kostenkurve** statt flacher `ap_for_levelup`, `f(1) = 0.5` fürs Errichten (§13.6, Stufe 3) — Mittel
+- [x] **A4** ✅ 2026-09-06 — `decay.overcap_factor` 2.0 → 1.5 (§13.1) — Klein
+- [x] **A5** ✅ 2026-09-06 — `bar.ap_cost_accept` 1 → 2, `ap_cost_negotiate` 3 → 4 (Stufe 3) — Klein
+- [ ] **A6 Trust-Warnstufen** < −10 (roter Chip) und < −18 (Nexus-Warnung) (§18.2) — Mittel
+- [ ] **A7 Nexus-Milestones**: Sol-90-Letzte-Warnung, Fristverkürzung auf Sol 95 nach Sanktion (§15); toten Config-Block `run.nexus_milestones` verdrahten oder entfernen — Mittel
+- [ ] **A8 Nexus-Schulden**: 95 %-Warnmeldung + manuelle Rückzahlung (§18.2) — Mittel, nach F3
+- [ ] **A9 Nexus-Boni** ahead-of-curve (§15) — Niedrig, Design-Frage (A.4) zuerst
+- [ ] **A10 Kenntnis-Teilmenge pro Run** (§10) — nach F6
+- [ ] **A11 Uplink-Station Lv2/Lv3**: Händler-Frequenz (Lv2), Kolonialbericht/Meta-Bonus (Lv3) definieren oder streichen; Lv1 „Verwaltungsanfragen" klären — Mittel
+- [ ] **A12 Kanal 2 Nexus-Handelsschiffe** — nach F5
+- [ ] **A13 Handelsposten „Konsul-Effizienz"** (§4) — Text streichen oder AP-Rabatt implementieren — Klein
+- [ ] **A14 Notreparatur** CC/Wohnhabitat (§7) — implementieren oder aus GDD streichen — Klein
+- [ ] **A15 Kolonisten-Framing** für Supply in der UI (§6) — Klein
+- [ ] **A16 Konstant-Yield-Spec** — nach F4
+- [ ] **A17 Playtest-Instrumentierung** 11 Metriken in `RunReport` — nach F8
+- [ ] **A18** `mission_perimeter_patrol` in `config/missions.php` aufnehmen (§8b) — Klein
+- [ ] **T7 Encounter-Reste**: Geologische Instabilität + Seuchenausbruch in `SolReportService::eventsGroup()` (B12) — Klein
+
+### C — Doku widerspricht Code (Entscheidung, dann GDD oder Code anpassen)
+
+- [ ] **C1** §13.1 „Upkeep-Verlust läuft über `nexus_debt`" — nach F3
+- [ ] **C2** §7 Instanz-Zerstörung vs. Level-0-Ruine — nach F2
+- [x] **C3** ✅ 2026-09-06 (GDD-Konsolidierung) — §4 Uplink Lv2 „Tiefenscan 1 Sol weniger" → Code: Scan-AP 2 → 1; Text angleichen
+- [ ] **C4** §15/§18.4 Phase-1-Bedingung — nach F7
+- [x] **C5** ✅ 2026-09-06 (GDD-Konsolidierung) — §15 Fail States / Gnadenfrist auf Phase-2-Sol-Basis und Instant-Trust-Fail umschreiben (§18.5-TODO seit 06-28) — zusammen mit A7
+- [ ] **C6** §6 Supply-Cap Wohnhabitat: „pro Einheit" vs. Σ Level × 8; Ziel-Cap nach Tier-System neu prüfen (Stufe 1d, `cap_max` 200)
+- [x] **C7** ✅ 2026-09-06 (GDD-Konsolidierung) — §8b Missionstabelle: `mission_aid_transport` ungegatet, `mission_harvester_salvage` ergänzen, Lieferzeiten 1/2/3
+- [x] **C8** ✅ 2026-09-06 (GDD-Konsolidierung) — §4 Gebäudetabelle: Max-Level-Spalte (alle 13 gedeckelt), Wohnhabitat Lv3 × 6 Instanzen, „11 aktive + 3 im Design" → 13 implementiert
+- [ ] **C9** §4c Zuordnungstabelle — nach F1
+- [x] **C10** ✅ 2026-09-06 (GDD-Konsolidierung) — §10 Liste implementierter Kenntnis-Effekte vervollständigen (geology, agronomy-Organika, health-Seuche, defense-Sturm, trade-Preisbonus, Analytik Lv4/5)
+- [x] **C11** ✅ 2026-09-06 (GDD-Konsolidierung) — §13 „Implementierung": `PersonellService` → `AdvisorService`, `FleetService` entfernen
+- [x] **C12** ✅ 2026-09-06 (GDD-Konsolidierung) — Tick-Schrittnummern in §8b/§13/§14 auf die 1–15-Nummerierung von `GameTick.php` (Stufe 6)
+- [x] **C13** ✅ 2026-09-06 (GDD-Konsolidierung) — Terminologie-Pass „INNN" → Kolonieprotokoll/Nexus-Funk (29 Stellen im GDD)
+- [ ] **C14** ADR-0004-Zahlen aus §14/§18.2/§6-Prosa entfernen
+- [ ] **C16** §4 „Agrardom ist Pflicht-Gate für CC Lv2": Config-Kommentar und GDD behaupten eine Prüfung am CC-Levelup, `ColonyController::investBuilding()` prüft sie nicht (nur `placeBuilding()` vor Pfadgebäuden). Owner-Frage: Gate implementieren oder Text streichen
+- [x] **C15** ✅ 2026-09-06 — `docs/gdd/techtree.md`: Max-Level-Spalte, `strategist`-Zeile 166, Bio-Anlage-Gate
+- [ ] **Stufe 6** `docs/gdd/onboarding.md` §16.5 Budget-Rechnung auf einen Pool und `ap.base = 12` umrechnen
+
+---
+
 
 ## Phase 1b: Laminas → Laravel Migration
 
@@ -337,12 +397,14 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
 
 ### Prio 4: Spielablauf testen & stabilisieren
 
-- [ ] Tick-System und `fleet_orders`-Verarbeitung End-to-End testen
-- [ ] AP-System vollständig testen (Vergabe, Verbrauch, Moral-Multiplikator)
-- [ ] Handelsrouten (Ressourcen + Forschungen)
-- [ ] Flottenoperationen (Bewegung, PvP-Schiffskampf)
-- [ ] Flash-Messenger in Formularen
-- [ ] Login/Registrierung und Auth-System
+> **Obsolet (bereinigt 2026-09-06):** `fleet_orders`, Handelsrouten, Flottenoperationen/PvP und Flash-Messenger existieren seit der Streichung von Galaxie/Systemkarte (2026-06-20) bzw. dem Comm-Log-Redesign (Phase 3j) nicht mehr. AP-System und Auth sind über die PHPUnit-Suite und den PlaytestBot (Phase 3n) abgedeckt.
+
+- [x] ~~Tick-System und `fleet_orders`-Verarbeitung End-to-End testen~~ (entfallen)
+- [x] AP-System vollständig testen (Vergabe, Verbrauch, Trust-Multiplikator) — `AdvisorServiceTest`, PlaytestBot
+- [x] ~~Handelsrouten (Ressourcen + Forschungen)~~ (entfallen)
+- [x] ~~Flottenoperationen (Bewegung, PvP-Schiffskampf)~~ (entfallen)
+- [x] ~~Flash-Messenger in Formularen~~ (entfallen)
+- [x] Login/Registrierung und Auth-System — `tests/Feature/Auth`
 
 ---
 
@@ -405,7 +467,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 - [x] **Vertrauensanzeige im UI** — Vertrauens-Chip in Colony Hexview (grün/grau/rot); Trust in globaler Ressourcenleiste auf allen Seiten
 - [x] **Händler-Modal** — Alpine-gesteuert, nativer `<dialog>`, 3 Items (Reparatur-Kit, Vertrauensschub, Systemkarte); MerchantService + MerchantController + GameTick-Integration; DB: `merchant_visits` + `merchant_items`
 - [x] **Globale Ressourcenleiste** — Sol-Chip + Credits + Supply + Trust persistent auf allen Gameplay-Seiten (`layouts/app` + `layouts/colony`); Sol run-lokal via `since_tick`; deprecated Ressourcen (ENrg/LNrg/ANrg) gefiltert
-- [ ] **Ingame-Almanach** — Nachschlagewerk für Gebäude, Forschungen, Schiffstypen; Blade-Seite mit Config-Daten
+- [x] **Ingame-Almanach** — als NexusDB umgesetzt (`/nexus-db`, `NexusDbController`, `lang/de/nexusdb.php`, Almanach-Stimme des Drei-Stimmen-Systems). Erweiterungen (Freischalt-Artikel) siehe Phase 4 „Progressive Discovery"
 - [x] **jQuery-Migration (Schritt 1)** — galaxy.js, nouron.js, innn.js auf Vanilla JS migriert; techtree.js + leader-line.min.js aus layouts.app entfernt (dead code); Inline-$(document).ready → DOMContentLoaded
 - [x] **jQuery-Migration (Schritt 2)** — fleets.js und trade.js auf Vanilla JS/fetch migriert; jQuery, bootbox, growl aus layouts.app entfernt; jQuery vollständig aus dem Projekt entfernt
 
@@ -521,7 +583,7 @@ Techtree-Ansicht komplett überarbeitet. Fünf Sektionen (Phase 1–5), eine pro
 
 ### Phase 3i: Run-System — Abgeschlossen (Mai 2026, PR #141)
 
-Roguelike-Run-Struktur mit zwei Phasen, 9 trackbaren Objectives und Nexus-Interventionssystem. Playtest-Voraussetzung für Phase-4-Entscheidungen.
+Roguelike-Run-Struktur mit zwei Phasen, 8 trackbaren Objectives (ursprünglich 9, `task_combat_record` mit der Flotten-Streichung entfallen) und Nexus-Interventionssystem. Playtest-Voraussetzung für Phase-4-Entscheidungen.
 
 #### Sprint A — Kern-Infrastruktur
 
@@ -535,7 +597,7 @@ Roguelike-Run-Struktur mit zwei Phasen, 9 trackbaren Objectives und Nexus-Interv
 
 #### Sprint B — Vollständige Objective-Suite + Nexus
 
-- [x] 5 weitere Objective-Typen (9 insgesamt): `task_self_sufficiency`, `task_expedition_coverage`, `task_engineering_output`, `task_trade_volume`, `task_combat_record`
+- [x] 5 weitere Objective-Typen (damals 9 insgesamt, heute 8): `task_self_sufficiency`, `task_expedition_coverage`, `task_engineering_output`, `task_trade_volume`, ~~`task_combat_record`~~ (entfernt 2026-06)
 - [x] Nexus-Interventionen: Sol-30/50-Warnung, Sol-65-Berater-Sperre, Sol-80-Countdown, Schulden-Fail-State
 - [x] UI: Highscore-Tabelle Lobby, Nexus-Kredit-Badge Navbar (grau/gelb/rot)
 - [x] Vollständiger `newRun()`-Reset (Gebäude, Tiles, Forschungen, Advisors, Credits)
@@ -586,7 +648,7 @@ Ein automatisierter Run (Bot, ausschließlich über echte HTTP-Routen) soll die 
 
 ### Balance-Checkliste (Bot-Kalibrierung statt menschlichem Playtest)
 
-- [x] **Onboarding-Hints weitgehend abgedeckt** — Sol-1–4-Rampe neu geordnet (GDD §16.2/16.3/16.5), 67 Hint-Tests grün (2026-07-14). Ein Punkt bewusst offen: `hint_2` soll von der Sol-1-Spezialformulierung zu einem generellen "Regolith-Tile erschöpft, Harvester verlegen"-Alert werden (Owner-Entscheidung 2026-08-04, noch nicht umgesetzt).
+- [x] **Onboarding-Hints weitgehend abgedeckt** — Sol-1–4-Rampe neu geordnet (GDD §16.2/16.3/16.5), 67 Hint-Tests grün (2026-07-14). Ein Punkt bewusst offen: `hint_2` soll von der Sol-1-Spezialformulierung zu einem generellen "Regolith-Tile erschöpft, Harvester verlegen"-Alert werden (Owner-Entscheidung 2026-08-04). **Umgesetzt 2026-09-06** als eigener Hint `hint_harvester_low_regolith` (< 30 % Restvorkommen) + Ausweichziel-Markierung auf der Karte; offen nur noch, ob `hint_2` (Sol-1-Formulierung) damit entfällt.
 - [x] **Neuer Run spielbar?** — verifiziert per PlaytestBot statt menschlichem Spieler: Bot spielt komplette Runs ausschließlich über die echten HTTP-Routen; `phase2_start_sol` liegt aktuell (Stand 2026-08-13) bei 20–22 über 3 Test-Seeds. Startwerte seither mehrfach nachjustiert (Regolith-Startbestand 200→300→340). Läuft aktuell noch an `time_limit` aus (zu wenig Sole für Phase 2 übrig) statt an der strukturellen Blockade, die vorher bestand — siehe Phase 3o unten.
 - [x] **Kritische Blocker?** — systematisch über Bot- und Owner-Playtests ausgeräumt (einheitlicher 422-Fehlercontract, automatischer Techtree-Levelup + Fehleranzeige, mehrere Hint-Sackgassen behoben). Kein bekannter offener Blocker.
 - [x] **INNN/Nachrichten vereinfachen** — abgeschlossen, siehe Phase 3j
@@ -640,7 +702,7 @@ Offene Stufen: 1b/1d (Supply-Achse-Herleitung, Pfad-C-Regolith-Hebel), 3 (Ratenm
 - [x] Harvester-Zweitinstanz-Gate (CC Lv3 + 100 Rg pauschal, `ColonyController::placeBuilding`) — die generische "Level-Up-Preis für jede weitere Instanz"-Regel für Hangar/Wohnhabitat bleibt offen (Bootstrap-Zirkel, siehe Stufe 1b)
 - [x] `geology`-Effekt als hartverdrahteter Hook (erster von ursprünglich max. zwei erlaubten hartverdrahteten Kenntniseffekten — die Guard-Rail ist durch Owner-Entscheidung vom 2026-08-15 überholt, siehe `docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md`: mittlerweile 6 von 7 Kenntnissen mit hartverdrahtetem Effekt — `construction`/`cartography`/`trade` Bau-AP-Rabatt, `agronomy` Organika-Bonus, `trade` zusätzlich Cantina-Slot-Bonus (PR #253, 2026-08-15), `geology` zusätzlich Instabilitäts-Risiko-Reduktion, `defense` erster eigener Effekt (Sturm-Risiko-Reduktion) (Branch `design/encounters-and-defense`, 2026-08-16); `health` bewusst ohne Zusatzeffekt)
 - [x] `bar.base_prices` + `compound_import_price`, `knowledge.levelup_costs` + `credits` nachgezogen
-- [ ] Wachstumsachsen-Umstellung (§4c) unvollständig: Agrardom Level→Instanz zurückgestellt auf Stufe 1d; Religiöse Stätte/Kolonialdenkmal je 1 Instanz/Lv1 offen; Hangar-Doppelachse (Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse) offen
+- [ ] Wachstumsachsen-Umstellung (§4c) unvollständig: Agrardom Level→Instanz offen (Owner-Frage F1 oben); ~~Religiöse Stätte/Kolonialdenkmal je 1 Instanz/Lv1~~ ✅ 2026-08-26 (`max_level = 1`); Hangar-Doppelachse ✅ (Level 1–3 = Schiffsklasse, serverseitiges Gate seit 2026-09-04; Instanzen ungedeckelt)
 
 ### Stufe 1b — klein, danach — größtenteils abgeschlossen
 
@@ -649,7 +711,7 @@ Offene Stufen: 1b/1d (Supply-Achse-Herleitung, Pfad-C-Regolith-Hebel), 3 (Ratenm
 - [x] Cantina-Losgröße an Zahlungsfähigkeit gebunden (höchstens ~35 % des Bestands, 2026-08-04)
 - [x] Harvester-Zweitinstanz-Bezugsquelle entworfen und freigegeben (2026-08-05, §4c): Sockel-Baseline auf 1 Harvester-Instanz umgestellt (2. Instanz = optionaler Bonus, bewusst gegen Planbarkeit); Weg A = Orin (`corporate_rep`) verkauft Extraktionsrechte für 400–800 Cr; Weg B = Bergungsmission `mission_harvester_salvage` auf `ruin_tile`, kostenlos aber beschädigt ankommend — siehe Meilenstein 08-05/06 unten
 - [ ] **Pfad-C-Regolith-Hebel neu denken** — der Organika→Regolith-Tausch fällt mit der Knappheitsordnung weg (§13.7). Die Rollenklärung Reisender Händler vs. Cantina-Gäste ist inzwischen entschieden (Corvan übernimmt das Alltagsgeschäft, siehe Meilenstein 08-05/06); offen ist nur noch, ob Pfad C überhaupt einen eigenen Regolith-Hebel braucht
-- [ ] **Harvester-Erschöpfung** (§4c): Ertrag eines Regolith-Tiles soll über die Zeit sinken, damit der Harvester pro Run mehrfach umgesetzt werden muss. Schema-Grundlage existiert (`colony_tiles.resource_max`), ebenso die drei Ergiebigkeitsstufen und die Verlege-Vorschau. Zielbild: ein Tile trägt ~15–25 Sole. Rate gehört in die Regolith-Herleitung (§13.7)
+- [x] **Harvester-Erschöpfung** (§4c) — ✅ umgesetzt (`GameTick` Depletion-Kurve auf `colony_tiles.resource_amount`, Sidebar-Anzeige 09-04, Warn-Hint + Ausweichziel 09-06). Ursprüngliches Ziel: Ertrag eines Regolith-Tiles soll über die Zeit sinken, damit der Harvester pro Run mehrfach umgesetzt werden muss. Schema-Grundlage existiert (`colony_tiles.resource_max`), ebenso die drei Ergiebigkeitsstufen und die Verlege-Vorschau. Zielbild: ein Tile trägt ~15–25 Sole. Rate gehört in die Regolith-Herleitung (§13.7)
 - [ ] **Agrardom-Kurve am oberen Ende prüfen** (§3, §13.7): Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe. Ab Lv4 (41 Or/Sol gegen max. ~31 Bedarf) ist das Rennen entschieden und Organika hört auf, eine Sorge zu sein — offen ist, ob die Kurve dort flacher auslaufen soll oder ob Missionen/Events genug Zusatzlast tragen
 
 ### Stufe 1c — Schema und Messbarkeit — Abgeschlossen (PR #234)
@@ -665,9 +727,9 @@ Offene Stufen: 1b/1d (Supply-Achse-Herleitung, Pfad-C-Regolith-Hebel), 3 (Ratenm
 Kein Implementierungsschritt, sondern die nächste zusammenhängende Herleitung — nach demselben Verfahren wie §13.7: von der Designabsicht her, ohne die Bestandswerte als Randbedingung. Anlass: Die `supply_cost`-Werte sind gegen eine Wirtschaft kalibriert, in der Regolith knapper war. Wird Bauen leichter, wird Supply relativ zum bindenderen Limiter — was §6 entspricht, aber verlangt, die Zielkolonie gegen den erreichbaren Cap gegenzuprüfen.
 
 - [ ] `supply_cost` je Gebäude und die Cap-Quellen (CC-Level, Wohnhabitat, Kenntnisse) neu herleiten
-- [ ] **Level-Deckel für Cantina und Krankenstation** — beide heute `NULL` (unbegrenzt), im Widerspruch zum „kleine Kolonie"-Prinzip
-- [ ] **Instanz-Deckel für den Agrardom** — mit der Umstellung auf Instanzen (§4c) offen; hängt am Organika-Rennen und am Tile-Budget
-- [ ] Die übrigen `max_level = NULL`-Gebäude (Sciencelab, Temple, Hangar, Monument) mitentscheiden
+- [x] ~~Level-Deckel für Cantina und Krankenstation~~ — ✅ 2026-08-26 (Ausbaustufen-System, beide Lv3)
+- [ ] **Agrardom: Level oder Instanz** — Owner-Frage F1 (oben); Config ist seit 08-26 Level/3
+- [x] ~~Die übrigen `max_level = NULL`-Gebäude~~ — ✅ 2026-08-26: alle 13 Gebäude gedeckelt
 
 ### Stufe 2 — AP-Pool zusammenlegen (§13.1) — Abgeschlossen (PR #240/#241, 2026-08-10)
 
@@ -748,7 +810,7 @@ Design-Entscheidung vom 2026-07-20 bleibt gültig (Analytiker = passiver Multipl
   - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)
   - Session-Switching: wenn mehrere aktive Runs existieren, muss `activeIds.colonyId` beim Wechsel angepasst werden
   - Für echtes Multiplayer (mehrere User pro Run): `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`)
-- [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Reisezeitprognose in Systemkarte; Stratege → Ziel-Erreichbarkeits-Prognose im Run-Ziel-Panel. Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt abgeschlossene Phase-3o-Balance-Kalibrierung voraus.
+- [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Missionszeit-/Verschleiß-Prognose im Hangar (Systemkarte entfällt). Stratege ist zurückgestellt (2026-08-02) — seine Ziel-Erreichbarkeits-Prognose wandert ins Kommandozentrale-Dashboard (§13.4). Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt abgeschlossene Phase-3o-Balance-Kalibrierung voraus.
 - [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp
 - [ ] **NPC-Vereinbarungen** — `innn_message_types.relationship_effect` für Nexus-Beziehungsstufen auswerten; `treaty_signed`-Moral-Event für Handels-/Schutzabkommen mit NPC-Fraktionen (Händler, Schmuggler) aktivieren; kein Krieg/Allianz-System (inkompatibel mit Singleplayer-Roguelike-Konzept, GDD §1.1). `war_declared` als Moral-Event-Key deprecaten.
 - [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
@@ -767,5 +829,5 @@ Design-Entscheidung vom 2026-07-20 bleibt gültig (Analytiker = passiver Multipl
 **Voraussetzung:** Phase-4-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 5 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
 
 - [ ] **Außenposten** — `home_colony_id` pro Flotte (GDD §12); ob Außenposten kommen, hängt davon ab ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird; minimal halten (kein vollständiges Kolonie-System)
-- [ ] **Neue Schiffstypen** — Scout/Sonde (Supply 1) und weitere; setzt stabiles Combat-Balancing aus Phase 4 voraus
+- [ ] **Neue Schiffstypen** — über Drohne/Frachter/Korvette hinaus (die Sonde ist als Drohne, ID 85, bereits im Spiel); Schiffe kosten kein Supply. Kein Combat-System mehr — Voraussetzung ist ein erweiterter Missionskatalog, nicht Combat-Balancing
 - [ ] **Galaktische Politik** — über bilaterale Diplomatie hinaus: galaktische Institutionen, Abstimmungen, Fraktionspolitik; nur auf Basis von echtem Spielerverhalten definierbar
