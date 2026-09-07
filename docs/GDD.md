@@ -279,7 +279,6 @@ Credits werden durch vier Quellen erworben:
 |--------|-------------|
 | Relaisvergütung | Nexus zahlt pro Sol eine Vergütung für die Relais-/Sensor-Infrastruktur der Uplink-Station — abhängig vom Uplink-Station-Level |
 | Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Sol (Arbeitstitel: Name noch offen) |
-| Handelsvertrag (Konsul) | Garantierte Bar-Einnahme, sobald ein Konsul zugewiesen ist und die Cantina Lv1+ steht — steigt mit Konsul-Rang (§12, §13) |
 | Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
 
@@ -647,7 +646,9 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 
 **Pfad B — Hangar.** Der Pfad der aktiven Versorgung. Schiffe erschließen den Missionskatalog (§8b) und damit die breiteste Ressourcenbasis im Spiel — Regolith, Organika, Credits, Almanach-Funde und Tile-Aufklärung kommen alle über Missionen. Der Preis ist dauerhafter Aufwand: jede Mission kostet AP und Proviant, Schiffe verschleißen und wollen repariert werden. Wer diesen Pfad zuerst geht, hat früh viele Hebel, muss sie aber jeden Sol bedienen.
 
-**Pfad C — Cantina.** Der Pfad der Flexibilität. Der Konsul bringt mit dem Handelsvertrag eine garantierte Sol-Einnahme (§12), die Cantina selbst gibt Vertrauen (`trust_per_lv`), und der Handel erlaubt, jeden konkreten Engpass gegen Credits zu lösen — statt ihn produzieren zu müssen. Wer diesen Pfad zuerst geht, ist gegen Überraschungen am besten aufgestellt, hängt dafür aber an der Credits-Decke und an der Angebotslage.
+**Pfad C — Cantina.** Der Pfad der Flexibilität. Die Cantina selbst gibt Vertrauen (`trust_per_lv`), und der Handel erlaubt, jeden konkreten Engpass gegen Credits zu lösen — statt ihn produzieren zu müssen. Wer diesen Pfad zuerst geht, ist gegen Überraschungen am besten aufgestellt, hängt dafür aber an der Credits-Decke und an der Angebotslage.
+
+> ⚠️ **Konsul-Credits-Hebel offen (Owner-Entscheidung F3):** Der frühere „Handelsvertrag" (garantierte Dauer-Sol-Einnahme sobald Konsul + Cantina Lv1 stehen) wurde ersatzlos gestrichen — er war bedingungslos und ohne weiteres Zutun stärker als die Hebel von Analytiker und Raumfahrer und verletzte damit die Paritäts-Anforderung unten. Pfad C hat damit aktuell denselben offenen Credits-Hebel wie Pfad A (siehe Tabelle unten). Eine Ersatzmechanik ist nicht vorgesehen.
 
 ### Paritäts-Anforderung: jeder Pfad muss die Grundbedürfnisse decken
 
@@ -659,10 +660,10 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 |---|---|---|---|---|
 | **Regolith** | 1 Harvester-Instanz, Grundeinkommen pro Sol (Standard-Baseline, §4c) | `geology` senkt Erschöpfung | Mission-Missionen liefern variable Mengen je Umlauf | **kein dedizierter Wachstumshebel** — opportunistischer Credits→Regolith-Kauf als Sicherheitsnetz (§12), siehe „Pfad-C-Hebel" unten |
 | **Organika** | Agrardom | `agronomy` erhöht die Produktion mit jedem Level (glockenförmig) | Missions-Missionen liefern Organika je Umlauf | Ankauf über Bar-Angebote |
-| **Credits** | Relaisvergütung, Ratssubvention | ⚠️ Hebel offen | Botenflug / Konvoi-Begleitung | Handelsvertrag + Organika-Verkauf |
+| **Credits** | Relaisvergütung, Ratssubvention | ⚠️ Hebel offen | Botenflug / Konvoi-Begleitung | ⚠️ Hebel offen (Organika-Verkauf als opportunistische Teillösung) |
 | **Vertrauen** | Gebäude-Boni, Ereignisse | `health` + Krankenstation | `mission_aid_transport` (+2) | Cantina `trust_per_lv` + Handelserfolge |
 
-**Pfad A Credits-Hebel:** Offen (s. Tabelle). Kandidat: Kenntnis-Effekt, der Kosten senkt — passt besser zum Pfad-Charakter als eine zusätzliche Einnahmequelle.
+**Pfad A und Pfad C Credits-Hebel:** Beide offen (s. Tabelle). Kandidat für Pfad A: Kenntnis-Effekt, der Kosten senkt — passt besser zum Pfad-Charakter als eine zusätzliche Einnahmequelle. Für Pfad C ist noch kein Kandidat benannt (der bisherige Handelsvertrag ist gestrichen, siehe oben).
 
 > **Prüfregel für künftige Mechaniken:** Wird eine neue Ressource, Kosten- oder Bedarfsachse eingeführt, ist zu prüfen, ob alle drei Pfade sie bedienen können. Ist das nicht der Fall, ist entweder die Mechanik anzupassen oder den unterversorgten Pfaden ein Hebel zu geben — **nicht** die Ungleichheit hinzunehmen.
 
@@ -722,7 +723,7 @@ Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes f
 | **Kommandozentrale** | Level | Lv5 | Eine pro Kolonie, per Definition. Die Level tragen die Progressionsgates des gesamten Spiels. |
 | **Harvester** | **Instanz** | **2** | Mehrere Abbaurigs auf mehreren Regolith-Tiles. Bewusst knapp gedeckelt — siehe unten. |
 | **Wohnhabitat** | Instanz (+ Level 1–3 je Instanz) | 6 | Mehrere Habitate; das Level je Instanz trägt den Supply-Cap-Beitrag (§6). |
-| **Agrardom** | **Instanz** (Ziel) | offen | Mehrere Kuppeln; Nahrungsproduktion skaliert natürlich mit der Anzahl. **Owner-Frage F1:** Config führt den Agrardom als Level-Gebäude (max Lv3, nicht instanziert) — Umstellung oder Zielkorrektur offen. |
+| **Agrardom** | Level | Lv3 | Bleibt Level-Gebäude (Owner-Entscheidung F1). Er hat mit Level und `agronomy`-Kenntnis bereits zwei Wachstumshebel — eine dritte Achse (Instanz) wäre Redundanz ohne neue Entscheidung, und eine zusätzliche Instanz würde ein knappes Koloniefeld binden, das mit einzigartigen Gebäuden konkurriert. |
 | **Hangar** | **Instanz + Level** | Instanzen offen, Lv3 | Der einzige Fall, der beide Achsen braucht — siehe unten. |
 | **Analytik-Labor** | Level | Lv3+ | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Lv4/5 haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt, §13.3), keine reinen Gate-Stufen mehr. |
 | **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
@@ -1026,22 +1027,20 @@ max_status_points=5, decay_rate=0.5
   Nach Sol 4: status_points = 3.00  ← zwei ganze SP verloren
 ```
 
-**Konsequenzen nach Building-Typ:**
-
-| Entität | Typ | Konsequenz bei SP ≤ 0 |
-|---------|-----|----------------------|
-| Leveled Building (allgemein) | Leveled | Level − 1; status_points reset auf max_status_points; Protokoll-Ereignis |
-| Wohnhabitat | Instanced | **Instanz zerstört** (kein Level zum Abziehen); Supply-Cap sinkt; Protokoll-Ereignis |
-| Hangar | Instanced | **Instanz zerstört**; zugewiesenes Schiff wird **unbrauchbar** (nicht zerstört); Protokoll-Ereignis |
+**Konsequenz bei SP ≤ 0 — einheitlich, keine Zerstörung (Owner-Entscheidung F2):** Ein Gebäude oder eine Instanz wird durch Decay **nie gelöscht**. Erreichen die `status_points` 0, levelt das Exemplar um 1 herunter (min. Level 0), die `status_points` werden auf `max_status_points` zurückgesetzt, ein Protokoll-Ereignis wird geschrieben. Das gilt gleichermaßen für Level-Gebäude und für Instanzen (Wohnhabitat, Hangar) — eine Instanz bleibt als Instanz bestehen, auch auf Level 0.
 *(Kenntnis — kein Decay; Kenntnisse haben kein SP-System, siehe §10)*
 
-> **Instanced vs. Leveled:** Leveled Buildings verlieren ein Level und regenerieren SP — sie geben mehrere Chancen. Instanced Buildings (Wohnhabitat, Hangar) haben kein Level: Decay auf 0 zerstört die Instanz sofort. Das macht sie gefährlicher zu vernachlässigen, erlaubt aber bewusst riskantes Spiel (Repair-AP sparen auf eigene Gefahr).
+> **Effekte folgen dem Status, nicht dem Level (Owner-Entscheidung F2, Design-Ergänzung):** Das bisherige binäre Modell „Effekt an, solange `status_points > 0`" gilt nicht mehr uneingeschränkt. Sobald die `status_points` eines Exemplars 0 erreichen, fällt sein Effekt/Bonus vollständig aus — er kehrt erst zurück, wenn das Exemplar zu einem guten Teil wieder repariert ist (Richtwert **~50 %** von `max_status_points`), nicht schon beim ersten Reparatur-Klick. Beispiel: Ein verfallenes Wohnhabitat verliert seinen Supply-Beitrag vollständig, der Supply-Puffer der Kolonie kann dadurch negativ werden — das ist **beabsichtigt** und soll sich als Vertrauens-Malus niederschlagen (Kolonisten ohne ausreichend Wohnraum/Versorgung).
+>
+> **Ausnahme Hangar-Schiffe:** Schiffe bleiben ein bewusster binärer Sonderfall — ein Schiff ist entweder voll einsatzfähig oder vollständig deaktiviert, es gibt keinen Teil-Zustand. Sie werden **nicht** in das ~50 %-Reparatur-Modell gezwungen.
+>
+> ⚠️ BALANCE CONCERN: Ein negativer Supply-Puffer braucht eine Dämpfung gegen eine Verfalls-Kaskade (Vertrauen sinkt → mehr Verfall → noch weniger Vertrauen). Diese Dämpfung ist noch ungeklärt und muss vor der Implementierung geklärt werden.
 
 > **Manuelle Reparatur:** kostet Construction-AP und Regolith pro Schritt. Hartes Gate — ohne Regolith ist der Reparatur-Button gesperrt. CC und Harvester sind regolithfrei reparierbar (AP-only, Bootstrap-Schutz). Vollständige Kosten-Regeln siehe §4 „Baukosten & Level-Up-Kosten" und `config/game.php`.
 
 > **Notreparatur (CC und Wohnhabitat):** Wenn SP dieser kritischen Strukturen unter einen Schwellwert fällt, wird automatisch eine Notreparatur ausgelöst — kostet Credits statt AP. Verhindert unbeabsichtigten Verlust, nicht aber bewusste Vernachlässigung (Credits müssen vorhanden sein).
 
-> **Hangar-Decay-Detail:** Ein Schiff im zerstörten Hangar bleibt in der Datenbank erhalten — es ist nur deaktiviert. Sobald ein neuer Hangar gebaut oder der alte repariert wird, ist das Schiff wieder einsatzbereit.
+> **Hangar-Decay-Detail:** Levelt der Hangar auf Decay herunter, wird ein zugewiesenes Schiff deaktiviert, nicht zerstört — es bleibt in der Datenbank erhalten. Sobald der Hangar wieder auf den Reparatur-Schwellwert (~50 %, siehe oben) instand gesetzt ist, ist das Schiff wieder einsatzbereit.
 
 > **Schiffe haben keinen passiven Decay.** Schiffs-Verschleiß entsteht durch aktiven Einsatz (Außenmissionen), nicht durch Zeitablauf — siehe §7 "Schiffs-Verschleiß".
 
@@ -1490,18 +1489,7 @@ Die Bar ist ab CC Lv2 verfügbar. Sie ist der Ort des Handels — verkörpert du
 
 Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet AP** aus dem gemeinsamen Pool (§13.1) — der Handel konkurriert damit direkt mit Bau und Kenntnissen um dieselbe Kapazität. Exakte Kosten: siehe `config/game.php`.
 
-**Handelsvertrag (garantierte Einnahmequelle):** Kauf- und Tauschangebote erzeugen kein Credits-Einkommen — sie kosten Credits oder sind ressourcenneutral. Das strukturelle Handelseinkommen der Kolonie ist deshalb der Handelsvertrag: kein Bar-Angebot (kein Karten-Slot, keine Annahme, keine AP-Kosten), sondern eine **passive Cr/Sol-Einnahme**, strukturell identisch zur Relaisvergütung (§3). Sie fließt automatisch pro Tick, solange ein Konsul der Kolonie zugewiesen ist **und** die Cantina mindestens Lv1 steht; der Konsul vermittelt laufende Handelsverträge im Hintergrund, die Kolonie liefert dafür keine Ressourcen. Config: `game.credits.consul_contract_income_per_rank`, verarbeitet in `GameTick` im selben Schritt wie `nexus_subsidy`/`relay_bonus_per_uplink_level`. Werte nach Konsul-Rang:
-
-| Konsul-Rang | Handelsvertrag-Einkommen |
-|-------------|--------------------------|
-| Kein Konsul | — |
-| 1 — Junior | Niedrig |
-| 2 — Senior | Mittel |
-| 3 — Experte | Hoch |
-
-Exakte Werte pro Rang: siehe `config/game.php → credits.consul_contract_income_per_rank`.
-
-Ohne zugewiesenen Konsul entfällt diese Einnahme vollständig — **beabsichtigt**: die Konsul-Entscheidung erhält einen echten Gegenwert. Wichtig: Der Handelsvertrag wie auch Corvans Alltagsgeschäft sind beide an die gebaute Cantina (Bar Lv1+) gekoppelt. Für Läufe, die Sciencelab oder Hangar zuerst bauen (gleichwertige Pfadwahl, §13), entfällt damit der komplette Cantina-Einnahmepfad — das ist kein Edge-Case, sondern der Normalfall für jeden Lauf ohne frühe Cantina. Credits-Planung muss das berücksichtigen (Missionen, Nexus-Reserve, Berater-AP-Beitrag fallen schwächer aus).
+> ⚠️ **Handelsvertrag gestrichen (Owner-Entscheidung F3):** Es gab bis Anfang September 2026 eine passive Cr/Sol-Einnahme, die automatisch floss, sobald ein Konsul zugewiesen war und die Cantina Lv1+ stand. Sie wurde ersatzlos gestrichen — bedingungslos und ohne weiteres Zutun war sie stärker als die vergleichbaren Hebel von Analytiker (Kenntnis-Boni) und Raumfahrer (Missions-Erträge) und verletzte damit die Paritäts-Anforderung (§4b). Corvans Alltagsgeschäft (Kauf/Verkauf) bleibt an die Cantina Lv1+ gekoppelt und erzeugt weiterhin kein passives Einkommen — Kauf- und Tauschangebote kosten Credits oder sind ressourcenneutral. Pfad C hat aktuell keinen dedizierten Credits-Wachstumshebel (§4b); eine Ersatzmechanik ist nicht vorgesehen.
 
 **Bar-Level-Progression:**
 
@@ -1972,10 +1960,12 @@ Exakte Werte (AP-Bonus je Rang, Upkeep, Rang-Aufstiegs-Schwellen in aktiven Tick
 
 **Einstellungskosten (Rang 1) — typ-spezifisch:** Baumeister ist der günstigste Einstieg (Kernanforderung Tag 1); Analytiker, Raumfahrer und Konsul sind höher gestaffelt, gekoppelt an ihre spätere Verfügbarkeit (Analytiker erst ab CC Lv2, Raumfahrer voller Nutzen erst mit Hangar, Konsul mittlere Priorität). Exakte Beträge: `config/advisors.php`, `docs/game-reference.md`.
 
-**Beförderung** kostet beim Erreichen von Rang 2 bzw. Rang 3 zusätzlich zum laufenden Upkeep einen einmaligen Credits-Betrag (`config/game.php → advisor.promotion_costs`). Kann der Spieler die Beförderung nicht bezahlen, wird sie auf den nächsten Sol verschoben, bis genug Credits verfügbar sind.
+**Beförderung** kostet beim Erreichen von Rang 2 bzw. Rang 3 zusätzlich zum laufenden Upkeep einen einmaligen Credits-Betrag (`config/game.php → advisor.promotion_costs`).
+
+**Beförderung ist eine aktive Entscheidung, kein Automatismus (Owner-Entscheidung F3).** Sobald ein Berater den `active_ticks`-Schwellwert für den nächsten Rang erreicht hat, steht die Beförderung bereit — der Spieler löst sie selbst aus, wann er will, und kann sie beliebig lange hinauszögern, um den höheren Upkeep und die Einmalkosten erst zu tragen, wenn die Kolonie es sich leisten kann. Das folgt demselben Grundsatz wie an anderer Stelle im AP-/Berater-System: aktive Entscheidungen statt automatischer Fortschritt.
 
 - **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` gesetzt hat (Berater ist aktiv zugewiesen).
-- **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisor.rank_thresholds`).
+- **Rang-Aufstieg:** Bereitschaft wird nach ausreichend kumulierten `active_ticks` erreicht (`config/game.php → advisor.rank_thresholds`); der Vollzug bleibt manuell, siehe oben.
 - Alle Werte stehen in `config/game.php → advisor` (Einstellungskosten, AP-Bonus, Upkeep, Rang-Thresholds, Beförderungskosten).
 
 > **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Sol, laufender Upkeep (Cr/Sol) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
@@ -2580,6 +2570,8 @@ Nexus-intern heißt die Position **Konzessionär**: jemand der eine Betriebslize
 
 **Nexus** ist kein Staat und keine Armee — es ist ein interstellares Entwicklungskonsortium, das Kolonisierungsrechte vergibt, Startkapital vorschießt und am Ende Rechenschaft erwartet. Der Spieler hat eine Konzession unterzeichnet: Aufbau und Betrieb einer Siedlung auf einem zugewiesenen Planeten, für eine definierte Laufzeit, gegen Vorauszahlung in Credits. Was in der Konzession nicht steht: wie rau die Bedingungen vor Ort sind, was die Kolonisten wirklich brauchen, und wie wenig Nexus bereit ist zu helfen wenn es brennt.
 
+**Das Startkapital ist wörtlich ein Vorschuss, kein Geschenk (Owner-Entscheidung F3):** Die Kolonie startet mit nutzbaren Credits — und in exakt gleicher Höhe gleichzeitig mit `nexus_debt`. Das ist ein bewusster Härtefaktor, kein Rechentrick: Er erzeugt von Sol 1 an denselben Druck, den das Frontier-Survival-Ton verspricht, und macht die Konzessions-Entzug-Drohung (Fail State 2, §18.2) von Anfang an glaubwürdig statt erst spät im Run relevant zu werden.
+
 Der Direktor steht zwischen zwei Loyalitäten: den Kolonisten (Vertrauen) und Nexus (Schulden). Wer zu sehr für Nexus optimiert, verliert das Vertrauen der Siedler. Wer Nexus ignoriert, wird zurückgerufen. Das ist kein Widerspruch — das ist der Job.
 
 ---
@@ -2635,9 +2627,9 @@ Genau vier Fail States — kanonische Definition, Warnstufen und Auslösung in *
 4. **Phase-1-Fristbruch** — Phase 1 bei `run.phase1_deadline_sol` nicht abgeschlossen.
 
 **Nexus-Schulden-Mechanik:**
-- Schulden akkumulieren durch: Startkapital (Vorschuss, initialer `nexus_debt`) + Nexus-Deals (Schiffskauf auf Nexus-Kredit, §8b)
+- Schulden akkumulieren durch: Startkapital (Vorschuss, initialer `nexus_debt`), Nexus-Deals (Schiffskauf auf Nexus-Kredit, §8b) und — Owner-Entscheidung F3 — jedes Berater-Upkeep-Defizit, das die Credits nicht mehr deckt können: Credits werden dabei auf 0 geklemmt statt negativ zu werden, das Defizit fließt stattdessen in `nexus_debt`. `nexus_debt` ist damit das alleinige Schulden-Ledger der Kolonie; Credits selbst bleiben immer nutzbares, nicht-negatives Kapital (§13.1).
 - Keine Zinsen
-- Rückzahlung: nur manuell — *geplant, noch nicht implementiert* (ROADMAP A8)
+- Rückzahlung (Owner-Entscheidung F3, beantwortet ROADMAP A8): kein eigenes Rückzahlungs-Feature nötig — normales positives Sol-Einkommen tilgt `nexus_debt` automatisch mit, sobald wieder ein Überschuss entsteht. Kein separater manueller Rückzahlungs-Workflow geplant.
 - Schuldenlimit: fester Wert (`config/game.php`), als Balken im UI kommuniziert („Nexus-Kredit: X / Cap"), Farbwechsel bei moderaten und hohen Schwellen
 - Lose Kopplung mit Vertrauen: kein automatischer Zusammenhang, der Spieler managt beide Achsen aktiv. Ein Schiffskauf auf Kredit löst einen einmaligen kleinen Trust-Malus aus (`nexus_credit`-Event).
 
@@ -2799,7 +2791,7 @@ Begründung gegen eine Streak-Mechanikverzögerung: Trust unter −20 bedeutet a
 | > 95 % des Limits | Schuldenbalken wechselt auf Rot; *geplant:* Nexus-Meldung „Kreditlimit fast erreicht." |
 | > 100 % | Fail State — Run endet sofort |
 
-> **Implementierungsstand:** Akkumulation (Startkapital als initiale Schuld, Nexus-Kredit-Schiffskauf) und Fail-State-Prüfung sind implementiert. Offen: manuelle Rückzahlung und die 95 %-Warnmeldung (ROADMAP A8).
+> **Implementierungsstand:** Akkumulation (Startkapital als initiale Schuld, Nexus-Kredit-Schiffskauf, Berater-Upkeep-Defizit — Owner-Entscheidung F3, §15 Nexus-Schulden-Mechanik) und Fail-State-Prüfung sind implementiert. Rückzahlung braucht kein eigenes Feature (F3, beantwortet A8) — normales positives Einkommen tilgt automatisch. Offen bleibt nur die 95 %-Warnmeldung.
 
 **Narrativer Ausgang:** "Nexus hat die Konzession entzogen. Der Direktor wurde zurückgerufen."
 
@@ -2930,16 +2922,16 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 - `task_colony_prosperity` (Vertrauen über Schwelle) wird nicht am Zielwert kalibriert, solange die Trust-Ökonomie selbst nicht kalibriert ist (Trust bewegt sich im Bot nur um den Neutralbereich) — eigene Untersuchung.
 - `task_credit_reserve` liest die Schwelle aus `run.task_credit_reserve_threshold`.
 
-**Credits-Ökonomie — Break-even-Regel:** Der Berater-Unterhalt (`advisor.upkeep`, steigend mit dem Rang) muss im **worst case ohne Cantina** (keine Handelsvertrag- und Corvan-Einnahmen) spätestens mit ausgebauter Uplink-Station tragbar sein — sonst ist die Cantina eine verdeckte Pflicht statt eine gleichrangige Pfadwahl. Einnahmen ohne Cantina sind `nexus_subsidy` (flat, bedingungslos) und die Relaisvergütung (`relay_bonus_per_uplink_level`); der Handelsvertrag (`consul_contract_income_per_rank`) bleibt ein Bonus des Cantina-Pfads. Herleitung mit vier Beratern (Werte `config/game.php`):
+**Credits-Ökonomie — Break-even-Regel:** Der Berater-Unterhalt (`advisor.upkeep`, steigend mit dem Rang) muss spätestens mit ausgebauter Uplink-Station tragbar sein, unabhängig davon, ob die Cantina gebaut wurde — der frühere Handelsvertrag (Cantina-Bonuseinkommen) ist gestrichen (Owner-Entscheidung F3, §12 Kanal 1), Cantina liefert seither kein dediziertes Dauereinkommen mehr. Strukturelles Einkommen ist damit für alle drei Pfade gleich: `nexus_subsidy` (flat, bedingungslos) und die Relaisvergütung (`relay_bonus_per_uplink_level`). Herleitung mit vier Beratern (Werte `config/game.php`):
 
 | Rang | Upkeep (4 Berater) | Einkommen, Uplink Lv0 | Einkommen, Uplink Lv2 | Einkommen, Uplink Lv3 (max.) |
 |------|---------------------|------------------------|-------------------------|---------------------------------|
 | 2 | 100 Cr/Sol | 50 Cr/Sol (−50) | 140 Cr/Sol (+40) | 185 Cr/Sol (+85) |
 | 3 | 140 Cr/Sol | 50 Cr/Sol (−90) | 140 Cr/Sol (0) | 185 Cr/Sol (+45) |
 
-Ein Rang-2-Defizit bei niedrigem Uplink-Ausbau ist aus dem Phase-1-Reststand absorbierbar; Rang 3 erreicht mit Uplink Lv2+ eine neutrale bis positive Marge statt eines permanenten Bodens. Mit Cantina + Konsul liegt der Überschuss deutlich höher — der Konsul ist ein spürbarer, aber optionaler Vorteil. Beförderungskosten (`promotion_costs`) sind so gesetzt, dass mehrere gleichzeitige Rang-3-Aufstiege keinen Einmal-Schock erzeugen, der zusammen mit dem Upkeep-Sprung die Kasse leert.
+Ein Rang-2-Defizit bei niedrigem Uplink-Ausbau ist aus dem Phase-1-Reststand absorbierbar; Rang 3 erreicht mit Uplink Lv2+ eine neutrale bis positive Marge statt eines permanenten Bodens. Beförderungskosten (`promotion_costs`) sind so gesetzt, dass mehrere gleichzeitige Rang-3-Aufstiege keinen Einmal-Schock erzeugen, der zusammen mit dem Upkeep-Sprung die Kasse leert.
 
-**Offene Design-Frage (Owner-Entscheidung):** Sciencelab- und Hangar-Pfad sollen ein **eigenes** Credits-Einkommen bekommen, unabhängig davon, ob und wann die Cantina gebaut wird. Die Zahlenhebel oben nivellieren nur; sie ersetzen keinen fehlenden Kanal. Mechanismus nicht spezifiziert — ROADMAP „Offene Pfad-Paritäts-Fragen".
+**Offene Design-Frage (Owner-Entscheidung):** Alle drei Pfade — Analytik-Labor, Hangar **und** Cantina — brauchen weiterhin einen eigenen Credits-Wachstumshebel jenseits der pfadneutralen Grundeinnahmen oben (§4b markiert alle drei als ⚠️ offen bzw. nur opportunistisch gedeckt). Mechanismus nicht spezifiziert — ROADMAP „Offene Pfad-Paritäts-Fragen".
 
 ---
 
