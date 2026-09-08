@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-08
+
+- Docs: Owner-Fragen F4-F8 aus dem Implementierungsstand-Audit entschieden und im GDD nachgetragen (§3, §4, §8b, §10, §12, §13.7, §4c) — Harvester Konstant-Yield-Spec wird umgesetzt inkl. später nachzuholender §13.7-Neuherleitung (F4/A16), Kanal-2-Nexus-Handelsschiffe gestrichen und in eine verzögerte Uplink-Direktimport-Variante (3-5 Sole, Lieferzeit nur über Uplink-Station-Level reduzierbar) überführt (F5/A12), Roguelike-Kenntnis-Teilmenge pro Run ersatzlos gestrichen (F6/A10, Risiko fehlender essentieller Kenntnisse bei nur 7 Stück), Phase-1-Bedingung bestätigt wie im Code implementiert — nur irreführender Docblock-Kommentar in `RunProgressService::checkPhase1Completion()` korrigiert (F7/C4), Playtest-Instrumentierungsplan freigegeben (F8/A17, `docs/playtest-instrumentation-plan.md` überarbeitet: Regolith-Pfad-Attribution nach Mechanismen, Organika-Verbrauch in Hunger- vs. Mission-Dispatch-Anteil aufgeschlüsselt). Nebenbefund: GDD-Aussage "Pfad C trägt keinen Regolith-Hebel" korrigiert (Corvan-Kauf ist ein realer, nicht-dedizierter Weg). ROADMAP.md entsprechend markiert, neue Umsetzungs-Tasks A24-A33. Reine Doku-Änderung (bis auf den Kommentar-Fix), Umsetzung folgt separat.
+
 ## 2026-09-07
 
 - Docs: Owner-Fragen F1-F3 aus dem Implementierungsstand-Audit entschieden und im GDD nachgetragen (§3, §4b, §4c, §7, §12, §13, §15, §18.2, §18.5) — Agrardom bleibt Level-Gebäude (F1/C9), Decay-Instanzen werden nie gelöscht, Effekte kehren erst ab ~50% Reparatur zurück (F2/C2), Nexus-Schulden bleiben eigenes `nexus_debt`-Ledger und Berater-Upkeep-Defizit fließt künftig hinein statt zu klemmen (F3/C1), Konsul-Handelsvertrag ersatzlos gestrichen (Pfad-Paritätsverletzung), Berater-Beförderung wird von automatisch auf manuell umgestellt. ROADMAP.md entsprechend markiert (A8 obsolet, neue Umsetzungs-Tasks A19-A23). Reine Doku-Änderung, Umsetzung folgt separat.
