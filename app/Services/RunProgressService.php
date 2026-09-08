@@ -76,7 +76,10 @@ class RunProgressService
      *
      * Conditions (GDD §15):
      *  1. Command Center (building_id = 25) at level >= 3.
-     *  2. At least 2 production buildings (building_id != 25) at level >= 2.
+     *  2. At least 2 non-CC buildings (building_id != 25, any type, not just
+     *     production) at level >= 2. Confirmed intentional (Owner-Frage F7,
+     *     ROADMAP 2026-09-08) — the looser "any building" condition is correct,
+     *     not a bug.
      *  3. At least 3 active advisors (colony assigned, not on cooldown).
      */
     public function checkPhase1Completion(Run $run): bool

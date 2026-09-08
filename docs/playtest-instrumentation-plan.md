@@ -27,7 +27,7 @@
 | 5 | **Instandhaltungsanteil am Pool** | ❌ | AP-Breakdown: `repair_spent / total` (B1a) |
 | 6 | **Regolith-Bilanz** (Quelle-Breakdown) | Nur total | Snapshot: Quelle-Attribution pro Sol (B1c) |
 | 7 | **Supply-Auslastung** (used/cap + Sole über Cap) | ❌ | Snapshot: Supply-Berechnung (B1d) |
-| 8 | **Sole mit 0 AP je Domäne** | ❌ | Nachberechnung: Filter über Snapshots (B2c) |
+| 8 | **Sole mit 0 AP gesamt** (Domänen-Aufschlüsselung moot, s. B2c) | ❌ | Nachberechnung: Filter über Snapshots (B2c) |
 | 9 | **Regolith-Durchsatz je Pfad** (Frachter/Geologie/Cantina) | ❌ | Nachberechnung: Quelle-Aggregation nach Pfad (B2b) |
 | 10 | **Harvester-Umzüge** pro Run | ❌ | Snapshot: Positionen + Action-Log-Filter (B1e) |
 | 11 | **Organika-Bilanz** (Quelle-Breakdown) | Nur total | Snapshot: wie Regolith (B1c) |
@@ -55,7 +55,11 @@ Alle Tasks sind im Test-Harness (RunReport::snapshot()), keine Game-Logic-Änder
 #### B1c: Regolith- & Organika-Quellen
 - Klassifiziere jede Action im Log nach Quelle (harvester, mission, trade, event)
 - Speichere: `'regolith_sources' => ['harvester' => 8, 'mission' => 2, ...]`
-- **Test (TDD):** Quellen-Summen = Bestandsdelta (Anfang–Ende Sol)
+- **Organika-Verbrauch (entschieden, F8/3):** Es gibt zwei getrennte Verbrauchswege mit unterschiedlichem Timing, die die Attribution getrennt ausweisen muss, sonst verzerrt eine reine Sol-Snapshot-Momentaufnahme die Bilanz zwischen zwei Snapshots:
+  - `hunger_consumed` — `GameTick::processFoodConsumption()`, ein Abzug pro Tick, nach Produktion, vor Trust-Berechnung (End-of-Sol)
+  - `mission_dispatch_consumed` — `HangarService::dispatch()` → `organikaCostFor()`, sofort bei Spieleraktion, kann mehrmals pro Sol auftreten, asynchron zum Tick
+  - Speichere: `'organika_sources' => [...Zufluss wie oben...], 'organika_consumption' => {hunger_consumed, mission_dispatch_consumed}`
+- **Test (TDD):** Quellen-Summen = Bestandsdelta (Anfang–Ende Sol); für Organika zusätzlich: Zufluss − (`hunger_consumed` + `mission_dispatch_consumed`) = Delta
 
 #### B1d: Supply-Snapshot
 - Berechne `supply_used` (sum aller Gebäude-Kosten), `supply_cap` (GDD §6 Formel)
@@ -78,11 +82,15 @@ Alle Tasks sind im Test-Harness (RunReport::snapshot()), keine Game-Logic-Änder
 - **Test (TDD):** Multi-Sol-Accumulation korrekt
 
 #### B2b: Regolith-Pfad-Attribution (Metrik 9)
-- Klassifiziere nach Pfad: A (Frachter/mission), B (Geologie/harvester), C (Cantina/trade)
+- **Pfad-Definition (entschieden, F8/1):** Mechanismen-Klassifikation, nicht Kenntnisse — deckt sich 1:1 mit der GDD-Pfad-Struktur:
+  - **Pfad A** = geology-Kenntnis-Bonus auf Harvester-Ertrag, bereits separat berechnet in `GameTick::harvesterYield()`
+  - **Pfad B** = `mission_supply_run`-Frachtermission
+  - **Pfad C** = Cantina/Corvan-Regolith-Kauf
 - Aggregiere über Run
 - **Test (TDD):** Summe ≈ (final − start + consumed)
 
 #### B2c: Sole mit 0 AP (Metrik 8)
+- **Domänen-Aufschlüsselung (entschieden, F8/2):** obsolet/moot — AP-Domänen (Bau/Forschung/Handel/Navigation getrennt) existieren seit der AP-Pool-Konsolidierung (2026-08-02, GDD §13.1) nicht mehr, es gibt nur noch einen gemeinsamen Pool. Eine Domänen-Spalte ist technisch nicht mehr möglich. Metrik 8 bleibt "Sole mit 0 AP gesamt".
 - Filter Snapshots: zähle wo `ap_unspent <= 0`
 - Speichere: count + Liste der Sole-Nummern
 - **Test (TDD):** count ≤ total sols
@@ -133,11 +141,11 @@ B1a (AP) → B1b (Buildings) → B2a (Projekte) → C (Dashboard)
 
 | Phase | Aufwand | TDD |
 |---|---|---|
-| B1 (Snapshots) | 8h | 5h |
+| B1 (Snapshots) | 8.5h (B1c +0.5h für getrennte Organika-Verbrauchsattribution, F8/3) | 5.5h |
 | B2 (Aggregation) | 3.5h | 2h |
 | C (Dashboard) | 6h | — |
 | D (Summary) | 1h | — |
-| **Total** | **~22h** | **~7h** |
+| **Total** | **~22.5h** | **~7.5h** |
 
 ---
 
@@ -151,11 +159,13 @@ B1a (AP) → B1b (Buildings) → B2a (Projekte) → C (Dashboard)
 
 ---
 
-## Offene Owner-Entscheidungen
+## Owner-Entscheidungen (F8, 2026-09-08)
 
-1. **Pfad-Definition (Metrik 9):** Mechanismen (Frachter/Geologie/Cantina) oder Kenntnisse?
-2. **0-AP nach Domäne (Metrik 8):** Für Zukunft vorbereiten?
-3. **Organika-Consumption:** Dynamisch per Aktion oder nur End-of-Sol?
+Alle drei Punkte entschieden, Details inline in B1c und B2b/B2c vermerkt:
+
+1. Pfad-Definition (Metrik 9): Mechanismen-Klassifikation (Frachter/Geologie/Cantina) — siehe B2b.
+2. 0-AP nach Domäne (Metrik 8): moot, AP-Domänen existieren seit der Pool-Konsolidierung nicht mehr — siehe B2c.
+3. Organika-Consumption: zwei getrennte Kategorien (`hunger_consumed`, `mission_dispatch_consumed`) — siehe B1c.
 
 ---
 

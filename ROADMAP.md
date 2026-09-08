@@ -11,11 +11,11 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [x] **F1 Agrardom: Level oder Instanz?** ✅ 2026-09-07 (C9) — Entschieden: bleibt Level, Config unverändert (max_level=3), keine Instanz-Umstellung. Einziger Task war die GDD-Korrektur (game-designer, parallel in Bearbeitung).
 - [x] **F2 Instanz-Zerstörung bei Decay** ✅ 2026-09-07 (C2) — Entschieden: Instanzen werden nie gelöscht (bestätigter Ist-Zustand, kein Codeänderung nötig). NEU beschlossen: Reparatur-Hysterese ersetzt binäres `status_points > 0`-Modell — Effekte/Boni fallen bei 0 Status Points aus und kehren erst ab ~50 % Reparatur zurück. Hangar-Schiffe bleiben bewusster binärer Sonderfall (nicht anfassen). Umsetzungs-Tasks siehe **A19/A20**.
 - [x] **F3 Upkeep-Defizit → Nexus-Schulden?** ✅ 2026-09-07 (C1) — Entschieden: `nexus_debt` bleibt bestehen, Upkeep-Defizit fließt künftig hinein statt zu verpuffen. Konsul-„Handelsvertrag" entfällt ersatzlos. Berater-Beförderung wird von automatisch auf manuell (spielerausgelöst) umgestellt. Umsetzungs-Tasks siehe **A21/A22/A23** (drei zusammenhängende, aber separat umsetzbare Tasks — keiner ist Voraussetzung für einen anderen, aber A21 sollte zuerst gehen, da A8 daran hängt).
-- [ ] **F4 Harvester Konstant-Yield-Spec** (A16) — zurückziehen oder umsetzen? Betrifft §13.7-Sockelrechnung
-- [ ] **F5 Kanal 2 Nexus-Handelsschiffe** (A12) — streichen zugunsten Werkstoff-Direktimport?
-- [ ] **F6 Roguelike-Kenntnis-Teilmenge pro Run** (A10) — noch gewollt? §8b-Argumentation hängt daran
-- [ ] **F7 Phase-1-Bedingung** „2 Produktionsgebäude" vs. „2 Nicht-CC-Gebäude" (C4) — seit 08-13 offen
-- [ ] **F8 Playtest-Instrumentierung** (A17) — `docs/playtest-instrumentation-plan.md` freigeben?
+- [x] **F4 Harvester Konstant-Yield-Spec** ✅ 2026-09-08 (A16) — Entschieden: Spec wird umgesetzt (konstante Rate statt Rampen-Formel), inkl. §13.7-Neuherleitung. GDD wird parallel nachgezogen (§4c Formel, §13.7 als veraltet markiert). Umsetzungs-Tasks siehe **A24/A25/A26/A27**.
+- [x] **F5 Kanal 2 Nexus-Handelsschiffe** ✅ 2026-09-08 (A12) — Entschieden: Kanal 2 wird gestrichen, Funktion wandert in einen Uplink-Direktimport für Nicht-Werkstoff-Ressourcen (Lieferzeit 3-5 Sol, reduzierbar über Uplink-Station-Level als einzigen Hebel). Werkstoff-Sofortkauf bleibt unverändert. Umsetzungs-Tasks siehe **A28/A29**.
+- [x] **F6 Roguelike-Kenntnis-Teilmenge pro Run** ✅ 2026-09-08 (A10) — Entschieden: wird komplett gestrichen, auch nicht abgeschwächt (bei nur 7 Kenntnissen zu hohes Risiko einer essentiellen Kenntnis-Lücke pro Run). GDD wird bereinigt (§10-Abschnitt entfernt, §8b-Begründung angepasst/gestrichen). Kein neuer Umsetzungs-Task — reine Streichung.
+- [x] **F7 Phase-1-Bedingung** ✅ 2026-09-08 „2 Produktionsgebäude" vs. „2 Nicht-CC-Gebäude" (C4) — Entschieden: Code (`RunProgressService::checkPhase1Completion()`, zählt jedes Nicht-CC-Gebäude ≥ Lv2) ist korrekt und bleibt unverändert; irreführender Docblock-Kommentar bereits gefixt. Kein neuer Umsetzungs-Task.
+- [x] **F8 Playtest-Instrumentierung** ✅ 2026-09-08 freigegeben (A17) — `docs/playtest-instrumentation-plan.md` ist vollständig überarbeitet (alle 3 Unterentscheidungen entschieden). Umsetzungs-Tasks siehe **A30/A31/A32/A33**.
 
 ### A — Design vorhanden, Implementierung fehlt (TDD-Pflicht)
 
@@ -28,20 +28,30 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [ ] **A7 Nexus-Milestones**: Sol-90-Letzte-Warnung, Fristverkürzung auf Sol 95 nach Sanktion (§15); toten Config-Block `run.nexus_milestones` verdrahten oder entfernen — Mittel
 - [x] **A8** ✅ 2026-09-07 — Nexus-Schulden-Rückzahlungs-Sondermechanik (§18.2) erledigt sich strukturell durch F3-Entscheidung (`nexus_debt` bleibt als laufender Fehlbetrags-Topf, keine separate Rückzahlungsmechanik nötig) — obsolet, kein eigener Task mehr
 - [ ] **A9 Nexus-Boni** ahead-of-curve (§15) — Niedrig, Design-Frage (A.4) zuerst
-- [ ] **A10 Kenntnis-Teilmenge pro Run** (§10) — nach F6
+- [x] **A10** ✅ 2026-09-08 — Kenntnis-Teilmenge pro Run (§10) erledigt sich strukturell durch F6-Entscheidung (Streichung, kein Umsetzungsauftrag) — obsolet, kein eigener Task mehr
 - [ ] **A11 Uplink-Station Lv2/Lv3**: Händler-Frequenz (Lv2), Kolonialbericht/Meta-Bonus (Lv3) definieren oder streichen; Lv1 „Verwaltungsanfragen" klären — Mittel
-- [ ] **A12 Kanal 2 Nexus-Handelsschiffe** — nach F5
+- [x] **A12** ✅ 2026-09-08 — Kanal 2 Nexus-Handelsschiffe erledigt sich strukturell durch F5-Entscheidung (Streichung zugunsten Uplink-Direktimport) — obsolet, kein eigener Task mehr, siehe A28/A29
 - [ ] **A13 Handelsposten „Konsul-Effizienz"** (§4) — Text streichen oder AP-Rabatt implementieren — Klein
 - [ ] **A14 Notreparatur** CC/Wohnhabitat (§7) — implementieren oder aus GDD streichen — Klein
 - [ ] **A15 Kolonisten-Framing** für Supply in der UI (§6) — Klein
-- [ ] **A16 Konstant-Yield-Spec** — nach F4
-- [ ] **A17 Playtest-Instrumentierung** 11 Metriken in `RunReport` — nach F8
+- [x] **A16** ✅ 2026-09-08 — Konstant-Yield-Spec entschieden (F4: umsetzen) — Umsetzungs-Tasks siehe A24/A25/A26/A27
+- [x] **A17** ✅ 2026-09-08 — Playtest-Instrumentierung 11 Metriken in `RunReport` freigegeben (F8) — Umsetzungs-Tasks siehe A30/A31/A32/A33
 - [ ] **A18** `mission_perimeter_patrol` in `config/missions.php` aufnehmen (§8b) — Klein
 - [ ] **A19 Reparatur-Hysterese: Schwellenwert einbauen** (nach F2, §7) — neuen Config-Wert (~50 %, z.B. `game.decay.effect_restore_threshold`) anlegen und an der/den Stelle(n) verdrahten, die Gebäude-Boni aktuell binär über `status_points > 0` gaten (u.a. `TrustService` — exakte Fundstellen von game-developer per Grep ermitteln, ggf. weitere Services betroffen). Effekt „aus bei 0, zurück ab ~50 % Reparatur", nicht mehr binär. TDD: Test zuerst (Zustandsübergänge 0 → <50 % → ≥50 %). — Mittel
 - [ ] **A20 Reparatur-Hysterese: Kaskaden-Schutz** (nach F2, §7, vor A19 zu klären) — Design-Klärung + Balance-Dämpfung gegen Abwärtsspirale (negativer Supply-Puffer → Trust runter → mehr Verfall → noch weniger Trust) VOR der A19-Implementierung; sonst Risiko eines Spiralen-Bugs (Softlock-Gefahr). Owner-Entscheidung zum Dämpfungsmechanismus einholen, dann Umsetzung + Regressionstest. — Mittel, Design-Frage zuerst
 - [ ] **A21 Nexus-Schulden: Upkeep-Defizit einspeisen** (nach F3, §13.1/§18.2) — `GameTick::processAdvisorUpkeep()`: `MAX(0, credits - upkeep)`-Klemme entfernen, Fehlbetrag stattdessen zu `nexus_debt` addieren. Dazu `nexus_debt_fail_threshold` (aktuell 12000) neu kalibrieren, da eine zusätzliche laufende Schuldenquelle hinzukommt. TDD: Test zuerst (Defizit-Szenario erhöht `nexus_debt` statt zu verpuffen; Threshold-Grenzfall). — Mittel
 - [ ] **A22 Konsul-„Handelsvertrag" entfernen** (nach F3, §15) — `config/game.php → credits.consul_contract_income_per_rank` löschen, zugehörige GameTick-Berechnung (~Zeile 1588ff) entfernen, `docs/game-reference.md` Konsul-Rang-Tabelle korrigieren (Pflicht-Checkliste vor Merge, ADR 0004). TDD: bestehende Tests, die den Contract-Income prüfen, anpassen/entfernen, ggf. Regressionstest „kein Contract-Income mehr" ergänzen. Unabhängig von A21/A23 umsetzbar. — Klein
 - [ ] **A23 Berater-Beförderung: automatisch → manuell** (nach F3, §13) — `GameTick::processAdvisorPromotions()` von Auto-Beförderung auf spielerausgelösten Trigger umstellen; neuer Endpoint (backend-coder) + UI-Trigger im Berater-Screen (ui-specialist), Spieler kann Beförderung bei erreichtem Threshold beliebig aufschieben. Cross-Cutting zwischen backend-coder und ui-specialist. TDD: Service-/Endpoint-Test zuerst (kein Auto-Trigger mehr im Tick; manueller Endpoint befördert nur bei erfülltem Threshold). Unabhängig von A21/A22 umsetzbar. — Mittel
+- [ ] **A24 Harvester Konstant-Yield: `GameTick::harvesterYield()` umstellen** (nach F4, §4c) — Rampen-Formel entfernen, auf konstante Rate laut Spec `docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md` umstellen; bestehende Tests umschreiben. TDD: Test zuerst. — Mittel
+- [ ] **A25 Harvester Konstant-Yield: `sols_remaining`-Berechnung + Serialisierung** (nach A24) — neue Methode (z.B. in `ColonyTileService`), Ergebnis am Tile-Endpoint mitliefern. TDD: Test zuerst. — Klein/Mittel
+- [ ] **A26 Harvester Konstant-Yield: UI „≈N Sole bis Erschöpfung"** (nach A25) — Anzeige im Tile-Panel (`hexview.blade.php`), Warnfarbe bei ≤3 Sole verbleibend — ui-specialist. — Klein
+- [ ] **A27 §13.7-Neuherleitung nach Playtest** (nach A24-A26, eigenständig, spät liegend) — Sockel-Durchschnitt ~12,9 → ~17 Rg/Sol bei regolith_normal neu herleiten, Baupreise/Guard-Rails prüfen. Explizit NICHT Teil des A24-A26-Sofort-Umbaus, erst nach Playtest-Feedback. — Mittel, spät
+- [ ] **A28 Uplink-Direktimport für Nicht-Werkstoff-Ressourcen** (nach F5, §4) — neue Uplink-Direktimport-Variante: Anfrage+Bezahlung sofort, Lieferung nach 3-5 Sol (Basiswert), reduzierbar durch Uplink-Station-Level (Lv1/2/3, einziger Hebel, kein Konsul-Rang/Kenntnis-Hebel). Bestehende Werkstoff-Sofortkauf-Variante bleibt unverändert. TDD: Test zuerst. — Mittel
+- [ ] **A29 GDD-Restvorkommen INNN im alten Kanal-2-Text bereinigen** (nach A28/GDD-Edit) — prüfen ob nach dem GDD-Edit noch Restverweise auf das entfernte INNN-System übrig sind, sonst als erledigt streichen. — Klein
+- [ ] **A30 Playtest-Instrumentierung Phase B1 — Extended Snapshots** (nach F8, kritischer Pfad, Owner: game-developer/qa-tester) — AP-Breakdown, Building-Level+AP-Spend, Regolith-/Organika-Quellen inkl. neuer `organika_consumption`-Aufschlüsselung, Supply-Snapshot, Harvester-Move-Tracking; siehe Phasen B1a-B1e in `docs/playtest-instrumentation-plan.md`. TDD: Test zuerst. — Groß
+- [ ] **A31 Playtest-Instrumentierung Phase B2 — Post-Lauf-Aggregation** (nach A30, kritischer Pfad) — Projekt-Metriken, Regolith-Pfad-Attribution nach Mechanismen, 0-AP-Filter. TDD: Test zuerst. — Mittel
+- [ ] **A32 Playtest-Instrumentierung Phase C — Dashboard-Erweiterung** (nach A31, kritischer Pfad, Owner: ui-specialist) — mind. 3 Charts als MVP (AP, Regolith, Supply), 4 weitere iterativ. — Mittel
+- [ ] **A33 Playtest-Instrumentierung Phase D — Summary-Tabellen-Erweiterung** (parallel zu A32, Owner: ui-specialist) — siehe Plan. — Klein/Mittel
 - [ ] **T7 Encounter-Reste**: Geologische Instabilität + Seuchenausbruch in `SolReportService::eventsGroup()` (B12) — Klein
 
 ### C — Doku widerspricht Code (Entscheidung, dann GDD oder Code anpassen)
@@ -49,7 +59,7 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [x] **C1** ✅ 2026-09-07 — §13.1 „Upkeep-Verlust läuft über `nexus_debt`" — entschieden: GDD-Text bestätigt sich als Zielzustand, Umsetzung fehlt noch (Code-Gap, siehe A21)
 - [x] **C2** ✅ 2026-09-07 — §7 Instanz-Zerstörung vs. Level-0-Ruine — entschieden: nie löschen (Ist-Zustand bestätigt), zusätzlich neue Reparatur-Hysterese für Effekt-Rückkehr ab ~50 % beschlossen (siehe A19/A20); GDD §7 bereits parallel aktualisiert
 - [x] **C3** ✅ 2026-09-06 (GDD-Konsolidierung) — §4 Uplink Lv2 „Tiefenscan 1 Sol weniger" → Code: Scan-AP 2 → 1; Text angleichen
-- [ ] **C4** §15/§18.4 Phase-1-Bedingung — nach F7
+- [x] **C4** ✅ 2026-09-08 — §15/§18.4 Phase-1-Bedingung — entschieden (F7): Code (`RunProgressService::checkPhase1Completion()`) ist korrekt und bleibt unverändert, irreführender Docblock-Kommentar bereits gefixt
 - [x] **C5** ✅ 2026-09-06 (GDD-Konsolidierung) — §15 Fail States / Gnadenfrist auf Phase-2-Sol-Basis und Instant-Trust-Fail umschreiben (§18.5-TODO seit 06-28) — zusammen mit A7
 - [ ] **C6** §6 Supply-Cap Wohnhabitat: „pro Einheit" vs. Σ Level × 8; Ziel-Cap nach Tier-System neu prüfen (Stufe 1d, `cap_max` 200)
 - [x] **C7** ✅ 2026-09-06 (GDD-Konsolidierung) — §8b Missionstabelle: `mission_aid_transport` ungegatet, `mission_harvester_salvage` ergänzen, Lieferzeiten 1/2/3

@@ -258,7 +258,7 @@ Daraus folgt zwingend `Preis(Regolith) < Preis(Organika) < Preis(Werkstoffe)` un
 
 Im Singleplayer gibt es keinen Spieler-zu-Spieler-Handel. Werkstoffe können **nicht lokal produziert** werden — die Kolonie ist zu klein zum Veredeln. Es gibt drei Bezugswege, die bewusst eine Hierarchie bilden:
 
-1. **Nexus-Direktimport (Sicherheitsnetz, garantiert):** Über die **Uplink-Station Lv1** (eine der aktiven Nexus-Anfragen, siehe §4) kann jederzeit eine beliebige Menge Werkstoffe gegen Credits gekauft werden — deterministisch, immer verfügbar, aber zu einem **festen, spürbar höheren Preis** als der Cantina-Spotpreis (siehe `docs/game-reference.md#werkstoff-preise`). Dies ist das Anti-Lock-Netz: ohne diesen garantierten Weg wäre jede Werkstoff-Baukostenanforderung potenziell hart blockierbar.
+1. **Nexus-Direktimport (Sicherheitsnetz, garantiert):** Über die **Uplink-Station Lv1** (eine der aktiven Nexus-Anfragen, siehe §4) kann jederzeit eine beliebige Menge Werkstoffe gegen Credits gekauft werden — deterministisch, **sofort verfügbar**, aber zu einem **festen, spürbar höheren Preis** als der Cantina-Spotpreis (siehe `docs/game-reference.md#werkstoff-preise`). Dies ist das Anti-Lock-Netz: ohne diesen garantierten Weg wäre jede Werkstoff-Baukostenanforderung potenziell hart blockierbar. Für alle anderen Ressourcen bietet dieselbe Nexus-Anfrage eine verzögerte Variante (Bezahlung sofort, Lieferung nach einigen Solen, §4) — Werkstoffe bleiben bei der Sofort-Lieferung, weil sie das einzige echte Progression-Lock-Risiko tragen.
 2. **Cantina (opportunistisch, günstiger):** Zufällige, zeitgebundene Kaufangebote zum niedrigeren Marktpreis (Kanal 1, §12). Belohnung fürs aufmerksame Spielen, aber **nie garantiert** — daher nie die einzige Quelle.
 3. **Events (Bonus):** Liefern Werkstoffe als Bonus, immer mit Wahlmöglichkeit, nie kostenlos und nie als einzige Quelle.
 
@@ -395,13 +395,15 @@ Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch e
 
 ### Uplink-Station (uplinkStation) — Mechanik
 
-Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Werkstoff-Direktimport, Handelsschiff anfordern, Verwaltungsanfragen). Eingehende Nexus-Funk-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
+Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Direktimport, Verwaltungsanfragen). Eingehende Nexus-Funk-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
 
 | Level | CC-Voraussetzung | Freischaltet / Effekt |
 |-------|-----------------|----------------------|
-| 1 | CC Lv2 | Aktive Nexus-Anfragen: **Werkstoff-Direktimport** (gegen Credits, immer verfügbar, fester Preis — siehe §3), Handelsschiff anfordern, Verwaltung |
-| 2 | CC Lv3 | Tiefenscan kostet weniger AP (`ColonyTileService`); *geplant:* Reisender Händler erscheint häufiger (ROADMAP A11) |
-| 3 | CC Lv5 | Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
+| 1 | CC Lv2 | Aktive Nexus-Anfragen: **Direktimport** (Werkstoffe gegen Credits, fester Preis, sofort verfügbar, siehe §3; alle anderen Ressourcen gegen Credits, fester Preis, verzögerte Lieferung, Basiswert 3–5 Sole, siehe unten), außerdem Verwaltungsanfragen |
+| 2 | CC Lv3 | Tiefenscan kostet weniger AP (`ColonyTileService`); Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt; *geplant:* Reisender Händler erscheint häufiger (ROADMAP A11) |
+| 3 | CC Lv5 | Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt weiter; Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
+
+**Direktimport für Nicht-Werkstoff-Ressourcen (Owner-Entscheidung F5, 2026-09-08):** Anfrage und Bezahlung passieren sofort wie beim Werkstoff-Direktimport, die Lieferung selbst braucht jedoch mehrere Sole (Basiswert 3–5 Sole auf Lv1). Der **einzige** Hebel zur Verkürzung ist das Uplink-Station-Level selbst — bewusst kein zusätzlicher Hebel über Konsul-Rang, Kenntnisse oder situative Boni, um den Direktimport als reine Infrastrukturfrage zu halten. Dieser Weg ersetzt das gestrichene Konzept „Nexus-Handelsschiffe" (§12) als Sicherheitsnetz für nicht lokal beschaffbare Ressourcenmengen.
 
 **Baukosten Lv1:** Ausschließlich Regolith + Credits — keine Werkstoffe, um einen Zirkelschluss zu vermeiden (Werkstoffe über Nexus anfordern setzt das Gebäude voraus).
 
@@ -669,7 +671,7 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 ### Pfad-C-Hebel: Credits statt Regolith
 
-**Pfad C trägt keinen Regolith-Hebel.** Ein Organika→Regolith-Tausch als Pfad-C-Hebel ist ausgeschlossen — er würde das knappere gegen das häufigere Gut tauschen (Knappheitsordnung §3). Die Regolith-Lücke der Zielkolonie schließen Pfad A (`geology`) und Pfad B (`mission_supply_run`) gemeinsam (§13.7). Der Engpass, gegen den Pfad C als „Pfad der Flexibilität" antritt, ist Credits — und die Kolonie produziert strukturelle Organika-Überschüsse (§4a), die über diesen Hebel monetarisiert werden.
+**Pfad C hat keinen dedizierten Regolith-Hebel.** Ein Organika→Regolith-Tausch als Pfad-C-Hebel ist ausgeschlossen — er würde das knappere gegen das häufigere Gut tauschen (Knappheitsordnung §3). Die Regolith-Lücke der Zielkolonie schließen strukturell Pfad A (`geology`) und Pfad B (`mission_supply_run`) gemeinsam (§13.7). Der Engpass, gegen den Pfad C als „Pfad der Flexibilität" antritt, ist Credits — und die Kolonie produziert strukturelle Organika-Überschüsse (§4a), die über diesen Hebel monetarisiert werden. Opportunistisch bleibt dem Spieler dennoch ein Nebenweg offen: Der Reisende Händler (Corvan) führt im Alltagsgeschäft auch Credits→Regolith-Kaufangebote, sodass eine Cantina-lastige Kolonie ihre Credits-Überschüsse bei Bedarf in Regolith umwandeln kann. Das ist kein struktureller Ersatz für A/B (Angebot ist unzuverlässig, an Losgröße und Kaufkraft gebunden) und ändert nichts an der Designabsicht — Pfad C bleibt ohne eigenen, planbaren Regolith-Wachstumshebel —, macht aber die Formulierung „trägt keinen Regolith-Hebel" zu absolut.
 
 **Mechanik: Organika-Verkauf als Angebotstyp des Reisenden Händlers.** Neben Kauf (Credits→Ressource) und Tausch (Ressource↔Ressource) gibt es den **Verkauf** (Organika→Credits), eng gefasst nur für Organika — Regolith- und Werkstoff-Verkauf bleiben außen vor, damit kein Umweg zur Regolith-Beschaffung entsteht.
 
@@ -751,10 +753,12 @@ Damit entsteht die gewollte Schleife: fördern → Ertrag sinkt → Umzug lohnt 
 #### Erschöpfungskurve und Umzugstakt
 
 ```
-Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0
 ```
 
-Ein Tile beginnt beim vollen Frischwert und fällt bis zum Ausschöpfen auf die **Hälfte** — nie auf null, damit ein vergessener Harvester nicht schlagartig stillsteht. Bei erschöpftem Vorkommen: Produktion 0, der Umzug ist erzwungen. Ein `poor`-Tile erreicht den Boden früher als ein `normal`-Tile — derselbe Mechanismus, keine Sonderregel.
+Ein Tile fördert **konstant zum Frischwert**, bis das Vorkommen aufgebraucht ist — kein Abschwächen zur Mitte hin. Bei erschöpftem Vorkommen: harter Cutoff auf Produktion 0, der Umzug ist erzwungen. Ein `poor`-Tile erreicht den Boden früher als ein `normal`-Tile — derselbe Mechanismus, keine Sonderregel.
+
+**Owner-Entscheidung (2026-08-10):** Vorher fiel der Ertrag mit sinkendem Restvorkommen bis auf die Hälfte des Frischwerts ab. Das war für den Spieler zu schwer zu durchschauen (unterschiedliche Förderrate pro Tick, ohne dass sich am Tile sichtbar etwas geändert hatte). Eine konstante Rate ist berechenbar; als Ausgleich für den Verlust der Vorwarnung durch die abfallende Kurve zeigt das Tile-Panel neu einen serverseitig berechneten „≈N Sole bis Erschöpfung"-Countdown (serverseitig, weil Geologie-Bonus und Vertrauens-Multiplikator nur dort zuverlässig bekannt sind). Herleitung: `docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md`.
 
 | Fall | Harvester |
 |---|---|
@@ -1263,8 +1267,6 @@ Exakte Kosten (Navigation-AP, Organika-Proviant, Zusatzmaterialien), Distanzen, 
 
 > **Idee (festgehalten 2026-07-04, später konzipieren):** Bar-Begegnungen (Cantina-NPCs) können Missions-Varianten mit verbesserten Boni oder veränderten Parametern anbieten — als Alternative für den Pfad Hangar-first → Cantina-second (vor dem Labor). Ziel: verschiedene Spielweisen gleichwertig halten (Roguelike-Varianz). Noch nicht designt.
 
-**Roguelike-Varianz gratis:** Da pro Run nur eine Teilmenge der Kenntnisse verfügbar ist (§10), fehlen in manchen Runs 2–3 der kenntnis-gebundenen Missionen (Prospektion, Datensammelflug, Handelsfahrt, Hilfsgütertransport, Trümmerbergung, Patrouille, Fernexpedition) — jede Missionsökonomie spielt sich pro Run anders, ohne Zusatzsystem. 6 der 7 Kenntnisse gaten je 1–2 Missionen; Agronomie bleibt frei als Reserve für spätere Missionstypen.
-
 **Kenntnis-Skalierung — Erfahrung senkt den Proviantbedarf:** Eine einzige, spielweite Regel:
 
 ```
@@ -1390,6 +1392,8 @@ Ein Ereignis kündigt sich 1 Sol vorher als `colony_log`-Eintrag an (Kategorie �
 | trade | Handel & Logistik | Trade & Logistics |
 | defense | Verteidigung & Überlebenstaktik | Defence & Survival Tactics |
 
+**Alle 7 Kenntnisse sind in jedem Run verfügbar** — endgültiger Zustand, keine offene Design-Frage mehr (Owner-Entscheidung F6, 2026-09-08). Eine roguelike-typische Teilmengen-Auswahl pro Run wurde geprüft und verworfen: Bei nur 7 Kenntnissen wäre das Risiko zu hoch, dass ein Run ohne eine essentielle Kenntnis auskommen müsste. Die Roguelike-Varianz des Spiels trägt sich über andere Systeme (Startbedingungen, Encounter-Würfe, Bar-Angebote, Berater-Erfolgschancen), nicht über die Kenntnisverfügbarkeit.
+
 ### Level-Modell ohne Decay
 
 Kenntnisse verwenden das **Level-Modell (Lv1–5)** — identisch zu Gebäuden, aber **ohne Decay**. Einmal erforschtes Wissen bleibt permanent. Es gibt keinen SP-Verfall auf Kenntnissen — das wäre thematisch unlogisch (Wissen verfällt nicht). Die natürliche Begrenzung erfolgt über AP-Knappheit und Rundenstruktur.
@@ -1418,12 +1422,6 @@ Bereits implementierte Effekte (`config/knowledge.php`):
 Nicht jede Kenntnis trägt zwingend einen mechanischen Effekt dieser Art — alle Kenntnisse tragen zusätzlich einheitlich zum Supply-Cap-Wachstum bei (§7). Welche Kenntnis welchen Effekt trägt und in welcher Höhe, ist ausschließlich in `config/knowledge.php` gepflegt; Lookup-Tabelle: `docs/game-reference.md#kenntnisse-7-levelup-kosten-effekte`.
 
 > **TODO Design:** Weitere Kenntnis-Effekte (insbesondere für Kenntnisse ohne eigenen mechanischen Effekt bislang) sind offen für spätere Balancing-Passes — nach Playtest, wenn klar ist, welche Lücken am meisten drücken.
-
-### Roguelike-Variabilität
-
-Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufällige Teilmenge (z.B. 5 von 7). Das erzeugt unterschiedliche Spezialisierungspfade ohne das System komplexer zu machen, analog zum variablen Spielfeld bei Catan.
-
-> **TODO Implementierung:** Run-Mechanik mit zufälliger Kenntnisauswahl — ausstehend für Phase 3 Run-Struktur (§15).
 
 ### Kolonisten-Ausbildung (Design-Konzept, Phase 4+)
 
@@ -1530,23 +1528,7 @@ Exakte Erfolgschancen und Bonussätze: siehe `config/game.php → bar` (`negotia
 
 ---
 
-### Kanal 2: Nexus-Handelsschiffe (Fallback, teuer, garantiert)
-
-> **Status: nicht implementiert, Owner-Frage F5 (ROADMAP):** Der Werkstoff-Direktimport über die Uplink-Station (§3, §4) deckt die Sicherheitsnetz-Funktion bereits ab. Entscheidung offen, ob dieser Kanal gestrichen oder als Direktimport umdefiniert wird.
-
-Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch ohne Händler-Berater, auch ohne Bar. Das Sicherheitsnetz gegen Progression-Locks.
-
-Lieferzeit und Preisaufschlag hängen vom Konsul-Rang ab — ohne Berater sind beide nachteilig. Höhere Ränge senken beide Parameter (schnellere Lieferung, bessere Konditionen). Exakte Werte: siehe `config/game.php`.
-
-**Anfrage-Mechanik:** Der Spieler sendet eine Anfrage über den Nexus-Funk (Nachricht an "Nexus Command"). Nexus antwortet nach 1–3 Solen (abhängig vom Konsul-Rang) mit einem Protokoll-Ereignis, das die Lieferung bestätigt und die Ressourcen direkt zur Kolonie transferiert. Kein eigenes Fleet-Objekt — das Nexus-Schiff erscheint nicht auf der Karte.
-
-**Ablauf:**
-1. Spieler öffnet den Nexus-Funk → "Nexus-Handelsschiff anfordern" → wählt Ressource + Menge
-2. Credits-Betrag wird sofort eingefroren (reserviert)
-3. Nach Lieferzeit: Protokoll-Ereignis "Nexus-Lieferung eingetroffen", Ressourcen gutgeschrieben, Credits abgebucht
-4. Kann nur 1 offene Anfrage gleichzeitig haben
-
----
+> **Kanal 2 gestrichen (Owner-Entscheidung F5, 2026-09-08):** Das früher hier vorgesehene, nie implementierte Konzept „Nexus-Handelsschiffe" (Anfrage über Nexus-Funk, Lieferung nach 1–3 Solen) entfällt ersatzlos. Seine Sicherheitsnetz-Funktion — verzögerte, aber garantierte Lieferung gegen Credits, auch für Ressourcen, die nicht sofort verfügbar sind — übernimmt stattdessen die erweiterte Direktimport-Variante der Uplink-Station (§3, §4).
 
 ### Kanal 3: Reisender Händler (selten, hochwertig)
 
@@ -1733,7 +1715,7 @@ Der Harvester hat **kein Level-Up** (`max_level = 1`). Er liefert je Standort ei
 | **Sockel (alle Pfade)** | Harvester, 1 Instanz (§4c) | keine (passiv), Umzüge kosten AP |
 | **A — Analytik** | Kenntnis `geology` erhöht die Harvester-Ausbeute je Level (`game.geology_harvester_bonus_per_level`, kumulativ) | einmalig hoch (AP bis zum Ziellevel), danach null laufende Kosten |
 | **B — Hangar** | Frachter auf `mission_supply_run` (Regolith je Umlauf, `config/missions.php`) | laufend: Navigation-AP, Organika-Proviant, Verschleiß |
-| **C — Cantina** | **kein Regolith-Hebel** — Pfad C liefert Credits (§4b „Pfad-C-Hebel") | — |
+| **C — Cantina** | kein dedizierter Hebel — Pfad C liefert Credits (§4b „Pfad-C-Hebel"); opportunistischer Credits→Regolith-Kauf via Corvan möglich | — |
 
 Die Profile sind bewusst gegensätzlich: **Analytik** verbessert den Sockel selbst — teuer im Aufbau, danach dauerhaft geschenkt, keine Logistik. **Hangar** legt einen zweiten Strom daneben — billig im Einstieg, aber jeden Sol Aufwand. **Cantina** kauft zu und wandelt Überschuss in Credits — maximal flexibel, an Credits und Angebotslage gebunden. Ob A und B die Regolith-Lücke der Zielkolonie tatsächlich schließen, rechnet §13.7 nach.
 
@@ -2084,6 +2066,8 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 
 Von der Designabsicht her hergeleitet statt aus Bestandswerten fortgeschrieben. Der Satz ist Owner-Entscheidung; die Werte stehen in `config/buildings.php` und `config/game.php`, Lookup in `docs/game-reference.md`. Dieses Kapitel hält die Herleitung fest, damit Playtest-Befunde gegen die richtige Stellschraube laufen.
 
+> ⚠️ **Veraltet (seit F4, 2026-09-08):** Der Harvester fördert nicht mehr über eine Rampe, sondern konstant zum Frischwert bis zur Erschöpfung (§4c). Das hebt den effektiven Sockel-Durchschnitt gegenüber dem hier gerechneten Zyklusmittel spürbar an — die gesamte Bilanz unten (Sockel-Anteil, Hebel-Zielgröße, G2/G6-Prozentsätze) rechnet noch mit dem alten Rampen-Zyklusmittel und ist nicht mehr aktuell. Owner-Entscheidung: keine Neuherleitung jetzt, sondern erst nach dem nächsten Playtest-Batch, als eigenes Vorhaben. Bau-Preise, `decay_rate`-Klassen und Guard-Rails (G2/G4/G6/G7) bleiben bis dahin unverändert, gelten aber als zu überprüfen.
+
 #### Das Spielgefühl — zuerst, ohne Zahlen
 
 Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelingt, ist sie willkürlich und gehört ersetzt.
@@ -2106,7 +2090,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 
 | Wert | Festlegung | folgt aus |
 |---|---|---|
-| Harvester-Ertrag | Frischwert je Tile-Stufe (`rich`/`normal`/`poor`), fallend mit der Erschöpfung (§4c), `max_level = 1` | G7 |
+| Harvester-Ertrag | Frischwert je Tile-Stufe (`rich`/`normal`/`poor`), konstant bis zur Erschöpfung, dann harter Cutoff (§4c), `max_level = 1` | G7 |
 | Reparatur | 1 Rg je SP (zusätzlich 1 AP je SP) | G2 + „eine Zahl, zwei Währungen" |
 | `decay_rate` | vier Klassen 0,40 / 0,60 / 0,80 / 1,20 | G2, G3 |
 | Errichtung (Lv0→1) | 70 Agrardom (Ramp-Gate-Ausnahme) / 95 alle drei Pfadgebäude | G4 (5–8 Sole) |
@@ -2152,7 +2136,7 @@ Rechnung über 80 Sole — die Fensterbreite entspricht der Phase-2-Sol-80-Konve
 Zielkolonie-Bedarf ≈ 835 (Errichtungen) + 720 (Level-Ups) + 240 (Reibung, ~15 %) ≈ 1.795 Rg
 ```
 
-**2. Sockel-Einnahmen** aus der Erschöpfungskurve, Standardfall 1 Instanz auf `regolith_normal` inklusive Transit-Sole: Zyklusmittel **~12,9 Rg/Sol**, konstant über den Run.
+**2. Sockel-Einnahmen** aus der Erschöpfungskurve, Standardfall 1 Instanz auf `regolith_normal` inklusive Transit-Sole: Zyklusmittel **~12,9 Rg/Sol**, konstant über den Run. *(Veraltet — Rampen-Zyklusmittel, siehe Hinweis am Kapitelanfang. Mit konstanter Förderrate liegt der Sockel-Durchschnitt höher; Neuherleitung steht aus.)*
 
 ```
 Sockel-Einnahmen = 12,9 Rg/Sol × 80 Sole ≈ 1.032 Rg
@@ -2182,7 +2166,7 @@ Merkregel, aus der Gegenrichtung: **ein reifer Pfad-Hebel ist etwa 60 % eines Ha
 |---|---|---|
 | A — Analytik | `geology`, kumuliert max 12 | 12 Rg/Sol |
 | B — Hangar | `mission_supply_run`, ~6,25 Rg/Sol je Frachter | 6,25 Rg/Sol (1 Schiff), skaliert mit der Flotte |
-| C — Cantina | kein Regolith-Hebel (§4b) | 0 |
+| C — Cantina | kein dedizierter Hebel (§4b), opportunistischer Kauf via Corvan | 0 (nicht planbar/strukturell) |
 
 ```
 A + B (1 Frachter) = 18,25 Rg/Sol  ≥  14,1 Rg/Sol benötigt
