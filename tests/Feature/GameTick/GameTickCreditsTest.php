@@ -278,23 +278,47 @@ class GameTickCreditsTest extends TestCase
     }
 
     /**
-     * Advisor upkeep clamps credits to 0 — never creates debt.
+     * Advisor upkeep clamps credits to 0 — the shortfall flows into the active
+     * run's nexus_debt instead of vanishing (Owner-Entscheidung F3/A21,
+     * 2026-09-09: Credits stay non-negative capital, nexus_debt is the sole
+     * debt ledger).
      *
-     * Start with 0 credits. Passive income = 30. Rank-3 upkeep = 80.
-     * 0 + 30 - 80 = -50 → clamped to 0.
-     *
-     * Actually: income is added first, then upkeep is MAX(0, credits - upkeep).
-     * After income: 0 + 30 = 30. After upkeep: MAX(0, 30 - 80) = 0.
+     * Start with 0 credits, income = 50 (nexus subsidy only). Two rank-3
+     * advisors = 70 Cr total upkeep. 0 + 50 = 50 available, 50 < 70 → all 50
+     * consumed (credits end at 0), shortfall of 20 added to nexus_debt.
      */
-    public function test_advisor_upkeep_clamps_credits_to_zero(): void
+    public function test_advisor_upkeep_shortfall_flows_into_nexus_debt(): void
     {
         $this->insertAdvisor(3);
+        $this->insertAdvisor(3);
         $this->setCredits(0);
+        $debtBefore = (int) DB::table('runs')->where('id', 1)->value('nexus_debt');
 
         Artisan::call('game:tick', ['--tick' => 11413]);
 
         $after = $this->getCredits();
-        $this->assertGreaterThanOrEqual(0, $after, 'Credits must never go below 0 from advisor upkeep');
+        $this->assertEquals(0, $after, 'Credits must clamp to 0, never go negative from upkeep');
+
+        $debtAfter = (int) DB::table('runs')->where('id', 1)->value('nexus_debt');
+        $shortfall = 2 * $this->upkeep(3) - $this->nexusSubsidy();
+        $this->assertEquals($debtBefore + $shortfall, $debtAfter,
+            'Upkeep shortfall must be added to nexus_debt instead of vanishing');
+    }
+
+    /**
+     * When available credits fully cover upkeep, nexus_debt must not change at
+     * all — no shortfall, no debt increase.
+     */
+    public function test_advisor_upkeep_no_shortfall_when_credits_suffice(): void
+    {
+        $this->insertAdvisor(1);
+        $this->setCredits(1000);
+        $debtBefore = (int) DB::table('runs')->where('id', 1)->value('nexus_debt');
+
+        Artisan::call('game:tick', ['--tick' => 11413]);
+
+        $debtAfter = (int) DB::table('runs')->where('id', 1)->value('nexus_debt');
+        $this->assertEquals($debtBefore, $debtAfter, 'nexus_debt must stay unchanged when upkeep is fully covered');
     }
 
     /**
