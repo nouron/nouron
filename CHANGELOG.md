@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-09
+
+- Balance/Fix: A19/A20 — geplante 50%-Reparatur-Hysterese für Gebäude-Effekte (F2, PR #313) verworfen zugunsten einer einfacheren Lösung ohne Kaskaden-Risiko. Gebäude-Level-Down bei 0 Status Points bestand bereits (SP-Reset auf Max, Effekte skalieren automatisch mit dem Level) — einzige Ergänzung: Level fällt nie unter 1, ein platziertes Gebäude verschwindet nie durch Verfall (`GameTick::applyLevelDown()`, `max(0,…)` → `max(1,…)`). TDD: neuer Test `GameTickDecayTest::test_building_level_floors_at_one_and_never_reaches_zero_via_decay`. GDD §7 entsprechend korrigiert, ROADMAP A19/A20 zusammengeführt und abgehakt.
+
 ## 2026-09-08
 
 - Docs: Owner-Fragen F4-F8 aus dem Implementierungsstand-Audit entschieden und im GDD nachgetragen (§3, §4, §8b, §10, §12, §13.7, §4c) — Harvester Konstant-Yield-Spec wird umgesetzt inkl. später nachzuholender §13.7-Neuherleitung (F4/A16), Kanal-2-Nexus-Handelsschiffe gestrichen und in eine verzögerte Uplink-Direktimport-Variante (3-5 Sole, Lieferzeit nur über Uplink-Station-Level reduzierbar) überführt (F5/A12), Roguelike-Kenntnis-Teilmenge pro Run ersatzlos gestrichen (F6/A10, Risiko fehlender essentieller Kenntnisse bei nur 7 Stück), Phase-1-Bedingung bestätigt wie im Code implementiert — nur irreführender Docblock-Kommentar in `RunProgressService::checkPhase1Completion()` korrigiert (F7/C4), Playtest-Instrumentierungsplan freigegeben (F8/A17, `docs/playtest-instrumentation-plan.md` überarbeitet: Regolith-Pfad-Attribution nach Mechanismen, Organika-Verbrauch in Hunger- vs. Mission-Dispatch-Anteil aufgeschlüsselt). Nebenbefund: GDD-Aussage "Pfad C trägt keinen Regolith-Hebel" korrigiert (Corvan-Kauf ist ein realer, nicht-dedizierter Weg). ROADMAP.md entsprechend markiert, neue Umsetzungs-Tasks A24-A33. Reine Doku-Änderung (bis auf den Kommentar-Fix), Umsetzung folgt separat.

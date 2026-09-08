@@ -642,7 +642,10 @@ class GameTick extends Command
         array $buildCostMap
     ): void {
         $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
-        $newLevel = max(0, $cb->level - 1);
+        // Floor at level 1 (Owner-Entscheidung F2/A19-A20, 2026-09-08): a placed
+        // building never decays out of existence — it loses levels down to a
+        // minimum of 1, never drops to 0 (which would mean "not built").
+        $newLevel = max(1, $cb->level - 1);
         $where = [
             'colony_id' => $cb->colony_id,
             'building_id' => $cb->building_id,

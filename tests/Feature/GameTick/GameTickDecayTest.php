@@ -112,6 +112,26 @@ class GameTickDecayTest extends TestCase
     }
 
     /**
+     * A level-1 building must never decay past level 1 — it stays at level 1 (SP
+     * reset to max) instead of dropping to level 0 (Owner-Entscheidung F2/A19-A20,
+     * 2026-09-08: buildings never disappear via decay, only ever lose levels down
+     * to a floor of 1).
+     */
+    public function test_building_level_floors_at_one_and_never_reaches_zero_via_decay(): void
+    {
+        $this->zeroAllSupplyCosts();
+        DB::table('colony_buildings')
+            ->where('colony_id', 1)->where('building_id', 27)
+            ->update(['level' => 1, 'status_points' => 0.1]);
+
+        Artisan::call('game:tick', ['--tick' => 11006]);
+
+        $row = $this->getBuildingRow(1, 27);
+        $this->assertEquals(1, $row->level, 'Level-1 building must floor at level 1, never drop to 0 via decay');
+        $this->assertEquals(20, (int) $row->status_points, 'SP must reset to max_status_points even at the floor');
+    }
+
+    /**
      * A building already at level 0 must not be decayed — it is excluded from the
      * decay query (WHERE level > 0).
      */
