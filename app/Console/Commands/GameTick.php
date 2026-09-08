@@ -1682,12 +1682,14 @@ class GameTick extends Command
     /**
      * Deducts Credits upkeep for every active (assigned) advisor each tick.
      *
-     * Upkeep schedule by rank (GDD §12):
-     *   rank 1 → 10 Cr/Tick
-     *   rank 2 → 50 Cr/Tick
-     *   rank 3 → 160 Cr/Tick
+     * Upkeep schedule by rank: see `config('game.advisor.upkeep')`.
      *
-     * Credits are clamped to ≥ 0 (the player cannot go into debt from advisor upkeep).
+     * Credits are clamped to ≥ 0 — they stay usable capital, never negative.
+     * Any shortfall (upkeep the user can't cover with available credits) is
+     * added to the active run's nexus_debt instead of silently vanishing
+     * (Owner-Entscheidung F3/A21, 2026-09-09 — nexus_debt is the sole debt
+     * ledger, credits are not). Aggregated per user so multiple advisors don't
+     * each re-clamp against an already-zeroed balance.
      * Called AFTER generatePassiveCredits() so income is applied before costs.
      * Advisors without a colony assignment (unemployed) incur no upkeep.
      *
@@ -1699,18 +1701,34 @@ class GameTick extends Command
 
         $advisors = Advisor::whereNotNull('colony_id')->with('colony')->get();
 
+        $upkeepByUser = [];
         foreach ($advisors as $advisor) {
             if (! $advisor->colony || $advisor->colony->user_id === null) {
                 continue; // NPC colony or orphaned advisor — skip
             }
 
+            $userId = $advisor->colony->user_id;
             $upkeep = (int) ($upkeepByRank[$advisor->rank] ?? 10);
+            $upkeepByUser[$userId] = ($upkeepByUser[$userId] ?? 0) + $upkeep;
+        }
 
-            DB::table('user_resources')
-                ->where('user_id', $advisor->colony->user_id)
-                ->update([
-                    'credits' => DB::raw("MAX(0, credits - {$upkeep})"),
-                ]);
+        if ($upkeepByUser !== []) {
+            $activeRunId = DB::table('runs')->where('status', 'active')->value('id');
+
+            foreach ($upkeepByUser as $userId => $totalUpkeep) {
+                $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
+                $deduction = min($credits, $totalUpkeep);
+                $shortfall = $totalUpkeep - $deduction;
+
+                DB::table('user_resources')
+                    ->where('user_id', $userId)
+                    ->update(['credits' => $credits - $deduction]);
+
+                if ($shortfall > 0 && $activeRunId !== null) {
+                    DB::table('runs')->where('id', $activeRunId)
+                        ->update(['nexus_debt' => DB::raw("nexus_debt + {$shortfall}")]);
+                }
+            }
         }
 
         return $advisors->count();
