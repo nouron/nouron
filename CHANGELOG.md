@@ -1,24 +1,12 @@
 # Changelog
 
-## 2026-09-09 (5)
-
-- Planung: Cantina-Begegnungspool-Umsetzung als ROADMAP-Tasks A35 (mechanisches Grundgerüst: Wette/Auktion/Kurzzeit-Kontrakt, Bar-Level-skaliert) und A36 (volle Charakter-Zuordnung, content-writer, später) ergänzt.
-
-## 2026-09-09 (4)
-
-- Docs: Cantina-Begegnungspool als Ersatz für den Pfad-C-Credits-Hebel konzipiert (§4b, §12) — Owner-Klarstellung: Pfad-Parität gilt für die Cantina als Gebäude, nicht für den Konsul-Berater selbst (der bereits eigenständigen Wert hat). Drei Credits-Ausgänge (Wette→Zara, Auktion→Voss, Kurzzeit-Kontrakt generisch) aus einem gemeinsamen Ereignis-Slot, skaliert über Bar-Level statt Konsul-Rang. Reines Konzept, keine Implementierung — Grundgerüst-Task folgt.
-
-## 2026-09-09 (3)
-
-- Balance: A22 — Konsul-„Handelsvertrag" (bedingungsloses Cr/Tick-Einkommen bei Konsul + Cantina) ersatzlos entfernt (F3, Pfad-Paritätsverletzung). `config/game.php`, `GameTick::generatePassiveCredits()`, `GameTickDryRun` und `docs/game-reference.md` bereinigt. TDD: alte Contract-Income-Tests durch Regressionstests ersetzt, volle Suite grün (1147 Tests).
-
-## 2026-09-09 (2)
-
-- Feature: A21 — Berater-Upkeep-Defizit fließt jetzt in `nexus_debt` statt zu verpuffen (F3). `GameTick::deductAdvisorUpkeep()` aggregiert die Gesamt-Upkeep pro User, klemmt Credits weiterhin auf ≥ 0, addiert einen verbleibenden Fehlbetrag zum aktiven Run. TDD: zwei neue Tests in `GameTickCreditsTest`. `nexus_debt_fail_threshold` bewusst unverändert — Neukalibrierung als eigener Playtest-Task (A34) angelegt, kein geratener Wert.
-
 ## 2026-09-09
 
 - Balance/Fix: A19/A20 — geplante 50%-Reparatur-Hysterese für Gebäude-Effekte (F2, PR #313) verworfen zugunsten einer einfacheren Lösung ohne Kaskaden-Risiko. Gebäude-Level-Down bei 0 Status Points bestand bereits (SP-Reset auf Max, Effekte skalieren automatisch mit dem Level) — einzige Ergänzung: Level fällt nie unter 1, ein platziertes Gebäude verschwindet nie durch Verfall (`GameTick::applyLevelDown()`, `max(0,…)` → `max(1,…)`). TDD: neuer Test `GameTickDecayTest::test_building_level_floors_at_one_and_never_reaches_zero_via_decay`. GDD §7 entsprechend korrigiert, ROADMAP A19/A20 zusammengeführt und abgehakt.
+- Feature: A21 — Berater-Upkeep-Defizit fließt jetzt in `nexus_debt` statt zu verpuffen (F3). `GameTick::deductAdvisorUpkeep()` aggregiert die Gesamt-Upkeep pro User, klemmt Credits weiterhin auf ≥ 0, addiert einen verbleibenden Fehlbetrag zum aktiven Run. TDD: zwei neue Tests in `GameTickCreditsTest`. `nexus_debt_fail_threshold` bewusst unverändert — Neukalibrierung als eigener Playtest-Task (A34) angelegt, kein geratener Wert.
+- Balance: A22 — Konsul-„Handelsvertrag" (bedingungsloses Cr/Tick-Einkommen bei Konsul + Cantina) ersatzlos entfernt (F3, Pfad-Paritätsverletzung). `config/game.php`, `GameTick::generatePassiveCredits()`, `GameTickDryRun` und `docs/game-reference.md` bereinigt. TDD: alte Contract-Income-Tests durch Regressionstests ersetzt, volle Suite grün (1147 Tests).
+- Docs: Cantina-Begegnungspool als Ersatz für den Pfad-C-Credits-Hebel konzipiert (§4b, §12) — Owner-Klarstellung: Pfad-Parität gilt für die Cantina als Gebäude, nicht für den Konsul-Berater selbst (der bereits eigenständigen Wert hat). Drei Credits-Ausgänge (Wette→Zara, Auktion→Voss, Kurzzeit-Kontrakt generisch) aus einem gemeinsamen Ereignis-Slot, skaliert über Bar-Level statt Konsul-Rang. Reines Konzept, keine Implementierung — Grundgerüst-Task folgt.
+- Planung: Cantina-Begegnungspool-Umsetzung als ROADMAP-Tasks A35 (mechanisches Grundgerüst: Wette/Auktion/Kurzzeit-Kontrakt, Bar-Level-skaliert) und A36 (volle Charakter-Zuordnung, content-writer, später) ergänzt.
 
 ## 2026-09-08
 
