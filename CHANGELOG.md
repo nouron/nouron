@@ -9,6 +9,7 @@
 - Planung: Cantina-Begegnungspool-Umsetzung als ROADMAP-Tasks A35 (mechanisches Grundgerüst: Wette/Auktion/Kurzzeit-Kontrakt, Bar-Level-skaliert) und A36 (volle Charakter-Zuordnung, content-writer, später) ergänzt.
 - Feature: A23 — Berater-Beförderung von automatisch auf manuell (spielerausgelöst) umgestellt (F3). `GameTick::incrementAdvisorTicks()` promotet nicht mehr selbst; neuer `AdvisorService::promote()` + `POST /advisors/{id}/promote`-Endpoint + "Befördern"-Button im Berater-Screen, sobald der Erfahrungs-Threshold erreicht ist — Spieler kann beliebig lange aufschieben, um Upkeep/Kosten selbst zu timen. TDD: neue Tests für Service/Controller/GameTick-Regression, alte reine Automatik-Tests entfernt. Volle Suite grün (1148 Tests).
 - Balance: A24 — Harvester-Ertrag auf konstante Rate umgestellt (F4). `GameTick::harvesterYield()`: Rampen-Formel (Ertrag fällt mit sinkendem Restvorkommen bis auf die Hälfte) entfernt, Ertrag ist jetzt konstant = Frischwert bis zur Erschöpfung, dann harter Cutoff auf 0. TDD: `HarvesterDepletionTest` umgeschrieben. §13.7-Sockelrechnung bleibt vorerst veraltet markiert (Neuherleitung folgt nach Playtest, A27).
+- Feature: A25 — „≈N Sole bis Erschöpfung"-Schätzung für aktive Harvester-Tiles. Neue `ColonyTileService::solsRemaining()` (Geologie-Bonus + Trust-Multiplikator berücksichtigt, null bei bereits erschöpft), in `ColonyController::hexview()` pro Tile mitgeliefert. TDD: neue Tests für die reine Formel und die Hexview-Integration. UI-Anzeige folgt separat (A26).
 
 ## 2026-09-08
 

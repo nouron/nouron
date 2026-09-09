@@ -200,6 +200,68 @@ class ColonyViewTest extends TestCase
         $this->assertSame(300, $tile['regolith_max']);
     }
 
+    /**
+     * A25: the active Harvester tile also carries a `sols_remaining` estimate
+     * ("ca. N Sole bis Erschöpfung", A24/A25). Neutral trust + no geology so
+     * the expected value matches the pure ColonyTileService::solsRemaining()
+     * formula exactly: fresh_yield(regolith_normal)=23, ceil(111/23)=5.
+     */
+    public function test_hexview_tiles_include_sols_remaining_for_placed_harvester(): void
+    {
+        DB::table('colony_resources')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID_FOR_REGOLITH, 'resource_id' => 12],
+            ['amount' => 0]
+        );
+        DB::table('trust_events')->where('colony_id', self::COLONY_ID_FOR_REGOLITH)->delete();
+        DB::table('colony_researches')
+            ->where('colony_id', self::COLONY_ID_FOR_REGOLITH)
+            ->where('research_id', 92)
+            ->delete();
+
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID_FOR_REGOLITH,
+            'q' => 5,
+            'r' => 5,
+            'ring' => 3,
+            'tile_type' => 'regolith_normal',
+            'is_colony_zone' => 0,
+            'is_explored' => 1,
+            'is_deep_scanned' => 0,
+            'resource_amount' => 111,
+            'resource_max' => 300,
+        ]);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID_FOR_REGOLITH)
+            ->where('building_id', 27)
+            ->update(['tile_x' => 5, 'tile_y' => 5]);
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $tiles = $response->viewData('tiles');
+        $tile = $tiles->first(fn ($t) => $t['q'] === 5 && $t['r'] === 5);
+
+        $this->assertNotNull($tile);
+        $this->assertSame(5, $tile['sols_remaining']);
+    }
+
+    /**
+     * A tile with no active Harvester must not carry a sols_remaining value
+     * (null → no countdown line rendered).
+     */
+    public function test_hexview_tiles_have_null_sols_remaining_without_active_harvester(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $tiles = $response->viewData('tiles');
+        $tile = $tiles->first(fn ($t) => ! isset($t['regolith_remaining']));
+
+        $this->assertNotNull($tile);
+        $this->assertArrayNotHasKey('sols_remaining', $tile);
+    }
+
     // Teil 2 (Owner-Playtest-Fund 2026-09-04, GDD §4c BALANCE CONCERN): the map
     // needs data about pre-scouted regolith relocation targets so the ui-specialist
     // follow-up task can highlight them once the active Harvester tile runs low.
