@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-09 (5)
+
+- Planung: Cantina-Begegnungspool-Umsetzung als ROADMAP-Tasks A35 (mechanisches Grundgerüst: Wette/Auktion/Kurzzeit-Kontrakt, Bar-Level-skaliert) und A36 (volle Charakter-Zuordnung, content-writer, später) ergänzt.
+
 ## 2026-09-09 (4)
 
 - Docs: Cantina-Begegnungspool als Ersatz für den Pfad-C-Credits-Hebel konzipiert (§4b, §12) — Owner-Klarstellung: Pfad-Parität gilt für die Cantina als Gebäude, nicht für den Konsul-Berater selbst (der bereits eigenständigen Wert hat). Drei Credits-Ausgänge (Wette→Zara, Auktion→Voss, Kurzzeit-Kontrakt generisch) aus einem gemeinsamen Ereignis-Slot, skaliert über Bar-Level statt Konsul-Rang. Reines Konzept, keine Implementierung — Grundgerüst-Task folgt.
