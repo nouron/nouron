@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-09 (4)
+
+- Docs: Cantina-Begegnungspool als Ersatz für den Pfad-C-Credits-Hebel konzipiert (§4b, §12) — Owner-Klarstellung: Pfad-Parität gilt für die Cantina als Gebäude, nicht für den Konsul-Berater selbst (der bereits eigenständigen Wert hat). Drei Credits-Ausgänge (Wette→Zara, Auktion→Voss, Kurzzeit-Kontrakt generisch) aus einem gemeinsamen Ereignis-Slot, skaliert über Bar-Level statt Konsul-Rang. Reines Konzept, keine Implementierung — Grundgerüst-Task folgt.
+
 ## 2026-09-09 (3)
 
 - Balance: A22 — Konsul-„Handelsvertrag" (bedingungsloses Cr/Tick-Einkommen bei Konsul + Cantina) ersatzlos entfernt (F3, Pfad-Paritätsverletzung). `config/game.php`, `GameTick::generatePassiveCredits()`, `GameTickDryRun` und `docs/game-reference.md` bereinigt. TDD: alte Contract-Income-Tests durch Regressionstests ersetzt, volle Suite grün (1147 Tests).
