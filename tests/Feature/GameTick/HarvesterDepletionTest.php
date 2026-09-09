@@ -12,9 +12,15 @@ use Tests\TestCase;
 
 /**
  * Harvester depletion mechanic (GDD §4c "Erschöpfungskurve und Umzugstakt",
- * freigegeben 2026-08-03) and the geology Kenntnis bonus (GDD §13.7).
+ * konstante Rate seit 2026-09-09, Owner-Entscheidung F4/A24 — siehe
+ * docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md) and
+ * the geology Kenntnis bonus (GDD §13.7).
  *
- *   Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+ *   Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (harter Cutoff)
+ *
+ * Replaces the old ramp (Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max))
+ * — the rate no longer scales down as the tile depletes, only the "Sole bis
+ * Erschöpfung"-Countdown communicates the approaching cutoff (A25/A26).
  *
  * Fixture: Colony 1 (Springfield), user_id=3 (Bart), harvester building_id=27.
  */
@@ -98,10 +104,11 @@ class HarvesterDepletionTest extends TestCase
         $this->assertSame(23, GameTick::harvesterYield('regolith_normal', 300, 300, 0));
     }
 
-    public function test_harvester_yield_near_depletion_approaches_half_fresh_value(): void
+    public function test_harvester_yield_stays_at_fresh_value_near_depletion(): void
     {
-        // remaining=10/300 → ratio ~0.033 → 23*(0.5+0.5*0.033) ≈ 11.88 → round 12.
-        $this->assertSame(12, GameTick::harvesterYield('regolith_normal', 10, 300, 0));
+        // Constant rate (A24): yield stays at the fresh value regardless of how
+        // little remains, right up until the tile hits 0 — no more ramp-down.
+        $this->assertSame(23, GameTick::harvesterYield('regolith_normal', 10, 300, 0));
     }
 
     public function test_harvester_yield_is_zero_when_exhausted(): void
@@ -126,7 +133,7 @@ class HarvesterDepletionTest extends TestCase
         $this->assertSame(300 - 23, $this->tileRemaining());
     }
 
-    public function test_tick_credits_reduced_yield_near_depletion(): void
+    public function test_tick_credits_full_yield_even_near_depletion(): void
     {
         DB::table('colony_tiles')
             ->where('colony_id', self::COLONY_ID)->where('q', 3)->where('r', 0)
@@ -134,8 +141,11 @@ class HarvesterDepletionTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 20002]);
 
-        $this->assertSame(12, $this->regolithAmount());
-        $this->assertSame(0, $this->tileRemaining(), 'yield (12) exceeds remaining (10) — clamps to 0, never negative');
+        // The full fresh-value yield (23) is credited to the colony's stock even
+        // though only 10 remained on the tile — matches pre-A24 behavior, where
+        // the final harvest tick already over-credited past the tile's remainder.
+        $this->assertSame(23, $this->regolithAmount());
+        $this->assertSame(0, $this->tileRemaining(), 'yield (23) exceeds remaining (10) — tile clamps to 0, never negative');
     }
 
     public function test_tick_credits_nothing_once_tile_exhausted(): void

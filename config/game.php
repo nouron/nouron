@@ -83,14 +83,17 @@ return [
     'project_min_cost_factor' => 0.5,
 
     // Harvester depletion mechanic (GDD §4c "Erschöpfungskurve und Umzugstakt",
-    // freigegeben 2026-08-03). Replaces production_curve[27] as the actual Regolith
-    // source — the curve above stays as inert historical data (GDD §13.7).
+    // freigegeben 2026-08-03; konstante Rate seit 2026-09-09, Owner-Entscheidung
+    // F4/A24, siehe docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md).
+    // Replaces production_curve[27] as the actual Regolith source — the curve
+    // above stays as inert historical data (GDD §13.7).
     //
-    //   Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+    //   Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (harter Cutoff)
     //
-    // Never drops below half of fresh_yield; at resource_amount <= 0, yield is 0
-    // (relocation is player-triggered, not automatic). ColonyTileService reads the
-    // same resource_max map so tile seeding and production can't drift apart.
+    // Constant rate, no more ramp-down as the tile depletes — at resource_amount
+    // <= 0, yield is 0 (relocation is player-triggered, not automatic).
+    // ColonyTileService reads the same resource_max map so tile seeding and
+    // production can't drift apart.
     'harvester' => [
         // +25-30% (2026-08-17, game-designer review): PlaytestBot data showed
         // Regolith crashing to 0-30 within the first 7-10 Sole in most runs —

@@ -842,15 +842,22 @@ class GameTick extends Command
 
     /**
      * Harvester yield for a single tile (GDD §4c "Erschöpfungskurve und Umzugstakt",
-     * freigegeben 2026-08-03) — pure, no DB access.
+     * konstante Rate seit 2026-09-09, Owner-Entscheidung F4/A24 — siehe
+     * docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md) —
+     * pure, no DB access.
      *
-     *   Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+     *   Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (harter Cutoff)
      *
-     * Never drops below half of fresh_yield while resources remain; 0 once exhausted
-     * ($remaining <= 0). $geologyLevel adds the geology Kenntnis bonus (GDD §13.7,
-     * config('game.geology_harvester_bonus_per_level')) on top — callers that apply
-     * the bonus only once per colony (not per harvester instance) must pass 0 here
-     * for every instance but the one carrying the bonus (see generateHarvesterYield()).
+     * Replaces the old ramp (Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max))
+     * — the rate no longer decreases as the tile depletes; players get a
+     * constant, easy-to-read yield until the tile runs out in one step, instead
+     * of a per-tick fluctuating rate. $remaining/$resourceMax stay in the
+     * signature for the exhaustion cutoff check, even though they no longer
+     * feed the rate itself. $geologyLevel adds the geology Kenntnis bonus
+     * (GDD §13.7, config('game.geology_harvester_bonus_per_level')) on top —
+     * callers that apply the bonus only once per colony (not per harvester
+     * instance) must pass 0 here for every instance but the one carrying the
+     * bonus (see generateHarvesterYield()).
      */
     public static function harvesterYield(string $tileType, int $remaining, int $resourceMax, int $geologyLevel): int
     {
@@ -863,11 +870,9 @@ class GameTick extends Command
             return 0;
         }
 
-        $ratio = min(1.0, $remaining / $resourceMax);
-        $base = $fresh * (0.5 + 0.5 * $ratio);
         $geologyBonus = self::cumulativeCurveYield(config('game.geology_harvester_bonus_per_level', []), $geologyLevel);
 
-        return (int) round($base) + $geologyBonus;
+        return $fresh + $geologyBonus;
     }
 
     private function generateResources(int $tick): int
