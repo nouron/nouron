@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-09 (3)
+
+- Balance: A22 — Konsul-„Handelsvertrag" (bedingungsloses Cr/Tick-Einkommen bei Konsul + Cantina) ersatzlos entfernt (F3, Pfad-Paritätsverletzung). `config/game.php`, `GameTick::generatePassiveCredits()`, `GameTickDryRun` und `docs/game-reference.md` bereinigt. TDD: alte Contract-Income-Tests durch Regressionstests ersetzt, volle Suite grün (1147 Tests).
+
 ## 2026-09-09 (2)
 
 - Feature: A21 — Berater-Upkeep-Defizit fließt jetzt in `nexus_debt` statt zu verpuffen (F3). `GameTick::deductAdvisorUpkeep()` aggregiert die Gesamt-Upkeep pro User, klemmt Credits weiterhin auf ≥ 0, addiert einen verbleibenden Fehlbetrag zum aktiven Run. TDD: zwei neue Tests in `GameTickCreditsTest`. `nexus_debt_fail_threshold` bewusst unverändert — Neukalibrierung als eigener Playtest-Task (A34) angelegt, kein geratener Wert.

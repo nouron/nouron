@@ -75,7 +75,12 @@ class GameTickDryRunTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function test_cantina_contract_income_is_included_when_konsul_assigned(): void
+    /**
+     * Konsul-Handelsvertrag was removed (Owner-Entscheidung F3/A22, 2026-09-09) —
+     * even with Cantina built and a Konsul assigned, the dry-run credits line
+     * must never show a "contract" income component.
+     */
+    public function test_cantina_konsul_never_shows_contract_income(): void
     {
         DB::table('colony_buildings')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'building_id' => 52],
@@ -91,7 +96,7 @@ class GameTickDryRunTest extends TestCase
         ]);
 
         $this->artisan('game:tick-dry-run', ['--colony' => self::COLONY_ID])
-            ->expectsOutputToContain('contract')
+            ->doesntExpectOutputToContain('contract')
             ->assertExitCode(0);
     }
 

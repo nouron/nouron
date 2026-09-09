@@ -333,8 +333,9 @@ return [
     // Configurable so balancing can be adjusted after first playtest (see GDD §8).
     'advisor' => [
         // Stretched 2026-07-19 (was [1=>10, 2=>20]) — gives the colony time to build
-        // income infrastructure (Uplink Station, Konsul-Handelsvertrag) before upkeep
-        // escalates. See GDD §18 task_credit_reserve.
+        // income infrastructure (Uplink Station) before upkeep escalates. See GDD
+        // §18 task_credit_reserve. (Konsul-Handelsvertrag mentioned here originally
+        // was removed 2026-09-09, see game.credits above.)
         'rank_thresholds' => [1 => 15, 2 => 45],
         'ap_per_rank' => [1 => 2, 2 => 3, 3 => 4],
         // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
@@ -389,13 +390,11 @@ return [
         // lever, chosen because it's path-neutral (doesn't inflate the already
         // overcompensating Cantina/Corvan channel).
         'relay_bonus_per_uplink_level' => 45,
-        // "Handelsvertrag" — Cr/Tick flat income while a Konsul (trader advisor,
-        // personell_id 92) is assigned to the colony AND the Cantina (Bar, building_id
-        // 52) is built (level >= 1). Keyed by the Konsul's current rank. Represents the
-        // Konsul actively brokering trade deals through the Cantina (GDD §12 Kanal 1).
-        // 0 with no Konsul assigned — an intended cost of skipping that advisor type,
-        // not a bug. Added 2026-07-19 as part of the Phase-1 credit-collapse fix.
-        'consul_contract_income_per_rank' => [1 => 10, 2 => 25, 3 => 45],
+        // Konsul "Handelsvertrag" (unconditional Cr/Tick contract income once a
+        // Konsul was assigned and the Cantina built) removed entirely (Owner-
+        // Entscheidung F3/A22, 2026-09-09) — it was stronger than the comparable
+        // Analytiker/Raumfahrer levers with no further player action required,
+        // a Pfad-Paritätsverletzung (GDD §4b). No replacement mechanic planned.
     ],
 
     // Bar/Cantina NPC offer generation (GDD §12 Kanal 1).

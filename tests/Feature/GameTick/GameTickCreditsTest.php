@@ -13,11 +13,10 @@ use Tests\TestCase;
  *
  * Step 8c — Passive Credits (generatePassiveCredits):
  *   Formula: nexus_subsidy (50) + uplinkStation.level × relay_bonus_per_uplink_level (35)
- *            + consul_contract_income_per_rank[konsulRank] (Konsul assigned + Cantina >= Lv1)
  *   "Relaisvergütung" is anchored on Uplink Station, not Housing — colonists' living
  *   quarters have no thematic connection to Nexus relay/sensor capacity.
- *   "Handelsvertrag" requires a Konsul (trader advisor, personell_id 92) assigned to
- *   the colony AND the Cantina (building_id 52) at level >= 1.
+ *   Konsul "Handelsvertrag" contract income was removed (Owner-Entscheidung F3/A22,
+ *   2026-09-09) — Pfad-Paritätsverletzung, no replacement planned.
  *   Only colonies where CC level > 0 receive credits.
  *   NPC colonies (user_id = null) are skipped.
  *
@@ -31,16 +30,14 @@ use Tests\TestCase;
  *  Happy path:
  *  - Nexus subsidy (50 Cr) added each tick when CC > 0
  *  - Relay bonus added per Uplink Station level
- *  - Handelsvertrag contract income added when Konsul + Cantina present
  *  - Advisor upkeep deducted (rank 1 = 10 Cr)
  *  - Net income = passive - upkeep for one rank-1 advisor
  *
  *  Edge cases:
  *  - No CC → no passive credits at all
  *  - No Uplink Station built → nexus subsidy only
- *  - Cantina built but no Konsul assigned → no contract income
- *  - Konsul assigned but no Cantina built → no contract income
- *  - Advisor upkeep clamped to 0 (credits cannot go negative)
+ *  - No Konsul contract income regardless of Cantina/rank (removed, A22)
+ *  - Advisor upkeep clamped to 0, shortfall flows into nexus_debt (A21)
  *  - Multiple advisors: each deducts independently
  *  - Advisor rank 2 (25 Cr) and rank 3 (50 Cr) upkeep correct
  *
@@ -340,14 +337,15 @@ class GameTickCreditsTest extends TestCase
             'Multiple advisor upkeep costs must all be deducted independently');
     }
 
-    // ── Handelsvertrag (Konsul + Cantina) ──────────────────────────────────────
+    // ── Konsul-Handelsvertrag entfernt (Owner-Entscheidung F3/A22, 2026-09-09) ──
 
     /**
-     * With Cantina built and a rank-2 Konsul assigned, contract income (25 Cr)
-     * is added on top of nexus subsidy, minus the Konsul's own rank-2 upkeep (30 Cr):
-     * 30 (nexus) + 25 (contract) - 30 (Konsul upkeep) = +25.
+     * The Konsul "Handelsvertrag" passive income was struck (Pfad-Paritätsverletzung
+     * — unconditional income stronger than Analytiker/Raumfahrer's levers, GDD §4b).
+     * Even with Cantina built and a Konsul assigned, passive income must be nexus
+     * subsidy only — no contract bonus, regardless of Konsul rank.
      */
-    public function test_contract_income_added_when_konsul_and_cantina_present(): void
+    public function test_no_konsul_contract_income_regardless_of_cantina_and_rank(): void
     {
         $this->setCantinaLevel(1);
         $this->insertKonsul(2);
@@ -356,43 +354,9 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11416]);
 
         $after = $this->getCredits();
-        $contractRank2 = (int) config('game.credits.consul_contract_income_per_rank.2', 25);
-        $expected = $before + $this->nexusSubsidy() + $contractRank2 - $this->upkeep(2);
-        $this->assertEquals($expected, $after,
-            'Contract income must be added when a Konsul is assigned and the Cantina is built');
-    }
-
-    /**
-     * Cantina built but no Konsul assigned → no contract income, nexus subsidy only.
-     */
-    public function test_no_contract_income_without_konsul(): void
-    {
-        $this->setCantinaLevel(1);
-        $before = $this->getCredits();
-
-        Artisan::call('game:tick', ['--tick' => 11417]);
-
-        $after = $this->getCredits();
-        $expected = $before + $this->nexusSubsidy();
-        $this->assertEquals($expected, $after,
-            'No contract income without a Konsul assigned, even with Cantina built');
-    }
-
-    /**
-     * Konsul assigned but no Cantina built → no contract income; nexus subsidy (30)
-     * minus the Konsul's own rank-2 upkeep (30) nets to 0.
-     */
-    public function test_no_contract_income_without_cantina(): void
-    {
-        $this->insertKonsul(2);
-        $before = $this->getCredits();
-
-        Artisan::call('game:tick', ['--tick' => 11418]);
-
-        $after = $this->getCredits();
         $expected = $before + $this->nexusSubsidy() - $this->upkeep(2);
         $this->assertEquals($expected, $after,
-            'No contract income without a Cantina built, even with a Konsul assigned');
+            'Konsul-Handelsvertrag was removed — passive income must be nexus subsidy only, no contract bonus');
     }
 
     /**
