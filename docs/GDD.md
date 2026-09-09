@@ -650,7 +650,7 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 
 **Pfad C — Cantina.** Der Pfad der Flexibilität. Die Cantina selbst gibt Vertrauen (`trust_per_lv`), und der Handel erlaubt, jeden konkreten Engpass gegen Credits zu lösen — statt ihn produzieren zu müssen. Wer diesen Pfad zuerst geht, ist gegen Überraschungen am besten aufgestellt, hängt dafür aber an der Credits-Decke und an der Angebotslage.
 
-> ⚠️ **Konsul-Credits-Hebel offen (Owner-Entscheidung F3):** Der frühere „Handelsvertrag" (garantierte Dauer-Sol-Einnahme sobald Konsul + Cantina Lv1 stehen) wurde ersatzlos gestrichen — er war bedingungslos und ohne weiteres Zutun stärker als die Hebel von Analytiker und Raumfahrer und verletzte damit die Paritäts-Anforderung unten. Pfad C hat damit aktuell denselben offenen Credits-Hebel wie Pfad A (siehe Tabelle unten). Eine Ersatzmechanik ist nicht vorgesehen.
+> ⚠️ **Konsul-Credits-Hebel gestrichen, Cantina-Credits-Hebel neu geplant (Owner-Entscheidung F3, präzisiert 2026-09-09):** Der frühere „Handelsvertrag" (garantierte Dauer-Sol-Einnahme sobald Konsul + Cantina Lv1 stehen) wurde ersatzlos gestrichen — er war bedingungslos und ohne weiteres Zutun stärker als die Hebel von Analytiker und Raumfahrer und verletzte damit die Paritäts-Anforderung unten. Wichtig: Die Paritäts-Anforderung gilt für **Pfad C**, nicht für den Konsul selbst — der Berater hat bereits eigenständigen Wert (`trader_discount`, Werkstoffe-Bias, §13). Der Ersatz-Hebel hängt deshalb bewusst an der **Cantina als Gebäude/Pfad-Identität**, nicht am Konsul-Rang: der **Cantina-Begegnungspool** (§12, Kanal 1). Details dort; diese Tabelle und die folgenden Absätze sind entsprechend aktualisiert.
 
 ### Paritäts-Anforderung: jeder Pfad muss die Grundbedürfnisse decken
 
@@ -662,10 +662,10 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 |---|---|---|---|---|
 | **Regolith** | 1 Harvester-Instanz, Grundeinkommen pro Sol (Standard-Baseline, §4c) | `geology` senkt Erschöpfung | Mission-Missionen liefern variable Mengen je Umlauf | **kein dedizierter Wachstumshebel** — opportunistischer Credits→Regolith-Kauf als Sicherheitsnetz (§12), siehe „Pfad-C-Hebel" unten |
 | **Organika** | Agrardom | `agronomy` erhöht die Produktion mit jedem Level (glockenförmig) | Missions-Missionen liefern Organika je Umlauf | Ankauf über Bar-Angebote |
-| **Credits** | Relaisvergütung, Ratssubvention | ⚠️ Hebel offen | Botenflug / Konvoi-Begleitung | ⚠️ Hebel offen (Organika-Verkauf als opportunistische Teillösung) |
+| **Credits** | Relaisvergütung, Ratssubvention | ⚠️ Hebel offen | Botenflug / Konvoi-Begleitung | Cantina-Begegnungspool (§12) — Zufallsbegegnungen mit Credits-Ausgang, Bar-Level-skaliert statt Konsul-skaliert |
 | **Vertrauen** | Gebäude-Boni, Ereignisse | `health` + Krankenstation | `mission_aid_transport` (+2) | Cantina `trust_per_lv` + Handelserfolge |
 
-**Pfad A und Pfad C Credits-Hebel:** Beide offen (s. Tabelle). Kandidat für Pfad A: Kenntnis-Effekt, der Kosten senkt — passt besser zum Pfad-Charakter als eine zusätzliche Einnahmequelle. Für Pfad C ist noch kein Kandidat benannt (der bisherige Handelsvertrag ist gestrichen, siehe oben).
+**Pfad A Credits-Hebel:** weiterhin offen (s. Tabelle). Kandidat: Kenntnis-Effekt, der Kosten senkt — passt besser zum Pfad-Charakter als eine zusätzliche Einnahmequelle (ROADMAP „Offene Pfad-Paritäts-Fragen"). **Pfad C Credits-Hebel:** geschlossen über den Cantina-Begegnungspool (§12) — bewusst nicht als verlässliche Dauereinnahme, sondern als unregelmäßige, teils charaktergebundene Zufallsbegegnung, damit der Pfad-Charakter „Flexibilität statt Verlässlichkeit" erhalten bleibt und der Fehler des gestrichenen Handelsvertrags (bedingungslos, garantiert, dauerhaft) nicht wiederholt wird.
 
 > **Prüfregel für künftige Mechaniken:** Wird eine neue Ressource, Kosten- oder Bedarfsachse eingeführt, ist zu prüfen, ob alle drei Pfade sie bedienen können. Ist das nicht der Fall, ist entweder die Mechanik anzupassen oder den unterversorgten Pfaden ein Hebel zu geben — **nicht** die Ungleichheit hinzunehmen.
 
@@ -1487,7 +1487,26 @@ Die Bar ist ab CC Lv2 verfügbar. Sie ist der Ort des Handels — verkörpert du
 
 Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet AP** aus dem gemeinsamen Pool (§13.1) — der Handel konkurriert damit direkt mit Bau und Kenntnissen um dieselbe Kapazität. Exakte Kosten: siehe `config/game.php`.
 
-> ⚠️ **Handelsvertrag gestrichen (Owner-Entscheidung F3):** Es gab bis Anfang September 2026 eine passive Cr/Sol-Einnahme, die automatisch floss, sobald ein Konsul zugewiesen war und die Cantina Lv1+ stand. Sie wurde ersatzlos gestrichen — bedingungslos und ohne weiteres Zutun war sie stärker als die vergleichbaren Hebel von Analytiker (Kenntnis-Boni) und Raumfahrer (Missions-Erträge) und verletzte damit die Paritäts-Anforderung (§4b). Corvans Alltagsgeschäft (Kauf/Verkauf) bleibt an die Cantina Lv1+ gekoppelt und erzeugt weiterhin kein passives Einkommen — Kauf- und Tauschangebote kosten Credits oder sind ressourcenneutral. Pfad C hat aktuell keinen dedizierten Credits-Wachstumshebel (§4b); eine Ersatzmechanik ist nicht vorgesehen.
+> ⚠️ **Handelsvertrag gestrichen (Owner-Entscheidung F3):** Es gab bis Anfang September 2026 eine passive Cr/Sol-Einnahme, die automatisch floss, sobald ein Konsul zugewiesen war und die Cantina Lv1+ stand. Sie wurde ersatzlos gestrichen — bedingungslos und ohne weiteres Zutun war sie stärker als die vergleichbaren Hebel von Analytiker (Kenntnis-Boni) und Raumfahrer (Missions-Erträge) und verletzte damit die Paritäts-Anforderung (§4b). Corvans Alltagsgeschäft (Kauf/Verkauf) bleibt an die Cantina Lv1+ gekoppelt und erzeugt weiterhin kein passives Einkommen — Kauf- und Tauschangebote kosten Credits oder sind ressourcenneutral. Der Ersatz für den Pfad-C-Credits-Hebel ist der **Cantina-Begegnungspool** direkt unten — bewusst kein zweiter Handelsvertrag, sondern eine Zufallsbegegnung.
+
+**Der Cantina-Begegnungspool (Owner-Entscheidung, 2026-09-09):** Dritte Angebotsquelle neben Corvan und der anonymen Gästerotation, konzeptionell näher an den Begegnungen aus §9 (Sturm/Instabilität/Seuche) als an einem Handelsangebot — der Unterschied ist bewusst: Handel ist planbar, eine Begegnung ist es nicht. Zweck: den in §4b beschriebenen Pfad-C-Credits-Hebel bedienen, ohne die Fehler des gestrichenen Handelsvertrags zu wiederholen (bedingungslos, garantiert, dauerhaft, an den Konsul-Rang gekoppelt).
+
+Der Pool ist als **künftiger Container für die gesamte Cantina-Begegnungsvielfalt** gedacht (Credits sind nur die erste ausgearbeitete Kategorie), gegliedert in zwei Ebenen:
+
+- **Generische Begegnungen** — kein Charakterbezug, rein systemisch erzählt. Höhere Wiederholungsrate erlaubt, da neutral.
+- **Charaktergebundene Begegnungen** — jede Cantina-Figur (`config('characters')`) kann eigene, zu ihrer etablierten Rolle passende Begegnungen mitbringen. Niedrigere Wiederholungsrate je Figur (sonst nutzt sich die Persönlichkeit ab), Vielfalt entsteht durch die Rotation der Figuren selbst.
+
+**Für den Credits-Hebel sind drei Ausgänge vorgesehen, gezogen aus einem gemeinsamen Ereignis-Slot (nicht drei unabhängige Spawn-Checks — sonst Häufungs-/Spam-Risiko mit Corvan- und Gästerotations-Terminen):**
+
+- **Wette** — Einsatz (Ressourcen) gegen Credits-Auszahlung, chance-basiert, Totalverlust des Einsatzes bei Fehlschlag. Gebunden an **Zara** (Professional Gambler) — narrative Passung ohne Erklärungsbedarf.
+- **Auktion / Ausschuss-Ankauf** — Einmalzahlung, Ressourcenüberschuss gegen Credits, sofort abgeschlossen. Gebunden an **Voss** (Scrap Dealer) — deckt sich mit seiner etablierten Rolle.
+- **Kurzzeit-Kontrakt** — Credits/Sol für ein festes, kurzes Fenster, danach endet er automatisch wieder. Bewusst **ohne Charakterbindung** (generisch: „die Kolonie hat kurzfristig einen Abnehmer gefunden") — das ist der Ausgang, der dem gestrichenen Handelsvertrag am nächsten kommt, und eine Personenbindung würde ihn wieder zur verlässlichen, an eine feste Quelle gekoppelten Einnahme machen. Skaliert über Bar-Level, nicht über Konsul-Rang.
+
+> ⚠️ **BALANCE CONCERN:** Alle drei Ausgänge müssen über Bar-Level skalieren, nicht über Konsul-Rang — der Konsul bleibt bestenfalls leichter Preis-/Chancen-Modifikator, niemals Voraussetzung. Skaliert der Hebel stattdessen mit Konsul-Rang, wiederholt sich exakt der Fehler des gestrichenen Handelsvertrags, nur eine Ebene tiefer (Cantina statt Konsul, aber gleiche Kopplung). Der Gesamt-Erwartungswert aus Pool + Organika-Verkauf (§4b) ist gegen die noch offenen Pfad-A/B-Hebel zu prüfen, sobald diese spezifiziert sind — aktuell keine Zielgröße, da beide Vergleichswerte selbst offen sind.
+
+> **Leitplanke gegen Scope-Drift bei künftigen charaktergebundenen Begegnungen:** Nicht jede Cantina-Figur soll automatisch „ihre eigene Ressource" bekommen. §4b legt bewusst fest, dass Pfad C keinen verlässlichen Regolith-Wachstumshebel hat (Knappheitsordnung §3) — eine künftige Figur mit Regolith-Bezug (z.B. Fen, Veteran Prospector) darf diese Grenze nicht aufweichen; ihre Begegnungen müssen selten/opportunistisch bleiben, kein zweiter planbarer Regolith-Kanal neben Pfad A/B werden.
+
+**Scope dieser Iteration:** Nur das mechanische Grundgerüst des Credits-Ausgangs (drei Ausprägungen, Charakterbindung, Frequenz-/Skalierungsregeln) ist hiermit festgelegt. Die vollständige Zuordnung aller übrigen Cantina-Figuren zu eigenen Begegnungen (inkl. Lore/Dialog, weitere Ressourcen-/Story-Kategorien, ggf. Missions-Trigger analog `project_bar_mission_trigger_idea`) ist ein eigenständiger Folge-Task, sinnvollerweise mit `content-writer`, sobald das Grundgerüst implementiert ist — kein Blocker für den Credits-Hebel.
 
 **Bar-Level-Progression:**
 
