@@ -211,6 +211,10 @@
                                                       ? ('Inaktiv bis T' + slot.advisor.unavailable_until_tick)
                                                       : 'Aktiv'">
                                                 </span>
+                                                <template
+                                                    x-if="!slot.advisor.is_max_rank && slot.advisor.active_ticks >= slot.advisor.next_rank_ticks">
+                                                    <button class="btn-hire" @click="doPromote(slot)">Befördern</button>
+                                                </template>
                                                 <button class="btn-fire" @click="openFireDialog(slot)">Entlassen</button>
                                             </div>
 

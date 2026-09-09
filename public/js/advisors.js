@@ -121,6 +121,22 @@ function advisorCarousel(config) {
             }
         },
 
+        // Player-triggered rank promotion (Owner-Entscheidung F3/A23, 2026-09-09) —
+        // no confirmation dialog, mirrors how repair actions fire directly on click.
+        async doPromote(slot) {
+            const url = this.routes.promote.replace('__ID__', slot.advisor.id);
+            const res = await this.post(url, {});
+            if (res.ok) {
+                this.slots = res.slots;
+                this.slotInfo = res.slotInfo;
+                this.syncCreditsChip(res.credits);
+                this.syncApChip(res.apAvailable);
+                this.syncHint(res);
+            } else {
+                this.errorMsg = res.message ?? 'Beförderung fehlgeschlagen.';
+            }
+        },
+
         buildingPlaceholderSrc() {
             return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
         },

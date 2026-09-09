@@ -243,6 +243,52 @@ class AdvisorService
         ]);
     }
 
+    /**
+     * Player-triggered rank promotion (Owner-Entscheidung F3/A23, 2026-09-09) —
+     * replaces the old automatic promotion in GameTick::incrementAdvisorTicks().
+     * The player decides when to spend the one-time Credits cost, and can defer
+     * indefinitely once eligible (active_ticks keeps accumulating either way).
+     *
+     * @return true|string true on success, error code string on rejection:
+     *                     'not_found', 'not_eligible', 'max_rank', 'insufficient_credits'
+     */
+    public function promote(int $advisorId, int $userId): true|string
+    {
+        $advisor = Advisor::where('id', $advisorId)->where('user_id', $userId)->first();
+
+        if ($advisor === null) {
+            return 'not_found';
+        }
+
+        if ($advisor->rank >= 3) {
+            return 'max_rank';
+        }
+
+        $thresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
+        $threshold = $thresholds[$advisor->rank] ?? null;
+        if ($threshold === null || $advisor->active_ticks < $threshold) {
+            return 'not_eligible';
+        }
+
+        $toRank = $advisor->rank + 1;
+        $cost = (int) (config('game.advisor.promotion_costs', [2 => 150, 3 => 400])[$toRank] ?? 0);
+
+        return DB::transaction(function () use ($advisor, $toRank, $cost, $userId): true|string {
+            $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->lockForUpdate()->value('credits') ?? 0);
+            if ($credits < $cost) {
+                return 'insufficient_credits';
+            }
+
+            if ($cost > 0) {
+                DB::table('user_resources')->where('user_id', $userId)->decrement('credits', $cost);
+            }
+
+            Advisor::where('id', $advisor->id)->update(['rank' => $toRank]);
+
+            return true;
+        });
+    }
+
     // ── AP credit (merchant / external grants) ───────────────────────────────
 
     /**
