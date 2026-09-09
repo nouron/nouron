@@ -259,7 +259,8 @@ Alle Werte Cr/Tick, angewendet nach Ressourcen-Generierung in GameTick Schritt 8
 |---|---|---|
 | **Nexus-Subsidy** | CC > 0 | 50 Cr/Tick |
 | **Relay-Bonus** | Uplink-Station je Level | 45 Cr/Tick × Uplink-Lv |
-| **Konsul-Handelsvertrag** | Trader Rang 1–3 + Bar Lv1+ | 10/25/45 Cr/Tick je Rang |
+
+Konsul-Handelsvertrag (bedingungsloses Dauereinkommen) entfernt (2026-09-09, F3/A22) — Pfad-Paritätsverletzung, kein Ersatz geplant.
 
 ---
 
