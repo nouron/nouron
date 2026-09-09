@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
@@ -249,6 +250,34 @@ class ColonyTileService
         }
 
         return (int) (config('game.harvester.resource_max')[$tileType] ?? config('game.harvester.resource_max.regolith_poor', 160));
+    }
+
+    /**
+     * "≈N Sole bis Erschöpfung" estimate for a regolith tile under active
+     * Harvester production (A25, docs/superpowers/specs/2026-08-10-harvester-
+     * constant-yield-design.md §2). Computed server-side because the geology
+     * bonus and trust multiplier are only reliably known there. An ESTIMATE,
+     * not a guarantee — both inputs can change before the tile actually
+     * empties, so callers must label it "ca. N Sole" in the UI.
+     *
+     * Null means "no countdown to show": either the tile is already exhausted
+     * or the effective rate is 0 (unconfigured tile type, or a multiplier that
+     * zeroes out the yield).
+     */
+    public function solsRemaining(string $tileType, int $resourceAmount, int $resourceMax, int $geologyLevel, float $trustMultiplier): ?int
+    {
+        if ($resourceAmount <= 0) {
+            return null;
+        }
+
+        $baseYield = GameTick::harvesterYield($tileType, $resourceAmount, $resourceMax, $geologyLevel);
+        $effectiveRate = (int) round($baseYield * $trustMultiplier);
+
+        if ($effectiveRate <= 0) {
+            return null;
+        }
+
+        return (int) ceil($resourceAmount / $effectiveRate);
     }
 
     private function transformTile(ColonyTile $tile): array

@@ -128,11 +128,28 @@ class ColonyController extends BaseController
         $activeRegolithTiles = $this->tileService->activeHarvesterRegolithTiles($colony->id, $globalTick)
             ->keyBy(fn ($tile) => $tile->q.','.$tile->r);
 
-        $tiles = $tiles->map(function ($tile) use ($activeRegolithTiles) {
+        // A25 (docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md
+        // §2): "≈N Sole bis Erschöpfung" estimate needs the same geology/trust
+        // inputs GameTick::generateHarvesterYield() uses — computed once here,
+        // not per tile.
+        $geologyLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)
+            ->where('research_id', (int) config('knowledge.geology.id', 92))
+            ->value('level');
+        $trustMultiplier = $this->trustService->getProductionMultiplier($this->trustService->getTrust($colony->id));
+
+        $tiles = $tiles->map(function ($tile) use ($activeRegolithTiles, $geologyLevel, $trustMultiplier) {
             $active = $activeRegolithTiles->get($tile['q'].','.$tile['r']);
             if ($active !== null) {
                 $tile['regolith_remaining'] = $active->resource_amount;
                 $tile['regolith_max'] = $active->resource_max;
+                $tile['sols_remaining'] = $this->tileService->solsRemaining(
+                    $active->tile_type,
+                    $active->resource_amount,
+                    $active->resource_max,
+                    $geologyLevel,
+                    $trustMultiplier
+                );
             }
 
             return $tile;
