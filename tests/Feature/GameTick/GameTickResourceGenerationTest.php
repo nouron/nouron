@@ -18,7 +18,7 @@ use Tests\TestCase;
  * Harvester (building_id 27) production_curve is INERT since the §4c depletion
  * mechanic (2026-08-03) — the Harvester no longer levels up (max_level=1,
  * GDD §13.5) and instead produces from the specific regolith tile it is placed
- * on: Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max), see
+ * on: Ertrag = Frischwert (konstant bis Erschöpfung, A24/2026-09-09), see
  * GameTick::harvesterYield() and GameTick::generateHarvesterYield(). Full
  * depletion/geology-bonus coverage lives in HarvesterDepletionTest — this file
  * covers only the interaction with the level-0 gate, the trust multiplier,
