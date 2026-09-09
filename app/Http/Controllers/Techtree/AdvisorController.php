@@ -304,6 +304,7 @@ class AdvisorController extends BaseController
             'routes' => [
                 'hire' => route('advisors.hire'),
                 'fire' => route('advisors.fire', ['id' => '__ID__']),
+                'promote' => route('advisors.promote', ['id' => '__ID__']),
             ],
             'colonyId' => $colonyId,
             'junior_upkeep' => $upkeepMap[1] ?? 10,
@@ -412,5 +413,52 @@ class AdvisorController extends BaseController
         }
 
         return back()->with('success', __('advisors.fired'));
+    }
+
+    /**
+     * Player-triggered rank promotion (Owner-Entscheidung F3/A23, 2026-09-09) —
+     * replaces the old automatic GameTick promotion. Mirrors fire()'s
+     * ownership-check + JSON-response pattern.
+     */
+    public function promote(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        $userId = $this->getCurrentUserId();
+        $result = $this->advisorService->promote($id, $userId);
+
+        if ($result !== true) {
+            $errorMessages = [
+                'not_found' => __('advisors.error_generic'),
+                'not_eligible' => __('advisors.error_promotion_not_eligible'),
+                'max_rank' => __('advisors.error_promotion_max_rank'),
+                'insufficient_credits' => __('advisors.error_promotion_insufficient_credits'),
+            ];
+            $errorMessage = $errorMessages[$result] ?? __('advisors.error_generic');
+            $status = $result === 'not_found' ? 404 : 422;
+
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => false, 'error' => $result, 'message' => $errorMessage], $status);
+            }
+
+            return back()->with('error', $errorMessage);
+        }
+
+        $colonyId = (int) DB::table('advisors')->where('id', $id)->value('colony_id');
+
+        if ($request->expectsJson()) {
+            $currentTick = $this->getTick();
+            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
+
+            return response()->json([
+                'ok' => true,
+                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
+                'slotInfo' => $slotInfo,
+                'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
+                'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
+                'activeHint' => $this->resolveHint($colonyId),
+            ]);
+        }
+
+        return back()->with('success', __('advisors.promoted'));
     }
 }

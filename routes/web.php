@@ -131,6 +131,7 @@ Route::middleware(['auth', 'run.started'])->prefix('advisors')->name('advisors.'
     Route::get('/', [AdvisorController::class, 'index'])->name('index');
     Route::post('/hire', [AdvisorController::class, 'hire'])->name('hire');
     Route::delete('/{id}', [AdvisorController::class, 'fire'])->name('fire')->where('id', '[0-9]+');
+    Route::post('/{id}/promote', [AdvisorController::class, 'promote'])->name('promote')->where('id', '[0-9]+');
 });
 
 // ── Sol (player-triggered tick advancement) ───────────────────────────────────

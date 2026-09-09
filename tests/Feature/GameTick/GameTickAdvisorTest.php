@@ -172,15 +172,16 @@ class GameTickAdvisorTest extends TestCase
             'Second advisor active_ticks must increment');
     }
 
-    // ── Rank promotion ─────────────────────────────────────────────────────────
+    // ── Rank promotion is manual, not automatic (Owner-Entscheidung F3/A23, 2026-09-09) ──
 
     /**
-     * Advisor promotes from rank 1 to rank 2 when active_ticks reaches the threshold
-     * and the player can afford the promotion cost.
-     *
-     * active_ticks = threshold - 1 → after increment = threshold → promotion fires.
+     * GameTick must NOT auto-promote an advisor anymore, even when active_ticks
+     * crosses the threshold and the player could afford the cost — promotion is
+     * now player-triggered via AdvisorService::promote() (see
+     * AdvisorPromotionManualTest). active_ticks itself keeps accumulating past
+     * the threshold with no cap, so the player can defer indefinitely.
      */
-    public function test_advisor_promotes_rank1_to_rank2_on_threshold(): void
+    public function test_gametick_never_auto_promotes_rank1_advisor(): void
     {
         $id = $this->insertAdvisor(rank: 1, activeTicks: self::RANK1_THRESHOLD - 1);
         $this->setCredits(10_000);
@@ -188,96 +189,35 @@ class GameTickAdvisorTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11510]);
 
         $advisor = $this->getAdvisor($id);
-        $this->assertEquals(2, (int) $advisor->rank,
-            'Advisor must promote to rank 2 when active_ticks reaches threshold');
+        $this->assertEquals(1, (int) $advisor->rank, 'GameTick must never auto-promote an advisor');
+        $this->assertEquals(self::RANK1_THRESHOLD, (int) $advisor->active_ticks,
+            'active_ticks must still increment normally, just without triggering a promotion');
     }
 
     /**
-     * Promotion from rank 1 to 2 charges exactly the configured cost (150 Cr).
+     * Same regression at the rank 2 → 3 boundary.
      */
-    public function test_rank_promotion_charges_correct_cost(): void
-    {
-        $id = $this->insertAdvisor(rank: 1, activeTicks: self::RANK1_THRESHOLD - 1);
-        $this->setCredits(5_000);
-
-        // Determine net income/upkeep delta without promotion for comparison
-        // by running a tick where promotion does NOT fire
-        $noPromotionId = $this->insertAdvisor(rank: 1, activeTicks: 0); // won't promote
-        // We need to compare two runs — simpler: just verify the exact credit delta
-        // for the promotion cost after accounting for fixed income/upkeep.
-
-        // Housing produces no passive income (Relaisvergütung is Uplink-Station-based) —
-        // no zeroing needed there. We have TWO advisors now (rank 1); remove the second
-        // to keep the math simple.
-        DB::table('advisors')->where('id', $noPromotionId)->delete();
-
-        $before = $this->getCredits();
-
-        Artisan::call('game:tick', ['--tick' => 11511]);
-
-        $after = $this->getCredits();
-        $nexus = (int) config('game.credits.nexus_subsidy', 50);
-        $upkeepRank1 = (int) config('game.advisor.upkeep.1', 10);
-        $expected = $before + $nexus - $upkeepRank1 - self::RANK2_COST;
-        $this->assertEquals($expected, $after,
-            'Promotion must charge exactly the configured rank-2 cost (150 Cr)');
-    }
-
-    /**
-     * Promotion is deferred when the player cannot afford the promotion cost.
-     * Advisor stays at rank 1 when credits < 150.
-     */
-    public function test_promotion_deferred_when_insufficient_credits(): void
-    {
-        $id = $this->insertAdvisor(rank: 1, activeTicks: self::RANK1_THRESHOLD - 1);
-        // Ensure credits will always be below 150 even after income:
-        // income = 30 (nexus only, no Uplink Station); needed: credits + 30 < 150
-        $this->setCredits(0);
-
-        Artisan::call('game:tick', ['--tick' => 11512]);
-
-        // After tick: income = 30, upkeep = 10, credits = 0+30-10 = 20 (< 150)
-        $advisor = $this->getAdvisor($id);
-        $this->assertEquals(1, (int) $advisor->rank,
-            'Advisor must remain at rank 1 when player cannot afford promotion cost');
-    }
-
-    /**
-     * Promotion fires exactly once — subsequent ticks do not re-charge the cost.
-     */
-    public function test_promotion_fires_only_once(): void
-    {
-        $id = $this->insertAdvisor(rank: 1, activeTicks: self::RANK1_THRESHOLD - 1);
-        $this->setCredits(10_000);
-
-        // First tick: crosses threshold → promotes to rank 2
-        Artisan::call('game:tick', ['--tick' => 11520]);
-        $this->assertEquals(2, (int) $this->getAdvisor($id)->rank, 'Must promote on first crossing');
-        $afterTick1 = $this->getCredits();
-
-        // Second tick: already rank 2, rank-2 threshold (45 ticks) is far away
-        Artisan::call('game:tick', ['--tick' => 11521]);
-        $afterTick2 = $this->getCredits();
-
-        // Delta from tick2: income - upkeep (rank 2 = 30 Cr). No 150 Cr promotion.
-        $deltaSecond = $afterTick1 - $afterTick2;
-        $this->assertLessThan(self::RANK2_COST, $deltaSecond,
-            'Promotion cost must not be charged a second time after promotion is complete');
-    }
-
-    /**
-     * Advisor promotes from rank 2 to rank 3 on the rank-2 threshold.
-     */
-    public function test_advisor_promotes_rank2_to_rank3_on_threshold(): void
+    public function test_gametick_never_auto_promotes_rank2_advisor(): void
     {
         $id = $this->insertAdvisor(rank: 2, activeTicks: self::RANK2_THRESHOLD - 1);
         $this->setCredits(10_000);
 
         Artisan::call('game:tick', ['--tick' => 11530]);
 
-        $advisor = $this->getAdvisor($id);
-        $this->assertEquals(3, (int) $advisor->rank,
-            'Advisor must promote to rank 3 when active_ticks reaches rank-2 threshold');
+        $this->assertEquals(2, (int) $this->getAdvisor($id)->rank, 'GameTick must never auto-promote an advisor');
+    }
+
+    /**
+     * active_ticks must keep accumulating past the threshold without a cap —
+     * the player can defer the manual promotion for as long as they want.
+     */
+    public function test_active_ticks_accumulate_past_threshold_without_cap(): void
+    {
+        $id = $this->insertAdvisor(rank: 1, activeTicks: self::RANK1_THRESHOLD + 10);
+
+        Artisan::call('game:tick', ['--tick' => 11531]);
+
+        $this->assertEquals(self::RANK1_THRESHOLD + 11, (int) $this->getAdvisor($id)->active_ticks);
     }
 
     /**

@@ -7,6 +7,7 @@
 - Balance: A22 — Konsul-„Handelsvertrag" (bedingungsloses Cr/Tick-Einkommen bei Konsul + Cantina) ersatzlos entfernt (F3, Pfad-Paritätsverletzung). `config/game.php`, `GameTick::generatePassiveCredits()`, `GameTickDryRun` und `docs/game-reference.md` bereinigt. TDD: alte Contract-Income-Tests durch Regressionstests ersetzt, volle Suite grün (1147 Tests).
 - Docs: Cantina-Begegnungspool als Ersatz für den Pfad-C-Credits-Hebel konzipiert (§4b, §12) — Owner-Klarstellung: Pfad-Parität gilt für die Cantina als Gebäude, nicht für den Konsul-Berater selbst (der bereits eigenständigen Wert hat). Drei Credits-Ausgänge (Wette→Zara, Auktion→Voss, Kurzzeit-Kontrakt generisch) aus einem gemeinsamen Ereignis-Slot, skaliert über Bar-Level statt Konsul-Rang. Reines Konzept, keine Implementierung — Grundgerüst-Task folgt.
 - Planung: Cantina-Begegnungspool-Umsetzung als ROADMAP-Tasks A35 (mechanisches Grundgerüst: Wette/Auktion/Kurzzeit-Kontrakt, Bar-Level-skaliert) und A36 (volle Charakter-Zuordnung, content-writer, später) ergänzt.
+- Feature: A23 — Berater-Beförderung von automatisch auf manuell (spielerausgelöst) umgestellt (F3). `GameTick::incrementAdvisorTicks()` promotet nicht mehr selbst; neuer `AdvisorService::promote()` + `POST /advisors/{id}/promote`-Endpoint + "Befördern"-Button im Berater-Screen, sobald der Erfahrungs-Threshold erreicht ist — Spieler kann beliebig lange aufschieben, um Upkeep/Kosten selbst zu timen. TDD: neue Tests für Service/Controller/GameTick-Regression, alte reine Automatik-Tests entfernt. Volle Suite grün (1148 Tests).
 
 ## 2026-09-08
 

@@ -517,6 +517,61 @@ class AdvisorControllerTest extends TestCase
             ->assertJson(['ok' => false]);
     }
 
+    // ── PROMOTE — Owner-Entscheidung F3/A23, 2026-09-09 ──────────────────────
+
+    public function test_promote_returns_json_on_success(): void
+    {
+        $this->clearBartAdvisors();
+        $threshold = (int) config('game.advisor.rank_thresholds.1', 15);
+        $advisorId = $this->insertAdvisor($this->userIdBart, $this->personellEngineer, $this->colonyIdBart);
+        DB::table('advisors')->where('id', $advisorId)->update(['active_ticks' => $threshold]);
+        $this->ensureCredits($this->userIdBart, 1000);
+
+        $bart = User::find($this->userIdBart);
+
+        $response = $this->actingAs($bart)
+            ->withSession($this->bartSession())
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(route('advisors.promote', ['id' => $advisorId]));
+
+        $response->assertOk()
+            ->assertJson(['ok' => true])
+            ->assertJsonStructure(['ok', 'slots', 'slotInfo', 'credits', 'apAvailable']);
+        $this->assertEquals(2, (int) DB::table('advisors')->where('id', $advisorId)->value('rank'));
+    }
+
+    public function test_promote_returns_422_when_not_eligible(): void
+    {
+        $this->clearBartAdvisors();
+        $advisorId = $this->insertAdvisor($this->userIdBart, $this->personellEngineer, $this->colonyIdBart);
+        $this->ensureCredits($this->userIdBart, 1000);
+
+        $bart = User::find($this->userIdBart);
+
+        $response = $this->actingAs($bart)
+            ->withSession($this->bartSession())
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(route('advisors.promote', ['id' => $advisorId]));
+
+        $response->assertStatus(422)->assertJson(['ok' => false, 'error' => 'not_eligible']);
+        $this->assertEquals(1, (int) DB::table('advisors')->where('id', $advisorId)->value('rank'));
+    }
+
+    public function test_promote_returns_404_for_foreign_advisor(): void
+    {
+        // Advisor id=5 belongs to Homer — Bart cannot promote it.
+        $homerAdvisorId = 5;
+
+        $bart = User::find($this->userIdBart);
+
+        $response = $this->actingAs($bart)
+            ->withSession($this->bartSession())
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(route('advisors.promote', ['id' => $homerAdvisorId]));
+
+        $response->assertStatus(404)->assertJson(['ok' => false]);
+    }
+
     // ── Auth guard ────────────────────────────────────────────────────────────
 
     public function test_index_requires_authentication(): void

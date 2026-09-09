@@ -1767,58 +1767,18 @@ class GameTick extends Command
         return $spawned;
     }
 
+    /**
+     * Increments active_ticks for every assigned, available advisor. Rank
+     * promotion is player-triggered (AdvisorService::promote(), Owner-
+     * Entscheidung F3/A23, 2026-09-09) — GameTick no longer auto-promotes once
+     * a threshold is crossed. active_ticks accumulates without a cap so the
+     * player can defer the promotion for as long as they want.
+     */
     private function incrementAdvisorTicks(): int
     {
-        $updated = DB::table('advisors')
+        return DB::table('advisors')
             ->whereNull('unavailable_until_tick')
             ->whereNotNull('colony_id')
             ->increment('active_ticks');
-
-        $thresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
-        $promotionCosts = config('game.advisor.promotion_costs', [2 => 150, 3 => 400]);
-
-        foreach ($thresholds as $fromRank => $ticks) {
-            $toRank = $fromRank + 1;
-            $cost = (int) ($promotionCosts[$toRank] ?? 0);
-
-            $eligible = DB::table('advisors as a')
-                ->join('glx_colonies as c', 'c.id', '=', 'a.colony_id')
-                ->where('a.rank', $fromRank)
-                ->where('a.active_ticks', '>=', $ticks)
-                ->whereNotNull('a.colony_id')
-                ->select('a.id', 'c.user_id')
-                ->get();
-
-            foreach ($eligible as $advisor) {
-                DB::transaction(function () use ($advisor, $fromRank, $toRank, $cost): void {
-                    // Re-read with row lock to prevent race condition on concurrent tick runs.
-                    $current = DB::table('advisors')
-                        ->where('id', $advisor->id)
-                        ->lockForUpdate()
-                        ->first();
-
-                    // Guard: already promoted (or demoted) since the eligible query ran.
-                    if (! $current || (int) $current->rank !== $fromRank) {
-                        return;
-                    }
-
-                    if ($cost > 0) {
-                        $credits = (int) (DB::table('user_resources')
-                            ->where('user_id', $advisor->user_id)
-                            ->value('credits') ?? 0);
-                        if ($credits < $cost) {
-                            return; // Deferred — try again next tick
-                        }
-                        DB::table('user_resources')
-                            ->where('user_id', $advisor->user_id)
-                            ->decrement('credits', $cost);
-                    }
-
-                    DB::table('advisors')->where('id', $advisor->id)->update(['rank' => $toRank]);
-                });
-            }
-        }
-
-        return $updated;
     }
 }

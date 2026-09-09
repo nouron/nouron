@@ -463,7 +463,14 @@ class AdvisorServiceTest extends TestCase
         $this->assertEquals(7, $unavailable->active_ticks); // unchanged
     }
 
-    public function test_rank_promotion_to_two_at_fifteen_ticks(): void
+    /**
+     * Rank promotion is player-triggered (AdvisorService::promote(), Owner-
+     * Entscheidung F3/A23, 2026-09-09), not automatic via GameTick anymore —
+     * see AdvisorPromotionManualTest for promote() coverage and
+     * GameTick/GameTickAdvisorTest for the regression confirming ticks no
+     * longer auto-promote. active_ticks still increments here regardless.
+     */
+    public function test_rank_stays_at_one_past_fifteen_ticks_until_manually_promoted(): void
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
@@ -476,23 +483,11 @@ class AdvisorServiceTest extends TestCase
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
         $this->assertEquals(15, $advisor->active_ticks);
-        $this->assertEquals(2, $advisor->rank);
-    }
+        $this->assertEquals(1, $advisor->rank, 'GameTick must not auto-promote');
 
-    public function test_rank_promotion_to_three_at_fortyfive_ticks(): void
-    {
-        $advisor = Advisor::create([
-            'user_id' => $this->userId,
-            'personell_id' => AdvisorService::idFor('trader'),
-            'colony_id' => $this->colonyId,
-            'rank' => 2,
-            'active_ticks' => 44,
-        ]);
-
-        $this->artisan('game:tick')->assertSuccessful();
+        $this->service->promote($advisor->id, $this->userId);
         $advisor->refresh();
-        $this->assertEquals(45, $advisor->active_ticks);
-        $this->assertEquals(3, $advisor->rank);
+        $this->assertEquals(2, $advisor->rank, 'Manual promote() must still work once eligible');
     }
 
     public function test_rank_does_not_promote_at_rank_three(): void
@@ -508,11 +503,13 @@ class AdvisorServiceTest extends TestCase
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
         $this->assertEquals(3, $advisor->rank); // stays at 3
+
+        $result = $this->service->promote($advisor->id, $this->userId);
+        $this->assertEquals('max_rank', $result);
     }
 
-    public function test_rank_promotion_ap_points_reflect_new_rank_after_tick(): void
+    public function test_manual_promotion_ap_points_reflect_new_rank(): void
     {
-        // Start with 1 engineer at rank 1, 14 ticks — after one tick it hits 15 and promotes
         Advisor::where('colony_id', $this->colonyId)
             ->where('personell_id', AdvisorService::idFor('engineer'))
             ->delete();
@@ -522,18 +519,18 @@ class AdvisorServiceTest extends TestCase
             'personell_id' => AdvisorService::idFor('engineer'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
-            'active_ticks' => 14,
+            'active_ticks' => 15,
         ]);
 
         $totalBefore = $this->service->getTotalActionPoints($this->colonyId);
 
-        $this->artisan('game:tick')->assertSuccessful();
+        $result = $this->service->promote($advisor->id, $this->userId);
         $advisor->refresh();
 
-        // After promotion to rank 2, AP must exceed the pre-promotion total.
         // The exact value depends on the trust multiplier and other advisors already
         // present in the pool, so we compare against a captured baseline instead of
         // a fixed constant (a fixed threshold is unfalsifiable against ap.base=12).
+        $this->assertTrue($result === true);
         $this->assertEquals(2, $advisor->rank);
         $this->assertGreaterThan($totalBefore, $this->service->getTotalActionPoints($this->colonyId));
     }
