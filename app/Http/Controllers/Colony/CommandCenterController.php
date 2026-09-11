@@ -125,6 +125,7 @@ class CommandCenterController extends BaseController
             ->where('building_id', $uplinkId)
             ->value('level') ?? 0);
         $compoundImportPrice = (int) config('game.economy.compound_import_price', 90);
+        $delayedImportPrices = config('game.economy.delayed_import_price', [3 => 35, 5 => 65]);
 
         return view('colony.command_center', compact(
             'phaseProgress',
@@ -141,6 +142,7 @@ class CommandCenterController extends BaseController
             'trustEvents',
             'uplinkLevel',
             'compoundImportPrice',
+            'delayedImportPrices',
         ));
     }
 }

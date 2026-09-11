@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-11 (2)
+
+- Feature: A28 — Uplink-Direktimport für Regolith/Organika (F5), Ersatz für das gestrichene "Nexus-Handelsschiffe"-Konzept. Neue Tabelle `nexus_imports`; Anfrage+Bezahlung sofort (`ColonyController::nexusImportResource()`), Lieferung nach 3-5 Solen abhängig vom Uplink-Station-Level (`GameTick::processNexusImportDeliveries()`). Preise (35/65 Cr) und Lieferzeit-Staffel (Lv1=5/Lv2=4/Lv3=3) mit game-designer abgestimmt. Neues Widget im Command-Center-Screen. TDD: neue Tests für Endpoint + GameTick-Delivery, echte Browser-Verifikation. A29 (GDD-INNN-Reste) war bereits erledigt.
+
 ## 2026-09-11
 
 - UI: A26 — "≈N Sole bis Erschöpfung"-Countdown im Tile-Panel des aktiven Harvester-Tiles (`hexview.blade.php`, direkt unter dem Regolith-Vorkommen), Warnfarbe bei ≤3 Sole verbleibend. Nutzt die in A25 berechneten `sols_remaining`-Daten. Neuer Lang-Key `colony.harvester_sols_remaining_label`. Damit ist die Harvester-Konstant-Yield-Spec (F4/A24-A26) vollständig umgesetzt — nur die §13.7-Sockelrechnung (A27) bleibt offen, erst nach Playtest.

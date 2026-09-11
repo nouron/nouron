@@ -16,14 +16,18 @@
             routes: {
                 stipend: "{{ route("colony.stipend") }}",
                 nexusImport: "{{ route("colony.nexus.import") }}",
+                nexusImportDelayed: "{{ route("colony.nexus.import-delayed") }}",
             },
             i18n: {
                 stipendSuccess: @json(__("colony.stipend_success")),
                 stipendError: @json(__("colony.stipend_error")),
                 nexusImportSuccess: @json(__("colony.nexus_import_success")),
                 nexusImportError: @json(__("colony.nexus_import_error")),
+                nexusImportDelayedSuccess: @json(__("colony.nexus_import_delayed_success")),
+                nexusImportDelayedError: @json(__("colony.nexus_import_delayed_error")),
             },
             compoundImportPrice: {{ (int) $compoundImportPrice }},
+            delayedImportPrices: @json($delayedImportPrices),
         };
     </script>
 
@@ -241,6 +245,35 @@
                 <button class="nexus-import-btn"
                     :disabled="{{ $uplinkLevel < 1 ? "true" : "!nexusImportAmount || nexusImportAmount < 1" }}"
                     @click="doNexusImport()">{{ __("colony.nexus_import_confirm") }}</button>
+            </div>
+        </article>
+
+        {{-- Widget 9: Nexus-Import (verzögert) — Regolith/Organika gegen Credits,
+         ab Uplink-Station Lv1. Bezahlung sofort, Lieferung nach mehreren Solen
+         (Uplink-Station-Level ist der einzige Hebel, F5/A28). Ersetzt das
+         gestrichene "Nexus-Handelsschiffe"-Konzept als Sicherheitsnetz für nicht
+         lokal beschaffbare Mengen anderer Ressourcen als Werkstoffe. --}}
+        <article class="cc-card">
+            <h3 class="cc-card-title">{{ __("colony.nexus_import_delayed_title") }}</h3>
+            <p class="cc-card-hint">{{ __("colony.nexus_import_delayed_hint") }}</p>
+            @if ($uplinkLevel < 1)
+                <p class="cc-card-hint cc-card-hint--warning">{{ __("colony.nexus_import_uplink_required") }}</p>
+            @endif
+            <div class="nexus-import-controls">
+                <select x-model.number="nexusImportDelayedResourceId" class="nexus-import-resource"
+                    @if ($uplinkLevel < 1) disabled @endif
+                    aria-label="{{ __("colony.nexus_import_delayed_resource") }}">
+                    <option value="3">{{ __("colony.resource_regolith") }}</option>
+                    <option value="5">{{ __("resources.res_organika") }}</option>
+                </select>
+                <input type="number" min="1" max="9999" x-model.number="nexusImportDelayedAmount"
+                    class="nexus-import-amount" @if ($uplinkLevel < 1) disabled @endif
+                    aria-label="{{ __("colony.nexus_import_delayed_amount") }}">
+                <span class="nexus-import-total"
+                    x-text="`${(nexusImportDelayedAmount || 0) * (delayedImportPrices[nexusImportDelayedResourceId] || 0)} Cr`"></span>
+                <button class="nexus-import-btn"
+                    :disabled="{{ $uplinkLevel < 1 ? "true" : "!nexusImportDelayedAmount || nexusImportDelayedAmount < 1" }}"
+                    @click="doNexusImportDelayed()">{{ __("colony.nexus_import_delayed_confirm") }}</button>
             </div>
         </article>
 

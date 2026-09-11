@@ -202,6 +202,16 @@ return [
     'nexus_import_no_credits' => 'Nicht genug Credits für diesen Import.',
     'nexus_import_error' => 'Import fehlgeschlagen.',
 
+    // Delayed Uplink-Direktimport for Regolith/Organika (F5/A28, 2026-09-11) —
+    // payment immediate, delivery after N Sole (Uplink-Station-Level-abhängig).
+    'nexus_import_delayed_title' => 'Nexus-Import (verzögert)',
+    'nexus_import_delayed_hint' => 'Regolith oder Organika vom Nexus bestellen — Bezahlung sofort, Lieferung nach mehreren Solen.',
+    'nexus_import_delayed_resource' => 'Ressource',
+    'nexus_import_delayed_amount' => 'Menge',
+    'nexus_import_delayed_confirm' => 'Bestellen',
+    'nexus_import_delayed_success' => ':amount Einheiten bestellt — Ankunft in :ticks Solen (:cost Cr).',
+    'nexus_import_delayed_error' => 'Bestellung fehlgeschlagen.',
+
     // ── Kolonisten-Zulage (GDD §14) ──────────────────────────────────────────
 
     'stipend_button' => 'Kolonisten-Zulage',

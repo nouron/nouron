@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
  * removed/merged steps, and missing several since added; step order below
  * matches handle()'s actual call order):
  *  1. Hangar deliveries   — transition building→docked ships; expire pending ships
+ *  1b. Nexus import deliveries — credit Regolith/Organika from delayed Uplink-Direktimport (F5/A28)
  *  2. Hangar missions     — resolve dispatched missions (complete/abort), apply rewards
  *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
@@ -131,6 +132,9 @@ class GameTick extends Command
             [$delivered, $expired] = $this->processHangarDeliveries($tick);
             $this->line("  Hangar ships delivered:   {$delivered}");
             $this->line("  Hangar ships expired:     {$expired}");
+
+            $n = $this->processNexusImportDeliveries($tick);
+            $this->line("  Nexus imports delivered:  {$n}");
 
             [$completed, $aborted] = $this->processHangarMissions($tick, (int) ($run->rng_seed ?? 0));
             $this->line("  Hangar missions resolved: {$completed} completed, {$aborted} aborted");
@@ -257,6 +261,38 @@ class GameTick extends Command
             ->delete();
 
         return [$delivered, $expired];
+    }
+
+    /**
+     * Credits pending delayed Uplink-Direktimport deliveries (Regolith/Organika,
+     * Owner-Entscheidung F5/A28) once their deliver_at_tick is reached. Payment
+     * already happened at request time (ColonyController::nexusImportResource());
+     * this only adds the resource and removes the row — mirrors
+     * processHangarDeliveries()'s "transition once due" shape.
+     */
+    private function processNexusImportDeliveries(int $tick): int
+    {
+        $due = DB::table('nexus_imports')->where('deliver_at_tick', '<=', $tick)->get();
+
+        foreach ($due as $import) {
+            $this->resourcesService->increaseAmount($import->colony_id, $import->resource_id, $import->amount);
+
+            $this->eventService->createEvent([
+                'user' => (int) (DB::table('glx_colonies')->where('id', $import->colony_id)->value('user_id') ?? 0),
+                'tick' => $tick,
+                'event' => 'colony.nexus_import_delivered',
+                'area' => 'colony',
+                'parameters' => json_encode([
+                    'colony_id' => $import->colony_id,
+                    'resource_id' => $import->resource_id,
+                    'amount' => $import->amount,
+                ]),
+            ]);
+        }
+
+        DB::table('nexus_imports')->where('deliver_at_tick', '<=', $tick)->delete();
+
+        return $due->count();
     }
 
     // ── 0b. Hangar missions: wear + resolution (GDD §7/§8b) ─────────────────

@@ -82,6 +82,10 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     // Nexus direct import — Werkstoffe (compounds) against Credits, gated by Uplink Lv1
     Route::post('/nexus/import-compounds', [ColonyController::class, 'nexusImportCompounds'])->name('nexus.import');
 
+    // Nexus delayed direct import — Regolith/Organika, payment immediate, delivery
+    // delayed by Uplink-Station level (F5/A28)
+    Route::post('/nexus/import-delayed', [ColonyController::class, 'nexusImportResource'])->name('nexus.import-delayed');
+
     // Kolonisten-Zulage — spend Credits for a one-shot Trust event (max 1 tier/Sol)
     Route::post('/stipend', [ColonyController::class, 'purchaseStipend'])->name('stipend');
 

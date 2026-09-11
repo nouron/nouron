@@ -153,4 +153,21 @@ class CommandCenterTest extends TestCase
         $response->assertViewHas('solLimit');
         $response->assertViewHas('nexusDebt');
     }
+
+    /**
+     * Widget 9 (F5/A28, 2026-09-11): delayed Nexus import for Regolith/Organika.
+     * Prices come from config('game.economy.delayed_import_price'), keyed by
+     * resource_id (3=Regolith, 5=Organika).
+     */
+    public function test_delayed_import_widget_shows_prices_and_route(): void
+    {
+        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+
+        $response->assertViewHas('delayedImportPrices', function ($prices) {
+            return $prices[3] === (int) config('game.economy.delayed_import_price.3')
+                && $prices[5] === (int) config('game.economy.delayed_import_price.5');
+        });
+        $response->assertSee(__('colony.nexus_import_delayed_title'));
+        $response->assertSee(route('colony.nexus.import-delayed'), false);
+    }
 }
