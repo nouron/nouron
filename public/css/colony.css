@@ -1050,6 +1050,20 @@ button.btn-sol:hover,
     gap: 0.35rem;
 }
 
+.tile-building-sols-remaining {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tile-building-sols-remaining--warn {
+    color: #7a5500;
+    font-weight: 600;
+}
+
 .tile-under-construction {
     margin: 0.5rem 0;
     padding: 0.3rem 0.6rem;

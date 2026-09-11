@@ -65,6 +65,7 @@ return [
     'under_construction' => 'Im Bau',
     'resource_regolith' => 'Regolith',
     'harvester_regolith_remaining_label' => 'Regolith-Vorkommen (Feld):',
+    'harvester_sols_remaining_label' => 'Bis Erschöpfung:',
 
     // ── Status chips ──────────────────────────────────────────────────────────
 

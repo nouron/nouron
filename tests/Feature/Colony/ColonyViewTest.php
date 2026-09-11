@@ -200,6 +200,18 @@ class ColonyViewTest extends TestCase
         $this->assertSame(300, $tile['regolith_max']);
     }
 
+    // A26: the "≈N Sole bis Erschöpfung" countdown markup renders (Alpine-bound,
+    // so the actual number is client-side — this guards the wiring exists).
+    public function test_hexview_contains_sols_remaining_countdown_markup(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertSee('tile-building-sols-remaining', false);
+        $response->assertSee('selectedTile.sols_remaining', false);
+        $response->assertSee(__('colony.harvester_sols_remaining_label'), false);
+    }
+
     /**
      * A25: the active Harvester tile also carries a `sols_remaining` estimate
      * ("ca. N Sole bis Erschöpfung", A24/A25). Neutral trust + no geology so

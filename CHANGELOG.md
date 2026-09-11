@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-11
+
+- UI: A26 — "≈N Sole bis Erschöpfung"-Countdown im Tile-Panel des aktiven Harvester-Tiles (`hexview.blade.php`, direkt unter dem Regolith-Vorkommen), Warnfarbe bei ≤3 Sole verbleibend. Nutzt die in A25 berechneten `sols_remaining`-Daten. Neuer Lang-Key `colony.harvester_sols_remaining_label`. Damit ist die Harvester-Konstant-Yield-Spec (F4/A24-A26) vollständig umgesetzt — nur die §13.7-Sockelrechnung (A27) bleibt offen, erst nach Playtest.
+
 ## 2026-09-09
 
 - Balance/Fix: A19/A20 — geplante 50%-Reparatur-Hysterese für Gebäude-Effekte (F2, PR #313) verworfen zugunsten einer einfacheren Lösung ohne Kaskaden-Risiko. Gebäude-Level-Down bei 0 Status Points bestand bereits (SP-Reset auf Max, Effekte skalieren automatisch mit dem Level) — einzige Ergänzung: Level fällt nie unter 1, ein platziertes Gebäude verschwindet nie durch Verfall (`GameTick::applyLevelDown()`, `max(0,…)` → `max(1,…)`). TDD: neuer Test `GameTickDecayTest::test_building_level_floors_at_one_and_never_reaches_zero_via_decay`. GDD §7 entsprechend korrigiert, ROADMAP A19/A20 zusammengeführt und abgehakt.
