@@ -208,6 +208,25 @@ return [
         // spot price (110) required by the Knappheitsordnung (§3) after the bar.base_prices
         // correction below — Werkstoffe stay the scarcest good, Regolith < Organika < Werkstoffe.
         'compound_import_price' => 165,
+
+        // Delayed Uplink-Direktimport for Regolith/Organika (Owner-Entscheidung
+        // F5/A28, 2026-09-08/11) — the only two other tradeable resources besides
+        // Werkstoffe. Deliberately a smaller markup than compound_import_price's
+        // 1.5x (35/25=1.4x, 65/50=1.3x): the wait itself is already the "cost" of
+        // bypassing production, a full instant-delivery premium on top would be a
+        // double penalty for the same bypass. Cantina/Corvan (instant, no wait)
+        // stay the cheaper choice whenever available — Uplink is the fallback.
+        'delayed_import_price' => [3 => 35, 5 => 65],
+
+        // Delivery delay in Sole, keyed by Uplink-Station level — the ONLY lever
+        // (no Konsul-rank/knowledge/situational bonus, Owner-Entscheidung F5) so
+        // the mechanic stays a pure infrastructure question. One Sol reduction
+        // per level: long enough at Lv1 that it doesn't replace active play
+        // (a mission/encounter cycle usually fits in between), short enough even
+        // at Lv1 to resolve a within-phase progression lock. Lv3 (3 Sole) stays
+        // noticeably slower than Cantina/Corvan so Uplink remains the safety net,
+        // not the primary source.
+        'delayed_import_delivery_ticks' => [1 => 5, 2 => 4, 3 => 3],
     ],
 
     // Kolonisten-Zulage (GDD §14) — player-triggered Credits→Trust action.

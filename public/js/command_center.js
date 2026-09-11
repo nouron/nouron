@@ -45,6 +45,34 @@ function commandCenter(config = {}) {
             }
         },
 
+        // Delayed Nexus import (F5/A28) — Regolith/Organika, payment immediate,
+        // delivery after N Sole (credited by GameTick, not here). Only the
+        // Credits chip changes now; the ordered resource itself isn't touched
+        // until delivery.
+        nexusImportDelayedResourceId: 3,
+        nexusImportDelayedAmount: 10,
+        async doNexusImportDelayed() {
+            const amount = parseInt(this.nexusImportDelayedAmount, 10);
+            if (!amount || amount < 1) return;
+            const res = await this.post(this.routes.nexusImportDelayed, {
+                resource_id: this.nexusImportDelayedResourceId,
+                amount,
+            });
+            if (res.ok) {
+                this.syncResbarAmount('.res-Cr', res.credits);
+                this.flashResChip('.res-Cr');
+                this.showToast(
+                    (this.i18n.nexusImportDelayedSuccess ?? '')
+                        .replace(':amount', res.amount)
+                        .replace(':ticks', res.delivery_ticks)
+                        .replace(':cost', res.cost),
+                    'info',
+                );
+            } else {
+                this.showToast(res.message ?? res.error ?? this.i18n.nexusImportDelayedError, 'error');
+            }
+        },
+
         toastMessage: '',
         toastVisible: false,
         toastType: 'error', // 'error' | 'info'

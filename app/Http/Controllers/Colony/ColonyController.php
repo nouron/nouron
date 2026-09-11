@@ -940,6 +940,84 @@ class ColonyController extends BaseController
     }
 
     /**
+     * Delayed Uplink-Direktimport for Regolith/Organika (Owner-Entscheidung
+     * F5/A28, 2026-09-08/11) — replaces the struck "Nexus-Handelsschiffe"
+     * concept (§12 Kanal 2). Payment happens immediately like the Werkstoff
+     * import above; the resource itself only arrives after
+     * `game.economy.delayed_import_delivery_ticks[uplinkLevel]` Sole
+     * (GameTick::processNexusImportDeliveries() credits it).
+     */
+    public function nexusImportResource(Request $request): JsonResponse
+    {
+        $priceMap = config('game.economy.delayed_import_price', [3 => 35, 5 => 65]);
+
+        $data = $request->validate([
+            'resource_id' => ['required', 'integer', Rule::in(array_keys($priceMap))],
+            'amount' => 'required|integer|min:1|max:9999',
+        ]);
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $resourceId = (int) $data['resource_id'];
+        $amount = (int) $data['amount'];
+
+        $uplinkId = (int) config('buildings.uplinkStation.id', 54);
+        $uplinkLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $uplinkId)
+            ->value('level') ?? 0);
+
+        if ($uplinkLevel < 1) {
+            return $this->fail('uplink_required', __('colony.nexus_import_uplink_required'));
+        }
+
+        $price = (int) ($priceMap[$resourceId] ?? 0);
+        $totalCost = $amount * $price;
+
+        if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id)) {
+            return $this->fail('credit_limit', __('colony.nexus_import_no_credits'));
+        }
+
+        $this->resourcesService->payCosts([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id);
+
+        $deliveryTicksByLevel = config('game.economy.delayed_import_delivery_ticks', [1 => 5, 2 => 4, 3 => 3]);
+        $cappedLevel = min($uplinkLevel, max(array_keys($deliveryTicksByLevel)));
+        $deliveryTicks = (int) ($deliveryTicksByLevel[$cappedLevel] ?? 5);
+        $deliverAtTick = $this->getTick() + $deliveryTicks;
+
+        DB::table('nexus_imports')->insert([
+            'colony_id' => $colony->id,
+            'resource_id' => $resourceId,
+            'amount' => $amount,
+            'deliver_at_tick' => $deliverAtTick,
+        ]);
+
+        $this->eventService->createEvent([
+            'user' => Auth::id(),
+            'tick' => $this->getTick(),
+            'event' => 'colony.nexus_import_requested',
+            'area' => 'colony',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'resource_id' => $resourceId,
+                'amount' => $amount,
+                'cost' => $totalCost,
+                'deliver_at_tick' => $deliverAtTick,
+            ]),
+        ]);
+
+        $credits = (int) (DB::table('user_resources')->where('user_id', $colony->user_id)->value('credits') ?? 0);
+
+        return response()->json([
+            'ok' => true,
+            'resource_id' => $resourceId,
+            'amount' => $amount,
+            'cost' => $totalCost,
+            'credits' => $credits,
+            'deliver_at_tick' => $deliverAtTick,
+            'delivery_ticks' => $deliveryTicks,
+        ]);
+    }
+
+    /**
      * Kolonisten-Zulage (GDD §14) — spend Credits to fire a one-shot Trust
      * event. Max one tier per colony per Sol (different stipend event_keys
      * don't dedupe against each other in TrustService's same-key collapse).

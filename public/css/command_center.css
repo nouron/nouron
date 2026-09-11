@@ -223,6 +223,11 @@
     font-size: 0.8rem;
 }
 
+.nexus-import-resource {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+}
+
 .nexus-import-total {
     font-size: 0.78rem;
     font-weight: 600;
