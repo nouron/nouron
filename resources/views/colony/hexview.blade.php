@@ -498,6 +498,22 @@
                                         </p>
                                     </template>
 
+                                    {{-- "≈N Sole bis Erschöpfung" countdown (A25/A26, Owner-
+                                     Entscheidung 2026-08-10 harvester-constant-yield-design):
+                                     server-computed estimate (geology + trust already
+                                     factored in), not shown once the tile is exhausted
+                                     (sols_remaining is null there — the level-0 empty-tile
+                                     state already communicates that). Warning color at
+                                     ≤3 Sole so the relocation decision doesn't sneak up. --}}
+                                    <template
+                                        x-if="selectedTile.sols_remaining !== undefined && selectedTile.sols_remaining !== null">
+                                        <p class="tile-building-sols-remaining"
+                                            :class="{ 'tile-building-sols-remaining--warn': selectedTile.sols_remaining <= 3 }">
+                                            <span>{{ __("colony.harvester_sols_remaining_label") }}</span>
+                                            <span x-text="`≈${selectedTile.sols_remaining} Sole`"></span>
+                                        </p>
+                                    </template>
+
                                     {{-- Terrain is secondary on a built tile → closed
                                      disclosure (PicoCSS styles <details> natively). --}}
                                     <details class="tile-terrain-disclosure">
