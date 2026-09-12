@@ -19,7 +19,58 @@ class RunReport
 
     private ?int $phase2StartSol = null;
 
+    /**
+     * A30/B1a: maps a BotSession::act() rule name to its AP-spend category.
+     * Unmapped rules (hire_advisor, accept_bar_offer, buy_corporate_harvester_offer,
+     * sol_next) cost Credits or nothing, not AP — deliberately excluded rather
+     * than lumped into a catch-all "other" bucket the plan doesn't ask for.
+     */
+    private const AP_CATEGORY_MAP = [
+        'repair_critical' => 'repair',
+        'invest_cc' => 'project',
+        'invest_production' => 'project',
+        'place_building' => 'project',
+        'place_harvester_instance2' => 'project',
+        'relocate_harvester' => 'project',
+        'research_knowledge' => 'project',
+        'explore_tile' => 'action',
+        'deep_scan_signal_tile' => 'action',
+        'dispatch_mission' => 'action',
+        'dispatch_salvage_mission' => 'action',
+        'request_ship' => 'action',
+    ];
+
     public function __construct(private readonly int $seed, private readonly string $profile = 'default') {}
+
+    /**
+     * Sums ap_before-ap_after for this Sol's log entries, grouped by
+     * AP_CATEGORY_MAP. A negative or zero delta (rejected action, DB
+     * untouched) never counts — only real spend does.
+     *
+     * @return array{repair: int, project: int, action: int}
+     */
+    private function apSpendByCategory(BotSession $bot): array
+    {
+        $spent = ['repair' => 0, 'project' => 0, 'action' => 0];
+
+        foreach ($bot->log as $entry) {
+            if ($entry['sol'] !== $bot->sol) {
+                continue;
+            }
+
+            $category = self::AP_CATEGORY_MAP[$entry['rule']] ?? null;
+            if ($category === null) {
+                continue;
+            }
+
+            $delta = ($entry['ap_before'] ?? 0) - ($entry['ap_after'] ?? 0);
+            if ($delta > 0) {
+                $spent[$category] += $delta;
+            }
+        }
+
+        return $spent;
+    }
 
     /**
      * Capture one Sol's state — call once per Sol, after the strategy has
@@ -32,6 +83,13 @@ class RunReport
 
         // Note: AP pool is now unified (GDD §13.1) — no longer separate by type
         $apAvailable = app(AdvisorService::class)->getAvailableActionPoints($colonyId);
+        // "inflow" = the colony's total AP pool this tick (base + advisors,
+        // trust/plague multipliers applied) — what generatePassiveCredits()'s
+        // AP equivalent produced, before this Sol's spend. Distinct from
+        // $apAvailable, which is what's LEFT after spending (kept below as
+        // 'total'/'ap_unspent' for backward compat with existing consumers).
+        $apInflow = app(AdvisorService::class)->getApBreakdown($colonyId)['total'];
+        $apSpent = $this->apSpendByCategory($bot);
 
         $phase = (int) (DB::table('runs')->where('id', $bot->runId)->value('phase') ?? 1);
         if ($phase >= 2 && $this->phase2StartSol === null) {
@@ -44,7 +102,14 @@ class RunReport
             'credits' => BotStrategy::credits($bot),
             'regolith' => BotStrategy::regolith($bot),
             'organics' => BotStrategy::organics($bot),
-            'ap' => ['total' => $apAvailable],
+            'ap' => [
+                'total' => $apAvailable,
+                'inflow' => $apInflow,
+                'repair_spent' => $apSpent['repair'],
+                'project_spent' => $apSpent['project'],
+                'action_spent' => $apSpent['action'],
+                'unspent' => $apAvailable,
+            ],
             'ap_unspent' => $apAvailable,
             'cc_level' => $ccLevel,
             'advisors' => DB::table('advisors')->where('colony_id', $colonyId)->count(),

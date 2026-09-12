@@ -4,6 +4,7 @@ namespace Tests\Feature\Playtest;
 
 use App\Models\Run;
 use App\Models\User;
+use App\Services\AdvisorService;
 use App\Services\OnboardingService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class BotSession
 
     private ?string $failReason = null;
 
-    /** @var array<int, array{sol:int, rule:string, url:string, status:int, ok:bool, error:?string}> */
+    /** @var array<int, array{sol:int, rule:string, url:string, status:int, ok:bool, error:?string, ap_before:int, ap_after:int}> */
     public array $log = [];
 
     /** @var array<string, array{logCount:int, value:mixed}> */
@@ -98,10 +99,18 @@ class BotSession
         return $this->failReason;
     }
 
+    /**
+     * ap_before/ap_after (A30/B1a) let RunReport attribute this Sol's AP-spend
+     * to a category by rule name, without needing any new game-code tagging —
+     * the delta between two real reads brackets whatever the request actually
+     * did, success or failure alike.
+     */
     public function act(string $name, string $method, string $url, array $payload = []): array
     {
+        $apBefore = app(AdvisorService::class)->getAvailableActionPoints($this->colonyId);
         $res = $this->test->json($method, $url, $payload);
         $norm = $this->normalize($res);
+        $apAfter = app(AdvisorService::class)->getAvailableActionPoints($this->colonyId);
 
         $this->log[] = [
             'sol' => $this->sol,
@@ -110,6 +119,8 @@ class BotSession
             'status' => $norm['status'],
             'ok' => $norm['ok'],
             'error' => $norm['error'],
+            'ap_before' => $apBefore,
+            'ap_after' => $apAfter,
         ];
 
         return $norm;
