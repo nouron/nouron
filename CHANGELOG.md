@@ -4,6 +4,7 @@
 
 - Test: A30/A31 — Playtest-Instrumentierung Phasen B1+B2 komplett (F8). `RunReport`/`BotSession` (`tests/Feature/Playtest/`) erfassen jetzt AP-Bilanz nach Kategorie, Building-Level+AP-Spend, Regolith-/Organika-Quellen inkl. getrenntem Organika-Verbrauch (Hunger vs. Mission-Dispatch), Supply-Auslastung, Harvester-Positionen (B1) sowie daraus aggregiert Projekt-Metriken (Sole bis Fertigstellung, Median gleichzeitiger Baustellen, letzte Fertigstellung), Regolith-Pfad-Attribution (Pfad A/B/C) und den 0-AP-Sole-Filter (B2) — alle 11 GDD-A.5-Metriken abgedeckt. Reines Test-Harness, kein Game-Code. B1b/B1d/B1e und B2b/B2c jeweils parallel per Subagenten erarbeitet. Volle Playtest-Suite + Kern-Suite grün.
 - UI: A32 — Playtest-Dashboard um 3 MVP-Detail-Charts erweitert (nach A31). `tools/playtest-dashboard.php` zeigt jetzt AP-Bilanz, Regolith-Quellen und Supply-Auslastung (mit 70%-Zielmarke) als Stacked-Area-Charts für den im Log-Panel gewählten Einzel-Lauf. Echte Browser-Verifikation via Playwright. Verbleibende 4 Charts aus dem Plan bleiben iterativ.
+- UI: A33 — Playtest-Dashboard Summary-Tabelle um 6 Spalten erweitert (AP Ungenutzt %, Rego Top-Quelle, Supply Max %, Projekte, Harvester-Umzüge, Letztes Projekt) — alle aus den A30/A31-Snapshots abgeleitet. Damit ist die gesamte Playtest-Instrumentierung (A30-A33) abgeschlossen. Echte Browser-Verifikation via Playwright.
 
 ## 2026-09-11 (2)
 
