@@ -358,7 +358,8 @@ class RunReport
 
     /**
      * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
-     *               actions:array, rejections:array, burnout:array, sols:array, log:array, project_metrics:array}
+     *               actions:array, rejections:array, burnout:array, sols:array, log:array,
+     *               project_metrics:array, regolith_path_attribution:array, zero_ap_sols:array}
      */
     public function build(BotSession $bot): array
     {
@@ -393,6 +394,30 @@ class RunReport
             ->whereNotNull('unavailable_until_tick')
             ->count();
 
+        // A31/B2b: Metrik 9, per-run sum of regolithSources()'s per-Sol
+        // buckets. Mapping follows the real GDD path lettering, not the
+        // swapped one in the old plan text: Pfad A = Analytik-Labor/Geologie
+        // (the 'harvester' bucket), Pfad B = Hangar-Frachter-Mission (the
+        // 'mission' bucket), Pfad C = Cantina/Corvan (the 'trade' bucket).
+        // Known limitation (inherited from B1c, not solved here): the
+        // 'harvester' bucket still mixes the base Harvester yield with the
+        // Geologie-Kenntnis bonus — separating those would need an
+        // additional per-Sol Geologie-level snapshot, out of this task's
+        // scope.
+        $regolithPathAttribution = ['pfad_a_geologie' => 0, 'pfad_b_frachter' => 0, 'pfad_c_cantina' => 0];
+        foreach ($this->sols as $sol) {
+            $regolithPathAttribution['pfad_a_geologie'] += $sol['regolith_sources']['harvester'];
+            $regolithPathAttribution['pfad_b_frachter'] += $sol['regolith_sources']['mission'];
+            $regolithPathAttribution['pfad_c_cantina'] += $sol['regolith_sources']['trade'];
+        }
+
+        // B2c/Metrik 8 (Owner-Entscheidung F8/2): no per-domain breakdown —
+        // AP domains no longer exist post pool consolidation (GDD §13.1).
+        $zeroApSols = array_values(array_map(
+            fn ($s) => $s['sol'],
+            array_filter($this->sols, fn ($s) => $s['ap_unspent'] <= 0)
+        ));
+
         return [
             'seed' => $this->seed,
             'profile' => $this->profile,
@@ -423,6 +448,11 @@ class RunReport
             // read this directly, kept unaggregated unlike 'rejections' above.
             'log' => $bot->log,
             'project_metrics' => $this->projectMetrics(),
+            'regolith_path_attribution' => $regolithPathAttribution,
+            'zero_ap_sols' => [
+                'count' => count($zeroApSols),
+                'sols' => $zeroApSols,
+            ],
         ];
     }
 
