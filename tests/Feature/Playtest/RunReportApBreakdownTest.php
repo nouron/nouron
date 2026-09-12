@@ -27,6 +27,10 @@ class RunReportApBreakdownTest extends TestCase
             'error' => $ok ? null : 'rejected',
             'ap_before' => $apBefore,
             'ap_after' => $apAfter,
+            'regolith_before' => 0,
+            'regolith_after' => 0,
+            'organics_before' => 0,
+            'organics_after' => 0,
         ];
     }
 
