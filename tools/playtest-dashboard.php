@@ -86,6 +86,18 @@ if (is_dir($reportDir)) {
             <div class="pd-chart-card"><h3>CC-Level</h3><canvas id="chart-cc"></canvas></div>
         </div>
 
+        <!-- A32 (Playtest-Instrumentierung Phase C, MVP-Pflichtcharts laut
+             docs/playtest-instrumentation-plan.md — die übrigen 4 Charts
+             bleiben "iterativ später"). Zeigen den zuletzt einzeln ausgewählten
+             Lauf, nicht alle aktiven Läufe überlagert — Stacked Areas und die
+             Regolith-Quellen-Aufschlüsselung sind pro Lauf schon dicht genug. -->
+        <div class="pd-chart-stack pd-chart-stack--single-run">
+            <h2 class="pd-section-title">Detail-Charts (A30/A31-Metriken) — <span id="pd-detail-run-label">–</span></h2>
+            <div class="pd-chart-card"><h3>AP-Bilanz (Repair / Projekt / Handlung / Rest)</h3><canvas id="chart-ap-breakdown"></canvas></div>
+            <div class="pd-chart-card"><h3>Regolith-Quellen (Harvester / Mission / Handel / Ereignis)</h3><canvas id="chart-regolith-sources"></canvas></div>
+            <div class="pd-chart-card"><h3>Supply-Auslastung</h3><canvas id="chart-supply-utilization"></canvas></div>
+        </div>
+
         <table class="pd-summary">
             <thead>
                 <tr><th>Profil</th><th>Seed</th><th>Outcome</th><th>Phase 2 ab Sol</th><th>Objectives</th><th>Score</th><th>Aktionen</th><th>Top-Rejections</th></tr>
@@ -303,6 +315,119 @@ function render() {
     }).join('');
 }
 
+// ── A32 detail charts (single selected run — stacked breakdowns don't
+// overlay meaningfully across runs, so these follow the same "detail run"
+// the log panel already tracks via logSelect). ──────────────────────────
+const detailCharts = {};
+function makeStackedAreaChart(canvasId, seriesKeys, seriesLabels, seriesColors) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+    return new Chart(canvas, {
+        type: 'line',
+        data: { datasets: seriesKeys.map((key, i) => ({
+            label: seriesLabels[i],
+            data: [],
+            borderColor: seriesColors[i],
+            backgroundColor: seriesColors[i] + '55',
+            borderWidth: 1,
+            pointRadius: 0,
+            fill: true,
+            stack: 'stack0',
+            tension: 0.1,
+        })) },
+        options: {
+            responsive: true,
+            animation: false,
+            interaction: { mode: 'nearest', intersect: false },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'Sol', color: '#888' }, ticks: { color: '#888' }, grid: { color: '#1e1e30' } },
+                y: { stacked: true, ticks: { color: '#888' }, grid: { color: '#1e1e30' } },
+            },
+            plugins: { legend: { labels: { color: '#ccc', boxWidth: 12, font: { size: 10 } } } },
+        },
+    });
+}
+
+detailCharts.apBreakdown = makeStackedAreaChart(
+    'chart-ap-breakdown',
+    ['repair_spent', 'project_spent', 'action_spent', 'unspent'],
+    ['Reparatur', 'Projekt', 'Handlung', 'Ungenutzt'],
+    ['#ff7f7f', '#7fbbff', '#ffe07f', '#555']
+);
+detailCharts.regolithSources = makeStackedAreaChart(
+    'chart-regolith-sources',
+    ['harvester', 'mission', 'trade', 'event'],
+    ['Harvester', 'Mission', 'Handel', 'Ereignis'],
+    ['#b0ff7f', '#7fbbff', '#ffe07f', '#ff7fa0']
+);
+
+const supplyCanvas = document.getElementById('chart-supply-utilization');
+if (supplyCanvas) {
+    detailCharts.supplyUtilization = new Chart(supplyCanvas, {
+        type: 'line',
+        data: { datasets: [{
+            label: 'Auslastung',
+            data: [],
+            borderColor: '#7fbbff',
+            backgroundColor: '#7fbbff33',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.1,
+        }] },
+        options: {
+            responsive: true,
+            animation: false,
+            interaction: { mode: 'nearest', intersect: false },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'Sol', color: '#888' }, ticks: { color: '#888' }, grid: { color: '#1e1e30' } },
+                // utilization is a 0..1 ratio (RunReport clamps it) — a fixed
+                // [0,1] axis makes the 70%-Zielmarke line visually meaningful
+                // instead of rescaling per run.
+                y: { min: 0, max: 1, ticks: { color: '#888', callback: v => `${Math.round(v * 100)}%` }, grid: { color: '#1e1e30' } },
+            },
+            plugins: {
+                legend: { display: false },
+                annotation: {
+                    annotations: {
+                        target: {
+                            type: 'line', yMin: 0.7, yMax: 0.7,
+                            borderColor: '#ffe07f', borderWidth: 1, borderDash: [4, 3],
+                            label: { display: true, content: '70%-Zielmarke', position: 'end', font: { size: 9 }, color: '#ffe07f', backgroundColor: 'rgba(0,0,0,0.6)' },
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+
+function renderDetailCharts(run) {
+    const label = document.getElementById('pd-detail-run-label');
+    if (label) label.textContent = run ? runLabel(run) : '–';
+
+    const sols = run?.sols ?? [];
+
+    if (detailCharts.apBreakdown) {
+        detailCharts.apBreakdown.data.datasets.forEach(ds => {
+            const key = ['repair_spent', 'project_spent', 'action_spent', 'unspent'][detailCharts.apBreakdown.data.datasets.indexOf(ds)];
+            ds.data = sols.map(s => ({ x: s.sol, y: s.ap?.[key] ?? 0 }));
+        });
+        detailCharts.apBreakdown.update();
+    }
+    if (detailCharts.regolithSources) {
+        detailCharts.regolithSources.data.datasets.forEach(ds => {
+            const key = ['harvester', 'mission', 'trade', 'event'][detailCharts.regolithSources.data.datasets.indexOf(ds)];
+            ds.data = sols.map(s => ({ x: s.sol, y: s.regolith_sources?.[key] ?? 0 }));
+        });
+        detailCharts.regolithSources.update();
+    }
+    if (detailCharts.supplyUtilization) {
+        detailCharts.supplyUtilization.data.datasets[0].data = sols.map(s => ({ x: s.sol, y: s.supply?.utilization ?? 0 }));
+        detailCharts.supplyUtilization.update();
+    }
+}
+
 // ── Log panel ────────────────────────────────────────────────────────────
 const logSelect = document.getElementById('pd-log-run-select');
 const logBody = document.getElementById('pd-log-body');
@@ -314,6 +439,7 @@ function renderLogSelect(activeRuns) {
     const restoreIdx = [...logSelect.options].findIndex(o => o.value === prevValue);
     logSelect.selectedIndex = restoreIdx >= 0 ? restoreIdx : 0;
     renderLogTable(activeRuns[logSelect.selectedIndex] ?? null);
+    renderDetailCharts(activeRuns[logSelect.selectedIndex] ?? null);
 }
 
 function renderLogTable(run) {
@@ -332,6 +458,7 @@ function renderLogTable(run) {
 logSelect?.addEventListener('change', () => {
     const activeRuns = [...selected].map(idx => RUNS[idx]).filter(Boolean);
     renderLogTable(activeRuns[logSelect.selectedIndex] ?? null);
+    renderDetailCharts(activeRuns[logSelect.selectedIndex] ?? null);
 });
 
 document.getElementById('pd-event-cc')?.addEventListener('change', render);
