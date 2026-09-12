@@ -1,12 +1,8 @@
 # Changelog
 
-## 2026-09-12 (2)
-
-- Test: A31 — Playtest-Instrumentierung Phase B2 (Post-Lauf-Aggregation) komplett (F8, nach A30). `RunReport::build()` liefert jetzt Projekt-Metriken (Sole bis Fertigstellung, Median gleichzeitiger Baustellen, letzte Fertigstellung), Regolith-Pfad-Attribution (Pfad A/B/C) und den 0-AP-Sole-Filter — alle drei Metriken 2, 3, 4, 8, 9 aus GDD A.5. Aggregation rein aus den B1-Snapshots, keine neuen DB-Reads. Reines Test-Harness. B2b/B2c parallel per Subagenten erarbeitet. Volle Playtest-Suite + Kern-Suite grün.
-
 ## 2026-09-12
 
-- Test: A30 — Playtest-Instrumentierung Phase B1 (Extended Snapshots) komplett (F8). `RunReport`/`BotSession` (`tests/Feature/Playtest/`) erfassen jetzt AP-Bilanz nach Kategorie, Building-Level+AP-Spend, Regolith-/Organika-Quellen inkl. getrenntem Organika-Verbrauch (Hunger vs. Mission-Dispatch), Supply-Auslastung und Harvester-Positionen — Rohdaten für 9 der 11 GDD-A.5-Metriken. Reines Test-Harness, kein Game-Code. B1b/B1d/B1e parallel per Subagenten erarbeitet. Volle Playtest-Suite + Kern-Suite grün.
+- Test: A30/A31 — Playtest-Instrumentierung Phasen B1+B2 komplett (F8). `RunReport`/`BotSession` (`tests/Feature/Playtest/`) erfassen jetzt AP-Bilanz nach Kategorie, Building-Level+AP-Spend, Regolith-/Organika-Quellen inkl. getrenntem Organika-Verbrauch (Hunger vs. Mission-Dispatch), Supply-Auslastung, Harvester-Positionen (B1) sowie daraus aggregiert Projekt-Metriken (Sole bis Fertigstellung, Median gleichzeitiger Baustellen, letzte Fertigstellung), Regolith-Pfad-Attribution (Pfad A/B/C) und den 0-AP-Sole-Filter (B2) — alle 11 GDD-A.5-Metriken abgedeckt. Reines Test-Harness, kein Game-Code. B1b/B1d/B1e und B2b/B2c jeweils parallel per Subagenten erarbeitet. Volle Playtest-Suite + Kern-Suite grün.
 
 ## 2026-09-11 (2)
 
