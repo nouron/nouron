@@ -40,6 +40,7 @@ if (is_dir($reportDir)) {
             'rejections' => $data['rejections'] ?? [],
             'sols' => $data['sols'] ?? [],
             'log' => $data['log'] ?? [],
+            'project_metrics' => $data['project_metrics'] ?? ['project_durations' => [], 'last_completion_sol' => null],
         ];
     }
 }
@@ -100,7 +101,11 @@ if (is_dir($reportDir)) {
 
         <table class="pd-summary">
             <thead>
-                <tr><th>Profil</th><th>Seed</th><th>Outcome</th><th>Phase 2 ab Sol</th><th>Objectives</th><th>Score</th><th>Aktionen</th><th>Top-Rejections</th></tr>
+                <tr>
+                    <th>Profil</th><th>Seed</th><th>Outcome</th><th>Phase 2 ab Sol</th><th>Objectives</th><th>Score</th><th>Aktionen</th>
+                    <th>AP Ungenutzt %</th><th>Rego Top-Quelle</th><th>Supply Max %</th><th>Projekte</th><th>Harvester-Umzüge</th><th>Letztes Projekt (Sol)</th>
+                    <th>Top-Rejections</th>
+                </tr>
             </thead>
             <tbody id="pd-summary-body"></tbody>
         </table>
@@ -310,9 +315,50 @@ function render() {
             <td>${objectivesDone}/${run.objectives.length}</td>
             <td>${run.outcome.score ?? 0}</td>
             <td>${run.actions.ok ?? '—'}/${run.actions.attempted ?? '—'}</td>
+            <td>${apUnspentPct(run)}</td>
+            <td>${regolithTopSource(run)}</td>
+            <td>${supplyMaxPct(run)}</td>
+            <td>${run.project_metrics?.project_durations?.length ?? 0}</td>
+            <td>${harvesterMoveCount(run)}</td>
+            <td>${run.project_metrics?.last_completion_sol ?? '—'}</td>
             <td class="pd-rejections">${rejections || '—'}</td>
         </tr>`;
     }).join('');
+}
+
+// ── A33 summary-table helpers (Phase D) ─────────────────────────────────
+// All derived purely from data already in the JSON report (A30/A31 Sol
+// snapshots + project_metrics) — no new fields needed beyond project_metrics,
+// already added to the PHP pass-through above.
+
+function apUnspentPct(run) {
+    const sols = run.sols ?? [];
+    if (sols.length === 0) return '—';
+    const totalUnspent = sols.reduce((sum, s) => sum + (s.ap?.unspent ?? 0), 0);
+    const totalInflow = sols.reduce((sum, s) => sum + (s.ap?.inflow ?? 0), 0);
+    if (totalInflow <= 0) return '—';
+    return `${Math.round((totalUnspent / totalInflow) * 100)}%`;
+}
+
+function regolithTopSource(run) {
+    const totals = { harvester: 0, mission: 0, trade: 0, event: 0 };
+    (run.sols ?? []).forEach(s => {
+        Object.keys(totals).forEach(k => { totals[k] += s.regolith_sources?.[k] ?? 0; });
+    });
+    const labels = { harvester: 'Harvester', mission: 'Mission', trade: 'Handel', event: 'Ereignis' };
+    const [topKey, topValue] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
+    return topValue > 0 ? `${labels[topKey]} (${topValue})` : '—';
+}
+
+function supplyMaxPct(run) {
+    const sols = run.sols ?? [];
+    if (sols.length === 0) return '—';
+    const max = Math.max(...sols.map(s => s.supply?.utilization ?? 0));
+    return `${Math.round(max * 100)}%`;
+}
+
+function harvesterMoveCount(run) {
+    return (run.log ?? []).filter(e => e.rule === 'relocate_harvester' && e.ok).length;
 }
 
 // ── A32 detail charts (single selected run — stacked breakdowns don't
