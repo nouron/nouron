@@ -280,8 +280,86 @@ class RunReport
     }
 
     /**
+     * A31/B2a: derives project-completion metrics (2-4 of the plan) purely
+     * from the B1b `buildings` snapshots already captured per Sol — no new
+     * DB reads. Each building instance is tracked independently across the
+     * whole run since one instance can complete several level-up cycles.
+     *
+     *   project_durations          — Sole von erstem ap_spend>0 bis Level-Anstieg,
+     *                                 je abgeschlossenem Zyklus (nicht je Instanz)
+     *   last_completion_sol        — höchster Sol mit irgendeinem Level-Anstieg
+     *   median_concurrent_projects — Median über alle Sole der Instanzenzahl
+     *                                 mit ap_spend>0 an diesem Sol ("Baustelle")
+     */
+    private function projectMetrics(): array
+    {
+        $state = []; // building key => ['prevLevel' => int, 'startSol' => ?int]
+        $durations = [];
+        $lastCompletionSol = null;
+        $concurrentPerSol = [];
+
+        foreach ($this->sols as $snapshot) {
+            $sol = $snapshot['sol'];
+            $activeCount = 0;
+
+            foreach ($snapshot['buildings'] ?? [] as $key => $info) {
+                $level = $info['level'];
+                $apSpend = $info['ap_spend'];
+
+                if ($apSpend > 0) {
+                    $activeCount++;
+                }
+
+                if (! array_key_exists($key, $state)) {
+                    $state[$key] = ['prevLevel' => $level, 'startSol' => $apSpend > 0 ? $sol : null];
+
+                    continue;
+                }
+
+                if ($apSpend > 0 && $state[$key]['startSol'] === null) {
+                    $state[$key]['startSol'] = $sol;
+                }
+
+                if ($level > $state[$key]['prevLevel']) {
+                    if ($state[$key]['startSol'] !== null) {
+                        $durations[] = $sol - $state[$key]['startSol'];
+                        $lastCompletionSol = $lastCompletionSol === null ? $sol : max($lastCompletionSol, $sol);
+                    }
+                    $state[$key]['startSol'] = null;
+                }
+
+                $state[$key]['prevLevel'] = $level;
+            }
+
+            $concurrentPerSol[] = $activeCount;
+        }
+
+        return [
+            'project_durations' => $durations,
+            'last_completion_sol' => $lastCompletionSol,
+            'median_concurrent_projects' => self::median($concurrentPerSol),
+        ];
+    }
+
+    private static function median(array $values): float
+    {
+        if ($values === []) {
+            return 0.0;
+        }
+
+        sort($values);
+        $count = count($values);
+        $mid = intdiv($count, 2);
+
+        return $count % 2 === 0
+            ? ($values[$mid - 1] + $values[$mid]) / 2
+            : (float) $values[$mid];
+    }
+
+    /**
      * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
-     *               actions:array, rejections:array, burnout:array, sols:array, log:array}
+     *               actions:array, rejections:array, burnout:array, sols:array, log:array,
+     *               project_metrics:array, regolith_path_attribution:array, zero_ap_sols:array}
      */
     public function build(BotSession $bot): array
     {
@@ -316,6 +394,30 @@ class RunReport
             ->whereNotNull('unavailable_until_tick')
             ->count();
 
+        // A31/B2b: Metrik 9, per-run sum of regolithSources()'s per-Sol
+        // buckets. Mapping follows the real GDD path lettering, not the
+        // swapped one in the old plan text: Pfad A = Analytik-Labor/Geologie
+        // (the 'harvester' bucket), Pfad B = Hangar-Frachter-Mission (the
+        // 'mission' bucket), Pfad C = Cantina/Corvan (the 'trade' bucket).
+        // Known limitation (inherited from B1c, not solved here): the
+        // 'harvester' bucket still mixes the base Harvester yield with the
+        // Geologie-Kenntnis bonus — separating those would need an
+        // additional per-Sol Geologie-level snapshot, out of this task's
+        // scope.
+        $regolithPathAttribution = ['pfad_a_geologie' => 0, 'pfad_b_frachter' => 0, 'pfad_c_cantina' => 0];
+        foreach ($this->sols as $sol) {
+            $regolithPathAttribution['pfad_a_geologie'] += $sol['regolith_sources']['harvester'];
+            $regolithPathAttribution['pfad_b_frachter'] += $sol['regolith_sources']['mission'];
+            $regolithPathAttribution['pfad_c_cantina'] += $sol['regolith_sources']['trade'];
+        }
+
+        // B2c/Metrik 8 (Owner-Entscheidung F8/2): no per-domain breakdown —
+        // AP domains no longer exist post pool consolidation (GDD §13.1).
+        $zeroApSols = array_values(array_map(
+            fn ($s) => $s['sol'],
+            array_filter($this->sols, fn ($s) => $s['ap_unspent'] <= 0)
+        ));
+
         return [
             'seed' => $this->seed,
             'profile' => $this->profile,
@@ -345,6 +447,12 @@ class RunReport
             // Raw per-action log (sol/rule/ok/error) — dashboard event markers
             // read this directly, kept unaggregated unlike 'rejections' above.
             'log' => $bot->log,
+            'project_metrics' => $this->projectMetrics(),
+            'regolith_path_attribution' => $regolithPathAttribution,
+            'zero_ap_sols' => [
+                'count' => count($zeroApSols),
+                'sols' => $zeroApSols,
+            ],
         ];
     }
 
