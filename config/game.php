@@ -454,6 +454,44 @@ return [
         'ap_cost_negotiate' => 4,  // 3→4, same reason as ap_cost_accept
         'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
         'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
+
+        // Cantina-Begegnungspool (GDD §12 Kanal 1, Owner-Entscheidung F3/2026-09-09):
+        // replaces the struck Konsul-Handelsvertrag as the Pfad-C Credits lever. One
+        // shared event slot, single roll picks at most one of the three outcomes
+        // below — never three independent spawn checks (spam/stacking risk with
+        // Corvan + guest rotation). Scales with BAR LEVEL, never Konsul rank (that
+        // was the exact mistake the removed contract made). Values are a first pass
+        // for the mechanical skeleton, not a calibrated balance — see A34-style
+        // recalibration after a real playtest batch.
+        'encounter' => [
+            'spawn_chance_per_level' => [1 => 0.10, 2 => 0.14, 3 => 0.18, 4 => 0.22, 5 => 0.26],
+            'offer_duration' => 2, // ticks an unaccepted encounter stays available
+            'ap_cost_accept' => 2,
+
+            // Wette — bound to Zara (Professional Gambler). Stake is lost entirely on failure.
+            'wager' => [
+                'stake_resource_id' => 3, // regolith
+                'stake_amount_per_level' => [1 => 15, 2 => 20, 3 => 25, 4 => 30, 5 => 35],
+                'win_chance' => 0.45,
+                'payout_credits_per_level' => [1 => 40, 2 => 55, 3 => 70, 4 => 85, 5 => 100],
+            ],
+
+            // Auktion / Ausschuss-Ankauf — bound to Voss (Scrap Dealer). Guaranteed,
+            // resolves immediately, no chance involved.
+            'auction' => [
+                'give_resource_id' => 5, // organics — the colony's structural surplus
+                'give_amount_per_level' => [1 => 20, 2 => 30, 3 => 40, 4 => 50, 5 => 60],
+                'payout_credits_per_level' => [1 => 25, 2 => 38, 3 => 50, 4 => 63, 5 => 75],
+            ],
+
+            // Kurzzeit-Kontrakt — deliberately NOT character-bound (generic "the
+            // colony found a short-term buyer"). Credits/tick for a fixed window,
+            // then ends automatically.
+            'contract' => [
+                'credits_per_tick_per_level' => [1 => 8, 2 => 12, 3 => 16, 4 => 20, 5 => 24],
+                'duration_ticks' => 3,
+            ],
+        ],
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).
