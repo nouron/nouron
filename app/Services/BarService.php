@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Console\Commands\GameTick;
+use App\Models\BarEncounter;
 use App\Models\BarOffer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -343,6 +344,223 @@ class BarService
                 'get_amount' => $getAmount,
             ];
         });
+    }
+
+    /**
+     * Cantina-Begegnungspool (GDD §12 Kanal 1, A35) — a single shared event slot,
+     * one roll picks at most one of the three Credits-outcomes. Deliberately NOT
+     * three independent spawn checks (spam/stacking risk with Corvan + guest
+     * rotation), and deliberately scaled by BAR LEVEL, never Konsul rank — that
+     * coupling is exactly what got the struck Konsul-Handelsvertrag removed.
+     */
+    public function generateEncounterForColony(int $colonyId, int $tick): void
+    {
+        $barLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', self::BAR_BUILDING_ID)
+            ->value('level');
+
+        if ($barLevel < 1) {
+            return;
+        }
+
+        // Expire old, unaccepted encounters.
+        DB::table('bar_encounters')
+            ->where('colony_id', $colonyId)
+            ->where('expires_tick', '<=', $tick)
+            ->where('is_accepted', false)
+            ->delete();
+
+        // Only one open slot at a time — an existing pending (or running
+        // contract) encounter blocks a new roll.
+        $hasOpenEncounter = DB::table('bar_encounters')
+            ->where('colony_id', $colonyId)
+            ->where(function ($q) use ($tick) {
+                $q->where(function ($q2) use ($tick) {
+                    $q2->where('is_accepted', false)->where('expires_tick', '>', $tick);
+                })->orWhere(function ($q2) {
+                    $q2->where('is_accepted', true)->where('resolved', false);
+                });
+            })
+            ->exists();
+
+        if ($hasOpenEncounter) {
+            return;
+        }
+
+        $chance = (float) config("game.bar.encounter.spawn_chance_per_level.{$barLevel}", 0.0);
+        $roll = $this->pseudoRand($colonyId * 613 + $tick * 47, 0, 999);
+        if ($roll >= (int) round($chance * 1000)) {
+            return;
+        }
+
+        $types = ['wager', 'auction', 'contract'];
+        $type = $types[$this->pseudoRand($colonyId * 883 + $tick * 71, 0, count($types) - 1)];
+        $duration = (int) config('game.bar.encounter.offer_duration', 2);
+        $expiresTick = $tick + $duration;
+
+        $attributes = match ($type) {
+            'wager' => [
+                'give_resource_id' => (int) config('game.bar.encounter.wager.stake_resource_id', 3),
+                'give_amount' => (int) config("game.bar.encounter.wager.stake_amount_per_level.{$barLevel}", 0),
+                'win_chance' => (float) config('game.bar.encounter.wager.win_chance', 0.0),
+                'credits_amount' => (int) config("game.bar.encounter.wager.payout_credits_per_level.{$barLevel}", 0),
+                'duration_ticks' => null,
+            ],
+            'auction' => [
+                'give_resource_id' => (int) config('game.bar.encounter.auction.give_resource_id', 5),
+                'give_amount' => (int) config("game.bar.encounter.auction.give_amount_per_level.{$barLevel}", 0),
+                'win_chance' => null,
+                'credits_amount' => (int) config("game.bar.encounter.auction.payout_credits_per_level.{$barLevel}", 0),
+                'duration_ticks' => null,
+            ],
+            default => [
+                'give_resource_id' => null,
+                'give_amount' => null,
+                'win_chance' => null,
+                'credits_amount' => (int) config("game.bar.encounter.contract.credits_per_tick_per_level.{$barLevel}", 0),
+                'duration_ticks' => (int) config('game.bar.encounter.contract.duration_ticks', 1),
+            ],
+        };
+
+        BarEncounter::create(array_merge([
+            'colony_id' => $colonyId,
+            'type' => $type,
+            'expires_tick' => $expiresTick,
+            'is_accepted' => false,
+            'resolved' => false,
+        ], $attributes));
+    }
+
+    public function getActiveEncounter(int $colonyId, int $tick): ?BarEncounter
+    {
+        return BarEncounter::where('colony_id', $colonyId)
+            ->where(function ($q) use ($tick) {
+                $q->where(function ($q2) use ($tick) {
+                    $q2->where('is_accepted', false)->where('expires_tick', '>', $tick);
+                })->orWhere(function ($q2) {
+                    $q2->where('is_accepted', true)->where('resolved', false);
+                });
+            })
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * Accept a Cantina-Begegnungspool encounter. Wager and auction resolve
+     * immediately (chance-based / guaranteed); a contract only starts running —
+     * its Credits/tick payouts are processed by GameTick until ends_tick.
+     */
+    public function acceptEncounter(int $colonyId, int $encounterId, int $userId, int $currentTick): array
+    {
+        $encounter = BarEncounter::where('id', $encounterId)
+            ->where('colony_id', $colonyId)
+            ->first();
+
+        if (! $encounter) {
+            return ['ok' => false, 'error' => __('colony.bar_encounter_not_found')];
+        }
+        if ($encounter->is_accepted) {
+            return ['ok' => false, 'error' => __('colony.bar_encounter_already_accepted')];
+        }
+        if ($encounter->expires_tick <= $currentTick) {
+            return ['ok' => false, 'error' => __('colony.bar_encounter_expired')];
+        }
+
+        $apCost = (int) config('game.bar.encounter.ap_cost_accept', 0);
+        if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
+            $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
+            if ($availableAp < $apCost) {
+                return ['ok' => false, 'error' => __('colony.bar_encounter_insufficient_ap')];
+            }
+        }
+
+        if ($encounter->give_resource_id !== null) {
+            $balance = $this->getResourceBalance($colonyId, $userId, $encounter->give_resource_id);
+            if ($balance < $encounter->give_amount) {
+                return ['ok' => false, 'error' => __('colony.bar_encounter_insufficient_resources')];
+            }
+        }
+
+        return DB::transaction(function () use ($encounter, $colonyId, $apCost, $currentTick): array {
+            if ($apCost > 0) {
+                $this->advisorService->lockActionPoints($colonyId, $apCost, self::TRADER_ADVISOR_ID);
+            }
+
+            if ($encounter->give_resource_id !== null) {
+                $this->resourcesService->decreaseAmount($colonyId, $encounter->give_resource_id, $encounter->give_amount);
+            }
+
+            return match ($encounter->type) {
+                'wager' => $this->resolveWager($encounter, $colonyId, $currentTick),
+                'auction' => $this->resolveAuction($encounter, $colonyId),
+                default => $this->startContract($encounter, $currentTick),
+            };
+        });
+    }
+
+    private function resolveWager(BarEncounter $encounter, int $colonyId, int $currentTick): array
+    {
+        $roll = $this->pseudoRand($encounter->id * 7351 + $currentTick * 211, 0, 999);
+        $won = $roll < (int) round($encounter->win_chance * 1000);
+
+        if ($won) {
+            $this->resourcesService->increaseAmount($colonyId, self::RES_CREDITS, $encounter->credits_amount);
+        }
+
+        $encounter->is_accepted = true;
+        $encounter->resolved = true;
+        $encounter->won = $won;
+        $encounter->save();
+
+        Log::info('bar_encounter_wager', [
+            'colony_id' => $colonyId,
+            'encounter_id' => $encounter->id,
+            'won' => $won,
+        ]);
+
+        return [
+            'ok' => true,
+            'type' => 'wager',
+            'won' => $won,
+            'credits_amount' => $won ? $encounter->credits_amount : 0,
+            'give_resource_id' => $encounter->give_resource_id,
+        ];
+    }
+
+    private function resolveAuction(BarEncounter $encounter, int $colonyId): array
+    {
+        $this->resourcesService->increaseAmount($colonyId, self::RES_CREDITS, $encounter->credits_amount);
+
+        $encounter->is_accepted = true;
+        $encounter->resolved = true;
+        $encounter->save();
+
+        Log::info('bar_encounter_auction', [
+            'colony_id' => $colonyId,
+            'encounter_id' => $encounter->id,
+            'credits_amount' => $encounter->credits_amount,
+        ]);
+
+        return [
+            'ok' => true,
+            'type' => 'auction',
+            'credits_amount' => $encounter->credits_amount,
+            'give_resource_id' => $encounter->give_resource_id,
+        ];
+    }
+
+    private function startContract(BarEncounter $encounter, int $currentTick): array
+    {
+        $encounter->is_accepted = true;
+        $encounter->ends_tick = $currentTick + $encounter->duration_ticks;
+        $encounter->save();
+
+        return [
+            'ok' => true,
+            'type' => 'contract',
+            'ends_tick' => $encounter->ends_tick,
+        ];
     }
 
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int

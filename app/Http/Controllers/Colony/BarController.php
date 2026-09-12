@@ -50,6 +50,10 @@ class BarController extends BaseController
             ? $this->barService->getActiveOffers($colony->id, $tick)
             : collect();
 
+        $encounter = $barLevel > 0
+            ? $this->barService->getActiveEncounter($colony->id, $tick)
+            : null;
+
         $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $tick);
         $merchantItems = $merchantVisit
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
@@ -86,6 +90,7 @@ class BarController extends BaseController
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
+            'encounter',
         ));
     }
 
@@ -141,6 +146,38 @@ class BarController extends BaseController
         }
 
         $result = $this->withResourcebarSync($result, $colony->id);
+
+        return response()->json($result, $result['ok'] ? 200 : 422);
+    }
+
+    public function acceptEncounter(Request $request, int $encounterId): JsonResponse
+    {
+        $userId = Auth::id();
+        $colony = $this->colonyService->getPrimeColony($userId);
+        $tick = $this->tick->getTickCount();
+        $result = $this->barService->acceptEncounter($colony->id, $encounterId, $userId, $tick);
+
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user' => $userId,
+                'tick' => $tick,
+                'event' => 'trade.bar_encounter_'.$result['type'],
+                'area' => 'trade',
+                'parameters' => json_encode([
+                    'colony_id' => $colony->id,
+                    'encounter_id' => $encounterId,
+                ] + $result),
+            ]);
+        }
+
+        if ($result['ok']) {
+            $result['ap_available'] = $this->advisorService->getAvailableActionPoints($colony->id);
+            $possessions = $this->resourcesService->getPossessionsByColonyId($colony->id);
+            $result['credits_balance'] = $possessions[1]['amount'] ?? null;
+            if (! empty($result['give_resource_id'])) {
+                $result['give_resource_amount'] = $possessions[$result['give_resource_id']]['amount'] ?? null;
+            }
+        }
 
         return response()->json($result, $result['ok'] ? 200 : 422);
     }

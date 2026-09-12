@@ -172,6 +172,9 @@ class GameTick extends Command
             $n = $this->processBarOffers($tick);
             $this->line("  Bar offers generated:     {$n}");
 
+            $n = $this->processBarEncounters($tick);
+            $this->line("  Bar encounters processed: {$n}");
+
             $n = $this->processMerchantSpawn($tick);
             $this->line("  Merchant visits spawned:  {$n}");
         });
@@ -1771,6 +1774,43 @@ class GameTick extends Command
 
         foreach ($colonyIds as $colonyId) {
             $this->barService->generateOffersForColony((int) $colonyId, $tick);
+        }
+
+        return $colonyIds->count();
+    }
+
+    // ── 10b. Bar encounters (Cantina-Begegnungspool, GDD §12 Kanal 1, A35) ─────
+
+    /**
+     * Generates a new encounter roll per bar-equipped colony (same shared-slot
+     * gating as generateEncounterForColony()), then pays out every 'contract'
+     * encounter currently running its Credits/tick window — marking it resolved
+     * once its ends_tick has been paid.
+     */
+    private function processBarEncounters(int $tick): int
+    {
+        $colonyIds = DB::table('colony_buildings')
+            ->where('building_id', (int) config('buildings.bar.id', 52))
+            ->where('level', '>', 0)
+            ->pluck('colony_id');
+
+        foreach ($colonyIds as $colonyId) {
+            $this->barService->generateEncounterForColony((int) $colonyId, $tick);
+        }
+
+        $activeContracts = DB::table('bar_encounters')
+            ->where('type', 'contract')
+            ->where('is_accepted', true)
+            ->where('resolved', false)
+            ->where('ends_tick', '>=', $tick)
+            ->get();
+
+        foreach ($activeContracts as $contract) {
+            $this->resourcesService->increaseAmount((int) $contract->colony_id, 1, (int) $contract->credits_amount);
+
+            if ($tick >= $contract->ends_tick) {
+                DB::table('bar_encounters')->where('id', $contract->id)->update(['resolved' => true]);
+            }
         }
 
         return $colonyIds->count();

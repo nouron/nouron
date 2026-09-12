@@ -54,6 +54,29 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
         // levels + an active Corvan visit, offer count can still exceed 5 available
         // spots and hotspots will overlap.
         $spotForOffer = ["spot_1", "spot_2", "spot_3", "spot_4", "spot_5"];
+
+        // Cantina-Begegnungspool (GDD §12 Kanal 1, A35) — shares the same hotspot
+        // rotation as the offers above, taking the next slot after them.
+        $encounterSlug = match ($encounter->type ?? null) {
+            "wager" => "gambler",
+            "auction" => "scrap_dealer",
+            default => null,
+        };
+        $encounterChar = $encounterSlug ? config("characters.{$encounterSlug}") : null;
+        $encounterName = $encounterChar["name"] ?? __("colony.bar_encounter_contract_heading");
+        $encounterHeading = match ($encounter->type ?? null) {
+            "wager" => __("colony.bar_encounter_wager_heading"),
+            "auction" => __("colony.bar_encounter_auction_heading"),
+            "contract" => __("colony.bar_encounter_contract_heading"),
+            default => null,
+        };
+        $encounterBody = match ($encounter->type ?? null) {
+            "wager" => __("colony.bar_encounter_wager_body"),
+            "auction" => __("colony.bar_encounter_auction_body"),
+            "contract" => __("colony.bar_encounter_contract_body"),
+            default => null,
+        };
+        $encounterSlot = $spotForOffer[$offers->count() % count($spotForOffer)];
     @endphp
 
     <div class="bar-page"
@@ -67,7 +90,9 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
     @json($resourceAbbr),
     @json($offers->count()),
     @json(route("colony.corporate-contact.offer")),
-    @json(route("colony.corporate-contact.buy-harvester"))
+    @json(route("colony.corporate-contact.buy-harvester")),
+    @json($encounter?->id),
+    @json(route("colony.bar.accept-encounter", ["encounter" => "__ENCOUNTER__"]))
 )'
         x-cloak>
 
@@ -125,6 +150,25 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         </button>
                     @endforeach
 
+                    {{-- Cantina-Begegnungspool Hotspot (GDD §12 Kanal 1, A35) — shared
+                     event slot, at most one active encounter per colony at a time. --}}
+                    @if ($encounter)
+                        <button
+                            class="cantina-hotspot{{ $encounterChar ? " has-portrait" : "" }} hs-slot-{{ $encounterSlot }}"
+                            @click="openEncounter()">
+                            <span class="hotspot-pulse"></span>
+                            @if ($encounterChar)
+                                <img class="hotspot-portrait"
+                                    src="{{ asset("img/characters/" . $encounterSlug . ".webp") }}"
+                                    srcset="{{ asset("img/characters/" . $encounterSlug . ".webp") }} 1x, {{ asset("img/characters/" . $encounterSlug . "_lg.webp") }} 2x"
+                                    alt="{{ $encounterName }}">
+                            @else
+                                <i class="bi bi-briefcase"></i>
+                            @endif
+                            <span class="hotspot-label">{{ $encounterName }}</span>
+                        </button>
+                    @endif
+
                 </div>
 
                 {{-- Mobile-only swipe dots indicators --}}
@@ -137,7 +181,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                 </div>
 
                 {{-- Empty cantina indicator --}}
-                @if ($offers->isEmpty() && $merchantVisit === null)
+                @if ($offers->isEmpty() && $merchantVisit === null && !$encounter)
                     <div class="cantina-empty-hint">
                         <p style="margin:0; font-size: 0.9rem; font-weight:500;">{{ __("colony.bar_no_offers") }}</p>
                     </div>
@@ -341,6 +385,98 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         </x-cantina-dialog>
                     </div>
                 @endforeach
+
+                {{-- Cantina-Begegnungspool dialog (GDD §12 Kanal 1, A35) --}}
+                @if ($encounter)
+                    @php
+                        $encounterPortraitSrc = asset("img/characters/" . ($encounterSlug ?? "stranger") . ".webp");
+                        $encounterPortraitLgSrc = asset(
+                            "img/characters/" . ($encounterSlug ?? "stranger") . "_lg.webp",
+                        );
+                        $encounterRole = $encounterChar["role"] ?? "";
+                    @endphp
+                    <div x-show="activeModal === 'encounter'">
+                        <x-cantina-dialog :portrait-src="$encounterPortraitSrc" :portrait-lg-src="$encounterPortraitLgSrc" :name="$encounterHeading" :role="$encounterRole">
+                            <div x-show="toast.visible" x-transition
+                                :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
+                                aria-live="polite" role="status"></div>
+
+                            <p>{{ $encounterBody }}</p>
+
+                            @if ($encounter->type === "wager")
+                                <div
+                                    style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
+                                    <div>
+                                        <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                            {{ __("colony.bar_offer_give") }}
+                                        </div>
+                                        @include("partials.res_chip", [
+                                            "abbreviation" => $resourceAbbr[$encounter->give_resource_id] ?? "?",
+                                            "amount" => $encounter->give_amount,
+                                        ])
+                                    </div>
+                                    <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
+                                    <div>
+                                        <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                            {{ __("colony.bar_offer_get") }}
+                                        </div>
+                                        @include("partials.res_chip", [
+                                            "abbreviation" => "Cr",
+                                            "amount" => $encounter->credits_amount,
+                                        ])
+                                    </div>
+                                </div>
+                            @elseif ($encounter->type === "auction")
+                                <div
+                                    style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
+                                    <div>
+                                        <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                            {{ __("colony.bar_offer_give") }}
+                                        </div>
+                                        @include("partials.res_chip", [
+                                            "abbreviation" => $resourceAbbr[$encounter->give_resource_id] ?? "?",
+                                            "amount" => $encounter->give_amount,
+                                        ])
+                                    </div>
+                                    <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
+                                    <div>
+                                        <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                            {{ __("colony.bar_offer_get") }}
+                                        </div>
+                                        @include("partials.res_chip", [
+                                            "abbreviation" => "Cr",
+                                            "amount" => $encounter->credits_amount,
+                                        ])
+                                    </div>
+                                </div>
+                            @else
+                                <div class="res-chip res-Cr" style="display:inline-flex">
+                                    <span class="res-abbr">Cr</span>
+                                    <span class="res-amount">{{ $encounter->credits_amount }}/Sol</span>
+                                </div>
+                            @endif
+
+                            <div style="display:flex;justify-content:flex-end;align-items:center;gap:1rem;flex-wrap:wrap">
+                                <button class="tile-action-btn" style="width:auto;" @click="acceptEncounter($el)"
+                                    :disabled="encounterResolved || loading">
+                                    <span class="tile-action-btn__body">
+                                        <span x-show="!encounterResolved">{{ __("colony.bar_encounter_accept") }}</span>
+                                        <span x-show="encounterResolved">✓</span>
+                                    </span>
+                                </button>
+                            </div>
+                            <div x-show="encounterResult === 'won'" style="color:#166534;font-size:0.85rem">
+                                {{ __("colony.bar_encounter_wager_won") }}
+                            </div>
+                            <div x-show="encounterResult === 'lost'"
+                                style="color:var(--pico-del-color);font-size:0.85rem">
+                                {{ __("colony.bar_encounter_wager_lost") }}
+                            </div>
+                            <div x-show="encounterError" x-text="encounterError"
+                                style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                        </x-cantina-dialog>
+                    </div>
+                @endif
             </div>
         @endif
 
@@ -354,7 +490,8 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
     <script>
         function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, resourceAbbr,
-            offersCount = 0, corporateContactOfferRoute, corporateContactBuyRoute) {
+            offersCount = 0, corporateContactOfferRoute, corporateContactBuyRoute, encounterId = null,
+            acceptEncounterRoute) {
             const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
             const panelCount = hasGuests ? 4 : 1;
 
@@ -521,6 +658,50 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
                 openOffer(offerId) {
                     this.activeModal = 'offer_' + offerId;
+                },
+
+                // Cantina-Begegnungspool (GDD §12 Kanal 1, A35)
+                encounterId: encounterId,
+                encounterResolved: false,
+                encounterResult: null, // 'won' | 'lost' once a wager resolves
+                encounterError: null,
+
+                openEncounter() {
+                    this.activeModal = 'encounter';
+                },
+
+                async acceptEncounter(btn) {
+                    if (!this.encounterId) return;
+                    this.loading = true;
+                    this.encounterError = null;
+                    try {
+                        const res = await fetch(acceptEncounterRoute.replace('__ENCOUNTER__', this.encounterId), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'Accept': 'application/json',
+                            },
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            this.encounterResolved = true;
+                            if (data.type === 'wager') {
+                                this.encounterResult = data.won ? 'won' : 'lost';
+                            }
+                            this.syncAp(data.ap_available);
+                            this.syncResbarAmount(1, data.credits_balance);
+                            if (data.give_resource_id) {
+                                this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
+                            }
+                        } else {
+                            this.encounterError = data.error ?? 'Fehler';
+                        }
+                    } catch {
+                        this.encounterError = 'Verbindungsfehler';
+                    } finally {
+                        this.loading = false;
+                    }
                 },
 
                 closeModal() {

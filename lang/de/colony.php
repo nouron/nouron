@@ -271,6 +271,22 @@ return [
     'bar_offer_negotiate_failed' => 'Verhandlung gescheitert — das Angebot ist verloren.',
     'bar_offer_reserve_floor' => 'Der Verkauf würde die Nahrungsreserve der Kolonie unterschreiten.',
 
+    // ── Cantina-Begegnungspool (GDD §12 Kanal 1, A35) ─────────────────────────
+    'bar_encounter_not_found' => 'Begegnung nicht gefunden.',
+    'bar_encounter_already_accepted' => 'Begegnung bereits angenommen.',
+    'bar_encounter_expired' => 'Die Begegnung ist vorüber.',
+    'bar_encounter_insufficient_resources' => 'Nicht genügend Ressourcen für den Einsatz.',
+    'bar_encounter_insufficient_ap' => 'Nicht genügend AP.',
+    'bar_encounter_wager_heading' => 'Wette mit Zara',
+    'bar_encounter_wager_body' => 'Zara mustert deinen Einsatz. „Alles oder nichts — was meinst du?"',
+    'bar_encounter_wager_won' => 'Gewonnen! Zara schiebt dir die Credits widerwillig rüber.',
+    'bar_encounter_wager_lost' => 'Verloren. Zara grinst und streicht den Einsatz ein.',
+    'bar_encounter_auction_heading' => 'Ausschuss-Ankauf bei Voss',
+    'bar_encounter_auction_body' => 'Voss durchwühlt deinen Überschuss. „Das nehm ich dir ab — fairer Preis, kein Feilschen."',
+    'bar_encounter_contract_heading' => 'Kurzzeit-Kontrakt',
+    'bar_encounter_contract_body' => 'Ein durchreisender Abnehmer bietet ein befristetes Geschäft — Credits für ein paar Sole, dann ist er weitergezogen.',
+    'bar_encounter_accept' => 'Annehmen',
+
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 
     'next_sol_button' => 'Sol beenden',
