@@ -280,8 +280,85 @@ class RunReport
     }
 
     /**
+     * A31/B2a: derives project-completion metrics (2-4 of the plan) purely
+     * from the B1b `buildings` snapshots already captured per Sol — no new
+     * DB reads. Each building instance is tracked independently across the
+     * whole run since one instance can complete several level-up cycles.
+     *
+     *   project_durations          — Sole von erstem ap_spend>0 bis Level-Anstieg,
+     *                                 je abgeschlossenem Zyklus (nicht je Instanz)
+     *   last_completion_sol        — höchster Sol mit irgendeinem Level-Anstieg
+     *   median_concurrent_projects — Median über alle Sole der Instanzenzahl
+     *                                 mit ap_spend>0 an diesem Sol ("Baustelle")
+     */
+    private function projectMetrics(): array
+    {
+        $state = []; // building key => ['prevLevel' => int, 'startSol' => ?int]
+        $durations = [];
+        $lastCompletionSol = null;
+        $concurrentPerSol = [];
+
+        foreach ($this->sols as $snapshot) {
+            $sol = $snapshot['sol'];
+            $activeCount = 0;
+
+            foreach ($snapshot['buildings'] ?? [] as $key => $info) {
+                $level = $info['level'];
+                $apSpend = $info['ap_spend'];
+
+                if ($apSpend > 0) {
+                    $activeCount++;
+                }
+
+                if (! array_key_exists($key, $state)) {
+                    $state[$key] = ['prevLevel' => $level, 'startSol' => $apSpend > 0 ? $sol : null];
+
+                    continue;
+                }
+
+                if ($apSpend > 0 && $state[$key]['startSol'] === null) {
+                    $state[$key]['startSol'] = $sol;
+                }
+
+                if ($level > $state[$key]['prevLevel']) {
+                    if ($state[$key]['startSol'] !== null) {
+                        $durations[] = $sol - $state[$key]['startSol'];
+                        $lastCompletionSol = $lastCompletionSol === null ? $sol : max($lastCompletionSol, $sol);
+                    }
+                    $state[$key]['startSol'] = null;
+                }
+
+                $state[$key]['prevLevel'] = $level;
+            }
+
+            $concurrentPerSol[] = $activeCount;
+        }
+
+        return [
+            'project_durations' => $durations,
+            'last_completion_sol' => $lastCompletionSol,
+            'median_concurrent_projects' => self::median($concurrentPerSol),
+        ];
+    }
+
+    private static function median(array $values): float
+    {
+        if ($values === []) {
+            return 0.0;
+        }
+
+        sort($values);
+        $count = count($values);
+        $mid = intdiv($count, 2);
+
+        return $count % 2 === 0
+            ? ($values[$mid - 1] + $values[$mid]) / 2
+            : (float) $values[$mid];
+    }
+
+    /**
      * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
-     *               actions:array, rejections:array, burnout:array, sols:array, log:array}
+     *               actions:array, rejections:array, burnout:array, sols:array, log:array, project_metrics:array}
      */
     public function build(BotSession $bot): array
     {
@@ -345,6 +422,7 @@ class RunReport
             // Raw per-action log (sol/rule/ok/error) — dashboard event markers
             // read this directly, kept unaggregated unlike 'rejections' above.
             'log' => $bot->log,
+            'project_metrics' => $this->projectMetrics(),
         ];
     }
 
