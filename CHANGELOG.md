@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-12
+
+- Test: A30 — Playtest-Instrumentierung Phase B1 (Extended Snapshots) komplett (F8). `RunReport`/`BotSession` (`tests/Feature/Playtest/`) erfassen jetzt AP-Bilanz nach Kategorie, Building-Level+AP-Spend, Regolith-/Organika-Quellen inkl. getrenntem Organika-Verbrauch (Hunger vs. Mission-Dispatch), Supply-Auslastung und Harvester-Positionen — Rohdaten für 9 der 11 GDD-A.5-Metriken. Reines Test-Harness, kein Game-Code. B1b/B1d/B1e parallel per Subagenten erarbeitet. Volle Playtest-Suite + Kern-Suite grün.
+
 ## 2026-09-11 (2)
 
 - Feature: A28 — Uplink-Direktimport für Regolith/Organika (F5), Ersatz für das gestrichene "Nexus-Handelsschiffe"-Konzept. Neue Tabelle `nexus_imports`; Anfrage+Bezahlung sofort (`ColonyController::nexusImportResource()`), Lieferung nach 3-5 Solen abhängig vom Uplink-Station-Level (`GameTick::processNexusImportDeliveries()`). Preise (35/65 Cr) und Lieferzeit-Staffel (Lv1=5/Lv2=4/Lv3=3) mit game-designer abgestimmt. Neues Widget im Command-Center-Screen. TDD: neue Tests für Endpoint + GameTick-Delivery, echte Browser-Verifikation. A29 (GDD-INNN-Reste) war bereits erledigt.
