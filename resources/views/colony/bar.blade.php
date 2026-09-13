@@ -77,6 +77,11 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
             default => null,
         };
         $encounterSlot = $spotForOffer[$offers->count() % count($spotForOffer)];
+
+        // story_hook Cantina-Begegnung (A36) — pure Flavor, kein Ressourcen-/
+        // Credits-Effekt. Nimmt den nächsten Slot nach Angeboten + Begegnungspool.
+        $storyChar = $storyEncounterSlug ? config("characters.{$storyEncounterSlug}") : null;
+        $storySlot = $spotForOffer[($offers->count() + ($encounter ? 1 : 0)) % count($spotForOffer)];
     @endphp
 
     <div class="bar-page"
@@ -126,6 +131,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                             $offerId = $offer->id;
                             $isCorvanOffer = $offer->visit_id !== null;
                             $char = $isCorvanOffer ? null : $characterAssignment[$hsSlot] ?? null;
+                            $char = $char && ($char["game_role"] ?? null) === "story_hook" ? null : $char;
                             $charName = $isCorvanOffer ? __("colony.merchant_title") : $char["name"] ?? "???";
                         @endphp
                         <button
@@ -166,6 +172,20 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                                 <i class="bi bi-briefcase"></i>
                             @endif
                             <span class="hotspot-label">{{ $encounterName }}</span>
+                        </button>
+                    @endif
+
+                    {{-- story_hook Cantina-Begegnung (A36) — reiner Flavor-Moment,
+                     kein Ressourcen-/Credits-Effekt. --}}
+                    @if ($storyChar)
+                        <button class="cantina-hotspot has-portrait hs-slot-{{ $storySlot }}"
+                            @click="openStoryEncounter()">
+                            <span class="hotspot-pulse"></span>
+                            <img class="hotspot-portrait"
+                                src="{{ asset("img/characters/" . $storyEncounterSlug . ".webp") }}"
+                                srcset="{{ asset("img/characters/" . $storyEncounterSlug . ".webp") }} 1x, {{ asset("img/characters/" . $storyEncounterSlug . "_lg.webp") }} 2x"
+                                alt="{{ $storyChar["name"] ?? "???" }}">
+                            <span class="hotspot-label">{{ $storyChar["name"] ?? "???" }}</span>
                         </button>
                     @endif
 
@@ -296,6 +316,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         $isCorvanOffer = $offer->visit_id !== null;
                         $hsSlot = $spotForOffer[$idx % count($spotForOffer)];
                         $char = $isCorvanOffer ? null : $characterAssignment[$hsSlot] ?? null;
+                        $char = $char && ($char["game_role"] ?? null) === "story_hook" ? null : $char;
                         // Corvan offers reuse his existing, already-translated identity
                         // (same portrait/title as the special-inventory hotspot) rather
                         // than introducing new copy — "Bleibt bis Sol X" mirrors the
@@ -307,6 +328,12 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         $offerCharSlug = $isCorvanOffer ? "merchant" : $char["slug"] ?? "stranger";
                         $offerPortraitSrc = asset("img/characters/" . $offerCharSlug . ".webp");
                         $offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
+                        // bar_trade Charakter-Zuordnung (A36) — personalisierte Zeile,
+                        // kein neuer Mechanismus, nur Flavor zusätzlich zum Angebot.
+                        $offerFlavorKey =
+                            !$isCorvanOffer && ($char["game_role"] ?? null) === "bar_trade"
+                                ? "colony.bar_trade_flavor_" . $offerCharSlug
+                                : null;
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
                         <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
@@ -314,6 +341,12 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                             <div x-show="toast.visible" x-transition
                                 :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
                                 aria-live="polite" role="status"></div>
+
+                            @if ($offerFlavorKey)
+                                <p style="font-style:italic;color:var(--pico-muted-color)">
+                                    {{ __($offerFlavorKey) }}
+                                </p>
+                            @endif
 
                             <div
                                 style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
@@ -474,6 +507,29 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                             </div>
                             <div x-show="encounterError" x-text="encounterError"
                                 style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                        </x-cantina-dialog>
+                    </div>
+                @endif
+
+                {{-- story_hook Cantina-Begegnung (A36) — reiner Flavor-Moment,
+                 kein Ressourcen-/Credits-Effekt, nur zum Wegklicken. --}}
+                @if ($storyChar)
+                    @php
+                        $storyPortraitSrc = asset("img/characters/" . $storyEncounterSlug . ".webp");
+                        $storyPortraitLgSrc = asset("img/characters/" . $storyEncounterSlug . "_lg.webp");
+                        $storyName = $storyChar["name"] ?? "???";
+                        $storyRole = $storyChar["role"] ?? "";
+                        $storyBodyKey = "colony.story_encounter_" . $storyEncounterSlug;
+                    @endphp
+                    <div x-show="activeModal === 'story'">
+                        <x-cantina-dialog :portrait-src="$storyPortraitSrc" :portrait-lg-src="$storyPortraitLgSrc" :name="$storyName" :role="$storyRole">
+                            <p>{{ __($storyBodyKey) }}</p>
+                            <div style="display:flex;justify-content:flex-end">
+                                <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                    @click="closeModal()">
+                                    <span class="tile-action-btn__body">{{ __("colony.story_encounter_close") }}</span>
+                                </button>
+                            </div>
                         </x-cantina-dialog>
                     </div>
                 @endif
@@ -668,6 +724,10 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
                 openEncounter() {
                     this.activeModal = 'encounter';
+                },
+
+                openStoryEncounter() {
+                    this.activeModal = 'story';
                 },
 
                 async acceptEncounter(btn) {

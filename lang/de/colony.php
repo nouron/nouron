@@ -287,6 +287,22 @@ return [
     'bar_encounter_contract_body' => 'Ein durchreisender Abnehmer bietet ein befristetes Geschäft — Credits für ein paar Sole, dann ist er weitergezogen.',
     'bar_encounter_accept' => 'Annehmen',
 
+    // ── Cantina-Charakter-Zuordnung (A36) ──────────────────────────────────────
+    // bar_trade — personalisierte Zeile im Gäste-Tauschangebot-Dialog, zeigt sich
+    // zusätzlich zum generischen Geben/Bekommen-Raster, kein neuer Mechanismus.
+    'bar_trade_flavor_prospector' => 'Fen wiegt einen Brocken Regolith in der Hand, als würde sie ihn bereits taxieren.',
+    'bar_trade_flavor_doctor' => 'Maret schiebt dir müde ein kleines Bündel Organika rüber — „Nimm, bevor\'s schlecht wird."',
+    'bar_trade_flavor_mercenary' => 'Juno mustert dich einen Moment, dann legt sie wortlos etwas Brauchbares auf den Tisch.',
+    'bar_trade_flavor_smuggler' => 'Dax rutscht näher, den Rücken zur Wand, und murmelt etwas von Fracht, die niemand vermissen wird.',
+    'bar_trade_flavor_information_broker' => 'Vesper lächelt knapp, als hätte sie schon gewusst, dass du fragen würdest — und nennt ihren Preis.',
+    'bar_trade_flavor_mechanic' => 'Sarka klopft prüfend gegen ein Ersatzteil, bevor sie es dir zuschiebt: „Läuft noch. Meistens."',
+
+    // story_hook — reiner Flavor-Moment, keine Ressourcen-/Credits-Wirkung.
+    'story_encounter_preacher' => 'Sorel spricht ruhig davon, was die Kolonie ihren Siedlern schuldet, während sie in Gedanken versunken ihr Tuch glättet.',
+    'story_encounter_founder' => 'Aldra deutet auf einen Winkel der Cantina und nennt ihn beim alten Namen, den niemand sonst mehr kennt.',
+    'story_encounter_stranger' => 'Die Fremde stellt eine beiläufige Frage, die dir erst später merkwürdig vorkommt, und wendet sich wieder ihrem unberührten Glas zu.',
+    'story_encounter_close' => 'Schließen',
+
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 
     'next_sol_button' => 'Sol beenden',
