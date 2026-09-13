@@ -276,6 +276,10 @@ class RunReport
                 'utilization' => $supplyUtilization,
             ],
             'harvester_positions' => $this->harvesterPositions($colonyId),
+            // A34 prep: nexus_debt_fail_threshold recalibration needs the
+            // per-Sol curve, not just the pass/fail outcome — see
+            // config/game.php → run.nexus_debt_fail_threshold.
+            'nexus_debt' => (int) (DB::table('runs')->where('id', $bot->runId)->value('nexus_debt') ?? 0),
         ];
     }
 
@@ -426,6 +430,7 @@ class RunReport
                 'fail_reason' => $run->fail_reason,
                 'sols' => $bot->sol,
                 'score' => (int) ($run->score ?? 0),
+                'nexus_debt_final' => (int) ($run->nexus_debt ?? 0),
             ],
             'phase2_start_sol' => $this->phase2StartSol,
             'objectives' => $objectives,
@@ -472,7 +477,7 @@ class RunReport
     public function printTable(array $report): void
     {
         fwrite(STDERR, sprintf(
-            "\n[playtest] seed=%d profile=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d\n",
+            "\n[playtest] seed=%d profile=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
             $report['seed'],
             $report['profile'],
             $report['outcome']['status'],
@@ -483,6 +488,7 @@ class RunReport
             $report['actions']['ok'],
             $report['actions']['attempted'],
             $report['actions']['rejected'],
+            $report['outcome']['nexus_debt_final'],
         ));
 
         if (! empty($report['rejections'])) {
