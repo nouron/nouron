@@ -75,7 +75,12 @@ class Playtest extends Command
                         // objectives both mean more AP spent and more actions
                         // attempted per Sol — a single seed solo (concurrency=1,
                         // no contention) exceeded 120s after those changes.
-                        ->timeout(240)
+                        // 240 → 400 (2026-09-13, A37): researchCandidate() no
+                        // longer stalls on a CC-gated knowledge (previously
+                        // dead-ending the rule for the rest of the run), so it
+                        // now succeeds far more often — a solo run again
+                        // exceeded the old timeout with no contention involved.
+                        ->timeout(400)
                         ->command([
                             // opcache.enable_cli defaults to Off system-wide, so every
                             // spawned child cold-compiles the whole vendor tree from
