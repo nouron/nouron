@@ -4,6 +4,7 @@
 
 - Feature: A36 — Cantina-Begegnungspool, volle Charakter-Zuordnung für 9 der 11 verbleibenden Figuren (Deva/Lenn zurückgestellt, Owner-Entscheidung). Neues `game_role`-Feld in `config/characters.php` (bar_trade/story_hook/dedicated/permanent/information). 6 bar_trade-Figuren bekamen eine personalisierte Dialogzeile im bestehenden Gäste-Tauschangebot; 3 story_hook-Figuren (Sorel, Aldra, Stranger) bekamen eine rein narrative Begegnung ohne Ressourcen-/Credits-Wirkung (`BarService::pickStoryEncounter()`), zusätzlich Fix, dass diese Figuren nicht mehr fälschlich als Flavor eines Tauschangebots erscheinen. TDD, echte Browser-Verifikation via Playwright.
 - Test: A34-Vorbereitung — `nexus_debt` fehlte komplett in der Playtest-Instrumentierung (`RunReport`), obwohl `nexus_debt_fail_threshold` nach A21 neu kalibriert werden muss. Jeder Sol-Snapshot und der Run-Outcome berichten jetzt den aktuellen bzw. finalen `nexus_debt`-Wert — Grundlage für den anstehenden Playtest-Batch. Reines Test-Harness, kein Game-Code.
+- Test: A34 abgeschlossen, kein Änderungsbedarf — `nexus_debt_fail_threshold` (12000) bleibt. Erster Batch zeigte `nexus_debt` konstant bei 3000: PlaytestBot befördert Berater nie (bekannte Lücke seit A23), der A21-Zufluss kann so nie auslösen. Bot um `promote_advisor`-Regel ergänzt (`BotStrategy.php`); wiederholter 8-Seed-Batch bewegte `nexus_debt` (max. 4265), blieb aber weit unter 12000 — auch analytisch bestätigt. Zwei Nebenbefunde als neue Tasks A37 (kein Run gewinnt) und A38 (Nichtdeterminismus bei gleichem Seed) aufgenommen.
 
 ## 2026-09-12
 
