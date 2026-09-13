@@ -266,7 +266,7 @@ class HangarMissionResolutionTest extends TestCase
 
         $rawThreshold = (int) config('knowledge.cartography.levelup_costs.1');
         $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
-        $discountPercent = (int) (($curve[4] ?? 0) + ($curve[5] ?? 0));
+        $discountPercent = (int) array_sum(array_intersect_key($curve, array_flip(range(1, 5))));
         $discountedThreshold = (int) max(
             ceil($rawThreshold * (float) config('game.project_min_cost_factor', 0.5)),
             round($rawThreshold * (1 - $discountPercent / 100))

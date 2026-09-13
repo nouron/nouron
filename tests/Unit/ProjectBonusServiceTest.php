@@ -95,21 +95,21 @@ class ProjectBonusServiceTest extends TestCase
         );
     }
 
-    public function test_knowledge_discount_is_zero_below_level_4(): void
+    public function test_knowledge_discount_is_zero_at_level_1(): void
     {
-        $this->setSciencelabLevel(3);
+        $this->setSciencelabLevel(1);
         $service = $this->app->make(ProjectBonusService::class);
 
-        $this->assertSame(0, $service->knowledgeApDiscountPercent(self::COLONY_ID));
+        $this->assertSame(0, $service->knowledgeApDiscountPercent(self::COLONY_ID), 'Lv1 is a pure Kenntnis-gate, no discount yet (A39)');
     }
 
-    public function test_knowledge_discount_at_level_4(): void
+    public function test_knowledge_discount_at_level_2(): void
     {
-        $this->setSciencelabLevel(4);
+        $this->setSciencelabLevel(2);
         $service = $this->app->make(ProjectBonusService::class);
 
-        $expected = (int) (config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv')[4] ?? 0);
-        $this->assertGreaterThan(0, $expected, 'precondition: config must define a Lv4 discount');
+        $expected = (int) (config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv')[2] ?? 0);
+        $this->assertGreaterThan(0, $expected, 'precondition: config must define a Lv2 discount (A39)');
         $this->assertSame($expected, $service->knowledgeApDiscountPercent(self::COLONY_ID));
     }
 
@@ -119,7 +119,7 @@ class ProjectBonusServiceTest extends TestCase
         $service = $this->app->make(ProjectBonusService::class);
 
         $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
-        $expected = (int) (($curve[4] ?? 0) + ($curve[5] ?? 0));
+        $expected = (int) array_sum(array_intersect_key($curve, array_flip(range(1, 5))));
         $this->assertSame($expected, $service->knowledgeApDiscountPercent(self::COLONY_ID));
     }
 
