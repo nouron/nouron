@@ -298,14 +298,32 @@ class ColonyTileService
     }
 
     /**
-     * Picks a tile_type from the ring-weighted distribution using an actual
-     * random roll (not the deterministic colonyId hash) — used to randomize
-     * the Sol-1 starting environment so every run/reset gets a different
-     * layout (roguelike). See OnboardingService::seedStartingTiles().
+     * Picks a tile_type from the ring-weighted distribution using a seeded
+     * roll (not the deterministic colonyId hash) — randomizes the Sol-1
+     * starting environment so every run/reset gets a different layout
+     * (roguelike), while still being reproducible for a given seed (A38: a
+     * caller that wants the SAME map back — the playtest tool — passes the
+     * same seed; real players always get a fresh random seed, see
+     * OnboardingService::seedSol1State()). See OnboardingService::seedStartingTiles().
      */
-    public function randomTileType(int $ring): string
+    public function randomTileType(int $ring, int $seed): string
     {
-        return $this->resolveTileType($ring, random_int(0, 99));
+        return $this->resolveTileType($ring, $this->pseudoRand($seed, 0, 99));
+    }
+
+    /**
+     * Deterministic integer roll in [min, max] — same LCG-hash pattern as
+     * BarService::pseudoRand()/GameTick::cumulativeCurveYield() callers use
+     * elsewhere for seeded game randomness.
+     */
+    private function pseudoRand(int $seed, int $min, int $max): int
+    {
+        if ($min >= $max) {
+            return $min;
+        }
+        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
+
+        return $min + ($hash % ($max - $min + 1));
     }
 
     /**
@@ -368,14 +386,20 @@ class ColonyTileService
      * (not just their content) — otherwise the "frontier" shape would look
      * identical across every run/reset even though tile_type varies.
      *
+     * Seeded (A38): the same $seed reproduces the exact same rows — needed
+     * so `game:playtest --seeds=X` actually reproduces a run, not just its
+     * objective draw. Real players always pass a freshly random seed (see
+     * OnboardingService::seedSol1State()), so nothing changes for them.
+     *
      * @return list<array{q:int,r:int,ring:int,tile_type:string,is_colony_zone:int,is_explored:int,resource_amount:?int,resource_max:?int}>
      */
-    public function randomizeOuterRingRows(): array
+    public function randomizeOuterRingRows(int $seed): array
     {
         $rows = [];
+        $salt = 0;
 
         foreach ($this->ringCoords(2) as [$q, $r]) {
-            $tileType = $this->randomTileType(2);
+            $tileType = $this->randomTileType(2, $seed + $salt++);
             $resourceMax = $this->resourceMaxFor($tileType);
             $rows[] = [
                 'q' => $q, 'r' => $r, 'ring' => 2,
@@ -386,15 +410,19 @@ class ColonyTileService
         }
 
         $ring3Coords = $this->ringCoords(3);
-        shuffle($ring3Coords);
+        // Seeded Fisher-Yates — replaces shuffle(), which has no seed argument.
+        for ($i = count($ring3Coords) - 1; $i > 0; $i--) {
+            $j = $this->pseudoRand($seed + $salt++, 0, $i);
+            [$ring3Coords[$i], $ring3Coords[$j]] = [$ring3Coords[$j], $ring3Coords[$i]];
+        }
         $ring3Coords = array_slice($ring3Coords, 0, self::RING3_FRONTIER_COUNT);
 
         $ring3Rows = [];
         foreach ($ring3Coords as [$q, $r]) {
-            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->randomTileType(3)];
+            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->randomTileType(3, $seed + $salt++)];
         }
 
-        $targetIndex = array_rand($ring3Rows);
+        $targetIndex = $this->pseudoRand($seed + $salt++, 0, count($ring3Rows) - 1);
         if (! str_starts_with($ring3Rows[$targetIndex]['tile_type'], 'regolith_')) {
             $ring3Rows[$targetIndex]['tile_type'] = 'regolith_normal';
         }
