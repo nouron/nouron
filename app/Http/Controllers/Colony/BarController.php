@@ -54,6 +54,10 @@ class BarController extends BaseController
             ? $this->barService->getActiveEncounter($colony->id, $tick)
             : null;
 
+        $storyEncounterSlug = $barLevel > 0
+            ? $this->barService->pickStoryEncounter($colony->id, $tick)
+            : null;
+
         $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $tick);
         $merchantItems = $merchantVisit
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
@@ -90,7 +94,7 @@ class BarController extends BaseController
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
-            'encounter',
+            'encounter', 'storyEncounterSlug',
         ));
     }
 

@@ -492,6 +492,14 @@ return [
                 'duration_ticks' => 3,
             ],
         ],
+
+        // story_hook Cantina-Begegnungen (A36) — pure Flavor, kein Ressourcen-/
+        // Credits-Effekt (Leitplanke §12). Deterministisch pro Sol, kein DB-State
+        // nötig: derselbe Roll gilt für die ganze Dauer eines Ticks.
+        'story_encounter' => [
+            'chance' => 0.30,
+            'slugs' => ['preacher', 'founder', 'stranger'],
+        ],
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).

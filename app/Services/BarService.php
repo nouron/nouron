@@ -563,6 +563,27 @@ class BarService
         ];
     }
 
+    /**
+     * story_hook Cantina-Begegnung (A36) — pure flavor, no resource/Credits
+     * effect (Leitplanke §12: not every figure gets an economic tie-in).
+     * Deterministic per colony+tick (no DB state): same roll all Sol.
+     */
+    public function pickStoryEncounter(int $colonyId, int $tick): ?string
+    {
+        $chance = (float) config('game.bar.story_encounter.chance', 0.0);
+        $slugs = config('game.bar.story_encounter.slugs', []);
+        if (empty($slugs)) {
+            return null;
+        }
+
+        $roll = $this->pseudoRand($colonyId * 5099 + $tick * 233, 0, 999);
+        if ($roll >= (int) round($chance * 1000)) {
+            return null;
+        }
+
+        return $slugs[$this->pseudoRand($colonyId * 3169 + $tick * 149, 0, count($slugs) - 1)];
+    }
+
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int
     {
         if ($resId === self::RES_CREDITS) {
