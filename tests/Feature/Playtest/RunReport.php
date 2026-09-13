@@ -244,6 +244,17 @@ class RunReport
             ];
         }
 
+        // A37 investigation prep: research/Kenntnis levels were never tracked
+        // (only building levels, B1b) — needed to check whether knowledge
+        // progression is a factor in "no run ever wins".
+        $researches = [];
+        foreach (DB::table('colony_researches')->where('colony_id', $colonyId)->get() as $row) {
+            $researches[(int) $row->research_id] = [
+                'level' => (int) $row->level,
+                'ap_spend' => (int) $row->ap_spend,
+            ];
+        }
+
         $phase = (int) (DB::table('runs')->where('id', $bot->runId)->value('phase') ?? 1);
         if ($phase >= 2 && $this->phase2StartSol === null) {
             $this->phase2StartSol = $bot->sol;
@@ -270,6 +281,7 @@ class RunReport
             'organics_sources' => $organics['sources'],
             'organics_consumption' => $organics['consumption'],
             'buildings' => $buildings,
+            'researches' => $researches,
             'supply' => [
                 'used' => $supplyUsed,
                 'cap' => $supplyCap,
