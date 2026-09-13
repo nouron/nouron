@@ -160,18 +160,28 @@ return [
         // (implementiert via ProjectBonusService::effectiveKnowledgeApForLevelup(),
         // siehe knowledge_ap_cost_reduction_per_lv unten).
         'max_level' => 5,
-        // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23) — senkt die
-        // AP-Kosten für Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-
-        // Effekten von construction/trade (die Gebäude-Levelups
-        // rabattieren, siehe config/knowledge.php) — eigener Config-Key, da beide
-        // Kurven im selben Namensraum sonst kollidieren würden (invertierte
-        // Semantik: hier rabattiert Gebäude-Level Kenntnis-Kosten, dort
-        // rabattiert Kenntnis-Level Gebäude-Kosten). Nur Lv4/5 tragen einen Wert,
-        // Lv1-3 bleiben reine Kenntnis-Gates. Platzhalter-Größenordnung angelehnt
-        // an die Kurven-Enden der Kenntnis-Domänen (Lv4=3, Lv5=2 Prozentpunkte
-        // dort) — eigenständig gewählt, da hier nur 2 statt 5 Stufen zur
-        // Verfügung stehen. Zahlen-Kalibrierung nach Playtest (ADR 0004).
-        'knowledge_ap_cost_reduction_per_lv' => [4 => 3, 5 => 2],   // Σ5% bei Lv5
+        // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23, verstärkt
+        // 2026-09-13 nach A37-Investigation) — senkt die AP-Kosten für
+        // Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-Effekten
+        // von construction/trade (die Gebäude-Levelups rabattieren, siehe
+        // config/knowledge.php) — eigener Config-Key, da beide Kurven im
+        // selben Namensraum sonst kollidieren würden (invertierte Semantik:
+        // hier rabattiert Gebäude-Level Kenntnis-Kosten, dort rabattiert
+        // Kenntnis-Level Gebäude-Kosten). Lv1 bleibt reines Kenntnis-Gate.
+        //
+        // A37-Fund: `task_research_lead` (3 Kenntnisse auf Lv5) braucht 540 AP
+        // kumulativ (config/knowledge.php levelup_costs), während das Labor
+        // selbst typischerweise erst spät im Run auf die alten Rabatt-Level
+        // (4-5) kommt — der ursprüngliche Σ5%-Rabatt (nur Lv4/5) änderte daran
+        // praktisch nichts. Owner-Entscheidung: Rabatt beginnt jetzt bei Lv2,
+        // game-designer-kalibrierte Kurve, sanft ansteigend statt Sprungfunktion
+        // (jede Ausbaustufe bringt spürbar mehr), Σ30% bei Lv5 bleibt deutlich
+        // unter dem 50%-Floor (game.project_min_cost_factor) — senkt die 540 AP
+        // auf ~378 AP bei durchgehend Lv5, ohne Forschung zum Selbstläufer zu
+        // machen. Setzt voraus, dass das Labor VOR dem Kenntnis-Grind ausgebaut
+        // wird — sonst greift der Rabatt erst nachträglich (⚠️ im nächsten
+        // Playtest-Batch beobachten).
+        'knowledge_ap_cost_reduction_per_lv' => [2 => 6, 3 => 7, 4 => 8, 5 => 9],   // Σ6/13/21/30% bei Lv2-5
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
