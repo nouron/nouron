@@ -57,9 +57,9 @@ class OnboardingService
      * deleted — the player keeps earned advisors across runs. Use
      * ResetPlayer (dev tool) instead if advisors must be wiped entirely.
      */
-    public function resetColonyToSol1(int $userId, int $colonyId): void
+    public function resetColonyToSol1(int $userId, int $colonyId, ?int $rngSeed = null): void
     {
-        DB::transaction(function () use ($userId, $colonyId) {
+        DB::transaction(function () use ($userId, $colonyId, $rngSeed) {
             DB::table('colony_resources')->where('colony_id', $colonyId)->delete();
             DB::table('colony_buildings')->where('colony_id', $colonyId)->delete();
             DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
@@ -99,7 +99,7 @@ class OnboardingService
                 ->where('status', 'active')
                 ->update(['status' => 'superseded', 'ended_at' => now()]);
 
-            $this->seedSol1State($userId, $colonyId);
+            $this->seedSol1State($userId, $colonyId, $rngSeed);
         });
     }
 
@@ -108,12 +108,22 @@ class OnboardingService
      * tiles (incl. zone assignment), Nexus briefing, and the active Run
      * record. Assumes all prior colony state has already been cleared by
      * the caller.
+     *
+     * A38: one $rngSeed now drives BOTH the starting map (ColonyTileService)
+     * and runs.rng_seed (objective draw etc.) — previously these were two
+     * independent unseeded random_int() calls with no relationship to each
+     * other, so a caller-supplied "seed" (the playtest tool's --seeds) never
+     * actually reproduced the map, only accidentally influenced nothing at
+     * all (map generation ran before rng_seed was even assigned). Real
+     * players never pass $rngSeed, so their runs stay genuinely random.
      */
-    private function seedSol1State(int $userId, int $colonyId): void
+    private function seedSol1State(int $userId, int $colonyId, ?int $rngSeed = null): void
     {
+        $rngSeed ??= random_int(1, PHP_INT_MAX);
+
         $this->seedResources($userId, $colonyId);
         $this->seedStartingBuilding($colonyId);
-        $this->seedStartingTiles($colonyId);
+        $this->seedStartingTiles($colonyId, $rngSeed);
         $this->eventService->createNexusBriefing($userId, 0, $colonyId);
 
         $run = Run::create([
@@ -130,7 +140,7 @@ class OnboardingService
                 'supply_cap_max' => config('game.supply.cap_max'),
                 'max_players' => config('game.run.max_players'),
             ],
-            'rng_seed' => random_int(1, PHP_INT_MAX),
+            'rng_seed' => $rngSeed,
         ]);
 
         event(new RunStarted($run));
@@ -166,7 +176,7 @@ class OnboardingService
         DB::table('colony_resources')->insert($colonyResources);
     }
 
-    private function seedStartingTiles(int $colonyId): void
+    private function seedStartingTiles(int $colonyId, int $rngSeed): void
     {
         // Ring 0+1: fixed every run — building placement safety (CC/Harvester/Housing
         // land here) and the "settled core has no hazards" design rule. is_colony_zone
@@ -197,7 +207,7 @@ class OnboardingService
             ['q' => 1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
         ];
 
-        $tiles = array_merge($tiles, $this->tileService->randomizeOuterRingRows());
+        $tiles = array_merge($tiles, $this->tileService->randomizeOuterRingRows($rngSeed));
 
         $rows = array_map(fn ($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
         DB::table('colony_tiles')->insert($rows);
