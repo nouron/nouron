@@ -593,7 +593,26 @@ class BotStrategy
             ->where('building_id', BuildingId::Sciencelab->value)
             ->value('level') ?? 0);
 
-        $row = DB::table('researches as r')
+        // A37 fix: without this, the bot got permanently stuck on the
+        // lowest-id knowledge once its NEXT level hit `knowledge_cc_level_cap`
+        // (config/game.php — Kenntnis-Level 4/5 need CC Lv4/5) — the levelup
+        // attempt fails with 'knowledge_cc_gate' every Sol forever after, and
+        // the do() closure's fallback to 'add' only triggers on
+        // 'insufficient_ap_invested', not this error, so the rule just fails
+        // for the rest of the run. researchCandidate() never moved past that
+        // knowledge to the other 6, which then received zero investment for
+        // the remainder of the run despite abundant unspent AP (found
+        // 2026-09-13: a full 99-Sol run left 63% of daily AP unspent while
+        // stuck retrying one CC-gated knowledge). Filtering the candidate
+        // list by the SAME cap the server enforces lets the bot move on to
+        // the next eligible knowledge instead of stalling.
+        $ccLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->value('level') ?? 0);
+        $ccCaps = config('game.knowledge_cc_level_cap', []);
+
+        $candidates = DB::table('researches as r')
             ->leftJoin('colony_researches as cr', function ($join) use ($b) {
                 $join->on('cr.research_id', '=', 'r.id')->where('cr.colony_id', $b->colonyId);
             })
@@ -602,9 +621,19 @@ class BotStrategy
             ->where(fn ($q) => $q->whereNull('r.required_building_level')->orWhereRaw('? >= r.required_building_level', [$sciencelabLevel]))
             ->where(fn ($q) => $q->whereNull('cr.level')->orWhere('cr.level', '<', 5))
             ->orderBy('r.id')
-            ->value('r.id');
+            ->get(['r.id', 'cr.level']);
 
-        return $row !== null ? (int) $row : null;
+        foreach ($candidates as $candidate) {
+            $currentLevel = (int) ($candidate->level ?? 0);
+            $targetLevel = $currentLevel + 1;
+            $requiredCc = $ccCaps[$targetLevel] ?? null;
+
+            if ($requiredCc === null || $ccLevel >= $requiredCc) {
+                return (int) $candidate->id;
+            }
+        }
+
+        return null;
     }
 
     private static function dispatchCandidate(BotSession $b): ?object
