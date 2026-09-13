@@ -53,6 +53,22 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'promote_advisor',
+                // A23 made promotion manual (previously auto-promoted at threshold),
+                // but the bot never called it — every advisor stayed Rank 1 forever
+                // in every playtest report to date, which structurally can't exercise
+                // the A21 upkeep-deficit → nexus_debt inflow path (Rank 1 upkeep is
+                // the cheapest tier). Found during A34 (nexus_debt_fail_threshold
+                // recalibration, 2026-09-13): a real batch showed nexus_debt frozen
+                // at its 3000 starting value across 6 seeds — an artifact of this gap,
+                // not evidence the threshold is safe. Prioritized ABOVE place_building/
+                // invest_production (a promotion is a one-time Credits cost with a
+                // lasting AP-pool contribution, cheaper than most projects) but BELOW
+                // hire_advisor (a new slot matters more than upgrading an existing one).
+                'when' => fn (BotSession $b) => self::promoteCandidate($b),
+                'do' => fn (BotSession $b, int $advisorId) => $b->act('promote_advisor', 'POST', "/advisors/{$advisorId}/promote"),
+            ],
+            [
                 'name' => 'invest_cc',
                 // Phase 1: cap at Lv3 (the completion requirement) — investing further
                 // here competed with path-building Regolith and broke Phase-1 pacing
@@ -342,6 +358,35 @@ class BotStrategy
         }
 
         return null;
+    }
+
+    /**
+     * Cheapest-first: an advisor is a candidate once its active_ticks meets
+     * the current rank's threshold AND the promotion cost is affordable. Picks
+     * the lowest-cost eligible promotion (Rank 1→2 before 2→3) so the bot
+     * spreads limited Credits across advisors rather than always maxing out
+     * whichever one reached eligibility first.
+     */
+    private static function promoteCandidate(BotSession $b): ?int
+    {
+        $thresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
+        $costs = config('game.advisor.promotion_costs', [2 => 150, 3 => 250]);
+        $credits = self::credits($b);
+
+        $eligible = DB::table('advisors')
+            ->where('colony_id', $b->colonyId)
+            ->where('rank', '<', 3)
+            ->get(['id', 'rank', 'active_ticks'])
+            ->filter(function ($advisor) use ($thresholds) {
+                $threshold = $thresholds[$advisor->rank] ?? null;
+
+                return $threshold !== null && $advisor->active_ticks >= $threshold;
+            })
+            ->filter(fn ($advisor) => $credits >= (int) ($costs[$advisor->rank + 1] ?? PHP_INT_MAX))
+            ->sortBy(fn ($advisor) => (int) ($costs[$advisor->rank + 1] ?? PHP_INT_MAX))
+            ->first();
+
+        return $eligible?->id;
     }
 
     private static function exploreCandidate(BotSession $b): ?object
