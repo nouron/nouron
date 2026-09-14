@@ -146,6 +146,29 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'dispatch_compounds_mission',
+                // Round 2 of A37-Rest (2026-09-14, task_colony_prosperity):
+                // Werkstoffe/compounds is the scarcest resource by design (GDD §3
+                // Knappheitsordnung), but the bot had NO rule ever dispatching
+                // either dedicated compounds-reward mission
+                // (mission_salvage_sweep, requires construction Lv1;
+                // mission_long_range_expedition, requires cartography Lv3) — the
+                // same zero-rule-gap pattern as promote_advisor (A34) and
+                // buy_merchant_item. Result: the 4 trust buildings (A37-Rest)
+                // always failed their build_cost check for lack of compounds,
+                // masquerading as an economy-wall when it was a bot gap. Freighters/
+                // corvettes otherwise sit idle unless a ruin tile happens to be
+                // deep-scanned (dispatch_salvage_mission above) — this gives them
+                // a routine job. mission_salvage_sweep chosen over the pricier
+                // long_range_expedition (needs cartography Lv3, a knowledge the
+                // bot may never reach) as the more reliably dispatchable option.
+                'when' => fn (BotSession $b) => self::compoundsMissionCandidate($b),
+                'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_compounds_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
+                    'mission_key' => 'mission_salvage_sweep',
+                    'difficulty' => 'normal',
+                ]),
+            ],
+            [
                 'name' => 'relocate_harvester',
                 'when' => fn (BotSession $b) => self::harvesterRelocateCandidate($b),
                 'do' => fn (BotSession $b, object $tile) => $b->act('relocate_harvester', 'POST', '/colony/building/place', [
@@ -782,6 +805,23 @@ class BotStrategy
             return (int) config('ships.freighter.id');
         }
 
+        // A37-Rest (2026-09-14): the drone fallback below used to fire EVERY
+        // time the freighter was unaffordable, with no cap — the bot ended up
+        // hoarding 5-7 drones (300cr each) across a run instead of saving
+        // toward the one 500cr freighter that actually unlocks
+        // dispatch_salvage_mission/dispatch_compounds_mission (both require
+        // freighter/corvette, the drone doesn't qualify for either). Found via
+        // RunReportShipSnapshotTest: 3 seeds ended with 5-7 drones and ZERO
+        // freighters/corvettes despite reaching the 3-advisor threshold by
+        // Sol 20. Capped at 2 drones total (bootstrap + one spare for
+        // mission_recon_flight redundancy) — once advisors>=3, further
+        // Credits save toward the freighter instead of buying drone #3+.
+        $droneCount = DB::table('colony_ships')->where('colony_id', $b->colonyId)
+            ->where('ship_id', (int) config('ships.drone.id'))->count();
+        if ($droneCount >= 2) {
+            return null;
+        }
+
         return $credits >= $droneCost ? (int) config('ships.drone.id') : null;
     }
 
@@ -881,6 +921,41 @@ class BotStrategy
             ->whereNotNull('event_type')
             ->where('is_deep_scanned', 0)
             ->orderBy('ring')
+            ->first();
+    }
+
+    /**
+     * mission_salvage_sweep (config/missions.php: compounds 6-10 reward,
+     * requires construction Lv1, sol_distance=4, freighter/corvette) — the
+     * more reliably dispatchable of the two dedicated Werkstoffe-reward
+     * missions (mission_long_range_expedition needs cartography Lv3, a
+     * knowledge the bot may never research). No tile/target requirement,
+     * unlike salvageDispatchCandidate() — any eligible docked ship qualifies.
+     */
+    private static function compoundsMissionCandidate(BotSession $b): ?object
+    {
+        $navApCost = 4 * (int) config('missions.nav_ap_per_sol', 2); // sol_distance=4
+        if (self::availableAp($b) < $navApCost) {
+            return null;
+        }
+
+        $constructionLevel = (int) (DB::table('colony_researches')
+            ->where('colony_id', $b->colonyId)
+            ->where('research_id', 90) // knowledge_construction
+            ->value('level') ?? 0);
+        if ($constructionLevel < 1) {
+            return null;
+        }
+
+        $shipMaxStatus = 20; // HangarService::SHIP_MAX_STATUS — not exposed, mirrored here
+        $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
+        $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
+
+        return DB::table('colony_ships')
+            ->where('colony_id', $b->colonyId)
+            ->where('ship_state', 'docked')
+            ->whereIn('ship_id', $eligibleShipIds)
+            ->where('status_points', '>=', $minSp)
             ->first();
     }
 
