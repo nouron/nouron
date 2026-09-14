@@ -105,10 +105,10 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **construction** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%) |
 | **cartography** | 20/28/36/44/52 | 180 AP | 0 | Navigation-AP (Tile-Erkundung, Hangar-Missions-Reisekosten) −4/−8/−8/−6/−4% (Σ−30%) |
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
-| **agronomy** | 20/28/36/44/52 | 180 AP | +1 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
-| **health** | 20/28/36/44/52 | 180 AP | +2 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
+| **agronomy** | 20/28/36/44/52 | 180 AP | +2 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
+| **health** | 20/28/36/44/52 | 180 AP | +3 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
 | **trade** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%); Bar-Slots +0/+1/+1/+0/+0; Handelspreis-Bonus +2/+3/+3/+2/+2% (Σ12%) |
-| **defense** | 20/28/36/44/52 | 180 AP | +1 | Sturm-Risiko −3/−5/−5/−4/−3% |
+| **defense** | 20/28/36/44/52 | 180 AP | +2 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **CC-Level Gate**: Lv4 & Lv5 knowledge erfordern CC Lv4 bzw. Lv5
 > **Supply-Cap Bonus**: alle Kenntnisse +3/+5/+5/+4/+3 = 20 max pro Kenntnis
@@ -285,7 +285,7 @@ Konsul-Handelsvertrag (bedingungsloses Dauereinkommen) entfernt (2026-09-09, F3/
 | Handel erfolgreich | +2 | Bar-Angebot akzeptiert |
 | Handel blockiert | −3 | Bar-Angebot scheitert / abgelehnt |
 | Vertrag unterzeichnet | +3 | (zukünftig, nicht implementiert) |
-| Organika "gut versorgt" | +1 | Diese Sol: Vorrat ≥ Bedarf |
+| Organika "gut versorgt" | +2 | Diese Sol: Vorrat ≥ Bedarf |
 | Hunger-Strafe | −2 bis −8 | Hunger-Streak, linear bis Cap |
 | Encounter gewonnen | +2 | Mission erfolgreich (z.B. `encounter_won`) |
 | Encounter verloren | −4 | Beschädigte Begegnung (33–65% SP) |
@@ -440,13 +440,13 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 | Gebäude | Trust/Lv | Spezial-Effekt |
 |---|---|---|
 | Agrardom | 0 | Organisierte Organika-Produktion |
-| Cantina | +2/Lv | Verhandlungs-Risiko; +Konsul-Slot |
+| Cantina | +3/Lv | Verhandlungs-Risiko; +Konsul-Slot |
 | Analytik-Labor | 0 | Kenntnis-Forschung; +Analytiker-Slot; Lv2-5: Kenntnis-Levelup-AP −6/−7/−8/−9% (Σ6/13/21/30%) |
 | Hangar | 0 | Schiff-Ausbau; +Raumfahrer-Slot |
-| Krankenstation | +3/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
-| Religiöse Stätte | +2/Lv | Besinnlichkeit (Lv1 only) |
-| Kolonialdenkmal | +2/Lv | Stolz (Lv1 only) |
-| Security Hub | +1/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |
+| Krankenstation | +5/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
+| Religiöse Stätte | +3/Lv | Besinnlichkeit (Lv1 only) |
+| Kolonialdenkmal | +3/Lv | Stolz (Lv1 only) |
+| Security Hub | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |
 | Uplink Station | 0 | Deep-Scan −1 AP (Lv2+); Merchant frequency ↑ |
 | Trading Post | 0 | Merchant +12% trade value |
 

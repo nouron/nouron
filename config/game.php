@@ -537,7 +537,7 @@ return [
             'trade_blocked' => -3,
             'treaty_signed' => 3,
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
-            'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
+            'well_fed' => 2,       // colony's Organika stock covered the food need this Sol; 1→2 (2026-09-14, A37-Folge task_colony_prosperity — the only daily-repeatable positive event, deliberately weighted heavier)
             'encounter_won' => 2,  // successful protective/aid action (e.g. mission_aid_transport)
             'encounter_lost' => -4,        // damaged outcome (GDD §9, 33-65% SP)
             'colony_threatened' => -5,     // critical outcome (GDD §9, <33% SP)

@@ -49,7 +49,7 @@ return [
         'id' => 47,         // ex smallTransporter
         'moving_speed' => 3,
         'supply_cost' => 0,
-        'trust_per_unit' => 1,
+        'trust_per_unit' => 2,       // 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
         'nexus_cost' => 500,
         'nexus_delivery_ticks' => 2,
         'wear_per_sol' => 1.0,
