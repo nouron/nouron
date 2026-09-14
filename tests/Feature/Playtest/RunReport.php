@@ -244,6 +244,15 @@ class RunReport
             ];
         }
 
+        // A37-Rest investigation prep: ship ownership was never tracked, only
+        // harvester positions (B1e) — needed to check whether a mission-dispatch
+        // candidate never fires because the colony never actually owns the
+        // required ship type.
+        $ships = [];
+        foreach (DB::table('colony_ships')->where('colony_id', $colonyId)->get() as $row) {
+            $ships[(int) $row->ship_id] = ($ships[(int) $row->ship_id] ?? 0) + 1;
+        }
+
         // A37 investigation prep: research/Kenntnis levels were never tracked
         // (only building levels, B1b) — needed to check whether knowledge
         // progression is a factor in "no run ever wins".
@@ -282,6 +291,7 @@ class RunReport
             'organics_consumption' => $organics['consumption'],
             'buildings' => $buildings,
             'researches' => $researches,
+            'ships' => $ships,
             'supply' => [
                 'used' => $supplyUsed,
                 'cap' => $supplyCap,
