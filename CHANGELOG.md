@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-14
+
+- Fix: A37-Rest — `task_trade_volume` war unerreichbar, weil der Bot nie `/merchant/buy/{itemId}` aufrief (identischer Zero-Rule-Bug wie A34). Neue `buy_merchant_item`-Regel, hoch priorisiert (Merchant-Besuche sind zeitlich begrenzt). 8-Seed-Batch: 4 von 8 Runs gewinnen jetzt (vorher 3/8).
+- Balance: A37-Rest — `task_colony_prosperity` (Trust > 70, 10 Sole Streak) war praktisch unerreichbar (reales Maximum lag bei ~48-58, nicht wie grob geschätzt bei ~70). Owner-Entscheidung: Schwellenwert unangetastet, stattdessen Trust-Quellen verstärkt (Gebäude, Kenntnisse, Schiff, `well_fed`-Event — game-designer-kalibriert). TDD: `TrustServiceTest` aktualisiert, `docs/game-reference.md` nachgezogen. Max. Trust stieg spürbar (17-20 → 33-48), Ziel bleibt aber offen: die 4 trust-tragenden Gebäude werden vom Bot weiterhin nie gebaut (scheitern am Werkstoff-Ressourcen-Check trotz erhöhter Bau-Priorität) — eigene Folge-Analyse nötig.
+
 ## 2026-09-13
 
 - Feature: A36 — Cantina-Begegnungspool, volle Charakter-Zuordnung für 9 der 11 verbleibenden Figuren (Deva/Lenn zurückgestellt, Owner-Entscheidung). Neues `game_role`-Feld in `config/characters.php` (bar_trade/story_hook/dedicated/permanent/information). 6 bar_trade-Figuren bekamen eine personalisierte Dialogzeile im bestehenden Gäste-Tauschangebot; 3 story_hook-Figuren (Sorel, Aldra, Stranger) bekamen eine rein narrative Begegnung ohne Ressourcen-/Credits-Wirkung (`BarService::pickStoryEncounter()`), zusätzlich Fix, dass diese Figuren nicht mehr fälschlich als Flavor eines Tauschangebots erscheinen. TDD, echte Browser-Verifikation via Playwright.

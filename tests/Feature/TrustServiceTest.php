@@ -338,7 +338,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_positive_building_contribution(): void
     {
-        // hospital (id=46): +3 per level; level=4 → +12
+        // hospital (id=46): +5 per level (2026-09-14, A37-Folge task_colony_prosperity); level=4 → +20
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -349,7 +349,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(12, $trust);
+        $this->assertSame(20, $trust);
     }
 
     public function test_calculate_trust_building_with_zero_status_points_is_excluded(): void
@@ -388,7 +388,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_positive_research_contribution(): void
     {
-        // health (id=94): +2 per level; level=3 → +6
+        // health (id=94): +3 per level (2026-09-14, A37-Folge task_colony_prosperity); level=3 → +9
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 94,
@@ -399,12 +399,13 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(6, $trust);
+        $this->assertSame(9, $trust);
     }
 
     public function test_calculate_trust_positive_defense_contribution(): void
     {
-        // defense (id=96): +1 per level (Owner-Entscheidung 2026-08-27); level=10 → +10
+        // defense (id=96): +2 per level (Owner-Entscheidung 2026-08-27, verstärkt
+        // 2026-09-14 A37-Folge task_colony_prosperity); level=10 → +20
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 96,
@@ -415,7 +416,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(10, $trust);
+        $this->assertSame(20, $trust);
     }
 
     public function test_calculate_trust_research_not_in_config_is_ignored(): void
@@ -438,7 +439,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_positive_ship_contribution(): void
     {
-        // frachter (id=47): +1 per unit; level=6 → +6
+        // frachter (id=47): +2 per unit (2026-09-14, A37-Folge task_colony_prosperity); level=6 → +12
         DB::table('colony_ships')->insert([
             'colony_id' => $this->colonyId,
             'ship_id' => 47,
@@ -449,7 +450,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(6, $trust);
+        $this->assertSame(12, $trust);
     }
 
     public function test_calculate_trust_corvette_is_neutral(): void
@@ -615,7 +616,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_and_store_persists_trust_in_colony_resources(): void
     {
-        // hospital (id=46): +3/level; level=5 → trust = +15
+        // hospital (id=46): +5/level (2026-09-14, A37-Folge task_colony_prosperity); level=5 → trust = +25
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -627,12 +628,12 @@ class TrustServiceTest extends TestCase
         $colony = Colony::find($this->colonyId);
         $result = $this->service->calculateAndStore($colony, $this->tick);
 
-        $this->assertSame(15, $result);
+        $this->assertSame(25, $result);
 
         $this->assertDatabaseHas('colony_resources', [
             'colony_id' => $this->colonyId,
             'resource_id' => TrustService::RESOURCE_ID,
-            'amount' => 15,
+            'amount' => 25,
         ]);
     }
 
@@ -688,7 +689,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_and_store_return_value_matches_stored_value(): void
     {
-        // health (id=94): +2/level; level=7 → +14
+        // health (id=94): +3/level (2026-09-14, A37-Folge task_colony_prosperity); level=7 → +21
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 94,
@@ -701,7 +702,7 @@ class TrustServiceTest extends TestCase
         $returned = $this->service->calculateAndStore($colony, $this->tick);
         $stored = $this->service->getTrust($this->colonyId);
 
-        $this->assertSame(14, $returned);
+        $this->assertSame(21, $returned);
         $this->assertSame($returned, $stored);
     }
 
@@ -709,7 +710,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_combines_all_sources(): void
     {
-        // hospital (id=46): +3/level; level=2 → +6
+        // hospital (id=46): +5/level (2026-09-14, A37-Folge task_colony_prosperity); level=2 → +10
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -718,7 +719,7 @@ class TrustServiceTest extends TestCase
             'ap_spend' => 0,
         ]);
 
-        // health (id=94): +2/level; level=3 → +6
+        // health (id=94): +3/level; level=3 → +9
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 94,
@@ -727,7 +728,7 @@ class TrustServiceTest extends TestCase
             'ap_spend' => 0,
         ]);
 
-        // frachter (id=47): +1/unit; level=2 → +2
+        // frachter (id=47): +2/unit; level=2 → +4
         DB::table('colony_ships')->insert([
             'colony_id' => $this->colonyId,
             'ship_id' => 47,
@@ -745,7 +746,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        // +6 (buildings) + +6 (researches) + +2 (ships) + +2 (events) = +16
-        $this->assertSame(16, $trust);
+        // +10 (buildings) + +9 (researches) + +4 (ships) + +2 (events) = +25
+        $this->assertSame(25, $trust);
     }
 }

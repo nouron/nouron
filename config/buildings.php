@@ -240,7 +240,12 @@ return [
         'id' => 46,
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 10,
-        'trust_per_lv' => 3,
+        // 3 → 5 (2026-09-14, A37-Folge "task_colony_prosperity"): realistisches
+        // Trust-Maximum lag bei ~50, weit unter der 70er-Zielschwelle — Owner-
+        // Entscheidung, den Threshold NICHT zu senken, sondern die Trust-Quellen
+        // selbst zu verstärken. Infirmary bekommt den stärksten Bump ("Fürsorge"
+        // trägt thematisch am plausibelsten hohe Vertrauenswerte).
+        'trust_per_lv' => 5,
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
@@ -283,7 +288,7 @@ return [
         // 6 (unverändert seit 2026-06-28) — jetzt zugleich der gemeinsame supply_cost
         // aller drei Pfadgebäude (Owner, 2026-08-11, provisorisch, s. Hangar/Sciencelab).
         'supply_cost' => 6,
-        'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life
+        'trust_per_lv' => 3,       // social hub — leisure in an otherwise bleak colony life; 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
@@ -297,7 +302,7 @@ return [
         'id' => 50,
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 2,
-        'trust_per_lv' => 2,
+        'trust_per_lv' => 3,       // 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
         // Klasse "Robust" (GDD §13.7, 2026-08-03): 50 Sole bis Level-Down.
         'decay_rate' => 0.40,
         'max_status_points' => 20,
@@ -311,7 +316,7 @@ return [
         'id' => 32,
         'build_cost' => [3 => 50, 4 => 15],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 4,
-        'trust_per_lv' => 2,
+        'trust_per_lv' => 3,       // 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
         // Klasse "Fragil" (GDD §13.7, 2026-08-03): 17 Sole bis Level-Down — bewusst der
         // teuerste Unterhalt im Spiel, sie zahlt in Vertrauen statt Funktion.
         'decay_rate' => 1.20,
@@ -342,7 +347,7 @@ return [
         'id' => 53,
         'build_cost' => [3 => 80, 4 => 25],   // Regolith + Werkstoffe (Compounds gate accepted — see GDD §4)
         'supply_cost' => 8,
-        'trust_per_lv' => 1,                   // +1 trust per level (Lv3 max = +3)
+        'trust_per_lv' => 2,                   // +2 trust per level (Lv3 max = +6); 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
         'decay_rate' => 0.60,
         'max_status_points' => 20,

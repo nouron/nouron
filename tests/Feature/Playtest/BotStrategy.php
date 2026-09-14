@@ -69,6 +69,20 @@ class BotStrategy
                 'do' => fn (BotSession $b, int $advisorId) => $b->act('promote_advisor', 'POST', "/advisors/{$advisorId}/promote"),
             ],
             [
+                'name' => 'buy_merchant_item',
+                // A37-Rest (2026-09-14): `task_trade_volume` (5 merchant_items.sold)
+                // was never reachable — the bot had ZERO rule ever calling
+                // /merchant/buy/{itemId}, the exact same zero-rule-gap pattern as
+                // promote_advisor (A34) and researchCandidate's CC-gate stall
+                // (A37). Unlike bar_offers (regenerate every Sol) or buildings
+                // (persist indefinitely), a merchant visit is TIME-LIMITED
+                // (game.merchant.duration_ticks, default 2) — missing the window
+                // forfeits that purchase permanently, so this is prioritized high,
+                // right after promote_advisor and before any building work.
+                'when' => fn (BotSession $b) => self::merchantItemCandidate($b),
+                'do' => fn (BotSession $b, int $itemId) => $b->act('buy_merchant_item', 'POST', "/colony/merchant/buy/{$itemId}"),
+            ],
+            [
                 'name' => 'invest_cc',
                 // Phase 1: cap at Lv3 (the completion requirement) — investing further
                 // here competed with path-building Regolith and broke Phase-1 pacing
@@ -250,6 +264,31 @@ class BotStrategy
                 ]),
             ],
         ];
+    }
+
+    /**
+     * Cheapest not-yet-sold item from the currently active Merchant visit
+     * (Corvan's curated catalog, `merchant_items`/`merchant_visits` —
+     * distinct from the anonymous bar_offers barter pool). Cheapest-first to
+     * maximize item COUNT within limited Credits, since task_trade_volume
+     * counts purchases, not value.
+     */
+    private static function merchantItemCandidate(BotSession $b): ?int
+    {
+        $tick = app(TickService::class)->getTickCount();
+        $credits = self::credits($b);
+
+        $itemId = DB::table('merchant_items as mi')
+            ->join('merchant_visits as mv', 'mv.id', '=', 'mi.visit_id')
+            ->where('mv.colony_id', $b->colonyId)
+            ->where('mv.tick_start', '<=', $tick)
+            ->where('mv.tick_end', '>=', $tick)
+            ->where('mi.sold', 0)
+            ->where('mi.cost_credits', '<=', $credits)
+            ->orderBy('mi.cost_credits')
+            ->value('mi.id');
+
+        return $itemId !== null ? (int) $itemId : null;
     }
 
     private static function advisorService(): AdvisorService
@@ -439,10 +478,19 @@ class BotStrategy
             // Sort priority (ascending key = higher priority):
             //   key[0] = 0 for bioFacility (must be first — ramp gate),
             //             1 for path buildings (sciencelab/hangar/bar — unlock advisor slots),
-            //             2 for everything else
+            //             2 for trust buildings (infirmary/monument/temple/securityHub),
+            //             3 for everything else
             //   key[1] = existing instance count (prefer new building types)
             $pathIds = [31, 44, 52];       // sciencelab, hangar, bar
             $bioFacilityId = 41;
+            // A37-Folge (2026-09-14, task_colony_prosperity): the bot never placed
+            // ANY of these across every playtest report to date — "everything
+            // else, sorted by placed count" never singled them out among the
+            // whole non-path building catalog, so Trust plateaued at 17-20 (max
+            // theoretical with these built: ~45-55, see ROADMAP A37 write-up).
+            // Prioritized above generic buildings, below path/bioFacility —
+            // Trust is a real Phase-2 objective, not a nice-to-have.
+            $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
 
             $placedCounts = DB::table('colony_buildings')
                 ->where('colony_id', $b->colonyId)
@@ -451,8 +499,8 @@ class BotStrategy
                 ->groupBy('building_id')
                 ->pluck('cnt', 'building_id');
 
-            usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $bioFacilityId) {
-                $priority = function (array $building) use ($pathIds, $bioFacilityId, $placedCounts): int {
+            usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $bioFacilityId, $trustBuildingIds) {
+                $priority = function (array $building) use ($pathIds, $bioFacilityId, $trustBuildingIds, $placedCounts): int {
                     $id = (int) $building['building_id'];
                     // bioFacility is priority 0 only for its first (mandatory Ramp-Gate)
                     // instance — uncapped max_instances means it would otherwise always
@@ -467,8 +515,11 @@ class BotStrategy
                     if (in_array($id, $pathIds, true)) {
                         return 1;
                     }
+                    if (in_array($id, $trustBuildingIds, true)) {
+                        return 2;
+                    }
 
-                    return 2;
+                    return 3;
                 };
 
                 $pa = $priority($a);

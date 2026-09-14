@@ -78,7 +78,7 @@ return [
 
     'agronomy' => [
         'id' => 93,
-        'trust_per_lv' => 1,       // see GDD §13
+        'trust_per_lv' => 2,       // see GDD §13; 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
@@ -87,7 +87,7 @@ return [
 
     'health' => [
         'id' => 94,
-        'trust_per_lv' => 2,       // see GDD §13
+        'trust_per_lv' => 3,       // see GDD §13; 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
@@ -119,10 +119,11 @@ return [
     'defense' => [
         'id' => 96,
         // Vorzeichen umgekehrt (Owner-Entscheidung 2026-08-27, "Sicherheit schafft
-        // Vertrauen" statt "Wachsamkeit dämpft Vertrauen") — reiht defense neben
-        // agronomy (trust_per_lv=1) ein, dieselbe Magnitude wie zuvor, nur positiv.
-        // Zahlen-Kalibrierung nach Playtest (ADR 0004).
-        'trust_per_lv' => 1,
+        // Vertrauen" statt "Wachsamkeit dämpft Vertrauen") — dieselbe Magnitude
+        // wie agronomy ursprünglich, nur positiv. 1→2 (2026-09-14, A37-Folge
+        // task_colony_prosperity: realistisches Trust-Maximum lag bei ~50, weit
+        // unter der 70er-Zielschwelle — Trust-Quellen verstärkt statt Ziel gesenkt).
+        'trust_per_lv' => 2,
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
