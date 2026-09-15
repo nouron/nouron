@@ -249,8 +249,11 @@ class RunReport
         // candidate never fires because the colony never actually owns the
         // required ship type.
         $ships = [];
+        $shipStates = [];
         foreach (DB::table('colony_ships')->where('colony_id', $colonyId)->get() as $row) {
-            $ships[(int) $row->ship_id] = ($ships[(int) $row->ship_id] ?? 0) + 1;
+            $shipId = (int) $row->ship_id;
+            $ships[$shipId] = ($ships[$shipId] ?? 0) + 1;
+            $shipStates[$shipId][$row->ship_state] = ($shipStates[$shipId][$row->ship_state] ?? 0) + 1;
         }
 
         // A37 investigation prep: research/Kenntnis levels were never tracked
@@ -275,6 +278,7 @@ class RunReport
             'credits' => BotStrategy::credits($bot),
             'regolith' => BotStrategy::regolith($bot),
             'organics' => BotStrategy::organics($bot),
+            'compounds' => BotStrategy::compounds($bot),
             'ap' => [
                 'total' => $apAvailable,
                 'inflow' => $apInflow,
@@ -292,6 +296,7 @@ class RunReport
             'buildings' => $buildings,
             'researches' => $researches,
             'ships' => $ships,
+            'ship_states' => $shipStates,
             'supply' => [
                 'used' => $supplyUsed,
                 'cap' => $supplyCap,

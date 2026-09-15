@@ -34,4 +34,28 @@ class RunReportShipSnapshotTest extends TestCase
         $this->assertSame(2, $sol['ships'][47]);
         $this->assertSame(1, $sol['ships'][85]);
     }
+
+    /**
+     * A37-Rest continuation (2026-09-15): a ship_id count alone can't tell
+     * apart a freighter sitting 'docked' (dispatchable) from one stuck
+     * 'pending' (no free hangar slot) or 'dispatched' (already on a
+     * mission) — exactly the ambiguity that stalled the compounds-mission
+     * investigation.
+     */
+    public function test_snapshot_reports_ship_states_by_id(): void
+    {
+        $bot = BotSession::boot($this, seed: 1);
+
+        DB::table('colony_ships')->insert([
+            ['colony_id' => $bot->colonyId, 'ship_id' => 47, 'ship_state' => 'docked', 'status_points' => 20],
+            ['colony_id' => $bot->colonyId, 'ship_id' => 47, 'ship_state' => 'pending', 'status_points' => 20],
+        ]);
+
+        $report = new RunReport(seed: 1);
+        $report->snapshot($bot);
+        $sol = $report->build($bot)['sols'][0];
+
+        $this->assertArrayHasKey('ship_states', $sol);
+        $this->assertSame(['docked' => 1, 'pending' => 1], $sol['ship_states'][47]);
+    }
 }
