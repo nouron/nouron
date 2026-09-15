@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-15
+
+- Cantina-Grafik-Review: Barkeeper (Dauer-Charakter, Kenntnis-AP-Bonus) und Charakter-Anliegen bei zufälligen Begegnungen (variable Belohnung) als Konzeptstand ins GDD (§12 Kanal 1 Bar/Cantina) und ROADMAP (A40/A41) aufgenommen. Kein Code, Detailausarbeitung offen.
+
 ## 2026-09-14
 
 - Fix: A37-Rest — `task_trade_volume` war unerreichbar, weil der Bot nie `/merchant/buy/{itemId}` aufrief (identischer Zero-Rule-Bug wie A34). Neue `buy_merchant_item`-Regel, hoch priorisiert (Merchant-Besuche sind zeitlich begrenzt). 8-Seed-Batch: 4 von 8 Runs gewinnen jetzt (vorher 3/8).
