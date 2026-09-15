@@ -3,6 +3,7 @@
 ## 2026-09-15
 
 - Cantina-Grafik-Review: Barkeeper (Dauer-Charakter, Kenntnis-AP-Bonus) und Charakter-Anliegen bei zufälligen Begegnungen (variable Belohnung) als Konzeptstand ins GDD (§12 Kanal 1 Bar/Cantina) und ROADMAP (A40/A41) aufgenommen. Kein Code, Detailausarbeitung offen.
+- Fix: A37-Rest — Compounds-Bestand- und Schiffs-Zustand-Tracking in `RunReport` ergänzt, damit zwei tiefere Root Causes gefunden: (1) `shipToRequest()` kaufte Frachter ohne freien Hangar-Slot, gekaufte Schiffe verfielen im `pending`-Zustand; (2) Hangar/Wohnhabitat (beide quasi-unbegrenzt instanzierbar) füllten die Kolonie-Zone (~16 Tiles) lange bevor Trust-Gebäude je konkurrieren konnten — reine Prioritäts-Anpassung reichte nicht, harter Ausschluss ab 2 Instanzen nötig (Owner bestätigt: Design-Absicht 2-3 Hangars). Ergebnis: 2 von 3 vorher blockierten Seeds gewinnen jetzt (vorher 0/3), ein Seed baute erstmals alle 4 Trust-Gebäude und traf Trust=70 exakt (Schwelle `>70`, knapp verfehlt — Zahlen-Feinjustierung für später).
 
 ## 2026-09-14
 

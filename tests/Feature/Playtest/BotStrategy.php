@@ -20,6 +20,8 @@ class BotStrategy
 
     private const RES_ORGANICS = 5;
 
+    private const RES_COMPOUNDS = 4;
+
     private const RES_CREDITS = 1;
 
     // Engineer -> Scientist -> Pilot -> Trader: matches the sciencelab/hangar/bar
@@ -338,6 +340,15 @@ class BotStrategy
     }
 
     /** Shared with RunReport — the single source for this lookup. */
+    public static function compounds(BotSession $b): int
+    {
+        return (int) (DB::table('colony_resources')
+            ->where('colony_id', $b->colonyId)
+            ->where('resource_id', self::RES_COMPOUNDS)
+            ->value('amount') ?? 0);
+    }
+
+    /** Shared with RunReport — the single source for this lookup. */
     public static function ccLevel(BotSession $b): int
     {
         return (int) (DB::table('colony_buildings')
@@ -498,6 +509,33 @@ class BotStrategy
             $available = $b->peek('/colony/buildings/available');
             $buildings = $available['body']['buildings'] ?? [];
 
+            $placedCounts = DB::table('colony_buildings')
+                ->where('colony_id', $b->colonyId)
+                ->whereNotNull('tile_x')
+                ->selectRaw('building_id, COUNT(*) as cnt')
+                ->groupBy('building_id')
+                ->pluck('cnt', 'building_id');
+
+            // A37-Rest (2026-09-15): a lower sort priority alone doesn't reserve
+            // zone-tile headroom — Hangar/Housing are the only AFFORDABLE
+            // candidates early game (trust buildings below need compounds,
+            // which doesn't arrive until Sol 70-90), so they fill every one of
+            // the ~16 colony-zone tiles long before trust buildings ever
+            // compete, regardless of sort order. Owner confirmed the design
+            // intent is ~2-3 Hangar instances, not unlimited ("1 Hangar = 1
+            // Schiffslot" — uncapped in config, but not meant to be built
+            // without restraint) — so these are hard-EXCLUDED from the
+            // candidate list entirely once capped, reserving tiles for other
+            // building types rather than "lowest priority but still the only
+            // option".
+            $instanceCap = [44 => 2, 28 => 2]; // hangar, housingComplex
+            $buildings = array_values(array_filter($buildings, function (array $building) use ($instanceCap, $placedCounts) {
+                $id = (int) $building['building_id'];
+                $cap = $instanceCap[$id] ?? null;
+
+                return $cap === null || ($placedCounts[$id] ?? 0) < $cap;
+            }));
+
             // Sort priority (ascending key = higher priority):
             //   key[0] = 0 for bioFacility (must be first — ramp gate),
             //             1 for path buildings (sciencelab/hangar/bar — unlock advisor slots),
@@ -515,13 +553,6 @@ class BotStrategy
             // Trust is a real Phase-2 objective, not a nice-to-have.
             $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
 
-            $placedCounts = DB::table('colony_buildings')
-                ->where('colony_id', $b->colonyId)
-                ->whereNotNull('tile_x')
-                ->selectRaw('building_id, COUNT(*) as cnt')
-                ->groupBy('building_id')
-                ->pluck('cnt', 'building_id');
-
             usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $bioFacilityId, $trustBuildingIds) {
                 $priority = function (array $building) use ($pathIds, $bioFacilityId, $trustBuildingIds, $placedCounts): int {
                     $id = (int) $building['building_id'];
@@ -535,7 +566,18 @@ class BotStrategy
                     if ($id === $bioFacilityId && ($placedCounts[$bioFacilityId] ?? 0) === 0) {
                         return 0;
                     }
-                    if (in_array($id, $pathIds, true)) {
+                    // A37-Rest continuation (2026-09-15): path priority used to
+                    // apply unconditionally, not just to a path building's FIRST
+                    // instance — but Hangar has uncapped max_instances (GDD
+                    // "Hangar-Doppelachse"), so it kept winning every free
+                    // colony-zone tile forever (found: 6 hangar instances built,
+                    // zero trust buildings ever placed despite priority 2 and
+                    // plenty of compounds — the zone tiles were gone before trust
+                    // buildings got a turn). Same fix shape as bioFacility above:
+                    // only the first instance of a path building (which is what
+                    // actually unlocks its advisor slot) gets priority 1; repeats
+                    // fall through to the normal tiers.
+                    if (in_array($id, $pathIds, true) && ($placedCounts[$id] ?? 0) === 0) {
                         return 1;
                     }
                     if (in_array($id, $trustBuildingIds, true)) {
@@ -779,10 +821,20 @@ class BotStrategy
      * bought only into a free hangar slot so it actually docks and can fly
      * mission_recon_flight. Further purchases only open up once all 3
      * Phase-1 advisors are hired, preferring the freighter (needed to ever
-     * exercise the trade/Path-B code path) over another drone — bought
-     * regardless of a free slot, since HangarService::requestShip supports
-     * a 'pending' ship_state when the hangar is full (real game mechanic,
-     * see request_ship rule comment above).
+     * exercise the trade/Path-B code path, and now dispatch_compounds_mission)
+     * over another drone.
+     *
+     * A37-Rest continuation (2026-09-15): the freighter branch used to buy
+     * regardless of a free hangar slot, reasoning that HangarService's
+     * 'pending' ship_state was a safe real-game fallback. In practice it
+     * wasn't — found via the new ship_states RunReport snapshot
+     * (RunReportShipSnapshotTest): a colony bought 3 pending freighters
+     * (Sol 13-18), all of which decayed away entirely before a 2nd Hangar
+     * instance opened a slot (Sol 35), wasting 1500 Credits into nothing and
+     * leaving `dispatch_compounds_mission` permanently without an eligible
+     * ship for the rest of the run. Now gated on hasFreeHangarSlot() like
+     * the bootstrap drone purchase — a freighter bought without a slot to
+     * receive it is a wasted purchase, not a deferred one.
      */
     private static function shipToRequest(BotSession $b): ?int
     {
@@ -801,7 +853,7 @@ class BotStrategy
         }
 
         $freighterCost = (int) config('ships.freighter.nexus_cost', 0);
-        if ($credits >= $freighterCost) {
+        if ($credits >= $freighterCost && self::hasFreeHangarSlot($b)) {
             return (int) config('ships.freighter.id');
         }
 
