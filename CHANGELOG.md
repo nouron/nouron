@@ -3,6 +3,7 @@
 ## 2026-09-16
 
 - A37 abgeschlossen: Trust=70-exakt-Miss (1/3 Seeds) via game-designer bewertet, Owner-Einwand ("Bots spielen nicht optimal, soll schwer bleiben") bestätigt — `task_colony_prosperity` verlangt Streak von 10 Ticks über Trust>70, strukturell härteste der 6 Task-Kategorien by design. Stichprobe (3 Seeds) zu klein für weitere Zahlenkorrektur. Entscheidung: so belassen, keine weitere Änderung an `trust_per_lv`/`trust_per_unit`.
+- A42 (neu): Deva/Lenn (information-Rolle) + Charakter-Kodex als Konzeptstand ins GDD (§12 Kanal 1) und ROADMAP aufgenommen — wiederholbare Begegnung mit Vier-Ausgänge-Pool (2 mechanisch, je 1×/Run; 2 narrativ, unbegrenzt) plus run-übergreifender, rein narrativer Charakter-Kodex für den ganzen Cantina-Cast (kein Mechanik-Bonus). Kein Code, Detailausarbeitung offen.
 
 ## 2026-09-15
 

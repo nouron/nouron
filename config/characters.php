@@ -11,8 +11,11 @@
  *     personalized flavor line (lang/de/colony.php → bar_trade_flavor_*)
  *   - story_hook: flavor-only encounter, no resource/Credits effect at all
  *     (Leitplanke §12: not every figure gets an economic tie-in)
- *   - information: role reserved, no mechanic yet (Deva/Lenn — deferred,
- *     A36 follow-up, not part of this iteration)
+ *   - information: repeatable encounter with a per-character outcome pool
+ *     (tactical buffs/knowledge progress, capped once per run per outcome
+ *     type, plus unlimited flavor-only outcomes) — Deva/Lenn, concept
+ *     finalized in GDD §12 "Deva & Lenn — taktische Information", not yet
+ *     implemented
  */
 return [
     'bartender' => ['name' => 'Tomas',  'role' => 'Bartender', 'game_role' => 'permanent'],
