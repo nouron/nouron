@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-16
+
+- A37 abgeschlossen: Trust=70-exakt-Miss (1/3 Seeds) via game-designer bewertet, Owner-Einwand ("Bots spielen nicht optimal, soll schwer bleiben") bestätigt — `task_colony_prosperity` verlangt Streak von 10 Ticks über Trust>70, strukturell härteste der 6 Task-Kategorien by design. Stichprobe (3 Seeds) zu klein für weitere Zahlenkorrektur. Entscheidung: so belassen, keine weitere Änderung an `trust_per_lv`/`trust_per_unit`.
+
 ## 2026-09-15
 
 - Cantina-Grafik-Review: Barkeeper (Dauer-Charakter, Kenntnis-AP-Bonus) und Charakter-Anliegen bei zufälligen Begegnungen (variable Belohnung) als Konzeptstand ins GDD (§12 Kanal 1 Bar/Cantina) und ROADMAP (A40/A41) aufgenommen. Kein Code, Detailausarbeitung offen.
