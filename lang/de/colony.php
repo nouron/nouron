@@ -287,6 +287,175 @@ return [
     'bar_encounter_contract_body' => 'Ein durchreisender Abnehmer bietet ein befristetes Geschäft — Credits für ein paar Sole, dann ist er weitergezogen.',
     'bar_encounter_accept' => 'Annehmen',
 
+    // ── Cantina-Barkeeper Tomas (A40) ────────────────────────────────────────
+    // "Mit Tomas reden" — kostenlose Interaktion, kein AP-Kosten-Check. Die 4
+    // Tier-Varianten spiegeln config('game.bartender.ap_bonus_tiers') (0/5/15/30
+    // Interaktionen -> 0/1/2/3 AP) und werden wärmer, je vertrauter Tomas den
+    // Direktor kennt.
+    'bartender_talk_button' => 'Mit Tomas reden',
+    'bartender_dialog_intro' => 'Tomas hört zu, während er ein Glas poliert — bei ihm ist kein Wort verschwendet, aber jedes zählt.',
+    'bartender_dialog_tier_0' => '„Erzähl mir, was dich umtreibt." Er nickt knapp und hört zu — mehr nicht, noch kennt er dich nicht gut genug.',
+    'bartender_dialog_tier_1' => 'Tomas hält kurz inne. „Dich seh ich öfter." Er schiebt dir wortlos einen Gedanken zu, der weiterhilft.',
+    'bartender_dialog_tier_2' => 'Er stellt das Glas ab und setzt sich für einen Moment hin. „Du bist kein Fremder mehr hier." Was er dir mitgibt, wiegt mehr als sonst.',
+    'bartender_dialog_tier_3' => 'Tomas lächelt kurz — selten genug, dass es auffällt. „Du gehörst hierher." Er gibt dir mehr, als er den meisten je gegeben hat.',
+
+    // ── Charakter-Anliegen (A41) ────────────────────────────────────────────────
+    // Je Figur eine Ansprache-Zeile + Erfolgs-Zeile; eine Fehlschlag-Zeile nur
+    // dort, wo config('game.bar.concern.success_chance.<slug>') < 1.0 ist
+    // (prospector 0.50, founder 0.70, preacher 0.65, stranger 0.35 — die
+    // übrigen 5 Figuren gelingen garantiert, siehe config/game.php).
+    'bar_concern_not_found' => 'Anliegen nicht gefunden.',
+    'bar_concern_already_resolved' => 'Anliegen wurde bereits erledigt.',
+    'bar_concern_expired' => 'Das Anliegen ist erledigt — die Person ist weitergezogen.',
+    'bar_concern_insufficient_resources' => 'Nicht genügend Ressourcen für den Einsatz.',
+    'bar_concern_insufficient_ap' => 'Nicht genügend AP.',
+    'bar_concern_heading' => 'Anliegen',
+    'bar_concern_resolve' => 'Helfen',
+
+    'bar_concern_smuggler_intro' => 'Dax rutscht dichter heran, den Blick auf die Tür gerichtet. „Ich brauch für ein paar Tage eine Geschichte, die niemand hinterfragt — Deckung, nichts weiter."',
+    'bar_concern_smuggler_success' => 'Dax nickt knapp. Tage später steht unangemeldet ein Schiff im Hangar — seine Art, sich erkenntlich zu zeigen.',
+
+    'bar_concern_information_broker_intro' => 'Vesper legt die Hände auf den Tisch. „Ich weiß von einer Schwachstelle in eurer nächsten Bauplanung — die Information hat ihren Preis, aber sie ist es wert."',
+    'bar_concern_information_broker_success' => 'Vesper schiebt dir ein Datenfragment zu — die nächste Bauinvestition der Kolonie wird günstiger ausfallen, als sie es sonst täte.',
+
+    'bar_concern_mechanic_intro' => 'Sarka wischt sich die Hände an einem Lappen ab. „Ich komm allein nicht mehr durch die Wartungsliste. Ein paar Hände, die mitdenken, würden reichen."',
+    'bar_concern_mechanic_success' => 'Zu zweit geht es schneller, als Sarka erwartet hat. Sie knurrt ein „passt schon" — von ihr fast ein Kompliment — und gibt dir weiter, was sie dabei gelernt hat.',
+
+    'bar_concern_doctor_intro' => 'Maret reibt sich die Augen. „Mir fehlen Ersatzteile für die Medizintechnik — nichts Dramatisches, aber ohne komm ich nicht weiter."',
+    'bar_concern_doctor_success' => 'Mit den beschafften Teilen lässt sich improvisieren. Maret bedankt sich knapp und gibt dir im Gegenzug etwas ab von dem, was in der Krankenstation übrig ist.',
+
+    'bar_concern_prospector_intro' => 'Fen wiegt eine Probe in der Hand. „Ich hab eine Spur auf ein Vorkommen — unbestätigt, vielleicht nichts. Wer sich traut, kann sie verfolgen."',
+    'bar_concern_prospector_success' => 'Die Spur war echt. Fen grinst zufrieden, als du mit vollen Händen zurückkommst — auch wenn sie tut, als hätte sie nie gezweifelt.',
+    'bar_concern_prospector_failure' => 'Das Vorkommen erweist sich als taub. Fen zuckt mit den Schultern. „Passiert. Nächstes Mal wieder."',
+
+    'bar_concern_mercenary_intro' => 'Juno mustert dich lange, bevor sie spricht. „Eure Sicherheitslage hat Lücken. Ich sag dir, wo — für eine angemessene Gegenleistung."',
+    'bar_concern_mercenary_success' => 'Junos Einschätzung ist präzise wie erwartet. Die vereinbarte Gegenleistung wechselt wortlos den Besitzer.',
+
+    'bar_concern_founder_intro' => 'Aldra kramt in einer alten Tasche. „Ich hab noch Baupläne aus den ersten Jahren — vielleicht taugt was davon noch heute."',
+    'bar_concern_founder_success' => 'Die alten Pläne sind tatsächlich brauchbar — vieles hat sich seit den ersten Jahren kaum verändert. Aldra nickt zufrieden, als hätte sie es gewusst.',
+    'bar_concern_founder_failure' => 'Die Pläne sind zu veraltet, um noch zu passen. Aldra seufzt. „Manches bleibt eben in der Vergangenheit."',
+
+    'bar_concern_preacher_intro' => 'Sorel faltet die Hände. „In der Kolonie gärt ein Streit, den niemand offen ausspricht. Jemand muss vermitteln, bevor er größer wird."',
+    'bar_concern_preacher_success' => 'Die Vermittlung gelingt — nicht perfekt, aber genug. Sorel nickt zufrieden. „Das war es wert."',
+    'bar_concern_preacher_failure' => 'Der Streit lässt sich nicht schlichten, im Gegenteil. Sorel presst die Lippen zusammen. „Manche Wunden brauchen mehr als ein Gespräch."',
+
+    'bar_concern_stranger_intro' => 'Die Fremde schiebt dir einen Umschlag zu, ohne aufzuschauen. Kein Name, keine Erklärung — nur eine Erwartung, die im Raum steht.',
+    'bar_concern_stranger_success' => 'Was auch immer erwartet wurde, ist erledigt. Die Fremde nimmt einen Schluck aus ihrem Glas und sagt kein Wort dazu — nur die Bezahlung liegt bereit.',
+    'bar_concern_stranger_failure' => 'Etwas läuft schief — was genau, bleibt unklar. Die Fremde verschwindet, ohne eine Erklärung zu hinterlassen. Der Einsatz ist verloren.',
+
+    // ── Deva & Lenn — taktische Information (A42) ──────────────────────────────
+    // Alle 8 Ausgänge (4 pro Figur) bereits final formuliert.
+    'bar_information_not_found' => 'Gespräch nicht gefunden.',
+    'bar_information_already_resolved' => 'Das Gespräch ist bereits beendet.',
+    'bar_information_expired' => 'Die Gelegenheit ist vorüber.',
+    'bar_information_heading' => 'Taktische Information',
+    'bar_information_resolve' => 'Nachfragen',
+    'bar_information_veteran_drill_buffer' => 'Deva zeigt dir einen Handgriff, der im Ernstfall Zeit kostet — dem Gegner.',
+    'bar_information_veteran_knowledge_boost' => 'Deva denkt kurz nach und gibt dir einen gezielten Hinweis weiter.',
+    'bar_information_veteran_narrative_1' => 'Deva erzählt beiläufig von einem alten Einsatz — nichts, was dir hier weiterhilft.',
+    'bar_information_veteran_narrative_2' => 'Deva nickt dir knapp zu und schweigt den Rest des Gesprächs.',
+    'bar_information_ai_researcher_nav_discount' => 'Lenn tippt etwas in ein Datenpad und reicht es dir — die nächste Erkundung ist vorbereitet.',
+    'bar_information_ai_researcher_knowledge_boost' => 'Lenn murmelt etwas über Kartierungsalgorithmen und schiebt dir ihre Notizen zu.',
+    'bar_information_ai_researcher_narrative_1' => 'Lenn verliert sich in einer Theorie, der du nicht ganz folgen kannst.',
+    'bar_information_ai_researcher_narrative_2' => 'Lenn wirkt abgelenkt und wechselt schnell das Thema.',
+
+    // ── Charakter-Kodex (A42) ───────────────────────────────────────────────────
+    // 5 Lore-Snippets je der 15 config('characters')-Figuren (Key-Muster
+    // codex_entry_<slug>_<1-5>, entry_number aus CharacterCodexService).
+    // Vertiefen/ergänzen die Charakterbögen (docs/characters/*.md), schreiben
+    // sie nicht ab. Kurz gehalten — Sammel-Nachschlagewerk, keine Kurzgeschichten.
+    'codex_heading' => 'Charakter-Kodex',
+
+    'codex_entry_bartender_1' => 'Vor der Kolonie diente Tomas auf einer Versorgungsstation im Outer Reach — was ihn von dort wegtrieb, hat er nie erzählt.',
+    'codex_entry_bartender_2' => 'Die drei Balken und der Kreis auf seinem Unterarm sind das Kennzeichen einer Station, die es offiziell nicht mehr gibt.',
+    'codex_entry_bartender_3' => 'Tomas führt kein Namensregister — und braucht keines. Er merkt sich jedes Gesicht, jede Bestellung, jeden Groll.',
+    'codex_entry_bartender_4' => 'Fragt man ihn nach seiner Herkunft, wechselt er das Thema mit einer neuen Runde.',
+    'codex_entry_bartender_5' => 'Manche sagen, Tomas habe die Cantina übernommen, weil sie der letzte Ort war, an dem ihn niemand nach seinem Namen fragte.',
+
+    'codex_entry_smuggler_1' => 'Dax kennt Depots, die in keinem Nexus-Register auftauchen — und Patrouillen, die genau dann wegsehen, wenn er es braucht.',
+    'codex_entry_smuggler_2' => 'Er sitzt nie mit dem Rücken zur Tür und verlässt die Cantina nie durch den Haupteingang — beides aus Gewohnheit, nicht aus Zufall.',
+    'codex_entry_smuggler_3' => 'Zwanzig Jahre im Geschäft haben ihm keine Loyalitäten hinterlassen, nur Preise.',
+    'codex_entry_smuggler_4' => 'Was er transportiert, fragt er selten — solange die Bezahlung stimmt.',
+    'codex_entry_smuggler_5' => 'Es gibt Gerüchte über eine Fracht, die er einmal nicht ausgeliefert hat. Er bestreitet, dass es sie je gab.',
+
+    'codex_entry_information_broker_1' => 'Vesper nennt keine Herkunft — jede Antwort darauf wäre ohnehin nur eine weitere Information, die sie verkaufen könnte.',
+    'codex_entry_information_broker_2' => 'Der kleine Datenstecker hinter ihrem Ohr ist mehr als Zierrat — manche behaupten, sie zeichnet jedes Gespräch auf, das sie führt.',
+    'codex_entry_information_broker_3' => 'Ihre Kontakte reichen angeblich bis in Nexus-nahe Strukturen — bewiesen hat sie das nie, bestritten auch nicht.',
+    'codex_entry_information_broker_4' => 'Sie taucht immer genau dann auf, wenn sie etwas weiß, das gerade relevant wird — Zufall ist das nicht.',
+    'codex_entry_information_broker_5' => 'Ein Gespräch mit Vesper fühlt sich immer wie ein Tausch an, auch wenn man nie merkt, was man selbst preisgegeben hat.',
+
+    'codex_entry_mechanic_1' => 'Sarka hält drei Viertel der Verteilersysteme der Kolonie eigenhändig am Laufen — offiziell zählt dazu nicht ihr Schlaf.',
+    'codex_entry_mechanic_2' => 'Sie kann keinen Raum betreten, ohne Scharniere zu prüfen und Ventile zu bewerten — auch die Cantina bleibt davon nicht verschont.',
+    'codex_entry_mechanic_3' => 'Ihre Überstunden würde niemand je bezahlen können — sie hat aufgehört, sie zu zählen.',
+    'codex_entry_mechanic_4' => 'Ihre Einschätzungen sind ungeschönt und deshalb verlässlich — Sarka sagt nie mehr, als nötig ist, aber nie weniger.',
+    'codex_entry_mechanic_5' => 'Wer sie nach ihrem letzten freien Tag fragt, bekommt nur ein müdes Lachen als Antwort.',
+
+    'codex_entry_corporate_rep_1' => 'Niemand hat je herausgefunden, für wen Orin tatsächlich arbeitet — fragt man ihn, nennt er jedes Mal eine andere Firma.',
+    'codex_entry_corporate_rep_2' => 'Er taucht auf, wenn Lieferverträge, Abbaurechte oder regulatorische Fragen zu klären sind — nie ohne Grund.',
+    'codex_entry_corporate_rep_3' => 'Sein Datenpad verlässt ihn nie — was darauf gespeichert ist, zeigt er niemandem.',
+    'codex_entry_corporate_rep_4' => 'Er ist höflich auf eine Art, die keine Nähe zulässt — Freundlichkeit als Werkzeug, nicht als Angebot.',
+    'codex_entry_corporate_rep_5' => 'Was er wirklich will, deckt sich selten mit dem, was er sagt — das weiß inzwischen jeder in der Cantina.',
+
+    'codex_entry_founder_1' => 'Aldra war da, als die ersten Strukturmodule gesetzt wurden — lange bevor Nexus mitzureden hatte.',
+    'codex_entry_founder_2' => 'Sie nennt jeden Ort in der Kolonie noch bei seinem ursprünglichen Namen — Namen, die sonst niemand mehr kennt.',
+    'codex_entry_founder_3' => 'Ihre Pläne für die Kolonie sahen eine Siedlung vor, die sich selbst trägt — keine Versorgungsstation für Konzerninteressen. Daraus wurde nichts.',
+    'codex_entry_founder_4' => 'Sie ist geblieben, weil sie nirgendwo sonst hingehört — nicht, weil sie mit dem einverstanden ist, was aus ihrer Kolonie wurde.',
+    'codex_entry_founder_5' => 'Den Direktor beobachtet sie mit einer Mischung aus Hoffnung und Skepsis — als hätte sie diesen Blick schon oft gehabt.',
+
+    'codex_entry_gambler_1' => 'Zara wettet auf alles — die Lebensdauer eines Gebäudes, das nächste Lieferdatum, die Regenwahrscheinlichkeit am nächsten Morgen.',
+    'codex_entry_gambler_2' => 'Sie betrügt nicht — zumindest nicht schlecht — und hat den Ruf, ihre Schulden immer zu begleichen.',
+    'codex_entry_gambler_3' => 'Seit Jahren hat sie kein festes Quartier und offenbar keine Notwendigkeit, sich eines zu leisten.',
+    'codex_entry_gambler_4' => 'Woher ihr Startkapital stammte, weiß niemand mehr — sie selbst am wenigsten, oder sie sagt es nur so.',
+    'codex_entry_gambler_5' => 'Der glatte Metallring an ihrem Finger wandert ständig zwischen Drehen und Abnehmen — niemand hat sie je gefragt, warum.',
+
+    'codex_entry_ai_researcher_1' => 'Lenn arbeitete früher für eine Nexus-nahe Forschungseinrichtung — bis er die genehmigten Parameter zu weit hinter sich ließ.',
+    'codex_entry_ai_researcher_2' => 'Was er entwickelt, verrät er nicht — nur, dass es Rechenleistung braucht, die die Kolonie kaum überwacht.',
+    'codex_entry_ai_researcher_3' => 'Sein Ohrstecker mit der kleinen LED ist fast nie aus — ob dort ein Programm läuft oder etwas anderes, bleibt offen.',
+    'codex_entry_ai_researcher_4' => 'Manchmal führt er halbe Gespräche mit jemandem, der nicht da ist — niemand fragt mehr nach, warum.',
+    'codex_entry_ai_researcher_5' => 'Gelegentlich braucht er Bauteile, die in keinem regulären Katalog stehen — woher er die sonst bekommt, weiß niemand.',
+
+    'codex_entry_veteran_1' => 'Deva diente dreißig Jahre, zuletzt als Kompaniekommandantin bei Sicherungsmissionen an der Grenze unkartierter Sektoren.',
+    'codex_entry_veteran_2' => 'Sie ist nicht aus militärischen Gründen in der Kolonie — sie suchte jemanden, fand die Person nie und blieb.',
+    'codex_entry_veteran_3' => 'Sicherheitsprotokolle und taktische Einschätzungen teilt sie nur, wenn sie den Anlass für würdig hält.',
+    'codex_entry_veteran_4' => 'Die alte Narbe von der Schläfe bis zum Kinn erklärt sie nie — wer danach fragt, bekommt keine Antwort.',
+    'codex_entry_veteran_5' => 'Sie trinkt nie mehr als zwei Gläser — und beobachtet jeden, der mehr trinkt als sie.',
+
+    'codex_entry_stranger_1' => 'Niemand weiß, wann diese Person zum ersten Mal in der Cantina saß — sie war irgendwann einfach da.',
+    'codex_entry_stranger_2' => 'Sie berührt ihr Glas kaum, sitzt aber stundenlang daran, als wäre die Zeit für sie etwas anderes.',
+    'codex_entry_stranger_3' => 'Tomas bedient sie, ohne zu fragen — was auch immer der Grund dafür ist, kennt nur er.',
+    'codex_entry_stranger_4' => 'Ihre Fragen wirken im Moment harmlos — erst Stunden später merkt man, wie seltsam sie eigentlich waren.',
+    'codex_entry_stranger_5' => 'Woher sie kommt, mit wem sie reist, warum sie hier ist — niemand hat je eine Antwort bekommen.',
+
+    'codex_entry_doctor_1' => 'Marets Dienst endet offiziell um 22 Uhr — praktisch endet er nie.',
+    'codex_entry_doctor_2' => 'Sie ist die einzige ausgebildete Ärztin der Kolonie — eine Tatsache, die ihr keine Ruhe lässt.',
+    'codex_entry_doctor_3' => 'In der Cantina sucht sie Stille, findet aber meist Patienten, die wissen, wo sie sitzt.',
+    'codex_entry_doctor_4' => 'Sie verspricht nie mehr, als sie halten kann — auch wenn das bedeutet, wenig zu versprechen.',
+    'codex_entry_doctor_5' => 'Für große Gesten hat sie keine Kraft mehr übrig — für den Einzelnen vor ihr findet sie trotzdem noch etwas.',
+
+    'codex_entry_preacher_1' => 'Sorel zitiert keine Schriften — sie argumentiert, als erkläre sie etwas Selbstverständliches, das andere nur noch nicht gesehen haben.',
+    'codex_entry_preacher_2' => 'Sie vertritt eine Weltanschauung, keine Religion — und lässt diesen Unterschied nie unerwähnt.',
+    'codex_entry_preacher_3' => 'Ihr Einfluss reicht in Fragen, wie Ressourcen verteilt werden und wie die Kolonie mit Fremden umgeht.',
+    'codex_entry_preacher_4' => 'Das handbedruckte Tuch um ihren Hals wechselt sie regelmäßig — als hätte jedes eine eigene Bedeutung.',
+    'codex_entry_preacher_5' => 'Ob sie recht hat mit dem, was sie predigt, ist eine Frage, die in der Cantina niemand laut zu stellen wagt.',
+
+    'codex_entry_prospector_1' => 'Fen zieht seit drei Jahrzehnten zwischen Kolonien und Außenposten umher — immer auf der Suche nach Vorkommen, die offizielle Vermessungsteams übersehen haben.',
+    'codex_entry_prospector_2' => 'Sie kann nicht anders, als den materiellen Wert von allem um sich herum abzuschätzen — auch von Dingen, die niemand verkaufen will.',
+    'codex_entry_prospector_3' => 'Sie behauptet, wegen Tomas\' Bier zurückzukommen — dass die Kolonie ein guter Stützpunkt ist, gibt sie nur zögernd zu.',
+    'codex_entry_prospector_4' => 'Informationen liefert sie wie Ware — nüchtern, ohne Verkaufsgespräch, ohne Übertreibung.',
+    'codex_entry_prospector_5' => 'Manche ihrer Spuren erweisen sich als taub — sie nimmt das mit derselben Gelassenheit wie einen Treffer.',
+
+    'codex_entry_mercenary_1' => 'Juno hat für diverse Auftraggeber gearbeitet — keiner davon mit einem Namen, der in einem öffentlichen Verzeichnis auftaucht.',
+    'codex_entry_mercenary_2' => 'Vor zwei Jahren hat sie aufgehört, aktive Aufträge anzunehmen. Warum, sagt sie nicht.',
+    'codex_entry_mercenary_3' => 'Sie kam zur Kolonie, weil sie hier niemanden kannte — das war ursprünglich der einzige Grund.',
+    'codex_entry_mercenary_4' => 'Über konkrete Einsätze spricht sie nie — nur über Prinzipien, Kosten und Konsequenzen.',
+    'codex_entry_mercenary_5' => 'Wie sie einen Raum liest, sagt mehr über sie als jede Ausrüstung, die sie nicht mehr trägt.',
+
+    'codex_entry_scrap_dealer_1' => 'Voss kauft, sammelt und verkauft, was andere wegwerfen oder nicht mehr brauchen — sein Lagerbestand ist Chaos, sein Inventar lebt nur in seinem Kopf.',
+    'codex_entry_scrap_dealer_2' => 'Er beginnt Preisverhandlungen immer mit einer wild überzogenen Zahl — und macht danach trotzdem ein faires Angebot.',
+    'codex_entry_scrap_dealer_3' => 'Er handelt gelegentlich mit Dingen, deren Herkunft er lieber nicht genauer beschreibt.',
+    'codex_entry_scrap_dealer_4' => 'Stille empfindet er als Zeitverschwendung — sein Redefluss versiegt praktisch nie.',
+    'codex_entry_scrap_dealer_5' => 'Trotz seines Rufs als schlechter Verhandler ist noch niemand von ihm betrogen worden.',
+
     // ── Cantina-Charakter-Zuordnung (A36) ──────────────────────────────────────
     // bar_trade — personalisierte Zeile im Gäste-Tauschangebot-Dialog, zeigt sich
     // zusätzlich zum generischen Geben/Bekommen-Raster, kein neuer Mechanismus.
@@ -445,5 +614,16 @@ return [
     'encounter_notice_storm_abgewehrt' => 'Sturm bei :building erfolgreich abgewehrt — kein Schaden.',
     'encounter_notice_storm_beschaedigt' => 'Sturmschaden an :building.',
     'encounter_notice_storm_kritisch' => 'Kritischer Sturmschaden an :building — Level gesunken.',
+
+    // ── UI: Tomas-Dialog, Anliegen-/Informations-Dialog-Chrome, Kodex-Nav (A40/A41/A42) ──
+    'user_nav_codex' => 'Charakter-Kodex',
+    'bartender_knowledge_label' => 'In welche Kenntnis fließt der Hinweis?',
+    'bartender_error_cooldown' => 'Tomas hat dir für heute schon einen Rat mitgegeben — versuch es nächstes Sol wieder.',
+    'bartender_error_generic' => 'Das Gespräch kam nicht zustande.',
+    'bar_concern_knowledge_label' => 'In welche Kenntnis soll die Hilfe fließen?',
+    'bar_information_knowledge_label' => 'Welche Kenntnis soll profitieren?',
+    'codex_page_intro' => 'Jede Figur der Cantina hinterlässt Spuren — je öfter ihr euch begegnet, desto mehr erfährst du über sie. Freigeschaltete Einträge bleiben dir über das Ende eines Runs hinaus erhalten.',
+    'codex_locked_entry' => '???',
+    'codex_no_entries_yet' => 'Noch keine Einträge freigeschaltet.',
 
 ];

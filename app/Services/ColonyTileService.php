@@ -43,13 +43,30 @@ class ColonyTileService
         $baseApCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
         $apCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseApCost);
 
+        // Lenn's "Navigation-Rabatt" Vier-Ausgänge-Pool outcome (A42) — a
+        // granted, unconsumed voucher waives the Nav-AP cost entirely for
+        // this call (100% discount, not additive with the cartography
+        // discount above — the whole cost simply becomes 0).
+        $hasActiveNavVoucher = (bool) DB::table('colony_information_pool_state')
+            ->where('colony_id', $colonyId)
+            ->where('active_nav_voucher', true)
+            ->exists();
+        if ($hasActiveNavVoucher) {
+            $apCost = 0;
+        }
+
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $apCost) {
             return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap')];
         }
 
         $tile->is_explored = true;
         $tile->save();
-        if (! config('game.bypass.ap_checks')) {
+        if ($hasActiveNavVoucher) {
+            DB::table('colony_information_pool_state')
+                ->where('colony_id', $colonyId)
+                ->update(['active_nav_voucher' => false]);
+        }
+        if (! config('game.bypass.ap_checks') && $apCost > 0) {
             $this->advisorService->lockActionPoints($colonyId, $apCost);
         }
 

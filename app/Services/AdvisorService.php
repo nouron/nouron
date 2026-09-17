@@ -70,10 +70,19 @@ class AdvisorService
         $multiplier = $this->trustService->getApMultiplier($trust);
 
         // Seuchenausbruch (GDD §9): temporary AP-reduction debuff while
-        // glx_colonies.plague_until_tick is still in the future.
-        $plagueUntilTick = DB::table('glx_colonies')->where('id', $colonyId)->value('plague_until_tick');
-        $plagueActive = $plagueUntilTick !== null && (int) $plagueUntilTick >= $this->tickService->getTickCount();
-        $plagueMultiplier = $plagueActive ? (1 - (float) config('game.encounter.plague.ap_reduction_pct', 0.20)) : 1.0;
+        // glx_colonies.plague_until_tick is still in the future. The reduction
+        // percentage itself is read from plague_ap_reduction_pct — set per
+        // episode by GameTick::rollPlague() (halved when Deva's "Drill-
+        // Reaktionspuffer", A42, was active) — falling back to the global
+        // config default for rows where it was never set (e.g. plague_until_tick
+        // set directly in a test, bypassing rollPlague()).
+        $plagueRow = DB::table('glx_colonies')->where('id', $colonyId)->first(['plague_until_tick', 'plague_ap_reduction_pct']);
+        $plagueActive = $plagueRow !== null && $plagueRow->plague_until_tick !== null
+            && (int) $plagueRow->plague_until_tick >= $this->tickService->getTickCount();
+        $plagueReductionPct = $plagueRow?->plague_ap_reduction_pct !== null
+            ? (float) $plagueRow->plague_ap_reduction_pct
+            : (float) config('game.encounter.plague.ap_reduction_pct', 0.20);
+        $plagueMultiplier = $plagueActive ? (1 - $plagueReductionPct) : 1.0;
 
         return [
             'base' => $baseAp,

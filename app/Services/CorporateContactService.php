@@ -27,6 +27,7 @@ class CorporateContactService
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly TradingPostService $tradingPostService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly CharacterCodexService $characterCodexService,
     ) {}
 
     /**
@@ -86,6 +87,9 @@ class CorporateContactService
             DB::table('user_resources')->where('user_id', $userId)->decrement('credits', $offer['price']);
             $this->harvesterEntitlementService->grantPurchase($userId);
         });
+
+        // Charakter-Kodex (A42) — Orin's (corporate_rep) dedicated mechanic.
+        $this->characterCodexService->recordProgress($userId, 'corporate_rep');
 
         return ['ok' => true, 'price' => $offer['price']];
     }

@@ -12,6 +12,7 @@ use App\Models\ColonyResource;
 use App\Models\Run;
 use App\Models\UserResource;
 use App\Services\BarService;
+use App\Services\CharacterCodexService;
 use App\Services\EncounterService;
 use App\Services\EventService;
 use App\Services\HangarService;
@@ -75,6 +76,7 @@ class GameTick extends Command
         private readonly MerchantService $merchantService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly HangarService $hangarService,
+        private readonly CharacterCodexService $characterCodexService,
     ) {
         parent::__construct();
     }
@@ -1472,6 +1474,15 @@ class GameTick extends Command
         }
 
         $outageSols = (int) ($cfg['outage_sols'] ?? 3);
+
+        // Deva's "Drill-Reaktionspuffer" (A42) — halves the outage this
+        // instance, consumed the moment it applies. See config/game.php →
+        // bar.information_pool.veteran.drill_buffer_reduction_pct.
+        if ($this->consumeActiveDrillBuffer($colony->id)) {
+            $reductionPct = (float) config('game.bar.information_pool.veteran.drill_buffer_reduction_pct', 0.5);
+            $outageSols = max(1, (int) ceil($outageSols * (1 - $reductionPct)));
+        }
+
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)->where('building_id', BuildingId::Harvester->value)->where('instance_id', $harvester->instance_id)
             ->update(['instability_outage_until_tick' => $tick + $outageSols]);
@@ -1536,7 +1547,21 @@ class GameTick extends Command
         }
 
         $debuffSols = (int) config('game.encounter.plague.debuff_sols', 5);
-        DB::table('glx_colonies')->where('id', $colony->id)->update(['plague_until_tick' => $tick + $debuffSols]);
+        $apReductionPct = (float) config('game.encounter.plague.ap_reduction_pct', 0.20);
+
+        // Deva's "Drill-Reaktionspuffer" (A42) — halves the AP-reduction and
+        // shortens the debuff by 1 Sol for this episode, consumed the moment
+        // it applies. See config/game.php → bar.information_pool.veteran.
+        if ($this->consumeActiveDrillBuffer($colony->id)) {
+            $bufferReductionPct = (float) config('game.bar.information_pool.veteran.drill_buffer_reduction_pct', 0.5);
+            $apReductionPct *= 1 - $bufferReductionPct;
+            $debuffSols = max(1, $debuffSols - 1);
+        }
+
+        DB::table('glx_colonies')->where('id', $colony->id)->update([
+            'plague_until_tick' => $tick + $debuffSols,
+            'plague_ap_reduction_pct' => $apReductionPct,
+        ]);
         $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
 
         $this->fireEncounterOnboardingHint($colony, $tick);
@@ -1550,6 +1575,23 @@ class GameTick extends Command
         ]);
 
         return 1;
+    }
+
+    /**
+     * Consumes Deva's active "Drill-Reaktionspuffer" (A42), if any, atomically
+     * flipping it back off — shared by rollInstability() and rollPlague(),
+     * whichever one of the two mutually-exclusive danger types triggers first
+     * consumes it. Returns whether a buffer was actually active (and thus
+     * just consumed).
+     */
+    private function consumeActiveDrillBuffer(int $colonyId): bool
+    {
+        $updated = DB::table('colony_information_pool_state')
+            ->where('colony_id', $colonyId)
+            ->where('active_drill_buffer', true)
+            ->update(['active_drill_buffer' => false]);
+
+        return $updated > 0;
     }
 
     /**
@@ -1795,7 +1837,29 @@ class GameTick extends Command
             ->pluck('colony_id');
 
         foreach ($colonyIds as $colonyId) {
-            $this->barService->generateEncounterForColony((int) $colonyId, $tick);
+            $encounterFired = $this->barService->generateEncounterForColony((int) $colonyId, $tick);
+            // Charakter-Anliegen (A41) — a second, independent special-event
+            // slot, only rolled when the encounter roll above did NOT fire
+            // this tick (at most 1 Cantina special event per tick, total).
+            $this->barService->generateConcernForColony((int) $colonyId, $tick, $encounterFired);
+            // Deva & Lenn Vier-Ausgänge-Pool (A42) — a THIRD, independent
+            // channel: unlike the two above, it rolls every tick regardless
+            // of whether the shared encounter/concern slot fired.
+            $this->barService->generateInformationEncounterForColony((int) $colonyId, $tick);
+
+            // Charakter-Kodex (A42) — story_hook figures (Aldra/founder,
+            // Sorel/preacher, the Mysterious Figure/stranger). pickStoryEncounter()
+            // is a pure, deterministic, stateless roll (A36) — GameTick is the
+            // single place it's evaluated authoritatively once per Sol, so the
+            // codex trigger lives here rather than on the (repeatedly re-evaluated)
+            // display read path in BarController::index().
+            $storySlug = $this->barService->pickStoryEncounter((int) $colonyId, $tick);
+            if ($storySlug !== null) {
+                $userId = (int) (DB::table('glx_colonies')->where('id', $colonyId)->value('user_id') ?? 0);
+                if ($userId > 0) {
+                    $this->characterCodexService->recordProgress($userId, $storySlug);
+                }
+            }
         }
 
         $activeContracts = DB::table('bar_encounters')

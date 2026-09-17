@@ -19,6 +19,8 @@ namespace Tests\Feature\Bar;
  *    - test_accept_returns_error_for_nonexistent_offer
  *    - test_accept_returns_error_when_insufficient_resources
  *    - test_accept_does_not_allow_foreign_colony_offer
+ *    - test_accept_forwards_character_slug_to_codex_progress
+ *    - test_accept_without_character_slug_records_no_codex_progress
  */
 
 use App\Models\User;
@@ -295,6 +297,54 @@ class BarControllerTest extends TestCase
 
         // HTTP 200 on success, 422 on failure
         $response->assertStatus(200);
+    }
+
+    /**
+     * A42: the Blade dialog already knows which character a bar_trade offer
+     * belongs to (A36's slot-based assignment) — the controller must forward
+     * that slug from the request body to BarService::acceptOffer() so the
+     * Charakter-Kodex actually credits the trade (see BarOfferCodexHookupTest
+     * for the service-level guarantee).
+     */
+    public function test_accept_forwards_character_slug_to_codex_progress(): void
+    {
+        $this->mockTick(10);
+        $this->setBarLevel(1);
+        $this->clearBarOffers();
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertValidOffer(9999);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.accept', ['offer' => $offerId]), [
+                'character_slug' => 'prospector',
+            ]);
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertSame(1, DB::table('character_codex_entries')
+            ->where('user_id', self::USER_ID_BART)
+            ->where('character_slug', 'prospector')
+            ->count());
+    }
+
+    public function test_accept_without_character_slug_records_no_codex_progress(): void
+    {
+        $this->mockTick(10);
+        $this->setBarLevel(1);
+        $this->clearBarOffers();
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertValidOffer(9999);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.accept', ['offer' => $offerId]));
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertSame(0, DB::table('character_codex_entries')
+            ->where('user_id', self::USER_ID_BART)
+            ->count());
     }
 
     // ── NEGOTIATE ─────────────────────────────────────────────────────────────

@@ -58,6 +58,17 @@ class BarController extends BaseController
             ? $this->barService->pickStoryEncounter($colony->id, $tick)
             : null;
 
+        // Charakter-Anliegen (A41) — second, independent Cantina special-event slot.
+        $concern = $barLevel > 0
+            ? $this->barService->getActiveConcern($colony->id, $tick)
+            : null;
+
+        // Deva & Lenn Vier-Ausgänge-Pool (A42) — third, independent channel, not
+        // gated by bar level's shared "one special event per tick" rule.
+        $informationEncounter = $barLevel > 0
+            ? $this->barService->getActiveInformationEncounter($colony->id, $tick)
+            : null;
+
         $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $tick);
         $merchantItems = $merchantVisit
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
@@ -90,20 +101,48 @@ class BarController extends BaseController
         $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 3);
         $hasConsul = $barLevel > 0 && $this->barService->hasAvailableConsul($colony->id);
 
+        // Knowledge dropdown options shared by Tomas (A40), Sarka's Anliegen (A41)
+        // and Deva's knowledge_boost outcome (A42) — all 7 Kenntnisse are valid
+        // targets for Tomas/Sarka; Deva's choice is further restricted client-side
+        // to game.bar.information_pool.veteran.knowledge_choices.
+        $knowledgeOptions = [];
+        foreach (config('knowledge', []) as $key => $def) {
+            $knowledgeOptions[] = ['id' => $def['id'], 'key' => $key, 'name' => __("knowledge.{$key}")];
+        }
+
+        $concernApCost = $concern ? (int) config("game.bar.concern.ap_cost.{$concern->character_slug}", 0) : null;
+
+        $devaKnowledgeChoiceKeys = config('game.bar.information_pool.veteran.knowledge_choices', []);
+        $devaKnowledgeChoices = array_values(array_filter(
+            $knowledgeOptions,
+            fn ($opt) => in_array($opt['key'], $devaKnowledgeChoiceKeys, true),
+        ));
+
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
-            'encounter', 'storyEncounterSlug',
+            'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
+            'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
         ));
     }
 
     public function accept(Request $request, int $offerId): JsonResponse
     {
+        $validated = $request->validate([
+            'character_slug' => ['nullable', 'string', 'max:64'],
+        ]);
+
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick = $this->tick->getTickCount();
-        $result = $this->barService->acceptOffer($colony->id, $offerId, $userId, $tick);
+        $result = $this->barService->acceptOffer(
+            $colony->id,
+            $offerId,
+            $userId,
+            $tick,
+            $validated['character_slug'] ?? null,
+        );
 
         if ($result['ok']) {
             $this->eventService->createEvent([
@@ -182,6 +221,92 @@ class BarController extends BaseController
                 $result['give_resource_amount'] = $possessions[$result['give_resource_id']]['amount'] ?? null;
             }
         }
+
+        return response()->json($result, $result['ok'] ? 200 : 422);
+    }
+
+    /**
+     * "Mit Tomas reden" (A40). No AP cost, no shared-pool interaction — Tomas
+     * injects his bonus (if any) directly into the chosen knowledge, so there
+     * is nothing here for the resourcebar to sync.
+     */
+    public function talkToBartender(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'knowledge_id' => ['required', 'integer'],
+        ]);
+
+        $userId = Auth::id();
+        $colony = $this->colonyService->getPrimeColony($userId);
+        $tick = $this->tick->getTickCount();
+
+        $result = $this->barService->talkToBartender($colony->id, $validated['knowledge_id'], $tick);
+
+        return response()->json(
+            ['ok' => $result['success']] + $result,
+            $result['success'] ? 200 : 422,
+        );
+    }
+
+    /**
+     * Resolves a Charakter-Anliegen (A41). AP for the concern's own cost
+     * comes out of the shared colony pool, so the resourcebar's AP chip
+     * (and, depending on the character's reward, Credits/Regolith/
+     * Werkstoffe) must be able to sync live — see withResourcebarSync()'s
+     * docblock for the general convention this follows.
+     */
+    public function resolveConcern(Request $request, int $concernId): JsonResponse
+    {
+        $validated = $request->validate([
+            'knowledge_id' => ['nullable', 'integer'],
+        ]);
+
+        $userId = Auth::id();
+        $colony = $this->colonyService->getPrimeColony($userId);
+        $tick = $this->tick->getTickCount();
+
+        $result = $this->barService->resolveConcern(
+            $colony->id,
+            $concernId,
+            $userId,
+            $tick,
+            $validated['knowledge_id'] ?? null,
+        );
+
+        if ($result['ok']) {
+            $result['ap_available'] = $this->advisorService->getAvailableActionPoints($colony->id);
+            $possessions = $this->resourcesService->getPossessionsByColonyId($colony->id);
+            $result['credits_balance'] = $possessions[1]['amount'] ?? null;
+            $result['regolith_balance'] = $possessions[3]['amount'] ?? null;
+            $result['compounds_balance'] = $possessions[4]['amount'] ?? null;
+        }
+
+        return response()->json($result, $result['ok'] ? 200 : 422);
+    }
+
+    /**
+     * Resolves a Deva & Lenn Vier-Ausgänge-Pool encounter (A42). No AP cost
+     * from the shared pool (see BarService::resolveInformationEncounter()
+     * docblock) and no resource change either — nothing here needs a
+     * resourcebar sync.
+     */
+    public function resolveInformationEncounter(Request $request, int $encounterId): JsonResponse
+    {
+        $validated = $request->validate([
+            'knowledge_id' => ['nullable', 'integer'],
+        ]);
+
+        $userId = Auth::id();
+        $colony = $this->colonyService->getPrimeColony($userId);
+        $tick = $this->tick->getTickCount();
+
+        $result = $this->barService->resolveInformationEncounter(
+            $colony->id,
+            $encounterId,
+            $userId,
+            $tick,
+            $validated['knowledge_id'] ?? null,
+        );
 
         return response()->json($result, $result['ok'] ? 200 : 422);
     }

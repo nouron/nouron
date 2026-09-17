@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
+use App\Services\CharacterCodexService;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
@@ -42,6 +43,7 @@ class ColonyController extends BaseController
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly BuildingUnlockService $buildingUnlockService,
+        private readonly CharacterCodexService $characterCodexService,
     ) {
         parent::__construct($tick);
     }
@@ -726,6 +728,19 @@ class ColonyController extends BaseController
                     'status_points' => $building->max_status_points ?? 20,
                 ]);
             $leveledUp = true;
+            // Consumes an active Cantina-Anliegen voucher (A41), if any — it
+            // already discounted $effectiveApForLevelup above via
+            // ProjectBonusService::effectiveApForLevelup(); this just marks it
+            // spent so it doesn't apply again to the NEXT level-up.
+            $this->projectBonusService->consumeActiveBuildingDiscountVoucher($colony->id);
+
+            // Charakter-Kodex (A42) — Tomas (bartender, `permanent` game_role)
+            // has no random-encounter trigger; his codex unlocks at Cantina
+            // Ausbaustufen-Meilensteinen instead (level 1 -> entry 1, ...,
+            // level 5 -> entry 5, via recordProgress()'s next-sequential slot).
+            if ($buildingId === (int) config('buildings.bar.id', 52)) {
+                $this->characterCodexService->recordProgress(Auth::id(), 'bartender');
+            }
         }
 
         $this->eventService->createEvent([

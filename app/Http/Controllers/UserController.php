@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CharacterCodexService;
 use App\Services\TickService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,9 +15,24 @@ use Illuminate\Support\Facades\Hash;
  */
 class UserController extends BaseController
 {
-    public function __construct(TickService $tick)
-    {
+    public function __construct(
+        TickService $tick,
+        private readonly CharacterCodexService $characterCodexService,
+    ) {
         parent::__construct($tick);
+    }
+
+    /**
+     * Charakter-Kodex screen (A42, GDD §12) — user-persistent, account-bound
+     * lore progression for the whole Cantina cast. Lives under /user (not
+     * /colony) because it survives across runs, unlike everything else in
+     * the Cantina system.
+     */
+    public function codex()
+    {
+        return view('user.codex', [
+            'characters' => $this->characterCodexService->getRosterWithUnlockedEntries(Auth::id()),
+        ]);
     }
 
     public function show()

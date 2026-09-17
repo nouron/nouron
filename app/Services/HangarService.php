@@ -352,6 +352,68 @@ class HangarService
     }
 
     /**
+     * Grant a ship at no Credits cost and without touching Nexus-Kredit debt or
+     * Trust (A41, Dax/smuggler concern "unofficial delivery"). Mirrors the ship
+     * creation half of requestShip() — free hangar slot lookup, colony_ships
+     * insert, delivery scheduling — but skips the cost/debt/trust branches
+     * entirely, since this ship was never actually ordered through the Nexus.
+     *
+     * Deliberately does NOT enforce SHIP_ID_TO_REQUIRED_HANGAR_LEVEL — Dax's
+     * delivery is off the books, not a catalog purchase; if no hangar slot is
+     * free (or no hangar exists yet) the ship simply enters 'pending' state
+     * like any other delivery with no free slot.
+     *
+     * @throws RuntimeException if $shipId is not a known orderable ship type.
+     */
+    public function grantFreeShip(int $colonyId, int $shipId): void
+    {
+        if (! in_array($shipId, self::ALLOWED_SHIP_IDS, true)) {
+            throw new RuntimeException("Ship type {$shipId} is not orderable from the Nexus.");
+        }
+
+        $configKey = self::SHIP_ID_TO_CONFIG_KEY[$shipId];
+        $deliveryTicks = (int) config("ships.{$configKey}.nexus_delivery_ticks", 1);
+        $currentTick = $this->tickService->getTickCount();
+        $pendingDecayTicks = (int) config('game.hangar.pending_decay_ticks', 5);
+
+        DB::transaction(function () use ($colonyId, $shipId, $deliveryTicks, $currentTick, $pendingDecayTicks): void {
+            $occupiedInstanceIds = DB::table('colony_ships')
+                ->where('colony_id', $colonyId)
+                ->whereNotNull('hangar_instance_id')
+                ->pluck('hangar_instance_id')
+                ->all();
+
+            $freeSlot = DB::table('colony_buildings')
+                ->where('colony_id', $colonyId)
+                ->where('building_id', self::HANGAR_BUILDING_ID)
+                ->when(! empty($occupiedInstanceIds), fn ($q) => $q->whereNotIn('instance_id', $occupiedInstanceIds))
+                ->orderBy('instance_id')
+                ->value('instance_id');
+
+            $hangarInstanceId = $freeSlot !== null ? (int) $freeSlot : null;
+            $shipState = 'building';
+            $pendingUntilTick = null;
+
+            if ($hangarInstanceId === null) {
+                $shipState = 'pending';
+                $pendingUntilTick = $currentTick + $pendingDecayTicks;
+            }
+
+            DB::table('colony_ships')->insert([
+                'colony_id' => $colonyId,
+                'ship_id' => $shipId,
+                'hangar_instance_id' => $hangarInstanceId,
+                'ship_state' => $shipState,
+                'level' => 0,
+                'status_points' => self::SHIP_MAX_STATUS,
+                'ap_spend' => 0,
+                'deliver_at_tick' => $currentTick + $deliveryTicks,
+                'pending_until_tick' => $pendingUntilTick,
+            ]);
+        });
+    }
+
+    /**
      * Assign a pending ship (no hangar) to a free hangar slot.
      *
      * @param  int  $shipRowId  The auto-increment colony_ships.id (PK).

@@ -493,6 +493,49 @@ return [
             ],
         ],
 
+        // Deva & Lenn Vier-Ausgänge-Pool (GDD §12 "Deva & Lenn — taktische
+        // Information", A42) — a third, independent Cantina special-event
+        // channel: it does NOT share the "at most one Cantina special event
+        // per tick" slot with bar.encounter (A35) / bar.concern (A41) — it
+        // rolls on its own, every tick, in parallel. Flat spawn chance (NOT
+        // scaled by bar level, unlike encounter/concern) — deliberately more
+        // frequent/repeatable over the whole run (see BarService::
+        // generateInformationEncounterForColony()).
+        //
+        // Each figure (veteran/Deva, ai_researcher/Lenn) has 4 possible
+        // outcomes, one drawn per encounter: 2 MECHANICAL (usable once per
+        // run each — see colony_information_pool_state.*_used) + 2 NARRATIVE
+        // (flavor-only, unlimited). See BarService::rollInformationOutcome().
+        'information_pool' => [
+            'spawn_chance_per_tick' => 0.06,
+            'character_split' => 0.50, // roll < split -> veteran (Deva), else ai_researcher (Lenn)
+            'offer_duration' => 2, // ticks an unresolved encounter stays available
+
+            // Deva (veteran) — Military Veteran.
+            'veteran' => [
+                // Mechanical A "Drill-Reaktionspuffer": halves the consequence
+                // of the next triggered Instabilität/Seuche encounter — see
+                // GameTick::rollInstability()/rollPlague() consuming
+                // colony_information_pool_state.active_drill_buffer.
+                'drill_buffer_reduction_pct' => 0.50,
+                // Mechanical B: player picks geology OR health to receive
+                // bonus AP via ResearchService::investBonus().
+                'knowledge_boost_ap' => 15,
+                'knowledge_choices' => ['geology', 'health'],
+            ],
+
+            // Lenn (ai_researcher) — Unlicensed AI Researcher.
+            'ai_researcher' => [
+                // Mechanical A: next exploreTile() call costs 0 Navigation-AP
+                // (100% discount, not a partial one) — see
+                // colony_information_pool_state.active_nav_voucher, consumed
+                // by ColonyTileService::exploreTile().
+                // Mechanical B: fixed target (cartography), no player choice.
+                'knowledge_boost_ap' => 15,
+                'knowledge_target' => 'cartography',
+            ],
+        ],
+
         // story_hook Cantina-Begegnungen (A36) — pure Flavor, kein Ressourcen-/
         // Credits-Effekt (Leitplanke §12). Deterministisch pro Sol, kein DB-State
         // nötig: derselbe Roll gilt für die ganze Dauer eines Ticks.
@@ -500,6 +543,94 @@ return [
             'chance' => 0.30,
             'slugs' => ['preacher', 'founder', 'stranger'],
         ],
+
+        // Charakter-Anliegen (A41, GDD §12) — a second, independent Cantina
+        // special-event slot. Rolled ONLY when the encounter roll above did NOT
+        // fire in the same tick (at most 1 Cantina special event per tick,
+        // total). Nine figures, each with a bespoke reward — see
+        // BarService::resolveConcern(). Owner decision 2026-09-17: this is the
+        // one exception to the story_hook "flavor-only" Leitplanke — founder,
+        // preacher and stranger DO get a mechanical concern here (see the
+        // corrected comment on config/characters.php).
+        'concern' => [
+            'spawn_chance_per_level' => [1 => 0.05, 2 => 0.07, 3 => 0.09, 4 => 0.11, 5 => 0.13],
+            'offer_duration' => 2, // ticks an unresolved concern stays available
+            'character_cooldown_sols' => 5, // same figure not rolled again within N Sol
+            'character_weights' => [
+                'mechanic' => 3, 'doctor' => 3,
+                'smuggler' => 2, 'prospector' => 2, 'mercenary' => 2, 'founder' => 2, 'preacher' => 2,
+                'information_broker' => 1, 'stranger' => 1,
+            ],
+            'ap_cost' => [
+                'smuggler' => 4, 'information_broker' => 3, 'mechanic' => 2, 'doctor' => 3,
+                'prospector' => 2, 'mercenary' => 3, 'founder' => 3, 'preacher' => 3, 'stranger' => 4,
+            ],
+            'success_chance' => [
+                'smuggler' => 1.0, 'information_broker' => 1.0, 'mechanic' => 1.0, 'doctor' => 1.0,
+                'prospector' => 0.50, 'mercenary' => 1.0, 'founder' => 0.70, 'preacher' => 0.65, 'stranger' => 0.35,
+            ],
+
+            // Dax — unofficial delivery cover. Reward: a free ship, granted the
+            // same way a Nexus purchase would deliver one (HangarService), just
+            // without the Credits cost. Drone (id 85) — cheapest, lowest hangar
+            // level requirement, matches the "off the books" flavor.
+            'smuggler' => ['ship_id' => 85],
+
+            // Vesper — insider knowledge on building flaws. One-time voucher,
+            // no expiry, consumed by the next building level-up the colony
+            // completes (ProjectBonusService).
+            'information_broker' => ['discount_pct' => 25],
+
+            // Sarka — needs a hand at the systems. Injected via
+            // ResearchService::investBonus() — same earmarked-AP mechanism as
+            // Tomas' bartender bonus (A40), bypasses the shared pool's
+            // availability gate for the bonus itself (the concern's own AP cost
+            // still comes out of the shared pool like any other concern).
+            'mechanic' => ['ap_bonus' => 5],
+
+            // Maret — spare parts for medical equipment. Compounds, scaled by
+            // bar level (same scaling shape as encounter.auction above).
+            'doctor' => ['compounds_amount_per_level' => [1 => 15, 2 => 16, 3 => 17, 4 => 18, 5 => 20]],
+
+            // Fen — a lead on a deposit, unconfirmed.
+            'prospector' => ['regolith_min' => 20, 'regolith_max' => 30],
+
+            // Juno — security consulting fee.
+            'mercenary' => ['credits_min' => 30, 'credits_max' => 50],
+
+            // Aldra — old founder blueprints. Smaller, time-limited voucher —
+            // expires after voucher_expires_sols Sol if unused.
+            'founder' => ['discount_pct' => 15, 'voucher_expires_sols' => 10],
+
+            // Sorel — a community dispute to mediate. Trust-only reward/penalty,
+            // fired via TrustService (see game.trust.events below), no
+            // resource/Credits amount here.
+            'preacher' => [],
+
+            // The Mysterious Figure — a nameless job, no context given. A pure
+            // stake wager: Werkstoffe in, Credits out on success, stake fully
+            // lost on failure either way (no Trust effect in either direction).
+            'stranger' => ['stake_min' => 40, 'stake_max' => 50, 'payout_min' => 150, 'payout_max' => 180],
+        ],
+    ],
+
+    // Charakter-Kodex (A42, GDD §12) — pure lore/meta progression for the whole
+    // Cantina cast, no gameplay effect, user-persistent across runs. See
+    // CharacterCodexService::recordProgress().
+    'character_codex' => [
+        'entries_per_character' => 5,
+    ],
+
+    // Cantina-Barkeeper Tomas (A40, GDD §12) — the one permanent Cantina character
+    // with no random spawn. "Mit Tomas reden" costs no AP and no pool lock; instead
+    // Tomas injects AP directly into a knowledge investment chosen by the player,
+    // gated by a once-per-tick cooldown. Bonus tiers scale with the colony's
+    // cumulative, run-persistent interaction_count (never reset per tick).
+    'bartender' => [
+        'interaction_cooldown_ticks' => 1,
+        // Keyed by the interaction_count threshold (evaluated against the count
+        // BEFORE the current interaction) -> AP bonus injected via ResearchService::invest().
+        'ap_bonus_tiers' => [0 => 0, 5 => 1, 15 => 2, 30 => 3],
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).
@@ -544,6 +675,8 @@ return [
             'stipend_small' => 2,  // Kolonisten-Zulage (GDD §14) — see stipend.tiers above
             'stipend_medium' => 3,
             'stipend_large' => 4,
+            'story_concern_resolved' => 3,  // Sorel/preacher Cantina-Anliegen (A41) resolved successfully
+            'story_concern_failed' => -2,   // Sorel/preacher Cantina-Anliegen (A41) failed
         ],
     ],
 
