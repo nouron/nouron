@@ -58,6 +58,7 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::patch('/settings/name', [UserController::class, 'updateDisplayName'])->name('update.displayname');
     Route::patch('/settings/password', [UserController::class, 'updatePassword'])->name('update.password');
     Route::patch('/settings/onboarding', [UserController::class, 'updateOnboardingHints'])->name('update.onboarding');
+    Route::get('/codex', [UserController::class, 'codex'])->name('codex');
 });
 
 // ── Colony ────────────────────────────────────────────────────────────────────
@@ -97,6 +98,9 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::post('/bar/accept/{offer}', [BarController::class, 'accept'])->name('bar.accept');
     Route::post('/bar/negotiate/{offer}', [BarController::class, 'negotiate'])->name('bar.negotiate');
     Route::post('/bar/accept-encounter/{encounter}', [BarController::class, 'acceptEncounter'])->name('bar.accept-encounter');
+    Route::post('/bar/talk-to-bartender', [BarController::class, 'talkToBartender'])->name('bar.talk-to-bartender');
+    Route::post('/bar/concern/{concern}', [BarController::class, 'resolveConcern'])->name('bar.resolve-concern');
+    Route::post('/bar/information-encounter/{encounter}', [BarController::class, 'resolveInformationEncounter'])->name('bar.resolve-information');
 
     // Traveling Merchant
     Route::post('/merchant/buy/{itemId}', [MerchantController::class, 'buy'])->name('merchant.buy')->where('itemId', '[0-9]+');

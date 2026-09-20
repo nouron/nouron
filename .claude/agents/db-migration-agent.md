@@ -28,7 +28,7 @@ Verantwortlich für den Daten-Layer von Nouron: Laravel 12 + SQLite. Schemas ent
 ## Zwei Datenbanken
 | Datei | Zweck |
 |---|---|
-| `data/db/nouron.db` | Dev-DB — laufende App |
+| `data/db/nouron.db` | Dev-DB — laufende App, Spielstand des Owners, **nie zurücksetzen** (siehe „Migrations ausführen") |
 | In-memory | Tests — per Run via `RefreshDatabase` neu aufgebaut |
 
 `TestSeeder` lädt `data/sql/testdata.sqlite.sql` für Test-Fixtures.
@@ -66,12 +66,17 @@ DB::statement('PRAGMA legacy_alter_table = OFF');
 **`PRAGMA foreign_keys = ON`** — muss pro Verbindung gesetzt werden, in SQLite standardmäßig aus.
 
 ## Migrations ausführen
+
+**NIEMALS `migrate:fresh`, `migrate:rollback`, `db:seed` oder `db:wipe` gegen `data/db/nouron.db` ausführen.** Ohne Env-Override läuft artisan gegen die Dev-DB des Owners (`.env` → `DB_DATABASE`), sie ist gitignored und ohne Backup — der Spielstand ist danach weg (Vorfall 2026-09-17). Nur `phpunit.xml` schützt die Test-Suite (`:memory:`), artisan-Aufrufe von dir sind NICHT geschützt.
+
+Destruktive Befehle nur gegen eine Wegwerf-DB:
 ```bash
-php artisan migrate                        # apply pending migrations
-php artisan migrate:fresh                  # drop all tables and re-run from scratch
-php artisan migrate:rollback              # undo last batch
-bin/phpunit --testsuite=laravel-feature   # verify tests still pass after schema change
+rm -f /tmp/mig-check.db && touch /tmp/mig-check.db
+DB_DATABASE=/tmp/mig-check.db php artisan migrate:fresh --seed --force   # prove migrations run from scratch
+rm -f /tmp/mig-check.db                                                  # clean up afterwards
+bin/phpunit --testsuite=laravel-feature                                  # verify tests still pass after schema change
 ```
+Gegen die Dev-DB ist nur `php artisan migrate` (additiv, nur ausstehende Migrations) erlaubt — und auch das nur, wenn der Auftrag es ausdrücklich verlangt; im Zweifel weglassen und dem Owner melden, dass er `php artisan migrate` selbst ausführen muss.
 
 ## Output-Format
 Liefern: (1) Migrations-Datei, (2) notwendige Aktualisierung von `data/sql/testdata.sqlite.sql`.

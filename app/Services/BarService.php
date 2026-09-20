@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Console\Commands\GameTick;
+use App\Models\BarConcern;
 use App\Models\BarEncounter;
+use App\Models\BarInformationEncounter;
 use App\Models\BarOffer;
+use App\Services\Techtree\ResearchService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,13 +20,27 @@ class BarService
 
     private const RES_CREDITS = 1;
 
+    private const RES_REGOLITH = 3;
+
+    private const RES_COMPOUNDS = 4;
+
     private const TRADEABLE = [3, 4, 5]; // regolith, compounds, organics
+
+    /** config/characters.php keys eligible for a Charakter-Anliegen (A41). */
+    private const CONCERN_CHARACTERS = [
+        'smuggler', 'information_broker', 'mechanic', 'doctor',
+        'prospector', 'mercenary', 'founder', 'preacher', 'stranger',
+    ];
 
     public function __construct(
         private readonly ResourcesService $resourcesService,
         private readonly AdvisorService $advisorService,
         private readonly TradingPostService $tradingPostService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly ResearchService $researchService,
+        private readonly TrustService $trustService,
+        private readonly HangarService $hangarService,
+        private readonly CharacterCodexService $characterCodexService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -135,7 +152,22 @@ class BarService
             ->exists();
     }
 
-    public function acceptOffer(int $colonyId, int $offerId, int $userId, int $currentTick): array
+    /**
+     * @param  string|null  $characterSlug  The config/characters.php slug of
+     *                                      the figure whose personalized
+     *                                      flavor line was shown for this
+     *                                      guest offer (bar_trade_flavor_*,
+     *                                      A36) — a UI-only assignment
+     *                                      (resources/views/colony/bar.blade.php),
+     *                                      not persisted on bar_offers, so
+     *                                      the caller passes it through
+     *                                      explicitly. Only credited toward
+     *                                      Charakter-Kodex (A42) progress
+     *                                      when the slug's game_role is
+     *                                      'bar_trade' — every other role
+     *                                      has its own dedicated trigger.
+     */
+    public function acceptOffer(int $colonyId, int $offerId, int $userId, int $currentTick, ?string $characterSlug = null): array
     {
         $offer = BarOffer::where('id', $offerId)
             ->where('colony_id', $colonyId)
@@ -231,6 +263,13 @@ class BarService
             'get_resource_id' => $offer->get_resource_id,
             'get_amount' => $getAmount,
         ]);
+
+        // Charakter-Kodex (A42) — bar_trade figures only (their dedicated
+        // trigger: a completed trade shown with their personalized flavor
+        // line). Every other game_role has its own trigger elsewhere.
+        if ($characterSlug !== null && (config("characters.{$characterSlug}.game_role") === 'bar_trade')) {
+            $this->characterCodexService->recordProgress($userId, $characterSlug);
+        }
 
         return [
             'ok' => true,
@@ -353,7 +392,13 @@ class BarService
      * rotation), and deliberately scaled by BAR LEVEL, never Konsul rank — that
      * coupling is exactly what got the struck Konsul-Handelsvertrag removed.
      */
-    public function generateEncounterForColony(int $colonyId, int $tick): void
+    /**
+     * @return bool Whether a new encounter was actually created this tick — the
+     *              Charakter-Anliegen slot (generateConcernForColony(), A41) is
+     *              only rolled when this returns false, enforcing "at most one
+     *              Cantina special event per tick" across the two pools.
+     */
+    public function generateEncounterForColony(int $colonyId, int $tick): bool
     {
         $barLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
@@ -361,7 +406,7 @@ class BarService
             ->value('level');
 
         if ($barLevel < 1) {
-            return;
+            return false;
         }
 
         // Expire old, unaccepted encounters.
@@ -385,13 +430,13 @@ class BarService
             ->exists();
 
         if ($hasOpenEncounter) {
-            return;
+            return false;
         }
 
         $chance = (float) config("game.bar.encounter.spawn_chance_per_level.{$barLevel}", 0.0);
         $roll = $this->pseudoRand($colonyId * 613 + $tick * 47, 0, 999);
         if ($roll >= (int) round($chance * 1000)) {
-            return;
+            return false;
         }
 
         $types = ['wager', 'auction', 'contract'];
@@ -430,6 +475,8 @@ class BarService
             'is_accepted' => false,
             'resolved' => false,
         ], $attributes));
+
+        return true;
     }
 
     public function getActiveEncounter(int $colonyId, int $tick): ?BarEncounter
@@ -482,7 +529,7 @@ class BarService
             }
         }
 
-        return DB::transaction(function () use ($encounter, $colonyId, $apCost, $currentTick): array {
+        return DB::transaction(function () use ($encounter, $colonyId, $userId, $apCost, $currentTick): array {
             if ($apCost > 0) {
                 $this->advisorService->lockActionPoints($colonyId, $apCost, self::TRADER_ADVISOR_ID);
             }
@@ -492,14 +539,18 @@ class BarService
             }
 
             return match ($encounter->type) {
-                'wager' => $this->resolveWager($encounter, $colonyId, $currentTick),
-                'auction' => $this->resolveAuction($encounter, $colonyId),
+                'wager' => $this->resolveWager($encounter, $colonyId, $userId, $currentTick),
+                'auction' => $this->resolveAuction($encounter, $colonyId, $userId),
                 default => $this->startContract($encounter, $currentTick),
             };
         });
     }
 
-    private function resolveWager(BarEncounter $encounter, int $colonyId, int $currentTick): array
+    /**
+     * @param  int  $userId  Only used to record Charakter-Kodex progress (A42)
+     *                       for Zara (gambler) — her `dedicated` game_role.
+     */
+    private function resolveWager(BarEncounter $encounter, int $colonyId, int $userId, int $currentTick): array
     {
         $roll = $this->pseudoRand($encounter->id * 7351 + $currentTick * 211, 0, 999);
         $won = $roll < (int) round($encounter->win_chance * 1000);
@@ -519,6 +570,9 @@ class BarService
             'won' => $won,
         ]);
 
+        // Charakter-Kodex (A42) — Zara's (gambler) dedicated mechanic.
+        $this->characterCodexService->recordProgress($userId, 'gambler');
+
         return [
             'ok' => true,
             'type' => 'wager',
@@ -528,7 +582,11 @@ class BarService
         ];
     }
 
-    private function resolveAuction(BarEncounter $encounter, int $colonyId): array
+    /**
+     * @param  int  $userId  Only used to record Charakter-Kodex progress (A42)
+     *                       for Voss (scrap_dealer) — his `dedicated` game_role.
+     */
+    private function resolveAuction(BarEncounter $encounter, int $colonyId, int $userId): array
     {
         $this->resourcesService->increaseAmount($colonyId, self::RES_CREDITS, $encounter->credits_amount);
 
@@ -541,6 +599,9 @@ class BarService
             'encounter_id' => $encounter->id,
             'credits_amount' => $encounter->credits_amount,
         ]);
+
+        // Charakter-Kodex (A42) — Voss's (scrap_dealer) dedicated mechanic.
+        $this->characterCodexService->recordProgress($userId, 'scrap_dealer');
 
         return [
             'ok' => true,
@@ -564,6 +625,321 @@ class BarService
     }
 
     /**
+     * Charakter-Anliegen (A41, GDD §12 Kanal 1) — a second, independent
+     * Cantina special-event slot. Only rolled when the shared encounter slot
+     * (generateEncounterForColony()) did NOT fire this tick — at most one
+     * Cantina special event per tick, total, across both pools.
+     */
+    public function generateConcernForColony(int $colonyId, int $tick, bool $encounterFiredThisTick): void
+    {
+        if ($encounterFiredThisTick) {
+            return;
+        }
+
+        $barLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', self::BAR_BUILDING_ID)
+            ->value('level');
+
+        if ($barLevel < 1) {
+            return;
+        }
+
+        // Expire old, unresolved concerns.
+        DB::table('bar_concerns')
+            ->where('colony_id', $colonyId)
+            ->where('expires_tick', '<=', $tick)
+            ->where('is_resolved', false)
+            ->delete();
+
+        // Only one open slot at a time.
+        $hasOpenConcern = DB::table('bar_concerns')
+            ->where('colony_id', $colonyId)
+            ->where('is_resolved', false)
+            ->where('expires_tick', '>', $tick)
+            ->exists();
+
+        if ($hasOpenConcern) {
+            return;
+        }
+
+        $chance = (float) config("game.bar.concern.spawn_chance_per_level.{$barLevel}", 0.0);
+        $roll = $this->pseudoRand($colonyId * 4021 + $tick * 59, 0, 999);
+        if ($roll >= (int) round($chance * 1000)) {
+            return;
+        }
+
+        $cooldownSols = (int) config('game.bar.concern.character_cooldown_sols', 0);
+        $weights = config('game.bar.concern.character_weights', []);
+
+        $eligible = [];
+        foreach (self::CONCERN_CHARACTERS as $slug) {
+            $weight = (int) ($weights[$slug] ?? 0);
+            if ($weight <= 0) {
+                continue;
+            }
+
+            $lastCreatedTick = DB::table('bar_concerns')
+                ->where('colony_id', $colonyId)
+                ->where('character_slug', $slug)
+                ->max('created_tick');
+
+            if ($lastCreatedTick !== null && $tick - (int) $lastCreatedTick < $cooldownSols) {
+                continue;
+            }
+
+            for ($i = 0; $i < $weight; $i++) {
+                $eligible[] = $slug;
+            }
+        }
+
+        if (empty($eligible)) {
+            return;
+        }
+
+        $slug = $eligible[$this->pseudoRand($colonyId * 4523 + $tick * 83, 0, count($eligible) - 1)];
+        $duration = (int) config('game.bar.concern.offer_duration', 2);
+
+        BarConcern::create([
+            'colony_id' => $colonyId,
+            'character_slug' => $slug,
+            'created_tick' => $tick,
+            'expires_tick' => $tick + $duration,
+            'is_resolved' => false,
+        ]);
+    }
+
+    public function getActiveConcern(int $colonyId, int $tick): ?BarConcern
+    {
+        return BarConcern::where('colony_id', $colonyId)
+            ->where('is_resolved', false)
+            ->where('expires_tick', '>', $tick)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * Resolves a Charakter-Anliegen (A41). AP cost comes out of the shared
+     * colony pool like any other Cantina action — Sarka's ap_bonus reward
+     * itself is the one exception, injected via ResearchService::investBonus()
+     * (earmarked, same mechanism as Tomas' bartender bonus, A40).
+     *
+     * @param  int  $knowledgeId  Required only for the mechanic (Sarka) concern
+     *                            — the knowledge the player chooses to invest
+     *                            Sarka's bonus AP into.
+     */
+    public function resolveConcern(int $colonyId, int $concernId, int $userId, int $currentTick, ?int $knowledgeId = null): array
+    {
+        $concern = BarConcern::where('id', $concernId)
+            ->where('colony_id', $colonyId)
+            ->first();
+
+        if (! $concern) {
+            return ['ok' => false, 'error' => __('colony.bar_concern_not_found')];
+        }
+        if ($concern->is_resolved) {
+            return ['ok' => false, 'error' => __('colony.bar_concern_already_resolved')];
+        }
+        if ($concern->expires_tick <= $currentTick) {
+            return ['ok' => false, 'error' => __('colony.bar_concern_expired')];
+        }
+
+        $slug = $concern->character_slug;
+        $apCost = (int) config("game.bar.concern.ap_cost.{$slug}", 0);
+
+        if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
+            $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
+            if ($availableAp < $apCost) {
+                return ['ok' => false, 'error' => __('colony.bar_concern_insufficient_ap')];
+            }
+        }
+
+        // Stranger stakes Werkstoffe upfront — rolled once here (not re-rolled
+        // in resolveConcernOutcome()) so the balance check and the actual
+        // deduction always agree on the same amount.
+        $strangerStake = null;
+        if ($slug === 'stranger') {
+            $cfg = config('game.bar.concern.stranger', []);
+            $strangerStake = $this->pseudoRand($concern->id * 11 + $currentTick * 13, (int) ($cfg['stake_min'] ?? 0), (int) ($cfg['stake_max'] ?? 0));
+            $balance = $this->getResourceBalance($colonyId, $userId, self::RES_COMPOUNDS);
+            if ($balance < $strangerStake) {
+                return ['ok' => false, 'error' => __('colony.bar_concern_insufficient_resources')];
+            }
+        }
+
+        $successChance = (float) config("game.bar.concern.success_chance.{$slug}", 0.0);
+        $roll = $this->pseudoRand($concern->id * 6113 + $currentTick * 191, 0, 999);
+        $success = $roll < (int) round($successChance * 1000);
+
+        return DB::transaction(function () use ($concern, $colonyId, $userId, $apCost, $slug, $success, $currentTick, $knowledgeId, $strangerStake): array {
+            if ($apCost > 0) {
+                $this->advisorService->lockActionPoints($colonyId, $apCost);
+            }
+
+            $outcome = $this->resolveConcernOutcome($colonyId, $slug, $success, $concern->id, $currentTick, $knowledgeId, $strangerStake);
+
+            $concern->is_resolved = true;
+            $concern->success = $success;
+            $concern->outcome = $outcome;
+            $concern->save();
+
+            // Charakter-Kodex (A42) — ONLY the 3 story_hook figures among the
+            // 9 concern characters (founder/Aldra, preacher/Sorel, stranger).
+            // The other 6 (bar_trade) are credited via acceptOffer()'s
+            // personalized-flavor guest trade instead, not via their concern.
+            if (in_array($slug, ['founder', 'preacher', 'stranger'], true)) {
+                $this->characterCodexService->recordProgress($userId, $slug);
+            }
+
+            Log::info('bar_concern_resolved', [
+                'colony_id' => $colonyId,
+                'concern_id' => $concern->id,
+                'character_slug' => $slug,
+                'success' => $success,
+                'outcome' => $outcome,
+            ]);
+
+            return array_merge(['ok' => true, 'character_slug' => $slug, 'success' => $success], $outcome);
+        });
+    }
+
+    /**
+     * Character-specific reward/penalty resolution. Runs inside the caller's
+     * DB transaction. Returns an array of outcome details persisted on
+     * bar_concerns.outcome (for logging/inspection) and merged into the
+     * resolveConcern() response.
+     */
+    private function resolveConcernOutcome(int $colonyId, string $slug, bool $success, int $seed, int $currentTick, ?int $knowledgeId, ?int $strangerStake): array
+    {
+        $cfg = config("game.bar.concern.{$slug}", []);
+
+        return match ($slug) {
+            'smuggler' => $this->resolveSmugglerConcern($colonyId, $cfg),
+            'information_broker' => $this->resolveVoucherConcern($colonyId, $currentTick, 'information_broker', (int) $cfg['discount_pct'], null),
+            'mechanic' => $this->resolveMechanicConcern($colonyId, $cfg, $knowledgeId),
+            'doctor' => $this->resolveDoctorConcern($colonyId, $cfg),
+            'prospector' => $this->resolveProspectorConcern($colonyId, $success, $cfg, $seed, $currentTick),
+            'mercenary' => $this->resolveMercenaryConcern($colonyId, $cfg, $seed, $currentTick),
+            'founder' => $this->resolveFounderConcern($colonyId, $success, $cfg, $currentTick),
+            'preacher' => $this->resolvePreacherConcern($colonyId, $success, $currentTick),
+            'stranger' => $this->resolveStrangerConcern($colonyId, $success, $cfg, $seed, $currentTick, (int) $strangerStake),
+            default => [],
+        };
+    }
+
+    private function resolveSmugglerConcern(int $colonyId, array $cfg): array
+    {
+        $shipId = (int) ($cfg['ship_id'] ?? 85);
+        $this->hangarService->grantFreeShip($colonyId, $shipId);
+
+        return ['reward' => 'ship', 'ship_id' => $shipId];
+    }
+
+    private function resolveVoucherConcern(int $colonyId, int $currentTick, string $source, int $discountPct, ?int $expiresAfterSols): array
+    {
+        DB::table('colony_building_discount_vouchers')->insert([
+            'colony_id' => $colonyId,
+            'discount_pct' => $discountPct,
+            'source' => $source,
+            'granted_tick' => $currentTick,
+            'expires_tick' => $expiresAfterSols !== null ? $currentTick + $expiresAfterSols : null,
+            'consumed_tick' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return ['reward' => 'building_discount_voucher', 'discount_pct' => $discountPct];
+    }
+
+    private function resolveMechanicConcern(int $colonyId, array $cfg, ?int $knowledgeId): array
+    {
+        $apBonus = (int) ($cfg['ap_bonus'] ?? 0);
+
+        if ($knowledgeId === null) {
+            return ['reward' => 'ap_bonus', 'ap_bonus' => 0, 'error' => 'knowledge_id_required'];
+        }
+
+        // Earmarked, same mechanism as Tomas' bartender bonus (A40) — bypasses
+        // the shared pool's availability gate for the bonus itself.
+        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+
+        return ['reward' => 'ap_bonus', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+    }
+
+    private function resolveDoctorConcern(int $colonyId, array $cfg): array
+    {
+        $barLevel = max(1, (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', self::BAR_BUILDING_ID)
+            ->value('level'));
+
+        $amount = (int) (($cfg['compounds_amount_per_level'] ?? [])[$barLevel] ?? 0);
+        $this->resourcesService->increaseAmount($colonyId, self::RES_COMPOUNDS, $amount);
+
+        return ['reward' => 'compounds', 'amount' => $amount];
+    }
+
+    private function resolveProspectorConcern(int $colonyId, bool $success, array $cfg, int $seed, int $currentTick): array
+    {
+        if (! $success) {
+            return ['reward' => 'regolith', 'amount' => 0];
+        }
+
+        $amount = $this->pseudoRand($seed * 2 + $currentTick * 3, (int) ($cfg['regolith_min'] ?? 0), (int) ($cfg['regolith_max'] ?? 0));
+        $this->resourcesService->increaseAmount($colonyId, self::RES_REGOLITH, $amount);
+
+        return ['reward' => 'regolith', 'amount' => $amount];
+    }
+
+    private function resolveMercenaryConcern(int $colonyId, array $cfg, int $seed, int $currentTick): array
+    {
+        $amount = $this->pseudoRand($seed * 5 + $currentTick * 7, (int) ($cfg['credits_min'] ?? 0), (int) ($cfg['credits_max'] ?? 0));
+        $this->resourcesService->increaseAmount($colonyId, self::RES_CREDITS, $amount);
+
+        return ['reward' => 'credits', 'amount' => $amount];
+    }
+
+    private function resolveFounderConcern(int $colonyId, bool $success, array $cfg, int $currentTick): array
+    {
+        if (! $success) {
+            return ['reward' => 'building_discount_voucher', 'discount_pct' => 0];
+        }
+
+        return $this->resolveVoucherConcern(
+            $colonyId,
+            $currentTick,
+            'founder',
+            (int) $cfg['discount_pct'],
+            isset($cfg['voucher_expires_sols']) ? (int) $cfg['voucher_expires_sols'] : null
+        );
+    }
+
+    private function resolvePreacherConcern(int $colonyId, bool $success, int $currentTick): array
+    {
+        $this->trustService->fireEvent(
+            $colonyId,
+            $success ? 'story_concern_resolved' : 'story_concern_failed',
+            $currentTick
+        );
+
+        return ['reward' => 'trust', 'success' => $success];
+    }
+
+    private function resolveStrangerConcern(int $colonyId, bool $success, array $cfg, int $seed, int $currentTick, int $stake): array
+    {
+        $this->resourcesService->decreaseAmount($colonyId, self::RES_COMPOUNDS, $stake);
+
+        if (! $success) {
+            return ['reward' => 'credits', 'amount' => 0, 'stake' => $stake];
+        }
+
+        $payout = $this->pseudoRand($seed * 17 + $currentTick * 19, (int) ($cfg['payout_min'] ?? 0), (int) ($cfg['payout_max'] ?? 0));
+        $this->resourcesService->increaseAmount($colonyId, self::RES_CREDITS, $payout);
+
+        return ['reward' => 'credits', 'amount' => $payout, 'stake' => $stake];
+    }
+
+    /**
      * story_hook Cantina-Begegnung (A36) — pure flavor, no resource/Credits
      * effect (Leitplanke §12: not every figure gets an economic tie-in).
      * Deterministic per colony+tick (no DB state): same roll all Sol.
@@ -582,6 +958,240 @@ class BarService
         }
 
         return $slugs[$this->pseudoRand($colonyId * 3169 + $tick * 149, 0, count($slugs) - 1)];
+    }
+
+    /**
+     * Deva & Lenn Vier-Ausgänge-Pool (GDD §12 "Deva & Lenn — taktische
+     * Information", A42) — a third, independent Cantina special-event
+     * channel. Deliberately NOT gated by the "at most one Cantina special
+     * event per tick" rule shared by generateEncounterForColony() (A35) /
+     * generateConcernForColony() (A41) — this pool rolls on its own, every
+     * tick, in parallel, with its own flat (not bar-level-scaled) chance.
+     */
+    public function generateInformationEncounterForColony(int $colonyId, int $tick): void
+    {
+        $barLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', self::BAR_BUILDING_ID)
+            ->value('level');
+
+        if ($barLevel < 1) {
+            return;
+        }
+
+        DB::table('bar_information_encounters')
+            ->where('colony_id', $colonyId)
+            ->where('expires_tick', '<=', $tick)
+            ->where('is_resolved', false)
+            ->delete();
+
+        $hasOpenEncounter = DB::table('bar_information_encounters')
+            ->where('colony_id', $colonyId)
+            ->where('is_resolved', false)
+            ->where('expires_tick', '>', $tick)
+            ->exists();
+
+        if ($hasOpenEncounter) {
+            return;
+        }
+
+        $chance = (float) config('game.bar.information_pool.spawn_chance_per_tick', 0.0);
+        $roll = $this->pseudoRand($colonyId * 9137 + $tick * 251, 0, 999);
+        if ($roll >= (int) round($chance * 1000)) {
+            return;
+        }
+
+        $split = (float) config('game.bar.information_pool.character_split', 0.5);
+        $splitRoll = $this->pseudoRand($colonyId * 6199 + $tick * 271, 0, 999);
+        $slug = $splitRoll < (int) round($split * 1000) ? 'veteran' : 'ai_researcher';
+
+        $available = $this->availableInformationOutcomes($colonyId, $slug);
+        $outcomeKey = $available[$this->pseudoRand($colonyId * 8293 + $tick * 293, 0, count($available) - 1)];
+
+        $duration = (int) config('game.bar.information_pool.offer_duration', 2);
+
+        BarInformationEncounter::create([
+            'colony_id' => $colonyId,
+            'character_slug' => $slug,
+            'outcome_key' => $outcomeKey,
+            'created_tick' => $tick,
+            'expires_tick' => $tick + $duration,
+            'is_resolved' => false,
+        ]);
+    }
+
+    /**
+     * The 4 possible outcome keys for a given character, filtered by the
+     * once-per-run mechanical cap (colony_information_pool_state.*_used) —
+     * the 2 narrative outcomes are always included, unlimited. See
+     * config/game.php → bar.information_pool for the "Deckel-Regel" this
+     * implements: as long as at least 1 mechanical outcome for the figure is
+     * still unused, the pool mixes mechanical+narrative; once both are used,
+     * only the narrative outcomes remain.
+     *
+     * @return string[]
+     */
+    private function availableInformationOutcomes(int $colonyId, string $slug): array
+    {
+        $state = DB::table('colony_information_pool_state')->where('colony_id', $colonyId)->first();
+
+        $mechanicalKeys = $slug === 'veteran'
+            ? ['drill_buffer' => 'deva_buff_used', 'knowledge_boost' => 'deva_knowledge_used']
+            : ['nav_discount' => 'lenn_nav_used', 'knowledge_boost' => 'lenn_knowledge_used'];
+
+        $available = [];
+        foreach ($mechanicalKeys as $outcomeKey => $usedField) {
+            if (! ($state->{$usedField} ?? false)) {
+                $available[] = $outcomeKey;
+            }
+        }
+
+        $available[] = 'narrative_1';
+        $available[] = 'narrative_2';
+
+        return $available;
+    }
+
+    public function getActiveInformationEncounter(int $colonyId, int $tick): ?BarInformationEncounter
+    {
+        return BarInformationEncounter::where('colony_id', $colonyId)
+            ->where('is_resolved', false)
+            ->where('expires_tick', '>', $tick)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * Resolves a Deva & Lenn Vier-Ausgänge-Pool encounter (A42). No AP cost —
+     * "mit Deva/Lenn reden" is a free tactical exchange, mirroring Tomas'
+     * bartender interaction (A40), not a priced Cantina action. Every
+     * resolution (mechanical or narrative) records Charakter-Kodex progress
+     * for the figure (GDD §12 "Charakter-Kodex", A42).
+     *
+     * @param  int|null  $knowledgeId  Only consulted for veteran's
+     *                                 'knowledge_boost' outcome — the player's
+     *                                 choice between the two allowed knowledge
+     *                                 IDs (config('game.bar.information_pool.
+     *                                 veteran.knowledge_choices')). Ignored for
+     *                                 every other outcome/character.
+     */
+    public function resolveInformationEncounter(int $colonyId, int $encounterId, int $userId, int $currentTick, ?int $knowledgeId = null): array
+    {
+        $encounter = BarInformationEncounter::where('id', $encounterId)
+            ->where('colony_id', $colonyId)
+            ->first();
+
+        if (! $encounter) {
+            return ['ok' => false, 'error' => __('colony.bar_information_not_found')];
+        }
+        if ($encounter->is_resolved) {
+            return ['ok' => false, 'error' => __('colony.bar_information_already_resolved')];
+        }
+        if ($encounter->expires_tick <= $currentTick) {
+            return ['ok' => false, 'error' => __('colony.bar_information_expired')];
+        }
+
+        return DB::transaction(function () use ($encounter, $colonyId, $userId, $knowledgeId): array {
+            $outcome = $this->resolveInformationOutcome($colonyId, $encounter->character_slug, $encounter->outcome_key, $knowledgeId);
+
+            $encounter->is_resolved = true;
+            $encounter->outcome = $outcome;
+            $encounter->save();
+
+            // Charakter-Kodex (A42): every resolved encounter from this pool
+            // counts, mechanical or narrative alike.
+            $this->characterCodexService->recordProgress($userId, $encounter->character_slug);
+
+            Log::info('bar_information_resolved', [
+                'colony_id' => $colonyId,
+                'encounter_id' => $encounter->id,
+                'character_slug' => $encounter->character_slug,
+                'outcome_key' => $encounter->outcome_key,
+                'outcome' => $outcome,
+            ]);
+
+            return array_merge([
+                'ok' => true,
+                'character_slug' => $encounter->character_slug,
+                'outcome_key' => $encounter->outcome_key,
+            ], $outcome);
+        });
+    }
+
+    /**
+     * Executes the already-drawn outcome's effect. Runs inside the caller's
+     * DB transaction.
+     */
+    private function resolveInformationOutcome(int $colonyId, string $slug, string $outcomeKey, ?int $knowledgeId): array
+    {
+        return match ([$slug, $outcomeKey]) {
+            ['veteran', 'drill_buffer'] => $this->resolveDrillBufferOutcome($colonyId),
+            ['veteran', 'knowledge_boost'] => $this->resolveVeteranKnowledgeBoostOutcome($colonyId, $knowledgeId),
+            ['ai_researcher', 'nav_discount'] => $this->resolveNavDiscountOutcome($colonyId),
+            ['ai_researcher', 'knowledge_boost'] => $this->resolveAiResearcherKnowledgeBoostOutcome($colonyId),
+            default => ['reward' => 'narrative'], // narrative_1/narrative_2 — flavor only
+        };
+    }
+
+    private function ensureInformationPoolStateRow(int $colonyId): void
+    {
+        DB::table('colony_information_pool_state')->insertOrIgnore(['colony_id' => $colonyId]);
+    }
+
+    private function resolveDrillBufferOutcome(int $colonyId): array
+    {
+        $this->ensureInformationPoolStateRow($colonyId);
+        DB::table('colony_information_pool_state')
+            ->where('colony_id', $colonyId)
+            ->update(['active_drill_buffer' => true, 'deva_buff_used' => true]);
+
+        return ['reward' => 'drill_buffer'];
+    }
+
+    private function resolveVeteranKnowledgeBoostOutcome(int $colonyId, ?int $knowledgeId): array
+    {
+        $apBonus = (int) config('game.bar.information_pool.veteran.knowledge_boost_ap', 0);
+        $choices = config('game.bar.information_pool.veteran.knowledge_choices', []);
+        $allowedIds = array_map(fn ($key) => (int) config("knowledge.{$key}.id"), $choices);
+
+        if ($knowledgeId === null || ! in_array($knowledgeId, $allowedIds, true)) {
+            return ['reward' => 'knowledge_boost', 'ap_bonus' => 0, 'error' => 'knowledge_id_required'];
+        }
+
+        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+
+        $this->ensureInformationPoolStateRow($colonyId);
+        DB::table('colony_information_pool_state')
+            ->where('colony_id', $colonyId)
+            ->update(['deva_knowledge_used' => true]);
+
+        return ['reward' => 'knowledge_boost', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+    }
+
+    private function resolveNavDiscountOutcome(int $colonyId): array
+    {
+        $this->ensureInformationPoolStateRow($colonyId);
+        DB::table('colony_information_pool_state')
+            ->where('colony_id', $colonyId)
+            ->update(['active_nav_voucher' => true, 'lenn_nav_used' => true]);
+
+        return ['reward' => 'nav_discount'];
+    }
+
+    private function resolveAiResearcherKnowledgeBoostOutcome(int $colonyId): array
+    {
+        $apBonus = (int) config('game.bar.information_pool.ai_researcher.knowledge_boost_ap', 0);
+        $target = config('game.bar.information_pool.ai_researcher.knowledge_target', 'cartography');
+        $knowledgeId = (int) config("knowledge.{$target}.id");
+
+        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+
+        $this->ensureInformationPoolStateRow($colonyId);
+        DB::table('colony_information_pool_state')
+            ->where('colony_id', $colonyId)
+            ->update(['lenn_knowledge_used' => true]);
+
+        return ['reward' => 'knowledge_boost', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
     }
 
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int
@@ -650,6 +1260,66 @@ class BarService
             ->where('personell_id', self::TRADER_ADVISOR_ID)
             ->whereNull('unavailable_until_tick')
             ->value('rank') ?? 0);
+    }
+
+    /**
+     * "Mit Tomas reden" (Cantina-Barkeeper, A40, GDD §12). Costs no AP and never
+     * locks or checks the shared colony pool — Tomas injects AP directly into the
+     * chosen knowledge via ResearchService::investBonus(). Gated by a once-per-tick cooldown;
+     * the bonus tier is resolved from the colony's cumulative, run-persistent
+     * interaction_count as it stood BEFORE this interaction, then the counter
+     * is incremented regardless of whether a bonus tier was reached.
+     *
+     * @return array{success: bool, ap_added?: int, interaction_count?: int, error?: string}
+     */
+    public function talkToBartender(int $colonyId, int $knowledgeId, int $currentTick): array
+    {
+        $state = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->first();
+
+        $cooldownTicks = (int) config('game.bartender.interaction_cooldown_ticks');
+        $lastInteractionTick = $state?->last_interaction_tick;
+
+        if ($lastInteractionTick !== null && $currentTick - $lastInteractionTick < $cooldownTicks) {
+            return ['success' => false, 'error' => 'cooldown_active'];
+        }
+
+        $countBefore = $state->interaction_count ?? 0;
+        $apAdded = $this->bartenderApBonus($countBefore);
+
+        return DB::transaction(function () use ($colonyId, $knowledgeId, $currentTick, $countBefore, $apAdded): array {
+            DB::table('colony_bartender_state')->updateOrInsert(
+                ['colony_id' => $colonyId],
+                ['interaction_count' => $countBefore + 1, 'last_interaction_tick' => $currentTick],
+            );
+
+            if ($apAdded > 0) {
+                // Tomas' bonus AP is earmarked, not drawn from the shared colony pool —
+                // investBonus() skips that pool's availability gate so the bonus can
+                // never silently evaporate because the pool happens to be near-empty.
+                $this->researchService->investBonus($colonyId, $knowledgeId, $apAdded);
+            }
+
+            return [
+                'success' => true,
+                'ap_added' => $apAdded,
+                'interaction_count' => $countBefore + 1,
+            ];
+        });
+    }
+
+    /** AP bonus for the given interaction_count, per config/game.php → bartender.ap_bonus_tiers. */
+    private function bartenderApBonus(int $interactionCount): int
+    {
+        $tiers = config('game.bartender.ap_bonus_tiers', []);
+        $bonus = 0;
+
+        foreach ($tiers as $threshold => $tierBonus) {
+            if ($interactionCount >= $threshold) {
+                $bonus = $tierBonus;
+            }
+        }
+
+        return $bonus;
     }
 
     /** Barter: player gives one resource, gets another (no credits involved). */

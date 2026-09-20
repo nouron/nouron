@@ -82,6 +82,40 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
         // Credits-Effekt. Nimmt den nächsten Slot nach Angeboten + Begegnungspool.
         $storyChar = $storyEncounterSlug ? config("characters.{$storyEncounterSlug}") : null;
         $storySlot = $spotForOffer[($offers->count() + ($encounter ? 1 : 0)) % count($spotForOffer)];
+
+        // Charakter-Anliegen (A41) — third occupant of the shared rotation,
+        // next slot after offers + Begegnungspool + story_hook.
+        $concernChar = $concern ? config("characters.{$concern->character_slug}") : null;
+        $concernSlot =
+            $spotForOffer[($offers->count() + ($encounter ? 1 : 0) + ($storyChar ? 1 : 0)) % count($spotForOffer)];
+
+        // Deva & Lenn Vier-Ausgänge-Pool (A42) — fourth occupant. Not gated by
+        // the "1 special event per tick" rule the others share, so it can
+        // coexist with any of the above.
+        $informationChar = $informationEncounter ? config("characters.{$informationEncounter->character_slug}") : null;
+        $informationSlot =
+            $spotForOffer[
+                ($offers->count() + ($encounter ? 1 : 0) + ($storyChar ? 1 : 0) + ($concern ? 1 : 0)) %
+                    count($spotForOffer)
+            ];
+
+        // Bundled extra config for barPage() (A40/A41/A42) — kept as a single
+        // JSON blob (rather than more positional x-data args) to keep the
+        // already-long barPage(...) call signature readable.
+        $barPageExtra = [
+            "talkToBartenderRoute" => route("colony.bar.talk-to-bartender"),
+            "resolveConcernRoute" => route("colony.bar.resolve-concern", ["concern" => "__CONCERN__"]),
+            "resolveInformationRoute" => route("colony.bar.resolve-information", [
+                "encounter" => "__INFO_ENCOUNTER__",
+            ]),
+            "concernId" => $concern?->id,
+            "concernCharacterSlug" => $concern?->character_slug,
+            "informationEncounterId" => $informationEncounter?->id,
+            "informationCharacterSlug" => $informationEncounter?->character_slug,
+            "informationOutcomeKey" => $informationEncounter?->outcome_key,
+            "knowledgeOptions" => $knowledgeOptions,
+            "devaKnowledgeChoices" => $devaKnowledgeChoices,
+        ];
     @endphp
 
     <div class="bar-page"
@@ -97,7 +131,8 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
     @json(route("colony.corporate-contact.offer")),
     @json(route("colony.corporate-contact.buy-harvester")),
     @json($encounter?->id),
-    @json(route("colony.bar.accept-encounter", ["encounter" => "__ENCOUNTER__"]))
+    @json(route("colony.bar.accept-encounter", ["encounter" => "__ENCOUNTER__"])),
+    @json($barPageExtra)
 )'
         x-cloak>
 
@@ -189,6 +224,47 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         </button>
                     @endif
 
+                    {{-- Charakter-Anliegen (A41, GDD §12 Kanal 1) — second, independent
+                     Cantina special-event slot; at most one open concern at a time. --}}
+                    @if ($concern)
+                        <button
+                            class="cantina-hotspot{{ $concernChar ? " has-portrait" : "" }} hs-slot-{{ $concernSlot }}"
+                            @click="openConcern()">
+                            <span class="hotspot-pulse"></span>
+                            @if ($concernChar)
+                                <img class="hotspot-portrait"
+                                    src="{{ asset("img/characters/" . $concern->character_slug . ".webp") }}"
+                                    srcset="{{ asset("img/characters/" . $concern->character_slug . ".webp") }} 1x, {{ asset("img/characters/" . $concern->character_slug . "_lg.webp") }} 2x"
+                                    alt="{{ $concernChar["name"] ?? "???" }}">
+                            @else
+                                <i class="bi bi-chat-dots"></i>
+                            @endif
+                            <span
+                                class="hotspot-label">{{ $concernChar["name"] ?? __("colony.bar_concern_heading") }}</span>
+                        </button>
+                    @endif
+
+                    {{-- Deva & Lenn Vier-Ausgänge-Pool (A42, GDD §12 "Deva & Lenn —
+                     taktische Information") — third, independent channel, not gated by
+                     the "1 special event per tick" rule the two pools above share. --}}
+                    @if ($informationEncounter)
+                        <button
+                            class="cantina-hotspot{{ $informationChar ? " has-portrait" : "" }} hs-slot-{{ $informationSlot }}"
+                            @click="openInformationEncounter()">
+                            <span class="hotspot-pulse"></span>
+                            @if ($informationChar)
+                                <img class="hotspot-portrait"
+                                    src="{{ asset("img/characters/" . $informationEncounter->character_slug . ".webp") }}"
+                                    srcset="{{ asset("img/characters/" . $informationEncounter->character_slug . ".webp") }} 1x, {{ asset("img/characters/" . $informationEncounter->character_slug . "_lg.webp") }} 2x"
+                                    alt="{{ $informationChar["name"] ?? "???" }}">
+                            @else
+                                <i class="bi bi-broadcast"></i>
+                            @endif
+                            <span
+                                class="hotspot-label">{{ $informationChar["name"] ?? __("colony.bar_information_heading") }}</span>
+                        </button>
+                    @endif
+
                 </div>
 
                 {{-- Mobile-only swipe dots indicators --}}
@@ -201,7 +277,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                 </div>
 
                 {{-- Empty cantina indicator --}}
-                @if ($offers->isEmpty() && $merchantVisit === null && !$encounter)
+                @if ($offers->isEmpty() && $merchantVisit === null && !$encounter && !$concern && !$informationEncounter)
                     <div class="cantina-empty-hint">
                         <p style="margin:0; font-size: 0.9rem; font-weight:500;">{{ __("colony.bar_no_offers") }}</p>
                     </div>
@@ -230,6 +306,19 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                 </span>
             </div>
 
+            {{-- Tomas (bartender) — permanent Cantina fixture (A40, GDD §12), no
+             random spawn. A fixed banner like Orin's above, not a rotating
+             hotspot — Tomas is always here, so there's no "next slot" logic
+             that applies to him. --}}
+            <div class="corporate-contact-banner" @click="openBartender()">
+                <img class="corporate-contact-banner__portrait" src="{{ asset("img/characters/bartender.webp") }}"
+                    alt="{{ config("characters.bartender.name") }}">
+                <div class="corporate-contact-banner__text">
+                    <strong>{{ config("characters.bartender.name") }}</strong>
+                    <span>{{ __("colony.bartender_talk_button") }}</span>
+                </div>
+            </div>
+
             {{-- Backdrop to dim page behind modal --}}
             <div class="cantina-modal-backdrop" x-show="activeModal !== null" @click="closeModal()" x-transition.opacity
                 style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;" x-cloak></div>
@@ -250,8 +339,9 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     <div x-show="activeModal === 'merchant'">
                         <x-cantina-dialog :portrait-src="$merchantPortraitSrc" :portrait-lg-src="$merchantPortraitLgSrc" :name="$merchantName" :role="$merchantRole">
                             {{-- Toast feedback --}}
-                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                                x-text="toast.message" aria-live="polite" role="status"></div>
+                            <div x-show="toast.visible" x-transition
+                                :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
+                                aria-live="polite" role="status"></div>
 
                             <div class="merchant-items-bar"
                                 style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
@@ -321,19 +411,24 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         // (same portrait/title as the special-inventory hotspot) rather
                         // than introducing new copy — "Bleibt bis Sol X" mirrors the
                         // catalog dialog's role text for a consistent Corvan presentation.
-                        $name = $isCorvanOffer ? __("colony.merchant_title") : $char["name"] ?? "???";
-                        $role = $isCorvanOffer
-                            ? __("colony.merchant_until_sol") . " " . $offer->expires_tick
-                            : $char["role"] ?? "";
-                        $offerCharSlug = $isCorvanOffer ? "merchant" : $char["slug"] ?? "stranger";
-                        $offerPortraitSrc = asset("img/characters/" . $offerCharSlug . ".webp");
-                        $offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
-                        // bar_trade Charakter-Zuordnung (A36) — personalisierte Zeile,
-                        // kein neuer Mechanismus, nur Flavor zusätzlich zum Angebot.
-                        $offerFlavorKey =
-                            !$isCorvanOffer && ($char["game_role"] ?? null) === "bar_trade"
-                                ? "colony.bar_trade_flavor_" . $offerCharSlug
-                                : null;
+$name = $isCorvanOffer ? __("colony.merchant_title") : $char["name"] ?? "???";
+$role = $isCorvanOffer
+    ? __("colony.merchant_until_sol") . " " . $offer->expires_tick
+    : $char["role"] ?? "";
+$offerCharSlug = $isCorvanOffer ? "merchant" : $char["slug"] ?? "stranger";
+$offerPortraitSrc = asset("img/characters/" . $offerCharSlug . ".webp");
+$offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
+// bar_trade Charakter-Zuordnung (A36) — personalisierte Zeile,
+// kein neuer Mechanismus, nur Flavor zusätzlich zum Angebot.
+$offerFlavorKey =
+    !$isCorvanOffer && ($char["game_role"] ?? null) === "bar_trade"
+        ? "colony.bar_trade_flavor_" . $offerCharSlug
+        : null;
+// A42: only forward the slug for an actually-assigned, non-Corvan
+// character — BarService::acceptOffer() itself filters by
+// game_role === 'bar_trade' before crediting the codex, so passing
+                        // any assigned slug here (not just bar_trade ones) is safe.
+                        $offerAcceptCharSlug = !$isCorvanOffer && $char ? $char["slug"] : null;
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
                         <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
@@ -393,7 +488,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                                         </button>
                                     @endif
                                     <button class="tile-action-btn" style="width:auto;"
-                                        @click="accept({{ $offerId }}, $el)"
+                                        @click='accept({{ $offerId }}, @json($offerAcceptCharSlug), $el)'
                                         :disabled="offerResolved({{ $offerId }}) || loading">
                                         <span class="tile-action-btn__body">
                                             <span
@@ -533,6 +628,183 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         </x-cantina-dialog>
                     </div>
                 @endif
+
+                {{-- Tomas (bartender) dialog — A40, GDD §12. --}}
+                @php
+                    $bartenderPortraitSrc = asset("img/characters/bartender.webp");
+                    $bartenderPortraitLgSrc = asset("img/characters/bartender_lg.webp");
+                    $bartenderName = config("characters.bartender.name");
+                    $bartenderRole = config("characters.bartender.role");
+                @endphp
+                <div x-show="activeModal === 'bartender'">
+                    <x-cantina-dialog :portrait-src="$bartenderPortraitSrc" :portrait-lg-src="$bartenderPortraitLgSrc" :name="$bartenderName" :role="$bartenderRole">
+                        <p x-show="bartenderResultTier === null">{{ __("colony.bartender_dialog_intro") }}</p>
+
+                        <template x-for="tier in [0, 1, 2, 3]" :key="tier">
+                            <p x-show="bartenderResultTier === tier"
+                                x-text="{{ json_encode([
+                                    0 => __("colony.bartender_dialog_tier_0"),
+                                    1 => __("colony.bartender_dialog_tier_1"),
+                                    2 => __("colony.bartender_dialog_tier_2"),
+                                    3 => __("colony.bartender_dialog_tier_3"),
+                                ]) }}[tier]">
+                            </p>
+                        </template>
+
+                        <div x-show="bartenderResultTier === null" style="display:flex;flex-direction:column;gap:0.5rem">
+                            <label style="font-size:0.85rem;color:var(--pico-muted-color)">
+                                {{ __("colony.bartender_knowledge_label") }}
+                                <select x-model.number="bartenderKnowledgeId">
+                                    <template x-for="opt in knowledgeOptions" :key="opt.id">
+                                        <option :value="opt.id" x-text="opt.name"></option>
+                                    </template>
+                                </select>
+                            </label>
+                            <div style="display:flex;justify-content:flex-end">
+                                <button class="tile-action-btn" style="width:auto;" @click="talkToBartender()"
+                                    :disabled="bartenderLoading || !bartenderKnowledgeId">
+                                    <span class="tile-action-btn__body">{{ __("colony.bartender_talk_button") }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div x-show="bartenderResultTier !== null" style="display:flex;justify-content:flex-end">
+                            <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                @click="closeModal()">
+                                <span class="tile-action-btn__body">{{ __("colony.story_encounter_close") }}</span>
+                            </button>
+                        </div>
+
+                        <div x-show="bartenderError" x-text="bartenderError"
+                            style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                    </x-cantina-dialog>
+                </div>
+
+                {{-- Charakter-Anliegen dialog — A41, GDD §12 Kanal 1. --}}
+                @if ($concern)
+                    @php
+                        $concernPortraitSrc = asset("img/characters/" . $concern->character_slug . ".webp");
+                        $concernPortraitLgSrc = asset("img/characters/" . $concern->character_slug . "_lg.webp");
+                        $concernName = $concernChar["name"] ?? __("colony.bar_concern_heading");
+                        $concernRole = $concernChar["role"] ?? "";
+                        $concernIntroKey = "colony.bar_concern_" . $concern->character_slug . "_intro";
+                        $concernSuccessKey = "colony.bar_concern_" . $concern->character_slug . "_success";
+                        $concernFailureKey = "colony.bar_concern_" . $concern->character_slug . "_failure";
+                        $concernHasFailureLine = Lang::has($concernFailureKey);
+                    @endphp
+                    <div x-show="activeModal === 'concern'">
+                        <x-cantina-dialog :portrait-src="$concernPortraitSrc" :portrait-lg-src="$concernPortraitLgSrc" :name="$concernName" :role="$concernRole">
+                            <p x-show="!concernResolved">{{ __($concernIntroKey) }}</p>
+
+                            <div x-show="!concernResolved && concernCharacterSlug === 'mechanic'"
+                                style="margin-bottom:0.75rem">
+                                <label style="font-size:0.85rem;color:var(--pico-muted-color)">
+                                    {{ __("colony.bar_concern_knowledge_label") }}
+                                    <select x-model.number="concernKnowledgeId">
+                                        <template x-for="opt in knowledgeOptions" :key="opt.id">
+                                            <option :value="opt.id" x-text="opt.name"></option>
+                                        </template>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div x-show="!concernResolved"
+                                style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+                                @include("partials.ap-cost-chip", [
+                                    "type" => "economy",
+                                    "amount" => $concernApCost,
+                                ])
+                                <button class="tile-action-btn" style="width:auto;" @click="resolveConcern()"
+                                    :disabled="concernLoading">
+                                    <span class="tile-action-btn__body">{{ __("colony.bar_concern_resolve") }}</span>
+                                </button>
+                            </div>
+
+                            <p x-show="concernResolved && concernSuccess === true" style="color:#166534">
+                                {{ __($concernSuccessKey) }}</p>
+                            @if ($concernHasFailureLine)
+                                <p x-show="concernResolved && concernSuccess === false"
+                                    style="color:var(--pico-del-color)">{{ __($concernFailureKey) }}</p>
+                            @else
+                                <p x-show="concernResolved && concernSuccess === false" style="color:#166534">
+                                    {{ __($concernSuccessKey) }}</p>
+                            @endif
+
+                            <div x-show="concernResolved" style="display:flex;justify-content:flex-end">
+                                <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                    @click="closeModal()">
+                                    <span class="tile-action-btn__body">{{ __("colony.story_encounter_close") }}</span>
+                                </button>
+                            </div>
+
+                            <div x-show="concernError" x-text="concernError"
+                                style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                        </x-cantina-dialog>
+                    </div>
+                @endif
+
+                {{-- Deva & Lenn Vier-Ausgänge-Pool dialog — A42, GDD §12
+                 "Deva & Lenn — taktische Information". --}}
+                @if ($informationEncounter)
+                    @php
+                        $informationPortraitSrc = asset(
+                            "img/characters/" . $informationEncounter->character_slug . ".webp",
+                        );
+                        $informationPortraitLgSrc = asset(
+                            "img/characters/" . $informationEncounter->character_slug . "_lg.webp",
+                        );
+                        $informationName = $informationChar["name"] ?? __("colony.bar_information_heading");
+                        $informationRole = $informationChar["role"] ?? "";
+                        $informationSlug = $informationEncounter->character_slug;
+                        $informationOutcomeLines = [];
+                        foreach (
+                            ["drill_buffer", "knowledge_boost", "nav_discount", "narrative_1", "narrative_2"]
+                            as $outcomeKey
+                        ) {
+                            $lineKey = "colony.bar_information_{$informationSlug}_{$outcomeKey}";
+                            if (Lang::has($lineKey)) {
+                                $informationOutcomeLines[$outcomeKey] = __($lineKey);
+                            }
+                        }
+                    @endphp
+                    <div x-show="activeModal === 'information'">
+                        <x-cantina-dialog :portrait-src="$informationPortraitSrc" :portrait-lg-src="$informationPortraitLgSrc" :name="$informationName" :role="$informationRole">
+                            <div x-show="!informationResolved && informationNeedsKnowledgeChoice"
+                                style="margin-bottom:0.75rem">
+                                <label style="font-size:0.85rem;color:var(--pico-muted-color)">
+                                    {{ __("colony.bar_information_knowledge_label") }}
+                                    <select x-model.number="informationKnowledgeId">
+                                        <template x-for="opt in devaKnowledgeChoices" :key="opt.id">
+                                            <option :value="opt.id" x-text="opt.name"></option>
+                                        </template>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div x-show="!informationResolved" style="display:flex;justify-content:flex-end">
+                                <button class="tile-action-btn" style="width:auto;"
+                                    @click="resolveInformationEncounter()" :disabled="informationLoading">
+                                    <span class="tile-action-btn__body">{{ __("colony.bar_information_resolve") }}</span>
+                                </button>
+                            </div>
+
+                            <template x-if="informationResolved">
+                                <p x-text="{{ json_encode($informationOutcomeLines) }}[informationOutcome?.outcome_key]">
+                                </p>
+                            </template>
+
+                            <div x-show="informationResolved" style="display:flex;justify-content:flex-end">
+                                <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                    @click="closeModal()">
+                                    <span class="tile-action-btn__body">{{ __("colony.story_encounter_close") }}</span>
+                                </button>
+                            </div>
+
+                            <div x-show="informationError" x-text="informationError"
+                                style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                        </x-cantina-dialog>
+                    </div>
+                @endif
             </div>
         @endif
 
@@ -547,7 +819,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
     <script>
         function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, resourceAbbr,
             offersCount = 0, corporateContactOfferRoute, corporateContactBuyRoute, encounterId = null,
-            acceptEncounterRoute) {
+            acceptEncounterRoute, extra = {}) {
             const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
             const panelCount = hasGuests ? 4 : 1;
 
@@ -768,6 +1040,158 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     this.activeModal = null;
                 },
 
+                // ── Tomas — Cantina-Barkeeper (A40) ─────────────────────────────
+                knowledgeOptions: extra.knowledgeOptions ?? [],
+                bartenderKnowledgeId: (extra.knowledgeOptions ?? [])[0]?.id ?? null,
+                bartenderLoading: false,
+                bartenderResultTier: null, // 0-3 once "Reden" succeeds
+                bartenderError: null,
+
+                openBartender() {
+                    this.activeModal = 'bartender';
+                    this.bartenderResultTier = null;
+                    this.bartenderError = null;
+                },
+
+                async talkToBartender() {
+                    if (this.bartenderLoading || !this.bartenderKnowledgeId) return;
+                    this.bartenderLoading = true;
+                    this.bartenderError = null;
+                    try {
+                        const res = await fetch(extra.talkToBartenderRoute, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                knowledge_id: this.bartenderKnowledgeId
+                            }),
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            // ap_added tiers (0/1/2/3) map 1:1 onto the 4
+                            // bartender_dialog_tier_* lines (config('game.bartender.ap_bonus_tiers')).
+                            this.bartenderResultTier = Math.min(3, data.ap_added ?? 0);
+                        } else if (data.error === 'cooldown_active') {
+                            this.bartenderError = @js(__("colony.bartender_error_cooldown"));
+                        } else {
+                            this.bartenderError = @js(__("colony.bartender_error_generic"));
+                        }
+                    } catch {
+                        this.bartenderError = @js(__("colony.bartender_error_generic"));
+                    } finally {
+                        this.bartenderLoading = false;
+                    }
+                },
+
+                // ── Charakter-Anliegen (A41) ─────────────────────────────────────
+                concernId: extra.concernId ?? null,
+                concernCharacterSlug: extra.concernCharacterSlug ?? null,
+                concernKnowledgeId: (extra.knowledgeOptions ?? [])[0]?.id ?? null,
+                concernResolved: false,
+                concernSuccess: null,
+                concernOutcome: null,
+                concernError: null,
+                concernLoading: false,
+
+                openConcern() {
+                    this.activeModal = 'concern';
+                },
+
+                async resolveConcern() {
+                    if (!this.concernId || this.concernLoading) return;
+                    this.concernLoading = true;
+                    this.concernError = null;
+                    try {
+                        const res = await fetch(extra.resolveConcernRoute.replace('__CONCERN__', this.concernId), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                knowledge_id: this.concernCharacterSlug === 'mechanic' ? this
+                                    .concernKnowledgeId : null
+                            }),
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            this.concernResolved = true;
+                            this.concernSuccess = data.success;
+                            this.concernOutcome = data;
+                            this.syncAp(data.ap_available);
+                            this.syncResbarAmount(1, data.credits_balance);
+                            this.syncResbarAmount(3, data.regolith_balance);
+                            this.syncResbarAmount(4, data.compounds_balance);
+                        } else {
+                            this.concernError = data.error ?? 'Fehler';
+                        }
+                    } catch {
+                        this.concernError = 'Verbindungsfehler';
+                    } finally {
+                        this.concernLoading = false;
+                    }
+                },
+
+                // ── Deva & Lenn Vier-Ausgänge-Pool (A42) ─────────────────────────
+                informationEncounterId: extra.informationEncounterId ?? null,
+                informationCharacterSlug: extra.informationCharacterSlug ?? null,
+                informationOutcomeKey: extra.informationOutcomeKey ?? null,
+                devaKnowledgeChoices: extra.devaKnowledgeChoices ?? [],
+                informationKnowledgeId: (extra.devaKnowledgeChoices ?? [])[0]?.id ?? null,
+                informationResolved: false,
+                informationOutcome: null,
+                informationError: null,
+                informationLoading: false,
+
+                openInformationEncounter() {
+                    this.activeModal = 'information';
+                },
+
+                // Only veteran's (Deva's) 'knowledge_boost' outcome needs a
+                // player choice (geology vs. health) — ai_researcher's
+                // (Lenn's) knowledge_boost target is fixed (cartography).
+                get informationNeedsKnowledgeChoice() {
+                    return this.informationCharacterSlug === 'veteran' && this.informationOutcomeKey ===
+                        'knowledge_boost';
+                },
+
+                async resolveInformationEncounter() {
+                    if (!this.informationEncounterId || this.informationLoading) return;
+                    this.informationLoading = true;
+                    this.informationError = null;
+                    try {
+                        const res = await fetch(
+                            extra.resolveInformationRoute.replace('__INFO_ENCOUNTER__', this
+                                .informationEncounterId), {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                    'Accept': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    knowledge_id: this.informationNeedsKnowledgeChoice ? this
+                                        .informationKnowledgeId : null
+                                }),
+                            });
+                        const data = await res.json();
+                        if (data.ok) {
+                            this.informationResolved = true;
+                            this.informationOutcome = data;
+                        } else {
+                            this.informationError = data.error ?? 'Fehler';
+                        }
+                    } catch {
+                        this.informationError = 'Verbindungsfehler';
+                    } finally {
+                        this.informationLoading = false;
+                    }
+                },
+
                 // Mark visit as seen (fire-and-forget)
                 markVisitSeen() {
                     if (!this.merchantVisit || this.merchantVisit.was_visited) return;
@@ -824,8 +1248,10 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     }, 3500);
                 },
 
-                // Bar offer accept
-                async accept(offerId, btn) {
+                // Bar offer accept — characterSlug (A36's shown assignment, possibly
+                // null for a Corvan offer or an unassigned/story_hook hotspot) is
+                // forwarded so the Charakter-Kodex (A42) can credit bar_trade figures.
+                async accept(offerId, characterSlug, btn) {
                     this.loading = true;
                     this.error[offerId] = null;
                     try {
@@ -836,6 +1262,9 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
                                 'Accept': 'application/json',
                             },
+                            body: JSON.stringify({
+                                character_slug: characterSlug ?? null
+                            }),
                         });
                         const data = await res.json();
                         if (data.ok) {

@@ -261,7 +261,8 @@ abstract class AbstractTechnologyService
         int $colonyId,
         int $entityId,
         string $changeMode = 'add',
-        int $points = 1
+        int $points = 1,
+        bool $bypassPoolCheck = false
     ): bool {
         // Single source for "may this proceed, and if not why" — investBlocker() covers
         // id validation, the entity lookup, the change mode and AP availability.
@@ -271,9 +272,12 @@ abstract class AbstractTechnologyService
         // techtree was the one screen that stayed locked while dev mode was on. Only the
         // *availability* of AP is bypassed, never the ap_spend threshold enforced by
         // levelupBlocker() — skipping that would level entities up with no investment.
-        $bypassAp = (bool) config('game.bypass.ap_checks');
+        //
+        // $bypassPoolCheck additionally skips both the pool-availability gate AND the
+        // pool-locking side effect below — see investBonus() for the earmarked-AP use case.
+        $bypassAp = (bool) config('game.bypass.ap_checks') || $bypassPoolCheck;
 
-        if ($this->investBlocker($colonyId, $entityId, $changeMode, $points) !== null) {
+        if ($this->investBlocker($colonyId, $entityId, $changeMode, $points, $bypassPoolCheck) !== null) {
             return false;
         }
 
@@ -392,9 +396,13 @@ abstract class AbstractTechnologyService
     /**
      * Name the reason an invest() call would be refused, or null when it may proceed.
      *
+     * $bypassPoolCheck skips the shared-pool availability check entirely — used by
+     * investBonus() for earmarked AP that never came out of the pool in the first
+     * place, so its availability must never gate the injection.
+     *
      * @return string|null one of: entity_not_found, insufficient_ap, invalid_mode
      */
-    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1): ?string
+    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false): ?string
     {
         $this->validateId($colonyId);
         $this->validateId($entityId);
@@ -407,7 +415,7 @@ abstract class AbstractTechnologyService
             return 'entity_not_found';
         }
 
-        if (config('game.bypass.ap_checks')) {
+        if ($bypassPoolCheck || config('game.bypass.ap_checks')) {
             return null;
         }
 

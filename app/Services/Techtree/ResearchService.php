@@ -60,6 +60,29 @@ class ResearchService extends AbstractTechnologyService
     }
 
     /**
+     * Inject earmarked bonus AP directly into a knowledge's ap_spend, bypassing the
+     * shared-colony-pool availability gate that invest() normally runs.
+     *
+     * This is the official entry point for "bonus AP that never came out of the
+     * player's shared AP pool" — e.g. Cantina-Barkeeper Tomas' interaction-tier
+     * bonus (A40, BarService::talkToBartender()), a character concern's one-off
+     * knowledge boost (A41, Sarka), or a character's knowledge-progress-boost trait
+     * (A42, Deva/Lenn). Such sources are zweckgebunden: they are earned outside the
+     * pool and must never fail or evaporate just because the pool happens to be at
+     * or near 0 when the player triggers them. Do not route these through invest()
+     * with a manual pre-check instead — that still leaves the pool-locking side
+     * effect in place, which would incorrectly debit AP the colony never had drawn.
+     *
+     * Only the 'add' semantics apply here (ap_spend toward the next levelup) — this
+     * mirrors invest($action = 'add') but skips both the pool-availability gate and
+     * the pool-locking side effect, since the AP was never in the pool to begin with.
+     */
+    public function investBonus(int $colonyId, int $entityId, int $points = 1): bool
+    {
+        return $this->_invest($colonyId, $entityId, 'add', $points, bypassPoolCheck: true);
+    }
+
+    /**
      * Adds the knowledge CC-level gate (config/game.php → knowledge_cc_level_cap) on top
      * of the shared requirement checks: a colony must have its CommandCenter at the
      * required level before a Kenntnis may advance to the matching level.

@@ -93,6 +93,7 @@
                             <li><a href="{{ route("lobby") }}">{{ __("lobby.nav_runs") }}</a></li>
                             <li><a href="{{ route("user.show") }}">Profil</a></li>
                             <li><a href="{{ route("user.settings") }}">Einstellungen</a></li>
+                            <li><a href="{{ route("user.codex") }}">{{ __("colony.user_nav_codex") }}</a></li>
                             <li>
                                 <form method="POST" action="{{ route("logout") }}" style="margin:0">
                                     @csrf
@@ -199,6 +200,9 @@
                             Profil</a>
                         <a href="{{ route("user.settings") }}" class="nav-flyout-item"><i class="bi bi-gear"></i>
                             Einstellungen</a>
+                        <a href="{{ route("user.codex") }}" class="nav-flyout-item"><i
+                                class="bi bi-journal-bookmark"></i>
+                            {{ __("colony.user_nav_codex") }}</a>
                         <form method="POST" action="{{ route("logout") }}" style="margin:0">
                             @csrf
                             <button type="submit" class="nav-flyout-item nav-flyout-item--btn">

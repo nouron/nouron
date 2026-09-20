@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Console\Commands\GameTick;
 use App\Services\ProjectBonusService;
+use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -196,5 +197,92 @@ class ProjectBonusServiceTest extends TestCase
         $service = $this->app->make(ProjectBonusService::class);
 
         $this->assertSame(0, $service->tradePriceBonusPercent(self::COLONY_ID));
+    }
+
+    // ── Cantina-Anliegen Baukosten-Rabatt-Gutschein (A41) ───────────────────────
+
+    private function insertVoucher(int $discountPct, string $source, ?int $expiresTick = null, ?int $consumedTick = null): int
+    {
+        return DB::table('colony_building_discount_vouchers')->insertGetId([
+            'colony_id' => self::COLONY_ID,
+            'discount_pct' => $discountPct,
+            'source' => $source,
+            'granted_tick' => 1,
+            'expires_tick' => $expiresTick,
+            'consumed_tick' => $consumedTick,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_active_voucher_percent_is_zero_with_no_voucher(): void
+    {
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->activeBuildingDiscountVoucherPercent(self::COLONY_ID));
+    }
+
+    public function test_active_voucher_percent_returns_unconsumed_unexpired_voucher(): void
+    {
+        $this->insertVoucher(25, 'information_broker');
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(25, $service->activeBuildingDiscountVoucherPercent(self::COLONY_ID));
+    }
+
+    public function test_active_voucher_percent_ignores_consumed_voucher(): void
+    {
+        $this->insertVoucher(25, 'information_broker', consumedTick: 5);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->activeBuildingDiscountVoucherPercent(self::COLONY_ID));
+    }
+
+    public function test_active_voucher_percent_ignores_expired_voucher(): void
+    {
+        $this->app->instance(TickService::class, new TickService(20));
+        $this->insertVoucher(15, 'founder', expiresTick: 10);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->activeBuildingDiscountVoucherPercent(self::COLONY_ID));
+    }
+
+    public function test_active_voucher_percent_picks_the_larger_discount_when_two_are_active(): void
+    {
+        $this->insertVoucher(15, 'founder');
+        $this->insertVoucher(25, 'information_broker');
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(25, $service->activeBuildingDiscountVoucherPercent(self::COLONY_ID));
+    }
+
+    public function test_effective_ap_for_levelup_folds_in_active_voucher(): void
+    {
+        $this->insertVoucher(25, 'information_broker');
+        $service = $this->app->make(ProjectBonusService::class);
+
+        // No knowledge discount, only the 25% voucher: round(10 * 0.75) = 8, floor = 5.
+        $this->assertSame(8, $service->effectiveApForLevelup(self::COLONY_ID, 10));
+    }
+
+    public function test_consume_active_building_discount_voucher_marks_it_consumed(): void
+    {
+        $id = $this->insertVoucher(25, 'information_broker');
+        $this->app->instance(TickService::class, new TickService(7));
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $service->consumeActiveBuildingDiscountVoucher(self::COLONY_ID);
+
+        $this->assertSame(7, DB::table('colony_building_discount_vouchers')->where('id', $id)->value('consumed_tick'));
+        $this->assertSame(0, $service->activeBuildingDiscountVoucherPercent(self::COLONY_ID));
+    }
+
+    public function test_consume_active_building_discount_voucher_is_noop_without_active_voucher(): void
+    {
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $service->consumeActiveBuildingDiscountVoucher(self::COLONY_ID);
+
+        $this->assertSame(0, DB::table('colony_building_discount_vouchers')->count());
     }
 }

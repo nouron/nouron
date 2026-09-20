@@ -25,6 +25,11 @@ namespace Tests\Unit;
  *    - test_request_ship_throws_when_hangar_level_too_low_for_ship_class
  *    - test_request_ship_succeeds_when_hangar_level_matches_ship_class
  *
+ *  grantFreeShip (A41 Dax/smuggler concern reward)
+ *    - test_grant_free_ship_creates_row_without_charging_credits
+ *    - test_grant_free_ship_creates_pending_when_no_free_slot
+ *    - test_grant_free_ship_throws_for_invalid_ship_id
+ *
  *  dispatchShip (mission catalog, GDD §8b)
  *    - test_dispatch_ship_sets_dispatched_state_and_creates_mission
  *    - test_dispatch_ship_throws_when_no_ship_in_bay
@@ -351,6 +356,51 @@ class HangarServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
 
         $this->hangarService->requestShip(self::COLONY_ID, 999, false, 0);
+    }
+
+    // ── grantFreeShip (A41) ──────────────────────────────────────────────────
+
+    public function test_grant_free_ship_creates_row_without_charging_credits(): void
+    {
+        $this->insertHangar(1);
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => 42]);
+
+        $this->hangarService->grantFreeShip(self::COLONY_ID, self::SHIP_DRONE);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->first();
+
+        $this->assertNotNull($row, 'colony_ships row must be created after grantFreeShip');
+        $this->assertSame('building', $row->ship_state);
+        $this->assertSame(1, (int) $row->hangar_instance_id);
+        $this->assertSame(self::FIXED_TICK + 1, (int) $row->deliver_at_tick);
+        $this->assertSame(42, (int) DB::table('user_resources')->where('user_id', 3)->value('credits'));
+    }
+
+    public function test_grant_free_ship_creates_pending_when_no_free_slot(): void
+    {
+        // No hangar row at all — there is no free slot to assign to.
+        $this->hangarService->grantFreeShip(self::COLONY_ID, self::SHIP_DRONE);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->first();
+
+        $this->assertSame('pending', $row->ship_state);
+        $this->assertNull($row->hangar_instance_id);
+        $this->assertNotNull($row->pending_until_tick);
+    }
+
+    public function test_grant_free_ship_throws_for_invalid_ship_id(): void
+    {
+        $this->insertHangar(1);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->grantFreeShip(self::COLONY_ID, 999);
     }
 
     public function test_request_ship_throws_for_insufficient_credits(): void

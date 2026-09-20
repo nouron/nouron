@@ -9,13 +9,20 @@
  *     Zara/wager, Voss/auction — see BarService)
  *   - bar_trade: shares the generic anonymous-guest barter offer, with a
  *     personalized flavor line (lang/de/colony.php → bar_trade_flavor_*)
- *   - story_hook: flavor-only encounter, no resource/Credits effect at all
- *     (Leitplanke §12: not every figure gets an economic tie-in)
+ *   - story_hook: flavor-only Cantina *encounter* pool (A36, pickStoryEncounter()),
+ *     no resource/Credits effect there. NOTE (A41, owner decision 2026-09-17):
+ *     these figures DO get a mechanical outcome via the separate Charakter-
+ *     Anliegen slot (BarService::generateConcernForColony()/resolveConcern())
+ *     — founder and preacher grant a building discount voucher / Trust swing,
+ *     stranger runs a Credits wager. The story_hook label only means "no
+ *     tie-in within the encounter pool", not "never mechanical anywhere".
  *   - information: repeatable encounter with a per-character outcome pool
  *     (tactical buffs/knowledge progress, capped once per run per outcome
- *     type, plus unlimited flavor-only outcomes) — Deva/Lenn, concept
- *     finalized in GDD §12 "Deva & Lenn — taktische Information", not yet
- *     implemented
+ *     type, plus unlimited flavor-only outcomes) — Deva/Lenn, GDD §12
+ *     "Deva & Lenn — taktische Information" (A42). Independent third
+ *     encounter channel, own spawn roll, NOT gated by the "at most one
+ *     Cantina special event per tick" rule that governs the Credits
+ *     encounter pool and the Charakter-Anliegen slot (see BarService).
  */
 return [
     'bartender' => ['name' => 'Tomas',  'role' => 'Bartender', 'game_role' => 'permanent'],

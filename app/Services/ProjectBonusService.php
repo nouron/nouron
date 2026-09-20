@@ -24,6 +24,8 @@ class ProjectBonusService
     /** research_id values from config/knowledge.php that discount building projects. */
     private const DOMAIN_KNOWLEDGE_KEYS = ['construction', 'trade'];
 
+    public function __construct(private readonly TickService $tickService) {}
+
     public function buildingApDiscountPercent(int $colonyId): int
     {
         $total = 0;
@@ -46,10 +48,59 @@ class ProjectBonusService
 
     public function effectiveApForLevelup(int $colonyId, int $baseApForLevelup): int
     {
-        $discountPercent = $this->buildingApDiscountPercent($colonyId);
+        $discountPercent = $this->buildingApDiscountPercent($colonyId)
+            + $this->activeBuildingDiscountVoucherPercent($colonyId);
         $minCostFactor = (float) config('game.project_min_cost_factor', 0.5);
 
         return self::applyDiscount($baseApForLevelup, $discountPercent, $minCostFactor);
+    }
+
+    /**
+     * Additive AP-cost discount from a Cantina-Anliegen voucher (A41 — Vesper/
+     * information_broker or Aldra/founder), folded into effectiveApForLevelup()
+     * so every read site (invest action AND the sidebar cost-preview endpoints)
+     * sees the same discounted number — see CLAUDE.md discount-wiring checklist.
+     * Picks the largest unconsumed, unexpired voucher if more than one is active.
+     */
+    public function activeBuildingDiscountVoucherPercent(int $colonyId): int
+    {
+        $tick = $this->tickService->getTickCount();
+
+        $voucher = DB::table('colony_building_discount_vouchers')
+            ->where('colony_id', $colonyId)
+            ->whereNull('consumed_tick')
+            ->where(function ($q) use ($tick) {
+                $q->whereNull('expires_tick')->orWhere('expires_tick', '>', $tick);
+            })
+            ->orderByDesc('discount_pct')
+            ->first();
+
+        return $voucher !== null ? (int) $voucher->discount_pct : 0;
+    }
+
+    /**
+     * Consumes the currently active building-discount voucher (if any) — called
+     * once a building level-up actually completes while a voucher was active.
+     * No-op if none is active.
+     */
+    public function consumeActiveBuildingDiscountVoucher(int $colonyId): void
+    {
+        $tick = $this->tickService->getTickCount();
+
+        $voucher = DB::table('colony_building_discount_vouchers')
+            ->where('colony_id', $colonyId)
+            ->whereNull('consumed_tick')
+            ->where(function ($q) use ($tick) {
+                $q->whereNull('expires_tick')->orWhere('expires_tick', '>', $tick);
+            })
+            ->orderByDesc('discount_pct')
+            ->first();
+
+        if ($voucher !== null) {
+            DB::table('colony_building_discount_vouchers')
+                ->where('id', $voucher->id)
+                ->update(['consumed_tick' => $tick]);
+        }
     }
 
     /**

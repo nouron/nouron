@@ -124,4 +124,54 @@ class BuildingInvestTest extends TestCase
             'event' => 'colony.building_invested',
         ]);
     }
+
+    // ── Cantina-Anliegen Baukosten-Rabatt-Gutschein (A41) ───────────────────────
+
+    private function insertVoucher(int $discountPct, string $source): void
+    {
+        DB::table('colony_building_discount_vouchers')->insert([
+            'colony_id' => self::COLONY_ID,
+            'discount_pct' => $discountPct,
+            'source' => $source,
+            'granted_tick' => 1,
+            'expires_tick' => null,
+            'consumed_tick' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_invest_reaches_levelup_earlier_with_an_active_voucher(): void
+    {
+        // 25% off ap_for_levelup=10 -> effective threshold 8 (round(7.5)=8).
+        $this->insertVoucher(25, 'information_broker');
+        $this->setCcState(['level' => 1, 'ap_spend' => 7, 'status_points' => 16]);
+
+        $response = $this->invest();
+
+        $response->assertOk()->assertJsonPath('leveled_up', true);
+        $this->assertSame(2, (int) $this->ccRow()->level);
+    }
+
+    public function test_invest_levelup_consumes_the_active_voucher(): void
+    {
+        $this->insertVoucher(25, 'information_broker');
+        $this->setCcState(['level' => 1, 'ap_spend' => 7, 'status_points' => 16]);
+
+        $this->invest()->assertJsonPath('leveled_up', true);
+
+        $voucher = DB::table('colony_building_discount_vouchers')->where('colony_id', self::COLONY_ID)->first();
+        $this->assertNotNull($voucher->consumed_tick, 'voucher must be marked consumed once the level-up it discounted completes');
+    }
+
+    public function test_invest_without_levelup_does_not_consume_the_voucher(): void
+    {
+        $this->insertVoucher(25, 'information_broker');
+        $this->setCcState(['level' => 1, 'ap_spend' => 0, 'status_points' => 16]);
+
+        $this->invest()->assertJsonPath('leveled_up', false);
+
+        $voucher = DB::table('colony_building_discount_vouchers')->where('colony_id', self::COLONY_ID)->first();
+        $this->assertNull($voucher->consumed_tick, 'voucher must remain active until a level-up actually completes');
+    }
 }
