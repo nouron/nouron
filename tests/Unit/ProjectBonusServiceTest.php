@@ -37,15 +37,24 @@ class ProjectBonusServiceTest extends TestCase
         $this->assertSame(0, $service->buildingApDiscountPercent(self::COLONY_ID));
     }
 
-    public function test_discount_sums_construction_and_trade_additively(): void
+    public function test_building_discount_comes_from_construction_only(): void
     {
-        // construction id=90, trade id=95 (config/knowledge.php) — cartography (id=91)
-        // ist NICHT mehr Teil dieses Pools (siehe navigationApDiscountPercent() unten).
+        // construction id=90 is the sole source of the building-project discount.
         $this->setKnowledgeLevel(90, 3);   // cumulative [2,4,4] = 10
-        $this->setKnowledgeLevel(95, 5);   // cumulative [2,4,4,3,2] = 15
         $service = $this->app->make(ProjectBonusService::class);
 
-        $this->assertSame(25, $service->buildingApDiscountPercent(self::COLONY_ID));
+        $this->assertSame(10, $service->buildingApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_trade_no_longer_contributes_to_building_discount(): void
+    {
+        // Owner-Entscheidung 2026-09-20 (A13): building level-up AP costs are not a
+        // trade matter — thematically wrong, trade acts on prices/offers/negotiation.
+        $this->setKnowledgeLevel(95, 5);   // trade Lv5 — voll investiert
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->buildingApDiscountPercent(self::COLONY_ID), 'trade must not feed the building-project discount pool');
+        $this->assertArrayNotHasKey('ap_cost_reduction_per_lv', config('knowledge.trade'));
     }
 
     public function test_cartography_no_longer_contributes_to_building_discount(): void
@@ -137,7 +146,7 @@ class ProjectBonusServiceTest extends TestCase
     public function test_knowledge_discount_does_not_affect_building_discount_pool(): void
     {
         // Die beiden Pools sind unabhängig — Analytik-Labor-Level darf den
-        // bestehenden Gebäude-Rabatt (construction/trade) nicht
+        // bestehenden Gebäude-Rabatt (construction) nicht
         // beeinflussen, und umgekehrt.
         $this->setSciencelabLevel(5);
         $this->setKnowledgeLevel(90, 0); // construction unbelegt

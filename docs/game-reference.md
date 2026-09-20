@@ -107,7 +107,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
 | **agronomy** | 20/28/36/44/52 | 180 AP | +2 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
 | **health** | 20/28/36/44/52 | 180 AP | +3 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
-| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%); Bar-Slots +0/+1/+1/+0/+0; Handelspreis-Bonus +2/+3/+3/+2/+2% (Σ12%) |
+| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bar-Slots +0/+1/+1/+0/+0; Handelspreis-Bonus +2/+3/+3/+2/+2% (Σ12%) |
 | **defense** | 20/28/36/44/52 | 180 AP | +2 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **CC-Level Gate**: Lv4 & Lv5 knowledge erfordern CC Lv4 bzw. Lv5
@@ -222,7 +222,7 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 ### AP-Kosten (Beispiele)
 | Aktion | AP-Typ | Kosten |
 |---|---|---|
-| Gebäude-Levelup | construction | *Individuell; Rabatt via construction/trade* |
+| Gebäude-Levelup | construction | *Individuell; Rabatt via construction* |
 | Kenntnis-Levelup | research | *20–52 je Ziel-Level* |
 | Feld erkunden | navigation | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3); Rabatt via cartography |
 | Handel annehmen | economy | 2 |

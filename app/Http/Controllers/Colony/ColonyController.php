@@ -678,7 +678,7 @@ class ColonyController extends BaseController
             return $this->fail('max_level_reached');
         }
 
-        // Construction/trade knowledge additively discounts the AP
+        // Construction knowledge (plus any active discount voucher) discounts the AP
         // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
         // and-encounters-design.md §2). Level-up Regolith is charged on the click that
         // STARTS the cycle (ap_spend 0 → >0) — mirrors the erect-cost pattern (paid at

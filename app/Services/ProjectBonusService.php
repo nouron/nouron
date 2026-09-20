@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
  * Hosts several independent AP-cost discount and price-bonus pools (GDD §13.3),
  * each sourced from its own knowledge/building level and combined additively
  * within its own pool only — no cross-pool stacking:
- *   - building-project AP discount, summed across the construction and trade
- *     knowledge curves (buildingApDiscountPercent());
+ *   - building-project AP discount, sourced from the construction knowledge
+ *     curve (buildingApDiscountPercent());
  *   - knowledge-levelup AP discount, sourced from the Analytik-Labor
  *     (sciencelab) building level (knowledgeApDiscountPercent());
  *   - navigation-AP discount for exploration and hangar mission actions,
@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ProjectBonusService
 {
-    /** research_id values from config/knowledge.php that discount building projects. */
-    private const DOMAIN_KNOWLEDGE_KEYS = ['construction', 'trade'];
+    /** Knowledge keys from config/knowledge.php that discount building projects (trade is thematically not one — A13). */
+    private const DOMAIN_KNOWLEDGE_KEYS = ['construction'];
 
     public function __construct(private readonly TickService $tickService) {}
 
