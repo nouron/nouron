@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-20
+
+- Fix: `db-migration-agent` durfte per Agent-Definition `migrate:fresh` ohne Einschränkung ausführen — das setzte am 2026-09-17 versehentlich die Dev-DB (`data/db/nouron.db`) zurück. Destruktive artisan-Befehle sind jetzt nur noch gegen eine Wegwerf-DB (`DB_DATABASE=/tmp/...`) erlaubt, gegen die Dev-DB nur `php artisan migrate`.
+
 ## 2026-09-17
 
 - Feature: A40 — Cantina-Barkeeper Tomas implementiert. "Mit Tomas reden" (0 AP-Kosten, Cooldown 1×/Sol) injiziert Bonus-AP direkt in eine vom Spieler gewählte laufende Kenntnis-Investition, wachsend mit kumulativer Interaktionshäufigkeit (0/+1/+2/+3 AP an den Schwellen 0/5/15/30, harter Deckel). Dabei Bug gefunden und generisch gefixt: `ResearchService::invest()` verweigerte die Injektion, wenn der gemeinsame AP-Pool gerade auf 0 stand, obwohl Tomas' Bonus-AP diesen Pool gar nicht anfasst — neue, wiederverwendbare Methode `ResearchService::investBonus()` umgeht den Pool-Gate gezielt für zweckgebundene Bonus-AP (auch von A41/Sarka und A42/Deva-Lenn genutzt). TDD, volle Suite grün.
