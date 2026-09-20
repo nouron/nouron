@@ -223,6 +223,8 @@ class GameTick extends Command
             }
         }
 
+        $runProgressService->checkTrustWarnings($run);
+
         $failReason = $runProgressService->checkFailStates($run);
         if ($failReason) {
             $runProgressService->endRun($run, 'failed', $failReason);

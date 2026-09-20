@@ -710,6 +710,12 @@ return [
         'allow_multiple' => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
         'tick_limit' => 100,    // total ticks per run (60–100, default 100)
         'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
+        // Trust warning levels below 0 (GDD §18.2): the header chip turns red below `chip_red`,
+        // a one-time Nexus-Funk warning fires below `nexus_warning`. Both must stay above trust_fail_threshold.
+        'trust_warning' => [
+            'chip_red' => -10,
+            'nexus_warning' => -18,
+        ],
         'nexus_debt_fail_threshold' => 12000,  // instant fail when nexus_debt exceeds this value
         'phase1_deadline_sol' => 30,    // hard fail if Phase 1 isn't complete by this Sol (checkFailStates)
         'phase1_warning_sol' => 22,     // escalating Nexus warning if Phase 1 still incomplete by this Sol

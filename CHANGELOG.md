@@ -2,6 +2,8 @@
 
 ## 2026-09-20
 
+- Feature: A15 — Kolonisten-Framing in der UI. Der Supply-Chip zeigt jetzt „KOL belegt / Kapazität" (rot bei Überschreitung) statt „SUP frei / Kapazität"; Popup, Gebäudekosten, Fehler-/Onboarding-Texte, Lobby und Nexus-DB sprechen von Kolonisten. Veralteter Popup-Text (Schiffe belegten Supply) korrigiert.
+- Feature: A6 — Trust-Warnstufen (§18.2). Trust-Chip: gelb unter 0, rot unter −10; einmalige Nexus-Funk-Warnung unter −18 (`run.nexus_trust_critical`, Schwellen in `config/game.php → run.trust_warning`). Der Event-Schlüssel musste in drei getrennten Nexus-Listen eingetragen werden (`RunProgressService`, `EventService`, `CommLogController`).
 - Fix: `db-migration-agent` durfte per Agent-Definition `migrate:fresh` ohne Einschränkung ausführen — das setzte am 2026-09-17 versehentlich die Dev-DB (`data/db/nouron.db`) zurück. Destruktive artisan-Befehle sind jetzt nur noch gegen eine Wegwerf-DB (`DB_DATABASE=/tmp/...`) erlaubt, gegen die Dev-DB nur `php artisan migrate`.
 
 ## 2026-09-17

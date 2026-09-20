@@ -68,7 +68,9 @@
                         __("resources.popup_sup_used_researches") => -$supplyBreakdown["used"]["researches"],
                         __("resources.popup_sup_used_advisors") => -$supplyBreakdown["used"]["advisors"],
                     ]),
-                )
+                ) .
+                '<div class="res-popup-extra"></div>' .
+                $breakdownRows([__("resources.popup_sup_free") => $supplyBreakdown["free"]])
             : null;
 
         // AP chip popup extras: base + advisor + trust-multiplier composition —
@@ -150,17 +152,22 @@
             </span>
         @endif
 
-        {{-- Supply chip — shows free/cap (not just cap) so the player sees how much
-         headroom is left before new buildings/advisors/research are blocked. --}}
+        {{-- Colonist chip (GDD §6 Kolonisten-Framing, A15) — "used / cap" colonists, e.g. "47 / 60".
+         Flagged red when the colony is over its cap (free < 0). --}}
         @if (isset($primary[2]))
-            <span class="res-chip res-Sup" @mouseenter="openChip = 'sup'" @mouseleave="openChip = null"
-                @click.stop="openChip = openChip === 'sup' ? null : 'sup'"
+            @php
+                $supplyOver = isset($supplyBreakdown) && $supplyBreakdown["free"] < 0;
+            @endphp
+            <span class="res-chip res-Sup{{ $supplyOver ? " res-chip--over" : "" }}" @mouseenter="openChip = 'sup'"
+                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'sup' ? null : 'sup'"
                 @click.outside="openChip === 'sup' && (openChip = null)" style="position:relative;cursor:default">
-                <span class="res-abbr">SUP</span>
+                <span class="res-abbr">KOL</span>
                 <span class="res-amount">
-                    {{ number_format($supplyBreakdown["free"] ?? ($primary[2]["amount"] ?? 0), 0, ",", ".") }}
                     @if (isset($supplyBreakdown))
+                        {{ number_format($supplyBreakdown["cap"] - $supplyBreakdown["free"], 0, ",", ".") }}
                         / {{ number_format($supplyBreakdown["cap"], 0, ",", ".") }}
+                    @else
+                        {{ number_format($primary[2]["amount"] ?? 0, 0, ",", ".") }}
                     @endif
                 </span>
                 @include("partials.res-popup", [
@@ -175,7 +182,7 @@
         {{-- Trust — thematically next to Supply, shared globally (see AppServiceProvider). --}}
         @if (isset($trust))
             <span id="resbar-ap-trust"
-                class="ap-chip {{ $trust >= 20 ? "ap-chip--trust-pos" : ($trust < 0 ? "ap-chip--trust-neg" : "ap-chip--trust-neu") }}"
+                class="ap-chip {{ $trust >= 20 ? "ap-chip--trust-pos" : ($trust < (int) config("game.run.trust_warning.chip_red", -10) ? "ap-chip--trust-neg" : ($trust < 0 ? "ap-chip--trust-warn" : "ap-chip--trust-neu")) }}"
                 @mouseenter="openChip = 'trust'" @mouseleave="openChip = null"
                 @click.stop="openChip = openChip === 'trust' ? null : 'trust'"
                 @click.outside="openChip === 'trust' && (openChip = null)" style="position:relative;cursor:default">

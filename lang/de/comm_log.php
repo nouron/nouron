@@ -81,6 +81,11 @@ return [
                 'body' => 'Letzte Mahnung: Keine Ziele bis Sol 50 erreicht. Sanktionen treten ab Sol 65 in Kraft. Dies ist Ihre letzte Gelegenheit zur Kurskorrektur.',
                 'badge' => 'Kritische Warnung',
             ],
+            'nexus_trust_critical' => [
+                'title' => 'Nexus-Warnung: Vertrauen kritisch',
+                'body' => 'Direktor, die Lage ist kritisch. Das Vertrauen der Kolonisten steht kurz vor dem Zusammenbruch. Sofortige Maßnahmen erforderlich.',
+                'badge' => 'Kritische Warnung',
+            ],
             'nexus_sanction_sol65' => [
                 'title' => 'Nexus-Sanktion verhängt',
                 'body' => 'Gemäß Konzessionsvertrag §7: Ein Berater wurde temporär gesperrt. Schuldensaldo wird überprüft. Erfüllen Sie die ausstehenden Ziele, um weitere Maßnahmen zu vermeiden.',

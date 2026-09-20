@@ -3,7 +3,7 @@
 return [
     // Resource names (used in tooltips)
     'res_credits' => 'Credits',
-    'res_supply' => 'Versorgung',
+    'res_supply' => 'Kolonisten',
     'res_regolith' => 'Regolith',
     'res_werkstoffe' => 'Werkstoffe',
     'res_organika' => 'Organika',
@@ -19,14 +19,15 @@ return [
     'popup_nx_title' => 'Nexus-Schuld',
     'popup_nx_desc' => 'Was der Nexus geliehen hat, will er zurück. Überschreitest du das Schuldenlimit, entzieht er die Konzession — ohne Gnade, ohne Vorlaufzeit.',
 
-    'popup_sup_title' => 'Supply',
-    'popup_sup_desc' => 'Strom, Wasser, Infrastruktur — alles auf einmal abstrahiert. Gebäude und Schiffe belegen Kapazität; ist das Limit erschöpft, kann keine weitere Einheit in Betrieb genommen werden. Angezeigt wird der freie Rest.',
+    'popup_sup_title' => 'Kolonisten',
+    'popup_sup_desc' => 'Kolonisten im Einsatz / Kapazität der Siedlung. Jedes Gebäude und jede Forschung bindet pro Stufe Leute — ein größeres Labor braucht mehr als ein kleines. Ist die Kapazität erschöpft, kann nichts Neues in Betrieb genommen werden; wird sie überschritten, verfällt alles schneller.',
     'popup_sup_source_cc' => 'Kommandozentrale',
     'popup_sup_source_housing' => 'Wohnhabitat',
     'popup_sup_source_knowledge' => 'Kenntnisse',
     'popup_sup_used_buildings' => 'Gebäude',
     'popup_sup_used_researches' => 'Forschung',
     'popup_sup_used_advisors' => 'Berater',
+    'popup_sup_free' => 'Frei',
 
     'popup_ap_title' => 'Aktionspunkte',
     'popup_ap_desc' => 'Der gemeinsame Pool deiner Kolonie — Bau, Kenntnisse, Erkundung und Handel teilen sich dieselbe Kapazität.',

@@ -114,6 +114,17 @@ class CommLogControllerTest extends TestCase
         $this->assertContains('run.run_failed_phase1_deadline', $events);
     }
 
+    public function test_nexus_includes_trust_critical_warning_from_run_area(): void
+    {
+        $this->log('run.nexus_trust_critical', ['trust' => -19], area: 'run');
+
+        $this->assertSame(1, app(EventService::class)->countUnreadNexus(self::USER_ID));
+
+        $events = $this->actingAs($this->user())->get(route('comm.nexus'))
+            ->assertOk()->viewData('entries')->pluck('event')->all();
+        $this->assertContains('run.nexus_trust_critical', $events);
+    }
+
     public function test_nexus_marks_entries_as_read(): void
     {
         $this->log('run.nexus_warning_sol30', [], area: 'nexus');

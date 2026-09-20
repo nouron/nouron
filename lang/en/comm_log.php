@@ -69,6 +69,11 @@ return [
                 'body' => 'Final notice: no objectives reached by Sol 50. Sanctions take effect from Sol 65. This is your last opportunity to correct course.',
                 'badge' => 'Critical Warning',
             ],
+            'nexus_trust_critical' => [
+                'title' => 'Nexus Warning: Trust critical',
+                'body' => 'Director, the situation is critical. Colonist trust is close to collapse. Immediate action required.',
+                'badge' => 'Critical Warning',
+            ],
             'nexus_sanction_sol65' => [
                 'title' => 'Nexus Sanction imposed',
                 'body' => 'Pursuant to concession contract §7: one advisor has been temporarily suspended. Debt balance under review. Fulfil outstanding objectives to avoid further measures.',
