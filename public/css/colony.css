@@ -2988,6 +2988,36 @@ dialog[x-ref="discoveryDialog"] {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* ── Marktbericht (Konsul, A13) — quiet, non-interactive notice above the
+   character banners; deliberately not clickable (planning information only). */
+.market-report {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--pico-border-radius, 6px);
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--pico-muted-border-color, #ddd);
+}
+
+.market-report > i {
+    font-size: 1.25rem;
+    color: var(--color-accent, #8c2030);
+    flex-shrink: 0;
+}
+
+.market-report__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.market-report__text span {
+    font-size: 0.82rem;
+    color: var(--pico-muted-color, #666);
+}
+
 /* ── Orin (corporate_rep) — Harvester second-instance offer banner ──────────
    (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle", Weg A). A fixed banner
    rather than a scene hotspot — no reserved position exists for a rare,

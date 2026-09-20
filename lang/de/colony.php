@@ -239,6 +239,16 @@ return [
     'merchant_buy_success' => 'Kauf erfolgreich.',
     'merchant_buy_error' => 'Kauf fehlgeschlagen.',
 
+    // ── Marktbericht (Konsul, A13, GDD §12) ────────────────────────────────────
+    // TODO(content-writer): Platzhalter — Ton/Feinschliff folgt.
+    'merchant_forecast_title' => 'Marktbericht',
+    'merchant_forecast_tomorrow' => 'Corvan trifft morgen ein.',
+    'merchant_forecast_in_sols' => 'Corvan trifft in :sols Sol ein.',
+    'merchant_forecast_inventory' => 'Angekündigt: :categories',
+    'merchant_category_ap_package' => 'AP-Paket',
+    'merchant_category_information' => 'Information',
+    'merchant_category_one_time' => 'Einmal-Item',
+
     // ── Orin (corporate_rep) — Harvester-Zweitinstanz Weg A (GDD §4c,
     // freigegeben 2026-08-05) ───────────────────────────────────────────────
     // TODO(content-writer): Platzhalter — narrative Feinabstimmung folgt
@@ -516,6 +526,7 @@ return [
     'hangar_nexus_credit' => 'Nexus-Kredit',
     'hangar_nexus_credit_hint' => '0 Cr jetzt — Nexus-Schulden steigen',
     'hangar_consul_ap_title' => 'Konsul-Verhandlung',
+    'hangar_consul_required' => 'Für eine Verhandlung wird ein verfügbarer Konsul benötigt.',
     'hangar_consul_ap_label' => 'AP investieren (spart :amount Cr)',
     'hangar_consul_ap_hint' => ':ap AP → spart :saved Cr',
     'hangar_delivery_pending' => 'Lieferung ausstehend',

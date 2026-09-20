@@ -285,6 +285,25 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
             </div>
 
+            {{-- Marktbericht (Konsul, A13, GDD §12): Konsul announces Corvan's next visit.
+             Pure planning info — read-only, no action, costs nothing. --}}
+            @if ($merchantForecast !== null)
+                <div class="market-report">
+                    <i class="bi bi-megaphone" aria-hidden="true"></i>
+                    <div class="market-report__text">
+                        <strong>{{ __("colony.merchant_forecast_title") }}</strong>
+                        <span>
+                            {{ $merchantForecast["sols"] === 1 ? __("colony.merchant_forecast_tomorrow") : __("colony.merchant_forecast_in_sols", ["sols" => $merchantForecast["sols"]]) }}
+                        </span>
+                        @if ($merchantForecast["categories"] !== null)
+                            <span>
+                                {{ __("colony.merchant_forecast_inventory", ["categories" => collect($merchantForecast["categories"])->map(fn($category) => __("colony.merchant_category_" . $category))->implode(", ")]) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             {{-- Orin (corporate_rep) — Harvester second-instance offer, Weg A (GDD §4c,
              freigegeben 2026-08-05). Fetched client-side (GET
              colony.corporate-contact.offer) on page load — deliberately NOT part of

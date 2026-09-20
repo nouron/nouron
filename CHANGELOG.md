@@ -2,6 +2,10 @@
 
 ## 2026-09-20
 
+- Refactor: A13 — Kenntnis `trade` senkt keine Bau-AP-Kosten mehr (Owner: thematisch falsch). Der Bau-Rabatt-Pool wird nur noch von `construction` gespeist (max. 15 %); `trade` behält Angebots-Slots und Handelspreis-Bonus.
+- Feature: A13 — rangskalierte Konsul-Schiffsverhandlung (50/60/70 Cr pro AP je Rang, `game.hangar.consul_ap_discount`); Anzeige und Ausführung nutzen dieselbe Quelle. Verhandlungs-AP ohne verfügbaren Konsul werden jetzt abgelehnt (vorher gab der direkte Aufruf den Nachlass trotzdem).
+- Feature: A13 — Marktbericht: Der Konsul kündigt Corvans Besuch je nach Rang 1/2/3 Sol vorher an, ab Rang 3 mit den Kategorien des Sonderinventars (`MerchantService::getForecast()`, Hinweis im Cantina-Screen). Reine Planungsinformation, ändert den Besuchsplan nicht.
+- Doku: A13/A14 — GDD §4/§10/§12/§13 auf das neue Handelskonzept („Handelsvorteil", Konzeptstand) angepasst, der Widerspruch „mit Konsul erscheint Corvan häufiger" korrigiert; A14 im ROADMAP von „Notreparatur" auf „Überkapazität" umgestellt.
 - Feature: A15 — Kolonisten-Framing in der UI. Der Supply-Chip zeigt jetzt „KOL belegt / Kapazität" (rot bei Überschreitung) statt „SUP frei / Kapazität"; Popup, Gebäudekosten, Fehler-/Onboarding-Texte, Lobby und Nexus-DB sprechen von Kolonisten. Veralteter Popup-Text (Schiffe belegten Supply) korrigiert.
 - Feature: A6 — Trust-Warnstufen (§18.2). Trust-Chip: gelb unter 0, rot unter −10; einmalige Nexus-Funk-Warnung unter −18 (`run.nexus_trust_critical`, Schwellen in `config/game.php → run.trust_warning`). Der Event-Schlüssel musste in drei getrennten Nexus-Listen eingetragen werden (`RunProgressService`, `EventService`, `CommLogController`).
 - Fix: `db-migration-agent` durfte per Agent-Definition `migrate:fresh` ohne Einschränkung ausführen — das setzte am 2026-09-17 versehentlich die Dev-DB (`data/db/nouron.db`) zurück. Destruktive artisan-Befehle sind jetzt nur noch gegen eine Wegwerf-DB (`DB_DATABASE=/tmp/...`) erlaubt, gegen die Dev-DB nur `php artisan migrate`.

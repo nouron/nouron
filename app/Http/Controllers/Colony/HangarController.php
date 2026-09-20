@@ -46,12 +46,11 @@ class HangarController extends BaseController
             ->where('personell_id', 89)
             ->exists();
 
-        // Ship costs for the request modal (keyed by ship DB id).
-        $shipCosts = [
-            85 => ['cost' => config('ships.drone.nexus_cost'),     'delivery_ticks' => config('ships.drone.nexus_delivery_ticks')],
-            37 => ['cost' => config('ships.corvette.nexus_cost'),  'delivery_ticks' => config('ships.corvette.nexus_delivery_ticks')],
-            47 => ['cost' => config('ships.freighter.nexus_cost'), 'delivery_ticks' => config('ships.freighter.nexus_delivery_ticks')],
-        ];
+        // Ship costs, delivery time and max useful negotiation AP for the request
+        // modal (keyed by ship DB id) — same service helpers requestShip() charges with.
+        $shipRequestCatalog = $this->hangarService->getShipRequestCatalog($colony->id);
+        $shipCosts = $shipRequestCatalog['ships'];
+        $consulApDiscount = $shipRequestCatalog['consul_ap_discount'];
 
         // Nexus-Kredit available if CC level >= threshold defined in game config.
         $ccLevel = (int) DB::table('colony_buildings')
@@ -60,12 +59,8 @@ class HangarController extends BaseController
             ->value('level');
         $canUseNexusCredit = $ccLevel >= (int) config('game.hangar.nexus_credit_min_cc_level', 2);
 
-        // Konsul (trader advisor, personell_id = 92) active check.
-        $konsulPersonellId = (int) config('advisors.trader.id', 92);
-        $hasAktivierterKonsul = DB::table('advisors')
-            ->where('colony_id', $colony->id)
-            ->where('personell_id', $konsulPersonellId)
-            ->exists();
+        // Konsul (trader advisor) available: assigned and not on a mission.
+        $hasAktivierterKonsul = $this->hangarService->consulRank($colony->id) > 0;
         $verfuegbareVerhandlungsAP = $hasAktivierterKonsul
             ? $this->advisorService->getAvailableActionPoints($colony->id)
             : 0;
@@ -94,6 +89,7 @@ class HangarController extends BaseController
             'shipTypes',
             'hasPilot',
             'shipCosts',
+            'consulApDiscount',
             'canUseNexusCredit',
             'hasAktivierterKonsul',
             'verfuegbareVerhandlungsAP',

@@ -72,6 +72,7 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class HangarServiceTest extends TestCase
@@ -301,6 +302,157 @@ class HangarServiceTest extends TestCase
 
         $ship = $slots[0]['ship'];
         $this->assertNull($ship['active_mission'], 'Recalled mission must not populate active_mission');
+    }
+
+    // ── requestShip: rank-scaled Konsul negotiation (A13 P5) ────────────────
+
+    /**
+     * @return array<string, array{0: int, 1: int, 2: int, 3: int}> rank, ship id, base cost, expected max AP
+     */
+    public static function consulRankShipProvider(): array
+    {
+        return [
+            'rank 1 drone' => [1, self::SHIP_DRONE, 300, 6],
+            'rank 2 drone' => [2, self::SHIP_DRONE, 300, 5],
+            'rank 3 drone' => [3, self::SHIP_DRONE, 300, 5],
+            'rank 1 freighter' => [1, self::SHIP_FREIGHTER, 500, 10],
+            'rank 2 freighter' => [2, self::SHIP_FREIGHTER, 500, 9],
+            'rank 3 freighter' => [3, self::SHIP_FREIGHTER, 500, 8],
+            'rank 1 corvette' => [1, self::SHIP_CORVETTE, 800, 16],
+            'rank 2 corvette' => [2, self::SHIP_CORVETTE, 800, 14],
+            'rank 3 corvette' => [3, self::SHIP_CORVETTE, 800, 12],
+        ];
+    }
+
+    private function assignConsul(int $rank, ?int $unavailableUntilTick = null): void
+    {
+        DB::table('advisors')->where('colony_id', self::COLONY_ID)->where('personell_id', 92)->delete();
+        if ($rank > 0) {
+            DB::table('advisors')->insert([
+                'user_id' => 3,
+                'colony_id' => self::COLONY_ID,
+                'personell_id' => 92,
+                'rank' => $rank,
+                'active_ticks' => 0,
+                'unavailable_until_tick' => $unavailableUntilTick,
+            ]);
+        }
+    }
+
+    private function setCredits(int $credits): void
+    {
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => $credits]);
+    }
+
+    private function credits(): int
+    {
+        return (int) DB::table('user_resources')->where('user_id', 3)->value('credits');
+    }
+
+    private function lockedConsulAp(): int
+    {
+        return (int) DB::table('locked_actionpoints')
+            ->where('scope_type', 'colony')
+            ->where('scope_id', self::COLONY_ID)
+            ->sum('spend_ap');
+    }
+
+    public function test_consul_ap_discount_config_is_rank_scaled(): void
+    {
+        $this->assertSame([1 => 50, 2 => 60, 3 => 70], config('game.hangar.consul_ap_discount'));
+    }
+
+    #[DataProvider('consulRankShipProvider')]
+    public function test_consul_max_negotiation_ap_per_rank_and_ship(int $rank, int $shipId, int $baseCost, int $expectedMaxAp): void
+    {
+        $this->assignConsul($rank);
+
+        $this->assertSame($expectedMaxAp, $this->hangarService->maxConsulAp(self::COLONY_ID, $shipId));
+        $this->assertSame(config('game.hangar.consul_ap_discount')[$rank], $this->hangarService->consulApDiscountPerAp(self::COLONY_ID));
+    }
+
+    #[DataProvider('consulRankShipProvider')]
+    public function test_request_ship_deducts_rank_scaled_discount_and_locks_ap(int $rank, int $shipId, int $baseCost, int $expectedMaxAp): void
+    {
+        config(['game.bypass.ap_checks' => true]);
+        $this->insertHangar(1, 3);
+        $this->assignConsul($rank);
+        $this->setCredits(10000);
+        $perAp = config('game.hangar.consul_ap_discount')[$rank];
+        // Invest one AP less than the maximum so a residual cost remains.
+        $ap = $expectedMaxAp - 1;
+
+        $this->hangarService->requestShip(self::COLONY_ID, $shipId, false, $ap);
+
+        $this->assertSame(10000 - ($baseCost - $ap * $perAp), $this->credits(), "rank {$rank}: {$perAp} Cr per AP");
+        $this->assertSame($ap, $this->lockedConsulAp());
+    }
+
+    #[DataProvider('consulRankShipProvider')]
+    public function test_request_ship_max_negotiation_ap_makes_ship_free(int $rank, int $shipId, int $baseCost, int $expectedMaxAp): void
+    {
+        $this->insertHangar(1, 3);
+        $this->assignConsul($rank);
+        $this->setCredits(10000);
+        config(['game.bypass.ap_checks' => true]);
+
+        $this->hangarService->requestShip(self::COLONY_ID, $shipId, false, $expectedMaxAp);
+
+        $this->assertSame(10000, $this->credits(), 'max AP reduces the price to 0, never below');
+    }
+
+    public function test_display_path_matches_execution_path_for_all_ranks(): void
+    {
+        config(['game.bypass.ap_checks' => true]);
+        foreach ([1, 2, 3] as $rank) {
+            foreach ([self::SHIP_DRONE, self::SHIP_FREIGHTER, self::SHIP_CORVETTE] as $shipId) {
+                $this->clearHangarFixtures();
+                $this->insertHangar(1, 3);
+                $this->assignConsul($rank);
+                $this->setCredits(10000);
+
+                // Display values (what the modal shows) ...
+                $catalog = $this->hangarService->getShipRequestCatalog(self::COLONY_ID);
+                $perAp = $catalog['consul_ap_discount'];
+                $baseCost = $catalog['ships'][$shipId]['cost'];
+                $displayedMaxAp = $catalog['ships'][$shipId]['max_consul_ap'];
+                $displayedCost = max(0, $baseCost - 3 * $perAp);
+
+                // ... must equal what execution actually charges.
+                $this->hangarService->requestShip(self::COLONY_ID, $shipId, false, 3);
+
+                $this->assertSame(10000 - $displayedCost, $this->credits(), "rank {$rank} ship {$shipId}");
+                $this->assertSame(config('game.hangar.consul_ap_discount')[$rank], $perAp);
+                $this->assertSame($this->hangarService->maxConsulAp(self::COLONY_ID, $shipId), $displayedMaxAp);
+            }
+        }
+    }
+
+    public function test_request_ship_without_consul_offers_no_negotiation(): void
+    {
+        $this->insertHangar(1);
+        $this->assignConsul(0);
+        $this->setCredits(10000);
+        config(['game.bypass.ap_checks' => true]);
+
+        $this->assertSame(0, $this->hangarService->consulRank(self::COLONY_ID));
+        $this->assertSame(0, $this->hangarService->consulApDiscountPerAp(self::COLONY_ID));
+        $this->assertSame(0, $this->hangarService->maxConsulAp(self::COLONY_ID, self::SHIP_DRONE));
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+        $this->assertSame(10000 - 300, $this->credits(), 'without Konsul the full price is charged');
+
+        $this->expectException(\RuntimeException::class);
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 3);
+    }
+
+    public function test_request_ship_with_unavailable_consul_offers_no_negotiation(): void
+    {
+        $this->insertHangar(1);
+        $this->assignConsul(3, self::FIXED_TICK + 5);
+        config(['game.bypass.ap_checks' => true]);
+
+        $this->assertSame(0, $this->hangarService->consulRank(self::COLONY_ID));
     }
 
     // ── requestShip ───────────────────────────────────────────────────────────

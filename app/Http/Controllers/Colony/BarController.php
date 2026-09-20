@@ -74,6 +74,11 @@ class BarController extends BaseController
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
             : [];
 
+        // Marktbericht (Konsul, A13): read-only announcement of Corvan's next visit.
+        $merchantForecast = $barLevel > 0
+            ? $this->merchantService->getForecast($colony->id, $tick)
+            : null;
+
         $hotspotsFile = base_path('data/cantina_hotspots.json');
         $hotspots = file_exists($hotspotsFile)
             ? (json_decode(file_get_contents($hotspotsFile), true) ?: [])
@@ -120,7 +125,7 @@ class BarController extends BaseController
 
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
-            'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
+            'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
             'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',

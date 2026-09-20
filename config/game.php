@@ -294,6 +294,10 @@ return [
 
         // Ticks before an unassigned (pending) ship decays and is removed
         'pending_decay_ticks' => 5,
+
+        // Konsul ship negotiation: credits discount per invested AP, indexed by the
+        // Konsul advisor's rank. No Konsul (rank 0) => no negotiation.
+        'consul_ap_discount' => [1 => 50, 2 => 60, 3 => 70],
     ],
 
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
@@ -790,6 +794,25 @@ return [
         'interval_max' => 8,   // maximum Sols between visits (Direction 1: was 15)
         'duration_ticks' => 2,    // how many Sols the merchant stays (inclusive)
         'items_count' => 3,    // items offered per visit (3 default, up to 4)
+
+        // Marktbericht (Konsul, GDD §12, A13): the Konsul announces Corvan's next
+        // visit ahead of time. Pure planning information — never changes the visit
+        // rhythm (interval_min/max stay Konsul-independent). Windows must not
+        // overlap, which holds because interval_min (5) exceeds the largest lead.
+        // Lead in Sols per Konsul rank (index = rank; rank 0 = no Konsul = no notice).
+        'forecast_sols' => [0 => 0, 1 => 1, 2 => 2, 3 => 3],
+        // From this rank on, the announcement also lists the special-inventory
+        // categories of the coming visit (never the Alltagsgeschäft lots).
+        'forecast_inventory_min_rank' => 3,
+        // Item type → announced category (translation key colony.merchant_category_*).
+        // Order defines the display order of the category list.
+        'forecast_categories' => [
+            'ap_flex' => 'ap_package',
+            'ap_targeted' => 'ap_package',
+            'information' => 'information',
+            'repair_kit' => 'one_time',
+            'trust_boost' => 'one_time',
+        ],
         'items' => [
             'ap_flex' => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
             'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 15],
