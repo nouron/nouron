@@ -429,7 +429,14 @@ return [
     //   Also read by MerchantService for Corvan's buy offers (game.merchant.commodity).
     // price_variance: ±fraction applied to base price (pseudo-random per offer).
     // trader_discount: Rank 0 = no trader. Rank 1 gives 10% — Junior must have visible value.
-    //   Also read by MerchantService for Corvan's prices (Konsul pflegt die Kontakte).
+    //   The Konsul source of the Cantina channel's Handelsvorteil (A13): read ONLY by
+    //   TradeAdvantageService and added there to the other sources — never baked into
+    //   offers at generation time (offers store base terms only).
+    // trade_terms: Handelsvorteil rules (GDD §12, A13).
+    //   fixed_price_offers: Corvan's sell lots (visit_id set, Credits on the get side)
+    //     get neither Handelsvorteil nor negotiation — Verkaufs-Credits are fixed.
+    //   silent_cap: silent guard rail per channel, never a player-facing rule (current
+    //     sources max out at 0.54 / 0.24 / 0.24, well below these).
     // guest_count: [min, max] NPC guests per tick keyed by trader rank. Guests only
     //   ever barter (resource↔resource) — Credits-Handel moved entirely to Corvan
     //   (GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina",
@@ -446,6 +453,10 @@ return [
         'base_prices' => [3 => 25, 4 => 110, 5 => 50], // regolith, compounds, organics
         'price_variance' => 0.20,
         'trader_discount' => [0 => 0.00, 1 => 0.10, 2 => 0.20, 3 => 0.30],
+        'trade_terms' => [
+            'fixed_price_offers' => true,
+            'silent_cap' => ['bar' => 0.60, 'merchant' => 0.60, 'nexus' => 0.25],
+        ],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'offer_duration' => 2,  // fallback when bar level unknown
         'ap_cost_accept' => 2,  // 1→2 with the shared AP pool (GDD §13.6 Handlungs-AP): trades compete with build/knowledge projects
@@ -777,7 +788,8 @@ return [
     //
     // Each Corvan visit carries two independent offer layers:
     //   1. commodity (below) — Alltagsgeschäft: buy (Credits→Regolith/Compounds/
-    //      Organics, reusing game.bar.base_prices/trader_discount) + sell
+    //      Organics, reusing game.bar.base_prices; the Konsul's Handelsvorteil is
+    //      applied on top at accept time, not baked in) + sell
     //      (Organics→Credits, the §4b Pfad-C-Hebel). Persisted as bar_offers rows
     //      with visit_id set — same accept/negotiate/AP pipeline as guest offers.
     //   2. items (below) — the curated special inventory (AP packages, ships,

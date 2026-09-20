@@ -50,6 +50,13 @@ class BarController extends BaseController
             ? $this->barService->getActiveOffers($colony->id, $tick)
             : collect();
 
+        // Terms each offer actually executes at (Handelsvorteil applied) — the same
+        // BarService::effectiveTerms() acceptOffer() books, so shown == executed.
+        $offerTerms = [];
+        foreach ($offers as $offer) {
+            $offerTerms[$offer->id] = $this->barService->effectiveTerms($offer, $colony->id);
+        }
+
         $encounter = $barLevel > 0
             ? $this->barService->getActiveEncounter($colony->id, $tick)
             : null;
@@ -71,7 +78,7 @@ class BarController extends BaseController
 
         $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $tick);
         $merchantItems = $merchantVisit
-            ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
+            ? $this->merchantService->getPricedItemsForVisit($merchantVisit->id, $colony->id)
             : [];
 
         // Marktbericht (Konsul, A13): read-only announcement of Corvan's next visit.
@@ -124,7 +131,7 @@ class BarController extends BaseController
         ));
 
         return view('colony.bar', compact(
-            'colony', 'offers', 'barLevel', 'currentSol',
+            'colony', 'offers', 'offerTerms', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',

@@ -43,8 +43,7 @@ class MerchantService
         private readonly AdvisorService $advisorService,
         private readonly BarService $barService,
         private readonly ResourcesService $resourcesService,
-        private readonly TradingPostService $tradingPostService,
-        private readonly ProjectBonusService $projectBonusService,
+        private readonly TradeAdvantageService $tradeAdvantageService,
     ) {}
 
     public function getActiveVisit(int $colonyId, int $currentTick): ?object
@@ -382,14 +381,10 @@ class MerchantService
             return ['ok' => false, 'error' => 'Der Händler ist nicht mehr anwesend.'];
         }
 
-        // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — Stufe 2 schaltet
-        // den Reisender-Händler-Kanal frei. Vor dem Credits-Check berechnet, damit
-        // die Affordability-Prüfung gegen den tatsächlich fälligen Betrag läuft.
-        $discount = $this->tradingPostService->discountFor($colonyId, 'merchant')
-            + $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
-        $chargedCredits = $discount > 0.0
-            ? (int) max(1, round($item->cost_credits * (1 - $discount)))
-            : $item->cost_credits;
+        // Handelsvorteil, 'merchant' channel (GDD §12, A13) — computed BEFORE the
+        // credits check so affordability runs against the amount actually due, and
+        // through itemPrice() so it is exactly the price the listing shows.
+        $chargedCredits = $this->itemPrice($colonyId, (int) $item->cost_credits);
 
         // Check credits
         $credits = (int) (DB::table('user_resources')
@@ -432,12 +427,45 @@ class MerchantService
         ];
     }
 
+    /**
+     * What a special-inventory item of base price $baseCost actually costs this
+     * colony: Handelsvorteil of the 'merchant' channel (Handelsposten tier >= 2 +
+     * trade knowledge, no Konsul) as a price discount. Used by buyItem() AND by
+     * the listing, so the shown price is the charged price.
+     */
+    public function itemPrice(int $colonyId, int $baseCost): int
+    {
+        $advantage = $this->tradeAdvantageService->forChannel($colonyId, TradeAdvantageService::CHANNEL_MERCHANT);
+
+        return $this->tradeAdvantageService->applyToPrice($baseCost, $advantage);
+    }
+
     public function getItemsForVisit(int $visitId): Collection
     {
         return DB::table('merchant_items')
             ->where('visit_id', $visitId)
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Special-inventory items of a visit for display: every row plus the price
+     * this colony would actually be charged (price_credits) next to the base
+     * cost_credits.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getPricedItemsForVisit(int $visitId, int $colonyId): array
+    {
+        return $this->getItemsForVisit($visitId)
+            ->map(function (object $item) use ($colonyId): array {
+                $row = (array) $item;
+                $row['price_credits'] = $this->itemPrice($colonyId, (int) $item->cost_credits);
+
+                return $row;
+            })
+            ->values()
+            ->all();
     }
 
     public function markVisited(int $visitId, int $colonyId): void

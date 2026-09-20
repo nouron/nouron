@@ -25,8 +25,7 @@ class CorporateContactService
 {
     public function __construct(
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
-        private readonly TradingPostService $tradingPostService,
-        private readonly ProjectBonusService $projectBonusService,
+        private readonly TradeAdvantageService $tradeAdvantageService,
         private readonly CharacterCodexService $characterCodexService,
     ) {}
 
@@ -35,7 +34,11 @@ class CorporateContactService
      * Orin isn't offering it (gate not met, already at max instances, the user
      * already holds an entitlement via any path, or the roll misses).
      *
-     * @return array{price: int}|null
+     * `price` is what the colony is charged (and what the dialog shows);
+     * `base_price` and `advantage` (the 'nexus' channel: Handelsposten tier 3 +
+     * trade knowledge, no Konsul) let the UI explain the difference.
+     *
+     * @return array{price: int, base_price: int, advantage: array}|null
      */
     public function getActiveOffer(int $colonyId, int $userId, int $tick): ?array
     {
@@ -51,17 +54,18 @@ class CorporateContactService
             return null;
         }
 
-        $price = $this->priceRoll($colonyId, $tick);
+        $basePrice = $this->priceRoll($colonyId, $tick);
 
-        // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — Stufe 3 schaltet
-        // den Nexus/Corporate-Contact-Kanal frei.
-        $discount = $this->tradingPostService->discountFor($colonyId, 'corporate_contact')
-            + $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
-        if ($discount > 0.0) {
-            $price = (int) max(1, round($price * (1 - $discount)));
-        }
+        // Handelsvorteil, 'nexus' channel (GDD §12, A13): price discount of exactly
+        // the advantage. Read here once — display and purchase both go through
+        // this method, so they cannot disagree.
+        $advantage = $this->tradeAdvantageService->forChannel($colonyId, TradeAdvantageService::CHANNEL_NEXUS);
 
-        return ['price' => $price];
+        return [
+            'price' => $this->tradeAdvantageService->applyToPrice($basePrice, $advantage),
+            'base_price' => $basePrice,
+            'advantage' => $advantage,
+        ];
     }
 
     /**

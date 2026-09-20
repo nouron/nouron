@@ -20,6 +20,7 @@ class TradingPostService
         'bar' => 1,
         'merchant' => 2,
         'corporate_contact' => 3,
+        'nexus' => 3, // alias used by TradeAdvantageService
     ];
 
     public function discountFor(int $colonyId, string $channel): float

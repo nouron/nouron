@@ -279,6 +279,10 @@ return [
     'bar_offer_already_negotiated' => 'Angebot wurde bereits verhandelt.',
     'bar_offer_negotiate_success' => 'Verhandlung erfolgreich!',
     'bar_offer_negotiate_failed' => 'Verhandlung gescheitert — das Angebot ist verloren.',
+    'bar_offer_not_negotiable' => 'Dieses Angebot ist ein Festpreis und nicht verhandelbar.',
+    'trade_source_consul' => 'Konsul',
+    'trade_source_trading_post' => 'Handelsposten',
+    'trade_source_trade_knowledge' => 'Kenntnis Handel',
     'bar_offer_reserve_floor' => 'Der Verkauf würde die Nahrungsreserve der Kolonie unterschreiten.',
 
     // ── Cantina-Begegnungspool (GDD §12 Kanal 1, A35) ─────────────────────────

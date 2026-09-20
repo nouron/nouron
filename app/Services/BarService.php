@@ -35,12 +35,11 @@ class BarService
     public function __construct(
         private readonly ResourcesService $resourcesService,
         private readonly AdvisorService $advisorService,
-        private readonly TradingPostService $tradingPostService,
-        private readonly ProjectBonusService $projectBonusService,
         private readonly ResearchService $researchService,
         private readonly TrustService $trustService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly TradeAdvantageService $tradeAdvantageService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -93,13 +92,14 @@ class BarService
         $levelDurations = config('game.bar.level_offer_duration', []);
         $duration = $levelDurations[$barLevel] ?? (int) config('game.bar.offer_duration', 2);
         $expiresTick = $tick + $duration;
-        $discount = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
         $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
 
         for ($i = 0; $i < $guestCount; $i++) {
             $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
+            // Base terms only — the Handelsvorteil (Konsul, Handelsposten, trade
+            // knowledge) is applied at display/accept time by TradeAdvantageService.
             [$giveResId, $giveAmount, $getResId, $getAmount] =
-                $this->buildBarterOffer($seed, $basePrices, $discount);
+                $this->buildBarterOffer($seed, $basePrices);
 
             BarOffer::create([
                 'colony_id' => $colonyId,
@@ -195,33 +195,12 @@ class BarService
             }
         }
 
-        // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — nur auf
-        // nicht-verhandelte Angebote, kein Stack-Effekt mit dem
-        // Konsul-Rang-Verhandlungsbonus aus negotiateOffer(). Berechnet VOR dem
-        // Affordability-Check, damit dieser gegen den tatsächlich fälligen
-        // Betrag läuft (Whole-Branch-Review-Fund 2026-08-27 — derselbe Bug,
-        // der in MerchantService::buyItem() bereits behoben wurde).
-        //
-        // Der trade-Kenntnis-Preisbonus ist davon unabhängig — eine dritte,
-        // eigenständige Rabattquelle (additiv, wie construction+cartography+trade
-        // im Building-Discount-Pool) — und gilt daher AUCH für verhandelte
-        // Angebote (Whole-Branch-Review-Fund 2026-08-30: durfte nicht von der
-        // is_negotiated-Guard mit ausgeschlossen werden).
-        $giveAmount = $offer->give_amount;
-        $getAmount = $offer->get_amount;
-        $discount = $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
-        if (! $offer->is_negotiated) {
-            $discount += $this->tradingPostService->discountFor($colonyId, 'bar');
-        }
-        if ($discount > 0.0) {
-            $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
-            $giveAmount = $isCreditsOffer
-                ? (int) max(1, round($offer->give_amount * (1 - $discount)))
-                : $offer->give_amount;
-            $getAmount = $isCreditsOffer
-                ? $offer->get_amount
-                : (int) max(1, round($offer->get_amount * (1 + $discount)));
-        }
+        // Handelsvorteil (GDD §12, A13): the executed terms come from the very
+        // same computation the Cantina page displays (effectiveTerms()). Computed
+        // BEFORE the affordability check so it runs against the amount actually due.
+        $terms = $this->effectiveTerms($offer, $colonyId);
+        $giveAmount = $terms['give_amount'];
+        $getAmount = $terms['get_amount'];
 
         // Check player can afford the give side
         $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
@@ -309,6 +288,9 @@ class BarService
         if ($offer->expires_tick <= $currentTick) {
             return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
         }
+        if ($this->isFixedPriceOffer($offer)) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_not_negotiable')];
+        }
 
         $traderRank = $this->traderRank($colonyId);
 
@@ -381,8 +363,72 @@ class BarService
                 'give_amount' => $giveAmount,
                 'get_resource_id' => $offer->get_resource_id,
                 'get_amount' => $getAmount,
+                // What acceptOffer() will now actually execute (negotiated terms
+                // plus the Handelsvorteil) — the UI must show these, not the
+                // give/get above (P3 folds both into one result).
+                'terms' => $this->effectiveTerms($offer, $colonyId),
             ];
         });
+    }
+
+    /**
+     * Corvan's Organika sell lots (visit_id set, Credits on the Get side) are
+     * fixed-price: no Handelsvorteil, no negotiation (GDD §12, A13 — otherwise
+     * passive infrastructure would turn into a reliable Credits income and a
+     * buy-and-resell loop).
+     */
+    public function isFixedPriceOffer(object $offer): bool
+    {
+        return (bool) config('game.bar.trade_terms.fixed_price_offers', true)
+            && $offer->visit_id !== null
+            && (int) $offer->get_resource_id === self::RES_CREDITS;
+    }
+
+    /**
+     * The terms a bar offer actually executes at — THE single source for both
+     * acceptOffer() (execution) and BarController (display), so the shown
+     * amounts can never differ from the booked ones.
+     *
+     * The stored offer holds base terms only. The Handelsvorteil of the bar
+     * channel (Konsul + Handelsposten + trade knowledge, additive) multiplies the
+     * Get side; the Give side (the price) stays. Fixed-price lots get no advantage.
+     *
+     * Provisional until P3 (Verhandeln neu): a negotiated offer excludes the
+     * Handelsposten source, and its stored terms already contain the negotiation
+     * bonus — the GDD target is base + advantage + negotiation bonus, additive.
+     *
+     * @return array{
+     *     give_resource_id: int, give_amount: int, get_resource_id: int, get_amount: int,
+     *     base_give_amount: int, base_get_amount: int, fixed_price: bool, negotiated: bool, advantage: array
+     * }
+     */
+    public function effectiveTerms(object $offer, int $colonyId): array
+    {
+        $fixedPrice = $this->isFixedPriceOffer($offer);
+        $negotiated = (bool) ($offer->is_negotiated ?? false);
+
+        $advantage = $this->tradeAdvantageService->forChannel(
+            $colonyId,
+            TradeAdvantageService::CHANNEL_BAR,
+            $fixedPrice
+                ? [TradeAdvantageService::SOURCE_CONSUL, TradeAdvantageService::SOURCE_TRADING_POST, TradeAdvantageService::SOURCE_TRADE_KNOWLEDGE]
+                : ($negotiated ? [TradeAdvantageService::SOURCE_TRADING_POST] : []),
+        );
+
+        $baseGive = (int) $offer->give_amount;
+        $baseGet = (int) $offer->get_amount;
+
+        return [
+            'give_resource_id' => (int) $offer->give_resource_id,
+            'give_amount' => $baseGive,
+            'get_resource_id' => (int) $offer->get_resource_id,
+            'get_amount' => $this->tradeAdvantageService->applyToAmount($baseGet, $advantage),
+            'base_give_amount' => $baseGive,
+            'base_get_amount' => $baseGet,
+            'fixed_price' => $fixedPrice,
+            'negotiated' => $negotiated,
+            'advantage' => $advantage,
+        ];
     }
 
     /**
@@ -1225,7 +1271,6 @@ class BarService
     {
         $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
         $variance = (float) config('game.bar.price_variance', 0.20);
-        $discount = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
 
         // At rank 3 Corvan has compound connections — bias towards compounds.
         $compoundsBias = (float) config('game.merchant.commodity.compounds_bias_at_rank3', 0.50);
@@ -1237,7 +1282,8 @@ class BarService
         $getAmount = $this->pseudoRand($seed + 2, 1, 5) * 10; // 10–50 units
         $basePrice = $basePrices[$getResId] ?? 40;
         $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));
-        $unitPrice = max(0.01, $rawPrice * (1 - $discount));
+        // Base price only — the Konsul's Handelsvorteil raises the goods at accept time.
+        $unitPrice = max(0.01, (float) $rawPrice);
 
         // Losgröße an die Zahlungsfähigkeit binden (höchstens ~35% des
         // Credits-Bestands), sonst kostet ein Angebot ein Vielfaches des
@@ -1255,11 +1301,7 @@ class BarService
     /** Trader advisor (Konsul) rank for a colony — 0 if none assigned or unavailable. */
     public function traderRank(int $colonyId): int
     {
-        return (int) (DB::table('advisors')
-            ->where('colony_id', $colonyId)
-            ->where('personell_id', self::TRADER_ADVISOR_ID)
-            ->whereNull('unavailable_until_tick')
-            ->value('rank') ?? 0);
+        return $this->tradeAdvantageService->consulRank($colonyId);
     }
 
     /**
@@ -1323,7 +1365,7 @@ class BarService
     }
 
     /** Barter: player gives one resource, gets another (no credits involved). */
-    private function buildBarterOffer(int $seed, array $basePrices, float $discount): array
+    private function buildBarterOffer(int $seed, array $basePrices): array
     {
         $shuffled = self::TRADEABLE;
         $giveResId = $shuffled[$this->pseudoRand($seed + 4, 0, count($shuffled) - 1)];
@@ -1334,7 +1376,7 @@ class BarService
         $giveAmount = $this->pseudoRand($seed + 6, 2, 6) * 5; // 10–30 units
         $givePrice = ($basePrices[$giveResId] ?? 40) * $giveAmount;
         $getPrice = ($basePrices[$getResId] ?? 40);
-        $getAmount = (int) max(1, round($givePrice * (1 + $discount) / $getPrice));
+        $getAmount = (int) max(1, round($givePrice / $getPrice));
 
         return [$giveResId, $giveAmount, $getResId, $getAmount];
     }

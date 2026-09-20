@@ -371,7 +371,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                                         <div class="merchant-item-bar__row">
                                             <span class="res-chip res-Cr">
                                                 <span class="res-abbr">Cr</span>
-                                                <span class="res-amount" x-text="item.cost_credits"></span>
+                                                <span class="res-amount" x-text="item.price_credits"></span>
                                             </span>
                                             <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
                                                 @click="buyItem(item.id)">
@@ -422,6 +422,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                 @foreach ($offers as $idx => $offer)
                     @php
                         $offerId = $offer->id;
+                        $terms = $offerTerms[$offerId];
                         $isCorvanOffer = $offer->visit_id !== null;
                         $hsSlot = $spotForOffer[$idx % count($spotForOffer)];
                         $char = $isCorvanOffer ? null : $characterAssignment[$hsSlot] ?? null;
@@ -470,7 +471,7 @@ $offerFlavorKey =
                                     </div>
                                     @include("partials.res_chip", [
                                         "abbreviation" => $resourceAbbr[$offer->give_resource_id] ?? "?",
-                                        "amount" => $offer->give_amount,
+                                        "amount" => $terms["give_amount"],
                                     ])
                                 </div>
                                 <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
@@ -480,7 +481,7 @@ $offerFlavorKey =
                                     </div>
                                     @include("partials.res_chip", [
                                         "abbreviation" => $resourceAbbr[$offer->get_resource_id] ?? "?",
-                                        "amount" => $offer->get_amount,
+                                        "amount" => $terms["get_amount"],
                                     ])
                                 </div>
                             </div>
@@ -491,7 +492,7 @@ $offerFlavorKey =
                                     {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
                                 </small>
                                 <div style="display:flex;gap:0.5rem">
-                                    @if ($hasConsul)
+                                    @if ($hasConsul && !$terms["fixed_price"])
                                         <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
                                             @click="negotiate({{ $offerId }}, $el)"
                                             :disabled="negotiated[{{ $offerId }}] || offerResolved({{ $offerId }}) ||
@@ -1321,7 +1322,8 @@ $offerFlavorKey =
                             this.negotiated[offerId] = true;
                             // No resources move here (see backend docblock) — only AP.
                             this.syncAp(data.ap_available);
-                            this.updateOfferChipAmounts(btn, data.give_amount, data.get_amount);
+                            // data.terms = what Annehmen will now execute (negotiated terms + Handelsvorteil)
+                            this.updateOfferChipAmounts(btn, data.terms.give_amount, data.terms.get_amount);
                             this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
                         } else if (data.ok && !data.success) {
                             this.negotiateResult[offerId] = 'failed';

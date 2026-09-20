@@ -17,7 +17,7 @@ use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
-use App\Services\TradingPostService;
+use App\Services\TradeAdvantageService;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -55,8 +55,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(AdvisorService::class),
             $app->make(BarService::class),
             $app->make(ResourcesService::class),
-            $app->make(TradingPostService::class),
-            $app->make(ProjectBonusService::class),
+            $app->make(TradeAdvantageService::class),
         ));
         $this->app->bind(ResourcesService::class, ResourcesService::class);
         $this->app->bind(TrustService::class, fn ($app) => new TrustService(

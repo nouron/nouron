@@ -1010,54 +1010,30 @@ class BarServiceTest extends TestCase
         $this->assertTrue($found);
     }
 
-    public function test_negotiate_success_increases_get_amount_for_corvan_sell_offer(): void
+    public function test_negotiate_rejects_a_corvan_sell_lot_as_fixed_price(): void
     {
-        // A Corvan sell offer (visit_id set, give=Organika/get=Credits) takes the
-        // barter branch in negotiateOffer() — $isCreditsOffer checks the GIVE side,
-        // and Organika isn't Credits — so a successful negotiation scales get_amount
-        // (more Credits), not give_amount. That's correct for this shape, but is an
-        // artifact of which side the check reads; pin it explicitly so a future
-        // "fix" that switches the check to get_resource_id can't silently turn
-        // Corvan's sell channel into an Organika discount instead.
+        // A13/P2a: Corvan's Organika->Credits lots (visit_id set, Credits on the Get
+        // side) are fixed-price — no Handelsvorteil, no negotiation (GDD §12). This
+        // replaces the earlier pin that a successful negotiation raised their Credits.
         $this->clearBarOffers();
+        $this->mockTick(10);
         $this->assignTrader(3);
         $visitId = $this->insertMerchantVisit();
+        $this->setColonyResource(self::RES_ORGANICS, 1000);
 
-        $found = false;
-        for ($tick = 1; $tick <= 200; $tick++) {
-            $this->clearBarOffers();
-            $this->mockTick($tick);
-            $this->barService = $this->app->make(BarService::class);
-            $this->setColonyResource(self::RES_ORGANICS, 1000);
+        $offerId = $this->insertOffer([
+            'visit_id' => $visitId,
+            'give_resource_id' => self::RES_ORGANICS,
+            'give_amount' => 20,
+            'get_resource_id' => self::RES_CREDITS,
+            'get_amount' => 700,
+            'expires_tick' => 20,
+        ]);
 
-            $offerId = $this->insertOffer([
-                'visit_id' => $visitId,
-                'give_resource_id' => self::RES_ORGANICS,
-                'give_amount' => 20,
-                'get_resource_id' => self::RES_CREDITS,
-                'get_amount' => 700,
-                'expires_tick' => $tick + 10,
-            ]);
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
-            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
-
-            if ($result['ok'] && $result['success']) {
-                $found = true;
-                $bonus = (float) config('game.bar.negotiate_bonus.3', 0.2);
-                $expectedGet = (int) max(1, round(700 * (1 + $bonus)));
-                $this->assertEquals($expectedGet, $result['get_amount'], 'A negotiated Corvan sell offer must pay out more Credits, not fewer Organika');
-                $this->assertEquals(20, $result['give_amount'], 'give_amount (Organika owed) is unaffected by a successful negotiation on a sell offer');
-
-                // Reserve floor still governs at accept — negotiation only moved
-                // get_amount for this shape, give_amount (and thus the stock check
-                // in acceptOffer()) is unchanged.
-                $accepted = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
-                $this->assertTrue($accepted['ok'], 'A negotiated sell offer must still be acceptable when comfortably above the reserve floor');
-                break;
-            }
-        }
-
-        $this->assertTrue($found);
+        $this->assertFalse($result['ok']);
+        $this->assertSame(__('colony.bar_offer_not_negotiable'), $result['error']);
     }
 
     public function test_negotiate_rejects_an_already_negotiated_offer(): void
@@ -1227,7 +1203,10 @@ class BarServiceTest extends TestCase
         }
     }
 
-    public function test_accept_offer_applies_trading_post_discount_when_credits_are_the_give_side(): void
+    // A13/P2a: the Handelsvorteil no longer discounts the Credits price of a bar
+    // offer — on the Cantina channel it always raises the Get side (GDD §12,
+    // "Bei Ware: mehr Menge"). The price (Give) stays.
+    public function test_accept_offer_applies_trading_post_advantage_to_the_get_side_when_credits_are_the_give_side(): void
     {
         $this->clearBarOffers();
         $this->mockTick(10);
@@ -1251,9 +1230,12 @@ class BarServiceTest extends TestCase
 
         $this->assertTrue($result['ok']);
         $bonus = (float) config('buildings.tradingPost.merchant_price_bonus');
-        $expectedGive = (int) max(1, round($giveAmount * (1 - $bonus)));
-        $this->assertSame($expectedGive, $result['give_amount'], 'give_amount (Credits) must be discounted by the trading post channel rate');
-        $this->assertSame(1000 - $expectedGive, $this->getCredits());
+        $expectedGet = (int) max(1, round($getAmount * (1 + $bonus)));
+        $this->assertGreaterThan($getAmount, $expectedGet, 'fixture assumption: the advantage must visibly raise the Get amount');
+        $this->assertSame($giveAmount, $result['give_amount'], 'the Credits price stays');
+        $this->assertSame($expectedGet, $result['get_amount'], 'get_amount must be raised by the trading post channel rate');
+        $this->assertSame(1000 - $giveAmount, $this->getCredits());
+        $this->assertSame($expectedGet, $this->getColonyResource(self::RES_REGOLITH));
     }
 
     public function test_accept_offer_has_no_discount_without_trading_post(): void
@@ -1276,15 +1258,21 @@ class BarServiceTest extends TestCase
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
-        $this->assertSame($giveAmount, $result['give_amount'], 'no trading post → no discount, unchanged amount');
+        $this->assertSame($giveAmount, $result['give_amount'], 'no trading post → unchanged price');
+        $this->assertSame(20, $result['get_amount'], 'no trading post → no advantage, unchanged Get amount');
     }
 
-    public function test_accept_offer_does_not_stack_trading_post_discount_with_negotiation(): void
+    /**
+     * Provisional until P3 (Verhandeln neu): the Handelsposten source stays
+     * excluded on an already-negotiated offer; Konsul and trade knowledge still
+     * apply. GDD target (A13): the Handelsposten applies to negotiated offers too.
+     */
+    public function test_accept_offer_excludes_the_trading_post_source_on_a_negotiated_offer(): void
     {
         $this->clearBarOffers();
         $this->mockTick(10);
         $this->setTradingPostLevel(1);
-        $this->assignTrader(3); // rank 3 Konsul, siehe bestehende assignTrader()-Helper
+        $this->assignTrader(3); // rank 3 Konsul = +30 % on the Cantina channel
 
         $giveAmount = 500;
         $this->setCredits(1000);
@@ -1298,9 +1286,6 @@ class BarServiceTest extends TestCase
             'expires_tick' => 20,
         ]);
 
-        // Verhandeln setzt is_negotiated=true und passt give_amount bereits über den
-        // Konsul-Rang-Bonus an — der Handelsposten-Rabatt darf hier NICHT zusätzlich
-        // draufkommen (GDD: kein Stack-Effekt).
         config(['game.bypass.ap_checks' => true]);
         // tick=11 (not 10) — deterministic pseudoRand roll for this offerId/rank
         // combination only lands as a negotiation success at tick=11; see brief note.
@@ -1308,11 +1293,14 @@ class BarServiceTest extends TestCase
         $this->assertTrue($negotiateResult['ok']);
         $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful — check negotiate_success_chance fixture for rank 3');
 
-        $negotiatedGiveAmount = DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
+        $negotiatedGiveAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
+        $negotiatedGetAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount');
 
         $acceptResult = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
 
-        $this->assertSame((int) $negotiatedGiveAmount, $acceptResult['give_amount'], 'trading post discount must not stack on top of an already-negotiated offer');
+        $this->assertSame($negotiatedGiveAmount, $acceptResult['give_amount'], 'the (negotiated) price is not touched by the advantage');
+        $this->assertSame((int) round($negotiatedGetAmount * 1.30), $acceptResult['get_amount'], 'Konsul 30 % only — the trading post (12 %) must not stack on a negotiated offer');
+        $this->assertNotSame((int) round($negotiatedGetAmount * 1.42), $acceptResult['get_amount'], 'fixture assumption: with the trading post the result would differ');
     }
 
     /**
@@ -1351,54 +1339,47 @@ class BarServiceTest extends TestCase
         $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful — check negotiate_success_chance fixture for rank 3');
 
         $negotiatedGiveAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
-        $expectedGive = (int) max(1, round($negotiatedGiveAmount * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
+        $negotiatedGetAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount');
+        // Konsul rank 3 (30 %) + trade Lv3 cumulative curve (8 %); the trading post is excluded on negotiated offers (provisional, P3).
+        $expectedGet = (int) round($negotiatedGetAmount * (1 + 0.30 + 0.08));
 
         $acceptResult = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
 
         $this->assertTrue($acceptResult['ok'] ?? false);
-        $this->assertLessThan($negotiatedGiveAmount, $expectedGive, 'fixture assumption: trade bonus must further reduce the already-negotiated amount for this test to be meaningful');
-        $this->assertSame($expectedGive, $acceptResult['give_amount'], 'trade knowledge price bonus must apply on top of a negotiated offer, unlike the trading post channel discount');
+        $this->assertGreaterThan((int) round($negotiatedGetAmount * 1.30), $expectedGet, 'fixture assumption: trade bonus must further raise the already-negotiated Get amount for this test to be meaningful');
+        $this->assertSame($negotiatedGiveAmount, $acceptResult['give_amount']);
+        $this->assertSame($expectedGet, $acceptResult['get_amount'], 'trade knowledge must apply on top of a negotiated offer, unlike the trading post channel');
     }
 
     /**
-     * Whole-Branch-Review-Fund 2026-08-27: the affordability check must run against
-     * the DISCOUNTED price, not the offer's full give_amount — otherwise a player
-     * who can afford the discounted price but not the full price is wrongly
-     * rejected with bar_offer_insufficient_resources.
+     * A13/P2a: the price of a bar offer is never discounted any more (the advantage
+     * raises the Get side instead), so the affordability check runs against the
+     * stored Give amount — a player who cannot pay the shown price is rejected,
+     * whatever advantage sources exist.
      */
-    public function test_accept_offer_succeeds_when_only_discounted_price_is_affordable(): void
+    public function test_accept_offer_rejects_when_credits_are_below_the_undiscounted_price(): void
     {
         $this->clearBarOffers();
         $this->mockTick(10);
-        $this->setTradingPostLevel(1); // Stufe 1 schaltet den Cantina-Kanal frei, 12% Rabatt
+        $this->setTradingPostLevel(1);
+        $this->assignTrader(3);
 
-        $giveAmount = 500;
-        $getAmount = 20;
-
-        // 450 liegt zwischen dem rabattierten Preis (~440 bei 12%) und dem vollen
-        // Preis (500) — mit dem alten Bug wäre die Prüfung gegen 500 gelaufen und
-        // hätte fälschlich abgelehnt.
         $this->setCredits(450);
         $this->setColonyResource(self::RES_REGOLITH, 0);
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_CREDITS,
-            'give_amount' => $giveAmount,
+            'give_amount' => 500,
             'get_resource_id' => self::RES_REGOLITH,
-            'get_amount' => $getAmount,
+            'get_amount' => 20,
             'expires_tick' => 20,
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
-        $bonus = (float) config('buildings.tradingPost.merchant_price_bonus');
-        $expectedGive = (int) max(1, round($giveAmount * (1 - $bonus)));
-        $this->assertLessThan($giveAmount, $expectedGive, 'fixture assumption: discounted price must be strictly below the full price for this test to be meaningful');
-        $this->assertLessThanOrEqual(450, $expectedGive, 'fixture assumption: discounted price must be affordable at 450 credits for this test to be meaningful');
-
-        $this->assertTrue($result['ok'] ?? false, 'offer must be accepted when the player can afford the discounted price, even if not the full price');
-        $this->assertSame($expectedGive, $result['give_amount']);
-        $this->assertSame(450 - $expectedGive, $this->getCredits());
+        $this->assertFalse($result['ok']);
+        $this->assertSame(__('colony.bar_offer_insufficient_resources'), $result['error']);
+        $this->assertSame(450, $this->getCredits());
     }
 
     public function test_accept_offer_applies_trade_price_bonus_even_without_trading_post_channel(): void
@@ -1430,9 +1411,10 @@ class BarServiceTest extends TestCase
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertTrue($result['ok']);
-        $expectedGive = (int) max(1, round($giveAmount * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
-        $this->assertSame($expectedGive, $result['give_amount'], 'trade knowledge price bonus must apply even without a trading post channel discount');
-        $this->assertSame(1000 - $expectedGive, $this->getCredits());
+        $expectedGet = (int) round(20 * 1.08); // trade Lv3 cumulative curve = 8 %
+        $this->assertSame($giveAmount, $result['give_amount'], 'the price stays');
+        $this->assertSame($expectedGet, $result['get_amount'], 'trade knowledge advantage must apply even without a trading post channel');
+        $this->assertSame(1000 - $giveAmount, $this->getCredits());
     }
 
     /**

@@ -91,4 +91,13 @@ class TradingPostServiceTest extends TestCase
 
         $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'not_a_real_channel'));
     }
+
+    public function test_nexus_channel_is_an_alias_of_corporate_contact_for_tier_3(): void
+    {
+        $this->setTradingPostLevel(2);
+        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'nexus'));
+
+        $this->setTradingPostLevel(3);
+        $this->assertSame((float) config('buildings.tradingPost.merchant_price_bonus'), $this->service->discountFor(self::COLONY_ID, 'nexus'));
+    }
 }
