@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-21
+
+- Feature: A13 P2a — zentraler Handelsvorteil-Dienst (`TradeAdvantageService`): Konsul-Rang (nur Cantina), Handelsposten und Kenntnis `trade` werden additiv aus sichtbaren Quellen berechnet. Bar-Angebote speichern nur noch Basiskonditionen (Konsul-Rabatt nicht mehr eingebacken); die Cantina erhöht die Get-Menge, Sonderinventar und Orin senken den Preis. Corvans Verkaufslose sind Festpreis und nicht verhandelbar (schließt eine Arbitrage aus). Migration löscht offene Alt-Angebote — nach dem Deploy `php artisan migrate`.
+- Feature: A13 P3 — Verhandeln neu: kostet wie Annehmen 2 AP (danach Annehmen 0 AP), Erfolgschance 60/65/70 % je Konsul-Rang plus Kenntnis `trade` (bis +8 Prozentpunkte), Aufschlag +20 % additiv zum Handelsvorteil statt eingefrorener Mengen; der Handelsposten wirkt auch bei verhandelten Angeboten. Ein Test sichert ab, dass Verhandeln je nach Build weder immer besser noch immer schlechter als Annehmen ist.
+- Feature: A13 P2b — Angebotsdialog mit Quellen-Aufschlüsselung: Basisangebot, Handelsvorteil je Quelle, Ergebnis „+X gegenüber Basis", Erfolgs-/Fehlschlag-Chance mit Aufschlüsselung, Hinweise für fehlende Quellen; Cantina-Kopfzeile sowie Preiszeilen bei Sonderinventar und Orin. Behebt einen hängenden „Verhandlung erfolgreich"-Toast in späteren Dialogen.
+
 ## 2026-09-20
 
 - Refactor: A13 — Kenntnis `trade` senkt keine Bau-AP-Kosten mehr (Owner: thematisch falsch). Der Bau-Rabatt-Pool wird nur noch von `construction` gespeist (max. 15 %); `trade` behält Angebots-Slots und Handelspreis-Bonus.
