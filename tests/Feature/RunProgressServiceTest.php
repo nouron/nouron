@@ -1472,4 +1472,67 @@ class RunProgressServiceTest extends TestCase
         $this->assertLessThanOrEqual(2, $count, 'With a 2-task pool, at most 2 objectives must be drawn');
         $this->assertGreaterThan(0, $count, 'At least 1 objective must be drawn even with a tiny pool');
     }
+
+    // ── A6: trust warning levels (GDD §18.2, Fail State 1) ────────────────────
+
+    private function trustCriticalEvents(): int
+    {
+        return DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_trust_critical')
+            ->count();
+    }
+
+    public function test_trust_critical_nexus_warning_fires_below_threshold(): void
+    {
+        $run = $this->makeRun(['started_at' => now()->subHour()]);
+        $this->setTrust(-19);
+
+        $this->service->checkTrustWarnings($run);
+
+        $this->assertSame(1, $this->trustCriticalEvents());
+        $this->assertSame(0, (int) DB::table('colony_log')->where('event', 'run.nexus_trust_critical')->value('is_read'), 'must land unread in Nexus-Funk');
+    }
+
+    public function test_trust_critical_nexus_warning_does_not_fire_at_threshold(): void
+    {
+        $run = $this->makeRun(['started_at' => now()->subHour()]);
+        $this->setTrust(-18);
+
+        $this->service->checkTrustWarnings($run);
+
+        $this->assertSame(0, $this->trustCriticalEvents());
+    }
+
+    public function test_trust_critical_nexus_warning_fires_only_once_per_run(): void
+    {
+        $run = $this->makeRun(['started_at' => now()->subHour()]);
+        $this->setTrust(-19);
+
+        $this->service->checkTrustWarnings($run);
+        $this->service->checkTrustWarnings($run);
+
+        $this->assertSame(1, $this->trustCriticalEvents());
+    }
+
+    public function test_trust_critical_nexus_warning_is_skipped_when_run_already_fails_on_trust(): void
+    {
+        $run = $this->makeRun(['started_at' => now()->subHour()]);
+        $this->setTrust(-21);
+
+        $this->service->checkTrustWarnings($run);
+
+        $this->assertSame(0, $this->trustCriticalEvents(), 'the fail state message replaces the warning');
+    }
+
+    public function test_trust_critical_event_has_comm_log_translation(): void
+    {
+        foreach (['de', 'en'] as $locale) {
+            $this->assertNotSame(
+                'comm_log.nexus_events.run.nexus_trust_critical.title',
+                trans('comm_log.nexus_events.run.nexus_trust_critical.title', [], $locale),
+                "missing {$locale} translation"
+            );
+        }
+    }
 }

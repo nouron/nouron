@@ -418,7 +418,7 @@
                                         </div>
                                         <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"
-                                                x-text="`${b.supply_cost} SUP`"></span>
+                                                x-text="`${b.supply_cost} KOL`"></span>
                                             <span class="building-list-cost" x-show="b.build_cost && b.build_cost[3]"
                                                 x-text="`${b.build_cost?.[3]} Rg`"></span>
                                             <span class="building-list-cost building-list-cost--compounds"

@@ -157,7 +157,7 @@ return [
     'error_requires_research' => 'Der Kolonie fehlt die nötige Kenntnis.',
     'error_insufficient_resources' => 'Nicht genug Ressourcen für den Ausbau.',
     'error_insufficient_ap_invested' => 'Noch nicht genug AP investiert, um die Stufe abzuschließen.',
-    'error_insufficient_supply' => 'Nicht genug freie Versorgungskapazität — erst Wohnhabitat ausbauen.',
+    'error_insufficient_supply' => 'Nicht genug freie Kolonisten — erst Wohnhabitat ausbauen.',
     'error_max_level' => 'Maximalstufe bereits erreicht.',
     'error_knowledge_cc_gate' => 'Kommandozentrale zu niedrig für diese Kenntnisstufe — erst ausbauen.',
     'error_insufficient_ap' => 'Nicht genug AP verfügbar für diese Investition.',

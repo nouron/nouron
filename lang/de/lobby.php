@@ -26,7 +26,7 @@ return [
     'bypass_warning' => 'Bypass aktiv',
     'settings_detail' => 'Missionsdetails',
     'tick_limit' => 'Sol-Limit',
-    'supply_cap' => 'Supply-Cap',
+    'supply_cap' => 'Kolonisten-Kapazität',
     'bypass_active' => 'Bypass',
     'show_details' => 'Details anzeigen',
     'hide_details' => 'Details ausblenden',

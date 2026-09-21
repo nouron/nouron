@@ -142,7 +142,7 @@ return [
     // ── Onboarding — Inline-Trigger-Erklärungen ───────────────────────────────
 
     // Trigger 2 — Supply-Cap voll (UI-Banner, 1 Satz)
-    'onboarding_trigger_supply_full' => 'Versorgungskapazität erschöpft — weitere Gebäude oder Schiffe können nicht zugewiesen werden. Wohnhabitat ausbauen oder Verbraucher abbauen.',
+    'onboarding_trigger_supply_full' => 'Keine freien Kolonisten mehr — weitere Gebäude und Forschungen können nicht in Betrieb genommen werden. Wohnhabitat ausbauen oder Verbraucher abbauen.',
 
     // Trigger 4 — AP-Limit (Tooltip)
     'onboarding_trigger_ap_limit' => 'Keine AP mehr in diesem Sol verfügbar.',

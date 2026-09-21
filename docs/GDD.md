@@ -896,6 +896,8 @@ Daraus folgt die Strategie-Abwägung:
 
 > **Kolonisten-Framing — vorgezogen (2026-08-02, war „Phase 4+"):** Supply wird als **Kolonisten** dargestellt — „47 Kolonisten im Einsatz / 60 verfügbar" statt „Supply 47/60". Mechanik bleibt identisch (Cap-Modell), nur die UI-Sprache wird konkreter. Implementierungsaufwand: minimal (nur Labels + Tooltips).
 >
+> **Umgesetzt (A15):** Der Chip in der Ressourcenleiste zeigt „KOL belegt / Kapazität" und färbt sich rot, sobald die Kolonie über ihrer Kapazität liegt; das Popup nennt zusätzlich den freien Rest. Texte, Kostenanzeige am Gebäude und Nexus-DB sprechen durchgehend von Kolonisten.
+>
 > **Warum jetzt statt später:** Die Level-Multiplikation ist ohne Framing nicht intuitiv — bei einer abstrakten Zahl „Supply" versteht kein Spieler, warum ein Labor auf Lv3 dreimal so teuer ist wie auf Lv1. Mit Kolonisten ist es selbsterklärend: *ein größeres Labor braucht mehr Leute.* Da die Formel mit dem Ratenmodell ohnehin klargestellt wird, gehört das Framing in denselben Schritt.
 
 Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kosten der neuen Einheit`.
@@ -2807,8 +2809,8 @@ Begründung gegen eine Streak-Mechanikverzögerung: Trust unter −20 bedeutet a
 | Schwellwert | Maßnahme |
 |-------------|---------|
 | Trust < 0 | Protokoll-Ereignis (Kolonist, Absender): "Die Stimmung in der Kolonie ist angespannt." — einmalig pro Run |
-| Trust < −10 | *geplant:* Roter Farbwechsel am Trust-Ressource-Chip in der Ressourcenleiste |
-| Trust < −18 | *geplant:* Nexus-Funk-Warnung: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." |
+| Trust < −10 | Roter Farbwechsel am Trust-Ressource-Chip in der Ressourcenleiste (zwischen 0 und −10 zeigt der Chip gelb als Vorstufe) |
+| Trust < −18 | Nexus-Funk-Warnung, einmalig pro Run: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." (entfällt, wenn im selben Tick bereits der Fail State greift) |
 | Trust < −20 | Fail State — Run endet sofort |
 
 > ⚠️ BALANCE CONCERN: Die −20-Schwelle ist bewusst tief gesetzt. Ein Hunger-Streak von vier Solen (kumulierter Malus nach `TrustService::hungerPenalty`: −2 − 3 − 4 − 5 = −14 kumuliert nach Streak 4) plus ein Level-Down-Event (−3) würde die Schwelle knapp nicht erreichen — das ist gewollt: Vernachlässigung soll spürbar bestrafen, aber erholbar bleiben. Nach erstem Playtest kalibrieren ob −20 zu tief (Spieler scheitern selten) oder zu flach (Spieler scheitern überraschend schnell) ist.

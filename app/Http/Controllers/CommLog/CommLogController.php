@@ -16,6 +16,7 @@ class CommLogController extends BaseController
     private const NEXUS_EVENT_KEYS = [
         'run.nexus_warning_sol30',
         'run.nexus_warning_sol50',
+        'run.nexus_trust_critical',
         'run.nexus_sanction_sol65',
         'run.nexus_countdown_sol80',
         'run.nexus_phase1_warning',

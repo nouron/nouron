@@ -619,6 +619,40 @@ class RunProgressService
             ->exists();
     }
 
+    // ── Trust warning (GDD §18.2) ────────────────────────────────────────────
+
+    /**
+     * One-time Nexus-Funk warning once trust falls below `trust_warning.nexus_warning`.
+     *
+     * Skipped when trust is already below the fail threshold — the fail state's own
+     * message replaces the warning in that tick. Runs in both phases.
+     */
+    public function checkTrustWarnings(Run $run): void
+    {
+        $warnBelow = (int) config('game.run.trust_warning.nexus_warning', -18);
+        $failBelow = (int) config('game.run.trust_fail_threshold', -20);
+
+        $trust = (int) (DB::table('colony_resources')
+            ->where('colony_id', $run->colony_id)
+            ->where('resource_id', 12)
+            ->value('amount') ?? 0);
+
+        if ($trust >= $warnBelow || $trust < $failBelow) {
+            return;
+        }
+
+        $eventKey = 'run.nexus_trust_critical';
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+            'run_id' => $run->id,
+            'colony_id' => $run->colony_id,
+            'trust' => $trust,
+        ]);
+    }
+
     // ── Fail state checks ────────────────────────────────────────────────────
 
     /**
@@ -773,7 +807,7 @@ class RunProgressService
         array $parameters = []
     ): void {
         $isNexus = $area === 'nexus' || in_array($event, [
-            'run.nexus_warning_sol30', 'run.nexus_warning_sol50',
+            'run.nexus_warning_sol30', 'run.nexus_warning_sol50', 'run.nexus_trust_critical',
             'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80', 'run.nexus_phase1_warning',
             'run.run_completed', 'run.run_failed_trust',
             'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.run_failed_phase1_deadline',

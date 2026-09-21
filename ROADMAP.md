@@ -24,7 +24,7 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [ ] **A3 f(L)-Kostenkurve** statt flacher `ap_for_levelup`, `f(1) = 0.5` fürs Errichten (§13.6, Stufe 3) — Mittel
 - [x] **A4** ✅ 2026-09-06 — `decay.overcap_factor` 2.0 → 1.5 (§13.1) — Klein
 - [x] **A5** ✅ 2026-09-06 — `bar.ap_cost_accept` 1 → 2, `ap_cost_negotiate` 3 → 4 (Stufe 3) — Klein
-- [ ] **A6 Trust-Warnstufen** < −10 (roter Chip) und < −18 (Nexus-Warnung) (§18.2) — Mittel
+- [x] **A6 Trust-Warnstufen** ✅ 2026-09-20 (§18.2) — Trust-Chip stuft sich jetzt ab: neutral, gelb unter 0 (Vorstufe), rot unter −10; Nexus-Funk-Warnung `run.nexus_trust_critical` unter −18, einmal pro Run und nur solange nicht im selben Tick der Fail State (−20) greift (`RunProgressService::checkTrustWarnings()`, Schwellen in `config/game.php → run.trust_warning`). Nebenbefund: die Liste der Nexus-Event-Schlüssel steht dreifach im Code (`RunProgressService::createEvent`, `EventService`, `CommLogController`) — ein neues Event muss überall eingetragen werden, sonst erscheint es nie im Nexus-Funk (Test `test_nexus_includes_trust_critical_warning_from_run_area` sichert das). TDD, echte Browser-Verifikation.
 - [ ] **A7 Nexus-Milestones**: Sol-90-Letzte-Warnung, Fristverkürzung auf Sol 95 nach Sanktion (§15); toten Config-Block `run.nexus_milestones` verdrahten oder entfernen — Mittel
 - [x] **A8** ✅ 2026-09-07 — Nexus-Schulden-Rückzahlungs-Sondermechanik (§18.2) erledigt sich strukturell durch F3-Entscheidung (`nexus_debt` bleibt als laufender Fehlbetrags-Topf, keine separate Rückzahlungsmechanik nötig) — obsolet, kein eigener Task mehr
 - [ ] **A9 Nexus-Boni** ahead-of-curve (§15) — Niedrig, Design-Frage (A.4) zuerst
@@ -33,7 +33,7 @@ Quelle: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C, Absc
 - [x] **A12** ✅ 2026-09-08 — Kanal 2 Nexus-Handelsschiffe erledigt sich strukturell durch F5-Entscheidung (Streichung zugunsten Uplink-Direktimport) — obsolet, kein eigener Task mehr, siehe A28/A29
 - [ ] **A13 Handelsposten „Konsul-Effizienz"** (§4) — Text streichen oder AP-Rabatt implementieren — Klein
 - [ ] **A14 Notreparatur** CC/Wohnhabitat (§7) — implementieren oder aus GDD streichen — Klein
-- [ ] **A15 Kolonisten-Framing** für Supply in der UI (§6) — Klein
+- [x] **A15 Kolonisten-Framing** ✅ 2026-09-20 (§6) — Chip zeigt „KOL belegt / Kapazität" statt „SUP frei / Kapazität" (Owner-Entscheidung), rot bei Überschreitung; Popup mit „Frei"-Zeile und korrigiertem Text (Schiffe kosten seit 2026-06-08 kein Supply mehr), Gebäudekosten „KOL", Onboarding-/Fehlertexte, Lobby und Nexus-DB auf Kolonisten umgestellt. `task_self_sufficiency` bewusst als „Kolonisten-Kapazität > 0" formuliert (prüft die Kapazität, nicht den freien Rest).
 - [x] **A16** ✅ 2026-09-08 — Konstant-Yield-Spec entschieden (F4: umsetzen) — Umsetzungs-Tasks siehe A24/A25/A26/A27
 - [x] **A17** ✅ 2026-09-08 — Playtest-Instrumentierung 11 Metriken in `RunReport` freigegeben (F8) — Umsetzungs-Tasks siehe A30/A31/A32/A33
 - [ ] **A18** `mission_perimeter_patrol` in `config/missions.php` aufnehmen (§8b) — Klein

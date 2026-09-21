@@ -16,7 +16,7 @@
 @php
     // .res-{X} color classes use mixed case (Cr/Rg/Co/Or/Sup) — decoupled from
     // the displayed $abbr, which res-abbr's CSS uppercases visually anyway.
-    $colorClassMap = ["CR" => "Cr", "RG" => "Rg", "CO" => "Co", "OR" => "Or", "SUP" => "Sup"];
+    $colorClassMap = ["CR" => "Cr", "RG" => "Rg", "CO" => "Co", "OR" => "Or", "KOL" => "Sup"];
     $colorClass = $colorClassMap[strtoupper($abbr)] ?? $abbr;
 @endphp
 

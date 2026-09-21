@@ -12,8 +12,8 @@ return [
     'page_subtitle' => 'Referenz für Spielmechaniken und Begriffe.',
 
     // Concept cards
-    'concept_supply_title' => 'Versorgung',
-    'concept_supply_body' => 'Versorgung bezeichnet die kolonieweite Betriebskapazität, abstrahiert aus Strom-, Wasser- und Personalinfrastruktur. Jede in Betrieb genommene Einheit belegt einen festen Kapazitätsanteil. Wird das Kapazitätslimit erreicht, ist keine weitere Inbetriebnahme möglich; bestehende Einheiten bleiben unverändert aktiv. Kapazitätserweiterung erfolgt durch höherstufige Kommandozentralen oder zusätzliche Wohnhabitate.',
+    'concept_supply_title' => 'Kolonisten-Kapazität',
+    'concept_supply_body' => 'Die Kolonisten-Kapazität bezeichnet, wie viele Menschen deine Siedlung tragen kann — abstrahiert aus Unterkunft, Strom, Wasser und Infrastruktur. Jedes Gebäude und jede Forschung bindet pro Ausbaustufe eine feste Zahl davon; ein größeres Labor braucht mehr Leute als ein kleines. Ist die Kapazität erreicht, kann nichts Neues in Betrieb genommen werden; bestehende Einheiten bleiben aktiv. Wird sie überschritten, verfällt alles schneller. Mehr Kapazität bringen höherstufige Kommandozentralen, zusätzliche Wohnhabitate und Kenntnisse.',
 
     'concept_trust_title' => 'Vertrauen',
     'concept_trust_body' => 'Vertrauen bezeichnet den Zustimmungsindex der Kolonistenbevölkerung gegenüber der Kolonieleitung, skaliert von 0 bis 100. Zwischenfälle, Versorgungsausfälle und Sicherheitsmängel senken den Wert; stabile Betriebsbedingungen und erfüllte Versorgungserwartungen erhöhen ihn. Unterschreiten kritischer Schwellwerte reduziert die kolonieweite Produktionseffizienz und wird in der Konzessionsbewertung des Direktors negativ vermerkt.',

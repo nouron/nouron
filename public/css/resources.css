@@ -135,6 +135,11 @@
     background: #f0f0f0;
     border-color: #aaa;
 }
+.res-Sup.res-chip--over {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+}
 .res-Rg {
     background: #fdf0e0;
     border-color: #d4924a;
@@ -296,6 +301,11 @@
 .ap-chip--trust-neu {
     background: #f3f4f6;
     color: #374151;
+}
+
+.ap-chip--trust-warn {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .ap-chip--trust-neg {
