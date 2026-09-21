@@ -130,7 +130,9 @@ class TradeChannelPricesTest extends TestCase
 
         $this->assertStringContainsString('"price_credits":176', $html, 'the page data must carry the charged price (200 x 0.88)');
         $this->assertStringContainsString('item.price_credits', $html, 'the list must display the charged price, not the base cost');
-        $this->assertStringNotContainsString('x-text="item.cost_credits"', $html);
+        // The chip shows the charged price; the base cost only appears as the struck-through "was" price (P2b).
+        $this->assertStringContainsString('<span class="res-amount" x-text="item.price_credits">', $html);
+        $this->assertStringNotContainsString('<span class="res-amount" x-text="item.cost_credits">', $html);
     }
 
     // ── Orin ('nexus') ────────────────────────────────────────────────────────

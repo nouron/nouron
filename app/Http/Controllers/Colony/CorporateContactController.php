@@ -8,6 +8,7 @@ use App\Services\CorporateContactService;
 use App\Services\EventService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
+use App\Services\TradeAdvantagePresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,7 @@ class CorporateContactController extends BaseController
         private readonly CorporateContactService $corporateContactService,
         private readonly EventService $eventService,
         private readonly ResourcesService $resourcesService,
+        private readonly TradeAdvantagePresenter $advantagePresenter,
     ) {
         parent::__construct($tick);
     }
@@ -36,12 +38,20 @@ class CorporateContactController extends BaseController
      * Returns Orin's current harvester offer for the player's colony, or null when
      * he isn't offering it right now. Read-only — never trusted for the purchase
      * itself, buyHarvester() re-derives the offer independently.
+     *
+     * The offer carries `advantage_view` (A13 P2b): the Nexus-channel advantage as
+     * player-facing lines (Handelsposten, trade knowledge) so the dialog can explain
+     * base_price -> price.
      */
     public function offer(Request $request): JsonResponse
     {
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $offer = $this->corporateContactService->getActiveOffer($colony->id, $userId, $this->getTick());
+
+        if ($offer !== null) {
+            $offer['advantage_view'] = $this->advantagePresenter->present($colony->id, $offer['advantage']);
+        }
 
         return response()->json(['offer' => $offer]);
     }

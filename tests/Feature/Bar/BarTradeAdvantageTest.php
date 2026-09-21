@@ -438,14 +438,17 @@ class BarTradeAdvantageTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::BAR_BUILDING_ID)->update(['level' => 1]);
         $this->assignConsul(3);
         $this->setTradingPostLevel(1); // 30 + 12 = 42 %
+        app()->setLocale('de');
         $offerId = $this->insertOffer(['give_amount' => 25, 'get_amount' => 20]);
 
         $html = $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
 
         $section = $this->offerDialogHtml($html, $offerId);
-        $this->assertStringContainsString('<span class="res-amount">25</span>', $section, 'price (Give) stays');
-        $this->assertStringContainsString('<span class="res-amount">28</span>', $section, '20 x 1.42 = 28.4 -> 28 is what accept will book');
-        $this->assertStringNotContainsString('<span class="res-amount">20</span>', $section, 'the stored base amount must not be shown');
+        $text = preg_replace('/\s+/', ' ', strip_tags($section));
+        // P2b: the dialog now lists the base offer as text and the result as a chip.
+        $this->assertStringContainsString('25 Regolith → 20 Werkstoffe', $text, 'base offer shown as such, price (Give) stays 25');
+        $this->assertMatchesRegularExpression('/Du erhältst\s+Co\s*28\b/', $text, '20 x 1.42 = 28.4 -> 28 is what accept will book');
+        $this->assertDoesNotMatchRegularExpression('/Du erhältst\s+Co\s*20\b/', $text, 'the stored base amount is never the shown result');
     }
 
     public function test_bar_page_hides_negotiate_button_for_fixed_price_lots(): void
@@ -491,7 +494,7 @@ class BarTradeAdvantageTest extends TestCase
             return '';
         }
         $end = strpos($html, "activeModal === 'offer_", $start + 10);
-        $end = $end === false ? min(strlen($html), $start + 6000) : $end;
+        $end = $end === false ? min(strlen($html), $start + 20000) : $end; // the dialog grew with the source breakdown (P2b)
 
         return substr($html, $start, $end - $start);
     }

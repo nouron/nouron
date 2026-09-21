@@ -23,19 +23,29 @@ class TradingPostService
         'nexus' => 3, // alias used by TradeAdvantageService
     ];
 
+    /** Handelsposten tier a colony has reached (0 = not built). Read by the offer dialog for its "Stufe I/II/III" line. */
+    public function level(int $colonyId): int
+    {
+        return (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::TradingPost->value)
+            ->value('level') ?? 0);
+    }
+
+    /** Tier that unlocks the discount on a channel, null for an unknown channel. */
+    public function requiredTier(string $channel): ?int
+    {
+        return self::CHANNEL_THRESHOLDS[$channel] ?? null;
+    }
+
     public function discountFor(int $colonyId, string $channel): float
     {
-        $threshold = self::CHANNEL_THRESHOLDS[$channel] ?? null;
+        $threshold = $this->requiredTier($channel);
         if ($threshold === null) {
             return 0.0;
         }
 
-        $level = (int) (DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', BuildingId::TradingPost->value)
-            ->value('level') ?? 0);
-
-        if ($level < $threshold) {
+        if ($this->level($colonyId) < $threshold) {
             return 0.0;
         }
 

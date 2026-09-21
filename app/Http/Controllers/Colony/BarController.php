@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Models\Run;
 use App\Services\AdvisorService;
+use App\Services\BarOfferDialogPresenter;
 use App\Services\BarService;
 use App\Services\ColonyService;
 use App\Services\EventService;
@@ -12,6 +13,8 @@ use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
+use App\Services\TradeAdvantagePresenter;
+use App\Services\TradeAdvantageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +34,8 @@ class BarController extends BaseController
         private readonly OnboardingHintService $onboardingHintService,
         private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
+        private readonly BarOfferDialogPresenter $offerDialogPresenter,
+        private readonly TradeAdvantagePresenter $advantagePresenter,
     ) {
         parent::__construct($tick);
     }
@@ -53,9 +58,25 @@ class BarController extends BaseController
         // Terms each offer actually executes at (Handelsvorteil applied) — the same
         // BarService::effectiveTerms() acceptOffer() books, so shown == executed.
         $offerTerms = [];
+        $offerDialogs = [];
+        $negotiateChance = $this->barService->negotiateChance($colony->id);
         foreach ($offers as $offer) {
             $offerTerms[$offer->id] = $this->barService->effectiveTerms($offer, $colony->id);
+            // Player-facing breakdown (A13 P2b): sources, both negotiation outcomes, chance.
+            $offerDialogs[$offer->id] = $this->offerDialogPresenter->present(
+                $offerTerms[$offer->id],
+                $negotiateChance,
+                $colony->id,
+            );
         }
+        // Offers already negotiated on an earlier visit of the page start flagged, so the
+        // dialog shows "Verhandelt: …" with a 0-AP Annehmen instead of offering Verhandeln again.
+        $negotiatedOffers = array_map(fn () => true, array_filter($offerTerms, fn ($t) => $t['negotiated']));
+
+        // Cantina header line + Corvan's price line (Handelsvorteil per channel).
+        $tradeAdvantage = $barLevel > 0
+            ? $this->advantagePresenter->forChannel($colony->id, TradeAdvantageService::CHANNEL_BAR)
+            : null;
 
         $encounter = $barLevel > 0
             ? $this->barService->getActiveEncounter($colony->id, $tick)
@@ -80,6 +101,9 @@ class BarController extends BaseController
         $merchantItems = $merchantVisit
             ? $this->merchantService->getPricedItemsForVisit($merchantVisit->id, $colony->id)
             : [];
+        $merchantAdvantage = $merchantVisit
+            ? $this->advantagePresenter->forChannel($colony->id, TradeAdvantageService::CHANNEL_MERCHANT)
+            : null;
 
         // Marktbericht (Konsul, A13): read-only announcement of Corvan's next visit.
         $merchantForecast = $barLevel > 0
@@ -131,7 +155,7 @@ class BarController extends BaseController
         ));
 
         return view('colony.bar', compact(
-            'colony', 'offers', 'offerTerms', 'barLevel', 'currentSol',
+            'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
