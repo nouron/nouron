@@ -884,12 +884,16 @@ class BarServiceTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('ap', $result['error']);
     }
 
-    public function test_negotiate_costs_more_ap_than_accept(): void
+    public function test_negotiate_costs_the_same_ap_as_accept(): void
     {
-        $apAccept = (int) config('game.bar.ap_cost_accept', 1);
-        $apNegotiate = (int) config('game.bar.ap_cost_negotiate', 3);
-
-        $this->assertGreaterThan($apAccept, $apNegotiate, 'Negotiating must cost more AP than a plain accept');
+        // A13/P3 (owner decision): Verhandeln costs exactly as much as Annehmen; the
+        // risk price is the lost offer on a failed roll, not an AP surcharge.
+        $this->assertSame(
+            (int) config('game.bar.ap_cost_accept'),
+            (int) config('game.bar.ap_cost_negotiate'),
+            'Negotiating costs the same AP as a plain accept'
+        );
+        $this->assertSame(2, (int) config('game.bar.ap_cost_negotiate'));
     }
 
     public function test_negotiate_success_locks_negotiate_ap_but_does_not_execute_the_trade(): void
@@ -898,7 +902,7 @@ class BarServiceTest extends TestCase
         // improves the offer's terms — the player still confirms with "Annehmen".
         // No resources move and the offer is NOT marked accepted at this point.
         $this->clearBarOffers();
-        $this->assignTrader(3); // 85% success chance — find a winning tick quickly
+        $this->assignTrader(3); // 70% success chance — find a winning tick quickly
 
         $found = false;
         for ($tick = 1; $tick <= 200; $tick++) {
@@ -932,82 +936,77 @@ class BarServiceTest extends TestCase
             }
         }
 
-        $this->assertTrue($found, 'Expected at least one successful negotiation roll within 200 ticks at 85% chance');
+        $this->assertTrue($found, 'Expected at least one successful negotiation roll within 200 ticks at 70% chance');
     }
 
-    public function test_negotiate_success_reduces_give_amount_for_credits_offer(): void
+    /** Force a winning roll for every rank (chance 100 %, guard rail lifted). */
+    private function forceNegotiationSuccess(): void
     {
+        config([
+            'game.bar.trade_terms.negotiate_chance_max' => 1.0,
+            'game.bar.negotiate_success_chance' => [0 => 0.0, 1 => 1.0, 2 => 1.0, 3 => 1.0],
+        ]);
+    }
+
+    public function test_negotiate_success_keeps_the_credits_price_and_raises_the_get_side(): void
+    {
+        // A13/P3: the Credits price is never cut any more (it used to drop by the rank
+        // bonus and was baked into the row). The bonus raises the Get side instead,
+        // additively on top of the Konsul advantage; nothing is stored in the amounts.
         $this->clearBarOffers();
-        $this->assignTrader(3);
+        $this->forceNegotiationSuccess();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
+        $this->assignTrader(3); // Konsul rank 3 = +30 % Handelsvorteil
+        $this->setCredits(10000);
 
-        $found = false;
-        for ($tick = 1; $tick <= 200; $tick++) {
-            $this->clearBarOffers();
-            $this->mockTick($tick);
-            $this->barService = $this->app->make(BarService::class);
-            $this->setCredits(10000);
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => 1000,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => 20,
+            'expires_tick' => 20,
+        ]);
 
-            $offerId = $this->insertOffer([
-                'give_resource_id' => self::RES_CREDITS,
-                'give_amount' => 1000,
-                'get_resource_id' => self::RES_REGOLITH,
-                'get_amount' => 20,
-                'expires_tick' => $tick + 10,
-            ]);
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
-            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+        $this->assertTrue($result['ok'] && $result['success']);
+        $this->assertSame(1000, $result['give_amount'], 'The Credits price stays');
+        $this->assertSame(30, $result['get_amount'], '20 x (1 + 0.30 Konsul + 0.20 negotiation bonus) = 30');
+        // Credits are untouched — the trade only executes once acceptOffer() runs.
+        $this->assertEquals(10000, $this->getCredits());
 
-            if ($result['ok'] && $result['success']) {
-                $found = true;
-                $bonus = (float) config('game.bar.negotiate_bonus.3', 0.2);
-                $expectedGive = (int) max(1, round(1000 * (1 - $bonus)));
-                $this->assertEquals($expectedGive, $result['give_amount'], 'Negotiated price must apply the rank-3 bonus discount');
-                // Credits are untouched — the trade only executes once acceptOffer() runs.
-                $this->assertEquals(10000, $this->getCredits());
-
-                $row = DB::table('bar_offers')->where('id', $offerId)->first();
-                $this->assertEquals($expectedGive, $row->give_amount, 'The offer row itself must be updated to the negotiated give_amount');
-                $this->assertEquals(20, $row->get_amount, 'Barter get_amount is unaffected for a credits-give offer');
-                break;
-            }
-        }
-
-        $this->assertTrue($found);
+        $row = DB::table('bar_offers')->where('id', $offerId)->first();
+        $this->assertSame(1000, (int) $row->give_amount, 'The stored Give stays the base');
+        $this->assertSame(20, (int) $row->get_amount, 'The stored Get stays the base');
+        $this->assertTrue((bool) $row->is_negotiated);
     }
 
     public function test_negotiate_success_increases_get_amount_for_barter_offer(): void
     {
+        // Same intent as before (barter: Get side up, Give side untouched), now on the
+        // additive rule base x (1 + Handelsvorteil + bonus) with the amounts not stored.
         $this->clearBarOffers();
+        $this->forceNegotiationSuccess();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
         $this->assignTrader(3);
+        $this->setColonyResource(self::RES_REGOLITH, 1000);
 
-        $found = false;
-        for ($tick = 1; $tick <= 200; $tick++) {
-            $this->clearBarOffers();
-            $this->mockTick($tick);
-            $this->barService = $this->app->make(BarService::class);
-            $this->setColonyResource(self::RES_REGOLITH, 1000);
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_REGOLITH,
+            'give_amount' => 30,
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => 10,
+            'expires_tick' => 20,
+        ]);
 
-            $offerId = $this->insertOffer([
-                'give_resource_id' => self::RES_REGOLITH,
-                'give_amount' => 30,
-                'get_resource_id' => self::RES_COMPOUNDS,
-                'get_amount' => 10,
-                'expires_tick' => $tick + 10,
-            ]);
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
-            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
-
-            if ($result['ok'] && $result['success']) {
-                $found = true;
-                $bonus = (float) config('game.bar.negotiate_bonus.3', 0.2);
-                $expectedGet = (int) max(1, round(10 * (1 + $bonus)));
-                $this->assertEquals($expectedGet, $result['get_amount'], 'Barter offers get a get_amount bonus instead of a discount');
-                $this->assertEquals(30, $result['give_amount'], 'Barter give_amount is unaffected');
-                break;
-            }
-        }
-
-        $this->assertTrue($found);
+        $this->assertTrue($result['ok'] && $result['success']);
+        $this->assertSame(15, $result['get_amount'], '10 x (1 + 0.30 Konsul + 0.20 negotiation bonus) = 15');
+        $this->assertSame(30, $result['give_amount'], 'Barter give_amount is unaffected');
+        $this->assertSame(10, (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount'), 'no amount is baked into the row');
     }
 
     public function test_negotiate_rejects_a_corvan_sell_lot_as_fixed_price(): void
@@ -1059,7 +1058,7 @@ class BarServiceTest extends TestCase
     public function test_negotiate_failure_deletes_offer_but_still_costs_ap(): void
     {
         $this->clearBarOffers();
-        $this->assignTrader(1); // 55% success — 45% fail chance, findable quickly
+        $this->assignTrader(1); // 60% success — 40% fail chance, findable quickly
 
         $found = false;
         for ($tick = 1; $tick <= 200; $tick++) {
@@ -1091,7 +1090,7 @@ class BarServiceTest extends TestCase
             }
         }
 
-        $this->assertTrue($found, 'Expected at least one failing negotiation roll within 200 ticks at 45% fail chance');
+        $this->assertTrue($found, 'Expected at least one failing negotiation roll within 200 ticks at 40% fail chance');
     }
 
     public function test_generate_respects_max_concurrent(): void
@@ -1263,11 +1262,11 @@ class BarServiceTest extends TestCase
     }
 
     /**
-     * Provisional until P3 (Verhandeln neu): the Handelsposten source stays
-     * excluded on an already-negotiated offer; Konsul and trade knowledge still
-     * apply. GDD target (A13): the Handelsposten applies to negotiated offers too.
+     * A13/P3: the Handelsposten now counts on negotiated offers too (the P2a stopgap
+     * excluded it). Get side = base x (1 + Konsul + Handelsposten + negotiation bonus),
+     * one additive sum; the Credits price is untouched by all of it.
      */
-    public function test_accept_offer_excludes_the_trading_post_source_on_a_negotiated_offer(): void
+    public function test_accept_offer_includes_the_trading_post_source_on_a_negotiated_offer(): void
     {
         $this->clearBarOffers();
         $this->mockTick(10);
@@ -1286,28 +1285,26 @@ class BarServiceTest extends TestCase
             'expires_tick' => 20,
         ]);
 
+        $this->forceNegotiationSuccess();
         config(['game.bypass.ap_checks' => true]);
-        // tick=11 (not 10) — deterministic pseudoRand roll for this offerId/rank
-        // combination only lands as a negotiation success at tick=11; see brief note.
         $negotiateResult = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
         $this->assertTrue($negotiateResult['ok']);
-        $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful — check negotiate_success_chance fixture for rank 3');
-
-        $negotiatedGiveAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
-        $negotiatedGetAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount');
+        $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful');
 
         $acceptResult = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
 
-        $this->assertSame($negotiatedGiveAmount, $acceptResult['give_amount'], 'the (negotiated) price is not touched by the advantage');
-        $this->assertSame((int) round($negotiatedGetAmount * 1.30), $acceptResult['get_amount'], 'Konsul 30 % only — the trading post (12 %) must not stack on a negotiated offer');
-        $this->assertNotSame((int) round($negotiatedGetAmount * 1.42), $acceptResult['get_amount'], 'fixture assumption: with the trading post the result would differ');
+        $tradingPost = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expected = (int) round(20 * (1 + 0.30 + $tradingPost + 0.20));
+        $withoutTradingPost = (int) round(20 * (1 + 0.30 + 0.20));
+        $this->assertNotSame($withoutTradingPost, $expected, 'fixture assumption: the trading post must change the result');
+        $this->assertSame($giveAmount, $acceptResult['give_amount'], 'the price is not touched by advantage or bonus');
+        $this->assertSame($expected, $acceptResult['get_amount'], 'Konsul + trading post + negotiation bonus, additive');
     }
 
     /**
-     * Whole-Branch-Review-Fund 2026-08-30: the is_negotiated guard exists solely to
-     * keep the TradingPostService channel discount from stacking with the Konsul
-     * negotiation bonus (see test above) — it must NOT also suppress the trade
-     * knowledge price bonus, a categorically independent third source.
+     * Whole-Branch-Review-Fund 2026-08-30: trade knowledge is a source of its own and
+     * must never be suppressed on a negotiated offer. Since A13/P3 that holds for the
+     * Handelsposten as well — nothing is excluded any more.
      */
     public function test_accept_offer_applies_trade_price_bonus_to_a_negotiated_offer(): void
     {
@@ -1333,22 +1330,23 @@ class BarServiceTest extends TestCase
             'expires_tick' => 20,
         ]);
 
+        $this->forceNegotiationSuccess();
         config(['game.bypass.ap_checks' => true]);
         $negotiateResult = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
         $this->assertTrue($negotiateResult['ok']);
-        $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful — check negotiate_success_chance fixture for rank 3');
+        $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful');
 
-        $negotiatedGiveAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
-        $negotiatedGetAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount');
-        // Konsul rank 3 (30 %) + trade Lv3 cumulative curve (8 %); the trading post is excluded on negotiated offers (provisional, P3).
-        $expectedGet = (int) round($negotiatedGetAmount * (1 + 0.30 + 0.08));
+        // Konsul rank 3 (30 %) + trade Lv3 cumulative curve (8 %) + trading post + negotiation bonus (20 %), one additive sum.
+        $tradingPost = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expectedGet = (int) round(20 * (1 + 0.30 + 0.08 + $tradingPost + 0.20));
+        $withoutTradeKnowledge = (int) round(20 * (1 + 0.30 + $tradingPost + 0.20));
 
         $acceptResult = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
 
         $this->assertTrue($acceptResult['ok'] ?? false);
-        $this->assertGreaterThan((int) round($negotiatedGetAmount * 1.30), $expectedGet, 'fixture assumption: trade bonus must further raise the already-negotiated Get amount for this test to be meaningful');
-        $this->assertSame($negotiatedGiveAmount, $acceptResult['give_amount']);
-        $this->assertSame($expectedGet, $acceptResult['get_amount'], 'trade knowledge must apply on top of a negotiated offer, unlike the trading post channel');
+        $this->assertGreaterThan($withoutTradeKnowledge, $expectedGet, 'fixture assumption: trade knowledge must further raise the negotiated Get amount');
+        $this->assertSame($giveAmount, $acceptResult['give_amount']);
+        $this->assertSame($expectedGet, $acceptResult['get_amount'], 'trade knowledge applies on top of a negotiated offer');
     }
 
     /**

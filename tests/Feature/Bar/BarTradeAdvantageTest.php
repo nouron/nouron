@@ -370,9 +370,9 @@ class BarTradeAdvantageTest extends TestCase
         $this->assertSame(110, $shown['get_amount']);
     }
 
-    // ── Verhandeln (provisional interplay until P3) ───────────────────────────
+    // ── Verhandeln (additive, A13/P3) ─────────────────────────────────────────
 
-    public function test_negotiate_success_still_bakes_only_the_negotiation_bonus_and_reports_effective_terms(): void
+    public function test_negotiate_success_stores_nothing_and_reports_the_additive_effective_terms(): void
     {
         $this->assignConsul(3);
         $this->setTradingPostLevel(1);
@@ -391,12 +391,12 @@ class BarTradeAdvantageTest extends TestCase
             }
             $found = true;
 
-            $this->assertSame(12, $result['get_amount'], 'stored/negotiated terms: 10 x (1 + 0.20 rank-3 negotiate bonus)');
-            $this->assertSame(12, (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount'));
-
-            // Provisional: Handelsposten stays excluded on negotiated offers -> 30 % (Konsul) only.
-            $this->assertSame(30, $result['terms']['advantage']['total_percent']);
-            $this->assertSame(16, $result['terms']['get_amount'], '12 x 1.30 = 15.6 -> 16');
+            // Nothing is baked into the row any more; the Handelsposten counts on negotiated offers.
+            $this->assertSame(10, (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount'));
+            $this->assertSame(42, $result['terms']['advantage']['total_percent'], 'Konsul 30 % + Handelsposten 12 %');
+            $this->assertSame(0.2, $result['terms']['negotiation_bonus']);
+            $this->assertSame(16, $result['terms']['get_amount'], '10 x (1 + 0.42 + 0.20) = 16.2 -> 16');
+            $this->assertSame(16, $result['get_amount'], 'the top-level fields carry the same effective Get amount');
 
             $accepted = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
             $this->assertSame($result['terms']['get_amount'], $accepted['get_amount'], 'what negotiate reports is what accept executes');
@@ -459,6 +459,28 @@ class BarTradeAdvantageTest extends TestCase
         $section = $this->offerDialogHtml($html, $lotId);
         $this->assertNotSame('', $section);
         $this->assertStringNotContainsString('negotiate('.$lotId, $section);
+    }
+
+    public function test_bar_page_negotiate_button_shows_the_ap_cost_chip_and_the_failure_facts_are_wired(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::BAR_BUILDING_ID)->update(['level' => 1]);
+        $this->assignConsul(2);
+        $offerId = $this->insertOffer(['give_amount' => 25, 'get_amount' => 20]);
+
+        $html = $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
+
+        $section = $this->offerDialogHtml($html, $offerId);
+        $this->assertStringContainsString('negotiate('.$offerId, $section);
+        $this->assertStringContainsString('negotiate('.$offerId.', $el, "', $section, 'the Character name is passed as a JSON string argument (a broken quote would kill the Alpine handler)');
+        $this->assertStringContainsString('Eco 2 AP', $section, 'the Verhandeln chip shows the configured AP cost (= Annehmen)');
+        $this->assertSame(2, (int) config('game.bar.ap_cost_negotiate'));
+        // The failure message names the facts: who withdrew, what stays with the player, how many AP are gone.
+        $template = trans('colony.bar_offer_negotiate_failed', [], 'de'); // player-facing texts live in lang/de
+        foreach ([':name', ':resource', ':ap'] as $placeholder) {
+            $this->assertStringContainsString($placeholder, $template);
+        }
+        $this->assertStringContainsString('negotiateFailedText[', $section, 'the dialog renders the failure facts inline');
+        $this->assertStringContainsString('resourceLabels', $html, 'resource names are handed to the page script');
     }
 
     /** The markup of one offer's dialog block (from its x-show marker to the next offer/encounter block). */

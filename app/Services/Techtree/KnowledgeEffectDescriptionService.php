@@ -47,6 +47,7 @@ class KnowledgeEffectDescriptionService
         'trade' => [
             ['config' => 'knowledge.trade.bar_offer_boost_per_lv', 'label' => 'Bar-Angebotsslot', 'unit' => '', 'direction' => self::DIRECTION_INCREASE],
             ['config' => 'knowledge.trade.trade_price_bonus_per_lv', 'label' => 'Handelspreis-Bonus', 'unit' => '%', 'direction' => self::DIRECTION_INCREASE],
+            ['config' => 'knowledge.trade.negotiate_chance_bonus_per_lv', 'label' => 'Verhandlungs-Chance', 'unit' => '%', 'direction' => self::DIRECTION_INCREASE],
         ],
         'defense' => [
             ['config' => 'game.defense_storm_risk_reduction_per_lv', 'label' => 'Sturm-Risiko', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],

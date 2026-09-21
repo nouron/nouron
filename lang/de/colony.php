@@ -278,7 +278,8 @@ return [
     'bar_offer_no_consul' => 'Kein verfügbarer Konsul zugewiesen.',
     'bar_offer_already_negotiated' => 'Angebot wurde bereits verhandelt.',
     'bar_offer_negotiate_success' => 'Verhandlung erfolgreich!',
-    'bar_offer_negotiate_failed' => 'Verhandlung gescheitert — das Angebot ist verloren.',
+    // TODO(content-writer): Platzhalter-Text — Fakten (Figur, Give-Ressource bleibt, AP) müssen erhalten bleiben.
+    'bar_offer_negotiate_failed' => ':name hat das Angebot zurückgezogen. Kein Handel, dein :resource bleibt bei dir. :ap AP verbraucht.',
     'bar_offer_not_negotiable' => 'Dieses Angebot ist ein Festpreis und nicht verhandelbar.',
     'trade_source_consul' => 'Konsul',
     'trade_source_trading_post' => 'Handelsposten',

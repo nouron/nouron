@@ -40,6 +40,7 @@ class BarService
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
         private readonly TradeAdvantageService $tradeAdvantageService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -262,13 +263,21 @@ class BarService
     /**
      * Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — alternative resolution
      * path for a bar offer. Requires an assigned, available Konsul (trader advisor).
-     * Costs more Economy-AP than acceptOffer(); two-step outcome:
-     *   - Success: the offer's terms are improved in place (rank-scaled bonus) and
-     *     flagged is_negotiated — the trade does NOT execute yet, the player still
-     *     confirms with acceptOffer() (which waives its AP cost for a negotiated
-     *     offer, since ap_cost_negotiate already covered it).
-     *   - Failure: the offer is lost entirely (deleted) — no fallback to accept.
-     * AP is spent either way.
+     * Costs ap_cost_negotiate (equal to Annehmen) on success AND failure; two-step outcome:
+     *   - Success: the offer is only flagged is_negotiated — NOTHING is written into its
+     *     amounts. effectiveTerms() adds the negotiation bonus on top of the Handelsvorteil
+     *     (additive, Get side); the trade does NOT execute yet, the player still confirms
+     *     with acceptOffer() (which waives its AP cost for a negotiated offer).
+     *   - Failure: the offer is lost entirely (deleted) — no trade, the Give side stays
+     *     with the player, no fallback to accept. The result carries the facts for the UI.
+     * The success chance comes from negotiateChance() — the same number the dialog shows.
+     *
+     * Result on success: ok, success, give_/get_resource_id + give_/get_amount (= what
+     * acceptOffer() will execute) and `terms` (the full effectiveTerms() array; P2b builds
+     * the offer dialog on it). On failure: ok, success=false, give_resource_id + give_amount
+     * (stays with the player) and ap_spent.
+     *
+     * @return array<string, mixed>
      */
     public function negotiateOffer(int $colonyId, int $offerId, int $userId, int $currentTick): array
     {
@@ -292,13 +301,11 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_not_negotiable')];
         }
 
-        $traderRank = $this->traderRank($colonyId);
-
-        if ($traderRank < 1) {
+        if ($this->traderRank($colonyId) < 1) {
             return ['ok' => false, 'error' => __('colony.bar_offer_no_consul')];
         }
 
-        $apCost = (int) config('game.bar.ap_cost_negotiate', 3);
+        $apCost = (int) config('game.bar.ap_cost_negotiate', 2);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($availableAp < $apCost) {
@@ -306,16 +313,17 @@ class BarService
             }
         }
 
+        // The Give side never changes (neither by Handelsvorteil nor by negotiation).
         $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
         if ($giveBalance < $offer->give_amount) {
             return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
         }
 
-        $successChance = (float) config("game.bar.negotiate_success_chance.{$traderRank}", 0.0);
+        $chancePercent = $this->negotiateChance($colonyId)['total_percent'];
         $roll = $this->pseudoRand($offer->id * 7919 + $currentTick * 131, 0, 99);
-        $success = $roll < (int) round($successChance * 100);
+        $success = $roll < $chancePercent;
 
-        return DB::transaction(function () use ($offer, $colonyId, $apCost, $traderRank, $success): array {
+        return DB::transaction(function () use ($offer, $colonyId, $apCost, $success, $chancePercent): array {
             if ($apCost > 0) {
                 $this->advisorService->lockActionPoints($colonyId, $apCost, self::TRADER_ADVISOR_ID);
             }
@@ -326,49 +334,95 @@ class BarService
                 Log::info('bar_trade_negotiate_failed', [
                     'colony_id' => $colonyId,
                     'offer_id' => $offer->id,
+                    'chance_percent' => $chancePercent,
                 ]);
 
-                return ['ok' => true, 'success' => false];
+                return [
+                    'ok' => true,
+                    'success' => false,
+                    'give_resource_id' => (int) $offer->give_resource_id,
+                    'give_amount' => (int) $offer->give_amount,
+                    'ap_spent' => $apCost,
+                ];
             }
 
-            $bonus = (float) config("game.bar.negotiate_bonus.{$traderRank}", 0.0);
-            $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
-            $giveAmount = $isCreditsOffer
-                ? (int) max(1, round($offer->give_amount * (1 - $bonus)))
-                : $offer->give_amount;
-            $getAmount = $isCreditsOffer
-                ? $offer->get_amount
-                : (int) max(1, round($offer->get_amount * (1 + $bonus)));
-
-            // Improve the offer's terms in place — the trade itself executes when
-            // the player subsequently confirms via acceptOffer().
-            $offer->give_amount = $giveAmount;
-            $offer->get_amount = $getAmount;
             $offer->is_negotiated = true;
             $offer->save();
+
+            $terms = $this->effectiveTerms($offer, $colonyId);
 
             Log::info('bar_trade_negotiate_success', [
                 'colony_id' => $colonyId,
                 'offer_id' => $offer->id,
-                'give_resource_id' => $offer->give_resource_id,
-                'give_amount' => $giveAmount,
-                'get_resource_id' => $offer->get_resource_id,
-                'get_amount' => $getAmount,
+                'chance_percent' => $chancePercent,
+                'give_resource_id' => $terms['give_resource_id'],
+                'give_amount' => $terms['give_amount'],
+                'get_resource_id' => $terms['get_resource_id'],
+                'get_amount' => $terms['get_amount'],
             ]);
 
             return [
                 'ok' => true,
                 'success' => true,
-                'give_resource_id' => $offer->give_resource_id,
-                'give_amount' => $giveAmount,
-                'get_resource_id' => $offer->get_resource_id,
-                'get_amount' => $getAmount,
-                // What acceptOffer() will now actually execute (negotiated terms
-                // plus the Handelsvorteil) — the UI must show these, not the
-                // give/get above (P3 folds both into one result).
-                'terms' => $this->effectiveTerms($offer, $colonyId),
+                'give_resource_id' => $terms['give_resource_id'],
+                'give_amount' => $terms['give_amount'],
+                'get_resource_id' => $terms['get_resource_id'],
+                'get_amount' => $terms['get_amount'],
+                'terms' => $terms,
             ];
         });
+    }
+
+    /**
+     * Success chance of a Cantina-Verhandlung for a colony — THE single source for the
+     * roll in negotiateOffer() and for every display (offer dialog, P2b), so the shown
+     * chance is the rolled chance (GDD §12, A13).
+     *
+     * base            = game.bar.negotiate_success_chance[Konsul rank] (0 without an available Konsul)
+     * knowledge_bonus = knowledge.trade.negotiate_chance_bonus_per_lv, cumulative (only with a Konsul)
+     * total           = base + knowledge_bonus, silently capped at game.bar.trade_terms.negotiate_chance_max
+     * Percent fields are whole percentage points (the roll compares 0..99 against total_percent);
+     * `capped` tells the caller that total is below base + knowledge_bonus.
+     *
+     * @return array{
+     *     rank: int, base: float, base_percent: int, knowledge_bonus: float, knowledge_bonus_percent: int,
+     *     total: float, total_percent: int, capped: bool
+     * }
+     */
+    public function negotiateChance(int $colonyId): array
+    {
+        $rank = $this->traderRank($colonyId);
+
+        $basePercent = (int) round(((float) config("game.bar.negotiate_success_chance.{$rank}", 0.0)) * 100);
+        $bonusPercent = $rank > 0 ? $this->projectBonusService->tradeNegotiateChanceBonusPercent($colonyId) : 0;
+        $maxPercent = (int) round(((float) config('game.bar.trade_terms.negotiate_chance_max', 1.0)) * 100);
+
+        $uncapped = $basePercent + $bonusPercent;
+        $totalPercent = min($uncapped, $maxPercent);
+
+        return [
+            'rank' => $rank,
+            'base' => $basePercent / 100,
+            'base_percent' => $basePercent,
+            'knowledge_bonus' => $bonusPercent / 100,
+            'knowledge_bonus_percent' => $bonusPercent,
+            'total' => $totalPercent / 100,
+            'total_percent' => $totalPercent,
+            'capped' => $uncapped > $maxPercent,
+        ];
+    }
+
+    /**
+     * The negotiation bonus a successful Verhandeln adds to the Get side (additive to the
+     * Handelsvorteil). Constant per rank in config; an already negotiated offer keeps at
+     * least the rank-1 value even if the Konsul has since left on a mission — the success
+     * was earned and must not silently void.
+     */
+    public function negotiationBonus(int $colonyId): float
+    {
+        $rank = max(1, $this->traderRank($colonyId));
+
+        return (float) config("game.bar.negotiate_bonus.{$rank}", 0.0);
     }
 
     /**
@@ -389,44 +443,55 @@ class BarService
      * acceptOffer() (execution) and BarController (display), so the shown
      * amounts can never differ from the booked ones.
      *
-     * The stored offer holds base terms only. The Handelsvorteil of the bar
-     * channel (Konsul + Handelsposten + trade knowledge, additive) multiplies the
-     * Get side; the Give side (the price) stays. Fixed-price lots get no advantage.
+     * The stored offer holds base terms only. The Get side is
+     * base x (1 + Handelsvorteil + negotiation bonus) — one additive sum, "+X %" means
+     * "X % more goods" (Konsul + Handelsposten + trade knowledge in the advantage, the
+     * bonus only once the offer is flagged is_negotiated). The Give side (the price)
+     * never changes. Fixed-price lots get neither advantage nor bonus.
      *
-     * Provisional until P3 (Verhandeln neu): a negotiated offer excludes the
-     * Handelsposten source, and its stored terms already contain the negotiation
-     * bonus — the GDD target is base + advantage + negotiation bonus, additive.
+     * P2b builds the offer dialog on this array: `advantage.sources` for the Handelsvorteil
+     * lines, `negotiation_bonus` (applied) / `negotiation_bonus_offered` (what success would
+     * add) for the negotiation line, `get_amount_if_negotiated` for the "amount on success" figure (null when nothing to negotiate: already negotiated
+     * or fixed price).
      *
      * @return array{
      *     give_resource_id: int, give_amount: int, get_resource_id: int, get_amount: int,
-     *     base_give_amount: int, base_get_amount: int, fixed_price: bool, negotiated: bool, advantage: array
+     *     base_give_amount: int, base_get_amount: int, fixed_price: bool, negotiated: bool,
+     *     negotiation_bonus: float, negotiation_bonus_offered: float, get_amount_if_negotiated: int|null, advantage: array
      * }
      */
     public function effectiveTerms(object $offer, int $colonyId): array
     {
         $fixedPrice = $this->isFixedPriceOffer($offer);
-        $negotiated = (bool) ($offer->is_negotiated ?? false);
+        $negotiated = ! $fixedPrice && (bool) ($offer->is_negotiated ?? false);
 
         $advantage = $this->tradeAdvantageService->forChannel(
             $colonyId,
             TradeAdvantageService::CHANNEL_BAR,
             $fixedPrice
                 ? [TradeAdvantageService::SOURCE_CONSUL, TradeAdvantageService::SOURCE_TRADING_POST, TradeAdvantageService::SOURCE_TRADE_KNOWLEDGE]
-                : ($negotiated ? [TradeAdvantageService::SOURCE_TRADING_POST] : []),
+                : [],
         );
 
         $baseGive = (int) $offer->give_amount;
         $baseGet = (int) $offer->get_amount;
+        $bonus = $fixedPrice ? 0.0 : $this->negotiationBonus($colonyId);
+        $applied = $negotiated ? $bonus : 0.0;
 
         return [
             'give_resource_id' => (int) $offer->give_resource_id,
             'give_amount' => $baseGive,
             'get_resource_id' => (int) $offer->get_resource_id,
-            'get_amount' => $this->tradeAdvantageService->applyToAmount($baseGet, $advantage),
+            'get_amount' => $this->tradeAdvantageService->applyToAmount($baseGet, $advantage, $applied),
             'base_give_amount' => $baseGive,
             'base_get_amount' => $baseGet,
             'fixed_price' => $fixedPrice,
             'negotiated' => $negotiated,
+            'negotiation_bonus' => $applied,
+            'negotiation_bonus_offered' => $bonus,
+            'get_amount_if_negotiated' => ($fixedPrice || $negotiated)
+                ? null
+                : $this->tradeAdvantageService->applyToAmount($baseGet, $advantage, $bonus),
             'advantage' => $advantage,
         ];
     }

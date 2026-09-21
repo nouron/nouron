@@ -110,7 +110,7 @@ class BarController extends BaseController
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
         $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
-        $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 3);
+        $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 2);
         $hasConsul = $barLevel > 0 && $this->barService->hasAvailableConsul($colony->id);
 
         // Knowledge dropdown options shared by Tomas (A40), Sarka's Anliegen (A41)

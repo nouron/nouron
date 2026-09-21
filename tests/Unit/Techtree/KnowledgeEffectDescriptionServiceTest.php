@@ -64,11 +64,13 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
     public function test_trade_level4_has_no_ap_cost_line(): void
     {
         // config/knowledge.php trade: bar_offer_boost_per_lv[4]=0 (must be OMITTED),
-        // trade_price_bonus_per_lv[4]=2 — the building AP discount is gone (A13).
+        // trade_price_bonus_per_lv[4]=2, negotiate_chance_bonus_per_lv[4]=2 — the building
+        // AP discount is gone (A13); the Verhandlungs-Chance line (A13/P3) is a chance, not an AP cost.
         $lines = $this->service->effectsAtLevel('trade', 4);
 
         $this->assertHasTextLine($lines, '+2% Handelspreis-Bonus');
-        $this->assertCount(1, $lines, 'no AP-cost line, and bar_offer_boost_per_lv[4]=0 must not produce a line');
+        $this->assertHasTextLine($lines, '+2% Verhandlungs-Chance');
+        $this->assertCount(2, $lines, 'price + negotiation chance only: no AP-cost line, and bar_offer_boost_per_lv[4]=0 must not produce a line');
         foreach ($lines as $line) {
             $this->assertStringNotContainsString('AP-Kosten', $line['text']);
         }

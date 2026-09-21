@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\DB;
  *   - navigation-AP discount for exploration and hangar mission actions,
  *     sourced from the cartography knowledge level (navigationApDiscountPercent());
  *   - trade-price bonus across all 3 trade channels, sourced from the trade
- *     knowledge level (tradePriceBonusPercent()).
+ *     knowledge level (tradePriceBonusPercent());
+ *   - Cantina-Verhandlung success-chance bonus, sourced from the trade
+ *     knowledge level (tradeNegotiateChanceBonusPercent()).
  */
 class ProjectBonusService
 {
@@ -171,6 +173,23 @@ class ProjectBonusService
             ->value('level');
 
         $curve = config('knowledge.trade.trade_price_bonus_per_lv', []);
+
+        return GameTick::cumulativeCurveYield($curve, $level);
+    }
+
+    /**
+     * Percentage points the trade knowledge adds to the Cantina-Verhandlung success
+     * chance (GDD §12/§10, A13), cumulative over the researched levels. The caller
+     * decides whether it applies at all (only when a Konsul negotiates).
+     */
+    public function tradeNegotiateChanceBonusPercent(int $colonyId): int
+    {
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', (int) config('knowledge.trade.id'))
+            ->value('level');
+
+        $curve = config('knowledge.trade.negotiate_chance_bonus_per_lv', []);
 
         return GameTick::cumulativeCurveYield($curve, $level);
     }

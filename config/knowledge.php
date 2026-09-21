@@ -112,6 +112,10 @@ return [
         // TradingPostService-Kanalrabatt — additives Stacking mehrerer Quellen ist
         // etablierte Projekt-Konvention. Owner-Entscheidung 2026-08-27, Platzhalter-Größe (ADR 0004).
         'trade_price_bonus_per_lv' => [1 => 2, 2 => 3, 3 => 3, 4 => 2, 5 => 2],
+        // Verhandlungsführung: Prozentpunkte auf die Erfolgschance der Cantina-Verhandlung
+        // (game.bar.negotiate_success_chance), kumulativ über die Level (Σ8 bei Lv5). Wirkt nur,
+        // wenn ein Konsul verhandelt. Owner-Entscheidung A13 2026-09-20, Kalibrierung offen.
+        'negotiate_chance_bonus_per_lv' => [1 => 1, 2 => 2, 3 => 2, 4 => 2, 5 => 1],
     ],
 
     'defense' => [

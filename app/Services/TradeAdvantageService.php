@@ -63,8 +63,7 @@ class TradeAdvantageService
      * (value 0) — the offer dialog decides what to show and can hint at what a
      * missing Konsul or Handelsposten would bring.
      *
-     * @param  string[]  $excludeSources  Source keys to leave out (provisional: the
-     *                                    negotiated-offer Handelsposten exclusion, P3 removes it).
+     * @param  string[]  $excludeSources  Source keys to leave out (fixed-price lots get none).
      * @return array{
      *     channel: string,
      *     sources: list<array{key: string, label_key: string, value: float, percent: int}>,
@@ -111,12 +110,15 @@ class TradeAdvantageService
     }
 
     /**
-     * Get-side application: amount x (1 + advantage), rounded half up. Never
-     * below the base amount. "+X %" means exactly "X % more goods".
+     * Get-side application: amount x (1 + advantage [+ extra]), rounded half up.
+     * Never below the base amount. "+X %" means exactly "X % more goods".
+     *
+     * @param  float  $extra  Further additive share on top of the Handelsvorteil
+     *                        (the Cantina-Verhandlung bonus), summed — never multiplied.
      */
-    public function applyToAmount(int $amount, array $advantage): int
+    public function applyToAmount(int $amount, array $advantage, float $extra = 0.0): int
     {
-        $bp = $this->totalBasisPoints($advantage);
+        $bp = $this->totalBasisPoints($advantage) + (int) round($extra * 10000);
 
         return intdiv($amount * (10000 + $bp) + 5000, 10000);
     }

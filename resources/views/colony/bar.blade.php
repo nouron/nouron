@@ -115,6 +115,8 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
             "informationOutcomeKey" => $informationEncounter?->outcome_key,
             "knowledgeOptions" => $knowledgeOptions,
             "devaKnowledgeChoices" => $devaKnowledgeChoices,
+            "resourceLabels" => $resourceLabels,
+            "negotiateFailedTemplate" => __("colony.bar_offer_negotiate_failed"),
         ];
     @endphp
 
@@ -494,7 +496,7 @@ $offerFlavorKey =
                                 <div style="display:flex;gap:0.5rem">
                                     @if ($hasConsul && !$terms["fixed_price"])
                                         <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
-                                            @click="negotiate({{ $offerId }}, $el)"
+                                            @click='negotiate({{ $offerId }}, $el, @json($name))'
                                             :disabled="negotiated[{{ $offerId }}] || offerResolved({{ $offerId }}) ||
                                                 loading">
                                             <span class="tile-action-btn__body">
@@ -525,9 +527,8 @@ $offerFlavorKey =
                                 {{ __("colony.bar_offer_negotiate_success") }}
                             </div>
                             <div x-show="negotiateResult[{{ $offerId }}] === 'failed'"
-                                style="color:var(--pico-del-color);font-size:0.85rem">
-                                {{ __("colony.bar_offer_negotiate_failed") }}
-                            </div>
+                                x-text="negotiateFailedText[{{ $offerId }}]"
+                                style="color:var(--pico-del-color);font-size:0.85rem"></div>
                             <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
                                 style="color:var(--pico-del-color);font-size:0.85rem"></div>
                         </x-cantina-dialog>
@@ -849,8 +850,9 @@ $offerFlavorKey =
 
                 // Offers state
                 accepted: {},
-                negotiated: {}, // offerId -> true once a negotiation improved the offer's terms
+                negotiated: {}, // offerId -> true once a negotiation succeeded (Get-side bonus applies)
                 negotiateResult: {}, // offerId -> 'failed' (negotiation lost the offer entirely)
+                negotiateFailedText: {}, // offerId -> failure message naming the facts (who, what stays, AP spent)
                 loading: false,
                 error: {},
 
@@ -1302,10 +1304,10 @@ $offerFlavorKey =
                     }
                 },
 
-                // Cantina-Verhandlung — improves the offer's terms, costs more AP, and
-                // can fail (offer lost entirely). A successful negotiation does NOT
+                // Cantina-Verhandlung — flags the offer as negotiated (bonus on the Get side,
+                // costs the same AP as Annehmen) and can fail (offer lost entirely). A successful negotiation does NOT
                 // execute the trade — the player still confirms with Annehmen.
-                async negotiate(offerId, btn) {
+                async negotiate(offerId, btn, characterName) {
                     this.loading = true;
                     this.error[offerId] = null;
                     try {
@@ -1322,13 +1324,19 @@ $offerFlavorKey =
                             this.negotiated[offerId] = true;
                             // No resources move here (see backend docblock) — only AP.
                             this.syncAp(data.ap_available);
-                            // data.terms = what Annehmen will now execute (negotiated terms + Handelsvorteil)
+                            // data.terms = what Annehmen will now execute: base x (1 + Handelsvorteil + negotiation bonus), additive
                             this.updateOfferChipAmounts(btn, data.terms.give_amount, data.terms.get_amount);
                             this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
                         } else if (data.ok && !data.success) {
                             this.negotiateResult[offerId] = 'failed';
                             this.syncAp(data.ap_available);
-                            this.showToast(@js(__("colony.bar_offer_negotiate_failed")), 'error');
+                            // Facts of the loss: nothing was traded, the Give side stays, the AP are gone.
+                            const failedText = (extra.negotiateFailedTemplate ?? '')
+                                .replace(':name', characterName)
+                                .replace(':resource', (extra.resourceLabels ?? {})[data.give_resource_id] ?? '?')
+                                .replace(':ap', data.ap_spent);
+                            // Shown inline in the dialog (persistent) — no extra toast that would repeat it.
+                            this.negotiateFailedText[offerId] = failedText;
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';
                         }

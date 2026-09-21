@@ -456,6 +456,9 @@ return [
         'trade_terms' => [
             'fixed_price_offers' => true,
             'silent_cap' => ['bar' => 0.60, 'merchant' => 0.60, 'nexus' => 0.25],
+            // Silent guard rail on the TOTAL Cantina-Verhandlung success chance (rank base +
+            // trade knowledge); never explained to the player (GDD §12, A13).
+            'negotiate_chance_max' => 0.95,
         ],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'offer_duration' => 2,  // fallback when bar level unknown
@@ -465,11 +468,14 @@ return [
 
         // Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — Konsul (advisor_trader)
         // muss zugewiesen und verfügbar sein (kein Rang-Minimum über Rang 1 hinaus).
-        // AP ist bewusst NICHT der eigentliche Deckel (siehe GDD): der Preis ist der
-        // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf.
-        'ap_cost_negotiate' => 4,  // 3→4, same reason as ap_cost_accept
-        'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
-        'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
+        // Owner-Entscheidung A13 (2026-09-20, game-designer-kalibriert, Kalibrierung offen):
+        // Verhandeln kostet gleich viele AP wie Annehmen — der Preis des Risikos ist der
+        // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf, nicht AP-Rechnerei.
+        // Der Aufschlag ist konstant und wirkt additiv auf die Get-Seite (base x (1 + Handelsvorteil
+        // + Aufschlag)); die Chance steigt mit dem Rang (+ trade-Kenntnis, knowledge.php).
+        'ap_cost_negotiate' => 2,  // = ap_cost_accept
+        'negotiate_success_chance' => [0 => 0.0, 1 => 0.60, 2 => 0.65, 3 => 0.70],
+        'negotiate_bonus' => [0 => 0.0, 1 => 0.20, 2 => 0.20, 3 => 0.20],
 
         // Cantina-Begegnungspool (GDD §12 Kanal 1, Owner-Entscheidung F3/2026-09-09):
         // replaces the struck Konsul-Handelsvertrag as the Pfad-C Credits lever. One
