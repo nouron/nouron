@@ -3,7 +3,8 @@
 ## 2026-09-22
 
 - Feature: A13 P4 — Nexus-Kanal: Handelsposten Stufe III wirkt jetzt auf den Preis des Nexus-Direktimports (`NexusImportService`, neuer Handelsvorteil-Kanal `nexus`, ersetzt `corporate_contact` als Kanalnamen) sowie weiterhin auf Orins Angebot — die Lieferzeit bleibt unverändert eine reine Uplink-Station-Frage.
-- Doku: A13 P7 — damit ist der gesamte A13-Handels-/Konsul-Umbau (P1–P7) implementiert. GDD §4/§8b/§12/§13.4 von „Konzeptstand A13"/„noch nicht im Code" auf den tatsächlichen Code-Stand umgestellt; `docs/game-reference.md` um Abschnitt „7a. Handel & Konsul" ergänzt. Offen bleibt nur P8 (Bot-Batch-Kalibrierung, 8–10 Seeds).
+- Doku: A13 P7 — GDD §4/§8b/§12/§13.4 von „Konzeptstand A13"/„noch nicht im Code" auf den tatsächlichen Code-Stand umgestellt; `docs/game-reference.md` um Abschnitt „7a. Handel & Konsul" ergänzt; alle `TODO(content-writer)`-Platzhalter in `lang/de/colony.php` finalisiert (u.a. Grammatik-Fix der Verhandeln-Fehlschlag-Meldung).
+- Balance: A13 P8 — Bot-Batch (8 Seeds) zur Absicherung des neuen Handels-/Verhandeln-Codes: 7/8 Runs abgeschlossen, keine Regressionen. Damit ist der gesamte A13-Handels-/Konsul-Umbau (P1–P8) abgeschlossen.
 
 ## 2026-09-21
 
