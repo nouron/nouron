@@ -6,7 +6,9 @@ use App\Http\Controllers\BaseController;
 use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\ColonyService;
+use App\Services\NexusImportService;
 use App\Services\TickService;
+use App\Services\TradeAdvantagePresenter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,8 @@ class CommandCenterController extends BaseController
         TickService $tick,
         private readonly ColonyService $colonyService,
         private readonly AdvisorService $advisorService,
+        private readonly NexusImportService $nexusImportService,
+        private readonly TradeAdvantagePresenter $tradeAdvantagePresenter,
     ) {
         parent::__construct($tick);
     }
@@ -124,8 +128,11 @@ class CommandCenterController extends BaseController
             ->where('colony_id', $colony->id)
             ->where('building_id', $uplinkId)
             ->value('level') ?? 0);
-        $compoundImportPrice = (int) config('game.economy.compound_import_price', 90);
-        $delayedImportPrices = config('game.economy.delayed_import_price', [3 => 35, 5 => 65]);
+        // Prices come from the one central quote (base x 'nexus' Handelsvorteil) that the
+        // import actions charge with — the shown price is the charged price. The presenter
+        // formats the advantage sources/hints (A13 P4).
+        $nexusImport = $this->nexusImportService->quote($colony->id);
+        $nexusImport['advantage_view'] = $this->tradeAdvantagePresenter->present($colony->id, $nexusImport['advantage']);
 
         return view('colony.command_center', compact(
             'phaseProgress',
@@ -141,8 +148,7 @@ class CommandCenterController extends BaseController
             'advisors',
             'trustEvents',
             'uplinkLevel',
-            'compoundImportPrice',
-            'delayedImportPrices',
+            'nexusImport',
         ));
     }
 }

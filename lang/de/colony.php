@@ -195,6 +195,8 @@ return [
     'nexus_import_hint' => 'Werkstoffe direkt vom Nexus kaufen — immer verfügbar, fester Preis.',
     'nexus_import_amount' => 'Menge (Werkstoffe)',
     'nexus_import_price_each' => ':price Cr/Einheit',
+    // TODO(content-writer): Platzhalter (A13 P4) — Fakten (Quellen einzeln mit Prozentwert) müssen erhalten bleiben.
+    'nexus_import_price_sources' => 'Preisvorteil: :sources',
     'nexus_import_total' => 'Gesamt: :total Cr',
     'nexus_import_confirm' => 'Importieren',
     'nexus_import_success' => ':amount Werkstoffe importiert (:cost Cr).',

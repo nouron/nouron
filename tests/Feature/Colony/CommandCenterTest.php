@@ -163,9 +163,11 @@ class CommandCenterTest extends TestCase
     {
         $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
 
-        $response->assertViewHas('delayedImportPrices', function ($prices) {
-            return $prices[3] === (int) config('game.economy.delayed_import_price.3')
-                && $prices[5] === (int) config('game.economy.delayed_import_price.5');
+        // No trading post / trade knowledge on the fixture colony -> price == base price.
+        $response->assertViewHas('nexusImport', function ($quote) {
+            return $quote['resources'][3]['price'] === (int) config('game.economy.delayed_import_price.3')
+                && $quote['resources'][5]['price'] === (int) config('game.economy.delayed_import_price.5')
+                && $quote['resources'][4]['price'] === (int) config('game.economy.compound_import_price');
         });
         $response->assertSee(__('colony.nexus_import_delayed_title'));
         $response->assertSee(route('colony.nexus.import-delayed'), false);

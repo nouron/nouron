@@ -8,7 +8,9 @@ function commandCenter(config = {}) {
     return {
         routes: config.routes ?? {},
         i18n: config.i18n ?? {},
-        compoundImportPrice: config.compoundImportPrice ?? 90,
+        // Credits per unit by resource id — the server's quote (base x Nexus Handelsvorteil),
+        // i.e. exactly what the import actions charge.
+        nexusImportPrices: config.nexusImportPrices ?? {},
         nexusImportAmount: 10,
 
         // Kolonisten-Zulage (GDD §14) — trust effect only applies from the next
