@@ -231,7 +231,7 @@ class BarOfferDialogPageTest extends TestCase
         $this->assertStringNotContainsString('negotiate('.$id, $html);
         $this->assertStringNotContainsString('Konsul (Rang', $text, 'no inactive Konsul line');
         $juniorPercent = (int) round(config('game.bar.trader_discount.1') * 100);
-        $this->assertStringContainsString("Kein Konsul verfügbar: kein Verhandeln. Ein Junior brächte +{$juniorPercent} %.", $text);
+        $this->assertStringContainsString("Kein Konsul verfügbar — kein Verhandeln möglich. Ein Junior-Konsul brächte +{$juniorPercent} %.", $text);
         $this->assertStringNotContainsString('Chance', $text);
         $this->assertStringContainsString('sicher:', $text, 'Annehmen still shows its certain outcome');
     }
@@ -245,7 +245,7 @@ class BarOfferDialogPageTest extends TestCase
 
         $cc = (int) DB::table('buildings')->where('id', self::TRADING_POST_ID)->value('required_building_level');
         $percent = (int) round(config('buildings.tradingPost.merchant_price_bonus') * 100);
-        $this->assertStringContainsString("Handelsposten (CC {$cc}) würde +{$percent} % bringen.", $text);
+        $this->assertStringContainsString("Handelsposten (ab CC {$cc}) würde +{$percent} % bringen.", $text);
         $this->assertStringNotContainsString('Handelsposten (Stufe', $text);
     }
 

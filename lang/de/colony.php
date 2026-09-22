@@ -195,7 +195,6 @@ return [
     'nexus_import_hint' => 'Werkstoffe direkt vom Nexus kaufen — immer verfügbar, fester Preis.',
     'nexus_import_amount' => 'Menge (Werkstoffe)',
     'nexus_import_price_each' => ':price Cr/Einheit',
-    // TODO(content-writer): Platzhalter (A13 P4) — Fakten (Quellen einzeln mit Prozentwert) müssen erhalten bleiben.
     'nexus_import_price_sources' => 'Preisvorteil: :sources',
     'nexus_import_total' => 'Gesamt: :total Cr',
     'nexus_import_confirm' => 'Importieren',
@@ -242,10 +241,9 @@ return [
     'merchant_buy_error' => 'Kauf fehlgeschlagen.',
 
     // ── Marktbericht (Konsul, A13, GDD §12) ────────────────────────────────────
-    // TODO(content-writer): Platzhalter — Ton/Feinschliff folgt.
     'merchant_forecast_title' => 'Marktbericht',
     'merchant_forecast_tomorrow' => 'Corvan trifft morgen ein.',
-    'merchant_forecast_in_sols' => 'Corvan trifft in :sols Sol ein.',
+    'merchant_forecast_in_sols' => 'Corvan trifft in :sols Solen ein.',
     'merchant_forecast_inventory' => 'Angekündigt: :categories',
     'merchant_category_ap_package' => 'AP-Paket',
     'merchant_category_information' => 'Information',
@@ -253,8 +251,6 @@ return [
 
     // ── Orin (corporate_rep) — Harvester-Zweitinstanz Weg A (GDD §4c,
     // freigegeben 2026-08-05) ───────────────────────────────────────────────
-    // TODO(content-writer): Platzhalter — narrative Feinabstimmung folgt
-    // zusammen mit Orins Charakterblatt-Update (Game Role: bar_trade).
     'corporate_contact_banner_hint' => 'Ein Angebot wartet.',
     'corporate_contact_dialog_intro' => 'Orin hat ein Harvester-Modul im Angebot — Herkunft ungeklärt, Preis fällig sofort.',
     'corporate_contact_price_label' => 'Preis',
@@ -279,25 +275,21 @@ return [
     'bar_offer_negotiate' => 'Verhandeln',
     'bar_offer_no_consul' => 'Kein verfügbarer Konsul zugewiesen.',
     'bar_offer_already_negotiated' => 'Angebot wurde bereits verhandelt.',
-    'bar_offer_negotiate_success' => 'Verhandlung erfolgreich!',
-    // TODO(content-writer): Platzhalter-Text — Fakten (Figur, Give-Ressource bleibt, AP) müssen erhalten bleiben.
-    'bar_offer_negotiate_failed' => ':name hat das Angebot zurückgezogen. Kein Handel, dein :resource bleibt bei dir. :ap AP verbraucht.',
+    'bar_offer_negotiate_failed' => ':name hat das Angebot zurückgezogen — kein Handel, du behältst :resource, :ap AP verbraucht.',
     'bar_offer_not_negotiable' => 'Dieses Angebot ist ein Festpreis und nicht verhandelbar.',
     'trade_source_consul' => 'Konsul',
     'trade_source_trading_post' => 'Handelsposten',
     'trade_source_trade_knowledge' => 'Kenntnis Handel',
 
     // ── Handelsvorteil im Angebotsdialog (A13 P2b, GDD §12 "Was der Angebotsdialog zeigt") ──
-    // TODO(content-writer): alle Texte dieses Blocks sind Platzhalter (kurz, sachlich, Spielerton) —
-    // Fakten (Zahlen, Quellen, "kein Handel / Ressource bleibt / Angebot verfällt / AP verbraucht") müssen erhalten bleiben.
     'trade_line_consul' => 'Konsul (Rang :rank)',
     'trade_line_trading_post' => 'Handelsposten (Stufe :tier)',
     'trade_line_trade_knowledge' => 'Kenntnis Handel (Lv :level)',
     'trade_short_consul' => 'Konsul Rang :rank',
     'trade_short_trading_post' => 'Handelsposten',
     'trade_short_trade_knowledge' => 'Handel Lv:level',
-    'trade_hint_no_consul' => 'Kein Konsul verfügbar: kein Verhandeln. Ein :rank brächte +:percent %.',
-    'trade_hint_trading_post_bar' => 'Handelsposten (CC :cc) würde +:percent % bringen.',
+    'trade_hint_no_consul' => 'Kein Konsul verfügbar — kein Verhandeln möglich. Ein :rank-Konsul brächte +:percent %.',
+    'trade_hint_trading_post_bar' => 'Handelsposten (ab CC :cc) würde +:percent % bringen.',
     'trade_hint_trading_post_tier' => 'Handelsposten ab Stufe :tier würde −:percent % bringen.',
     'trade_advantage_header' => 'Handelsvorteil :total (:sources)',
     'trade_price_advantage_line' => 'Preisvorteil :total (:sources)',

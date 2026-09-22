@@ -107,7 +107,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
 | **agronomy** | 20/28/36/44/52 | 180 AP | +2 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
 | **health** | 20/28/36/44/52 | 180 AP | +3 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
-| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bar-Slots +0/+1/+1/+0/+0; Handelspreis-Bonus +2/+3/+3/+2/+2% (Σ12%) |
+| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bar-Slots +0/+1/+1/+0/+0; Handelsvorteil-Preisbonus (alle 3 Kanäle) +2/+3/+3/+2/+2% (Σ12%); Cantina-Verhandlung-Erfolgschance +1/+2/+2/+2/+1%-Punkte (Σ8%-Punkte, nur mit Konsul). Kein Bau-AP-Rabatt mehr (A13, 2026-09-20 — vorher Σ15% additiv mit construction, gestrichen: Handel wirkt auf Preise/Angebote/Verhandlung, nicht auf Bauprojekte). |
 | **defense** | 20/28/36/44/52 | 180 AP | +2 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **CC-Level Gate**: Lv4 & Lv5 knowledge erfordern CC Lv4 bzw. Lv5
@@ -127,6 +127,32 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 > **Hangar-Level = Schiffsklasse**: Lv1 = Drohne, Lv2 = Frachter, Lv3 = Korvette
 > Instanzen sind separate Achse (supply-limitiert, unbegrenzt Slots theoretisch)
+
+---
+
+## 7a. Handel & Konsul (A13, `TradeAdvantageService`)
+
+**Handelsvorteil-Kanäle** (`TradeAdvantageService::CHANNEL_*`) — additive Quellen, nie multipliziert:
+
+| Kanal | Quellen | Wirkung |
+|---|---|---|
+| `bar` (Cantina) | Konsul-Rang + Handelsposten (Stufe ≥1) + `trade`-Kenntnis | mehr Ware auf der Get-Seite |
+| `merchant` (Corvans Sonderinventar) | Handelsposten (Stufe ≥2) + `trade`-Kenntnis (kein Konsul) | Preisnachlass |
+| `nexus` (Direktimport-Preis + Orin) | Handelsposten (Stufe ≥3) + `trade`-Kenntnis (kein Konsul, F5) | Preisnachlass |
+
+Stiller Deckel (nie im UI erklärt, `game.bar.trade_terms.silent_cap`): `bar` 60%, `merchant` 60%, `nexus` 25%.
+
+**Konsul-Rang-Rabatt im `bar`-Kanal** (`game.bar.trader_discount`): Rang 0 → 0%, Rang 1 → 10%, Rang 2 → 20%, Rang 3 → 30%.
+
+**Cantina-Verhandlung** (`BarService::negotiateOffer/negotiateChance`, `game.bar`):
+- `ap_cost_negotiate` = 2 (gleich `ap_cost_accept`)
+- `negotiate_success_chance` je Konsul-Rang: 0 → 0%, 1 → 60%, 2 → 65%, 3 → 70%; zzgl. `knowledge.trade.negotiate_chance_bonus_per_lv` (Σ8%-Punkte bei Lv5), gedeckelt bei `negotiate_chance_max` = 95%
+- `negotiate_bonus` (additiver Aufschlag auf die Get-Seite bei Erfolg): konstant 20% ab Rang 1
+- Verkaufslose mit Credits-Erlös (Corvans Organika-Lose) sind Festpreis: kein Handelsvorteil, keine Verhandlung (`trade_terms.fixed_price_offers`)
+
+**Rangskalierte Schiffsverhandlung im Hangar** (`HangarService::consulApDiscountPerAp`, `game.hangar.consul_ap_discount`): Credits-Nachlass pro investiertem Verhandlungs-AP je Konsul-Rang — Rang 1 → 50 Cr/AP, Rang 2 → 60 Cr/AP, Rang 3 → 70 Cr/AP. Risikofrei (kein Fehlschlag), 0 ohne verfügbaren Konsul.
+
+**Marktbericht** (`MerchantService::getForecast`, `game.merchant`): Vorlauf für Corvans nächsten Besuch je Konsul-Rang (`forecast_sols`) — Rang 0 → keine Ankündigung, Rang 1 → 1 Sol, Rang 2 → 2 Sole, Rang 3 → 3 Sole. Ab `forecast_inventory_min_rank` = 3 zusätzlich die Sonderinventar-Kategorien des kommenden Besuchs (nicht die Alltagsgeschäft-Lose).
 
 ---
 
@@ -448,7 +474,7 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 | Kolonialdenkmal | +3/Lv | Stolz (Lv1 only) |
 | Security Hub | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |
 | Uplink Station | 0 | Deep-Scan −1 AP (Lv2+); Merchant frequency ↑ |
-| Trading Post | 0 | Merchant +12% trade value |
+| Trading Post | 0 | Handelsvorteil-Kanalrabatt 12% je Ausbaustufe: Lv1 Bar-Kanal, Lv2 + Merchant-Kanal, Lv3 + Nexus-Kanal (kumulativ, additiv mit Konsul-Rang/`trade`-Kenntnis im Handelsvorteil, A13) |
 
 ---
 

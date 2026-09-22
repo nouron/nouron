@@ -403,7 +403,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 | 2 | CC Lv3 | Tiefenscan kostet weniger AP (`ColonyTileService`); Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt; *geplant:* Reisender Händler erscheint häufiger (ROADMAP A11) |
 | 3 | CC Lv5 | Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt weiter; Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
 
-**Direktimport für Nicht-Werkstoff-Ressourcen (Owner-Entscheidung F5, 2026-09-08):** Anfrage und Bezahlung passieren sofort wie beim Werkstoff-Direktimport, die Lieferung selbst braucht jedoch mehrere Sole (Basiswert 3–5 Sole auf Lv1). Der **einzige** Hebel zur Verkürzung ist das Uplink-Station-Level selbst — bewusst kein zusätzlicher Hebel über Konsul-Rang, Kenntnisse oder situative Boni, um den Direktimport als reine Infrastrukturfrage zu halten. Das betrifft die *Lieferzeit*; der *Preis* des Direktimports ist ein eigener Kanal des Handelspostens (Stufe III, siehe „Handelsposten — Mechanik", Konzeptstand A13). Dieser Weg ersetzt das gestrichene Konzept „Nexus-Handelsschiffe" (§12) als Sicherheitsnetz für nicht lokal beschaffbare Ressourcenmengen.
+**Direktimport für Nicht-Werkstoff-Ressourcen (Owner-Entscheidung F5, 2026-09-08):** Anfrage und Bezahlung passieren sofort wie beim Werkstoff-Direktimport, die Lieferung selbst braucht jedoch mehrere Sole (Basiswert 3–5 Sole auf Lv1). Der **einzige** Hebel zur Verkürzung ist das Uplink-Station-Level selbst — bewusst kein zusätzlicher Hebel über Konsul-Rang, Kenntnisse oder situative Boni, um den Direktimport als reine Infrastrukturfrage zu halten. Das betrifft die *Lieferzeit*; der *Preis* des Direktimports ist ein eigener Kanal des Handelspostens (Stufe III, siehe „Handelsposten — Mechanik" unten). Dieser Weg ersetzt das gestrichene Konzept „Nexus-Handelsschiffe" (§12) als Sicherheitsnetz für nicht lokal beschaffbare Ressourcenmengen.
 
 **Baukosten Lv1:** Ausschließlich Regolith + Credits — keine Werkstoffe, um einen Zirkelschluss zu vermeiden (Werkstoffe über Nexus anfordern setzt das Gebäude voraus).
 
@@ -420,7 +420,7 @@ Der Handelsposten ist **Infrastruktur**: Seine Wirkung hängt nicht davon ab, ob
 **Passiv — Kanal-Rabatt (Design-Spec 2026-08-23):**
 Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal frei, kumulativ: Stufe I (Bekannter Gast) die Cantina-Angebote, Stufe II (Fester Kunde) zusätzlich Corvans Sonderinventar, Stufe III (Persönlicher Kontakt) zusätzlich die Nexus-Kanäle. Der Rabatt ist kein eigener Stack, sondern eine sichtbare Quelle im **Handelsvorteil** des jeweiligen Kanals (§12): Er addiert sich dort mit dem Konsul-Rang (nur Cantina-Kanal) und der `trade`-Kenntnis. Der frühere Ausschluss bei verhandelten Angeboten entfällt — Verhandeln ist ein zusätzlicher Aufschlag oben drauf, keine Konkurrenz zum Handelsposten (Begründung §12).
 
-> **Konzeptstand (A13, 2026-09-20), noch nicht im Code — Stufe III neu:** Heute wirkt Stufe III nur auf Orins Einmal-Angebot (§4c) und ist damit nahezu wertlos; der Nexus-Direktimport (Uplink-Station, oben) kennt bisher keinen Handelsrabatt. Künftig senkt Stufe III den **Preis** des Direktimports (Werkstoffe sowie die verzögerten Importe von Regolith und Organika) und weiterhin Orins Preis. Ausdrücklich **nicht** die Lieferzeit: sie bleibt eine reine Uplink-Station-Frage (siehe Direktimport-Abschnitt oben, Owner-Entscheidung F5). Der Nexus-Kanal hat bewusst nur diese zwei Quellen (Handelsposten, `trade`) und keinen Konsul-Anteil; damit bleibt sein Vorteil klein genug, dass der Nexus auch im besten Fall der teurere Fallback über dem lokalen Preisniveau bleibt. Hier wirkt der Vorteil als Preisnachlass in genau der angezeigten Höhe.
+**Stufe III (A13):** Stufe III senkt den **Preis** des Nexus-Direktimports (Werkstoffe sowie die verzögerten Importe von Regolith und Organika) und weiterhin Orins Einmal-Angebot (§4c). Ausdrücklich **nicht** die Lieferzeit: sie bleibt eine reine Uplink-Station-Frage (siehe Direktimport-Abschnitt oben, Owner-Entscheidung F5). Der Nexus-Kanal hat bewusst nur diese zwei Quellen (Handelsposten, `trade`) und keinen Konsul-Anteil; damit bleibt sein Vorteil klein genug, dass der Nexus auch im besten Fall der teurere Fallback über dem lokalen Preisniveau bleibt. Hier wirkt der Vorteil als Preisnachlass in genau der angezeigten Höhe.
 
 Exakter Rabattsatz: `config/buildings.php` → `merchant_price_bonus`.
 
@@ -1179,7 +1179,7 @@ Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftka
 |------|--------|---------|
 | **Nexus-Anfrage (Standard)** | Credits + Lieferzeit (N Sole) | Schiff landet nach N Solen auf `docked` |
 | **Nexus-Kredit** | 0 Cr jetzt + Nexus-Schulden ↑ | Schiff sofort verfügbar; Schulden-Risiko (§15) |
-| **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis; der Nachlass je AP wächst mit dem Konsul-Rang (Konzeptstand A13, noch nicht im Code — heute rangunabhängig) |
+| **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis; der Nachlass je AP wächst mit dem Konsul-Rang (A13) |
 | **Event / Händler** | situativ (Wrackbergung, Sonderdeal) | Schiff direkt `docked` oder `pending` |
 
 > **Hinweis Namenskollision:** Die "Konsul-Verhandlung" hier ist **risikofrei** — mehr AP kauft einen garantiert niedrigeren Preis, kein Fehlschlag möglich. Nicht zu verwechseln mit der **"Cantina-Verhandlung (Risiko-Handel)"** in §12 Kanal 1 — dort kann die Verhandlung scheitern und das Angebot geht komplett verloren. Zwei unterschiedliche Mechaniken, bewusst unterschiedlich benannt.
@@ -1418,7 +1418,7 @@ Bereits implementierte Effekte (`config/knowledge.php`):
 - `trade` gibt einen Preisbonus auf allen drei Handelskanälen (`trade_price_bonus_per_lv`, §4).
 - `construction` senkt additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`). `cartography` senkt stattdessen eigenständig die Navigation-AP-Kosten von Tile-Erkundung und Hangar-Missions-Reisekosten (siehe §13.3). `trade` senkt **keine** Bau-Kosten (A13, Owner-Entscheidung 2026-09-20: Handelsgeschick hat thematisch nichts mit dem Ausbau von Gebäuden zu tun) — ihre Wirkung liegt ausschließlich auf Handelskonditionen und Cantina.
 - `trade` erhöht zusätzlich die Zahl gleichzeitig aktiver Cantina-Angebote (§12), siehe `bar_offer_boost_per_lv`.
-- `trade` erhöht (Konzeptstand A13, Kalibrierung offen, noch nicht im Code) außerdem die Erfolgschance der Cantina-Verhandlung (§12) — die im Beschreibungstext der Kenntnis versprochene „Verhandlungsführung". Wirkt nur, wenn ein Konsul verhandelt.
+- `trade` erhöht außerdem die Erfolgschance der Cantina-Verhandlung (§12, A13, Kalibrierung offen) — die im Beschreibungstext der Kenntnis versprochene „Verhandlungsführung". Wirkt nur, wenn ein Konsul verhandelt.
 - `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
 - Analytik-Labor Lv4/5 senkt die AP-Kosten von Kenntnis-Levelups (§13.3) — kein Kenntnis-, sondern ein Gebäudeeffekt, hier der Vollständigkeit halber.
 
@@ -1568,7 +1568,7 @@ Der Konsul trägt zum gemeinsamen AP-Pool bei (Beitrag steigt mit Rang), verbess
 
 **Werkstoffe-Bias bei höheren Rängen:** Der Experten-Konsul hat Marktbeziehungen — bei Credits→Ressource-Angeboten erscheinen seltene Ressourcen häufiger. Das gibt dem höheren Rang einen konkreten wirtschaftlichen Vorteil in der knappsten Ressource des Spiels (§3 Werkstoffe nicht lokal produzierbar).
 
-**Handelsvorteil (Konzeptstand A13, 2026-09-20 — noch nicht im Code):**
+**Handelsvorteil (A13):**
 
 Leitgedanke ist **Verständlichkeit**: Der Spieler muss im Angebotsdialog nachvollziehen können, *warum* ein Angebot so aussieht, und jede angezeigte Zahl muss sich im Kopf nachrechnen lassen. Alle *passiven* Konditionsquellen laufen deshalb je Handelskanal in **einem einzigen, sichtbaren Prozentwert** zusammen, dem Handelsvorteil: der Konsul-Rang (nur Cantina-Kanal), der Kanal-Rabatt des Handelspostens (§4) und der Preisbonus der `trade`-Kenntnis. Heute stacken diese Quellen teils multiplikativ und an verschiedenen Stellen (Rang schon bei der Angebots-Erzeugung eingebacken, Rest beim Annehmen), sodass keine Anzeige die Herkunft einer Zahl erklären könnte. Künftig gilt:
 
@@ -1580,11 +1580,9 @@ Leitgedanke ist **Verständlichkeit**: Der Spieler muss im Angebotsdialog nachvo
 - **Verkaufslose sind Festpreis.** Credits-Erlöse (Corvans Organika-Lose, §4b) erhalten weder Handelsvorteil noch Verhandlung. Sonst würden passive Infrastruktur und Konsul zu einer verlässlichen Credits-Einnahme, und ein Kauf-und-Rückverkauf-Kreislauf entstünde — genau das, was A22 ausgeschlossen hat. Merkregel für den Spieler: *Der Handelsvorteil verbessert, was du an Ware bekommst — Verkaufs-Credits sind fix.*
 - **Verhandeln ist ein weiterer Aufschlag oben drauf,** nach denselben Anzeigeregeln (eigene Zeile, „+X %" heißt „X % mehr Ware"). Der Handelsposten gilt auch bei verhandelten Angeboten.
 
-**Was der Angebotsdialog zeigt (Konzeptstand):** (1) das Basisangebot; (2) den Handelsvorteil mit jeder Quelle in einer eigenen Zeile — nur Quellen mit Wirkung, dazu ein dezenter Hinweis, was ein fehlender Konsul oder Handelsposten brächte; (3) das Ergebnis als konkrete Menge samt „Plus gegenüber Basis"; (4) bei Verhandeln *beide* Ausgänge in Zahlen — Erfolgschance samt ihren Quellen, Menge bei Erfolg, und ein klarer Satz, was bei Misserfolg passiert (kein Handel, die Give-Ressourcen bleiben beim Spieler, das Angebot verfällt, die AP sind verbraucht); (5) die AP-Kosten an beiden Buttons; (6) bei Verkaufslosen den Hinweis auf den Festpreis. Zusätzlich fasst die Kopfzeile der Cantina den aktuellen Handelsvorteil mit seinen Quellen zusammen. Bar- und Händlerlisten zeigen den tatsächlich fälligen Betrag, nicht mehr die unrabattierten Basiswerte.
+**Was der Angebotsdialog zeigt:** (1) das Basisangebot; (2) den Handelsvorteil mit jeder Quelle in einer eigenen Zeile — nur Quellen mit Wirkung, dazu ein dezenter Hinweis, was ein fehlender Konsul oder Handelsposten brächte; (3) das Ergebnis als konkrete Menge samt „Plus gegenüber Basis"; (4) bei Verhandeln *beide* Ausgänge in Zahlen — Erfolgschance samt ihren Quellen, Menge bei Erfolg, und ein klarer Satz, was bei Misserfolg passiert (kein Handel, die Give-Ressourcen bleiben beim Spieler, das Angebot verfällt, die AP sind verbraucht); (5) die AP-Kosten an beiden Buttons; (6) bei Verkaufslosen den Hinweis auf den Festpreis. Zusätzlich fasst die Kopfzeile der Cantina den aktuellen Handelsvorteil mit seinen Quellen zusammen. Bar- und Händlerlisten zeigen den tatsächlich fälligen Betrag, nicht mehr die unrabattierten Basiswerte.
 
 **Cantina-Verhandlung (Risiko-Handel):**
-
-> **Konzeptstand A13 (2026-09-20) — Neukalibrierung noch nicht im Code:** Gleiche AP-Kosten wie Annehmen, Chance und Aufschlag je Rang, der Chance-Bonus der `trade`-Kenntnis, die Aufhebung des Handelsposten-Ausschlusses und der Festpreis der Verkaufslose sind entschieden bzw. vorgeschlagen, aber noch nicht umgesetzt. Die Beschreibung darunter nennt jeweils den Zielzustand.
 
 Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — ob sich der Klick lohnt, hängt an der Rechnung unten.
 
@@ -1642,8 +1640,6 @@ Ein reisender Händler erscheint gelegentlich bei der Kolonie für eine begrenzt
 | **Information** | Alle noch unerkundeten Tiles der Exploration Zone sofort aufgedeckt (`colony_tiles.is_explored`) | selten |
 | **Einmal-Item** | Reparatur-Kit, Vertrauens-Schub, Credits-Notfallkredit | häufig |
 | **Exotics** | Platzhalter Phase 4+ | sehr selten |
-
-> **Config-Nacharbeit (nicht GDD — für game-developer/backend-coder):** `config/game.php → merchant.items.information.label` heißt noch **"Systemkarte vollständig"** — ein rein kosmetischer Restverweis auf die 2026-06-20 gestrichene Systemkarte. Geprüft: `MerchantService::applyItemEffect()` setzt bereits korrekt `colony_tiles.is_explored = true` für die Kolonie (Exploration Zone) — die Wirkung ist **nicht** kaputt, nur das Label ist veraltet. Label an die obige Formulierung anpassen (kein Balance-Risiko, reiner Text-Fix).
 
 ---
 
@@ -2137,7 +2133,7 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 |---------|--------|--------------------|----------------------|
 | Baumeister | Colony-View | Decay-Prognose pro Gebäude ("in ~4 Solen Level-Down") | Kritische Gebäude hervorgehoben (SP < 30% Max) |
 | Analytiker | Techtree | "Sole bis Level X beim aktuellen AP-Fluss in diese Kenntnis" | Priorisierungshinweis für offene Run-Aufgaben |
-| Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt; Marktbericht zu Corvans nächstem Besuch (§12, Konzeptstand) |
+| Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt; Marktbericht zu Corvans nächstem Besuch (§12) |
 | Raumfahrer | Hangar | Aufgebrochene Missionszeit ("X Sole Hinweg + Rückkehr Sol Z") | Verschleiß-Prognose pro geplantem Dispatch (§7) |
 
 > Die Ziel-Erreichbarkeits-Prognose („Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") und die Ausgangs-Prognose bei Gefahren-Vorwarnung (§9) sind keiner Berater-Informationsebene zugeordnet — sie gehören ins Kommandozentrale-Dashboard (§13.4).
