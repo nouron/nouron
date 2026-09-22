@@ -14,7 +14,7 @@
 
 **Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System (ein gemeinsamer Pool), Berater-System, Decay-System, Trust-System (Vertrauen), Supply-System, Kolonieprotokoll + Nexus-Funk (`/comm-log`, ersetzt INNN), Hex-Grid Kolonieansicht, Reisender Händler (Corvan), Corporate Contact (Orin), jQuery-Migration (vollständig), Bootstrap-5-Migration (vollständig, kein Rest mehr), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System (2 Phasen, 8 Objectives, 4 Fail-States), Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Hangar + Außenmissionen (13 Missionen, Erfolgschance/Schwierigkeit), Encounters (Sturm/Instabilität/Seuche), Kenntnis-Effekte (6 von 7), Gebäude-Ausbaustufen (Tier-System), Harvester-Erschöpfung + Zweitinstanz, PlaytestBot + Dashboard, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt). **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Fleet-Overlay, Kommandanten-Zuweisung, INNN-Messaging — siehe `docs/gdd/archiv-flotten-systemkarte.md`.
 
-**Laufend:** Phase 3o AP-Ratenmodell (Stufen 3/4/6 offen) und Bot-Kalibrierung; Abarbeitung des Implementierungsstand-Audits — offene Punkte (Kategorie A/C + Owner-Fragen) stehen in `docs/audit-implementierungsstand-2026-09-06.md` und ROADMAP „Nächste Woche". Onboarding: Triggers + Hints implementiert, kein dedizierter New-Player-Flow.
+**Laufend:** Phase 4 AP-Ratenmodell (Themen D3/D4/D6 offen) und Bot-Kalibrierung; Abarbeitung des Implementierungsstand-Audits — offene Punkte (Kategorie A/C + Owner-Fragen) stehen in `docs/audit-implementierungsstand-2026-09-06.md` und ROADMAP „Nächste Woche". Onboarding: Triggers + Hints implementiert, kein dedizierter New-Player-Flow.
 
 ## Wichtige Korrekturen
 

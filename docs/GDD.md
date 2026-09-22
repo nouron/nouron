@@ -1836,7 +1836,7 @@ f(L≥2) = 1 + 0.4 × (L−2)
 
 Das Errichten (Level 1) kostet bewusst weniger als Level-Ups — Anreiz für breite Kolonien früh (weniger AP pro neues Gebäude) und tiefe Spezialisierung später. Gebäude sind nach Rolle in Kostenklassen gruppiert (Produktion, Klein, Mittel, Groß, Kommandozentrale als Sonderfall), jede mit eigenem Basis-AP. Produktionsgebäude sind am billigsten — ihre Glockenkurve (`game.production_curve`) setzt bereits einen Deckel.
 
-> **Implementierungsstand:** Die Kurve `f(L)` ist **geplant** (ROADMAP Phase 3o, Stufe 3). Aktuell gilt je Gebäude ein flacher `ap_for_levelup`-Wert für jedes Level; die Kostenklassen sind in `config/buildings.php` angelegt.
+> **Implementierungsstand:** Die Kurve `f(L)` ist **geplant** (ROADMAP Phase 4, D3). Aktuell gilt je Gebäude ein flacher `ap_for_levelup`-Wert für jedes Level; die Kostenklassen sind in `config/buildings.php` angelegt.
 
 **Early-Game-Tempo:** Breite Kolonien früh (billige erste Level) über tiefe Spezialisierung, kombiniert mit den Supply-Cap-Grenzen aus §6 — zusammen das Breite/Tiefe-Dreieck ohne optimalen Pfad. Befristete AP-Boni oder Vorbau in der Startkolonie sind keine Alternative: erstere wirken dort, wo ohnehin wenig Instandhaltung nötig ist, letzterer zerstört die Lernmomente aus §16.
 
