@@ -178,8 +178,24 @@ return [
             'difficulties' => ['normal', 'hard'],
         ],
 
-        // 'mission_perimeter_patrol' (corvette, defense Lv1, encounter_prep reward)
-        // is deferred until the §9 colonist-hazard system exists — see GDD §8b.
+        // mission_perimeter_patrol (ROADMAP A18): the §9 colonist-hazard system
+        // (Sturm/Instabilität/Seuche) this mission was deferred on now exists —
+        // see GameTick::rollStorm()/rollInstability()/rollPlague(). The GDD's
+        // originally-envisioned `encounter_prep` reward belongs to the Almanach
+        // (§17), which is not implemented yet, so this uses the already-supported
+        // `trust_event` reward type instead (same mechanism as mission_trade_convoy /
+        // mission_aid_transport) — `encounter_won` is documented in
+        // config/game.php → trust.events as "successful protective/aid action",
+        // which fits a perimeter patrol thematically. Swap to `encounter_prep`
+        // once §17 lands; do not stack both (see GDD §8b balance concern).
+        'mission_perimeter_patrol' => [
+            'ships' => ['corvette'],
+            'sol_distance' => 3,
+            'requires' => ['knowledge' => ['defense' => 1]],
+            'reward' => ['credits' => 220, 'trust_event' => 'encounter_won'],
+            'repeatable' => true,
+            'difficulties' => ['normal', 'hard'],
+        ],
 
     ],
 ];

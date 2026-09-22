@@ -61,7 +61,8 @@ return [
     'housingComplex' => [
         'id' => 28,
         'build_cost' => [3 => 40],   // Regolith only (early)
-        'supply_cap' => 8,       // per unit (instance), max 6 units → +48 cap
+        'supply_cap' => 8,       // per instance LEVEL, summed (ResourcesService::getSupplyBreakdown()):
+        // max_instances=6 × max_level=3 × 8 = 144 cap at full build-out, not a flat 48
         'supply_cost' => 0,
         'trust_per_lv' => 0,
         // Klasse "Robust" (GDD §13.7, 2026-08-03): 50 Sole bis Level-Down.

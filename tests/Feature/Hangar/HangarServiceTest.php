@@ -122,6 +122,48 @@ class HangarServiceTest extends TestCase
             ->value('difficulty'));
     }
 
+    // ── mission_perimeter_patrol (ROADMAP A18) ────────────────────────────────
+
+    /**
+     * ROADMAP A18: mission_perimeter_patrol was a commented-out placeholder in
+     * config/missions.php, deferred until the §9 hazard system existed. That
+     * system (Sturm/Instabilität/Seuche) is now implemented, so the mission
+     * must be present in the catalog: corvette-only, gated on defense Lv1.
+     */
+    public function test_mission_perimeter_patrol_is_in_the_catalog_gated_on_defense_lv1(): void
+    {
+        $mission = config('missions.catalog.mission_perimeter_patrol');
+
+        $this->assertNotNull($mission, 'mission_perimeter_patrol must be present in config/missions.php');
+        $this->assertSame(['corvette'], $mission['ships']);
+        $this->assertSame(['defense' => 1], $mission['requires']['knowledge'] ?? null);
+    }
+
+    public function test_dispatch_rejects_mission_perimeter_patrol_below_defense_gate(): void
+    {
+        $service = $this->app->make(HangarService::class);
+
+        $this->expectException(\RuntimeException::class);
+
+        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_perimeter_patrol', null, 'normal');
+    }
+
+    public function test_dispatch_accepts_mission_perimeter_patrol_at_defense_lv1(): void
+    {
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.defense.id')],
+            ['level' => 1, 'ap_spend' => 0]
+        );
+        $service = $this->app->make(HangarService::class);
+
+        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_perimeter_patrol', null, 'normal');
+
+        $this->assertSame('normal', DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', self::HANGAR_INSTANCE)
+            ->where('destination', 'mission_perimeter_patrol')->where('state', 'active')
+            ->value('difficulty'));
+    }
+
     public function test_mission_catalog_includes_difficulty_options_with_chance_and_multiplier(): void
     {
         // Test env defaults to locale 'en' (no APP_LOCALE in .env.testing); this

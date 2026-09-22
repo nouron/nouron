@@ -1500,6 +1500,7 @@ class GameTick extends Command
                 'colony_id' => $colony->id,
                 'instance_id' => $harvester->instance_id,
                 'outage_until_tick' => $tick + $outageSols,
+                'sols_since_relocation' => $solsSinceRelocation,
             ]),
         ]);
 
@@ -1573,7 +1574,13 @@ class GameTick extends Command
             'tick' => $tick,
             'event' => 'encounter.plague_triggered',
             'area' => 'encounter',
-            'parameters' => json_encode(['colony_id' => $colony->id, 'debuff_until_tick' => $tick + $debuffSols]),
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'debuff_until_tick' => $tick + $debuffSols,
+                'reason' => $hungerStreak >= 3 ? 'hunger' : 'trust',
+                'hunger_streak' => $hungerStreak,
+                'trust' => $trust,
+            ]),
         ]);
 
         return 1;

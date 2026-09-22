@@ -144,6 +144,15 @@ class GameTickEncounterTest extends TestCase
             ->whereIn('building_id', [31, 44])
             ->update(['level' => 0]);
 
+        // TestSeeder fixture (ROADMAP T8, 2026-09-22) gives colony 1's housing
+        // (building_id=28) three instances to fund a realistic supply cap. This
+        // fixture wants exactly ONE eligible housing row (three eligible
+        // buildings total: CC, housing, infirmary) — drop the extra instances.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 28)
+            ->where('instance_id', '!=', 1)
+            ->delete();
+
         // Ordinary per-tick building decay (processBuildingDecay(), step 3 of the
         // pipeline) runs independently of, and BEFORE, storm resolution on every
         // tick — including the warning tick. Zero it for the three buildings this
@@ -443,6 +452,36 @@ class GameTickEncounterTest extends TestCase
         $this->assertNull($harvester->pending_until_tick, 'instability must not set pending_until_tick — that field means "relocating" and must stay free so the player can still relocate during the outage');
     }
 
+    /**
+     * ROADMAP T7: the `encounter.instability_triggered` colony_log entry must
+     * carry `sols_since_relocation` so the Sol-Report can state a reason for
+     * the outage ("why now"), not just the outcome — mirroring the GDD's
+     * requirement that the outcome line name a cause, not only a result.
+     */
+    public function test_instability_triggered_event_logs_sols_since_relocation_reason(): void
+    {
+        config([
+            'game.encounter.instability.chance_per_sol_since_relocation' => 1.0,
+            'game.encounter.instability.chance_cap' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+        ]);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+            ->update(['placed_at_tick' => 11000]);
+
+        $this->artisan('game:tick', ['--tick' => 11800])->assertExitCode(0);
+
+        $row = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.instability_triggered')->where('tick', 11800),
+            self::COLONY_ID
+        )->first();
+
+        $this->assertNotNull($row, 'Expected an encounter.instability_triggered colony_log entry');
+        $params = json_decode($row->parameters, true);
+        $this->assertSame(800, $params['sols_since_relocation'] ?? null);
+    }
+
     public function test_geological_instability_skipped_when_harvester_never_relocated(): void
     {
         config([
@@ -580,6 +619,31 @@ class GameTickEncounterTest extends TestCase
 
         $colony = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
         $this->assertNull($colony->plague_until_tick, 'plague must never roll on a healthy colony — 0% base risk is a hard gate, not just a low chance');
+    }
+
+    /**
+     * ROADMAP T7: the `encounter.plague_triggered` colony_log entry must carry
+     * a `reason` ('hunger' | 'trust') plus the triggering `hunger_streak`
+     * value, so the Sol-Report can state why the plague broke out instead of
+     * only announcing the debuff.
+     */
+    public function test_plague_triggered_event_logs_hunger_reason(): void
+    {
+        config([
+            'game.encounter.plague.chance_per_sol_when_emergent' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 1,
+        ]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 3]);
+        DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->update(['amount' => 0]);
+
+        $this->artisan('game:tick')->assertExitCode(0);
+
+        $row = $this->colonyLogQuery()->where('event', 'encounter.plague_triggered')->first();
+        $this->assertNotNull($row, 'Expected an encounter.plague_triggered colony_log entry');
+        $params = json_decode($row->parameters, true);
+        $this->assertSame('hunger', $params['reason'] ?? null);
+        $this->assertGreaterThanOrEqual(3, $params['hunger_streak'] ?? 0);
     }
 
     // ── Onboarding hint (Task 7) ─────────────────────────────────────────────

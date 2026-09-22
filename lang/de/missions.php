@@ -58,6 +58,12 @@ return [
     'mission_escort_convoy_desc' => 'Die Korvette begleitet einen fremden Konvoi durch unwegsames Gelände — meist reicht schon ihre Silhouette am Himmel, damit nichts passiert.',
     'mission_escort_convoy_reward' => '280 Credits',
 
+    // TODO(content-writer): Platzhalter-Text, ROADMAP A18 — Umkreis-Patrouille
+    // (GDD §8b), erfordert Verteidigung Lv1. Ggf. verfeinern.
+    'mission_perimeter_patrol_name' => 'Umkreis-Patrouille',
+    'mission_perimeter_patrol_desc' => 'Die Korvette zieht ruhige Runden um die Kolonie — kein Angriff in Sicht, aber wer vorbereitet ist, übersteht den nächsten Zwischenfall besser.',
+    'mission_perimeter_patrol_reward' => '220 Credits + Vertrauen',
+
     // ── Dispatch dialog ──────────────────────────────────────────────────────
 
     'dialog_title' => 'Mission wählen',

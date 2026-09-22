@@ -51,6 +51,12 @@ return [
     'mission_escort_convoy_desc' => 'The corvette shadows a convoy through rough country — most days nothing happens, and that is exactly the point.',
     'mission_escort_convoy_reward' => '280 Credits',
 
+    // TODO(content-writer): placeholder text, ROADMAP A18 — Perimeter Patrol
+    // (GDD §8b), requires Defense Lv1. May need polishing.
+    'mission_perimeter_patrol_name' => 'Perimeter Patrol',
+    'mission_perimeter_patrol_desc' => 'The corvette runs quiet loops around the colony — nothing in sight, but preparedness pays off when the next incident hits.',
+    'mission_perimeter_patrol_reward' => '220 Credits + Trust',
+
     // ── Dispatch dialog ──────────────────────────────────────────────────────
 
     'dialog_title' => 'Choose a mission',

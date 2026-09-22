@@ -596,7 +596,9 @@ class ResetPlayer extends Command
      *   Hangar Lv2, Cantina Lv1, SecurityHub Lv1.
      * 4 advisors: engineer, scientist, pilot, trader (rank 1).
      * Ring 1+2 tiles explored; Harvester relocated to Ring-2 regolith.
-     * Supply cap: CC 10 + Housing Lv3 × 8 + knowledge ~24 pts ≈ 58.
+     * Supply cap: CC 10 + Housing Lv3 × 8 (24) + knowledge (61) = 95 (see setResources() call
+     * below for the per-research breakdown; this line previously understated the knowledge
+     * contribution — ROADMAP T8, 2026-09-22).
      * Werkstoffe: bought from merchant (30 units accumulated).
      * Credits: advisor productivity + merchant sales over 80+ Sols → 7000.
      * Kenntnisse: 4 researches unlocked, including cartography at Lv4 and geology

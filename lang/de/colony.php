@@ -596,6 +596,11 @@ return [
     'sol_report_stipend_detail' => '-:cost Cr — +:trust Vertrauen',
     'sol_report_event_storm' => 'Sturm über der Kolonie',
     'sol_report_storm_detail' => 'Der Wartungszustand der Anlagen hat entschieden: :abgewehrt abgewehrt, :beschaedigt beschädigt, :kritisch kritisch.',
+    'sol_report_event_instability' => 'Geologische Instabilität',
+    'sol_report_instability_detail' => 'Nach :sols Solen ohne Standortwechsel: Harvester-Ertrag gestört.',
+    'sol_report_event_plague' => 'Seuchenausbruch',
+    'sol_report_plague_detail_hunger' => 'Nahrungsknappheit (:streak Sole ohne Vorräte) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
+    'sol_report_plague_detail_trust' => 'Kritisches Vertrauen (:trust) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',

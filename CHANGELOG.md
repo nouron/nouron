@@ -3,6 +3,10 @@
 ## 2026-09-22
 
 - Feature: A13 P4 — Nexus-Kanal: Handelsposten Stufe III wirkt jetzt auf den Preis des Nexus-Direktimports (`NexusImportService`, neuer Handelsvorteil-Kanal `nexus`, ersetzt `corporate_contact` als Kanalnamen) sowie weiterhin auf Orins Angebot — die Lieferzeit bleibt unverändert eine reine Uplink-Station-Frage.
+- Aufräumen: T7 — Geologische Instabilität und Seuchenausbruch erscheinen jetzt mit Zustandsbegründung im Sol-Report (analog zur bestehenden Sturm-Zeile).
+- Feature: A18 — Umkreis-Patrouille (`mission_perimeter_patrol`) in den Missionskatalog aufgenommen (Korvette, Verteidigung Lv1).
+- Fix: T8 — die Test-/Dev-Fixture hatte für Bart einen unrealistischen Supply-Zustand (−34/18, im Normalspiel unerreichbar). Zwei weitere Wohnhabitat-Instanzen bringen die Kapazität auf einen rechnerisch korrekten, tatsächlich erreichbaren Stand (+14 statt −34).
+- Doku: C6 — veralteten Kommentar zum Wohnhabitat-Supply-Cap in `config/buildings.php` korrigiert (GDD war bereits richtig).
 - Doku: A13 P7 — GDD §4/§8b/§12/§13.4 von „Konzeptstand A13"/„noch nicht im Code" auf den tatsächlichen Code-Stand umgestellt; `docs/game-reference.md` um Abschnitt „7a. Handel & Konsul" ergänzt; alle `TODO(content-writer)`-Platzhalter in `lang/de/colony.php` finalisiert (u.a. Grammatik-Fix der Verhandeln-Fehlschlag-Meldung).
 - Balance: A13 P8 — Bot-Batch (8 Seeds) zur Absicherung des neuen Handels-/Verhandeln-Codes: 7/8 Runs abgeschlossen, keine Regressionen. Damit ist der gesamte A13-Handels-/Konsul-Umbau (P1–P8) abgeschlossen.
 
