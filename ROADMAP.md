@@ -2,24 +2,24 @@
 
 Stand: 2026-09-22
 
-Aktueller Stand: Laravel 12 + SQLite, Phase 3 ("Das Spiel zeigen") abgeschlossen, Phase 3o (AP-Ratenmodell & Regolith-Balance) läuft. Singleplayer Roguelike Mini-4X, kein menschlicher Playtest geplant — `PlaytestBot`/`game:playtest` ist das primäre Balance-Werkzeug.
+Aktueller Stand: Laravel 12 + SQLite, Phase 3 ("Das Spiel zeigen") abgeschlossen, Phase 4 (AP-Ratenmodell & Regolith-Balance) läuft. Singleplayer Roguelike Mini-4X, kein menschlicher Playtest geplant — `PlaytestBot`/`game:playtest` ist das primäre Balance-Werkzeug.
 
 Abgeschlossene Arbeit ist in zwei Archiv-Dateien ausgelagert:
 - `docs/roadmap-archiv-migration.md` — Laminas → Laravel Migration (ehem. Phase 1b)
-- `docs/roadmap-archiv.md` — Phase 2 (Spielablauf stabilisieren), Phase 3 (Das Spiel zeigen, inkl. aller Unterphasen 3a–3j), sowie die bereits abgeschlossenen Stufen 0/1/1c/2 des Phase-3o-Stufenplans
+- `docs/roadmap-archiv.md` — Phase 2 (Spielablauf stabilisieren), Phase 3 (Das Spiel zeigen, inkl. aller Unterphasen 3a–3j), sowie die bereits abgeschlossenen Stufen 0/1/1c/2 des Phase-4-Stufenplans (dort historisch noch als „Phase 3o" bezeichnet)
 
 ---
 
 ## Aktive Arbeit
 
-Quelle des A/C-Katalogs: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C). Kategorien B und D (Doku-Hygiene) wurden am 2026-09-06 direkt behoben; das GDD wurde am selben Tag von gestapelten Nachträgen/Korrekturen auf Ist-/Soll-Zustand konsolidiert (3640 → ~2990 Zeilen). T-Punkte sind zusätzliche, nicht im ursprünglichen Audit erfasste Funde. S-Punkte sind die weiterhin offenen Stufen des Phase-3o-Stufenplans (AP-Ratenmodell & Regolith-Balance, Design in GDD §3, §4b, §4c, §6, §13.1–13.7, Anhang A/B) — zusammengelegt mit dem A/C/T-Katalog gemäß Owner-Entscheidung 2026-09-22 (vorher als separater Abschnitt geführt).
+Quelle des A/C-Katalogs: `docs/audit-implementierungsstand-2026-09-06.md` (Kategorien A + C). Kategorien B und D (Doku-Hygiene) wurden am 2026-09-06 direkt behoben; das GDD wurde am selben Tag von gestapelten Nachträgen/Korrekturen auf Ist-/Soll-Zustand konsolidiert (3640 → ~2990 Zeilen). T-Punkte sind zusätzliche, nicht im ursprünglichen Audit erfasste Funde. D-Punkte sind die weiterhin offenen Themen aus Phase 4 (AP-Ratenmodell & Regolith-Balance, Design in GDD §3, §4b, §4c, §6, §13.1–13.7, Anhang A/B) — zusammengelegt mit dem A/C/T-Katalog gemäß Owner-Entscheidung 2026-09-22 (vorher als separater Abschnitt geführt, mit verschachtelten Sub-Stufen-IDs S1b/S1d/S3/S4/S5/S6/S7; bei einer zweiten Restrukturierung am selben Tag auf eine flache D1–D7-Nummerierung ohne Buchstaben-Suffixe umgestellt — die alte Phasen-Bezeichnung „Phase 3o" wurde dabei ebenfalls zu „Phase 4" vereinheitlicht, siehe unten).
 
 **ID-Schema (Konvention, festgelegt 2026-09-22):**
 - **A** — Design vorhanden, Implementierung fehlt
 - **C** — Doku widerspricht Code
 - **T** — sonstige Funde (Polish, Tech-Debt), außerhalb des ursprünglichen Audit-Katalogs
-- **S\<Stufennummer\>** — offene Stufe aus dem Phase-3o-Stufenplan, Nummerierung 1:1 aus dem ursprünglichen Stufenplan übernommen (S1b, S1d, S3, S4, S5, S6). **S7** ist neu vergeben für den vormals unnummerierten Abschnitt „Offene Pfad-Paritäts-Fragen" (folgte im Ursprungsdokument inhaltlich auf Stufe 6, hatte aber nie eine eigene Nummer).
-- IDs nur für Punkte, die über mehrere Sessions verfolgt werden — einmalige Ideenpool-Einträge (Phase 4/5, unten) bleiben ID-los.
+- **D1–D7** — die sieben Themen aus Phase 4 (AP-Ratenmodell & Regolith-Balance), flach durchnummeriert in derselben Reihenfolge, in der sie unten stehen (D1 zuerst, D7 zuletzt — die Reihenfolge trägt weiterhin die inhaltliche Abfolge/Abhängigkeit der ursprünglichen Stufen). Vormals S1b, S1d, S3, S4, S5, S6, S7 (verschachtelte Sub-Stufen-Nummerierung des ursprünglichen Phase-3o-Stufenplans, historisch gewachsen). Die IDs der bereits archivierten, abgeschlossenen Stufen (0, 1, 1c, 2 in `docs/roadmap-archiv.md`) bleiben unverändert — nur die noch offene, aktiv verfolgte Arbeit wurde flach durchnummeriert.
+- IDs nur für Punkte, die über mehrere Sessions verfolgt werden — einmalige Ideenpool-Einträge (Phase 5/6, unten) bleiben ID-los.
 - **Aufwand-Label:** ausschließlich Klein / Mittel / Groß. Frühere Varianten „Hoch"/„Niedrig" wurden auf Groß/Klein abgebildet, „Mittel/Groß" auf Groß vereinheitlicht (höhere Schätzung als sicherere Seite), „Mittel, spät" auf „Mittel (spät liegend)" — „spät liegend" ist ein Zusatzhinweis, kein Teil des Aufwand-Werts.
 - Sub-Schritte (wie bei A13) nur bei echtem Bedarf, 2-Space-Einrückung, eigene Checkbox.
 
@@ -120,18 +120,18 @@ Quelle des A/C-Katalogs: `docs/audit-implementierungsstand-2026-09-06.md` (Kateg
 - [ ] **C14** ADR-0004-Zahlen aus §14/§18.2/§6-Prosa entfernen
 - [ ] **C16** §4 „Agrardom ist Pflicht-Gate für CC Lv2": Config-Kommentar und GDD behaupten eine Prüfung am CC-Levelup, `ColonyController::investBuilding()` prüft sie nicht (nur `placeBuilding()` vor Pfadgebäuden). Owner-Frage: Gate implementieren oder Text streichen
 - [x] **C15** ✅ 2026-09-06 — `docs/gdd/techtree.md`: Max-Level-Spalte, `strategist`-Zeile 166, Bio-Anlage-Gate
-- [ ] **C17** `docs/gdd/onboarding.md` §16.5 Budget-Rechnung auf einen Pool und `ap.base = 12` umrechnen (im Ursprungsdokument als „Stufe 6" bezeichnet — bei der Restrukturierung 2026-09-22 in C17 umbenannt, um Verwechslung mit dem neuen S6 zu vermeiden; inhaltlich deckt sich das mit dem ersten Punkt in S6 unten, dort ausführlicher gefasst — beide zusammen abarbeiten)
+- [ ] **C17** `docs/gdd/onboarding.md` §16.5 Budget-Rechnung auf einen Pool und `ap.base = 12` umrechnen (im Ursprungsdokument als „Stufe 6" bezeichnet — bei der Restrukturierung 2026-09-22 in C17 umbenannt, um Verwechslung mit dem neuen D6 zu vermeiden; inhaltlich deckt sich das mit dem ersten Punkt in D6 unten, dort ausführlicher gefasst — beide zusammen abarbeiten)
 
 ### T — sonstige Funde (außerhalb des ursprünglichen Audit-Katalogs)
 
 - [x] **T7 Encounter-Reste** ✅ 2026-09-22: Geologische Instabilität + Seuchenausbruch erscheinen jetzt als Detailzeile mit Zustandsbegründung in `SolReportService::eventsGroup()` (analog zur bestehenden Sturm-Behandlung, B12) — `GameTick::rollInstability()`/`rollPlague()` loggen dafür zusätzliche Parameter (Sole seit Standortwechsel bzw. Hunger-Streak/Vertrauenswert)
 - [x] **T8 Realistische Test-/Dev-Fixture (Supply)** ✅ 2026-09-22 (Fund 2026-09-20) — `data/sql/testdata.sqlite.sql`: 2 weitere Wohnhabitat-Instanzen für Bart (Levels 2+3+2, Σ7), Kapazität dadurch von 18 (fest) auf 66 (rechnerisch aus CC+Wohnhabitat hergeleitet), Supply jetzt +14 statt −34. Kein Gebäude-Level wurde reduziert, um die vielen darauf hart-codierten Tests nicht zu kaskadieren — stattdessen der Hebel genutzt, den auch der Spieler hätte (Wohnhabitat ausbauen). `ResetPlayer.php`-Szenarien geprüft: alle bereits positiv, nur ein veralteter Docblock-Kommentar (near-deadline "≈58" statt tatsächlich 95) korrigiert. Volle Suite grün (1566 Tests), 6 Testdateien an die neue Kapazität angepasst. Bekannter Nebenbefund (nicht behoben, eigenes Ticket wert): `testdata.sqlite.sql` listet `sciencelab.supply_cost=8`, `config/buildings.php` sagt 6 (Drift seit 2026-08-11).
 
-### S — Phase 3o: AP-Ratenmodell & Regolith-Balance (offene Stufen)
+### D — Phase 4: AP-Ratenmodell & Regolith-Balance (offene Themen)
 
-**Nicht abgeschlossen** trotz CLAUDE.md-Eintrag "AP-System-Konsolidierung (Phase 3o)" unter *Abgeschlossen* — das bezieht sich nur auf die inzwischen archivierte **Stufe 2** (AP-Pool zusammenlegen, 2026-08-10), nicht auf den gesamten Stufenplan. Design steht im GDD (§3, §4b, §4c, §6, §13.1–13.7, Anhang A/B). TDD ist verbindlich (CLAUDE.md): für jede Stufe mit Verhalten zuerst ein fehlschlagender Test, der das gewünschte Verhalten beschreibt. Bereits abgeschlossene Stufen (0, 1, 1c, 2) stehen in `docs/roadmap-archiv.md`.
+**Nicht abgeschlossen** trotz CLAUDE.md-Eintrag "AP-System-Konsolidierung (Phase 4)" unter *Abgeschlossen* — das bezieht sich nur auf die inzwischen archivierte **Stufe 2** (AP-Pool zusammenlegen, 2026-08-10), nicht auf den gesamten Stufenplan. Design steht im GDD (§3, §4b, §4c, §6, §13.1–13.7, Anhang A/B). TDD ist verbindlich (CLAUDE.md): für jedes Thema mit Verhalten zuerst ein fehlschlagender Test, der das gewünschte Verhalten beschreibt. Bereits abgeschlossene Stufen (0, 1, 1c, 2, historisch als „Phase 3o" geführt) stehen in `docs/roadmap-archiv.md`.
 
-#### S1b — klein, danach — größtenteils abgeschlossen
+#### D1 — klein, danach — größtenteils abgeschlossen
 
 - [x] `mission_supply_run.sol_distance` 2 → 1 (2026-08-04)
 - [x] `mission_aid_transport` ungegatet — zweite Frachter-Mission ohne Kenntnis-Gate, schließt zugleich die Vertrauens-Lücke von Pfad B (2026-08-04)
@@ -141,7 +141,7 @@ Quelle des A/C-Katalogs: `docs/audit-implementierungsstand-2026-09-06.md` (Kateg
 - [x] **Harvester-Erschöpfung** (§4c) — ✅ umgesetzt (`GameTick` Depletion-Kurve auf `colony_tiles.resource_amount`, Sidebar-Anzeige 09-04, Warn-Hint + Ausweichziel 09-06). Ursprüngliches Ziel: Ertrag eines Regolith-Tiles soll über die Zeit sinken, damit der Harvester pro Run mehrfach umgesetzt werden muss. Schema-Grundlage existiert (`colony_tiles.resource_max`), ebenso die drei Ergiebigkeitsstufen und die Verlege-Vorschau. Zielbild: ein Tile trägt ~15–25 Sole. Rate gehört in die Regolith-Herleitung (§13.7)
 - [ ] **Agrardom-Kurve am oberen Ende prüfen** (§3, §13.7): Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe. Ab Lv4 (41 Or/Sol gegen max. ~31 Bedarf) ist das Rennen entschieden und Organika hört auf, eine Sorge zu sein — offen ist, ob die Kurve dort flacher auslaufen soll oder ob Missionen/Events genug Zusatzlast tragen
 
-#### S1d — Supply-Achse (nächste Design-Runde, offen)
+#### D2 — Supply-Achse (nächste Design-Runde, offen)
 
 Kein Implementierungsschritt, sondern die nächste zusammenhängende Herleitung — nach demselben Verfahren wie §13.7: von der Designabsicht her, ohne die Bestandswerte als Randbedingung. Anlass: Die `supply_cost`-Werte sind gegen eine Wirtschaft kalibriert, in der Regolith knapper war. Wird Bauen leichter, wird Supply relativ zum bindenderen Limiter — was §6 entspricht, aber verlangt, die Zielkolonie gegen den erreichbaren Cap gegenzuprüfen.
 
@@ -150,7 +150,7 @@ Kein Implementierungsschritt, sondern die nächste zusammenhängende Herleitung 
 - [ ] **Agrardom: Level oder Instanz** — Owner-Frage F1 (oben, beantwortet); Config ist seit 08-26 Level/3 und bleibt so
 - [x] ~~Die übrigen `max_level = NULL`-Gebäude~~ — ✅ 2026-08-26: alle 13 Gebäude gedeckelt
 
-#### S3 — Ratenmodell vervollständigen (§13.2–13.3, §13.6) — offen
+#### D3 — Ratenmodell vervollständigen (§13.2–13.3, §13.6) — offen
 
 - [ ] `f(L)`-Kostenkurve statt flacher `ap_for_levelup` je Level; `f(1) = 0.5` fürs Errichten
 - [x] Bonus-System, Domänen-Kenntnis-Teil (§13.3) — additive, glockenförmige Bau-AP-Kostenreduktion aus `construction`/`cartography`/`trade` (Σ15% je Kenntnis bei Lv5), wirkt auf alle Gebäude-Levelups; `app/Services/ProjectBonusService.php` (PR #253, 2026-08-15)
@@ -159,7 +159,7 @@ Kein Implementierungsschritt, sondern die nächste zusammenhängende Herleitung 
 - [x] ~~Handlungs-AP nachziehen: `bar.ap_cost_accept` 1→2, `ap_cost_negotiate` 3→4~~ — ✅ erledigt sich durch A5 (2026-09-06) und A13/P3 (2026-09-21, Verhandeln auf 2/2 AP)
 - [x] ~~`decay.overcap_factor` 2.0 → 1.5~~ — ✅ erledigt sich durch A4 (2026-09-06)
 
-#### S4 — Kommandozentrale-Dashboard (§13.4) — offen
+#### D4 — Kommandozentrale-Dashboard (§13.4) — offen
 
 Tragende Voraussetzung des Ratenmodells, kein Komfort — es ersetzt die bewusst weggelassene Bodengarantie. Deckt sich mit **A1** (oben) — beide Punkte gemeinsam abarbeiten, A1 ist die konkretere Task-Fassung.
 
@@ -167,7 +167,7 @@ Tragende Voraussetzung des Ratenmodells, kein Komfort — es ersetzt die bewusst
 - [ ] Restertrag bis Run-Ende je Projekt (trägt den Late-Game-Kipppunkt ohne Zahlenänderung)
 - [ ] Regolith-Bilanz, Over-Cap-Warnung, Konzessions-Prognose, Run-Aufgaben-Fortschritt
 
-#### S5 — Instrumentierung, Playtest, Kalibrierung (laufend)
+#### D5 — Instrumentierung, Playtest, Kalibrierung (laufend)
 
 Der Playtest-Bot ist die Messumgebung.
 
@@ -175,9 +175,9 @@ Der Playtest-Bot ist die Messumgebung.
 - [x] Die neun Metriken aus GDD Anhang A.5 in `RunReport` aufnehmen — ✅ erledigt sich durch A30/A31/A32/A33 (2026-09-12)
 - [ ] Bot-Läufe, dann §13.6-Zahlen gegen die Zielkorridore nachziehen (laufend)
 
-**Im Detail (laufend):** Bot-Läufe + Kalibrierung gegen die Zielkorridore laufend: **Kalibrierung des Regolith-Zahlensatzes (§13.7) via `PlaytestBot`** mehrfach neu hergeleitet — Sockel-Baseline auf 1-Harvester-Instanz umgestellt (08-05), Zahlensatz gegen diese Baseline neu gerechnet (08-06), Regolith-Startbestand mehrfach angehoben (200→300, dann 300→340, beides 08-13, inkl. zweier gefundener PlaytestBot-Bugs bei der Pfadgebäude-Bedarfsrechnung). Stand nach A37/A39 (2026-09-16): 3-4 von 8 Bot-Seeds gewinnen einen Run (vorher 0/8) — deutlicher Fortschritt, aber weiterhin nicht bei den angestrebten ~80 % (Balance-Ziel, `docs/roadmap-archiv.md`). Weitere Iteration nötig, insbesondere zu den in A14/S1b/S7 offenen Punkten (Überkapazität, Pfad-C-Regolith-Hebel, Post-Phase-1-Ökonomie).
+**Im Detail (laufend):** Bot-Läufe + Kalibrierung gegen die Zielkorridore laufend: **Kalibrierung des Regolith-Zahlensatzes (§13.7) via `PlaytestBot`** mehrfach neu hergeleitet — Sockel-Baseline auf 1-Harvester-Instanz umgestellt (08-05), Zahlensatz gegen diese Baseline neu gerechnet (08-06), Regolith-Startbestand mehrfach angehoben (200→300, dann 300→340, beides 08-13, inkl. zweier gefundener PlaytestBot-Bugs bei der Pfadgebäude-Bedarfsrechnung). Stand nach A37/A39 (2026-09-16): 3-4 von 8 Bot-Seeds gewinnen einen Run (vorher 0/8) — deutlicher Fortschritt, aber weiterhin nicht bei den angestrebten ~80 % (Balance-Ziel, `docs/roadmap-archiv.md`). Weitere Iteration nötig, insbesondere zu den in A14/D1/D7 offenen Punkten (Überkapazität, Pfad-C-Regolith-Hebel, Post-Phase-1-Ökonomie).
 
-#### S6 — Nachzieharbeiten — offen
+#### D6 — Nachzieharbeiten — offen
 
 Kein Blocker, aber Teil der Definition-of-Done.
 
@@ -188,9 +188,9 @@ Kein Blocker, aber Teil der Definition-of-Done.
 - [x] `config/game.php → merchant.items.information.label` — behoben (2026-08-18, PR #270), beschreibt jetzt den echten Effekt statt der gestrichenen Systemkarte
 - [x] Tick-Schritt-Nummerierung in `GameTick.php` (Docblock) — behoben (2026-08-18, PR #270), 1-15 lückenlos neu durchnummeriert. GDD-Referenzen (§8b, §13, §14, §15) auf die alten Schrittnummern sind noch offen, eigener Pass
 
-#### S7 — Offene Pfad-Paritäts-Fragen (Kenntnisse/Hangar/Cantina)
+#### D7 — Offene Pfad-Paritäts-Fragen (Kenntnisse/Hangar/Cantina)
 
-Design-Entscheidung vom 2026-07-20 bleibt gültig (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion), jetzt in GDD §4b ausformuliert. S1b/Stufe 1c (archiviert) haben einen Teil der ursprünglich als blockierend markierten Punkte bereits gelöst (Losgröße, Zweitinstanz-Bezugsquelle, `BotStrategy`-Fix, Instanz-Decay-Bug). Verbleibend offen:
+Design-Entscheidung vom 2026-07-20 bleibt gültig (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion), jetzt in GDD §4b ausformuliert. D1/Stufe 1c (archiviert) haben einen Teil der ursprünglich als blockierend markierten Punkte bereits gelöst (Losgröße, Zweitinstanz-Bezugsquelle, `BotStrategy`-Fix, Instanz-Decay-Bug). Verbleibend offen:
 
 - [x] Kenntnisse-Sekundäreffekt-Matrix, größter Teil — die Aussage „keine Ressourcen-/AP-Boni" ist überholt: 6 von 7 Kenntnissen haben inzwischen einen hartverdrahteten Primäreffekt (Bau-AP-Rabatt, Organika-/Regolith-Produktion, Cantina-Slots, Sturm-/Instabilitäts-Risiko — siehe archivierte Stufe 1 + Branch `design/encounters-and-defense`, 2026-08-16). Offen bleibt nur die feinere Kosten-Differenzierung je Kenntnis/Level (siehe GDD Anhang A.4 „Kenntnisse-Boni komplett ausarbeiten") — `config/knowledge.php → levelup_costs`/`credits` sind weiterhin für alle 7 Kenntnisse identisch
 - [ ] Post-Phase-1-Ökonomie-Erholung (Kollaps bei mehreren Rang-2/3-Beratern gleichzeitig) — **Stand 2026-08-18:** die zwei Zahlen-Fixes aus der 08-17-Analyse sind umgesetzt (`advisor.upkeep[3]` 50→35, `relay_bonus_per_uplink_level` 35→45, PR #270, siehe GDD §18.4 Nachtrag 2026-08-17/18 für die volle Break-even-Rechnung). **Weiterhin offen: die eigentliche Design-Frage.** Owner-Entscheidung 2026-08-17: sowohl Analytik- (Sciencelab) als auch Hangar-Pfad brauchen ein EIGENES Credits-Einkommen, unabhängig davon ob/wann die Cantina gebaut wird (Randfall: gar nicht oder erst spät) — welcher Mechanismus (Sciencelab-Forschungsverkauf? Hangar-Bergungsertrag in Credits? etwas Drittes?) ist noch nicht spezifiziert. Eigener Design-Schritt für eine kommende Session, die zwei Zahlen-Fixes ersetzen ihn nicht.
@@ -216,12 +216,12 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 ## Ideenpool
 
-### Phase 4: Das Spiel vertiefen
-*(nach Phase 3)*
+### Phase 5: Das Spiel vertiefen
+*(nach Phase 4)*
 
 **Ziel:** Spieler, die das Basisspiel kennen, bekommen neue Strategiepfade und Interaktionsebenen.
 
-**Voraussetzung:** Balance-Kalibrierung der Phase-3o-Ökonomie (via `PlaytestBot`) abgeschlossen — kein menschlicher Playtest geplant (CLAUDE.md, Owner-Entscheidung). Ohne belastbare Bot-Daten sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere NPC-Vereinbarungs-Balance hängt von Beobachtungen aus stabilen Bot-Runs ab.
+**Voraussetzung:** Balance-Kalibrierung der Phase-4-Ökonomie (via `PlaytestBot`) abgeschlossen — kein menschlicher Playtest geplant (CLAUDE.md, Owner-Entscheidung). Ohne belastbare Bot-Daten sind die Design-Entscheidungen in Phase 5 zu unsicher — insbesondere NPC-Vereinbarungs-Balance hängt von Beobachtungen aus stabilen Bot-Runs ab.
 
 - [ ] **Progressive Discovery System** (GDD §17) — Drei miteinander verwandte Mechaniken die als roter Faden durch den Run laufen:
   - **Almanach-Grundstruktur:** Neue Tabellen `almanac_articles` + `run_almanac_unlocks`; Freischalt-Trigger-System; INNN-Benachrichtigung "Neuer Almanach-Artikel freigeschaltet"; Wissensbonus beim ersten Lesen (einmalig pro Run); Config-Block `config/almanac.php`. Erster Implementierungsschritt, keine Abhängigkeiten.
@@ -234,7 +234,7 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
   - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)
   - Session-Switching: wenn mehrere aktive Runs existieren, muss `activeIds.colonyId` beim Wechsel angepasst werden
   - Für echtes Multiplayer (mehrere User pro Run): `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`)
-- [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Missionszeit-/Verschleiß-Prognose im Hangar (Systemkarte entfällt). Stratege ist zurückgestellt (2026-08-02) — seine Ziel-Erreichbarkeits-Prognose wandert ins Kommandozentrale-Dashboard (§13.4/A1/S4). Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt abgeschlossene Phase-3o-Balance-Kalibrierung voraus.
+- [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Missionszeit-/Verschleiß-Prognose im Hangar (Systemkarte entfällt). Stratege ist zurückgestellt (2026-08-02) — seine Ziel-Erreichbarkeits-Prognose wandert ins Kommandozentrale-Dashboard (§13.4/A1/D4). Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt abgeschlossene Phase-4-Balance-Kalibrierung voraus.
 - [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp
 - [ ] **NPC-Vereinbarungen** — `innn_message_types.relationship_effect` für Nexus-Beziehungsstufen auswerten; `treaty_signed`-Moral-Event für Handels-/Schutzabkommen mit NPC-Fraktionen (Händler, Schmuggler) aktivieren; kein Krieg/Allianz-System (inkompatibel mit Singleplayer-Roguelike-Konzept, GDD §1.1). `war_declared` als Moral-Event-Key deprecaten.
 - [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
@@ -246,12 +246,12 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 ---
 
-### Phase 5: Das Spiel erweitern
-*(nach Phase 4)*
+### Phase 6: Das Spiel erweitern
+*(nach Phase 5)*
 
 **Ziel:** Strukturelle Erweiterungen auf Basis von echtem Spieler-Feedback aus dem Betrieb.
 
-**Voraussetzung:** Phase-4-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 5 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
+**Voraussetzung:** Phase-5-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 6 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
 
 - [ ] **Außenposten** — `home_colony_id` pro Flotte (GDD §12); ob Außenposten kommen, hängt davon ab ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird; minimal halten (kein vollständiges Kolonie-System)
 - [ ] **Neue Schiffstypen** — über Drohne/Frachter/Korvette hinaus (die Sonde ist als Drohne, ID 85, bereits im Spiel); Schiffe kosten kein Supply. Kein Combat-System mehr — Voraussetzung ist ein erweiterter Missionskatalog, nicht Combat-Balancing
@@ -261,4 +261,4 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 ## Archiv
 
-Abgeschlossene Arbeit vor dem aktuellen Stand: siehe `docs/roadmap-archiv-migration.md` (Laminas → Laravel) und `docs/roadmap-archiv.md` (Phase 2/3 + Phase-3o-Stufen 0/1/1c/2).
+Abgeschlossene Arbeit vor dem aktuellen Stand: siehe `docs/roadmap-archiv-migration.md` (Laminas → Laravel) und `docs/roadmap-archiv.md` (Phase 2/3 + Phase-4-Stufen 0/1/1c/2, dort historisch noch als „Phase 3o" bezeichnet).

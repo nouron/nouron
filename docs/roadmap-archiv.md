@@ -293,7 +293,7 @@ Ein automatisierter Run (Bot, ausschließlich über echte HTTP-Routen) soll die 
 ### Balance-Checkliste (Bot-Kalibrierung statt menschlichem Playtest)
 
 - [x] **Onboarding-Hints weitgehend abgedeckt** — Sol-1–4-Rampe neu geordnet (GDD §16.2/16.3/16.5), 67 Hint-Tests grün (2026-07-14). Ein Punkt bewusst offen: `hint_2` soll von der Sol-1-Spezialformulierung zu einem generellen "Regolith-Tile erschöpft, Harvester verlegen"-Alert werden (Owner-Entscheidung 2026-08-04). **Umgesetzt 2026-09-06** als eigener Hint `hint_harvester_low_regolith` (< 30 % Restvorkommen) + Ausweichziel-Markierung auf der Karte; offen nur noch, ob `hint_2` (Sol-1-Formulierung) damit entfällt.
-- [x] **Neuer Run spielbar?** — verifiziert per PlaytestBot statt menschlichem Spieler: Bot spielt komplette Runs ausschließlich über die echten HTTP-Routen; `phase2_start_sol` liegt aktuell (Stand 2026-08-13) bei 20–22 über 3 Test-Seeds. Startwerte seither mehrfach nachjustiert (Regolith-Startbestand 200→300→340). Läuft aktuell noch an `time_limit` aus (zu wenig Sole für Phase 2 übrig) statt an der strukturellen Blockade, die vorher bestand — siehe `ROADMAP.md → Aktive Arbeit → Phase 3o` für den Fortgang.
+- [x] **Neuer Run spielbar?** — verifiziert per PlaytestBot statt menschlichem Spieler: Bot spielt komplette Runs ausschließlich über die echten HTTP-Routen; `phase2_start_sol` liegt aktuell (Stand 2026-08-13) bei 20–22 über 3 Test-Seeds. Startwerte seither mehrfach nachjustiert (Regolith-Startbestand 200→300→340). Läuft aktuell noch an `time_limit` aus (zu wenig Sole für Phase 2 übrig) statt an der strukturellen Blockade, die vorher bestand — siehe `ROADMAP.md → Aktive Arbeit → Phase 4` für den Fortgang.
 - [x] **Kritische Blocker?** — systematisch über Bot- und Owner-Playtests ausgeräumt (einheitlicher 422-Fehlercontract, automatischer Techtree-Levelup + Fehleranzeige, mehrere Hint-Sackgassen behoben). Kein bekannter offener Blocker.
 - [x] **INNN/Nachrichten vereinfachen** — abgeschlossen, siehe Phase 3j
 
@@ -324,7 +324,9 @@ INNN-Nachrichtensystem vollständig ersetzt. Neuer Screen `/comm-log` mit zwei T
 
 ## Phase 3o: AP-Ratenmodell & Regolith-Balance — abgeschlossene Stufen (0, 1, 1c, 2)
 
-Design steht im GDD (§3, §4b, §4c, §6, §13.1–13.7, Anhang A/B). Die offenen Stufen (1b, 1d, 3, 4, 5, 6) sowie die "Offene Pfad-Paritäts-Fragen" sind als S-Punkte in `ROADMAP.md → Aktive Arbeit` zusammengeführt — dort auch die Erklärung des ID-Schemas.
+*(Diese Phase heißt in der aktiven Arbeit seit der Restrukturierung 2026-09-22 „Phase 4" — hier, für die bereits archivierten Stufen, historisch als „Phase 3o" belassen.)*
+
+Design steht im GDD (§3, §4b, §4c, §6, §13.1–13.7, Anhang A/B). Die offenen Stufen (1b, 1d, 3, 4, 5, 6) sowie die "Offene Pfad-Paritäts-Fragen" sind als D-Punkte (D1–D7) in `ROADMAP.md → Aktive Arbeit → Phase 4` zusammengeführt — dort auch die Erklärung des ID-Schemas (vormals S1b/S1d/S3/S4/S5/S6/S7, bei der Restrukturierung 2026-09-22 auf eine flache Nummerierung umgestellt).
 
 ### Stufe 0 — Klären (Owner) — Abgeschlossen (2026-08-03)
 
@@ -353,7 +355,7 @@ Design steht im GDD (§3, §4b, §4c, §6, §13.1–13.7, Anhang A/B). Die offen
 - [x] `BotStrategy` repariert (Raumfahrer in `HIRE_ORDER`, Schiffskauf nicht mehr auf eine Drohne gedeckelt)
 - [x] Instanz-Decay-Bug verifiziert und gefixt (`processBuildingDecay()` filterte nicht nach `instance_id`)
 
-*Ein Punkt aus dieser Stufe ("Post-Phase-1-Ökonomie / Verkaufsrichtung in der Cantina — eigenes Ticket, kein Blocker mehr für den Zahlensatz") war im Ursprungsdokument trotz „Abgeschlossen"-Status der Stufe unangehakt geblieben. Er ist inhaltlich derselbe offene Punkt wie „Bar/Cantina: Verkaufsrichtung als dritter Angebotstyp" — bei der Restrukturierung (2026-09-22) nach `ROADMAP.md → Aktive Arbeit → S7` verschoben, um den Widerspruch zwischen Status und Checkbox aufzulösen, ohne den Inhalt zu verlieren.*
+*Ein Punkt aus dieser Stufe ("Post-Phase-1-Ökonomie / Verkaufsrichtung in der Cantina — eigenes Ticket, kein Blocker mehr für den Zahlensatz") war im Ursprungsdokument trotz „Abgeschlossen"-Status der Stufe unangehakt geblieben. Er ist inhaltlich derselbe offene Punkt wie „Bar/Cantina: Verkaufsrichtung als dritter Angebotstyp" — bei der Restrukturierung (2026-09-22) nach `ROADMAP.md → Aktive Arbeit → D7` verschoben, um den Widerspruch zwischen Status und Checkbox aufzulösen, ohne den Inhalt zu verlieren.*
 
 ### Stufe 2 — AP-Pool zusammenlegen (§13.1) — Abgeschlossen (PR #240/#241, 2026-08-10)
 
