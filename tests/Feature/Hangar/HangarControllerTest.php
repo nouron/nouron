@@ -245,6 +245,86 @@ class HangarControllerTest extends TestCase
         );
     }
 
+    // ── KONSUL NEGOTIATION (A13 P5): displayed values == executed values ──────
+
+    public function test_index_konsul_discount_and_max_ap_match_executed_charge_for_all_ranks(): void
+    {
+        config(['game.bypass.ap_checks' => true]);
+        $expectedPerAp = [1 => 50, 2 => 60, 3 => 70];
+        $expectedMaxAp = [
+            1 => [self::SHIP_DRONE => 6, self::SHIP_FREIGHTER => 10, self::SHIP_CORVETTE => 16],
+            2 => [self::SHIP_DRONE => 5, self::SHIP_FREIGHTER => 9, self::SHIP_CORVETTE => 14],
+            3 => [self::SHIP_DRONE => 5, self::SHIP_FREIGHTER => 8, self::SHIP_CORVETTE => 12],
+        ];
+
+        foreach ([1, 2, 3] as $rank) {
+            foreach ([self::SHIP_DRONE, self::SHIP_FREIGHTER, self::SHIP_CORVETTE] as $shipId) {
+                $this->clearHangarFixtures();
+                $this->insertHangar(1);
+                DB::table('colony_buildings')
+                    ->where('colony_id', self::COLONY_ID_BART)
+                    ->where('building_id', self::HANGAR_BUILDING)
+                    ->update(['level' => 3]);
+                DB::table('advisors')->where('colony_id', self::COLONY_ID_BART)->where('personell_id', 92)->delete();
+                DB::table('advisors')->insert([
+                    'user_id' => self::USER_ID_BART,
+                    'colony_id' => self::COLONY_ID_BART,
+                    'personell_id' => 92,
+                    'rank' => $rank,
+                    'active_ticks' => 0,
+                ]);
+                DB::table('user_resources')->where('user_id', self::USER_ID_BART)->update(['credits' => 10000]);
+
+                $index = $this->actingAs($this->bart())->get(route('colony.hangar'));
+                $index->assertOk();
+                $displayedPerAp = $index->viewData('consulApDiscount');
+                $displayed = $index->viewData('shipCosts')[$shipId];
+
+                $this->assertSame($expectedPerAp[$rank], $displayedPerAp, "rank {$rank}");
+                $this->assertSame($expectedMaxAp[$rank][$shipId], $displayed['max_consul_ap'], "rank {$rank} ship {$shipId}");
+
+                // Invest 3 AP: charge must equal the price the UI derives from the displayed data.
+                $this->actingAs($this->bart())
+                    ->postJson(route('colony.hangar.request'), [
+                        'ship_id' => $shipId,
+                        'use_nexus_credit' => 0,
+                        'consul_ap_spent' => 3,
+                    ])->assertOk();
+
+                $this->assertSame(
+                    10000 - max(0, $displayed['cost'] - 3 * $displayedPerAp),
+                    (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits'),
+                    "rank {$rank} ship {$shipId}: charged credits must match displayed price",
+                );
+            }
+        }
+    }
+
+    public function test_request_ship_with_negotiation_ap_but_no_konsul_returns_422(): void
+    {
+        $this->insertHangar(1);
+        DB::table('advisors')->where('colony_id', self::COLONY_ID_BART)->where('personell_id', 92)->delete();
+
+        $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), [
+                'ship_id' => self::SHIP_DRONE,
+                'use_nexus_credit' => 0,
+                'consul_ap_spent' => 2,
+            ])->assertStatus(422)->assertJson(['ok' => false]);
+    }
+
+    public function test_index_without_konsul_shows_no_negotiation(): void
+    {
+        $this->insertHangar(1);
+        DB::table('advisors')->where('colony_id', self::COLONY_ID_BART)->where('personell_id', 92)->delete();
+
+        $index = $this->actingAs($this->bart())->get(route('colony.hangar'));
+
+        $this->assertFalse($index->viewData('hasAktivierterKonsul'));
+        $this->assertSame(0, $index->viewData('consulApDiscount'));
+        $this->assertSame(0, $index->viewData('shipCosts')[self::SHIP_DRONE]['max_consul_ap']);
+    }
+
     // ── REQUEST SHIP ──────────────────────────────────────────────────────────
 
     public function test_request_ship_returns_ok_with_slots_and_pending(): void

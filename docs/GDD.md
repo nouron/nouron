@@ -403,7 +403,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 | 2 | CC Lv3 | Tiefenscan kostet weniger AP (`ColonyTileService`); Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt; *geplant:* Reisender Händler erscheint häufiger (ROADMAP A11) |
 | 3 | CC Lv5 | Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt weiter; Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
 
-**Direktimport für Nicht-Werkstoff-Ressourcen (Owner-Entscheidung F5, 2026-09-08):** Anfrage und Bezahlung passieren sofort wie beim Werkstoff-Direktimport, die Lieferung selbst braucht jedoch mehrere Sole (Basiswert 3–5 Sole auf Lv1). Der **einzige** Hebel zur Verkürzung ist das Uplink-Station-Level selbst — bewusst kein zusätzlicher Hebel über Konsul-Rang, Kenntnisse oder situative Boni, um den Direktimport als reine Infrastrukturfrage zu halten. Dieser Weg ersetzt das gestrichene Konzept „Nexus-Handelsschiffe" (§12) als Sicherheitsnetz für nicht lokal beschaffbare Ressourcenmengen.
+**Direktimport für Nicht-Werkstoff-Ressourcen (Owner-Entscheidung F5, 2026-09-08):** Anfrage und Bezahlung passieren sofort wie beim Werkstoff-Direktimport, die Lieferung selbst braucht jedoch mehrere Sole (Basiswert 3–5 Sole auf Lv1). Der **einzige** Hebel zur Verkürzung ist das Uplink-Station-Level selbst — bewusst kein zusätzlicher Hebel über Konsul-Rang, Kenntnisse oder situative Boni, um den Direktimport als reine Infrastrukturfrage zu halten. Das betrifft die *Lieferzeit*; der *Preis* des Direktimports ist ein eigener Kanal des Handelspostens (Stufe III, siehe „Handelsposten — Mechanik" unten). Dieser Weg ersetzt das gestrichene Konzept „Nexus-Handelsschiffe" (§12) als Sicherheitsnetz für nicht lokal beschaffbare Ressourcenmengen.
 
 **Baukosten Lv1:** Ausschließlich Regolith + Credits — keine Werkstoffe, um einen Zirkelschluss zu vermeiden (Werkstoffe über Nexus anfordern setzt das Gebäude voraus).
 
@@ -415,16 +415,16 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 
 Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er verbessert Handelskonditionen über mehrere Kanäle hinweg:
 
-<!-- TODO: Konsul-Effizienz-Absatz prüfen, evtl. Verwechslung mit trade-Kenntnis-Domäneneffizienz — separater Task -->
-**Passiv — Konsul-Effizienz:**
-Trade-Orders erhalten einen Bonus (AP-Kostenreduktion). Nur relevant wenn ein Konsul aktiv ist — dies ist ein Beispiel für einen Domänen-Effizienzbonus (§13.3). Exakte Werte: `config/buildings.php`.
+Der Handelsposten ist **Infrastruktur**: Seine Wirkung hängt nicht davon ab, ob ein Konsul zugewiesen ist. Ein früher an dieser Stelle geführter „Konsul-Effizienz"-Effekt (AP-Kostenrabatt auf Handelsgeschäfte) ist gestrichen (A13, Owner-Entscheidung 2026-09-20): Handelsgeschäfte sind Handlungen, und Boni senken nur Projektkosten (§13.3). Der Konsul verbessert stattdessen die *Qualität* seiner Handlungen (§12).
 
 **Passiv — Kanal-Rabatt (Design-Spec 2026-08-23):**
-Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal für einen Preisrabatt frei, kumulativ: Stufe I (Bekannter Gast) den Kanal Cantina-Zufallsangebote, Stufe II (Fester Kunde) zusätzlich den Reisenden Händler, Stufe III (Persönlicher Kontakt) zusätzlich Nexus/Corporate Contact (Orin). Beim Cantina-Kanal gilt: kein Stack-Effekt mit dem expliziten Konsul-Verhandlungsbonus (`negotiate_bonus`, ausgelöst über den "Verhandeln"-Button) — der Rabatt gilt nur für nicht verhandelte Angebote.
-> **TODO Balance/Design:** Der passive, bereits bei der Angebots-Generierung eingerechnete Konsul-Rang-Rabatt (`trader_discount`, siehe `BarService::generateOffersForColony()`) ist von diesem Ausschluss NICHT erfasst und stackt aktuell multiplikativ mit dem Handelsposten-Rabatt (z.B. Rang-3-Konsul 30% + Handelsposten-Stufe-I 12% = kombiniert 38,4%). Ob das gewollt ist, wurde noch nicht bewertet — Whole-Branch-Review-Fund 2026-08-27, offene Design-Frage für den nächsten Balance-Pass.
+Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal frei, kumulativ: Stufe I (Bekannter Gast) die Cantina-Angebote, Stufe II (Fester Kunde) zusätzlich Corvans Sonderinventar, Stufe III (Persönlicher Kontakt) zusätzlich die Nexus-Kanäle. Der Rabatt ist kein eigener Stack, sondern eine sichtbare Quelle im **Handelsvorteil** des jeweiligen Kanals (§12): Er addiert sich dort mit dem Konsul-Rang (nur Cantina-Kanal) und der `trade`-Kenntnis. Der frühere Ausschluss bei verhandelten Angeboten entfällt — Verhandeln ist ein zusätzlicher Aufschlag oben drauf, keine Konkurrenz zum Handelsposten (Begründung §12).
+
+**Stufe III (A13):** Stufe III senkt den **Preis** des Nexus-Direktimports (Werkstoffe sowie die verzögerten Importe von Regolith und Organika) und weiterhin Orins Einmal-Angebot (§4c). Ausdrücklich **nicht** die Lieferzeit: sie bleibt eine reine Uplink-Station-Frage (siehe Direktimport-Abschnitt oben, Owner-Entscheidung F5). Der Nexus-Kanal hat bewusst nur diese zwei Quellen (Handelsposten, `trade`) und keinen Konsul-Anteil; damit bleibt sein Vorteil klein genug, dass der Nexus auch im besten Fall der teurere Fallback über dem lokalen Preisniveau bleibt. Hier wirkt der Vorteil als Preisnachlass in genau der angezeigten Höhe.
+
 Exakter Rabattsatz: `config/buildings.php` → `merchant_price_bonus`.
 
-**Zusätzlich — Kenntnis-Preisbonus:** Die `trade`-Kenntnis liefert unabhängig vom Handelsposten einen eigenen Preis-Bonus auf allen drei Handelskanälen (Cantina-Angebote, Reisender Händler, Nexus/Corporate Contact). Beide Quellen stacken additiv, ohne Konkurrenz oder Ausschluss — dasselbe Muster wie beim Bau-AP-Rabatt-Pool, den `construction` und `trade` gemeinsam speisen (§13.3). Exakte Werte: `config/knowledge.php` → `trade.trade_price_bonus_per_lv`.
+**Zusätzlich — Kenntnis-Preisbonus:** Die `trade`-Kenntnis liefert unabhängig vom Handelsposten einen eigenen Preis-Bonus auf den Handelskanälen (Cantina-Angebote, Corvans Sonderinventar, Nexus-Kanäle). Beide Quellen stacken additiv im Handelsvorteil (§12), ohne Ausschluss. Exakte Werte: `config/knowledge.php` → `trade.trade_price_bonus_per_lv`.
 
 > **TODO Balance:** Baukosten und Decay nach erstem Playtest festlegen (siehe `config/buildings.php`).
 
@@ -677,7 +677,7 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 - **Preis:** deutlich unter dem Kaufpreis der Gegenrichtung, damit Arbitrage unattraktiv bleibt (`config/game.php`).
 - **Reserve-Untergrenze:** Verkaufslose nur, solange der Bestand über einer Mindestreserve liegt (Vielfaches des Sol-Bedarfs `food_need`) — schützt die Hunger-Spirale (§3/§4a) vor Leerverkauf.
-- **Zugang:** Corvan (Kanal 3, §12) bringt die Verkaufslose bei jedem Besuch mit. Bar-gated (Cantina Lv1+), aber nicht Konsul-exklusiv — der Konsul-Rang skaliert Preise und Häufigkeit. Das ist die Pfad-C-Prämie: wer früh in den Konsul investiert, profitiert schneller und stärker, während alle Pfade Zugang haben.
+- **Zugang:** Corvan (Kanal 3, §12) bringt die Verkaufslose bei jedem Besuch mit. Bar-gated (Cantina Lv1+), aber nicht Konsul-exklusiv — der Konsul verbessert die Konditionen der Kaufangebote und kündigt Corvans Besuche früher an (Marktbericht, §12); weder Besuchsrhythmus noch Verkaufserlöse skaliert er. Das ist die Pfad-C-Prämie: wer früh in den Konsul investiert, plant besser und kauft günstiger, während alle Pfade Zugang haben, ohne dass der Konsul zur passiven Einnahmequelle wird.
 
 **Zielgröße:** offen. Eine belastbare Credits-Zielgröße je Konsul-Rang erfordert eine Credits-Bilanz über den Run (`docs/gdd-balance-checklist.md` A.4). Bis dahin ist die Losanzahl pro Besuch ein Playtest-Kandidat; der Hebel, falls mehr gebraucht wird, sind mehr Lose pro Besuch, nicht ein kürzeres Intervall.
 
@@ -1179,7 +1179,7 @@ Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftka
 |------|--------|---------|
 | **Nexus-Anfrage (Standard)** | Credits + Lieferzeit (N Sole) | Schiff landet nach N Solen auf `docked` |
 | **Nexus-Kredit** | 0 Cr jetzt + Nexus-Schulden ↑ | Schiff sofort verfügbar; Schulden-Risiko (§15) |
-| **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis |
+| **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis; der Nachlass je AP wächst mit dem Konsul-Rang (A13) |
 | **Event / Händler** | situativ (Wrackbergung, Sonderdeal) | Schiff direkt `docked` oder `pending` |
 
 > **Hinweis Namenskollision:** Die "Konsul-Verhandlung" hier ist **risikofrei** — mehr AP kauft einen garantiert niedrigeren Preis, kein Fehlschlag möglich. Nicht zu verwechseln mit der **"Cantina-Verhandlung (Risiko-Handel)"** in §12 Kanal 1 — dort kann die Verhandlung scheitern und das Angebot geht komplett verloren. Zwei unterschiedliche Mechaniken, bewusst unterschiedlich benannt.
@@ -1416,8 +1416,9 @@ Bereits implementierte Effekte (`config/knowledge.php`):
 - `health` senkt additiv zur Krankenstation das Seuchenausbruch-Risiko (§9).
 - `defense` senkt das Sturm-Risiko (§9).
 - `trade` gibt einen Preisbonus auf allen drei Handelskanälen (`trade_price_bonus_per_lv`, §4).
-- `construction`, `trade` senken additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`). `cartography` senkt stattdessen eigenständig die Navigation-AP-Kosten von Tile-Erkundung und Hangar-Missions-Reisekosten (siehe §13.3).
+- `construction` senkt additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`). `cartography` senkt stattdessen eigenständig die Navigation-AP-Kosten von Tile-Erkundung und Hangar-Missions-Reisekosten (siehe §13.3). `trade` senkt **keine** Bau-Kosten (A13, Owner-Entscheidung 2026-09-20: Handelsgeschick hat thematisch nichts mit dem Ausbau von Gebäuden zu tun) — ihre Wirkung liegt ausschließlich auf Handelskonditionen und Cantina.
 - `trade` erhöht zusätzlich die Zahl gleichzeitig aktiver Cantina-Angebote (§12), siehe `bar_offer_boost_per_lv`.
+- `trade` erhöht außerdem die Erfolgschance der Cantina-Verhandlung (§12, A13, Kalibrierung offen) — die im Beschreibungstext der Kenntnis versprochene „Verhandlungsführung". Wirkt nur, wenn ein Konsul verhandelt.
 - `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
 - Analytik-Labor Lv4/5 senkt die AP-Kosten von Kenntnis-Levelups (§13.3) — kein Kenntnis-, sondern ein Gebäudeeffekt, hier der Vollständigkeit halber.
 
@@ -1481,7 +1482,9 @@ Die Bar ist ab CC Lv2 verfügbar. Sie ist der Ort des Handels — verkörpert du
    - **Kuratiertes Sonderinventar (Sub-Chance je Besuch):** AP-Pakete, Schiffe, Information, Einmal-Items — die Kategorie-Tabelle unter Kanal 3.
 2. **Anonyme Gästerotation — nur Tauschhandel.** Pro Sol erscheinen 0–2 Gäste (Dax, Voss, …), jeder mit einem Ressource↔Ressource-Angebot, das 2–4 Sole gültig ist (abhängig vom Bar-Level). Kein Kauf, kein Verkauf gegen Credits ohne Corvan.
 
-**Konsul-Rang-Skalierung:** Ohne Konsul erscheint Corvans Alltagsgeschäft seltener, aber nicht nie; mit Konsul häufiger und zu besseren Konditionen (`trader_discount`) — der Konsul pflegt die Kontakte, die Corvan öfter vorbeikommen lassen. Die genaue Losanzahl pro Besuch ist ein Playtest-Kandidat, bis eine Credits-Bilanz über den Run eine Zielgröße liefert (§4b).
+**Konsul-Rang-Skalierung:** Corvans Besuchsrhythmus ist vom Konsul unabhängig — ein häufigerer Corvan wäre ein passiver Einkommens-Hebel und würde den Fehler des gestrichenen Handelsvertrags wiederholen (A22). Der Konsul wirkt stattdessen auf die *Qualität* der Geschäfte (bessere Kaufkonditionen über den Handelskonditionen-Pool, s.u.) und auf den *Planungsvorsprung* (Marktbericht, s.u.). Die genaue Losanzahl pro Besuch ist ein Playtest-Kandidat, bis eine Credits-Bilanz über den Run eine Zielgröße liefert (§4b).
+
+**Marktbericht (Konsul, A13):** Der Konsul kündigt Corvans nächsten Besuch vorab an — je höher der Rang, desto früher. Auf dem höchsten Rang zeigt der Bericht zusätzlich, welche Sonderinventar-Kategorien (AP-Paket, Information, Einmal-Item — Schiffe erscheinen dort erst, sobald der Item-Pool welche enthält) Corvan mitbringt, nicht aber die konkreten Lose des Alltagsgeschäfts. Der Spieler kann damit Credits für ein absehbar teures Sonderangebot zurückhalten oder Organika für die Verkaufslose aufsparen. Es ist reine Planungsinformation: kein Einkommen, keine Wirkung auf Häufigkeit oder Preise, und ohne zugewiesenen, verfügbaren Konsul (nicht auf Außenmission) entfällt die Ankündigung — Corvan kommt trotzdem, nur ohne Vorwarnung. Der Marktbericht ist die spielwirksame Ausprägung des Konsul-Motivs „pflegt die Kontakte"; er ergänzt die kontextuelle Händler-Einschätzung aus §13 („Berater als Informationsebene").
 
 **Orin ist nicht Teil dieses Kanals.** Orin (`corporate_rep`) ist ausschließlich an den Harvester-Zweitinstanz-Deal gebunden (§4c Weg A), mit eigenem Spawn-Check außerhalb von `BarService`/`MerchantService`.
 
@@ -1555,34 +1558,59 @@ Zusätzlich zum Bar-Level selbst erhöht die Kenntnis **Handel** (`trade`) ab ei
 
 **Konsul (advisor_trader) — Rang-Effekte:**
 
-Der Konsul trägt zum gemeinsamen AP-Pool bei (Beitrag steigt mit Rang), verbessert die Gäste-Häufigkeit und Preiskonditionen, und erhöht die Wahrscheinlichkeit von Werkstoffen in Credits↔Ressource-Angeboten bei höheren Rängen. Exakte Werte pro Rang: siehe `config/advisors.php`.
+Der Konsul trägt zum gemeinsamen AP-Pool bei (Beitrag steigt mit Rang), verbessert die Gäste-Häufigkeit und Preiskonditionen, schaltet die Cantina-Verhandlung frei (Chance und Aufschlag steigen mit Rang) und erhöht die Wahrscheinlichkeit von Werkstoffen in Credits→Ressource-Angeboten bei höheren Rängen. Exakte Werte pro Rang: siehe `config/advisors.php` und `config/game.php → bar`.
+
+**Kein AP-Rabatt — die Domäne „Wirtschaft" besteht aus Handlungen.** Der Domänen-Beitrag des Konsuls (§13.1) ist bewusst nicht als Prozentrabatt auf AP-Kosten von Handelsgeschäften angelegt: Boni senken nur Projektkosten (§13.3), und Handlungs-AP sind so klein, dass ein Prozentrabatt an der Rundung scheitert oder — über feste Abzüge — nur verdecktes „mehr AP" wäre. Der Konsul-Beitrag liegt auf der *Qualität* der Handlungen: bessere Konditionen, Verhandlungschance, Planungsvorsprung (Marktbericht), günstigere Schiffsverhandlung.
+
+**Rangskalierte Schiffsverhandlung (A13):** Die Konsul-Verhandlung beim Schiffskauf (§8b) tauscht investierte AP gegen einen Credits-Nachlass. Der Nachlass je AP wächst mit dem Konsul-Rang; ohne zugewiesenen, verfügbaren Konsul gibt es keine Verhandlung. Die AP-Menge bleibt begrenzt, der Kauf bleibt risikofrei und wirkt nur bei aktiver Nutzung — kein passiver Effekt.
+
+> **Idee (festgehalten 2026-09-20, nicht beschlossen): „Wunschangebot".** Der Konsul „aktiviert seine Kontakte": Der Spieler nennt eine gewünschte Ressource, und für den nächsten Sol erscheint ein Gästeangebot, das sie als Get-Seite trägt — gegen AP und mit Rang-abhängigem Cooldown. Würde die Tauschrichtung nach Bedarf steuerbar machen (§13.5 „Tauschrichtung nach Bestand"). Offen: Werkstoffe als Wunsch erst auf höchstem Rang, um die Knappheit (§3) zu schützen. Nicht im Umfang von A13.
 
 **Werkstoffe-Bias bei höheren Rängen:** Der Experten-Konsul hat Marktbeziehungen — bei Credits→Ressource-Angeboten erscheinen seltene Ressourcen häufiger. Das gibt dem höheren Rang einen konkreten wirtschaftlichen Vorteil in der knappsten Ressource des Spiels (§3 Werkstoffe nicht lokal produzierbar).
 
+**Handelsvorteil (A13):**
+
+Leitgedanke ist **Verständlichkeit**: Der Spieler muss im Angebotsdialog nachvollziehen können, *warum* ein Angebot so aussieht, und jede angezeigte Zahl muss sich im Kopf nachrechnen lassen. Alle *passiven* Konditionsquellen laufen deshalb je Handelskanal in **einem einzigen, sichtbaren Prozentwert** zusammen, dem Handelsvorteil: der Konsul-Rang (nur Cantina-Kanal), der Kanal-Rabatt des Handelspostens (§4) und der Preisbonus der `trade`-Kenntnis. Heute stacken diese Quellen teils multiplikativ und an verschiedenen Stellen (Rang schon bei der Angebots-Erzeugung eingebacken, Rest beim Annehmen), sodass keine Anzeige die Herkunft einer Zahl erklären könnte. Künftig gilt:
+
+- **Addiert, nie multipliziert, nichts eingebacken.** Angebote werden mit ihren Basiskonditionen (fairer Tausch nach Marktwert) erzeugt; der Handelsvorteil wird erst beim Anzeigen und Abschluss angewandt. Nur so kann der Dialog Basis und Quellen einzeln zeigen.
+- **Bei Ware: mehr Menge.** Bei Cantina-Angeboten (Tausch, Corvans Kaufangebote) gibt der Spieler dasselbe wie im Basisangebot und bekommt um den Handelsvorteil mehr Ware. Kein Preisnachlass, keine Umrechnung — „+X %" heißt genau „X % mehr Ware".
+- **Bei Credits-Käufen zu Festpreis: Preisnachlass.** Corvans Sonderinventar, Orins Angebot und der Nexus-Direktimport werden um genau den angezeigten Prozentsatz günstiger. Diese Kanäle haben keine Mengenachse.
+- **Nexus ohne Konsul.** Der Nexus-Kanal hat nur die Quellen Handelsposten und `trade` (F5: keine Konsul-Hebel am Direktimport).
+- **Kein Deckel als Spielregel.** Die Quellen sind so bemessen, dass die Summe in jedem Kanal von selbst in einem Rahmen bleibt, der den Nexus als teureren Fallback erhält. Ein Deckel existiert höchstens als stille Leitplanke in der Config für künftige Quellen und wird dem Spieler nie erklärt — sonst müsste der Dialog „Deckel erreicht" und eine von der Summe abweichende Zahl begründen, für einen Fall, der mit den heutigen Quellen kaum eintritt.
+- **Verkaufslose sind Festpreis.** Credits-Erlöse (Corvans Organika-Lose, §4b) erhalten weder Handelsvorteil noch Verhandlung. Sonst würden passive Infrastruktur und Konsul zu einer verlässlichen Credits-Einnahme, und ein Kauf-und-Rückverkauf-Kreislauf entstünde — genau das, was A22 ausgeschlossen hat. Merkregel für den Spieler: *Der Handelsvorteil verbessert, was du an Ware bekommst — Verkaufs-Credits sind fix.*
+- **Verhandeln ist ein weiterer Aufschlag oben drauf,** nach denselben Anzeigeregeln (eigene Zeile, „+X %" heißt „X % mehr Ware"). Der Handelsposten gilt auch bei verhandelten Angeboten.
+
+**Was der Angebotsdialog zeigt:** (1) das Basisangebot; (2) den Handelsvorteil mit jeder Quelle in einer eigenen Zeile — nur Quellen mit Wirkung, dazu ein dezenter Hinweis, was ein fehlender Konsul oder Handelsposten brächte; (3) das Ergebnis als konkrete Menge samt „Plus gegenüber Basis"; (4) bei Verhandeln *beide* Ausgänge in Zahlen — Erfolgschance samt ihren Quellen, Menge bei Erfolg, und ein klarer Satz, was bei Misserfolg passiert (kein Handel, die Give-Ressourcen bleiben beim Spieler, das Angebot verfällt, die AP sind verbraucht); (5) die AP-Kosten an beiden Buttons; (6) bei Verkaufslosen den Hinweis auf den Festpreis. Zusätzlich fasst die Kopfzeile der Cantina den aktuellen Handelsvorteil mit seinen Quellen zusammen. Bar- und Händlerlisten zeigen den tatsächlich fälligen Betrag, nicht mehr die unrabattierten Basiswerte.
+
 **Cantina-Verhandlung (Risiko-Handel):**
 
-Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
+Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — ob sich der Klick lohnt, hängt an der Rechnung unten.
 
 > **Nicht zu verwechseln** mit der "Konsul-Verhandlung" beim Schiffskauf (§8b, Hangar-Screen): dort ist der niedrigere Preis garantiert, hier nicht. Diese Mechanik heißt bewusst anders.
 
 **Ablauf — zwei Schritte:** Verhandeln führt das Geschäft nicht sofort aus, sondern verbessert bei Erfolg nur die Konditionen des Angebots — der Spieler sieht das Ergebnis und bestätigt danach explizit mit **Annehmen**.
 
 1. Verfügbarkeits- und Ressourcen-Check wie bei Annehmen (Give-Seite muss gedeckt sein — sonst Fehler `bar_offer_insufficient_resources`, kein Würfeln auf ein Geschäft, das ohnehin nicht zustande kommen könnte). Ein bereits verhandeltes Angebot kann nicht erneut verhandelt werden.
-2. AP-Kosten werden abgebucht (`ap_cost_negotiate`, höher als `ap_cost_accept`) — unabhängig vom Ausgang.
-3. Einmaliger Erfolgs-Wurf, Konsul-Rang-abhängig (`negotiate_success_chance`).
-   - **Erfolg:** Die Konditionen des Angebots (`give_amount`/`get_amount`) werden dauerhaft auf die verbesserten Werte aktualisiert (`negotiate_bonus`, gleiche Formel-Achse wie `trader_discount`, s.u.) und das Angebot als verhandelt markiert. Der Handel selbst führt sich **noch nicht** aus — der Verhandeln-Button wird gesperrt, der Annehmen-Button bleibt aktiv und zeigt jetzt 0 AP (die Kosten wurden bereits mit der Verhandlung bezahlt). Erst ein Klick auf Annehmen überträgt die Ressourcen.
-   - **Fehlschlag:** Kein Handel. Das Angebot ist **sofort und vollständig verloren** (gelöscht/verfallen) — kein zweiter Versuch, auch kein nachträgliches "Annehmen" zu den alten Konditionen. Die verlorene Chance ist die eigentliche Konsequenz, nicht die AP.
+2. AP-Kosten werden abgebucht (`ap_cost_negotiate`) — **genauso hoch wie Annehmen**, unabhängig vom Ausgang. Verhandeln kostet also nichts extra: Die Wahl ist reine Risiko/Ertrag-Abwägung („sicher oder riskant"), kein AP-Rechnen.
+3. Einmaliger Erfolgs-Wurf, Konsul-Rang-abhängig (`negotiate_success_chance`), zuzüglich des Chance-Bonus der `trade`-Kenntnis (§10) — auch der beste Konsul garantiert nichts. Der Dialog zeigt die Chance samt ihren Quellen.
+   - **Erfolg:** Das Angebot wird als verhandelt markiert; seine Konditionen sind jetzt Basisangebot plus Handelsvorteil plus Verhandlungs-Aufschlag (`negotiate_bonus`, s.o.) — als eigene Zeile im Dialog, nicht in die Mengen des Angebots eingefroren. Der Handel selbst führt sich **noch nicht** aus — der Verhandeln-Button wird gesperrt, der Annehmen-Button bleibt aktiv und zeigt jetzt 0 AP (die Kosten wurden bereits mit der Verhandlung bezahlt). Erst ein Klick auf Annehmen überträgt die Ressourcen.
+   - **Fehlschlag:** Kein Handel — die Give-Ressourcen bleiben beim Spieler. Das Angebot ist **sofort und vollständig verloren** (gelöscht/verfallen) — kein zweiter Versuch, auch kein nachträgliches "Annehmen" zu den alten Konditionen. Die AP sind verbraucht. Verloren geht damit der Handelsvorteil *und* die Ware, die man haben wollte.
+   - **Nicht verhandelbar:** Verkaufslose mit Credits-Erlös (Festpreis, s.o.).
 4. **Kein Trust-Malus.** `trade_blocked` (§13/§14) bleibt für einen anderen Fall reserviert (blockierter Handel, nicht gescheiterte Verhandlung) — eine fehlgeschlagene Verhandlung soll bestraft, aber nicht zusätzlich über Vertrauen abgestraft werden, sonst wird der Button nie benutzt.
 
-**Warum die Chance den Preis macht, nicht die AP:** Bei `ap_cost_accept = 1` und max. 2–6 gleichzeitigen Angeboten kann ein Konsul-Halter praktisch jedes Angebot verhandeln, egal wie hoch `ap_cost_negotiate` gesetzt wird — AP war hier nie ein wirksamer Deckel. Der eigentliche Preis ist der komplette Verlust des Angebots bei Fehlschlag.
+**Wann sich Verhandeln lohnt — und wann nicht (Designziel A13):** Verhandeln soll eine echte Entscheidung sein, kein Dauer-Klick und kein toter Button. Weil beide Wege gleich viele AP kosten, gibt es nichts zu verrechnen; verglichen werden nur die Ausgänge: sicher den Handelsvorteil, oder mit einer Chance den größeren Vorteil und sonst gar nichts. Ob das im Schnitt besser ist, hängt an drei Dingen:
 
-> **Zu prüfen im Handels-Balancing:** Mit dem gemeinsamen Pool (§13.1) konkurrieren Handelsgeschäfte direkt mit Bau und Kenntnissen — AP ist damit erstmals ein echter Deckel für Vielhandel. Ob `ap_cost_negotiate` dadurch schon von selbst wirkt oder weiterhin die Verlust-Mechanik tragen muss, ist offen.
+- **Der passive Handelsvorteil.** Je mehr davon vorhanden ist (Konsul-Rang, Handelsposten, `trade`), desto weniger bringt der riskante Aufschlag, und desto mehr kostet der Fehlschlag. Verhandeln ist die *aktive Alternative* zur passiven Infrastruktur: wer wenig davon hat, verhandelt gern; wer viel hat, nimmt lieber sicher an.
+- **Chance und Aufschlag.** Chance steigt mit dem Konsul-Rang und der `trade`-Kenntnis; ein hoher Rang macht das Verhandeln sicherer, aber wegen des größeren passiven Vorteils nicht automatisch lohnender.
+- **Bedarf des Spielers.** Ein Fehlschlag kostet auch die Ware, die man haben wollte. Wer die Ressource dringend braucht, nimmt sicher an; wer nur eine günstige Gelegenheit nutzen will, riskiert es. Dieser Bedarf ist die eigentliche situative Größe und liegt beim Spieler, nicht in der Config. Die Angebotsgröße entscheidet nicht darüber, *ob* Verhandeln besser ist, nur wie groß die Schwankung ausfällt.
 
-Die Erfolgschance und der Bonus-Betrag steigen mit Konsul-Rang. Der Zusatz-Bonus wirkt auf dieselbe Achse wie `trader_discount` bei der Angebots-Generierung, aber additiv obendrauf auf das **konkrete, bereits generierte** Angebot (nicht auf einen neuen Wurf). Kein zweites Formel-System — nur eine zweite Anwendung derselben Formel.
+Der Erwartungsvorsprung soll bewusst klein bleiben — in vielen Lagen ist der Unterschied nur wenige Prozent —, sodass die Wahl vor allem eine Frage der Risikoneigung ist. Fällt Verhandeln im Playtest dennoch zu dominant oder zu selten aus, ist die sanfteste Stellschraube die Erfolgschance; ein AP-Aufpreis für Verhandeln käme erst danach in Frage, weil er AP-Rechnerei in den Dialog trägt.
 
-Exakte Erfolgschancen und Bonussätze: siehe `config/game.php → bar` (`negotiate_success_chance` / `negotiate_bonus`).
+Exakte Chancen, Aufschläge und AP-Kosten: siehe `config/game.php → bar` (`negotiate_success_chance` / `negotiate_bonus` / `ap_cost_*`), `trade`-Chance-Bonus: `config/knowledge.php`.
 
-> ⚠️ BALANCE CONCERN: Kalibration gegen das Risiko/Reward-Gleichgewicht. Zu hohe Erfolgschance oder zu großer Bonus macht Verhandeln zur dominanten Strategie ohne echtes Risiko. Nach erstem Playtest kalibrieren (siehe `config/game.php → bar` für Schwellenwertbeispiele).
+> ⚠️ BALANCE CONCERN: Verhandeln muss je Konstellation mal besser, mal schlechter als Annehmen sein — auch für den höchsten Konsul-Rang. Zu hohe Chance oder zu großer Aufschlag macht es dominant, zu geringe macht es zum toten Button; beides ist über Rang, Handelsvorteil und Bedarf gegeneinander abzugleichen. Nach dem nächsten Bot-Batch kalibrieren (mindestens 6–10 Seeds) — der Bot kennt keinen Bedarf und keine Risikoneigung, sein Verhandlungsverhalten ist nur ein grober Indikator.
+
+> **Offen (nicht entschieden):** Ob der Totalverlust des Angebots bei Fehlschlag beibehalten oder abgeschwächt werden soll (etwa Angebot bleibt, aber mit Einbuße). Default-Annahme: beibehalten. Bei hohem passivem Handelsvorteil bleibt Verhandeln wegen dieser Regel eher die Ausnahme.
 
 ---
 
@@ -1594,7 +1622,7 @@ Implementiert über `MerchantService` + `config/game.php → merchant`; Spawn-Ch
 
 Ein reisender Händler erscheint gelegentlich bei der Kolonie für eine begrenzte Anzahl Sole. Er bietet seltene Waren an — keine Standardressourcen, sondern Shortcuts und Chancen die im normalen Spielverlauf nicht erreichbar sind.
 
-**Erscheinungsfrequenz:** Erscheint gelegentlich nach einer Startup-Phase (Kolonie soll sich erst etablieren). Regelmäßige Besuche danach, aber unregelmäßig genug um Roguelike-Druck zu erzeugen (kein garantiertes Angebot). Details: `config/game.php → merchant`.
+**Erscheinungsfrequenz:** Erscheint gelegentlich nach einer Startup-Phase (Kolonie soll sich erst etablieren). Regelmäßige Besuche danach, aber unregelmäßig genug um Roguelike-Druck zu erzeugen (kein garantiertes Angebot). Der Rhythmus ist vom Konsul unabhängig; der Konsul kündigt die Besuche nur an (Marktbericht, Kanal 1). Details: `config/game.php → merchant`.
 
 **Inventar:** 3–4 Items pro Besuch (Mobile-optimiert, kein Scrollen nötig).
 
@@ -1612,8 +1640,6 @@ Ein reisender Händler erscheint gelegentlich bei der Kolonie für eine begrenzt
 | **Information** | Alle noch unerkundeten Tiles der Exploration Zone sofort aufgedeckt (`colony_tiles.is_explored`) | selten |
 | **Einmal-Item** | Reparatur-Kit, Vertrauens-Schub, Credits-Notfallkredit | häufig |
 | **Exotics** | Platzhalter Phase 4+ | sehr selten |
-
-> **Config-Nacharbeit (nicht GDD — für game-developer/backend-coder):** `config/game.php → merchant.items.information.label` heißt noch **"Systemkarte vollständig"** — ein rein kosmetischer Restverweis auf die 2026-06-20 gestrichene Systemkarte. Geprüft: `MerchantService::applyItemEffect()` setzt bereits korrekt `colony_tiles.is_explored = true` für die Kolonie (Exploration Zone) — die Wirkung ist **nicht** kaputt, nur das Label ist veraltet. Label an die obige Formulierung anpassen (kein Balance-Risiko, reiner Text-Fix).
 
 ---
 
@@ -1663,7 +1689,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 | Navigation | Tile-Erkundung, Außenmissions-Dispatch | Raumfahrer |
 | Wirtschaft | Handelsangebote, Marktgeschäfte | Konsul |
 
-**Berater erhöhen den gemeinsamen Pool** und geben zusätzlich einen **Effizienzbonus in ihrer Domäne** (siehe 13.3) — sie bleiben damit klar unterscheidbar, ohne den Pool zu zersplittern.
+**Berater erhöhen den gemeinsamen Pool** und tragen zusätzlich einen **Beitrag in ihrer Domäne** — wo die Domäne aus Projekten besteht, als Kostenrabatt (siehe 13.3), wo sie aus Handlungen besteht, als Qualität der Handlungen. Der Konsul ist der zweite Fall: Konditionen, Verhandlungschance und Planungsvorsprung statt AP-Rabatt (§12). Berater bleiben damit klar unterscheidbar, ohne den Pool zu zersplittern.
 
 **Keine Bodengarantie** (entschieden 2026-08-02). Es wird **kein** Mindestanteil je Domäne reserviert; die Allokation ist vollständig frei.
 
@@ -1714,18 +1740,19 @@ Boni senken die **AP-Kosten von Projekten** und verkürzen damit die Bauzeit in 
 
 | Quelle | Status | Wo |
 |---|---|---|
-| Kenntnis-Level nach Domäne (Bau-Projekt-Rabatt-Pool) | implementiert | `ProjectBonusService::buildingApDiscountPercent()`, `config/knowledge.php → *.ap_cost_reduction_per_lv` |
+| Kenntnis `construction` (Bau-Projekt-Rabatt-Pool) | implementiert; `trade` dort entfernt (A13, Umsetzung im Code ausstehend) | `ProjectBonusService::buildingApDiscountPercent()`, `config/knowledge.php → construction.ap_cost_reduction_per_lv` |
+| Cantina-Gutschein (Charakter-Anliegen, §12) | implementiert | `ProjectBonusService::activeBuildingDiscountVoucherPercent()` |
 | Analytik-Labor Lv4/5 — Domänen-Effizienzbonus „Wissen" | implementiert | `config/buildings.php → sciencelab.knowledge_ap_cost_reduction_per_lv` |
 | Berater-Rang | **geplant** (ROADMAP Stufe 3) | vorgesehen: `config/game.php → project_cost_bonus` |
 | Koloniereife (CC-Level) | **geplant** (ROADMAP Stufe 3) | dito |
 
-**Bau-Projekt-Rabatt-Pool:** Bau ← `construction`, Wirtschaft ← `trade`. Beide Kurven sind glockenförmig über die fünf Level (Peak Lv2–4) und wirken additiv auf **alle** Gebäude-Levelups inklusive Kommandozentrale — nicht nach Projekttyp getrennt, weil nur Bau-Projekte existieren. `cartography` gehört nicht zu diesem Pool: die Kenntnis senkt eigenständig die Navigation-AP-Kosten von Tile-Erkundung (`ColonyTileService::exploreTile()`) und Hangar-Missions-Reisekosten (`HangarService::dispatchShip()`), `config('knowledge.cartography.nav_ap_reduction_per_lv')`.
+**Bau-Projekt-Rabatt-Pool:** Bau ← `construction`. Die Kurve ist glockenförmig über die fünf Level (Peak Lv2–4) und wirkt additiv auf **alle** Gebäude-Levelups inklusive Kommandozentrale — nicht nach Projekttyp getrennt, weil nur Bau-Projekte existieren. Weitere additive Quellen im Pool sind Cantina-Gutscheine aus Charakter-Anliegen (§12). `cartography` gehört nicht zu diesem Pool: die Kenntnis senkt eigenständig die Navigation-AP-Kosten von Tile-Erkundung (`ColonyTileService::exploreTile()`) und Hangar-Missions-Reisekosten (`HangarService::dispatchShip()`), `config('knowledge.cartography.nav_ap_reduction_per_lv')`. `trade` gehört ebenfalls nicht dazu (A13, Owner-Entscheidung 2026-09-20): Handelsgeschick beschleunigt keinen Gebäudeausbau, die Kenntnis wirkt auf Handelskonditionen (§12). Der Pool ist dadurch schlank; die primäre Progressionsachse „Bau-Beschleunigung als Zeitgewinn" ruht künftig stärker auf den noch geplanten Quellen Berater-Rang und Koloniereife (Tabelle oben, Stufe 3).
 
 **Analytik-Labor Lv4/5:** Gibt dem Laborausbau über die reinen Kenntnis-Gates (Lv1–3) hinaus einen eigenen Effekt — senkt die AP-Kosten für Kenntnis-Levelups, additiv und unabhängig vom Gebäude-Rabatt-Pool. Rührt an nichts, was pro Run gezogen wird (§10) — reine Effizienzsteigerung auf bereits freigeschaltete Kenntnisse.
 
-Ein **Mindest-Kostenanteil** (`project_min_cost_factor`) verhindert, dass Projekte auf null fallen — das ist eine Leitplanke für spätere Bonusquellen (Events, Missionsbelohnungen, Run-Modifier), keine aktive Regel zum Start. Wichtig, das so zu lesen, damit später niemand gegen einen Deckel kalibriert, der gar nicht wirkt.
+Ein **Mindest-Kostenanteil** (`project_min_cost_factor`) verhindert, dass Projekte auf null fallen — das ist eine Leitplanke für spätere Bonusquellen (Events, Missionsbelohnungen, Run-Modifier), keine aktive Regel zum Start. Mit einer einzigen Kenntnis im Pool plus höchstens einem Gutschein bleibt die Summe deutlich unter dem Deckel; auch hier gilt: nicht gegen einen Deckel kalibrieren, der gar nicht wirkt.
 
-**Boni gelten nur für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit.
+**Boni gelten nur für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit. Es ist zugleich der Grund, warum der Konsul keinen AP-Rabatt auf Handelsgeschäfte bekommt (§12): Sein Beitrag liegt auf der Qualität der Handlungen, nicht auf ihren Kosten. (Die Navigation-Rabatte der `cartography` sind eine bestehende Ausnahme; ihr Rundungsverhalten bei kleinen Basiskosten ist offen und nicht Teil dieser Regel.)
 
 ---
 
@@ -2106,7 +2133,7 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 |---------|--------|--------------------|----------------------|
 | Baumeister | Colony-View | Decay-Prognose pro Gebäude ("in ~4 Solen Level-Down") | Kritische Gebäude hervorgehoben (SP < 30% Max) |
 | Analytiker | Techtree | "Sole bis Level X beim aktuellen AP-Fluss in diese Kenntnis" | Priorisierungshinweis für offene Run-Aufgaben |
-| Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt |
+| Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt; Marktbericht zu Corvans nächstem Besuch (§12) |
 | Raumfahrer | Hangar | Aufgebrochene Missionszeit ("X Sole Hinweg + Rückkehr Sol Z") | Verschleiß-Prognose pro geplantem Dispatch (§7) |
 
 > Die Ziel-Erreichbarkeits-Prognose („Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") und die Ausgangs-Prognose bei Gefahren-Vorwarnung (§9) sind keiner Berater-Informationsebene zugeordnet — sie gehören ins Kommandozentrale-Dashboard (§13.4).

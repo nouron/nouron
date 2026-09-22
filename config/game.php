@@ -76,10 +76,11 @@ return [
     ],
 
     // Lower bound for additive project-AP discounts (§13.3) — prevents bonuses from
-    // pushing ap_for_levelup to 0. Not binding at the current max discount (30%,
-    // construction+trade fully invested; cartography no longer part of this pool,
-    // it has its own separate Navigation-AP discount); a guard rail for future bonus
-    // sources (advisor rank, colony maturity) that are not yet implemented.
+    // pushing ap_for_levelup to 0. Not binding at the current max discount (15% from
+    // construction fully invested, 40% with an active 25% discount voucher; trade and
+    // cartography are not part of this pool — cartography has its own Navigation-AP
+    // discount); a guard rail for future bonus sources (advisor rank, colony maturity)
+    // that are not yet implemented.
     'project_min_cost_factor' => 0.5,
 
     // Harvester depletion mechanic (GDD §4c "Erschöpfungskurve und Umzugstakt",
@@ -293,6 +294,10 @@ return [
 
         // Ticks before an unassigned (pending) ship decays and is removed
         'pending_decay_ticks' => 5,
+
+        // Konsul ship negotiation: credits discount per invested AP, indexed by the
+        // Konsul advisor's rank. No Konsul (rank 0) => no negotiation.
+        'consul_ap_discount' => [1 => 50, 2 => 60, 3 => 70],
     ],
 
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
@@ -424,7 +429,14 @@ return [
     //   Also read by MerchantService for Corvan's buy offers (game.merchant.commodity).
     // price_variance: ±fraction applied to base price (pseudo-random per offer).
     // trader_discount: Rank 0 = no trader. Rank 1 gives 10% — Junior must have visible value.
-    //   Also read by MerchantService for Corvan's prices (Konsul pflegt die Kontakte).
+    //   The Konsul source of the Cantina channel's Handelsvorteil (A13): read ONLY by
+    //   TradeAdvantageService and added there to the other sources — never baked into
+    //   offers at generation time (offers store base terms only).
+    // trade_terms: Handelsvorteil rules (GDD §12, A13).
+    //   fixed_price_offers: Corvan's sell lots (visit_id set, Credits on the get side)
+    //     get neither Handelsvorteil nor negotiation — Verkaufs-Credits are fixed.
+    //   silent_cap: silent guard rail per channel, never a player-facing rule (current
+    //     sources max out at 0.54 / 0.24 / 0.24, well below these).
     // guest_count: [min, max] NPC guests per tick keyed by trader rank. Guests only
     //   ever barter (resource↔resource) — Credits-Handel moved entirely to Corvan
     //   (GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina",
@@ -441,6 +453,13 @@ return [
         'base_prices' => [3 => 25, 4 => 110, 5 => 50], // regolith, compounds, organics
         'price_variance' => 0.20,
         'trader_discount' => [0 => 0.00, 1 => 0.10, 2 => 0.20, 3 => 0.30],
+        'trade_terms' => [
+            'fixed_price_offers' => true,
+            'silent_cap' => ['bar' => 0.60, 'merchant' => 0.60, 'nexus' => 0.25],
+            // Silent guard rail on the TOTAL Cantina-Verhandlung success chance (rank base +
+            // trade knowledge); never explained to the player (GDD §12, A13).
+            'negotiate_chance_max' => 0.95,
+        ],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'offer_duration' => 2,  // fallback when bar level unknown
         'ap_cost_accept' => 2,  // 1→2 with the shared AP pool (GDD §13.6 Handlungs-AP): trades compete with build/knowledge projects
@@ -449,11 +468,14 @@ return [
 
         // Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — Konsul (advisor_trader)
         // muss zugewiesen und verfügbar sein (kein Rang-Minimum über Rang 1 hinaus).
-        // AP ist bewusst NICHT der eigentliche Deckel (siehe GDD): der Preis ist der
-        // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf.
-        'ap_cost_negotiate' => 4,  // 3→4, same reason as ap_cost_accept
-        'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
-        'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
+        // Owner-Entscheidung A13 (2026-09-20, game-designer-kalibriert, Kalibrierung offen):
+        // Verhandeln kostet gleich viele AP wie Annehmen — der Preis des Risikos ist der
+        // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf, nicht AP-Rechnerei.
+        // Der Aufschlag ist konstant und wirkt additiv auf die Get-Seite (base x (1 + Handelsvorteil
+        // + Aufschlag)); die Chance steigt mit dem Rang (+ trade-Kenntnis, knowledge.php).
+        'ap_cost_negotiate' => 2,  // = ap_cost_accept
+        'negotiate_success_chance' => [0 => 0.0, 1 => 0.60, 2 => 0.65, 3 => 0.70],
+        'negotiate_bonus' => [0 => 0.0, 1 => 0.20, 2 => 0.20, 3 => 0.20],
 
         // Cantina-Begegnungspool (GDD §12 Kanal 1, Owner-Entscheidung F3/2026-09-09):
         // replaces the struck Konsul-Handelsvertrag as the Pfad-C Credits lever. One
@@ -772,7 +794,8 @@ return [
     //
     // Each Corvan visit carries two independent offer layers:
     //   1. commodity (below) — Alltagsgeschäft: buy (Credits→Regolith/Compounds/
-    //      Organics, reusing game.bar.base_prices/trader_discount) + sell
+    //      Organics, reusing game.bar.base_prices; the Konsul's Handelsvorteil is
+    //      applied on top at accept time, not baked in) + sell
     //      (Organics→Credits, the §4b Pfad-C-Hebel). Persisted as bar_offers rows
     //      with visit_id set — same accept/negotiate/AP pipeline as guest offers.
     //   2. items (below) — the curated special inventory (AP packages, ships,
@@ -789,6 +812,25 @@ return [
         'interval_max' => 8,   // maximum Sols between visits (Direction 1: was 15)
         'duration_ticks' => 2,    // how many Sols the merchant stays (inclusive)
         'items_count' => 3,    // items offered per visit (3 default, up to 4)
+
+        // Marktbericht (Konsul, GDD §12, A13): the Konsul announces Corvan's next
+        // visit ahead of time. Pure planning information — never changes the visit
+        // rhythm (interval_min/max stay Konsul-independent). Windows must not
+        // overlap, which holds because interval_min (5) exceeds the largest lead.
+        // Lead in Sols per Konsul rank (index = rank; rank 0 = no Konsul = no notice).
+        'forecast_sols' => [0 => 0, 1 => 1, 2 => 2, 3 => 3],
+        // From this rank on, the announcement also lists the special-inventory
+        // categories of the coming visit (never the Alltagsgeschäft lots).
+        'forecast_inventory_min_rank' => 3,
+        // Item type → announced category (translation key colony.merchant_category_*).
+        // Order defines the display order of the category list.
+        'forecast_categories' => [
+            'ap_flex' => 'ap_package',
+            'ap_targeted' => 'ap_package',
+            'information' => 'information',
+            'repair_kit' => 'one_time',
+            'trust_boost' => 'one_time',
+        ],
         'items' => [
             'ap_flex' => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
             'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 15],

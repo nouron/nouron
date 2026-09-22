@@ -39,8 +39,9 @@ return [
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
         // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
         // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
-        // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
+        // Wirkt auf ALLE Gebäude-Levelups (Owner-Entscheidung: keine Domänentrennung nach
+        // Projekttyp, da nur Bau-Projekte existieren). Einzige Quelle des Pools seit A13
+        // (2026-09-20); trade war bis dahin additiv beteiligt.
         'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
     ],
 
@@ -101,19 +102,20 @@ return [
         'max_status_points' => 20,
         'credits' => 0,
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
-        // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
-        // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit construction auf ALLE Gebäude-Levelups (Owner-Entscheidung:
-        // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
-        'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
+        // Kein Bau-AP-Rabatt mehr: bis 2026-09-20 senkte trade die AP-Kosten von Gebäude-
+        // Levelups (Σ15%, additiv mit construction). Owner-Entscheidung (A13): thematisch
+        // falsch — Handel wirkt auf Preise, Angebote und Verhandlung, nicht auf Bauprojekte.
         // Cantina-Angebotsslot-Bonus (Task 4 dieses Plans) — zusätzliche gleichzeitige
         // Bar-Angebote bei höherem trade-Level.
         'bar_offer_boost_per_lv' => [1 => 0, 2 => 1, 3 => 1, 4 => 0, 5 => 0],   // Σ2 Slots
         // Additiver Preis-Bonus auf ALLE 3 Handelskanäle, zusätzlich zum bestehenden
         // TradingPostService-Kanalrabatt — additives Stacking mehrerer Quellen ist
-        // etablierte Projekt-Konvention (siehe construction+cartography+trade auf dem
-        // Gebäude-AP-Rabatt-Pool). Owner-Entscheidung 2026-08-27, Platzhalter-Größe (ADR 0004).
+        // etablierte Projekt-Konvention. Owner-Entscheidung 2026-08-27, Platzhalter-Größe (ADR 0004).
         'trade_price_bonus_per_lv' => [1 => 2, 2 => 3, 3 => 3, 4 => 2, 5 => 2],
+        // Verhandlungsführung: Prozentpunkte auf die Erfolgschance der Cantina-Verhandlung
+        // (game.bar.negotiate_success_chance), kumulativ über die Level (Σ8 bei Lv5). Wirkt nur,
+        // wenn ein Konsul verhandelt. Owner-Entscheidung A13 2026-09-20, Kalibrierung offen.
+        'negotiate_chance_bonus_per_lv' => [1 => 1, 2 => 2, 3 => 2, 4 => 2, 5 => 1],
     ],
 
     'defense' => [

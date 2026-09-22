@@ -19,12 +19,6 @@ class HangarService
     private const REPAIR_SP_PER_AP = 2;  // status_points restored per AP spent
 
     /**
-     * Credits discount applied per AP the Konsul advisor spends during ship negotiation.
-     * Tune here — never hardcode in callers.
-     */
-    private const CONSUL_AP_DISCOUNT = 50;
-
-    /**
      * Map ship DB IDs → ships.php config keys so we can read nexus_cost / nexus_delivery_ticks.
      */
     private const SHIP_ID_TO_CONFIG_KEY = [
@@ -184,6 +178,72 @@ class HangarService
             ->max('level') ?? 0);
     }
 
+    /**
+     * Rank of the assigned, available (not on a mission) Konsul (trader advisor);
+     * 0 when none is assigned or he is unavailable. Same source as
+     * BarService::traderRank() — kept here because BarService depends on this
+     * service (no circular injection).
+     */
+    public function consulRank(int $colonyId): int
+    {
+        return (int) (DB::table('advisors')
+            ->where('colony_id', $colonyId)
+            ->where('personell_id', (int) config('advisors.trader.id', 92))
+            ->whereNull('unavailable_until_tick')
+            ->value('rank') ?? 0);
+    }
+
+    /**
+     * Credits discount per AP invested in the Konsul negotiation, scaled by the
+     * Konsul's rank (config game.hangar.consul_ap_discount). 0 without a Konsul.
+     * Single source for both the request execution and the hangar UI preview.
+     */
+    public function consulApDiscountPerAp(int $colonyId): int
+    {
+        $rank = $this->consulRank($colonyId);
+
+        return $rank > 0 ? (int) (config('game.hangar.consul_ap_discount')[$rank] ?? 0) : 0;
+    }
+
+    /**
+     * Highest useful negotiation AP for a ship — the AP amount that drives its
+     * price to 0. 0 when no Konsul is available or the ship is unknown.
+     */
+    public function maxConsulAp(int $colonyId, int $shipId): int
+    {
+        $perAp = $this->consulApDiscountPerAp($colonyId);
+        $configKey = self::SHIP_ID_TO_CONFIG_KEY[$shipId] ?? null;
+        if ($perAp <= 0 || $configKey === null) {
+            return 0;
+        }
+
+        return (int) ceil((int) config("ships.{$configKey}.nexus_cost", 0) / $perAp);
+    }
+
+    /**
+     * Data for the Nexus request modal: per ship the base cost, delivery ticks and
+     * max useful negotiation AP, plus the Konsul discount per AP. Uses the same
+     * helpers as requestShip() so preview and execution cannot diverge.
+     *
+     * @return array{consul_ap_discount: int, ships: array<int, array{cost: int, delivery_ticks: int, max_consul_ap: int}>}
+     */
+    public function getShipRequestCatalog(int $colonyId): array
+    {
+        $ships = [];
+        foreach (self::SHIP_ID_TO_CONFIG_KEY as $shipId => $configKey) {
+            $ships[$shipId] = [
+                'cost' => (int) config("ships.{$configKey}.nexus_cost", 0),
+                'delivery_ticks' => (int) config("ships.{$configKey}.nexus_delivery_ticks", 1),
+                'max_consul_ap' => $this->maxConsulAp($colonyId, $shipId),
+            ];
+        }
+
+        return [
+            'consul_ap_discount' => $this->consulApDiscountPerAp($colonyId),
+            'ships' => $ships,
+        ];
+    }
+
     // ── Write ─────────────────────────────────────────────────────────────────
 
     /**
@@ -199,7 +259,8 @@ class HangarService
      * @param  int  $shipId  Must be one of ALLOWED_SHIP_IDS.
      * @param  bool  $useNexusCredit  Take the ship on debt (no upfront Credits).
      * @param  int  $consulApSpent  AP invested by the Konsul advisor — each AP reduces
-     *                              the final credit cost by CONSUL_AP_DISCOUNT Cr.
+     *                              the final credit cost by consulApDiscountPerAp() Cr
+     *                              (rank-scaled). Requires an available Konsul when > 0.
      *
      * @throws RuntimeException on validation or insufficient credit failures.
      */
@@ -222,6 +283,10 @@ class HangarService
             throw new RuntimeException('consulApSpent must be zero or positive.');
         }
 
+        if ($consulApSpent > 0 && $this->consulRank($colonyId) < 1) {
+            throw new RuntimeException(__('colony.hangar_consul_required'));
+        }
+
         if ($consulApSpent > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($consulApSpent > $availableAp) {
@@ -236,8 +301,8 @@ class HangarService
         $baseCost = (int) config("ships.{$configKey}.nexus_cost", 0);
         $deliveryTicks = (int) config("ships.{$configKey}.nexus_delivery_ticks", 1);
 
-        // Apply Konsul discount — each AP reduces cost, floor at 0 (cannot go negative).
-        $discount = $consulApSpent * self::CONSUL_AP_DISCOUNT;
+        // Apply Konsul discount — each AP reduces cost (rank-scaled), floor at 0.
+        $discount = $consulApSpent * $this->consulApDiscountPerAp($colonyId);
         $finalCost = max(0, $baseCost - $discount);
 
         $currentTick = $this->tickService->getTickCount();

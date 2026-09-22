@@ -26,8 +26,7 @@
                 nexusImportDelayedSuccess: @json(__("colony.nexus_import_delayed_success")),
                 nexusImportDelayedError: @json(__("colony.nexus_import_delayed_error")),
             },
-            compoundImportPrice: {{ (int) $compoundImportPrice }},
-            delayedImportPrices: @json($delayedImportPrices),
+            nexusImportPrices: @json(collect($nexusImport["resources"])->map(fn($row) => $row["price"])),
         };
     </script>
 
@@ -237,11 +236,16 @@
             @if ($uplinkLevel < 1)
                 <p class="cc-card-hint cc-card-hint--warning">{{ __("colony.nexus_import_uplink_required") }}</p>
             @endif
+            @include("colony.partials.nexus-import-prices", [
+                "nexusImport" => $nexusImport,
+                "resourceIds" => [4],
+            ])
             <div class="nexus-import-controls">
                 <input type="number" min="1" max="9999" x-model.number="nexusImportAmount"
                     class="nexus-import-amount" @if ($uplinkLevel < 1) disabled @endif
                     aria-label="{{ __("colony.nexus_import_amount") }}">
-                <span class="nexus-import-total" x-text="`${(nexusImportAmount || 0) * compoundImportPrice} Cr`"></span>
+                <span class="nexus-import-total"
+                    x-text="`${(nexusImportAmount || 0) * (nexusImportPrices[4] || 0)} Cr`"></span>
                 <button class="nexus-import-btn"
                     :disabled="{{ $uplinkLevel < 1 ? "true" : "!nexusImportAmount || nexusImportAmount < 1" }}"
                     @click="doNexusImport()">{{ __("colony.nexus_import_confirm") }}</button>
@@ -259,6 +263,10 @@
             @if ($uplinkLevel < 1)
                 <p class="cc-card-hint cc-card-hint--warning">{{ __("colony.nexus_import_uplink_required") }}</p>
             @endif
+            @include("colony.partials.nexus-import-prices", [
+                "nexusImport" => $nexusImport,
+                "resourceIds" => [3, 5],
+            ])
             <div class="nexus-import-controls">
                 <select x-model.number="nexusImportDelayedResourceId" class="nexus-import-resource"
                     @if ($uplinkLevel < 1) disabled @endif
@@ -270,7 +278,7 @@
                     class="nexus-import-amount" @if ($uplinkLevel < 1) disabled @endif
                     aria-label="{{ __("colony.nexus_import_delayed_amount") }}">
                 <span class="nexus-import-total"
-                    x-text="`${(nexusImportDelayedAmount || 0) * (delayedImportPrices[nexusImportDelayedResourceId] || 0)} Cr`"></span>
+                    x-text="`${(nexusImportDelayedAmount || 0) * (nexusImportPrices[nexusImportDelayedResourceId] || 0)} Cr`"></span>
                 <button class="nexus-import-btn"
                     :disabled="{{ $uplinkLevel < 1 ? "true" : "!nexusImportDelayedAmount || nexusImportDelayedAmount < 1" }}"
                     @click="doNexusImportDelayed()">{{ __("colony.nexus_import_delayed_confirm") }}</button>

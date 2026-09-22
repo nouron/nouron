@@ -11,6 +11,7 @@ use App\Services\ColonyTileService;
 use App\Services\EventService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
+use App\Services\NexusImportService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
 use App\Services\ProjectBonusService;
@@ -44,6 +45,7 @@ class ColonyController extends BaseController
         private readonly ProjectBonusService $projectBonusService,
         private readonly BuildingUnlockService $buildingUnlockService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly NexusImportService $nexusImportService,
     ) {
         parent::__construct($tick);
     }
@@ -678,7 +680,7 @@ class ColonyController extends BaseController
             return $this->fail('max_level_reached');
         }
 
-        // Construction/trade knowledge additively discounts the AP
+        // Construction knowledge (plus any active discount voucher) discounts the AP
         // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
         // and-encounters-design.md §2). Level-up Regolith is charged on the click that
         // STARTS the cycle (ap_spend 0 → >0) — mirrors the erect-cost pattern (paid at
@@ -924,8 +926,8 @@ class ColonyController extends BaseController
             return $this->fail('uplink_required', __('colony.nexus_import_uplink_required'));
         }
 
-        $price = (int) config('game.economy.compound_import_price', 90);
-        $totalCost = $amount * $price;
+        $unitPrice = $this->nexusImportService->unitPrice($colony->id, NexusImportService::RES_COMPOUNDS);
+        $totalCost = $amount * $unitPrice;
 
         if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id)) {
             return $this->fail('credit_limit', __('colony.nexus_import_no_credits'));
@@ -939,7 +941,7 @@ class ColonyController extends BaseController
             'tick' => $this->getTick(),
             'event' => 'colony.compounds_imported',
             'area' => 'colony',
-            'parameters' => json_encode(['colony_id' => $colony->id, 'amount' => $amount, 'cost' => $totalCost]),
+            'parameters' => json_encode(['colony_id' => $colony->id, 'amount' => $amount, 'cost' => $totalCost, 'unit_price' => $unitPrice]),
         ]);
 
         $credits = (int) (DB::table('user_resources')->where('user_id', $colony->user_id)->value('credits') ?? 0);
@@ -949,6 +951,7 @@ class ColonyController extends BaseController
             'ok' => true,
             'amount' => $amount,
             'cost' => $totalCost,
+            'unit_price' => $unitPrice,
             'credits' => $credits,
             'compounds' => $compounds,
         ]);
@@ -964,10 +967,8 @@ class ColonyController extends BaseController
      */
     public function nexusImportResource(Request $request): JsonResponse
     {
-        $priceMap = config('game.economy.delayed_import_price', [3 => 35, 5 => 65]);
-
         $data = $request->validate([
-            'resource_id' => ['required', 'integer', Rule::in(array_keys($priceMap))],
+            'resource_id' => ['required', 'integer', Rule::in([NexusImportService::RES_REGOLITH, NexusImportService::RES_ORGANICS])],
             'amount' => 'required|integer|min:1|max:9999',
         ]);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -984,8 +985,8 @@ class ColonyController extends BaseController
             return $this->fail('uplink_required', __('colony.nexus_import_uplink_required'));
         }
 
-        $price = (int) ($priceMap[$resourceId] ?? 0);
-        $totalCost = $amount * $price;
+        $unitPrice = $this->nexusImportService->unitPrice($colony->id, $resourceId);
+        $totalCost = $amount * $unitPrice;
 
         if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id)) {
             return $this->fail('credit_limit', __('colony.nexus_import_no_credits'));
@@ -1015,6 +1016,7 @@ class ColonyController extends BaseController
                 'resource_id' => $resourceId,
                 'amount' => $amount,
                 'cost' => $totalCost,
+                'unit_price' => $unitPrice,
                 'deliver_at_tick' => $deliverAtTick,
             ]),
         ]);
@@ -1026,6 +1028,7 @@ class ColonyController extends BaseController
             'resource_id' => $resourceId,
             'amount' => $amount,
             'cost' => $totalCost,
+            'unit_price' => $unitPrice,
             'credits' => $credits,
             'deliver_at_tick' => $deliverAtTick,
             'delivery_ticks' => $deliveryTicks,

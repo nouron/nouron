@@ -34,6 +34,7 @@ function hangarCarousel(config) {
         // New acquisition model data
         shipCosts: config.shipCosts ?? {},
         canUseNexusCredit: config.canUseNexusCredit ?? false,
+        consulApDiscount: config.consulApDiscount ?? 0,
         hasAktivierterKonsul: config.hasAktivierterKonsul ?? false,
         verfuegbareVerhandlungsAP: config.verfuegbareVerhandlungsAP ?? 0,
         pendingShips: config.pendingShips ?? [],
@@ -112,23 +113,44 @@ function hangarCarousel(config) {
         },
 
         /**
-         * Returns the credit savings for the current consul AP selection (50 Cr per AP).
+         * Returns the credit savings for the current consul AP selection
+         * (rank-scaled Cr per AP, provided by the server as consulApDiscount).
          */
         get consulApSavings() {
             const ap = this.requestModal.consulApSpent ?? 0;
-            return ap > 0 ? '−' + ap * 50 + ' Cr' : '';
+            return ap > 0 ? '−' + ap * this.consulApDiscount + ' Cr' : '';
+        },
+
+        /**
+         * Upper bound for the negotiation slider: the AP that makes the most expensive
+         * ship free (server-provided max_consul_ap), capped by the available AP.
+         */
+        get consulApSliderMax() {
+            const maxUseful = Math.max(0, ...Object.values(this.shipCosts).map((e) => e.max_consul_ap ?? 0));
+            return Math.min(this.verfuegbareVerhandlungsAP, maxUseful);
+        },
+
+        /**
+         * Negotiation AP actually worth spending on a ship — never more than the AP that
+         * already drives its price to 0.
+         * @param {number} shipId
+         * @returns {number}
+         */
+        consulApFor(shipId) {
+            const max = this.shipCosts[shipId]?.max_consul_ap ?? 0;
+            return Math.min(this.requestModal.consulApSpent ?? 0, max);
         },
 
         /**
          * Returns the effective cost for a given ship after applying consul AP discount.
-         * Each AP spent reduces cost by 50 Cr; result is clamped to 0.
+         * Each AP spent reduces cost by consulApDiscount Cr (rank-scaled); result is clamped to 0.
          * @param {number} shipId
          * @returns {number}
          */
         effectiveCostFor(shipId) {
             const entry = this.shipCosts[shipId];
             if (!entry) return 0;
-            const discount = (this.requestModal.consulApSpent ?? 0) * 50;
+            const discount = this.consulApFor(shipId) * this.consulApDiscount;
             return Math.max(0, entry.cost - discount);
         },
 
@@ -346,7 +368,7 @@ function hangarCarousel(config) {
                     instance_id: this.requestModal.instanceId,
                     ship_id: shipId,
                     use_nexus_credit: this.requestModal.useNexusCredit ? 1 : 0,
-                    consul_ap_spent: this.requestModal.consulApSpent ?? 0,
+                    consul_ap_spent: this.consulApFor(shipId),
                 });
                 if (res.ok) {
                     this.pendingShips = res.pending;

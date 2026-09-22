@@ -2988,6 +2988,36 @@ dialog[x-ref="discoveryDialog"] {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* ── Marktbericht (Konsul, A13) — quiet, non-interactive notice above the
+   character banners; deliberately not clickable (planning information only). */
+.market-report {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--pico-border-radius, 6px);
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--pico-muted-border-color, #ddd);
+}
+
+.market-report > i {
+    font-size: 1.25rem;
+    color: var(--color-accent, #8c2030);
+    flex-shrink: 0;
+}
+
+.market-report__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.market-report__text span {
+    font-size: 0.82rem;
+    color: var(--pico-muted-color, #666);
+}
+
 /* ── Orin (corporate_rep) — Harvester second-instance offer banner ──────────
    (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle", Weg A). A fixed banner
    rather than a scene hotspot — no reserved position exists for a rare,
@@ -3031,4 +3061,208 @@ dialog[x-ref="discoveryDialog"] {
 
 .corporate-contact-banner__price {
     flex-shrink: 0;
+}
+
+/* ── Handelsvorteil (A13 P2b, GDD §12) ────────────────────────────────────
+   Cantina header line, Corvan/Orin price lines and hints, and the offer dialog's
+   source breakdown. Quiet by design: the numbers do the talking. */
+
+.trade-advantage-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--color-border, #e8e8ec);
+    border-radius: var(--pico-border-radius, 6px);
+}
+
+.trade-advantage-bar > i {
+    color: var(--color-success-fg, #166534);
+    flex-shrink: 0;
+}
+
+.trade-price-line,
+.trade-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.trade-price-line {
+    color: var(--color-success-fg, #166534);
+    font-weight: 500;
+}
+
+.trade-hint {
+    font-style: italic;
+}
+
+.trade-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.merchant-item-bar__price {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.merchant-item-bar__base {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-terms {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--pico-muted-border-color, #e8e8ec);
+    border-radius: 6px;
+    font-size: 0.88rem;
+}
+
+.offer-terms__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.offer-terms__label {
+    color: var(--color-text-secondary, #6b6b7a);
+    min-width: 0;
+}
+
+.offer-terms__value {
+    text-align: right;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+}
+
+.offer-terms__value--percent,
+.offer-terms__value--nowrap {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Basisangebot: label and "20 Regolith → 10 Organika" on one line if they fit, else the value drops below */
+.offer-terms__row--base {
+    flex-wrap: wrap;
+    row-gap: 0.1rem;
+}
+
+.offer-terms__row--base .offer-terms__value {
+    margin-left: auto;
+}
+
+/* One source per line, indented under "Dein Handelsvorteil" */
+.offer-terms__row--source {
+    padding-left: 1rem;
+    font-size: 0.82rem;
+}
+
+.offer-terms__row--source .offer-terms__value {
+    font-weight: 500;
+}
+
+.offer-terms__row--result {
+    margin-top: 0.3rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--color-border-strong, #d0d0dc);
+    align-items: center;
+}
+
+.offer-terms__row--result .offer-terms__label {
+    color: var(--color-text-primary, #1a1a1e);
+    font-weight: 600;
+}
+
+.offer-terms__plus {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-success-fg, #166534);
+}
+
+.offer-terms__swap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.offer-terms__arrow {
+    font-size: 1.25rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.offer-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+}
+
+.offer-action .tile-action-btn {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.offer-action__outcome {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    padding-left: 0.15rem;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.offer-action__lose {
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--color-border-strong, #d0d0dc);
+}
+
+.offer-note {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-status {
+    font-size: 0.88rem;
+}
+
+.offer-status--ok {
+    color: var(--color-success-fg, #166534);
+}
+
+.offer-status--fail {
+    color: var(--pico-del-color, #c0392b);
 }

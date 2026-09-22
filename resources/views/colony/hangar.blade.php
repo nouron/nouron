@@ -20,6 +20,7 @@
             {{-- New acquisition model data — controller provides these; fall back to safe defaults --}}
             shipCosts: @json($shipCosts ?? []),
             canUseNexusCredit: @json($canUseNexusCredit ?? false),
+            consulApDiscount: @json($consulApDiscount ?? 0),
             hasAktivierterKonsul: @json($hasAktivierterKonsul ?? false),
             verfuegbareVerhandlungsAP: @json($verfuegbareVerhandlungsAP ?? 0),
             pendingShips: @json($pendingShips ?? []),
@@ -417,7 +418,7 @@
                                 <span x-text="i18n.consulApTitle"></span>
                                 <strong x-text="consulApSavings"></strong>
                             </div>
-                            <input type="range" min="0" :max="verfuegbareVerhandlungsAP"
+                            <input type="range" min="0" :max="consulApSliderMax"
                                 x-model.number="requestModal.consulApSpent">
                         </label>
                     </template>

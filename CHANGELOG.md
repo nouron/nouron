@@ -1,7 +1,23 @@
 # Changelog
 
+## 2026-09-22
+
+- Feature: A13 P4 — Nexus-Kanal: Handelsposten Stufe III wirkt jetzt auf den Preis des Nexus-Direktimports (`NexusImportService`, neuer Handelsvorteil-Kanal `nexus`, ersetzt `corporate_contact` als Kanalnamen) sowie weiterhin auf Orins Angebot — die Lieferzeit bleibt unverändert eine reine Uplink-Station-Frage.
+- Doku: A13 P7 — GDD §4/§8b/§12/§13.4 von „Konzeptstand A13"/„noch nicht im Code" auf den tatsächlichen Code-Stand umgestellt; `docs/game-reference.md` um Abschnitt „7a. Handel & Konsul" ergänzt; alle `TODO(content-writer)`-Platzhalter in `lang/de/colony.php` finalisiert (u.a. Grammatik-Fix der Verhandeln-Fehlschlag-Meldung).
+- Balance: A13 P8 — Bot-Batch (8 Seeds) zur Absicherung des neuen Handels-/Verhandeln-Codes: 7/8 Runs abgeschlossen, keine Regressionen. Damit ist der gesamte A13-Handels-/Konsul-Umbau (P1–P8) abgeschlossen.
+
+## 2026-09-21
+
+- Feature: A13 P2a — zentraler Handelsvorteil-Dienst (`TradeAdvantageService`): Konsul-Rang (nur Cantina), Handelsposten und Kenntnis `trade` werden additiv aus sichtbaren Quellen berechnet. Bar-Angebote speichern nur noch Basiskonditionen (Konsul-Rabatt nicht mehr eingebacken); die Cantina erhöht die Get-Menge, Sonderinventar und Orin senken den Preis. Corvans Verkaufslose sind Festpreis und nicht verhandelbar (schließt eine Arbitrage aus). Migration löscht offene Alt-Angebote — nach dem Deploy `php artisan migrate`.
+- Feature: A13 P3 — Verhandeln neu: kostet wie Annehmen 2 AP (danach Annehmen 0 AP), Erfolgschance 60/65/70 % je Konsul-Rang plus Kenntnis `trade` (bis +8 Prozentpunkte), Aufschlag +20 % additiv zum Handelsvorteil statt eingefrorener Mengen; der Handelsposten wirkt auch bei verhandelten Angeboten. Ein Test sichert ab, dass Verhandeln je nach Build weder immer besser noch immer schlechter als Annehmen ist.
+- Feature: A13 P2b — Angebotsdialog mit Quellen-Aufschlüsselung: Basisangebot, Handelsvorteil je Quelle, Ergebnis „+X gegenüber Basis", Erfolgs-/Fehlschlag-Chance mit Aufschlüsselung, Hinweise für fehlende Quellen; Cantina-Kopfzeile sowie Preiszeilen bei Sonderinventar und Orin. Behebt einen hängenden „Verhandlung erfolgreich"-Toast in späteren Dialogen.
+
 ## 2026-09-20
 
+- Refactor: A13 — Kenntnis `trade` senkt keine Bau-AP-Kosten mehr (Owner: thematisch falsch). Der Bau-Rabatt-Pool wird nur noch von `construction` gespeist (max. 15 %); `trade` behält Angebots-Slots und Handelspreis-Bonus.
+- Feature: A13 — rangskalierte Konsul-Schiffsverhandlung (50/60/70 Cr pro AP je Rang, `game.hangar.consul_ap_discount`); Anzeige und Ausführung nutzen dieselbe Quelle. Verhandlungs-AP ohne verfügbaren Konsul werden jetzt abgelehnt (vorher gab der direkte Aufruf den Nachlass trotzdem).
+- Feature: A13 — Marktbericht: Der Konsul kündigt Corvans Besuch je nach Rang 1/2/3 Sol vorher an, ab Rang 3 mit den Kategorien des Sonderinventars (`MerchantService::getForecast()`, Hinweis im Cantina-Screen). Reine Planungsinformation, ändert den Besuchsplan nicht.
+- Doku: A13/A14 — GDD §4/§10/§12/§13 auf das neue Handelskonzept („Handelsvorteil", Konzeptstand) angepasst, der Widerspruch „mit Konsul erscheint Corvan häufiger" korrigiert; A14 im ROADMAP von „Notreparatur" auf „Überkapazität" umgestellt.
 - Feature: A15 — Kolonisten-Framing in der UI. Der Supply-Chip zeigt jetzt „KOL belegt / Kapazität" (rot bei Überschreitung) statt „SUP frei / Kapazität"; Popup, Gebäudekosten, Fehler-/Onboarding-Texte, Lobby und Nexus-DB sprechen von Kolonisten. Veralteter Popup-Text (Schiffe belegten Supply) korrigiert.
 - Feature: A6 — Trust-Warnstufen (§18.2). Trust-Chip: gelb unter 0, rot unter −10; einmalige Nexus-Funk-Warnung unter −18 (`run.nexus_trust_critical`, Schwellen in `config/game.php → run.trust_warning`). Der Event-Schlüssel musste in drei getrennten Nexus-Listen eingetragen werden (`RunProgressService`, `EventService`, `CommLogController`).
 - Fix: `db-migration-agent` durfte per Agent-Definition `migrate:fresh` ohne Einschränkung ausführen — das setzte am 2026-09-17 versehentlich die Dev-DB (`data/db/nouron.db`) zurück. Destruktive artisan-Befehle sind jetzt nur noch gegen eine Wegwerf-DB (`DB_DATABASE=/tmp/...`) erlaubt, gegen die Dev-DB nur `php artisan migrate`.

@@ -10,19 +10,21 @@ use Illuminate\Support\Facades\DB;
  * Hosts several independent AP-cost discount and price-bonus pools (GDD §13.3),
  * each sourced from its own knowledge/building level and combined additively
  * within its own pool only — no cross-pool stacking:
- *   - building-project AP discount, summed across the construction and trade
- *     knowledge curves (buildingApDiscountPercent());
+ *   - building-project AP discount, sourced from the construction knowledge
+ *     curve (buildingApDiscountPercent());
  *   - knowledge-levelup AP discount, sourced from the Analytik-Labor
  *     (sciencelab) building level (knowledgeApDiscountPercent());
  *   - navigation-AP discount for exploration and hangar mission actions,
  *     sourced from the cartography knowledge level (navigationApDiscountPercent());
  *   - trade-price bonus across all 3 trade channels, sourced from the trade
- *     knowledge level (tradePriceBonusPercent()).
+ *     knowledge level (tradePriceBonusPercent());
+ *   - Cantina-Verhandlung success-chance bonus, sourced from the trade
+ *     knowledge level (tradeNegotiateChanceBonusPercent()).
  */
 class ProjectBonusService
 {
-    /** research_id values from config/knowledge.php that discount building projects. */
-    private const DOMAIN_KNOWLEDGE_KEYS = ['construction', 'trade'];
+    /** Knowledge keys from config/knowledge.php that discount building projects (trade is thematically not one — A13). */
+    private const DOMAIN_KNOWLEDGE_KEYS = ['construction'];
 
     public function __construct(private readonly TickService $tickService) {}
 
@@ -171,6 +173,23 @@ class ProjectBonusService
             ->value('level');
 
         $curve = config('knowledge.trade.trade_price_bonus_per_lv', []);
+
+        return GameTick::cumulativeCurveYield($curve, $level);
+    }
+
+    /**
+     * Percentage points the trade knowledge adds to the Cantina-Verhandlung success
+     * chance (GDD §12/§10, A13), cumulative over the researched levels. The caller
+     * decides whether it applies at all (only when a Konsul negotiates).
+     */
+    public function tradeNegotiateChanceBonusPercent(int $colonyId): int
+    {
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', (int) config('knowledge.trade.id'))
+            ->value('level');
+
+        $curve = config('knowledge.trade.negotiate_chance_bonus_per_lv', []);
 
         return GameTick::cumulativeCurveYield($curve, $level);
     }

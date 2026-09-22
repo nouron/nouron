@@ -115,6 +115,10 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
             "informationOutcomeKey" => $informationEncounter?->outcome_key,
             "knowledgeOptions" => $knowledgeOptions,
             "devaKnowledgeChoices" => $devaKnowledgeChoices,
+            "resourceLabels" => $resourceLabels,
+            "negotiateFailedTemplate" => __("colony.bar_offer_negotiate_failed"),
+            // Offers negotiated earlier (is_negotiated in the DB) start flagged in the dialog.
+            "negotiatedOffers" => (object) $negotiatedOffers,
         ];
     @endphp
 
@@ -285,6 +289,34 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
             </div>
 
+            {{-- Handelsvorteil header line (A13 P2b, GDD §12): the current Cantina advantage with
+             its sources in one quiet line — only when it is above zero. --}}
+            @if ($tradeAdvantage && $tradeAdvantage["summary"])
+                <div class="trade-advantage-bar">
+                    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+                    <span>{{ $tradeAdvantage["summary"] }}</span>
+                </div>
+            @endif
+
+            {{-- Marktbericht (Konsul, A13, GDD §12): Konsul announces Corvan's next visit.
+             Pure planning info — read-only, no action, costs nothing. --}}
+            @if ($merchantForecast !== null)
+                <div class="market-report">
+                    <i class="bi bi-megaphone" aria-hidden="true"></i>
+                    <div class="market-report__text">
+                        <strong>{{ __("colony.merchant_forecast_title") }}</strong>
+                        <span>
+                            {{ $merchantForecast["sols"] === 1 ? __("colony.merchant_forecast_tomorrow") : __("colony.merchant_forecast_in_sols", ["sols" => $merchantForecast["sols"]]) }}
+                        </span>
+                        @if ($merchantForecast["categories"] !== null)
+                            <span>
+                                {{ __("colony.merchant_forecast_inventory", ["categories" => collect($merchantForecast["categories"])->map(fn($category) => __("colony.merchant_category_" . $category))->implode(", ")]) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             {{-- Orin (corporate_rep) — Harvester second-instance offer, Weg A (GDD §4c,
              freigegeben 2026-08-05). Fetched client-side (GET
              colony.corporate-contact.offer) on page load — deliberately NOT part of
@@ -300,9 +332,14 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     <strong>{{ config("characters.corporate_rep.name") }}</strong>
                     <span>{{ __("colony.corporate_contact_banner_hint") }}</span>
                 </div>
-                <span class="corporate-contact-banner__price res-chip res-Cr" x-show="corporateContactOffer">
-                    <span class="res-abbr">Cr</span>
-                    <span class="res-amount" x-text="corporateContactOffer?.price"></span>
+                <span class="corporate-contact-banner__price" x-show="corporateContactOffer">
+                    <s class="merchant-item-bar__base"
+                        x-show="corporateContactOffer && corporateContactOffer.price < corporateContactOffer.base_price"
+                        x-text="corporateContactOffer?.base_price"></s>
+                    <span class="res-chip res-Cr">
+                        <span class="res-abbr">Cr</span>
+                        <span class="res-amount" x-text="corporateContactOffer?.price"></span>
+                    </span>
                 </span>
             </div>
 
@@ -338,10 +375,23 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     @endphp
                     <div x-show="activeModal === 'merchant'">
                         <x-cantina-dialog :portrait-src="$merchantPortraitSrc" :portrait-lg-src="$merchantPortraitLgSrc" :name="$merchantName" :role="$merchantRole">
-                            {{-- Toast feedback --}}
-                            <div x-show="toast.visible" x-transition
+                            {{-- Toast feedback — bound to this dialog, so it can never show up in another one --}}
+                            <div x-show="toast.visible && toast.modal === 'merchant'" x-transition
                                 :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
                                 aria-live="polite" role="status"></div>
+
+                            {{-- Handelsvorteil, channel "merchant" (A13 P2b): why the prices below are lower than
+                             the base price — sources in one line, or a quiet hint about what is missing. --}}
+                            @if ($merchantAdvantage["summary"])
+                                <p class="trade-price-line">{{ $merchantAdvantage["summary"] }}</p>
+                            @endif
+                            @if ($merchantAdvantage["hints"])
+                                <div class="trade-hints">
+                                    @foreach ($merchantAdvantage["hints"] as $hint)
+                                        <p class="trade-hint">{{ $hint }}</p>
+                                    @endforeach
+                                </div>
+                            @endif
 
                             <div class="merchant-items-bar"
                                 style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
@@ -350,9 +400,17 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                                         <div class="merchant-item-bar__label" x-text="item.label" :title="item.label">
                                         </div>
                                         <div class="merchant-item-bar__row">
-                                            <span class="res-chip res-Cr">
-                                                <span class="res-abbr">Cr</span>
-                                                <span class="res-amount" x-text="item.cost_credits"></span>
+                                            <span class="merchant-item-bar__price">
+                                                {{-- Base price struck through, only when the advantage lowered it --}}
+                                                <s class="merchant-item-bar__base"
+                                                    x-show="item.price_credits < item.cost_credits"
+                                                    x-text="item.cost_credits"
+                                                    data-title="{{ __("colony.merchant_price_base_title") }}"
+                                                    :title="$el.dataset.title.replace(':price', item.cost_credits)"></s>
+                                                <span class="res-chip res-Cr">
+                                                    <span class="res-abbr">Cr</span>
+                                                    <span class="res-amount" x-text="item.price_credits"></span>
+                                                </span>
                                             </span>
                                             <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
                                                 @click="buyItem(item.id)">
@@ -376,26 +434,46 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                 @endphp
                 <div x-show="activeModal === 'corporate_contact'">
                     <x-cantina-dialog :portrait-src="$corporateContactPortraitSrc" :portrait-lg-src="$corporateContactPortraitLgSrc" :name="$corporateContactName" :role="$corporateContactRole">
-                        {{-- Toast feedback --}}
-                        <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                            x-text="toast.message" aria-live="polite" role="status"></div>
+                        {{-- Toast feedback — bound to this dialog --}}
+                        <div x-show="toast.visible && toast.modal === 'corporate_contact'" x-transition
+                            :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
+                            aria-live="polite" role="status"></div>
 
-                        <p>{{ __("colony.corporate_contact_dialog_intro") }}</p>
+                        <p x-show="corporateContactOffer">{{ __("colony.corporate_contact_dialog_intro") }}</p>
 
-                        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-                            <div>
-                                <small
-                                    style="color:var(--pico-muted-color)">{{ __("colony.corporate_contact_price_label") }}</small>
-                                <span class="res-chip res-Cr">
-                                    <span class="res-abbr">Cr</span>
-                                    <span class="res-amount" x-text="corporateContactOffer?.price"></span>
-                                </span>
+                        {{-- Handelsvorteil, channel "nexus" (A13 P2b): base price -> price with its sources. --}}
+                        <template x-if="corporateContactOffer">
+                            <div style="display:flex;flex-direction:column;gap:0.35rem">
+                                <div
+                                    style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+                                    <div>
+                                        <small
+                                            style="color:var(--pico-muted-color)">{{ __("colony.corporate_contact_price_label") }}</small>
+                                        <span class="merchant-item-bar__price">
+                                            <s class="merchant-item-bar__base"
+                                                x-show="corporateContactOffer.price < corporateContactOffer.base_price"
+                                                x-text="corporateContactOffer.base_price"></s>
+                                            <span class="res-chip res-Cr">
+                                                <span class="res-abbr">Cr</span>
+                                                <span class="res-amount" x-text="corporateContactOffer.price"></span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <button class="tile-action-btn" style="width:auto;"
+                                        :disabled="corporateContactBuying" @click="buyCorporateContact()">
+                                        <span class="tile-action-btn__body">{{ __("colony.merchant_buy") }}</span>
+                                    </button>
+                                </div>
+                                <p class="trade-price-line" x-show="corporateContactOffer.advantage_view?.summary"
+                                    x-text="corporateContactOffer.advantage_view?.summary"></p>
+                                <div class="trade-hints">
+                                    <template x-for="hint in (corporateContactOffer.advantage_view?.hints ?? [])"
+                                        :key="hint">
+                                        <p class="trade-hint" x-text="hint"></p>
+                                    </template>
+                                </div>
                             </div>
-                            <button class="tile-action-btn" style="width:auto;" :disabled="corporateContactBuying"
-                                @click="buyCorporateContact()">
-                                <span class="tile-action-btn__body">{{ __("colony.merchant_buy") }}</span>
-                            </button>
-                        </div>
+                        </template>
                     </x-cantina-dialog>
                 </div>
 
@@ -403,6 +481,8 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                 @foreach ($offers as $idx => $offer)
                     @php
                         $offerId = $offer->id;
+                        $terms = $offerTerms[$offerId];
+                        $dlg = $offerDialogs[$offerId];
                         $isCorvanOffer = $offer->visit_id !== null;
                         $hsSlot = $spotForOffer[$idx % count($spotForOffer)];
                         $char = $isCorvanOffer ? null : $characterAssignment[$hsSlot] ?? null;
@@ -432,8 +512,8 @@ $offerFlavorKey =
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
                         <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
-                            {{-- Toast feedback --}}
-                            <div x-show="toast.visible" x-transition
+                            {{-- Toast feedback — bound to this dialog, so it can never show up in another one --}}
+                            <div x-show="toast.visible && toast.modal === 'offer_{{ $offerId }}'" x-transition
                                 :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
                                 aria-live="polite" role="status"></div>
 
@@ -443,50 +523,121 @@ $offerFlavorKey =
                                 </p>
                             @endif
 
-                            <div
-                                style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
-                                <div>
-                                    <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                                        {{ __("colony.bar_offer_give") }}
-                                    </div>
-                                    @include("partials.res_chip", [
-                                        "abbreviation" => $resourceAbbr[$offer->give_resource_id] ?? "?",
-                                        "amount" => $offer->give_amount,
-                                    ])
-                                </div>
-                                <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
-                                <div>
-                                    <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                                        {{ __("colony.bar_offer_get") }}
-                                    </div>
-                                    @include("partials.res_chip", [
-                                        "abbreviation" => $resourceAbbr[$offer->get_resource_id] ?? "?",
-                                        "amount" => $offer->get_amount,
-                                    ])
-                                </div>
-                            </div>
+                            @php
+                                $getAbbr = $resourceAbbr[$offer->get_resource_id] ?? "?";
+                                $giveAbbr = $resourceAbbr[$offer->give_resource_id] ?? "?";
+                            @endphp
 
-                            <div
-                                style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-                                <small style="color:var(--pico-muted-color)">
-                                    {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
-                                </small>
-                                <div style="display:flex;gap:0.5rem">
-                                    @if ($hasConsul)
-                                        <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
-                                            @click="negotiate({{ $offerId }}, $el)"
-                                            :disabled="negotiated[{{ $offerId }}] || offerResolved({{ $offerId }}) ||
-                                                loading">
-                                            <span class="tile-action-btn__body">
-                                                <span
-                                                    x-show="!negotiated[{{ $offerId }}] && negotiateResult[{{ $offerId }}] !== 'failed'">{{ __("colony.bar_offer_negotiate") }}</span>
-                                                <span x-show="negotiated[{{ $offerId }}]">✓</span>
-                                                <span x-show="negotiateResult[{{ $offerId }}] === 'failed'">✗</span>
-                                            </span>
-                                            <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
-                                                x-text="`Eco {{ $negotiateApCost }} AP`"></span>
-                                        </button>
+                            {{-- Angebotsdialog mit Quellen-Aufschlüsselung (A13 P2b, GDD §12 "Was der Angebotsdialog
+                             zeigt"): Basisangebot -> Handelsvorteil (each active source on its own line) -> result
+                             with "plus vs. base". All numbers come from BarOfferDialogPresenter, i.e. from the very
+                             same computation acceptOffer()/negotiateOffer() use — shown == booked. --}}
+                            @if ($dlg["fixed_price"])
+                                {{-- Verkaufslos: Festpreis, no Handelsvorteil, not negotiable. --}}
+                                <div class="offer-terms offer-terms--fixed">
+                                    <div class="offer-terms__swap">
+                                        @include("partials.res_chip", [
+                                            "abbreviation" => $giveAbbr,
+                                            "amount" => $dlg["give_amount"],
+                                        ])
+                                        <span class="offer-terms__arrow" aria-hidden="true">→</span>
+                                        @include("partials.res_chip", [
+                                            "abbreviation" => $getAbbr,
+                                            "amount" => $terms["get_amount"],
+                                        ])
+                                    </div>
+                                    <p class="offer-note">{{ $dlg["fixed_price_note"] }}</p>
+                                </div>
+                            @else
+                                <div class="offer-terms">
+                                    <div class="offer-terms__row offer-terms__row--base">
+                                        <span class="offer-terms__label">
+                                            {{ $dlg["credits_give"] ? __("colony.bar_offer_base_label_credits") : __("colony.bar_offer_base_label") }}
+                                        </span>
+                                        <span class="offer-terms__value offer-terms__value--nowrap">
+                                            @if ($dlg["credits_give"])
+                                                {{ $dlg["base_credits_text"] }}
+                                            @else
+                                                {{ $dlg["base_give"] }} {{ $dlg["give_label"] }} → {{ $dlg["base_get"] }}
+                                                {{ $dlg["get_label"] }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="offer-terms__row">
+                                        <span
+                                            class="offer-terms__label">{{ __("colony.bar_offer_advantage_label") }}</span>
+                                        <span
+                                            class="offer-terms__value offer-terms__value--percent">{{ $dlg["advantage"]["total_text"] }}</span>
+                                    </div>
+                                    @foreach ($dlg["advantage"]["lines"] as $line)
+                                        <div class="offer-terms__row offer-terms__row--source">
+                                            <span class="offer-terms__label">{{ $line["label"] }}</span>
+                                            <span
+                                                class="offer-terms__value offer-terms__value--percent">{{ $line["percent_text"] }}</span>
+                                        </div>
+                                    @endforeach
+                                    @if ($dlg["negotiation_percent"] !== null)
+                                        <div class="offer-terms__row" x-show="negotiated[{{ $offerId }}]">
+                                            <span
+                                                class="offer-terms__label">{{ __("colony.bar_offer_negotiation_label") }}</span>
+                                            <span
+                                                class="offer-terms__value offer-terms__value--percent">+{{ $dlg["negotiation_percent"] }}
+                                                %</span>
+                                        </div>
                                     @endif
+                                    <div class="offer-terms__row offer-terms__row--result"
+                                        x-show="!negotiated[{{ $offerId }}] && negotiateResult[{{ $offerId }}] !== 'failed'">
+                                        <span class="offer-terms__label">{{ __("colony.bar_offer_receive_label") }}</span>
+                                        <span class="offer-terms__value">
+                                            @include("partials.res_chip", [
+                                                "abbreviation" => $getAbbr,
+                                                "amount" => $dlg["amount_safe"],
+                                            ])
+                                            <span
+                                                class="offer-terms__plus">{{ __("colony.bar_offer_plus_vs_base", ["plus" => "+" . $dlg["plus_safe"]]) }}</span>
+                                        </span>
+                                    </div>
+                                    @if ($dlg["amount_negotiated"] !== null)
+                                        <div class="offer-terms__row offer-terms__row--result"
+                                            x-show="negotiated[{{ $offerId }}]">
+                                            <span
+                                                class="offer-terms__label">{{ __("colony.bar_offer_receive_label") }}</span>
+                                            <span class="offer-terms__value">
+                                                @include("partials.res_chip", [
+                                                    "abbreviation" => $getAbbr,
+                                                    "amount" => $dlg["amount_negotiated"],
+                                                ])
+                                                <span
+                                                    class="offer-terms__plus">{{ __("colony.bar_offer_plus_vs_base", ["plus" => "+" . $dlg["plus_negotiated"]]) }}</span>
+                                            </span>
+                                        </div>
+                                    @endif
+                                    @if ($dlg["credits_give"])
+                                        <p class="offer-note">{{ $dlg["price_stays_text"] }}</p>
+                                    @endif
+                                </div>
+
+                                @if ($dlg["advantage"]["hints"])
+                                    <div class="trade-hints">
+                                        @foreach ($dlg["advantage"]["hints"] as $hint)
+                                            <p class="trade-hint">{{ $hint }}</p>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            @endif
+
+                            {{-- Result of a won negotiation: replaces the former toast (which leaked into
+                             other dialogs); the negotiated amount is what Annehmen (0 AP) books. --}}
+                            @if (!$dlg["fixed_price"] && $dlg["amount_negotiated"] !== null)
+                                <div class="offer-status offer-status--ok"
+                                    x-show="negotiated[{{ $offerId }}] && !accepted[{{ $offerId }}]">
+                                    <strong>{{ __("colony.bar_offer_negotiated_label") }}</strong>
+                                    {{ $dlg["amount_negotiated"] }} {{ $dlg["get_label"] }}.
+                                </div>
+                            @endif
+
+                            <div class="offer-actions">
+                                <div class="offer-action">
                                     <button class="tile-action-btn" style="width:auto;"
                                         @click='accept({{ $offerId }}, @json($offerAcceptCharSlug), $el)'
                                         :disabled="offerResolved({{ $offerId }}) || loading">
@@ -498,16 +649,52 @@ $offerFlavorKey =
                                         <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
                                             x-text="negotiated[{{ $offerId }}] ? 'Eco 0 AP' : `Eco {{ $offerApCost }} AP`"></span>
                                     </button>
+                                    @if (!$dlg["fixed_price"])
+                                        <span class="offer-action__outcome"
+                                            x-show="!negotiated[{{ $offerId }}] && !offerResolved({{ $offerId }})">
+                                            {{ __("colony.bar_offer_accept_safe", ["amount" => $dlg["amount_safe"], "resource" => $dlg["get_label"], "plus" => "+" . $dlg["plus_safe"]]) }}
+                                        </span>
+                                    @endif
                                 </div>
+
+                                @if ($dlg["can_negotiate"])
+                                    {{-- Gone once negotiated (the "Verhandelt:" line takes over) or lost. --}}
+                                    <div class="offer-action"
+                                        x-show="!negotiated[{{ $offerId }}] && negotiateResult[{{ $offerId }}] !== 'failed'">
+                                        <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                            @click='negotiate({{ $offerId }}, $el, @json($name))'
+                                            :disabled="offerResolved({{ $offerId }}) || loading">
+                                            <span
+                                                class="tile-action-btn__body">{{ __("colony.bar_offer_negotiate") }}</span>
+                                            <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
+                                                x-text="`Eco {{ $negotiateApCost }} AP`"></span>
+                                        </button>
+                                        <span class="offer-action__outcome"
+                                            x-show="!negotiated[{{ $offerId }}] && !offerResolved({{ $offerId }})">
+                                            <span class="offer-action__win">
+                                                {{ __("colony.bar_offer_negotiate_win", ["chance" => $dlg["chance"]["total_percent"], "amount" => $dlg["amount_negotiated"], "resource" => $dlg["get_label"], "plus" => "+" . $dlg["plus_negotiated"]]) }}
+                                            </span>
+                                            @if ($dlg["chance"]["lose_percent"] > 0)
+                                                <span class="offer-action__lose">
+                                                    {{ __("colony.bar_offer_negotiate_lose", ["chance" => $dlg["chance"]["lose_percent"], "resource" => $dlg["give_label"], "ap" => $negotiateApCost]) }}
+                                                </span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="offer-notes"
+                                        x-show="!negotiated[{{ $offerId }}] && !offerResolved({{ $offerId }})">
+                                        <p class="offer-note">{{ $dlg["chance"]["breakdown"] }}</p>
+                                        <p class="offer-note">{{ $dlg["negotiation_sum"] }}</p>
+                                    </div>
+                                @endif
                             </div>
-                            <div x-show="negotiated[{{ $offerId }}] && !accepted[{{ $offerId }}]"
-                                style="color:#166534;font-size:0.85rem">
-                                {{ __("colony.bar_offer_negotiate_success") }}
-                            </div>
+
+                            <small style="color:var(--pico-muted-color)">
+                                {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
+                            </small>
                             <div x-show="negotiateResult[{{ $offerId }}] === 'failed'"
-                                style="color:var(--pico-del-color);font-size:0.85rem">
-                                {{ __("colony.bar_offer_negotiate_failed") }}
-                            </div>
+                                x-text="negotiateFailedText[{{ $offerId }}]"
+                                class="offer-status offer-status--fail"></div>
                             <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
                                 style="color:var(--pico-del-color);font-size:0.85rem"></div>
                         </x-cantina-dialog>
@@ -829,8 +1016,13 @@ $offerFlavorKey =
 
                 // Offers state
                 accepted: {},
-                negotiated: {}, // offerId -> true once a negotiation improved the offer's terms
+                // offerId -> true once a negotiation succeeded (Get-side bonus applies); offers negotiated on an
+                // earlier page view start flagged (server state, extra.negotiatedOffers).
+                negotiated: {
+                    ...(extra.negotiatedOffers ?? {})
+                },
                 negotiateResult: {}, // offerId -> 'failed' (negotiation lost the offer entirely)
+                negotiateFailedText: {}, // offerId -> failure message naming the facts (who, what stays, AP spent)
                 loading: false,
                 error: {},
 
@@ -875,27 +1067,18 @@ $offerFlavorKey =
                     chip._flashTimer = setTimeout(() => chip.classList.remove(flashClass), 700);
                 },
 
-                // Updates the "Du gibst/bekommst" chip amounts inside a specific
-                // offer's dialog to the negotiated values — the real terms now differ
-                // from what was originally displayed when the dialog was rendered.
-                updateOfferChipAmounts(btn, giveAmount, getAmount) {
-                    const dialog = btn.closest('.cantina-dialog');
-                    if (!dialog) return;
-                    const amounts = dialog.querySelectorAll('.res-amount');
-                    if (amounts[0]) amounts[0].textContent = giveAmount;
-                    if (amounts[1]) amounts[1].textContent = getAmount;
-                    this.flashChip(amounts[0]?.closest('.res-chip'), 'res-chip--flash');
-                    this.flashChip(amounts[1]?.closest('.res-chip'), 'res-chip--flash');
-                },
-
                 // Merchant state
                 merchantVisit: merchantVisit,
                 merchantItems: merchantItems ?? [],
                 buyLoading: false,
+                // Toast is bound to the dialog that raised it (`modal`): every dialog renders it only when
+                // `toast.modal` is its own name, and any dialog change hides it — so a message can never
+                // show up in a different dialog opened later.
                 toast: {
                     visible: false,
                     message: '',
-                    type: 'info'
+                    type: 'info',
+                    modal: null
                 },
                 _toastTimer: null,
 
@@ -911,6 +1094,7 @@ $offerFlavorKey =
 
                 init() {
                     this.loadCorporateContactOffer();
+                    this.$watch('activeModal', () => this.hideToast());
                 },
 
                 async loadCorporateContactOffer() {
@@ -948,8 +1132,9 @@ $offerFlavorKey =
                         });
                         const data = await res.json();
                         if (data.ok) {
+                            // The offer is gone, the dialog stays open to show the confirmation (the toast is
+                            // bound to this dialog; closing first would drop it unseen).
                             this.corporateContactOffer = null;
-                            this.closeModal();
                             this.syncResbarAmount(1, data.credits);
                             this.showToast(@json(__("colony.merchant_buy_success")), 'info');
                         } else {
@@ -1241,11 +1426,17 @@ $offerFlavorKey =
                     this.toast = {
                         visible: true,
                         message,
-                        type
+                        type,
+                        modal: this.activeModal
                     };
                     this._toastTimer = setTimeout(() => {
                         this.toast.visible = false;
                     }, 3500);
+                },
+
+                hideToast() {
+                    if (this._toastTimer) clearTimeout(this._toastTimer);
+                    this.toast.visible = false;
                 },
 
                 // Bar offer accept — characterSlug (A36's shown assignment, possibly
@@ -1282,10 +1473,10 @@ $offerFlavorKey =
                     }
                 },
 
-                // Cantina-Verhandlung — improves the offer's terms, costs more AP, and
-                // can fail (offer lost entirely). A successful negotiation does NOT
+                // Cantina-Verhandlung — flags the offer as negotiated (bonus on the Get side,
+                // costs the same AP as Annehmen) and can fail (offer lost entirely). A successful negotiation does NOT
                 // execute the trade — the player still confirms with Annehmen.
-                async negotiate(offerId, btn) {
+                async negotiate(offerId, btn, characterName) {
                     this.loading = true;
                     this.error[offerId] = null;
                     try {
@@ -1302,12 +1493,19 @@ $offerFlavorKey =
                             this.negotiated[offerId] = true;
                             // No resources move here (see backend docblock) — only AP.
                             this.syncAp(data.ap_available);
-                            this.updateOfferChipAmounts(btn, data.give_amount, data.get_amount);
-                            this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
+                            // The dialog switches to its "Verhandelt: …" state (server-rendered from the same terms
+                            // data.terms carries: base x (1 + Handelsvorteil + negotiation bonus), additive); Annehmen
+                            // then books exactly that amount at 0 AP. No toast — the message lives in the dialog.
                         } else if (data.ok && !data.success) {
                             this.negotiateResult[offerId] = 'failed';
                             this.syncAp(data.ap_available);
-                            this.showToast(@js(__("colony.bar_offer_negotiate_failed")), 'error');
+                            // Facts of the loss: nothing was traded, the Give side stays, the AP are gone.
+                            const failedText = (extra.negotiateFailedTemplate ?? '')
+                                .replace(':name', characterName)
+                                .replace(':resource', (extra.resourceLabels ?? {})[data.give_resource_id] ?? '?')
+                                .replace(':ap', data.ap_spent);
+                            // Shown inline in the dialog (persistent) — no extra toast that would repeat it.
+                            this.negotiateFailedText[offerId] = failedText;
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';
                         }

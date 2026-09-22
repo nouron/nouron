@@ -15,6 +15,8 @@ namespace Tests\Feature\Colony;
  *   - test_get_offer_requires_auth
  *   - test_get_offer_returns_offer_on_a_hit_tick
  *   - test_get_offer_returns_null_offer_when_none_active
+ *   - test_get_offer_explains_the_discount_with_base_price_and_nexus_sources (A13 P2b)
+ *   - test_get_offer_without_any_source_shows_no_discount_lines_but_a_hint (A13 P2b)
  */
 use App\Models\User;
 use App\Services\TickService;
@@ -130,5 +132,40 @@ class CorporateContactControllerTest extends TestCase
             ->getJson(route('colony.corporate-contact.offer'));
 
         $response->assertOk()->assertJsonPath('offer', null);
+    }
+
+    public function test_get_offer_explains_the_discount_with_base_price_and_nexus_sources(): void
+    {
+        app()->setLocale('de');
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 55, 'instance_id' => 1],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
+        );
+
+        $offer = $this->actingAs($this->makeUser())
+            ->getJson(route('colony.corporate-contact.offer'))->assertOk()->json('offer');
+
+        $this->assertGreaterThan($offer['price'], $offer['base_price'], 'Handelsposten III discounts the price');
+        $view = $offer['advantage_view'];
+        $this->assertSame('−12 %', $view['total_text']);
+        $this->assertSame('−12 %', $view['lines'][0]['percent_text']);
+        $this->assertSame('Handelsposten (Stufe III)', $view['lines'][0]['label']);
+        $this->assertSame('Handelsposten −12', $view['sources_text']);
+        $this->assertSame([], $view['hints']);
+        $this->assertNotContains('consul', array_column($view['lines'], 'key'), 'the Nexus channel has no Konsul source');
+    }
+
+    public function test_get_offer_without_any_source_shows_no_discount_lines_but_a_hint(): void
+    {
+        app()->setLocale('de');
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 55)->delete();
+
+        $offer = $this->actingAs($this->makeUser())
+            ->getJson(route('colony.corporate-contact.offer'))->assertOk()->json('offer');
+
+        $this->assertSame($offer['price'], $offer['base_price']);
+        $this->assertSame([], $offer['advantage_view']['lines']);
+        $this->assertCount(1, $offer['advantage_view']['hints']);
+        $this->assertStringContainsString('Stufe III', $offer['advantage_view']['hints'][0]);
     }
 }

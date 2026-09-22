@@ -52,7 +52,7 @@ class TradingPostServiceTest extends TestCase
 
         $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'bar'));
         $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'merchant'));
-        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'corporate_contact'));
+        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'nexus'));
     }
 
     public function test_level_1_unlocks_only_bar_channel(): void
@@ -62,7 +62,7 @@ class TradingPostServiceTest extends TestCase
         $expected = (float) config('buildings.tradingPost.merchant_price_bonus');
         $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'bar'));
         $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'merchant'));
-        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'corporate_contact'));
+        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'nexus'));
     }
 
     public function test_level_2_unlocks_bar_and_merchant_cumulatively(): void
@@ -72,7 +72,7 @@ class TradingPostServiceTest extends TestCase
         $expected = (float) config('buildings.tradingPost.merchant_price_bonus');
         $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'bar'));
         $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'merchant'));
-        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'corporate_contact'));
+        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'nexus'));
     }
 
     public function test_level_3_unlocks_all_three_channels(): void
@@ -82,7 +82,7 @@ class TradingPostServiceTest extends TestCase
         $expected = (float) config('buildings.tradingPost.merchant_price_bonus');
         $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'bar'));
         $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'merchant'));
-        $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'corporate_contact'));
+        $this->assertSame($expected, $this->service->discountFor(self::COLONY_ID, 'nexus'));
     }
 
     public function test_unknown_channel_returns_zero_not_an_error(): void
@@ -90,5 +90,14 @@ class TradingPostServiceTest extends TestCase
         $this->setTradingPostLevel(3);
 
         $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'not_a_real_channel'));
+    }
+
+    public function test_legacy_corporate_contact_channel_name_no_longer_exists(): void
+    {
+        $this->setTradingPostLevel(3);
+
+        $this->assertNull($this->service->requiredTier('corporate_contact'));
+        $this->assertSame(0.0, $this->service->discountFor(self::COLONY_ID, 'corporate_contact'));
+        $this->assertSame(3, $this->service->requiredTier('nexus'));
     }
 }

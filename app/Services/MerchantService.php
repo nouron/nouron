@@ -43,8 +43,7 @@ class MerchantService
         private readonly AdvisorService $advisorService,
         private readonly BarService $barService,
         private readonly ResourcesService $resourcesService,
-        private readonly TradingPostService $tradingPostService,
-        private readonly ProjectBonusService $projectBonusService,
+        private readonly TradeAdvantageService $tradeAdvantageService,
     ) {}
 
     public function getActiveVisit(int $colonyId, int $currentTick): ?object
@@ -211,18 +210,9 @@ class MerchantService
         $cfg = config('game.merchant', []);
 
         $firstMin = (int) ($cfg['first_appearance_min'] ?? 15);
-        $firstMax = (int) ($cfg['first_appearance_max'] ?? 20);
-        $intervalMin = (int) ($cfg['interval_min'] ?? 10);
-        $intervalMax = (int) ($cfg['interval_max'] ?? 15);
 
         // No spawn without a built Cantina (bar building_id=52, level > 0)
-        $barBuilt = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 52)
-            ->where('level', '>', 0)
-            ->exists();
-
-        if (! $barBuilt) {
+        if (! $this->isBarBuilt($colonyId)) {
             return false;
         }
 
@@ -241,7 +231,90 @@ class MerchantService
             return false;
         }
 
-        // Find when the last visit ended
+        return $currentTick >= $this->scheduledStartTick($colonyId);
+    }
+
+    /**
+     * Marktbericht (Konsul, GDD §12, A13): announcement of Corvan's next visit.
+     *
+     * Read-only — derives the start tick and the special-inventory picks from the
+     * same deterministic functions the tick loop uses (scheduledStartTick(),
+     * pickItems()), so forecast and actual visit always agree. Never writes and
+     * never influences the visit schedule.
+     *
+     * Visible only when an available Konsul is assigned (rank > 0), no visit is
+     * currently active, the bar is built and the visit starts within the rank's
+     * lead time (game.merchant.forecast_sols).
+     *
+     * `categories` is null below game.merchant.forecast_inventory_min_rank.
+     *
+     * @return array{sols: int, tick: int, categories: string[]|null}|null
+     */
+    public function getForecast(int $colonyId, int $currentTick): ?array
+    {
+        $cfg = config('game.merchant', []);
+
+        $rank = $this->barService->traderRank($colonyId);
+        $leadSols = (int) ($cfg['forecast_sols'][$rank] ?? 0);
+
+        if ($rank < 1 || $leadSols < 1) {
+            return null;
+        }
+
+        if ($this->getActiveVisit($colonyId, $currentTick) !== null || ! $this->isBarBuilt($colonyId)) {
+            return null;
+        }
+
+        // A start tick already in the past means the visit spawns on the next tick.
+        $startTick = max($this->scheduledStartTick($colonyId), $currentTick + 1);
+        $sols = $startTick - $currentTick;
+
+        if ($sols > $leadSols) {
+            return null;
+        }
+
+        $categories = null;
+        if ($rank >= (int) ($cfg['forecast_inventory_min_rank'] ?? 3)) {
+            $picked = $this->pickItems(
+                array_keys($cfg['items'] ?? []),
+                (int) ($cfg['items_count'] ?? 3),
+                $colonyId,
+                $startTick
+            );
+            $map = $cfg['forecast_categories'] ?? [];
+            $present = [];
+            foreach ($picked as $type) {
+                $present[$map[$type] ?? $type] = true;
+            }
+            // Display in config-defined category order, independent of pick order.
+            $ordered = array_values(array_unique(array_values($map)));
+            $categories = array_values(array_filter(
+                array_merge($ordered, array_diff(array_keys($present), $ordered)),
+                fn (string $category): bool => isset($present[$category])
+            ));
+        }
+
+        return ['sols' => $sols, 'tick' => $startTick, 'categories' => $categories];
+    }
+
+    private function isBarBuilt(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 52)
+            ->where('level', '>', 0)
+            ->exists();
+    }
+
+    /**
+     * Tick at which the next visit starts (assuming none is active): the
+     * deterministic first-appearance tick, or previous tick_end + deterministic gap.
+     * Single source of truth for shouldSpawn() and getForecast().
+     */
+    private function scheduledStartTick(int $colonyId): int
+    {
+        $cfg = config('game.merchant', []);
+
         $lastEnd = DB::table('merchant_visits')
             ->where('colony_id', $colonyId)
             ->max('tick_end');
@@ -251,21 +324,20 @@ class MerchantService
             // [first_appearance_min, first_appearance_max] — not an independent
             // per-tick probability roll, which can (and, at the tighter Direction-1
             // interval, reliably does) push the effective gap well past the max.
-            $targetTick = $this->deterministicTarget($colonyId, -1, $firstMin, $firstMax);
-
-            return $currentTick >= $targetTick;
+            return $this->deterministicTarget(
+                $colonyId,
+                -1,
+                (int) ($cfg['first_appearance_min'] ?? 15),
+                (int) ($cfg['first_appearance_max'] ?? 20)
+            );
         }
 
-        $gap = $currentTick - (int) $lastEnd;
+        $intervalMin = (int) ($cfg['interval_min'] ?? 10);
+        $intervalMax = (int) ($cfg['interval_max'] ?? 15);
 
-        // Must wait at least interval_min Sols since last visit ended
-        if ($gap < $intervalMin) {
-            return false;
-        }
-
-        $targetGap = $this->deterministicTarget($colonyId, (int) $lastEnd, $intervalMin, $intervalMax);
-
-        return $gap >= $targetGap;
+        // The gap since the last visit ended is at least interval_min Sols
+        // (deterministicTarget never returns below its min).
+        return (int) $lastEnd + $this->deterministicTarget($colonyId, (int) $lastEnd, $intervalMin, $intervalMax);
     }
 
     /**
@@ -309,14 +381,10 @@ class MerchantService
             return ['ok' => false, 'error' => 'Der Händler ist nicht mehr anwesend.'];
         }
 
-        // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — Stufe 2 schaltet
-        // den Reisender-Händler-Kanal frei. Vor dem Credits-Check berechnet, damit
-        // die Affordability-Prüfung gegen den tatsächlich fälligen Betrag läuft.
-        $discount = $this->tradingPostService->discountFor($colonyId, 'merchant')
-            + $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
-        $chargedCredits = $discount > 0.0
-            ? (int) max(1, round($item->cost_credits * (1 - $discount)))
-            : $item->cost_credits;
+        // Handelsvorteil, 'merchant' channel (GDD §12, A13) — computed BEFORE the
+        // credits check so affordability runs against the amount actually due, and
+        // through itemPrice() so it is exactly the price the listing shows.
+        $chargedCredits = $this->itemPrice($colonyId, (int) $item->cost_credits);
 
         // Check credits
         $credits = (int) (DB::table('user_resources')
@@ -359,12 +427,45 @@ class MerchantService
         ];
     }
 
+    /**
+     * What a special-inventory item of base price $baseCost actually costs this
+     * colony: Handelsvorteil of the 'merchant' channel (Handelsposten tier >= 2 +
+     * trade knowledge, no Konsul) as a price discount. Used by buyItem() AND by
+     * the listing, so the shown price is the charged price.
+     */
+    public function itemPrice(int $colonyId, int $baseCost): int
+    {
+        $advantage = $this->tradeAdvantageService->forChannel($colonyId, TradeAdvantageService::CHANNEL_MERCHANT);
+
+        return $this->tradeAdvantageService->applyToPrice($baseCost, $advantage);
+    }
+
     public function getItemsForVisit(int $visitId): Collection
     {
         return DB::table('merchant_items')
             ->where('visit_id', $visitId)
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Special-inventory items of a visit for display: every row plus the price
+     * this colony would actually be charged (price_credits) next to the base
+     * cost_credits.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getPricedItemsForVisit(int $visitId, int $colonyId): array
+    {
+        return $this->getItemsForVisit($visitId)
+            ->map(function (object $item) use ($colonyId): array {
+                $row = (array) $item;
+                $row['price_credits'] = $this->itemPrice($colonyId, (int) $item->cost_credits);
+
+                return $row;
+            })
+            ->values()
+            ->all();
     }
 
     public function markVisited(int $visitId, int $colonyId): void

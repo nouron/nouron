@@ -216,7 +216,7 @@ class CorporateContactServiceTest extends TestCase
     {
         // GDD/Owner-Entscheidung 2026-08-27: trade-Kenntnis-Preisbonus ist additiv
         // zum Handelsposten-Kanal-Rabatt, nicht davon abhängig.
-        $this->setTradingPostLevel(2); // unter dem 'corporate_contact'-Schwellenwert (3) → 0% Handelsposten-Rabatt
+        $this->setTradingPostLevel(2); // unter dem 'nexus'-Schwellenwert (3) → 0% Handelsposten-Rabatt
 
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],

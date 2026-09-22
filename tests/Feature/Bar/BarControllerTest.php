@@ -13,6 +13,10 @@ namespace Tests\Feature\Bar;
  *  INDEX
  *    - test_index_shows_bar_page
  *    - test_index_shows_bar_page_when_bar_not_built
+ *    - test_index_shows_market_report_when_visit_announced
+ *    - test_index_shows_category_line_only_at_rank_3
+ *    - test_index_uses_tomorrow_wording_for_one_sol
+ *    - test_index_hides_market_report_without_consul
  *
  *  ACCEPT
  *    - test_accept_returns_json_ok
@@ -24,6 +28,7 @@ namespace Tests\Feature\Bar;
  */
 
 use App\Models\User;
+use App\Services\MerchantService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -171,6 +176,94 @@ class BarControllerTest extends TestCase
         $response->assertOk();
         $offers = $response->viewData('offers');
         $this->assertCount(1, $offers, 'Index must pass the active offer to the view');
+    }
+
+    // ── MARKTBERICHT (Konsul, A13) ────────────────────────────────────────────
+
+    private function setConsulRank(?int $rank): void
+    {
+        DB::table('advisors')
+            ->where('colony_id', self::COLONY_ID_BART)
+            ->where('personell_id', 92)
+            ->delete();
+
+        if ($rank !== null) {
+            DB::table('advisors')->insert([
+                'colony_id' => self::COLONY_ID_BART,
+                'personell_id' => 92,
+                'user_id' => self::USER_ID_BART,
+                'rank' => $rank,
+                'active_ticks' => 0,
+            ]);
+        }
+    }
+
+    /** First tick at which Corvan's next visit starts (per the real spawn check). */
+    private function corvanStartTick(): int
+    {
+        $service = $this->app->make(MerchantService::class);
+        for ($tick = 15; $tick < 80; $tick++) {
+            if ($service->shouldSpawn(self::COLONY_ID_BART, $tick)) {
+                return $tick;
+            }
+        }
+        $this->fail('no spawn tick found');
+    }
+
+    public function test_index_shows_market_report_when_visit_announced(): void
+    {
+        $this->setBarLevel(1);
+        $this->setConsulRank(3);
+        $start = $this->corvanStartTick();
+        $this->mockTick($start - 2);
+
+        $response = $this->actingAs($this->bart())->get(route('colony.bar'));
+
+        $response->assertOk();
+        $response->assertSee(__('colony.merchant_forecast_title'));
+        $response->assertSee(__('colony.merchant_forecast_in_sols', ['sols' => 2]));
+        $response->assertViewHas('merchantForecast', fn ($f) => $f['sols'] === 2 && $f['tick'] === $start);
+    }
+
+    public function test_index_shows_category_line_only_at_rank_3(): void
+    {
+        $this->setBarLevel(1);
+        $start = $this->corvanStartTick();
+        $this->mockTick($start - 1);
+
+        $this->setConsulRank(2);
+        $rank2 = $this->actingAs($this->bart())->get(route('colony.bar'));
+        $rank2->assertSee(__('colony.merchant_forecast_title'));
+        $rank2->assertDontSee(__('colony.merchant_forecast_inventory', ['categories' => '']));
+
+        $this->setConsulRank(3);
+        $rank3 = $this->actingAs($this->bart())->get(route('colony.bar'));
+        $rank3->assertSee(__('colony.merchant_forecast_inventory', ['categories' => '']), false);
+    }
+
+    public function test_index_uses_tomorrow_wording_for_one_sol(): void
+    {
+        $this->setBarLevel(1);
+        $this->setConsulRank(1);
+        $this->mockTick($this->corvanStartTick() - 1);
+
+        $response = $this->actingAs($this->bart())->get(route('colony.bar'));
+
+        $response->assertSee(__('colony.merchant_forecast_tomorrow'));
+        $response->assertDontSee(__('colony.merchant_forecast_in_sols', ['sols' => 1]));
+    }
+
+    public function test_index_hides_market_report_without_consul(): void
+    {
+        $this->setBarLevel(1);
+        $this->setConsulRank(null);
+        $this->mockTick($this->corvanStartTick() - 1);
+
+        $response = $this->actingAs($this->bart())->get(route('colony.bar'));
+
+        $response->assertOk();
+        $response->assertDontSee(__('colony.merchant_forecast_title'));
+        $response->assertViewHas('merchantForecast', null);
     }
 
     // ── ACCEPT ────────────────────────────────────────────────────────────────
