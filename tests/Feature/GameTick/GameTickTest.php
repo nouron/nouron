@@ -20,7 +20,7 @@ use Tests\TestCase;
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *     CC (building 25):      level=10, status_points=16
  *     oremine (building 27): level=5,  status_points=11
- *     housing (building 28): level=2,  status_points=10
+ *     housing (building 28): 3 instances, levels 2+3+2 = 7, status_points=10 (each)
  *   Colony 2 (Shelbyville), user_id=0 (no player)
  *   user_resources: user 3 → supply=1938 (will be overwritten by cap model)
  */
@@ -38,14 +38,14 @@ class GameTickTest extends TestCase
 
     /**
      * Supply cap = CC_flat (10) + housing_level * 8.
-     * Colony 1: CC level=3 (>0 → flat 10), housing level=2 → cap = 10 + 16 = 26.
+     * Colony 1: CC level=3 (>0 → flat 10), housing sum=7 (3 instances, 2+3+2) → cap = 10 + 56 = 66.
      */
     public function test_supply_cap_is_set_from_cc_and_housing(): void
     {
         Artisan::call('game:tick', ['--tick' => 9001]);
 
         $supply = DB::table('user_resources')->where('user_id', 3)->value('supply');
-        $this->assertEquals(26, $supply);
+        $this->assertEquals(66, $supply);
     }
 
     /**
@@ -66,24 +66,24 @@ class GameTickTest extends TestCase
     /**
      * Supply cap sums all housing instance levels (instanced building, multiple rows per colony).
      *
-     * Colony 1 baseline: CC level=3 → flat 10. One existing housing row at level 2 → 16.
-     * Add two more housing instances at level 2 each → total housing sum = 6 → cap = 10 + (6×8) = 58.
+     * Colony 1 baseline: CC level=3 → flat 10. Three existing housing instances, levels 2+3+2 = 7 → 56.
+     * Add two more housing instances at level 2 each → total housing sum = 11 → cap = 10 + (11×8) = 98.
      */
     public function test_supply_cap_sums_all_housing_instances(): void
     {
         // Insert two additional housing instances for colony 1 (building_id=28 is instanced).
         DB::table('colony_buildings')->insert([
-            ['colony_id' => 1, 'building_id' => 28, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'instance_id' => 2],
-            ['colony_id' => 1, 'building_id' => 28, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'instance_id' => 3],
+            ['colony_id' => 1, 'building_id' => 28, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'instance_id' => 6],
+            ['colony_id' => 1, 'building_id' => 28, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'instance_id' => 7],
         ]);
 
         Artisan::call('game:tick', ['--tick' => 9004]);
 
         $supply = DB::table('user_resources')->where('user_id', 3)->value('supply');
 
-        // Total housing level sum = 2 + 2 + 2 = 6; cap_housingcomplex = 8; cap_commandcenter = 10
-        // cap = 10 + (6 × 8) = 58
-        $this->assertEquals(58, $supply);
+        // Total housing level sum = 7 (baseline) + 2 + 2 = 11; cap_housingcomplex = 8; cap_commandcenter = 10
+        // cap = 10 + (11 × 8) = 98
+        $this->assertEquals(98, $supply);
     }
 
     /**

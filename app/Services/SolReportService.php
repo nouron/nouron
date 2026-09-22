@@ -334,6 +334,36 @@ class SolReportService
             ];
         }
 
+        // Geologische Instabilität (GDD §9, ROADMAP T7): the detail line names
+        // the reason (sols since the Harvester's last relocation), not just
+        // the outage outcome — matching the storm line's state-based reasoning.
+        foreach ($events['encounter.instability_triggered'] ?? [] as $params) {
+            $sols = (int) ($params['sols_since_relocation'] ?? 0);
+            $lines[] = [
+                'label' => __('colony.sol_report_event_instability'),
+                'detail' => __('colony.sol_report_instability_detail', ['sols' => $sols]),
+                'tone' => 'warning',
+                'beat' => false,
+            ];
+        }
+
+        // Seuchenausbruch (GDD §9, ROADMAP T7): reason is either hunger or a
+        // critically low Trust — the detail line must name which one, and the
+        // corresponding value, rather than only announcing the AP debuff.
+        foreach ($events['encounter.plague_triggered'] ?? [] as $params) {
+            $reason = $params['reason'] ?? 'hunger';
+            $detail = $reason === 'trust'
+                ? __('colony.sol_report_plague_detail_trust', ['trust' => (int) ($params['trust'] ?? 0)])
+                : __('colony.sol_report_plague_detail_hunger', ['streak' => (int) ($params['hunger_streak'] ?? 0)]);
+
+            $lines[] = [
+                'label' => __('colony.sol_report_event_plague'),
+                'detail' => $detail,
+                'tone' => 'danger',
+                'beat' => true,
+            ];
+        }
+
         if (empty($lines)) {
             return null;
         }

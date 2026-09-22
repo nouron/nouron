@@ -167,10 +167,10 @@ class KnowledgeServiceTest extends TestCase
 
     public function test_supply_cap_includes_knowledge_bonus(): void
     {
-        // Colony 1: CC=10 (flat 10), housing=2 (16). No knowledge → cap=26.
+        // Colony 1: CC=10 (flat 10), housing sum=7 (56). No knowledge → cap=66.
         Artisan::call('game:tick', ['--tick' => 9101]);
         $before = (int) DB::table('user_resources')->where('user_id', $this->userId)->value('supply');
-        $this->assertEquals(26, $before);
+        $this->assertEquals(66, $before);
 
         // Unlock knowledge_health (level 1 → +3 cap per config knowledge_cap_per_level[1])
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 20);
@@ -180,6 +180,6 @@ class KnowledgeServiceTest extends TestCase
         $after = (int) DB::table('user_resources')->where('user_id', $this->userId)->value('supply');
 
         // Level 1 gives +3 (knowledge_cap_per_level[1] = 3)
-        $this->assertEquals(29, $after);
+        $this->assertEquals(69, $after);
     }
 }

@@ -382,6 +382,125 @@ class SolReportTest extends TestCase
         $this->assertSame('good', $line['tone']);
     }
 
+    // ── Instability / plague outcomes (GDD §9, ROADMAP T7) ───────────────────
+
+    /**
+     * Umsetzungslücke (ROADMAP T7): `encounter.instability_triggered` was never
+     * read by eventsGroup(), so a triggered instability outage never reached
+     * the Sol-Report even though it was already logged to the Kolonieprotokoll.
+     * The detail line must state a reason (Sole seit Standortwechsel), not just
+     * the outcome — matching the storm line's state-based reasoning.
+     */
+    public function test_instability_triggered_shows_reason_line_in_events_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'encounter.instability_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => self::COLONY_ID,
+                'instance_id' => 1,
+                'outage_until_tick' => 10,
+                'sols_since_relocation' => 42,
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before);
+
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when instability triggered');
+
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_instability'));
+        $this->assertNotNull($line, 'Expected an instability line in the events group');
+        $this->assertSame(
+            __('colony.sol_report_instability_detail', ['sols' => 42]),
+            $line['detail'],
+            'the detail line must name the reason (sols since relocation), not just the outcome'
+        );
+        $this->assertSame('warning', $line['tone']);
+    }
+
+    /**
+     * Umsetzungslücke (ROADMAP T7): `encounter.plague_triggered` was never
+     * read by eventsGroup(). The detail line must name the trigger reason
+     * (hunger vs. low trust), not just announce the debuff.
+     */
+    public function test_plague_triggered_shows_hunger_reason_line_in_events_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'encounter.plague_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => self::COLONY_ID,
+                'debuff_until_tick' => 12,
+                'reason' => 'hunger',
+                'hunger_streak' => 4,
+                'trust' => 10,
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before);
+
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when plague triggered');
+
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_plague'));
+        $this->assertNotNull($line, 'Expected a plague line in the events group');
+        $this->assertSame(
+            __('colony.sol_report_plague_detail_hunger', ['streak' => 4]),
+            $line['detail'],
+            'the detail line must name the reason (hunger streak), not just the debuff'
+        );
+        $this->assertSame('danger', $line['tone']);
+        $this->assertTrue($line['beat']);
+    }
+
+    public function test_plague_triggered_shows_trust_reason_line_in_events_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'encounter.plague_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => self::COLONY_ID,
+                'debuff_until_tick' => 12,
+                'reason' => 'trust',
+                'hunger_streak' => 0,
+                'trust' => -25,
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before);
+
+        $events = $this->groupByKey($report, 'events');
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_plague'));
+        $this->assertNotNull($line, 'Expected a plague line in the events group');
+        $this->assertSame(
+            __('colony.sol_report_plague_detail_trust', ['trust' => -25]),
+            $line['detail'],
+            'the detail line must name the reason (trust value), not just the debuff'
+        );
+    }
+
     public function test_wear_without_level_down_shows_single_neutral_line(): void
     {
         $run = $this->setRunTick(3);

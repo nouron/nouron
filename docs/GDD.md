@@ -1214,7 +1214,7 @@ Nicht zugewiesene Schiffe (`pending`) erscheinen als separate Karten am Ende des
 
 ### Außenmissionen — Missionskatalog
 
-> **Status: Implementiert** — `config/missions.php`, `HangarService::dispatchShip()`/`getMissionCatalogFor()`, `GameTick::processHangarMissions()`. Noch nicht im Katalog: `mission_perimeter_patrol` (Voraussetzung §9 ist erfüllt, Aufnahme offen — ROADMAP A18). `mission_ruin_expedition` zahlt Credits; der Almanach-Unlock folgt mit §17.
+> **Status: Implementiert** — `config/missions.php`, `HangarService::dispatchShip()`/`getMissionCatalogFor()`, `GameTick::processHangarMissions()`. `mission_ruin_expedition` zahlt Credits; der Almanach-Unlock folgt mit §17.
 
 Außenmissionen sind der einzige aktive Einsatz von Schiffen (§7 Schiffs-Verschleiß). Jede Mission ist ein ziviler Auftrag — Erkundung, Logistik, Bergung, Schutzdienst. Es gibt keine Gegner und keinen Kampf (§9-Designlinie): Das Risiko einer Mission ist ausschließlich physisch — Verschleiß pro Sol unterwegs und der automatische Abbruch bei 0 SP.
 
@@ -1254,7 +1254,7 @@ Scheitert eine Mission, entfällt die Belohnung vollständig — das Schiff kehr
 | `mission_aid_transport` | Hilfsgütertransport | Frachter | sofort (ungegatet — zweite Frachter-Mission ohne Kenntnis-Gate, deckt die Vertrauens-Lücke von Pfad B) |
 | `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | Bautechnik Lv1 |
 | `mission_escort_convoy` | Konvoi-Begleitung | Korvette | Korvette vorhanden |
-| `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | Verteidigung Lv1 — **geplant, noch nicht in `config/missions.php`** |
+| `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | Verteidigung Lv1 |
 | `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | tiefengescanntes Ruinen-Tile |
 | `mission_harvester_salvage` | Harvester-Bergung | Frachter o. Korvette | tiefengescanntes Ruinen-Tile, einmalig (§4c Weg B) |
 | `mission_long_range_expedition` | Fernexpedition | Drohne | Kartografie Lv3 |

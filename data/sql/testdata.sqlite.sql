@@ -107,6 +107,17 @@ INSERT INTO "personell_costs" VALUES(93,2,2);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,25,3,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,27,1,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,28,2,20,2);
+-- Two more housingComplex instances for colony 1 (ROADMAP T8, 2026-09-22): the single
+-- level-2 instance above only funds a 26 supply cap (10 CC flat + 16), far below what
+-- colony 1's other buildings actually use (52, see infirmary/sciencelab/hangar below) —
+-- building out housing further is the normal in-game way a player raises the cap, and
+-- is the only lever besides CC (CC's contribution is flat, not ×level, regardless of CC
+-- level — see ResourcesService::getSupplyBreakdown()). Total housing level sum = 2+3+2 = 7
+-- -> cap = 10 + 7*8 = 66, matching user_resources.supply below. Kept as separate instance
+-- rows (not a level bump on the existing row) so every "housing level=2" fixture comment
+-- elsewhere (a single-instance reading) stays literally true.
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,28,4,3,20,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,28,5,2,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,31,1,10,0,0);
 -- Infirmary (46) for colony 1: used as a generic "uncapped, upgradable building" stand-in
 -- by BuildingServiceTest/ColonyZoneDecoupleTest/BuildResourceSinkTest (ex-depot, removed 2026-06-22).
@@ -187,7 +198,12 @@ INSERT INTO "trade_resources" VALUES(2,0,4,45,45,0);
 INSERT INTO "trade_resources" VALUES(1,0,5,4,3,0);
 INSERT INTO "trade_resources" VALUES(1,0,3,100,50,0);
 
-INSERT INTO "user_resources" VALUES(3,2700,18);
+-- supply=66 (ROADMAP T8, 2026-09-22): matches the GameTick-computed cap for colony 1's
+-- CC lvl3 (flat 10) + housing sum=7 (56) = 66 — was 18, which was far below the colony's
+-- own building usage (52) and unreachable in normal play (build/levelup is supply-gated).
+-- Used supply for colony 1 = 52 (harvester 2 + sciencelab 8 + infirmary 30 + 2x hangar 12),
+-- leaving a 14-point buffer. See data/sql notes above the colony_buildings housing rows.
+INSERT INTO "user_resources" VALUES(3,2700,66);
 
 INSERT OR REPLACE INTO "user_preferences" VALUES(1,0,1,NULL,NULL,NULL,NULL,0);
 INSERT OR REPLACE INTO "user_preferences" VALUES(2,1,1,NULL,NULL,NULL,NULL,0);

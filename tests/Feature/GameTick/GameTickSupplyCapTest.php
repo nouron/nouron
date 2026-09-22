@@ -32,9 +32,9 @@ use Tests\TestCase;
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *     CC (building_id=25): level=3 → flat cap = 10
- *     housing (building_id=28): level=2 → +16
- *     Expected supply = 26 (before knowledge contribution)
- *   user_resources: user 3, credits=2700, supply=18 (overwritten by tick)
+ *     housing (building_id=28): 3 instances, levels 2+3+2 = 7 → +56
+ *     Expected supply = 66 (before knowledge contribution)
+ *   user_resources: user 3, credits=2700, supply=66 (overwritten by tick)
  *
  * Uses tick numbers 11100–11129.
  */
@@ -60,14 +60,14 @@ class GameTickSupplyCapTest extends TestCase
 
     /**
      * Supply = CC_flat (10) + housing_level × 8.
-     * Colony 1: CC level=3 (>0) → flat 10; housing level=2 → 10 + 16 = 26.
+     * Colony 1: CC level=3 (>0) → flat 10; housing sum=7 (2+3+2 across 3 instances) → 10 + 56 = 66.
      */
     public function test_supply_cap_calculated_from_cc_and_housing(): void
     {
         Artisan::call('game:tick', ['--tick' => 11100]);
 
         $supply = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply');
-        $this->assertEquals(26, $supply, 'Supply cap must equal CC_flat + housing_level × 8');
+        $this->assertEquals(66, $supply, 'Supply cap must equal CC_flat + housing_level × 8');
     }
 
     /**
@@ -104,9 +104,9 @@ class GameTickSupplyCapTest extends TestCase
     /**
      * Multiple housing instances: all levels are summed.
      *
-     * Baseline: 1 housing instance at level 2.
-     * Add 2 more instances at level 3 each → total housing = 2+3+3 = 8.
-     * Expected supply = 10 + (8 × 8) = 74.
+     * Baseline (TestSeeder): 3 housing instances, levels 2+3+2 = 7.
+     * Add 2 more instances at level 3 each → total housing = 7+3+3 = 13.
+     * Expected supply = 10 + (13 × 8) = 114.
      */
     public function test_supply_cap_sums_all_housing_instances(): void
     {
@@ -118,9 +118,9 @@ class GameTickSupplyCapTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11103]);
 
         $supply = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply');
-        // existing housing=2 + new instance 2 level=3 + new instance 3 level=3 = 8 total
-        // cap = 10 + (8 × 8) = 74
-        $this->assertEquals(74, $supply, 'Supply must sum all housing instance levels');
+        // baseline housing=7 (3 instances) + new instance 2 level=3 + new instance 3 level=3 = 13 total
+        // cap = 10 + (13 × 8) = 114
+        $this->assertEquals(114, $supply, 'Supply must sum all housing instance levels');
     }
 
     /**
@@ -150,8 +150,8 @@ class GameTickSupplyCapTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11104]);
 
         $supply = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply');
-        // base = 10 (CC) + 16 (housing level 2 × 8) = 26, plus knowledge bonus
-        $expectedSupply = min(200, 26 + $expectedBonus);
+        // base = 10 (CC) + 56 (housing sum=7 × 8) = 66, plus knowledge bonus
+        $expectedSupply = min(200, 66 + $expectedBonus);
         $this->assertEquals($expectedSupply, $supply,
             'Knowledge cap bonus must be added to the supply cap');
     }
@@ -164,9 +164,9 @@ class GameTickSupplyCapTest extends TestCase
      */
     public function test_supply_drops_to_zero_when_cc_is_removed(): void
     {
-        // First tick: CC level=3 → supply=26
+        // First tick: CC level=3 → supply=66
         Artisan::call('game:tick', ['--tick' => 11110]);
-        $this->assertEquals(26, (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply'));
+        $this->assertEquals(66, (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply'));
 
         // CC is removed (level=0)
         DB::table('colony_buildings')
@@ -191,7 +191,7 @@ class GameTickSupplyCapTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11112]);
 
         $supply = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply');
-        // Expected: 10 (CC=3 flat) + 16 (housing level 2) = 26, not 9999 or 10025
-        $this->assertEquals(26, $supply, 'Supply must be SET not incremented — previous value must not matter');
+        // Expected: 10 (CC=3 flat) + 56 (housing sum=7) = 66, not 9999 or 10065
+        $this->assertEquals(66, $supply, 'Supply must be SET not incremented — previous value must not matter');
     }
 }
