@@ -4,6 +4,7 @@ namespace Tests\Feature\Playtest;
 
 use App\Services\AdvisorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -26,6 +27,15 @@ class BotSessionNormalizeTest extends TestCase
         // as proof the gate is reachable at all. Read from the service rather
         // than hardcoded so this doesn't drift from config('game.ap.base').
         $bot = BotSession::boot($this, seed: 1);
+
+        // Agrardom gate (ROADMAP C16): CC Lv1 -> Lv2 requires an Agrardom already
+        // placed. Pre-place it so this loop exercises the AP-limit gate in
+        // isolation, not the (already covered elsewhere) Agrardom gate.
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $bot->colonyId, 'building_id' => 41, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => 0]
+        );
+
         $available = app(AdvisorService::class)->getAvailableActionPoints($bot->colonyId);
 
         for ($i = 0; $i < $available; $i++) {

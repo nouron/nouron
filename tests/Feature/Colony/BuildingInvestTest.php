@@ -38,6 +38,14 @@ class BuildingInvestTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+
+        // Agrardom gate (ROADMAP C16): CC Lv1 -> Lv2 requires an Agrardom already
+        // placed. This suite is about the invest/level-up mechanics, not that gate —
+        // pre-place it so the fixture matches the intended "Agrardom first" Sol-1 flow.
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 41, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => 0]
+        );
     }
 
     private function makeUser(int $userId): User

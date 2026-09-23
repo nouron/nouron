@@ -74,6 +74,16 @@ class ColonyController extends BaseController
         return array_map('intval', $cfg['build_cost'] ?? []);
     }
 
+    /** Whether an Agrardom (bioFacility) has been placed in the given colony. */
+    private function agrardomPlaced(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', (int) config('buildings.bioFacility.id', 41))
+            ->whereNotNull('tile_x')
+            ->exists();
+    }
+
     /** Flat Regolith cost for a level-up on any non-CC, non-Harvester building (GDD §13.7). */
     private const LEVELUP_REGOLITH_FLAT = 25;
 
@@ -302,11 +312,7 @@ class ColonyController extends BaseController
             ->pluck('cnt', 'building_id')
             ->toArray();
 
-        $agrardomPlaced = DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)
-            ->where('building_id', 41)
-            ->whereNotNull('tile_x')
-            ->exists();
+        $agrardomPlaced = $this->agrardomPlaced($colony->id);
 
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level', 'max_instances',
@@ -471,15 +477,8 @@ class ColonyController extends BaseController
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.
         // Agrardom is a hard prerequisite for CC Lv2 — building a path building before
         // Agrardom would leave the player unable to advance.
-        if (in_array((int) $data['building_id'], self::PATH_BUILDING_IDS, true)) {
-            $agrardomPlaced = DB::table('colony_buildings')
-                ->where('colony_id', $colony->id)
-                ->where('building_id', 41)
-                ->whereNotNull('tile_x')
-                ->exists();
-            if (! $agrardomPlaced) {
-                return $this->fail('agrardom_required');
-            }
+        if (in_array((int) $data['building_id'], self::PATH_BUILDING_IDS, true) && ! $this->agrardomPlaced($colony->id)) {
+            return $this->fail('agrardom_required');
         }
 
         // Verlegekosten 1 → 2 AP je Hex (GDD §4c, freigegeben 2026-08-03) — the
@@ -657,13 +656,6 @@ class ColonyController extends BaseController
         $buildingId = (int) $data['building_id'];
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
-        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
-            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
-                'ap_type' => 'construction',
-                'current' => 0,
-            ]);
-        }
-
         $row = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', $buildingId)
@@ -672,6 +664,23 @@ class ColonyController extends BaseController
 
         if (! $row) {
             return $this->fail('building_not_found');
+        }
+
+        // Agrardom gate (GDD §4 "Agrardom wird Pflichtgebäude vor CC Lv2"): only the
+        // Lv1 -> Lv2 jump is gated — later CC levels have no Agrardom requirement.
+        // Checked before the AP-limit/resource gates below so a rejected click never
+        // locks AP or spends Regolith.
+        if ($buildingId === BuildingId::CommandCenter->value
+            && (int) $row->level === 1
+            && ! $this->agrardomPlaced($colony->id)) {
+            return $this->fail('agrardom_required');
+        }
+
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
+                'ap_type' => 'construction',
+                'current' => 0,
+            ]);
         }
 
         $building = DB::table('buildings')->where('id', $buildingId)->first();

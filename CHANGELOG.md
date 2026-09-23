@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-23
+
+- Doku: C14 — Zahlen aus GDD §6/§14/§18.2-Prosa entfernt (ADR 0004), durch qualitative Formulierungen + Fußnoten auf `config/*.php` ersetzt. Dabei mehrere Stellen gefunden, an denen das GDD bereits vom A37-Trust-Rebalance (2026-09-14) abwich.
+- Fix: C16 — Agrardom (`bioFacility`) ist jetzt tatsächlich ein Gate für den CC-Levelup von Lv1 auf Lv2 (`agrardom_required`, vor jedem AP-/Ressourcenverbrauch geprüft), wie Config-Kommentar und GDD es schon lange behaupteten, aber der Code nie durchsetzte. Spätere CC-Stufen bleiben ungegatet.
+
 ## 2026-09-22
 
 - Feature: A13 P4 — Nexus-Kanal: Handelsposten Stufe III wirkt jetzt auf den Preis des Nexus-Direktimports (`NexusImportService`, neuer Handelsvorteil-Kanal `nexus`, ersetzt `corporate_contact` als Kanalnamen) sowie weiterhin auf Orins Angebot — die Lieferzeit bleibt unverändert eine reine Uplink-Station-Frage.
