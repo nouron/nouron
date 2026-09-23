@@ -44,6 +44,14 @@ class BuildResourceSinkTest extends TestCase
         // Tests bypass all game checks by default (phpunit.xml). This suite is exactly
         // about the resource + supply gates, so enable them. AP stays bypassed.
         config(['game.bypass.resource_costs' => false, 'game.bypass.supply_checks' => false]);
+
+        // Agrardom gate (ROADMAP C16): CC Lv1 -> Lv2 requires an Agrardom already
+        // placed. This suite is about resource/supply deduction, not that gate —
+        // pre-place it so the fixture matches the intended "Agrardom first" Sol-1 flow.
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 41, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => 0]
+        );
     }
 
     private function bart(): User

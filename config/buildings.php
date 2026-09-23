@@ -111,8 +111,9 @@ return [
     // No longer part of the Sol-3 path-choice group (sciencelab/hangar/bar) —
     // it has no CC-level gate of its own (only Harvester ≥ Lv1), so it stays
     // reachable from Sol 1 and must be built before CC2 to guarantee Organika
-    // flow through the strictly linear Sol-1/2 ramp. Enforced in the CC
-    // levelup endpoint (ColonyService — NOT in this config), not here.
+    // flow through the strictly linear Sol-1/2 ramp. Enforced in
+    // ColonyController::investBuilding() (only the CC Lv1->Lv2 jump; ROADMAP
+    // C16, 2026-09-22), not here.
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id' => 41,
         // 40 → 70 (GDD §13.7 Sol-1-4-Rampe, 2026-08-03): Agrardom ist der erste Kauf des

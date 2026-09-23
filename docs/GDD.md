@@ -866,10 +866,12 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Slots und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
 
 ```
-supply_cap    = CC-Level × 10 + Anzahl-Wohnkomplexe × 8 + Σ(Kenntnisse-Cap-Bonus)
+supply_cap    = CC-Level × Cap-pro-CC-Level + Anzahl-Wohnkomplexe × Cap-pro-Wohnkomplex-Level + Σ(Kenntnisse-Cap-Bonus)
 laufende_last = Σ(Gebäude-Level × supply_cost)
 freies_supply = supply_cap − laufende_last
 ```
+
+Exakte Faktoren und ein Rechenbeispiel: `docs/game-reference.md` Abschnitt 10 (Supply-Cap-Formel) / `config/game.php → supply`.
 
 ### Die drei Begrenzungsachsen
 
@@ -877,7 +879,7 @@ Die Koloniegröße wird von drei unabhängigen Achsen begrenzt. Jede hat eine ei
 
 | Achse | begrenzt | wird bezahlt mit |
 |---|---|---|
-| **Breite** — Anzahl Gebäudetypen | Bauplatz (15 Tiles) | Instandhaltung: Σ `decay_rate` in AP und Regolith pro Schadenpunkt, jeden Sol |
+| **Breite** — Anzahl Gebäudetypen | Bauplatz (begrenzte Tile-Zahl) | Instandhaltung: Σ `decay_rate` in AP und Regolith pro Schadenpunkt, jeden Sol |
 | **Tiefe** — Summe der Gebäudelevel | **Supply-Cap** | — (reines Cap, kein laufender Abfluss) |
 | **Tempo** | AP-Rate (§13.2) | die 100-Sol-Uhr (§18.4) |
 
@@ -888,9 +890,9 @@ Daraus folgt die Strategie-Abwägung:
 | **Breit** (viele Gebäude auf niedrigem Level) | AP (Errichten kostet nur die halben Levelup-Kosten, §13.3), Supply (nur 1 Level je Gebäude) | Bauplatz, Instandhaltung (Decay zählt pro Gebäudetyp, level-unabhängig) |
 | **Tief** (wenige Gebäude hoch) | Bauplatz, Instandhaltung | AP (Kostenkurve wächst mit dem Level), Supply-Cap (Level × `supply_cost`) |
 
-> **Warum die Spreizung der `supply_cost`-Werte trägt:** Die Nennwerte liegen bei 2–10, aber weil sie mit dem Level multipliziert werden, ist die effektive Spreizung weit größer. Produktionsgebäude sind supply-billig (2/Level), Dienstleistungsgebäude teuer (8–10/Level). „Analytik-Labor Lv3" (24) bindet so viel Cap wie „Harvester Lv8 + Agrardom Lv4" (16 + 8). Das ist die eigentliche Kompositionsentscheidung des Supply-Systems — sie war nur durch die zweideutige Formel oben nicht sichtbar.
+> **Warum die Spreizung der `supply_cost`-Werte trägt:** Die Nennwerte sind bewusst gespreizt, aber weil sie mit dem Level multipliziert werden, ist die effektive Spreizung weit größer. Produktionsgebäude sind supply-billig, Dienstleistungsgebäude teuer. Ein hoch ausgebautes Analytik-Labor kann so viel Cap binden wie mehrere niedriger ausgebaute Produktionsgebäude zusammen. Das ist die eigentliche Kompositionsentscheidung des Supply-Systems — sie war nur durch die zweideutige Formel oben nicht sichtbar. Exakte `supply_cost`-Werte: `config/buildings.php` / `docs/game-reference.md`.
 
-> **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(usedSupply, 4)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt), das **Wohnhabitat** (`supply_cap 8`, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), der **Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse** (§10), und der CC-Ausbau. Supply bleibt unverändert.
+> **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(usedSupply, supply_per_eater)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt; exakter Divisor: `config/game.php → food.supply_per_eater`), das **Wohnhabitat** (`supply_cap` pro Einheit, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), der **Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse** (§10), und der CC-Ausbau. Supply bleibt unverändert.
 
 > **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Slots + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
 
@@ -906,16 +908,16 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 | Quelle | Supply-Cap-Beitrag |
 |--------|-------------------|
-| CommandCenter | wächst mit jedem Level (max Lv5 erreicht ein Dach) |
-| Wohnhabitat | wächst pro Einheit, max. 6 Instanzen (ergibt Tile-Limit) |
+| CommandCenter | wächst mit jedem Level (bei der höchsten Ausbaustufe erreicht ein Dach) |
+| Wohnhabitat | wächst pro Einheit, begrenzte Instanzzahl (ergibt Tile-Limit) |
 | Kenntnisse | **nicht-linear pro Level** (siehe unten) |
 
-**Startsituation:** CC Lv1 liefert einen Basis-Cap, ohne Wohnhabitate. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap erhöht sich. Genaue Werte: `config/game.php`.
-**Hard-Cap:** 200 Supply.
+**Startsituation:** CC Lv1 liefert einen Basis-Cap, ohne Wohnhabitate. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap erhöht sich. Genaue Werte: `config/game.php` / `docs/game-reference.md` Abschnitt 10.
+**Hard-Cap:** ein absolutes Supply-Maximum, siehe `config/game.php → supply.cap_max`.
 
-> **Tile-Budget:** 10 Nicht-CC-Gebäude + 5 Wohnhabitat = 15 Tiles (voll). Wer das 6. Wohnhabitat will, muss ein anderes Gebäude opfern — bewusste Designentscheidung für Knappheit.
+> **Tile-Budget:** Ein fester Anteil der Kolonie-Tiles ist für Nicht-CC-Gebäude reserviert, der Rest für Wohnhabitate — bei voller Belegung ist kein weiteres Wohnhabitat mehr möglich, ohne ein anderes Gebäude zu opfern. Exakte Tile-Zahlen: `config/game.php → colony_zone_expansion`. Bewusste Designentscheidung für Knappheit.
 
-> **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung 200 schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
+> **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung des Hard-Caps schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
 
 ### Schiffe und Supply
 
@@ -977,17 +979,11 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 
 ```php
 'supply' => [
-    'cap_commandcenter'  => 10,   // building_id 25 — pro Level (max Lv5 → 50)
-    'cap_housingcomplex' => 8,    // building_id 28 — pro Einheit
-    'cap_max'            => 200,  // absolutes Hard-Cap
-    // Kenntnisse: Cap-Bonus nicht-linear pro Level (+3/+5/+5/+4/+3 = 20 max je Kenntnis)
-    'knowledge_cap_per_level' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
+    // cap_commandcenter, cap_housingcomplex, cap_max: siehe docs/game-reference.md
+    // Abschnitt 10 (Supply-Cap-Formel)
+    // knowledge_cap_per_level: nicht-linear pro Kenntnis-Level (Glockenform, siehe oben)
     // Berater kosten kein Supply — Upkeep läuft über Credits (config/game.php → advisors)
-    'ship_cost' => [
-        85 => 0,   // drone     — unbemannt
-        37 => 14,  // corvette
-        47 => 6,   // freighter
-    ],
+    // ship_cost: siehe „Schiffe und Supply" unten
 ],
 ```
 
@@ -1002,7 +998,7 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 | Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
 |-------------|----------------|--------------|---------------|
 | Supply-Cap | **Summe der Gebäudelevel** (Ausbautiefe) | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
-| Bauplatz | Anzahl Gebäude (15 Tiles) | permanent | — (harte Grenze) |
+| Bauplatz | Anzahl Gebäude (begrenzte Tile-Zahl) | permanent | — (harte Grenze) |
 | AP | Arbeitsleistung pro Sol | täglich | mehr/bessere Berater, Kostenboni (§13.3) |
 | Gebäude-Decay | Stand von Gebäuden; skaliert mit der **Anzahl Gebäudetypen**, nicht mit deren Level | täglich | Reparatur (AP + Regolith pro SP, siehe §4) |
 | Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Sol auf Außenmission | Reparatur (1 AP/Klick) |
@@ -2343,31 +2339,29 @@ Vertrauen ist kein zweites Ressourcenproblem, das der Spieler managen muss. Es i
 
 ### Wertebereich
 
-```
-Vertrauen: -100 bis +100
-Neutralwert: 0
-Startwert: 0
-```
+Vertrauen bewegt sich auf einer symmetrischen Skala um einen Neutralwert, mit dem jede Kolonie startet. Beide Enden der Skala sind harte Grenzen — keine weitere Verschlechterung bzw. Verbesserung darüber hinaus. Exakte Grenzwerte: siehe `docs/game-reference.md` Abschnitt 14 (Trust-Bänder & Multiplikatoren) / `config/game.php → trust`.
 
 **Bedeutungsbereiche:**
 
-| Bereich | Bezeichnung | Anzeige (UI-Hinweis) |
-|---------|-------------|----------------------|
-| +61 bis +100 | Hohes Vertrauen | "Euphorisch" |
-| +21 bis +60 | Positive Stimmung | "Zufrieden" |
-| -20 bis +20 | Neutral | "Stabil" |
-| -21 bis -60 | Unzufriedenheit | "Unruhig" |
-| -61 bis -100 | Krise | "Aufruhr" |
+| Bezeichnung | Anzeige (UI-Hinweis) |
+|-------------|----------------------|
+| Hohes Vertrauen | "Euphorisch" |
+| Positive Stimmung | "Zufrieden" |
+| Neutral | "Stabil" |
+| Unzufriedenheit | "Unruhig" |
+| Krise | "Aufruhr" |
 
-Der Wert -100 ist ein harter Boden (keine weitere Verschlechterung). Ebenso +100 als Deckel.
+Die fünf Bänder sind von sehr negativ bis sehr positiv geordnet, symmetrisch um den Neutralwert — deckungsgleich mit den Bändern der Produktions- und AP-Multiplikatoren weiter unten. Exakte Schwellwerte ebenfalls in `docs/game-reference.md` Abschnitt 14.
 
 ### Berechnung (Sol-basiert)
 
 Vertrauen wird einmal pro Sol **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Sols ergibt sich aus der Summe aller aktiven Faktoren:
 
 ```
-vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + ereigniseffekte, -100, +100)
+vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), Schiffs-Untergrenze, Schiffs-Obergrenze) + ereigniseffekte, Vertrauens-Untergrenze, Vertrauens-Obergrenze)
 ```
+
+Exakte Grenzwerte: `docs/game-reference.md` Abschnitt 14 / `config/game.php → trust`.
 
 `colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
 
@@ -2381,50 +2375,56 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 
 **Positive Vertrauensgebäude:**
 
-| Gebäude-ID | Bezeichner | Vertrauen/Level |
-|------------|------------|-----------------|
-| 32 | temple (Religiöse Stätte) | +2 |
-| 46 | infirmary (Krankenstation) | +3 |
-| 50 | monument (Kolonialdenkmal) | +2 |
-| 52 | bar (Cantina) | +2 |
+| Gebäude-ID | Bezeichner | Vertrauensbeitrag/Level |
+|------------|------------|--------------------------|
+| 32 | temple (Religiöse Stätte) | positiv |
+| 46 | infirmary (Krankenstation) | positiv, am stärksten |
+| 50 | monument (Kolonialdenkmal) | positiv |
+| 52 | bar (Cantina) | positiv |
+
+Exakte Werte pro Level: `config/buildings.php → trust_per_lv` / `docs/game-reference.md`.
 
 **Negative Vertrauensgebäude:**
 
 *(keine in Phase 3 — alle verbleibenden Gebäude sind neutral oder positiv)*
 
-**Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
+**Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + infirmary + monument + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + infirmary + monument + bar auf Höchstlevel), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der Clamp am oberen Ende der Skala verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
 
 ### Einflussfaktoren: Schiffe
 
 Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Eine Korvette signalisiert den Kolonisten Wachsamkeit und Anspannung; ein Frachter steht für Handel und Versorgung.
 
-| Schiff-ID | Bezeichner | Vertrauen/Schiff |
-|-----------|------------|------------------|
-| 85 | drone | 0 |
-| 37 | korvette | 0 |
-| 47 | frachter | +1 |
+| Schiff-ID | Bezeichner | Vertrauensbeitrag/Schiff |
+|-----------|------------|---------------------------|
+| 85 | drone | neutral |
+| 37 | korvette | neutral |
+| 47 | frachter | positiv |
 
-**Rationale:** Der Frachter steht für Handel und Versorgung (+1/Schiff) — die Kolonisten sehen ihn als Zeichen normaler Aktivität. Die Korvette ist neutral: Kolonisten begrüßen ein Mindestmaß an Schutz, empfinden eine kleine Flotte aber nicht als Bedrohung. Drohnen sind unbemannte Geräte ohne emotionale Wirkung.
+Exakte Werte: `config/ships.php → trust_per_unit` / `docs/game-reference.md`.
 
-**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `+30` gecapped, bevor er in die Vertrauen-Summe eingeht:
+**Rationale:** Der Frachter steht für Handel und Versorgung — die Kolonisten sehen ihn als Zeichen normaler Aktivität. Die Korvette ist neutral: Kolonisten begrüßen ein Mindestmaß an Schutz, empfinden eine kleine Flotte aber nicht als Bedrohung. Drohnen sind unbemannte Geräte ohne emotionale Wirkung.
+
+**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf einen Höchstwert gecapped, bevor er in die Vertrauen-Summe eingeht:
 
 ```
-ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), 0, +30)
+ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), 0, Schiffs-Obergrenze)
 ```
+
+Exakter Deckel: `config/game.php → trust.ships_cap` / `docs/game-reference.md` Abschnitt 14.
 
 ### Einflussfaktoren: Forschungen
 
 Forschungen tragen mit einem Pauschalwert pro Level bei (unabhängig von status_points, da Forschungslevel persistenter sind).
 
-| Kenntnis-Key | Bezeichner | Vertrauen/Level |
-|--------------|------------|-----------------|
-| agronomy | Agronomie & Kultivierung | +1 |
-| health | Gesundheit & Wohlbefinden | +2 |
-| defense | Verteidigung & Überlebenstaktik | +1 |
+| Kenntnis-Key | Bezeichner | Vertrauensbeitrag/Level |
+|--------------|------------|--------------------------|
+| agronomy | Agronomie & Kultivierung | positiv |
+| health | Gesundheit & Wohlbefinden | positiv, am stärksten |
+| defense | Verteidigung & Überlebenstaktik | positiv |
 
-Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Vertrauenseffekt — sie sind neutrale Werkzeuge.
+Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Vertrauenseffekt — sie sind neutrale Werkzeuge. Exakte Werte: `config/knowledge.php → trust_per_lv`.
 
 **Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis schafft Sicherheit und stärkt dadurch das Vertrauen der Kolonisten — "Sicherheit schafft Vertrauen". Eine gut ausgebaute, zivile Sicherheitsvorsorge (Sturm-Risiko-Reduktion, der andere `defense`-Effekt) wird durchgängig positiv gerahmt, ohne Trade-off-Zwang. (Präzedenzfall: `geology` hat ebenfalls zwei Vorteile ohne Vertrauensmalus.)
 
@@ -2438,38 +2438,32 @@ Was sich ändert: Der Spieler kann eingenommene Credits — ob aus Relaisvergüt
 
 Aktive Aktion des Direktors: Ein Teil der Kolonie-Credits kann jederzeit direkt an die Kolonisten ausgeschüttet werden — eine spürbare, bewusst gewählte Ausgabe, die zeigt, dass es der Siedlung wirtschaftlich gut genug geht, um sie unmittelbar zu beteiligen. Anders als Vertrauensgebäude oder Kenntnisse (permanente Dauerboni) ist die Zulage ein **reaktiver Hebel**: kein Dauerzustand, sondern eine situative Entscheidung — z. B. um vor einem kritischen Sol (Nexus-Meilenstein §15, drohende Vertrauens-Fail-Schwelle §15) Vertrauen zu stabilisieren, auf Kosten von Credits, die sonst in Ausbau, Berater-Upkeep oder Handel geflossen wären.
 
-**Staffelung:**
-
-| Stufe | Kosten | Vertrauens-Bonus | Event-Key | Credits/Punkt |
-|-------|--------|-------------------|-----------|----------------|
-| Klein | 100 Credits | +2 Vertrauen | `stipend_small` | 50 |
-| Mittel | 300 Credits | +3 Vertrauen | `stipend_medium` | 100 |
-| Groß | 600 Credits | +4 Vertrauen | `stipend_large` | 150 |
+**Staffelung:** drei Stufen (Klein, Mittel, Groß), jeweils mit eigenem Event-Key (`stipend_small`, `stipend_medium`, `stipend_large`) — Kosten und Vertrauens-Bonus steigen mit der Stufe. Exakte Beträge: `docs/game-reference.md` Abschnitt 12–13 / `config/game.php → trust.events` und `stipend.tiers`.
 
 Die Wirkung folgt der Standard-Event-Logik (siehe "Einflussfaktoren: Ereignisse" unten): genau **1 Sol**, danach verworfen.
 
-**Nur eine Zulage pro Sol.** Die drei Stufen sind unterschiedliche Event-Keys (nicht Varianten desselben Keys) — das bestehende Dedup in `TrustService::eventContribution` fasst nur *gleiche* Keys zusammen und summiert *unterschiedliche* Keys auf. Ohne zusätzliche Sperre könnten "Klein" + "Groß" im selben Sol also zu +6 Vertrauen kombiniert werden. Das ist **nicht gewollt** und muss bei der Implementierung als eigene Regel ergänzt werden: pro Kolonie und Sol ist höchstens eine Zulagen-Stufe auslösbar (Fire-Time-Guard im Service, nicht im bestehenden Event-Dedup). Dieser Punkt ist ein expliziter Implementierungs-Hinweis, kein bereits vorhandenes Verhalten.
+**Nur eine Zulage pro Sol.** Die drei Stufen sind unterschiedliche Event-Keys (nicht Varianten desselben Keys) — das bestehende Dedup in `TrustService::eventContribution` fasst nur *gleiche* Keys zusammen und summiert *unterschiedliche* Keys auf. Ohne zusätzliche Sperre könnten z. B. "Klein" und "Groß" im selben Sol zu einem kombinierten Vertrauens-Bonus addiert werden. Das ist **nicht gewollt** und muss bei der Implementierung als eigene Regel ergänzt werden: pro Kolonie und Sol ist höchstens eine Zulagen-Stufe auslösbar (Fire-Time-Guard im Service, nicht im bestehenden Event-Dedup). Dieser Punkt ist ein expliziter Implementierungs-Hinweis, kein bereits vorhandenes Verhalten.
 
-**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (Credits pro Vertrauenspunkt steigen von 50 auf 150) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer jeden Sol die kleine Stufe zieht, zahlt 100 Credits/Sol für einen wiederkehrenden +2-Bonus — spürbar gegenüber der Relaisvergütung (20–60 Cr/Sol, abhängig vom Uplink-Station-Level) und dem Berater-Upkeep (50 Cr/Sol, Rang 2), aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) liefert einmalig +15 Vertrauen für 600 Credits (40 Cr/Punkt) — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll.
+**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (die Credits-Kosten pro Vertrauenspunkt steigen mit der Stufe) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer regelmäßig die kleine Stufe zieht, zahlt einen laufenden Credits-Betrag für einen wiederkehrenden Vertrauens-Bonus — spürbar gegenüber der Relaisvergütung und dem Berater-Upkeep, aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) liefert einmalig einen großen Vertrauens-Bonus für einen Credits-Betrag — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll. Exakte Werte für den Vergleich: `docs/game-reference.md` Abschnitt 11–13.
 
 **Rationale:** Die Zulage gibt dem Spieler einen direkten, jederzeit verfügbaren Hebel auf Vertrauen — aber zu einem Preis, der die Entscheidung "Vertrauen jetzt sichern" gegen "Credits in Ausbau/Handel investieren" tatsächlich schwer macht. Die degressive Staffelung verhindert, dass die große Stufe zur Standardwahl wird; die Einmal-pro-Sol-Regel verhindert Kombination innerhalb eines Sols. Zusammen ersetzt das einen Cooldown, ohne die Reaktionsfreiheit des Spielers einzuschränken.
 
-> ⚠️ BALANCE CONCERN: Ohne harten Mehr-Sol-Cooldown ist die Kolonisten-Zulage im Lategame (hohe Credits-Reserven) potenziell ein "Vertrauen auf Knopfdruck"-Ventil, das die -20-Fail-Schwelle (§15) entschärft. Nach dem ersten Playtest prüfen, ob ein Soft-Cap (z. B. max. 1 Zulagen-Event pro N Sole) nötig wird, falls Spieler die Mechanik nutzen, um Krisen risikofrei auszusitzen statt echte Ursachen (Hunger, Decay, Militarisierung) zu beheben.
+> ⚠️ BALANCE CONCERN: Ohne harten Mehr-Sol-Cooldown ist die Kolonisten-Zulage im Lategame (hohe Credits-Reserven) potenziell ein "Vertrauen auf Knopfdruck"-Ventil, das die Vertrauens-Fail-Schwelle (§18.2) entschärft. Nach dem ersten Playtest prüfen, ob ein Soft-Cap (z. B. max. 1 Zulagen-Event pro N Sole) nötig wird, falls Spieler die Mechanik nutzen, um Krisen risikofrei auszusitzen statt echte Ursachen (Hunger, Decay, Militarisierung) zu beheben.
 
 ### Einflussfaktoren: Verpflegung (Organika)
 
 Die Kolonie verbraucht jeden Sol Organika zur Versorgung (§3, Tick-Schritt 7). Zwei Vertrauenswirkungen:
 
-- **Gesättigt** → `well_fed`-Event (+1, Standard-Event-Logik, 1 Sol).
+- **Gesättigt** → `well_fed`-Event (Standard-Event-Logik, 1 Sol).
 - **Hunger** (Vorrat deckt den Bedarf nicht) → **eskalierender** Malus, abhängig von `glx_colonies.hunger_streak` (aufeinanderfolgende Hunger-Sole):
 
 ```
-Vertrauens-Malus = −min(2 + (streak−1), 8)
+Vertrauens-Malus = −min(Basis-Malus + (streak−1), Malus-Deckel)
 ```
 
 Anders als gewöhnliche Events eskaliert dieser Malus, solange der Hunger anhält, und verfällt erst beim Sättigen (Streak → 0). Er wird in `TrustService::calculateTrust` als eigener Summand addiert, nicht über die Event-Tabelle (die nicht stackt).
 
-Die Hunger-Spirale wird eskalierend bestraft — ein anhaltender Hunger führt zu einem progressiv stärkeren Vertrauens-Malus (kein Cap beim Eintreten, aber ein Deckel nach einigen Solen). Dies erzeugt einen echten Druck, die Organika-Produktion auf Lv1+ zu bringen. Der Feedback-Loop: leerer Agrardom → Vertrauensverfall → Produktions-/AP-Malus → noch weniger Organika möglich. Der Agrardom wird damit zum Pflichtgebäude. Exakte Malus-Werte: `config/game.php → trust.events.*`.
+Die Hunger-Spirale wird eskalierend bestraft — ein anhaltender Hunger führt zu einem progressiv stärkeren Vertrauens-Malus (kein Cap beim Eintreten, aber ein Deckel nach einigen Solen). Dies erzeugt einen echten Druck, die Organika-Produktion auf mindestens dem ersten Ausbaulevel zu halten. Der Feedback-Loop: leerer Agrardom → Vertrauensverfall → Produktions-/AP-Malus → noch weniger Organika möglich. Der Agrardom wird damit zum Pflichtgebäude. Exakte Malus-Werte: `config/game.php → food` (`hunger_base_malus`, `hunger_step`, `hunger_cap`) / `docs/game-reference.md` Abschnitt 15.
 
 ### Einflussfaktoren: Ereignisse (Events)
 
@@ -2485,12 +2479,12 @@ Alle Effekte wirken exakt 1 Sol (werden nach der Vertrauen-Berechnung verworfen)
 
 Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Verfall oder Fehler, Bonus für Erfolg oder Zuwendung) stehen in `config/game.php → trust.events.*` — exakte Werte nach erstem Playtest kalibrieren.
 
-> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Der **Sicherheits-Hub** dämpft diese drei Events (+ `building_level_down`) um 25 % wenn aktiv — das macht ihre genauen Werte doppelt relevant.
+> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Der **Sicherheits-Hub** dämpft diese drei Events (+ `building_level_down`) um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
 
 **Rationale für neue Events:**
-- `trade_blocked` (-3) macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
+- `trade_blocked` macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
 
-> ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
+> ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich einen kleinen, aber stetigen Bonus, der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
 
 ### Effekte des Vertrauens auf die Kolonie
 
@@ -2514,7 +2508,7 @@ Vertrauen beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separa
 
 ### Schema-Bedarf
 
-**Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer im Bereich -100 bis +100. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
+**Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer innerhalb der Skala aus "Wertebereich" oben. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
 
 **Die Konfiguration** steht produktiv in `config/game.php` unter dem Schlüssel `trust` (Umbenennung von `moral`→`trust` abgeschlossen). Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
@@ -2548,7 +2542,7 @@ Das beschriebene System ist bewusst einfach gehalten. Nach einem ersten Playtest
 - Revolutionsrisiko bei anhaltender Krise (harter Fail-State-Auslöser)
 - Ereignis-Kaskaden bei extremen Vertrauenswerten (z.B. Desertion, Sabotage)
 
-Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (-100 bis +100) in `colony_resources` stabil bleibt.
+Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (feste Skala, siehe "Wertebereich" oben) in `colony_resources` stabil bleibt.
 
 ---
 
@@ -2825,22 +2819,24 @@ Vier Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Object
 
 #### Fail State 1 — Vertrauenskollaps
 
-**Bedingung:** `trust < config('game.run.trust_fail_threshold')` → Standardwert **−20**
+**Bedingung:** `trust < config('game.run.trust_fail_threshold')` — ein tief negativer Schwellwert, siehe `config/game.php → run.trust_fail_threshold`.
 
-**Auslösung:** Instant in demselben Tick, in dem der Vertrauenswert unter −20 fällt. Kein Streak erforderlich.
+**Auslösung:** Instant in demselben Tick, in dem der Vertrauenswert unter die Fail-Schwelle fällt. Kein Streak erforderlich.
 
-Begründung gegen eine Streak-Mechanikverzögerung: Trust unter −20 bedeutet aktive Feindseligkeit der Kolonisten, keinen vorübergehenden Stimmungseinbruch mehr. Eine Streak-Wartezeit würde die Aussagekraft des Trust-Werts verwässern und den Spieler in einem faktisch verlorenen Zustand weiterspielen lassen.
+Begründung gegen eine Streak-Mechanikverzögerung: Trust unter der Fail-Schwelle bedeutet aktive Feindseligkeit der Kolonisten, keinen vorübergehenden Stimmungseinbruch mehr. Eine Streak-Wartezeit würde die Aussagekraft des Trust-Werts verwässern und den Spieler in einem faktisch verlorenen Zustand weiterspielen lassen.
 
 **Warnstufen (Nexus-Funk/Protokoll + UI):**
 
 | Schwellwert | Maßnahme |
 |-------------|---------|
-| Trust < 0 | Protokoll-Ereignis (Kolonist, Absender): "Die Stimmung in der Kolonie ist angespannt." — einmalig pro Run |
-| Trust < −10 | Roter Farbwechsel am Trust-Ressource-Chip in der Ressourcenleiste (zwischen 0 und −10 zeigt der Chip gelb als Vorstufe) |
-| Trust < −18 | Nexus-Funk-Warnung, einmalig pro Run: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." (entfällt, wenn im selben Tick bereits der Fail State greift) |
-| Trust < −20 | Fail State — Run endet sofort |
+| Trust unter dem Neutralwert | Protokoll-Ereignis (Kolonist, Absender): "Die Stimmung in der Kolonie ist angespannt." — einmalig pro Run |
+| Trust deutlich negativ | Roter Farbwechsel am Trust-Ressource-Chip in der Ressourcenleiste (dazwischen zeigt der Chip gelb als Vorstufe) |
+| Trust nahe der Fail-Schwelle | Nexus-Funk-Warnung, einmalig pro Run: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." (entfällt, wenn im selben Tick bereits der Fail State greift) |
+| Trust unter der Fail-Schwelle | Fail State — Run endet sofort |
 
-> ⚠️ BALANCE CONCERN: Die −20-Schwelle ist bewusst tief gesetzt. Ein Hunger-Streak von vier Solen (kumulierter Malus nach `TrustService::hungerPenalty`: −2 − 3 − 4 − 5 = −14 kumuliert nach Streak 4) plus ein Level-Down-Event (−3) würde die Schwelle knapp nicht erreichen — das ist gewollt: Vernachlässigung soll spürbar bestrafen, aber erholbar bleiben. Nach erstem Playtest kalibrieren ob −20 zu tief (Spieler scheitern selten) oder zu flach (Spieler scheitern überraschend schnell) ist.
+Exakte Schwellwerte: `config/game.php → run.trust_fail_threshold`, `run.trust_warning.chip_red`, `run.trust_warning.nexus_warning`.
+
+> ⚠️ BALANCE CONCERN: Die Fail-Schwelle ist bewusst tief gesetzt. Ein mehrtägiger Hunger-Streak plus ein zusätzliches Level-Down-Event würde die Schwelle knapp nicht erreichen — das ist gewollt: Vernachlässigung soll spürbar bestrafen, aber erholbar bleiben. Nach erstem Playtest kalibrieren ob die Schwelle zu tief (Spieler scheitern selten) oder zu flach (Spieler scheitern überraschend schnell) ist.
 
 **Narrativer Ausgang:** "Die Kolonisten haben das Vertrauen verloren. Der Direktor wurde abgesetzt."
 
@@ -2856,11 +2852,13 @@ Begründung gegen eine Streak-Mechanikverzögerung: Trust unter −20 bedeutet a
 
 | Schuldenstand | Maßnahme |
 |---------------|---------|
-| > 80 % des Limits | Schuldenbalken wechselt auf Gelb |
-| > 95 % des Limits | Schuldenbalken wechselt auf Rot; *geplant:* Nexus-Meldung „Kreditlimit fast erreicht." |
-| > 100 % | Fail State — Run endet sofort |
+| hoher Anteil des Limits erreicht | Schuldenbalken wechselt auf Gelb |
+| kurz vor dem Limit | Schuldenbalken wechselt auf Rot; *geplant:* Nexus-Meldung „Kreditlimit fast erreicht." |
+| Limit überschritten | Fail State — Run endet sofort |
 
-> **Implementierungsstand:** Akkumulation (Startkapital als initiale Schuld, Nexus-Kredit-Schiffskauf, Berater-Upkeep-Defizit — Owner-Entscheidung F3, §15 Nexus-Schulden-Mechanik) und Fail-State-Prüfung sind implementiert. Rückzahlung braucht kein eigenes Feature (F3, beantwortet A8) — normales positives Einkommen tilgt automatisch. Offen bleibt nur die 95 %-Warnmeldung.
+Exakte Schwellwerte für die UI-Warnstufen: Implementierung in `RunProgressService`, relativ zu `config('game.run.nexus_debt_fail_threshold')`.
+
+> **Implementierungsstand:** Akkumulation (Startkapital als initiale Schuld, Nexus-Kredit-Schiffskauf, Berater-Upkeep-Defizit — Owner-Entscheidung F3, §15 Nexus-Schulden-Mechanik) und Fail-State-Prüfung sind implementiert. Rückzahlung braucht kein eigenes Feature (F3, beantwortet A8) — normales positives Einkommen tilgt automatisch. Offen bleibt nur die Warnmeldung kurz vor dem Limit.
 
 **Narrativer Ausgang:** "Nexus hat die Konzession entzogen. Der Direktor wurde zurückgerufen."
 
@@ -2868,7 +2866,7 @@ Begründung gegen eine Streak-Mechanikverzögerung: Trust unter −20 bedeutet a
 
 #### Fail State 3 — Fristablauf ohne Sieg
 
-**Bedingung:** `current_tick >= config('game.run.tick_limit')` (100) UND weniger als 2 Objectives abgeschlossen
+**Bedingung:** `current_tick >= config('game.run.tick_limit')` UND weniger als 2 Objectives abgeschlossen
 
 **Auslösung:** In `checkFailStates()` nach jedem Tick. Das Sieg-Gate (§18.1) wird vor den Fail States geprüft — wer die zweite Objective genau auf Sol 100 abschließt, gewinnt noch.
 
