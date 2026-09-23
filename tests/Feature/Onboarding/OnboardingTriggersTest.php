@@ -444,19 +444,14 @@ class OnboardingTriggersTest extends TestCase
     }
 
     /**
-     * NPC colonies (user_id = null / 0) must never trigger onboarding_trust.
+     * NPC colonies (user_id = null) must never trigger onboarding_trust.
      *
-     * Colony 2 (Shelbyville) has user_id = 0 in testdata — the GameTick guard requires
-     * $userId !== null before even reading trustBefore, so no event must be emitted.
+     * The GameTick guard requires $userId !== null before even reading
+     * trustBefore, so no event must be emitted.
      */
     public function test_trust_trigger_does_not_fire_for_npc_colony(): void
     {
-        // Shelbyville (id=2) has user_id=0 in testdata — the v_glx_colonies view
-        // exposes user_id=0 which the GameTick treats as a non-null value (0).
-        // To test the actual guard we need a colony where user_id IS NULL.
-        // Shelbyville's user_id stored as integer 0 means the PHP null check
-        // ($colony->user_id ?? null) returns 0 (truthy-ish), not null.
-        // We create a truly NPC colony with user_id = null.
+        // The fixture has no playerless colony, so create one with user_id = null.
         DB::table('glx_colonies')->insert([
             'id' => 9999,
             'name' => 'NpcColony',

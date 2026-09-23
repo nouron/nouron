@@ -46,10 +46,12 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class HangarControllerTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     // ── Fixture constants ─────────────────────────────────────────────────────
@@ -597,14 +599,17 @@ class HangarControllerTest extends TestCase
         // Bart requests a drone — only Bart's credits should decrease,
         // not the credits of any other user.
         $this->insertHangar(1);
+        // A second player with their own credits — the fixture only has Bart's
+        // user_resources row, so without this the "others unchanged" loop is empty.
+        $this->createForeignColony();
 
-        // Record credits for both users before the request.
-        // user_id=1 (Homer), user_id=3 (Bart)
+        // Record credits for all users before the request.
         $bartCreditsBefore = (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits');
         $otherUsersBefore = DB::table('user_resources')
             ->where('user_id', '!=', self::USER_ID_BART)
             ->pluck('credits', 'user_id')
             ->all();
+        $this->assertNotEmpty($otherUsersBefore, 'precondition: at least one other user with credits');
 
         $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), [

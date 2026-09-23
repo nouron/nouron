@@ -25,7 +25,10 @@ use Tests\TestCase;
  *
  * Fixture (TestSeeder / testdata.sqlite.sql):
  *   User 3 (Bart)  → colony 1 "Springfield"  (CC level=3)
- *   User 0 (Homer) → colony 2 "Shelbyville"  (CC level=5)
+ *
+ * The CC-level-5 positive baselines used to run on colony 2 "Shelbyville" (CC=5);
+ * that playerless fixture colony was removed (2026-09-23), so they now bump
+ * colony 1's CC to 5 instead — the gate logic under test is identical.
  */
 class CrossColonyAccessTest extends TestCase
 {
@@ -33,14 +36,11 @@ class CrossColonyAccessTest extends TestCase
 
     private User $bart;
 
-    private User $homer;
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
         $this->bart = User::where('user_id', 3)->firstOrFail();
-        $this->homer = User::where('user_id', 0)->firstOrFail();
     }
 
     // ── Knowledge CC-level gate ───────────────────────────────────────────────
@@ -91,25 +91,30 @@ class CrossColonyAccessTest extends TestCase
     }
 
     /**
-     * Positive baseline: colony 2 (Shelbyville) has CC at level 5 (>= required 4).
+     * Positive baseline: colony 1 with CC bumped to level 5 (>= required 4).
      * Levelup to knowledge level 4 must succeed.
      */
     public function test_knowledge_levelup_to_4_succeeds_when_cc_is_level_5(): void
     {
-        $colonyId = 2;
+        $colonyId = 1;
         $knowledgeId = 90; // knowledge_construction
 
-        // Precondition: colony 2 CC is at level 5
+        // Bump colony 1 CC to level 5 (3 in seed)
+        DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->update(['level' => 5]);
+
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
             ->value('level');
         $this->assertSame(5, $ccLevel, 'precondition: CC must be at level 5 for this test');
 
-        // Add a Wissenschaftler to colony 2 so AP pool is available
+        // Replace colony 1's advisors with a Wissenschaftler so the AP pool is available
         Advisor::where('colony_id', $colonyId)->delete();
         Advisor::create([
-            'user_id' => $this->homer->user_id,
+            'user_id' => $this->bart->user_id,
             'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $colonyId,
             'rank' => 2,
@@ -139,25 +144,30 @@ class CrossColonyAccessTest extends TestCase
 
     /**
      * Edge case: CC at exactly the required threshold level.
-     * Colony 2 CC=5. Knowledge level 5 requires CC level 5.
+     * Colony 1 with CC bumped to 5. Knowledge level 5 requires CC level 5.
      * Must succeed (equals is allowed, only strict less-than blocks).
      */
     public function test_knowledge_levelup_to_5_succeeds_when_cc_is_exactly_5(): void
     {
-        $colonyId = 2;
+        $colonyId = 1;
         $knowledgeId = 90; // knowledge_construction
 
-        // Precondition: colony 2 CC is at level 5
+        // Bump colony 1 CC to level 5 (3 in seed)
+        DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->update(['level' => 5]);
+
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
             ->value('level');
         $this->assertSame(5, $ccLevel, 'precondition: CC must be at level 5 for this test');
 
-        // Add a Wissenschaftler to colony 2
+        // Replace colony 1's advisors with a Wissenschaftler
         Advisor::where('colony_id', $colonyId)->delete();
         Advisor::create([
-            'user_id' => $this->homer->user_id,
+            'user_id' => $this->bart->user_id,
             'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $colonyId,
             'rank' => 2,

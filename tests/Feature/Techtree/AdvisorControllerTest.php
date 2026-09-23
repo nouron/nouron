@@ -34,21 +34,19 @@ use App\Services\AdvisorService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class AdvisorControllerTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
     protected int $userIdBart = 3;   // owns colony 1 (Springfield), CC level 3
 
-    protected int $userIdHomer = 0;   // owns advisors on colony 2 (Shelbyville)
-
     protected int $colonyIdBart = 1;
-
-    protected int $colonyIdHomer = 2;
 
     // personell_id values from config/advisors.php
     protected int $personellEngineer = 35;
@@ -99,6 +97,20 @@ class AdvisorControllerTest extends TestCase
             'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
+    }
+
+    /**
+     * Create a second player's colony with one promotion-eligible engineer and
+     * return that advisor's id — the target for the cross-colony guards below.
+     */
+    private function insertForeignAdvisor(): int
+    {
+        $foreign = $this->createForeignColony();
+        $advisorId = $this->insertAdvisor($foreign['user_id'], $this->personellEngineer, $foreign['colony_id']);
+        DB::table('advisors')->where('id', $advisorId)
+            ->update(['active_ticks' => (int) config('game.advisor.rank_thresholds.1', 15)]);
+
+        return $advisorId;
     }
 
     /**
@@ -457,17 +469,18 @@ class AdvisorControllerTest extends TestCase
 
     public function test_fire_returns_404_for_foreign_advisor(): void
     {
-        // Advisor id=5 belongs to Homer (user_id=0) on colony 2.
-        // Bart must not be able to fire it.
-        $homerAdvisorId = 5;
+        // The advisor belongs to another player's colony — Bart must not be able to fire it.
+        $foreignAdvisorId = $this->insertForeignAdvisor();
+        $foreignColonyId = (int) DB::table('advisors')->where('id', $foreignAdvisorId)->value('colony_id');
 
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
             ->withSession($this->bartSession())
-            ->delete(route('advisors.fire', ['id' => $homerAdvisorId]));
+            ->delete(route('advisors.fire', ['id' => $foreignAdvisorId]));
 
         $response->assertNotFound();
+        $this->assertDatabaseHas('advisors', ['id' => $foreignAdvisorId, 'colony_id' => $foreignColonyId]);
     }
 
     public function test_fire_returns_404_for_nonexistent_advisor(): void
@@ -503,18 +516,20 @@ class AdvisorControllerTest extends TestCase
 
     public function test_fire_json_returns_404_for_foreign_advisor(): void
     {
-        // Advisor id=5 belongs to Homer — Bart cannot fire it via AJAX either.
-        $homerAdvisorId = 5;
+        // The advisor belongs to another player's colony — Bart cannot fire it via AJAX either.
+        $foreignAdvisorId = $this->insertForeignAdvisor();
+        $foreignColonyId = (int) DB::table('advisors')->where('id', $foreignAdvisorId)->value('colony_id');
 
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
             ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
-            ->delete(route('advisors.fire', ['id' => $homerAdvisorId]));
+            ->delete(route('advisors.fire', ['id' => $foreignAdvisorId]));
 
         $response->assertStatus(404)
             ->assertJson(['ok' => false]);
+        $this->assertDatabaseHas('advisors', ['id' => $foreignAdvisorId, 'colony_id' => $foreignColonyId]);
     }
 
     // ── PROMOTE — Owner-Entscheidung F3/A23, 2026-09-09 ──────────────────────
@@ -559,17 +574,20 @@ class AdvisorControllerTest extends TestCase
 
     public function test_promote_returns_404_for_foreign_advisor(): void
     {
-        // Advisor id=5 belongs to Homer — Bart cannot promote it.
-        $homerAdvisorId = 5;
+        // The advisor belongs to another player's colony and is promotion-eligible —
+        // Bart (with enough credits) still cannot promote it.
+        $foreignAdvisorId = $this->insertForeignAdvisor();
+        $this->ensureCredits($this->userIdBart, 1000);
 
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
             ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
-            ->post(route('advisors.promote', ['id' => $homerAdvisorId]));
+            ->post(route('advisors.promote', ['id' => $foreignAdvisorId]));
 
         $response->assertStatus(404)->assertJson(['ok' => false]);
+        $this->assertEquals(1, (int) DB::table('advisors')->where('id', $foreignAdvisorId)->value('rank'));
     }
 
     // ── Auth guard ────────────────────────────────────────────────────────────

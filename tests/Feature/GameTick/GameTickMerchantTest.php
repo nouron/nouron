@@ -45,7 +45,6 @@ use Tests\TestCase;
  *
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3 (Bart) — bar (building_id=52) level=0
- *   Colony 2 (Shelbyville), user_id=null     — NPC colony
  *
  * Uses tick numbers 11600–11649.
  */

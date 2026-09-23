@@ -6,10 +6,12 @@ use App\Enums\BuildingId;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class ValidateColonyTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     private const COLONY_ID = 1;
@@ -118,7 +120,20 @@ class ValidateColonyTest extends TestCase
 
     public function test_without_colony_id_checks_all_colonies(): void
     {
+        // Colony 1 healthy (see test_healthy_colony_exits_zero_with_no_errors), plus a
+        // second player's colony without a CommandCenter: only a run that really
+        // iterates over all colonies can surface that colony's error.
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 999]);
+        DB::table('colony_resources')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'resource_id' => 12],
+            ['amount' => 25]
+        );
+        $foreign = $this->createForeignColony(buildings: []);
+
         $this->artisan('game:validate-colony')
-            ->assertExitCode(1); // Shelbyville (colony 2) has no CC etc. — expected to surface issues
+            ->expectsOutputToContain('(id='.self::COLONY_ID.')')
+            ->expectsOutputToContain('(id='.$foreign['colony_id'].')')
+            ->expectsOutputToContain('CommandCenter missing or level 0')
+            ->assertExitCode(1);
     }
 }

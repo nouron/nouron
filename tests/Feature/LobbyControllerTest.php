@@ -7,6 +7,7 @@ use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 /**
@@ -16,6 +17,7 @@ use Tests\TestCase;
  */
 class LobbyControllerTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     private const USER_ID = 3;
@@ -130,9 +132,10 @@ class LobbyControllerTest extends TestCase
 
     public function test_abandon_forbids_other_users_run(): void
     {
+        $foreign = $this->createForeignColony();
         $run = Run::create([
-            'user_id' => 1, // Homer
-            'colony_id' => 2,
+            'user_id' => $foreign['user_id'],
+            'colony_id' => $foreign['colony_id'],
             'current_tick' => 1,
             'status' => 'active',
             'phase' => 1,

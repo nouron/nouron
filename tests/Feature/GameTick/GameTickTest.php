@@ -21,7 +21,6 @@ use Tests\TestCase;
  *     CC (building 25):      level=10, status_points=16
  *     oremine (building 27): level=5,  status_points=11
  *     housing (building 28): 3 instances, levels 2+3+2 = 7, status_points=10 (each)
- *   Colony 2 (Shelbyville), user_id=0 (no player)
  *   user_resources: user 3 → supply=1938 (will be overwritten by cap model)
  */
 class GameTickTest extends TestCase
