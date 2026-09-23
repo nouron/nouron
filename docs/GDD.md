@@ -1006,6 +1006,49 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 
 Die Mechanismen sind bewusst unabhängig voneinander — mit einer Ausnahme, die **keine** ist: Decay und Bauplatz greifen beide an der Breite an (siehe „Die drei Begrenzungsachsen" oben). Das ist gewollt: Breite kostet einmalig Bauplatz und dauerhaft Instandhaltung, Tiefe kostet einmalig AP und dauerhaft nichts, dafür permanent Supply-Cap.
 
+### Überkapazität — Konsequenzen (A14, Konzeptstand)
+
+> **Status: Konzept, noch nicht implementiert.** Dieser Abschnitt beschreibt das Zielverhalten für Kolonisten ohne Unterkunft/Versorgung (`laufende_last > supply_cap`). Bisher wirkt Überkapazität nur indirekt über `decay.overcap_factor` (§7). Die folgende Kaskade ergänzt das um eine direkte, sichtbare Konsequenz für die Kolonisten selbst — dreistufig, jede Stufe baut auf der vorigen auf.
+
+**Stufe 1 — Fehlbestand-Anzeige.** Solange `laufende_last > supply_cap`, ist die Kolonie im Zustand „Überkapazität" — sichtbar im Dashboard (analog zur Instandhaltungsanzeige, §13.4) und im Kolonieprotokoll. Eine kurze Schonfrist ab Eintritt in diesen Zustand hat noch keine Vertrauensfolgen — der Spieler bekommt Zeit, gegenzusteuern (Wohnhabitat bauen, Cap-Kenntnis erforschen, oder aktiv Stufe 3 nutzen), bevor es teuer wird. Läuft die Schonfrist ab, ohne dass die Kolonie wieder unter den Cap fällt, beginnt ein **eskalierender Vertrauens-Malus** nach demselben Muster wie der Hunger-Malus (§14, „Einflussfaktoren: Verpflegung"): Basis-Malus auf dem ersten Sol nach Schonfrist, +1 je weiterem ununterbrochenen Überkapazitäts-Sol, gedeckelt. Der Streak setzt sich fort, solange die Kolonie über Cap bleibt, und fällt sofort auf 0 zurück, sobald sie wieder darunter liegt — kein Nachhall. Exakte Werte: `config/game.php → overcap` (siehe Tabelle unten).
+
+**Stufe 2 — automatische Abwanderung.** Bleibt die Kolonie nach Ablauf der Schonfrist weiter über Cap, verlässt ab dem folgenden Sol regelmäßig ein Teil der Kolonisten die Siedlung: ein Gebäude verliert eine Ausbaustufe (derselbe Mechanismus wie ein Decay-Levelup-Verlust, §7 — Untergrenze Level 1, keine Zerstörung). Das läuft **automatisch**, ohne Spielereingriff, höchstens eine begrenzte Zahl Stufen pro zusammenhängender Überkapazitäts-Episode — danach pausiert die automatische Abwanderung, auch wenn die Kolonie weiter über Cap bleibt (nur der Vertrauens-Streak aus Stufe 1 läuft weiter). Jede automatische Abwanderung löst zusätzlich ein einmaliges Vertrauens-Ereignis aus (`trust.events.colonists_left`).
+
+Die Gebäudewahl folgt einer festen Priorität, **nicht** der freien Wahl des Spielers:
+
+- **Geschützt** (nie betroffen): Kommandozentrale, Wohnhabitat, Harvester, Agrardom — die vier Gebäude, deren Verlust die Lage selbst verschlimmern würde (Wohnhabitat senkt den Cap zusätzlich) oder die Grundversorgung akut gefährdet (Agrardom/Harvester).
+- **Erste Wahl:** Infrastrukturgebäude ohne eigenen Vertrauensbeitrag (Analytik-Labor, Hangar, Uplink-Station, Handelsposten).
+- **Zweite Wahl**, nur falls in der ersten Gruppe kein Gebäude mehr reduzierbar ist (bereits auf Mindestlevel): die Vertrauensgebäude (Krankenstation, Cantina, Religiöse Stätte, Kolonialdenkmal, Sicherheits-Hub) — bewusst nachrangig, weil ihr Verlust doppelt wirkt (Supply-Entlastung **und** ein künftig kleinerer Vertrauensbeitrag).
+
+Innerhalb der jeweiligen Gruppe wird das am höchsten ausgebaute Exemplar gewählt (größte Entlastung pro Stufe, kleinster relativer Verlust). Das ist eine „so wenig wie nötig"-Regel, keine Bestrafung nach Zufall.
+
+**Stufe 3 — Wegschicken (Spieleraktion).** Statt abzuwarten, kann der Direktor aktiv **Wegschicken** auslösen: eine Handlung, die AP kostet (spürbar, deutlich mehr als eine gewöhnliche Bauhandlung) und ein Gebäude um eine Ausbaustufe reduziert — die Kolonisten werden geordnet zu einem anderen Ziel überführt, statt unkontrolliert abzuwandern. Anders als bei der automatischen Abwanderung (Stufe 2) **wählt der Spieler das betroffene Gebäude frei**, ohne die Geschützt/Erste-Wahl/Zweite-Wahl-Einschränkung von Stufe 2 — er kennt seine Kolonie besser als eine feste Regel und trägt die Konsequenz seiner Wahl selbst. Wegschicken ist jederzeit verfügbar, sobald die Kolonie über Cap ist (auch schon während der Schonfrist von Stufe 1) — es ist der Gegenzug, der die reine Fehlbestand-Anzeige zu einer echten Entscheidung macht: zusehen und den Streak laufen lassen, oder AP investieren und die Kontrolle behalten. Wegschicken löst ein eigenes, milderes Vertrauens-Ereignis aus (`trust.events.colonists_dismissed`) — milder als die automatische Abwanderung, weil es eine geordnete, vom Direktor verantwortete Maßnahme ist statt eines Kontrollverlusts.
+
+> **Warum kein gemeinsamer Deckel mit dem Hunger-Malus (Owner-Entscheidung 2026-09-23):** Hunger- und Überkapazitäts-Streak wirken unabhängig und addieren sich im ungünstigsten Fall im selben Sol — Vertrauen wird **nicht kumulativ über Sole**, sondern jeden Sol frisch aus der Summe aller aktiven Faktoren berechnet (§14, „Berechnung"), der Fail State prüft instant gegen diese Tagessumme (§18.2). Ein einzelner, extrem schlechter Sol (langer Hunger-Streak + langer Überkapazitäts-Streak + ein oder zwei negative Zufallsereignisse gleichzeitig) kann die Fail-Schwelle dadurch theoretisch erreichen, ohne dass eine einzelne Ursache für sich genommen ausreichen würde. Das ist ein **bewusst akzeptiertes Risiko**, kein blinder Fleck: Beide Streaks brauchen unabhängig voneinander mehrere ununterbrochene Sole, um ihr jeweiliges Maximum zu erreichen — die Überkapazitäts-Schonfrist verlängert diesen Anlauf zusätzlich gegenüber dem Hunger-Malus (der keine Schonfrist hat), sodass ein gleichzeitiges Maximum beider Streaks einen längeren durchgängigen Doppel-Neglect voraussetzt als jede einzelne Ursache. Die Alternative (ein gemeinsamer Deckel über Hunger- und Überkapazitäts-Malus) wurde geprüft und verworfen — sie würde zwei mechanisch und thematisch unabhängige Vernachlässigungs-Signale (Nahrung vs. Wohnraum) an einer Stelle künstlich verknüpfen, die inhaltlich nichts miteinander zu tun haben. Der gewählte Hebel gegen das Restrisiko ist stattdessen ein niedrig angesetzter Überkapazitäts-Deckel (`overcap.trust_cap`, siehe unten) — er hält den Beitrag der neuen Ursache klein genug, dass sie das bestehende Verhältnis zwischen Hunger-Malus und Fail-Schwelle nicht grundlegend verschiebt.
+
+> ⚠️ BALANCE CONCERN: Die Kombination aus Hunger-Streak, Überkapazitäts-Streak und zwei negativen Ereignissen im selben Sol ist rechnerisch möglich und läge nahe an oder über der Fail-Schwelle (§18.2). Nach erstem Playtest prüfen, ob dieser Fall real vorkommt (nicht nur rechnerisch) und ob die Fail-Schwelle selbst, nicht die einzelnen Malus-Werte, der richtige Hebel wäre, falls er zu oft auftritt.
+
+**Verhältnis zu `decay.overcap_factor` (§7):** Der erhöhte Verfall bei Überkapazität ist **kein** Duplikat dieser drei Stufen, sondern wirkt auf einer anderen Achse — sofort, ungezielt, auf die AP-/Regolith-Instandhaltungslast **aller** Gebäude (§13.1). Die Konsequenzen hier wirken dagegen verzögert (nach Schonfrist), eskalierend (Vertrauen) bzw. gezielt (Gebäudewahl nach Priorität oder frei durch den Spieler) und ausschließlich auf die Überkapazität selbst. Siehe die ausführliche Einordnung in §7.
+
+**Konfigurationswerte** (final für die Umsetzung, `config/game.php → overcap` sowie `trust.events`):
+
+| Key | Bedeutung | Wert | Herkunft |
+|---|---|---|---|
+| `overcap.grace_sols` | Schonfrist nach Eintritt in Überkapazität, bevor Stufe 1 zu wirken beginnt | 5 | Vorschlag übernommen |
+| `overcap.trust_base_malus` | Vertrauens-Malus am ersten Sol nach Schonfrist | 2 | Vorschlag übernommen (= `food.hunger_base_malus`, gleiche Fühlbarkeit wie Hunger) |
+| `overcap.trust_step` | zusätzlicher Malus je weiterem ununterbrochenen Überkapazitäts-Sol | 1 | Vorschlag übernommen (= `food.hunger_step`) |
+| `overcap.trust_cap` | Deckel des Überkapazitäts-Malus | **4** (angepasst von vorgeschlagen 6) | game-designer-Empfehlung heute, s. Begründung oben — niedriger als `food.hunger_cap` (8), da Hunger die schwerere Vernachlässigung bleiben soll und die neue Ursache das bestehende Fail-Risiko nicht grundlegend verschieben soll |
+| `overcap.abandon_levels_per_sol` | Stufenverlust pro Sol während aktiver automatischer Abwanderung | 1 | Vorschlag übernommen |
+| `overcap.abandon_max_levels_per_episode` | Obergrenze automatischer Stufenverluste je zusammenhängender Überkapazitäts-Episode | 3 | Vorschlag übernommen |
+| `overcap.dismiss_ap_cost` | AP-Kosten für die Spieleraktion „Wegschicken" | 8 (≈ ⅔ des AP-Grundpools) | Vorschlag übernommen |
+| `overcap.protected_buildings` | Gebäude, die von der automatischen Abwanderung (Stufe 2) nie betroffen sind | `commandCenter`, `housingComplex`, `harvester`, `bioFacility` | Vorschlag übernommen |
+| `overcap.abandon_priority_tier2` | Gebäude, die erst gewählt werden, wenn Tier 1 vollständig auf Mindestlevel ist | `infirmary`, `bar`, `temple`, `monument`, `securityHub` | neu benannt (vorher implizit „alle übrigen") |
+| `trust.events.colonists_left` | einmaliger Vertrauens-Malus je automatischer Abwanderung (Stufe 2) | −3 | Vorschlag übernommen |
+| `trust.events.colonists_dismissed` | einmaliger Vertrauens-Malus je Wegschicken (Stufe 3) | −2 (milder als `colonists_left`, geordnete statt unkontrollierte Maßnahme) | Vorschlag übernommen |
+| `decay.overcap_factor` | Decay-Multiplikator bei Überkapazität | **unverändert, 1.5** | game-designer-Empfehlung heute — siehe Begründung in §7 |
+
+Alle Tier-1-Gebäude aus `overcap.abandon_priority_tier2` sind implizit „alle Nicht-geschützten, die nicht in `abandon_priority_tier2` stehen" (Analytik-Labor, Hangar, Uplink-Station, Handelsposten) — kein eigener Config-Key nötig, ergibt sich als Komplement.
+
 ---
 
 ## 7. Verfall & Entropie
@@ -1086,6 +1129,16 @@ Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genut
 ### Designabsicht
 
 Decay erzwingt regelmäßige AP-Investitionen in Wartung. Inaktive Spieler verlieren schrittweise Infrastruktur und Flotte. Die Kombination aus kleiner decay_rate und fraktionaler Akkumulation bedeutet: nichts bricht sofort — aber vernachlässigte Entitäten degradieren stetig.
+
+> **`decay.overcap_factor` bleibt bestehen — kein Doppelbestrafungs-Fall (geprüft 2026-09-23, A14-Konzeption).** Mit den Überkapazitäts-Konsequenzen aus §6a kommen zum bestehenden `overcap_factor` zwei weitere, an Überkapazität geknüpfte Wirkungen hinzu (eskalierender Vertrauens-Malus, verzögerte Gebäudeverluste). Das sind **drei verschiedene Hebel, keine Wiederholung desselben**:
+>
+> - `overcap_factor` wirkt **sofort, ungezielt und auf die Instandhaltungslast** — er trifft ab dem ersten Überkapazitäts-Sol *alle* Gebäude gleichermaßen (auch solche, die mit der Ursache der Überkapazität nichts zu tun haben) und belastet den AP-/Regolith-Fluss, nicht das Vertrauen direkt. Genau dafür wurde er 2026-08-02 kalibriert (§13.1): Reparatur soll bei Überkapazität spürbar teurer werden, ohne den AP-Pool zu lähmen.
+> - Der Vertrauens-Streak (§6a Stufe 1) wirkt **verzögert (nach Schonfrist) und eskalierend**, auf einer anderen Ressource (Vertrauen statt AP/Regolith).
+> - Die Gebäudeverluste (§6a Stufe 2/3) wirken **verzögert und gezielt** — nur das überzählige Supply wird abgebaut, mit einem festen Schutz für die vier kritischen Gebäude (CC, Wohnhabitat, Harvester, Agrardom), die vom ungezielten `overcap_factor` *nicht* verschont bleiben.
+>
+> Diese letzte Zeile ist der eigentliche Unterschied: `overcap_factor` kann — ungebremst — auch ein Wohnhabitat schneller verfallen lassen, was den Supply-Cap zusätzlich senkt und die Überkapazität verschärft (die weiter oben offene „Verfalls-Kaskade"-BALANCE-CONCERN, siehe „Konsequenz bei SP ≤ 0"). A14 schützt genau davor *im eigenen Mechanismus* (Stufe 2 wählt nie CC/Wohnhabitat/Harvester/Agrardom), löst aber nicht das allgemeinere Kaskadenrisiko von `overcap_factor` auf denselben Gebäuden — das bleibt ein **separat offener Punkt**, unabhängig von A14.
+>
+> **Empfehlung: `overcap_factor` unverändert bei 1.5 belassen, zusätzlich A14 in vollem Umfang bauen.** Die drei Hebel ergänzen sich (unterschiedliche Achse, unterschiedliches Timing) statt sich zu wiederholen — das ist kein Grund, `overcap_factor` zu senken oder zu streichen; die frühere Owner-Entscheidung "bei 1.5 belassen" bleibt nach dieser erneuten Prüfung bestehen. Eine Streichung würde einen bereits selbst im GDD dokumentierten Zweck aufgeben (siehe §13.1: *„es muss einen Gegenzug geben"*) — A14 Stufe 3 „Wegschicken" ist genau dieser seit 2026-08-02 offen gelassene Gegenzug, keine zusätzliche Strafe obendrauf, sondern der fehlende Ausweg, der den Multiplikator erst fair macht. Falls der erste Playtest nach A14-Einführung zeigt, dass Kolonien regelmäßig gleichzeitig unter Instandhaltungslast *und* Vertrauens-/Gebäudeverlust leiden (statt nacheinander, wie hier angenommen), ist der Hebel dann `overcap.trust_cap` oder die Schonfrist — nicht `overcap_factor`, da dessen Zweck (AP-Pool-Sichtbarkeit) unverändert gültig bleibt.
 
 ---
 
@@ -1704,7 +1757,9 @@ Eine Untergrenze würde genau den Allokationsschmerz entfernen, der der Zweck de
 
 > **Die reale Gefahr ist die fehlende Obergrenze, nicht die fehlende Untergrenze.** Ein Spieler, der jeden Sol den ganzen Pool in Reparaturen kippt, verliert den Run langsam, ohne es zu merken. Dagegen hilft keine Bodengarantie — nur die Instandhaltungsanzeige im Dashboard (13.4). Sie ist der Ersatz für die Bodengarantie und darf deshalb nicht als Komfort-Feature wegpriorisiert werden.
 
-> **`decay.overcap_factor` = 1.5.** Bei Überschreitung des Supply-Caps steigt die Instandhaltung um die Hälfte — spürbar, aber nicht lähmend (eine Verdopplung hätte den Anteil bei ~7 AP/Sol Basislast von 32 % auf 64 % des Pools getrieben). **Das** ist der „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Fall; er entsteht nicht aus dem Verfall, sondern aus diesem Multiplikator. Zusätzlich muss Over-Cap ein **sichtbarer Zustand** sein (Dashboard + Protokoll-Meldung), nicht ein stiller Faktor, und es muss einen Gegenzug geben — zu prüfen ist, ob freiwilliger Abriss über die UI erreichbar ist (§13 „AP-Verbrauch" nennt „Reparatur/Abbau").
+> **`decay.overcap_factor` = 1.5.** Bei Überschreitung des Supply-Caps steigt die Instandhaltung um die Hälfte — spürbar, aber nicht lähmend (eine Verdopplung hätte den Anteil bei ~7 AP/Sol Basislast von 32 % auf 64 % des Pools getrieben). **Das** ist der „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Fall; er entsteht nicht aus dem Verfall, sondern aus diesem Multiplikator. Zusätzlich muss Over-Cap ein **sichtbarer Zustand** sein (Dashboard + Protokoll-Meldung), nicht ein stiller Faktor, und es muss einen Gegenzug geben.
+>
+> **Gegenzug jetzt konzipiert (A14, §6a):** Die hier offen gelassene Frage — sichtbarer Zustand + Gegenzug — ist mit dem Überkapazitäts-Konzept in §6a beantwortet. Sichtbarkeit kommt über die Fehlbestand-Anzeige (Stufe 1), der Gegenzug über **„Wegschicken"** (Stufe 3): eine AP-kostende Spieleraktion, mit der ein Gebäude gezielt eine Ausbaustufe verliert, um wieder unter den Cap zu kommen — die in dieser Zeile skizzierte „freiwilliger Abriss über die UI"-Idee, jetzt konkretisiert. `overcap_factor` bleibt dabei unverändert (siehe Einordnung in §7) — er bleibt der sofort wirkende Druck, der „Wegschicken" überhaupt erst attraktiv macht, statt von ihm verdrängt zu werden.
 
 ---
 
