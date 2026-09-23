@@ -716,6 +716,20 @@ return [
         // mission dispatch costs moved to config/missions.php (nav_ap_per_sol, organika_per_sol)
     ],
 
+    // Over-capacity consequences (GDD §6 "Überkapazität — Konsequenzen", A14 stage 1).
+    // A colony is over capacity while used supply exceeds its cap (free < 0).
+    // glx_colonies.overcap_streak counts consecutive over-cap Sols (GameTick step 9,
+    // reset to 0 the moment the colony is back within cap). No trust effect during
+    // the grace period; from the first Sol after it an escalating, capped penalty
+    // applies (TrustService::overcapPenalty) — independent of the hunger penalty
+    // (Owner decision 2026-09-23: no shared cap).
+    'overcap' => [
+        'grace_sols' => 5,        // over-cap Sols without trust consequences
+        'trust_base_malus' => 2,  // trust penalty on the first Sol after the grace period
+        'trust_step' => 1,        // +1 penalty per further consecutive over-cap Sol
+        'trust_cap' => 4,         // max penalty (deliberately below food.hunger_cap)
+    ],
+
     // CC-Level gate for knowledge research levels 4 and 5.
     // A colony must have CommandCenter (ID 25) at this level before a Kenntnis
     // can be levelled to the corresponding level.

@@ -225,6 +225,15 @@ class GameTickDryRun extends Command
                 '  <fg=red>Over supply cap — decay ×%.1f</>',
                 $overcapFactor
             ));
+
+            // A14 stage 1: the next tick would advance the streak by one.
+            $streak = (int) DB::table('glx_colonies')->where('id', $cid)->value('overcap_streak');
+            $this->line(sprintf(
+                '  <fg=red>Over-capacity streak %d → %d, trust penalty next Sol: %d</>',
+                $streak,
+                $streak + 1,
+                $this->trustService->overcapPenaltyForStreak($streak + 1)
+            ));
         }
     }
 }

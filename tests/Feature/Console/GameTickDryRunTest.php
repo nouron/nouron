@@ -152,4 +152,24 @@ class GameTickDryRunTest extends TestCase
             ->expectsOutputToContain('Over supply cap')
             ->assertExitCode(0);
     }
+
+    /**
+     * A14 stage 1: the dry run previews the over-capacity streak and the trust
+     * penalty the next Sol would apply (streak + 1). grace 5 → streak 6 → −3 next Sol.
+     */
+    public function test_overcap_streak_and_next_sol_trust_penalty_are_previewed(): void
+    {
+        config([
+            'game.overcap.grace_sols' => 5,
+            'game.overcap.trust_base_malus' => 2,
+            'game.overcap.trust_step' => 1,
+            'game.overcap.trust_cap' => 4,
+        ]);
+        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 0]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_streak' => 6]);
+
+        $this->artisan('game:tick-dry-run', ['--colony' => self::COLONY_ID])
+            ->expectsOutputToContain('Over-capacity streak 6 → 7, trust penalty next Sol: -3')
+            ->assertExitCode(0);
+    }
 }

@@ -73,6 +73,34 @@
                 $breakdownRows([__("resources.popup_sup_free") => $supplyBreakdown["free"]])
             : null;
 
+        // Over-capacity rows (GDD §6 "Überkapazität", A14): colonist deficit plus either
+        // the remaining grace period or the current trust penalty — see OvercapService::status().
+        if ($supplyPopupExtra !== null && ($overcapStatus["over"] ?? false)) {
+            $supplyPopupExtra .=
+                '<div class="res-popup-extra"></div>' .
+                $breakdownRows([__("resources.popup_sup_overcap_deficit") => $overcapStatus["deficit"]]) .
+                ($overcapStatus["trust_penalty"] < 0
+                    ? $breakdownRows([__("resources.popup_sup_overcap_trust") => $overcapStatus["trust_penalty"]])
+                    : $breakdownRows([
+                        __("resources.popup_sup_overcap_grace") => __("resources.popup_sup_overcap_grace_value", [
+                            "sols" => $overcapStatus["grace_sols_left"],
+                        ]),
+                    ]));
+        }
+
+        // Trust chip popup extra: streak-based penalties as own rows (hunger, over-capacity).
+        $trustPopupExtra = isset($overcapStatus)
+            ? $breakdownRows(
+                array_filter(
+                    [
+                        __("resources.popup_trust_hunger") => $overcapStatus["hunger_penalty"],
+                        __("resources.popup_trust_overcap") => $overcapStatus["trust_penalty"],
+                    ],
+                    fn($v) => $v !== 0,
+                ),
+            )
+            : null;
+
         // AP chip popup extras: base + advisor + trust-multiplier composition —
         // see AdvisorService::getApBreakdown().
         $apPopupExtra = function (?array $breakdown) use ($breakdownRows) {
@@ -191,6 +219,7 @@
                     "popup_key" => "trust",
                     "popup_title" => __("resources.popup_trust_title"),
                     "popup_desc" => __("resources.popup_trust_desc"),
+                    "popup_extra" => $trustPopupExtra,
                 ])
             </span>
         @endif

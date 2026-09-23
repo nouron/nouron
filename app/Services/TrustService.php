@@ -66,6 +66,7 @@ class TrustService
         $trust += $this->shipContribution($colonyId);
         $trust += $this->eventContribution($colonyId, $tick);
         $trust += $this->hungerPenalty($colonyId);
+        $trust += $this->overcapPenalty($colonyId);
 
         return max(-100, min(100, $trust));
     }
@@ -77,7 +78,7 @@ class TrustService
      * the colony starves and vanishes the moment it is fed again (streak reset to 0 by
      * GameTick::processFoodConsumption). Returns a non-positive value.
      */
-    private function hungerPenalty(int $colonyId): int
+    public function hungerPenalty(int $colonyId): int
     {
         $streak = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('hunger_streak');
         if ($streak < 1) {
@@ -89,6 +90,40 @@ class TrustService
         $cap = (int) config('game.food.hunger_cap', 8);
 
         return -min($base + ($streak - 1) * $step, $cap);
+    }
+
+    /**
+     * Escalating trust penalty from sustained over-capacity (GDD §6
+     * "Überkapazität — Konsequenzen", A14 stage 1).
+     *
+     * Derived from glx_colonies.overcap_streak (maintained by GameTick). Zero for
+     * the first grace_sols over-cap Sols; from the first Sol after the grace period
+     * base + (streak − grace − 1) × step, capped. Independent of hungerPenalty() —
+     * no shared cap (Owner decision 2026-09-23). Returns a non-positive value.
+     */
+    public function overcapPenalty(int $colonyId): int
+    {
+        $streak = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('overcap_streak');
+
+        return $this->overcapPenaltyForStreak($streak);
+    }
+
+    /**
+     * The over-capacity penalty formula for a given streak (see overcapPenalty()).
+     * Returns a non-positive value.
+     */
+    public function overcapPenaltyForStreak(int $streak): int
+    {
+        $grace = (int) config('game.overcap.grace_sols', 5);
+        if ($streak <= $grace) {
+            return 0;
+        }
+
+        $base = (int) config('game.overcap.trust_base_malus', 2);
+        $step = (int) config('game.overcap.trust_step', 1);
+        $cap = (int) config('game.overcap.trust_cap', 4);
+
+        return -min($base + ($streak - $grace - 1) * $step, $cap);
     }
 
     /**

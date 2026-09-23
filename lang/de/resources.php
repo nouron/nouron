@@ -28,6 +28,11 @@ return [
     'popup_sup_used_researches' => 'Forschung',
     'popup_sup_used_advisors' => 'Berater',
     'popup_sup_free' => 'Frei',
+    // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
+    'popup_sup_overcap_deficit' => 'Ohne Unterkunft',
+    'popup_sup_overcap_grace' => 'Schonfrist',
+    'popup_sup_overcap_grace_value' => 'noch :sols Sol',
+    'popup_sup_overcap_trust' => 'Vertrauensverlust',
 
     'popup_ap_title' => 'Aktionspunkte',
     'popup_ap_desc' => 'Der gemeinsame Pool deiner Kolonie — Bau, Kenntnisse, Erkundung und Handel teilen sich dieselbe Kapazität.',
@@ -55,4 +60,7 @@ return [
 
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
+    // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
+    'popup_trust_overcap' => 'Überbelegung',
+    'popup_trust_hunger' => 'Hunger',
 ];

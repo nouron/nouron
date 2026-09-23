@@ -17,6 +17,9 @@ return [
             'renamed' => 'Kolonie umbenannt',
             'tile_explored' => 'Sektor erkundet',
             'tile_deep_scanned' => 'Tiefen-Scan durchgeführt',
+            // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
+            'overcap_started' => 'Überbelegung',
+            'overcap_trust_malus' => 'Überbelegung — Vertrauen sinkt',
         ],
         'merchant' => [
             'visit' => 'Reisender Händler angekündigt',
@@ -158,6 +161,9 @@ return [
         'colony_renamed' => 'Kolonie umbenannt.',
         'instability_triggered' => 'Geologische Instabilität: Harvester-Ertrag für :sols Sole gestört.',
         'plague_triggered' => 'Seuchenausbruch: Kolonie bedroht, Aktionspunkte vorübergehend reduziert.',
+        // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
+        'overcap_started' => 'Überbelegung: :deficit Kolonisten ohne Unterkunft. Nach :sols Sol ohne Abhilfe sinkt das Vertrauen.',
+        'overcap_trust_malus' => 'Überbelegung hält an: :deficit Kolonisten ohne Unterkunft — Vertrauen −:malus, steigend, solange die Kolonie überbelegt bleibt.',
 
         // Sturm (koloniweiter Scope, Owner-Entscheidung 2026-09-03): die
         // Warnung nennt kein einzelnes Gebäude mehr, die Auflösung fasst alle

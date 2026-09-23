@@ -212,6 +212,30 @@ class CommLogControllerTest extends TestCase
         $this->assertNotEmpty($entries->first()['segments']);
     }
 
+    public function test_overcap_started_description(): void
+    {
+        $this->log('colony.overcap_started', ['colony_id' => 1, 'deficit' => 6, 'grace_sols' => 5]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+
+        $this->assertSame(
+            __('comm_log.desc.overcap_started', ['deficit' => 6, 'sols' => 5]),
+            $entries->first()['segments'][0]['value']
+        );
+    }
+
+    public function test_overcap_trust_malus_description(): void
+    {
+        $this->log('colony.overcap_trust_malus', ['colony_id' => 1, 'deficit' => 6, 'malus' => 2]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+
+        $this->assertSame(
+            __('comm_log.desc.overcap_trust_malus', ['deficit' => 6, 'malus' => 2]),
+            $entries->first()['segments'][0]['value']
+        );
+    }
+
     public function test_level_up_finished_for_knowledge(): void
     {
         $this->log('techtree.level_up_finished', [

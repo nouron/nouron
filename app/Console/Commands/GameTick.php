@@ -19,6 +19,7 @@ use App\Services\HangarService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
+use App\Services\OvercapService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunProgressService;
@@ -42,10 +43,12 @@ use Illuminate\Support\Facades\DB;
  *  2. Hangar missions     — resolve dispatched missions (complete/abort), apply rewards
  *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
- *  5. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
- *  6. Resource generation — produce colony resources per industry building level (trust multiplier applied)
- *  7. Food consumption    — deduct Organics per colonist; trust penalty on shortfall
- *  8. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
+ *  5. Resource generation — produce colony resources per industry building level (trust multiplier applied)
+ *  6. Food consumption    — deduct Organics per colonist; trust penalty on shortfall
+ *  7. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
+ *  8. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model); runs after
+ *                           every level-down source (decay, encounters) so the cap is current for this Sol
+ *  8b. Over-capacity streak — overcap_streak +1 while free supply < 0, else reset (GDD §6, A14)
  *  9. Trust calculation   — recalculate colony trust and store in colony_resources (resource_id=12)
  * 10. Passive Credits     — nexus_subsidy (config('game.credits.nexus_subsidy')) + Uplink Station level ×
  *                           relay_bonus_per_uplink_level, added to user Credits
@@ -77,6 +80,7 @@ class GameTick extends Command
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly OvercapService $overcapService,
     ) {
         parent::__construct();
     }
@@ -147,9 +151,6 @@ class GameTick extends Command
             $n = $this->processResearchDecay($tick);
             $this->line("  Researches levelled down: {$n}");
 
-            $n = $this->calculateSupply();
-            $this->line("  Users supply updated:     {$n}");
-
             $n = $this->generateResources($tick);
             $this->line("  Colonies with resources:  {$n}");
 
@@ -158,6 +159,15 @@ class GameTick extends Command
 
             $n = $this->processEncounters($tick, (int) ($run->rng_seed ?? 0), (int) $run->phase);
             $this->line("  Encounters processed:     {$n}");
+
+            // Supply cap runs after the last step that can level a building down
+            // (decay AND encounters) so the stored cap — and the over-capacity
+            // streak derived from it right below — reflects this Sol's state.
+            $n = $this->calculateSupply();
+            $this->line("  Users supply updated:     {$n}");
+
+            $n = $this->overcapService->advanceStreaks($tick);
+            $this->line("  Colonies over capacity:   {$n}");
 
             $n = $this->calculateTrust($tick);
             $this->line("  Colonies trust updated:   {$n}");
