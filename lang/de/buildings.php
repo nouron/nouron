@@ -45,7 +45,7 @@ return [
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
 
     'securityHub' => 'Sicherheitszentrum',
-    'securityHub_desc' => 'Koordinationspunkt für Patrouilleneinsätze und Koloniesicherheit. Reduziert den operativen Aufwand für Verteidigungsoperationen und stellt sicher, dass beim Rückbau eines Gebäudes zumindest ein Teil der verbauten Materialien geborgen wird.',
+    'securityHub_desc' => 'Koordinationspunkt für Patrouilleneinsätze und Koloniesicherheit. Reduziert den operativen Aufwand für Verteidigungsoperationen und sorgt dafür, dass ein Teil der verbauten Materialien geborgen wird, wenn ein Gebäude durch Verfall eine Stufe verliert.',
 
     'uplinkStation' => 'Uplink-Station',
     'uplinkStation_desc' => 'Leistungsstarke Kommunikations- und Scananlage. Ermöglicht präzisere Tiefenscans der Umgebung und verbessert die Handelsverbindungen zu Nexus-Konvois. Ab der dritten Ausbaustufe: Direktzugang zur Nexus-Abschlussübertragung.',

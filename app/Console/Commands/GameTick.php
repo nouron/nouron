@@ -801,20 +801,13 @@ class GameTick extends Command
     /**
      * Recalculates and sets the supply cap for each user.
      *
-     * Cap model (GDD §6):
-     *   cap = CC_flat (10) + housing_level × 8 + Σ(knowledge_cap_per_level),  max 200
+     * Cap model (GDD §6): ResourcesService::calculateSupplyCap().
      *
      * CommandCenter must be level > 0. Without CC → cap = 0.
      * The result is SET (not incremented) in user_resources.supply.
      */
     private function calculateSupply(): int
     {
-        $capCC = (int) config('buildings.commandCenter.supply_cap', 10);
-        $capHousing = (int) config('buildings.housingComplex.supply_cap', 8);
-        $capMax = (int) config('game.supply.cap_max', 200);
-        $capPerLevel = config('game.supply.knowledge_cap_per_level', []);
-        $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
-
         $userIds = Colony::whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
@@ -834,26 +827,7 @@ class GameTick extends Command
                 continue;
             }
 
-            $housingLevel = (int) DB::table('colony_buildings')
-                ->where('colony_id', $colony->id)
-                ->where('building_id', BuildingId::Housing->value)
-                ->sum('level');
-
-            $knowledgeCap = 0;
-            if (! empty($knowledgeIds)) {
-                $levels = DB::table('colony_researches')
-                    ->where('colony_id', $colony->id)
-                    ->whereIn('research_id', $knowledgeIds)
-                    ->pluck('level', 'research_id');
-
-                foreach ($levels as $level) {
-                    for ($i = 1; $i <= min((int) $level, 5); $i++) {
-                        $knowledgeCap += $capPerLevel[$i] ?? 0;
-                    }
-                }
-            }
-
-            $cap = min($capCC + ($housingLevel * $capHousing) + $knowledgeCap, $capMax);
+            $cap = $this->resourcesService->calculateSupplyCap((int) $colony->id);
 
             UserResource::where('user_id', $userId)->update(['supply' => $cap]);
 

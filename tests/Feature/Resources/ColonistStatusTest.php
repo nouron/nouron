@@ -5,6 +5,7 @@ namespace Tests\Feature\Resources;
 use App\Services\ResourcesService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -135,5 +136,38 @@ class ColonistStatusTest extends TestCase
 
         $this->state(12, 8);
         $this->assertNotContains(self::COLONY_ID, $this->service()->getOverCapColonyIds(), 'understaffed, but nobody homeless');
+    }
+
+    // ── Projection helpers for the Rückbau preview (A43) ──────────────────────
+
+    public function test_colonist_status_for_a_given_cap_uses_that_cap_instead_of_the_stored_one(): void
+    {
+        $this->state(30, 0);
+
+        $status = $this->service()->colonistStatus(self::COLONY_ID, capOverride: 12);
+
+        $this->assertSame(12, $status['cap']);
+        $this->assertSame(20, $status['present']);
+        $this->assertSame(8, $status['homeless']);
+        $this->assertSame(30, $this->service()->colonistStatus(self::COLONY_ID)['cap'], 'the stored cap stays the default');
+    }
+
+    public function test_calculated_supply_cap_equals_the_cap_a_sol_stores(): void
+    {
+        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 0]);
+
+        Artisan::call('game:tick', ['--tick' => 11500]);
+
+        $this->assertSame(
+            (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply'),
+            $this->service()->calculateSupplyCap(self::COLONY_ID)
+        );
+    }
+
+    public function test_calculated_supply_cap_is_zero_without_command_center(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->update(['level' => 0]);
+
+        $this->assertSame(0, $this->service()->calculateSupplyCap(self::COLONY_ID));
     }
 }

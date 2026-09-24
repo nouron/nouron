@@ -139,6 +139,13 @@ return [
 
     // ── Instanced buildings + ships ───────────────────────────────────────────
     'detail_instances' => 'Instances',
+    // Instance list in the techtree detail panel (A43, GDD techtree §11.4)
+    'detail_instance_list' => 'On the map',
+    'detail_instance_level' => 'Level :level / :max',
+    'detail_instance_level_uncapped' => 'Level :level',
+    'detail_instance_construction' => 'Construction site',
+    'detail_instance_condition' => 'Condition :sp / :max',
+    'detail_instance_tile_link' => 'Go to tile',
     'detail_count' => 'Count',
     'detail_ap_invest' => 'Invest AP',
     'detail_colony_link' => 'Build on colony',
@@ -154,10 +161,9 @@ return [
     'error_max_level' => 'Maximum level already reached.',
     'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
     'error_insufficient_ap' => 'Not enough AP available for this investment.',
-    'error_instance_required' => 'There is more than one of this building — please pick one.',
-    'error_instance_not_found' => 'Your colony has no such building.',
-    'error_not_placed' => 'The building is not on the map yet — place it in the colony first.',
-    'error_min_level' => 'This building cannot be levelled down any further.',
+    'error_use_colony_view' => 'Building, upgrading, repairing and demolishing all happen in the tile panel of the colony view.',
+    'error_not_placed' => 'The building is not on the map yet — build it in the colony view first.',
+    'error_min_level' => 'This building cannot be levelled down any further. The Command Center always stays at level 1 or above.',
 
     // Technical rejections — normally never seen by the player.
     'error_entity_not_found' => 'Unknown entity.',

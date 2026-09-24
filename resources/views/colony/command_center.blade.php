@@ -128,6 +128,11 @@
                                 "description" => __(
                                     "buildings." . str_replace("building_", "", $buildingKey) . "_desc",
                                 ),
+                                "link" => route("colony.view", [
+                                    "building" => $b["building_id"],
+                                    "instance" => $b["instance_id"],
+                                ]),
+                                "link_label" => __("entity_chip.label_tile_link"),
                             ];
                         @endphp
                         <li class="cc-list-item">

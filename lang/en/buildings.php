@@ -45,7 +45,7 @@ return [
     // ── Phase 3g — implemented (May 2026) ────────────────────────────────────
 
     'securityHub' => 'Security Hub',
-    'securityHub_desc' => 'Coordination point for patrol operations and colony security. Reduces the operational overhead of defensive deployments and ensures that when a building is decommissioned, at least a portion of the materials are recovered.',
+    'securityHub_desc' => 'Coordination point for patrol operations and colony security. Reduces the operational overhead of defensive deployments and ensures that a portion of the materials is recovered when a building loses a level to decay.',
 
     'uplinkStation' => 'Uplink Station',
     'uplinkStation_desc' => 'High-powered communications and scanning array. Enables more precise deep scans of the surroundings and improves trade connections to Nexus convoys. From upgrade level three onward: direct access to the Nexus final transmission.',

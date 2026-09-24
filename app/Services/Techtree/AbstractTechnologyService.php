@@ -556,8 +556,9 @@ abstract class AbstractTechnologyService
                 $this->resourcesService->payCosts($costs, $colonyId);
             }
 
+            $newLevel = $this->leveldownTargetLevel($currentLevel);
             $updateData = [
-                'level' => $currentLevel - 1,
+                'level' => $newLevel,
                 'status_points' => $maxStatus,
             ];
 
@@ -565,12 +566,20 @@ abstract class AbstractTechnologyService
                 $updateData['ap_spend'] = 0;
             }
 
-            $updateData += $this->leveldownExtraUpdate($currentLevel - 1);
+            $updateData += $this->leveldownExtraUpdate($newLevel);
 
             DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
 
         return true;
+    }
+
+    /**
+     * The level a leveldown() leaves behind. Default: one below the current level.
+     */
+    protected function leveldownTargetLevel(int $currentLevel): int
+    {
+        return $currentLevel - 1;
     }
 
     /**

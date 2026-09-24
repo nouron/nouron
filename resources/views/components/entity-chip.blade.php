@@ -9,6 +9,8 @@
                       'level'       (int, optional)    — current level
                       'description' (string, optional) — one-sentence description
                       'link'        (string, optional) — URL shown as "Aufrufen" inside tooltip
+                      'link_label'  (string, optional) — pre-translated label replacing "Aufrufen"
+                                                         (building chips: "Zum Tile" deep link)
                       'meta'        (string, optional) — extra info line (pre-translated)
 
     Note: outer element is always <span>. Links live only inside the tooltip to avoid
@@ -71,7 +73,8 @@
             @if ($hasLink)
                 <span class="entity-chip-tooltip-link">
                     <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                    <a href="{{ e($link) }}">{{ __("entity_chip.label_open_link") }}</a>
+                    <a
+                        href="{{ $link }}">{{ $tooltip["link_label"] ?? __("entity_chip.label_open_link") }}</a>
                 </span>
             @endif
         </span>@endif

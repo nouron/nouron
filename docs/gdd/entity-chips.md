@@ -86,13 +86,15 @@ Das Alpine-Komponenten-Muster (`entityChip()`) wird vom UI-Spezialisten definier
 - Gebäudename (fett)
 - Aktueller Level (sofern bekannt: "Level 3")
 - Kurzbeschreibung (1 Satz, aus `lang/de/buildings.php` oder Tooltip-Key)
-- Link-Hinweis: "Kolonie-Ansicht aufrufen"
+- Link-Hinweis: "Zum Tile"
 
 **Link-Ziel**
-- Klickbarer Link zur Kolonieansicht (`/colony`). Kein direkter Anker auf das Gebäude (Hex-Grid unterstützt das aktuell nicht).
+- Deep-Link auf das Tile des Gebäudes: Kolonieansicht mit den Parametern Gebäude und Instanz. Die Kolonieansicht wählt die Instanz aus und öffnet ihr Tile-Panel. Das ist derselbe Deep-Link wie „Zum Tile" im Techtree-Detailpanel (GDD §11.4). Die Umsetzung läuft in A43 (ROADMAP).
+- Fallback: Ist die Instanz nicht bekannt oder nicht mehr platziert (z. B. nach Rückbau auf Stufe 0, GDD §11.5), führt der Link auf die Kolonieansicht ohne Auswahl.
 
 **Datenquelle**
 - `entity_key` (Config-Key wie `harvester`) → statisch aus Config-Array in PHP
+- `instance_id` → aus dem Log-Eintrag, wenn er einen Instanz-Kontext hat (für den Deep-Link)
 - `level` → dynamisch aus DB (`colony_buildings.level`) — muss im Controller mitgeladen werden
 - `desc` → statisch aus Lang-Datei
 
@@ -258,7 +260,7 @@ Diese Daten werden als Arrays durch den `decorate()`-Aufruf gereicht und beim Ch
 | `data-chip-label` | Anzeigename (lokalisiert) | `Harvester` |
 | `data-chip-level` | Aktueller Level (wenn bekannt) | `3` |
 | `data-chip-desc` | Kurzbeschreibung | `Fördert Regolith.` |
-| `data-chip-link` | Ziel-URL (leer = kein Link) | `/colony` |
+| `data-chip-link` | Ziel-URL (leer = kein Link) | Gebäude: Kolonieansicht mit Gebäude- und Instanz-Parameter |
 | `data-chip-meta` | Optionale Zusatzinfo (JSON-String) | `{"ap_type":"construction"}` |
 
 `data-chip-meta` ist ein Escape-Hatch für typ-spezifische Zusatzdaten (z.B. Berater-AP-Typ, Ressourcen-Handelsbarkeit) die nicht in das flache Schema passen. Der Tooltip-Renderer liest ihn per `JSON.parse`.
@@ -398,7 +400,7 @@ Beispiel: Ein `level_down`-Eintrag für ein Schiff — Schiff existiert nicht me
 Die folgenden Punkte sind bewusst ausgeklammert und werden nach dem Playtest evaluiert:
 
 - Chips ausserhalb des CommLog (Techtree, Cantina, Berater-Screen) — Pattern zuerst im CommLog validieren
-- Klickbare Chips mit Deeplinks in Screens (z.B. direkter Anker auf ein Gebäude im Hex-Grid) — abhängig von Screen-Implementierung
+- Deeplinks für andere Chip-Typen (z. B. Kenntnis-Anker im Techtree, Schiff im Hangar). Der Gebäude-Deeplink aufs Tile ist nicht mehr ausgeklammert, er kommt mit A43 (siehe `building` oben).
 - Animationen beim Tooltip-Öffnen — kein Aufwand bis Feedback vorliegt
 - Chips in Nexus-Funk-Nachrichten — Nexus-Karten haben eigenes Layout; gesonderter Review nötig
 - Touch-Verhalten auf Tablets (Mittelzone) — zunächst Desktop + Phone, Tablet folgt

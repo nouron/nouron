@@ -52,37 +52,31 @@ class TechtreeControllerTest extends TestCase
     {
         $bart = User::find($this->userIdBart);
 
-        // Another player's colony that also has a harvester (27)
-        $otherColonyId = $this->createForeignColony([25 => 3, 27 => 1])['colony_id'];
-
-        // Record the other colony's ap_spend before the request
-        $before = DB::table('colony_buildings')
-            ->where(['colony_id' => $otherColonyId, 'building_id' => 27])
-            ->value('ap_spend');
-        $this->assertNotNull($before, 'precondition: other colony has a harvester row');
-
-        // Bart invests AP in oremine — ap_spend on colony 1 must change
-        DB::table('colony_buildings')
-            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 27])
-            ->update(['ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]); // placed: invest needs a tile
+        // Another player's colony that also researches cartography (91)
+        $otherColonyId = $this->createForeignColony([25 => 3])['colony_id'];
+        DB::table('colony_researches')->insert([
+            'colony_id' => $otherColonyId,
+            'research_id' => 91,
+            'level' => 0,
+            'status_points' => 20,
+            'ap_spend' => 3,
+        ]);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 91],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
+        );
 
         $this->actingAs($bart)
-            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 27]), ['order' => 'add'])
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'add', 'ap' => 1])
             ->assertSuccessful();
 
-        // The other colony must be untouched
-        $afterOther = DB::table('colony_buildings')
-            ->where(['colony_id' => $otherColonyId, 'building_id' => 27])
-            ->value('ap_spend');
+        $this->assertEquals(3, DB::table('colony_researches')
+            ->where(['colony_id' => $otherColonyId, 'research_id' => 91])
+            ->value('ap_spend'), 'The other colony must not be affected by Bart\'s action');
 
-        $this->assertEquals($before, $afterOther, 'The other colony must not be affected by Bart\'s action');
-
-        // Colony 1 must have changed (ap_spend increased by 1)
-        $afterOwn = DB::table('colony_buildings')
-            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 27])
-            ->value('ap_spend');
-
-        $this->assertEquals(1, $afterOwn, 'Colony 1 (Bart\'s) must be updated');
+        $this->assertEquals(1, DB::table('colony_researches')
+            ->where(['colony_id' => $this->colonyIdBart, 'research_id' => 91])
+            ->value('ap_spend'), 'Colony 1 (Bart\'s) must be updated');
     }
 
     // ── order(): rejections carry a reason ────────────────────────────────────
@@ -93,16 +87,16 @@ class TechtreeControllerTest extends TestCase
      */
     public function test_order_rejection_names_the_blocking_requirement(): void
     {
-        config(['game.bypass.ap_checks' => false]);
+        config(['game.bypass.ap_checks' => false, 'game.bypass.resource_costs' => true]);
 
-        // housingComplex (28) instance 1, placed: ap_spend=2 < ap_for_levelup=10 → the
-        // invested-AP gate blocks. Colony 1 has several housing instances, so the order
-        // names one.
-        DB::table('colony_buildings')
-            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 28, 'instance_id' => 1])
-            ->update(['tile_x' => 0, 'tile_y' => 1]);
+        // cartography (91): prerequisites met (sciencelab + hangar Lv1), but no AP
+        // invested yet → the invested-AP gate blocks the levelup.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 91],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
+        );
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 28]), ['order' => 'levelup', 'instance_id' => 1]);
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'levelup']);
 
         $response->assertStatus(422);
         $response->assertJsonPath('success', false);
@@ -160,7 +154,7 @@ class TechtreeControllerTest extends TestCase
     public function test_order_rejects_an_unknown_order(): void
     {
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 27]), ['order' => 'sabotage']);
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'sabotage']);
 
         $response->assertStatus(422);
         $response->assertJsonPath('error', 'unknown_order');
@@ -345,6 +339,52 @@ class TechtreeControllerTest extends TestCase
             $this->app->make(BuildingUnlockService::class)->unlocksAtLevel(44, 1),
             $hangar['effects_current_level']
         );
+    }
+
+    /**
+     * A43: the techtree detail panel lists the placed instances of a building
+     * (read-only; every building action lives in the colony view) and its instance
+     * cap from config/buildings.php. Only placed instances count (the anchored
+     * Command Center rule is covered in BuildingServiceInstanceOrderTest — the CC
+     * is no techtree node).
+     */
+    public function test_index_building_items_include_max_instances_and_placed_instances(): void
+    {
+        // Housing (28): instances 1 (Lv2), 4 (Lv3), 5 (Lv2) — place 4 and 1, leave 5 without a tile.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 28, 'instance_id' => 4])
+            ->update(['tile_x' => 1, 'tile_y' => -1, 'status_points' => 7]);
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 28, 'instance_id' => 1])
+            ->update(['tile_x' => 0, 'tile_y' => 1]);
+
+        $pageData = $this->actingAs(User::find($this->userIdBart))
+            ->get(route('techtree.index'))->viewData('pageData');
+        $items = collect($pageData['phases'])->flatMap(fn ($phase) => $phase['items']);
+
+        $housing = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 28);
+        $this->assertSame(6, $housing['max_instances']);
+        $this->assertSame([1, 4], array_column($housing['instances'], 'instance_id'), 'only placed instances, ordered by instance_id');
+        $maxSp = (int) DB::table('buildings')->where('id', 28)->value('max_status_points');
+        $this->assertSame([
+            'instance_id' => 4,
+            'level' => 3,
+            'max_level' => (int) DB::table('buildings')->where('id', 28)->value('max_level'),
+            'status_points' => 7,
+            'max_status_points' => $maxSp,
+            'q' => 1,
+            'r' => -1,
+        ], $housing['instances'][1]);
+
+        $sciencelab = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 31);
+        $this->assertNull($sciencelab['max_instances'], 'no instance cap configured for the sciencelab');
+
+        $bar = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 52);
+        $this->assertSame([], $bar['instances'], 'an unplaced row is not an instance on the map');
+
+        $knowledge = $items->first(fn ($t) => $t['type'] === 'research');
+        $this->assertSame([], $knowledge['instances']);
+        $this->assertNull($knowledge['max_instances']);
     }
 
     public function test_index_knowledge_items_include_effects_current_level(): void
@@ -600,49 +640,41 @@ class TechtreeControllerTest extends TestCase
     // ── order(): cross-node status refresh (phases_update) ────────────────────
 
     /**
-     * Owner-Playtest-Fund 2026-09-04: a levelup used to only patch the ONE invested
-     * tech client-side — a dependent tech elsewhere in the tree stayed 'locked' in
-     * the UI until a full page reload, even though the server-side gate had already
-     * flipped. knowledge_geology (research id=92) requires sciencelab (building
-     * id=31) at Lv2 — colony 1's sciencelab starts at Lv1 (locked) and building 27
-     * (its secondary Lv1 requirement) is already met. Leveling sciencelab to Lv2
-     * must report geology's fresh status via 'phases_update' in the same response.
+     * Owner-Playtest-Fund 2026-09-04: an order used to only patch the ONE invested
+     * tech client-side — dependent techs elsewhere in the tree stayed stale until a
+     * full page reload. Every successful order therefore carries a 'phases_update'
+     * with the gate status of every node and the dependency arrows. (The dependent
+     * unlock case — a building level flipping a knowledge from locked to available —
+     * no longer goes through this endpoint since A43: buildings are levelled in the
+     * colony view, and the techtree is re-rendered on the next visit.)
      */
-    public function test_order_response_includes_phases_update_for_a_newly_unlocked_dependent_tech(): void
+    public function test_order_response_includes_phases_update(): void
     {
-        // Precondition: geology is locked while sciencelab is still Lv1.
-        $before = $this->actingAs(User::find($this->userIdBart))
-            ->get(route('techtree.index'))->viewData('pageData');
-        $geologyBefore = null;
-        foreach ($before['phases'] as $phase) {
-            $geologyBefore ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
-        }
-        $this->assertSame('locked', $geologyBefore['status'], 'precondition: geology must start locked');
+        config(['game.bypass.resource_costs' => true]);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 91],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
+        );
 
-        // sciencelab (building 31): ap_spend=0, ap_for_levelup=10 → invest exactly enough to auto-levelup to Lv2.
-        // Placed first: a building needs a tile to gain a level.
-        DB::table('colony_buildings')
-            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 31])
-            ->update(['tile_x' => 2, 'tile_y' => -1]);
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 31]), ['order' => 'add', 'ap' => 10]);
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'add', 'ap' => 1]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
-        $response->assertJsonPath('leveled_up', true);
-        $response->assertJsonPath('tech.level', 2);
 
         $phasesUpdate = $response->json('phases_update');
         $this->assertIsArray($phasesUpdate, 'response must carry a phases_update payload');
+        $this->assertCount(5, $phasesUpdate);
 
-        $geologyUpdate = null;
+        $geology = null;
         foreach ($phasesUpdate as $phase) {
-            $geologyUpdate ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
+            $this->assertArrayHasKey('items', $phase);
+            $this->assertArrayHasKey('lines', $phase);
+            $geology ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
         }
 
-        $this->assertNotNull($geologyUpdate, 'phases_update must include geology (research id=92)');
-        $this->assertSame('available', $geologyUpdate['status'],
-            'geology must flip to available in the same response that unlocks it, without a page reload');
+        $this->assertNotNull($geology, 'phases_update must include every node, e.g. geology (research id=92)');
+        $this->assertSame('locked', $geology['status']);
     }
 
     /**

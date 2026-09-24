@@ -16,4 +16,7 @@ return [
 
     // Link row at the bottom of the tooltip when a detail URL is present
     'label_open_link' => 'Aufrufen',
+
+    // Link row on building chips, deep-linking to the tile (A43)
+    'label_tile_link' => 'Zum Tile',
 ];

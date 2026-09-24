@@ -57,6 +57,8 @@
                 placeBuilding: '{{ route("colony.building.place") }}',
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
+                leveldownPreview: '{{ route("colony.building.leveldown-preview") }}',
+                leveldownBuilding: '{{ route("colony.building.leveldown") }}',
             },
             i18n: {
                 explore: '{{ __("colony.explore") }}',
@@ -79,6 +81,15 @@
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
                 regolithFallbackTileHint: @json(__("colony.regolith_fallback_tile_hint")),
                 networkError: @json(__("colony.network_error")),
+                leveldownNewLevel: @json(__("colony.leveldown_new_level")),
+                leveldownApForfeited: @json(__("colony.leveldown_ap_forfeited")),
+                leveldownFreedWorkplaces: @json(__("colony.leveldown_freed_workplaces")),
+                leveldownCapacityLoss: @json(__("colony.leveldown_capacity_loss")),
+                leveldownHomeless: @json(__("colony.leveldown_homeless")),
+                leveldownTileReleased: @json(__("colony.leveldown_tile_released")),
+                leveldownConstructionCancelled: @json(__("colony.leveldown_construction_cancelled")),
+                leveldownDone: @json(__("colony.leveldown_done")),
+                leveldownCancelledDone: @json(__("colony.leveldown_cancelled_done")),
             },
         };
     </script>
@@ -520,6 +531,19 @@
                                         <summary>{{ __("colony.terrain_details") }}</summary>
                                         @include("colony.partials.tile-terrain", ["built" => true])
                                     </details>
+
+                                    {{-- Rückbau (GDD techtree §11.5): free of charge, so no
+                                     AP chip; kept out of the quick-action strip as the one
+                                     destructive action. Always confirmed in the dialog below. --}}
+                                    <template x-if="canLeveldown(selectedBuilding)">
+                                        <div class="tile-leveldown">
+                                            <button type="button" class="tile-action-btn tile-leveldown__btn"
+                                                @click="openLeveldown(selectedBuilding)">
+                                                <span class="tile-action-btn__body"
+                                                    x-text="selectedBuilding.level === 0 ? @js(__("colony.leveldown_cancel_construction")) : @js(__("colony.leveldown"))"></span>
+                                            </button>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
 
@@ -558,6 +582,64 @@
                 </p>
                 <footer>
                     <button @click="dismissEventDiscovery()" x-text="i18n.discoveryDismiss"></button>
+                </footer>
+            </article>
+        </dialog>
+
+        {{-- Rückbau confirmation (GDD techtree §11.5) — shows the real consequences from
+         the preview endpoint before anything is written. --}}
+        <dialog x-ref="leveldownDialog" class="sol-modal leveldown-dialog"
+            x-effect="leveldownModal.open ? ($el.open || $el.showModal()) : ($el.open && $el.close())"
+            @close="closeLeveldown()">
+            <article>
+                <header>
+                    <h3
+                        x-text="leveldownModal.building?.level === 0 ? @js(__("colony.leveldown_cancel_construction")) : @js(__("colony.leveldown_title"))">
+                    </h3>
+                    <button type="button" class="sol-modal-close" @click="closeLeveldown()"
+                        aria-label="{{ __("colony.cancel") }}">&#x2715;</button>
+                </header>
+                <div class="leveldown-dialog__body">
+                    <p class="leveldown-dialog__name"
+                        x-text="leveldownModal.building ? buildingLabel(leveldownModal.building.building_key) : ''"></p>
+                    <p class="leveldown-dialog__loading" x-show="leveldownModal.loading">
+                        {{ __("colony.leveldown_loading") }}
+                    </p>
+                    <template x-if="leveldownModal.preview">
+                        <ul class="leveldown-dialog__list">
+                            <li x-show="!leveldownModal.preview.construction_cancelled"
+                                x-text="leveldownText('leveldownNewLevel', { from: leveldownModal.preview.current_level, to: leveldownModal.preview.new_level })">
+                            </li>
+                            <li class="leveldown-dialog__warn" x-show="leveldownModal.preview.construction_cancelled"
+                                x-text="i18n.leveldownConstructionCancelled"></li>
+                            <li class="leveldown-dialog__warn"
+                                x-show="leveldownModal.preview.tile_released && !leveldownModal.preview.construction_cancelled"
+                                x-text="i18n.leveldownTileReleased"></li>
+                            <li class="leveldown-dialog__warn" x-show="leveldownModal.preview.ap_forfeited > 0"
+                                x-text="leveldownText('leveldownApForfeited', { ap: leveldownModal.preview.ap_forfeited })">
+                            </li>
+                            <li x-show="leveldownModal.preview.freed_workplaces > 0"
+                                x-text="leveldownText('leveldownFreedWorkplaces', { count: leveldownModal.preview.freed_workplaces })">
+                            </li>
+                            <li x-show="leveldownModal.preview.capacity_loss > 0"
+                                x-text="leveldownText('leveldownCapacityLoss', { count: leveldownModal.preview.capacity_loss })">
+                            </li>
+                            <li class="leveldown-dialog__warn" x-show="leveldownWarnsHomeless(leveldownModal.preview)"
+                                x-text="leveldownText('leveldownHomeless', { after: leveldownModal.preview.homeless_after, now: leveldownModal.preview.homeless_now })">
+                            </li>
+                        </ul>
+                    </template>
+                    <p class="leveldown-dialog__note">{{ __("colony.leveldown_no_refund") }}</p>
+                </div>
+                <footer class="leveldown-dialog__actions">
+                    <button type="button" class="leveldown-dialog__cancel" @click="closeLeveldown()">
+                        {{ __("colony.cancel") }}
+                    </button>
+                    <button type="button" class="leveldown-dialog__confirm" @click="confirmLeveldown()"
+                        :disabled="leveldownModal.loading || leveldownModal.submitting || !leveldownModal.preview"
+                        :aria-busy="leveldownModal.submitting ? 'true' : 'false'"
+                        x-text="leveldownModal.building?.level === 0 ? @js(__("colony.leveldown_confirm_cancel_construction")) : @js(__("colony.leveldown_confirm"))">
+                    </button>
                 </footer>
             </article>
         </dialog>

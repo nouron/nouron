@@ -7,6 +7,7 @@
 - Fix: Techtree-Order für Gebäude wirkt instanzgenau (`instance_id`); Rückbau kostet nichts mehr und gibt auf Stufe 0 das Tile frei; nie platzierte Gebäude lassen sich nicht mehr ausbauen.
 - Fix: PlaytestBot — Sol-0-Tick im Test-Harness korrigiert, Agrardom vor CC-Ausbau, Supply-Gate beachtet. 8-Seed-Batch: 7/8 Runs abgeschlossen (vorher 0/8).
 - Doku: GDD §2–§7/§13 und `docs/game-reference.md` (§10, neu §10a) auf den A14-Stand; CC-Kapazitätsbeitrag bleibt flach, tote Config-Keys entfernt.
+- Feature: A43 — Techtree ist Übersicht + Forschung; Gebäude-Aktionen nur noch im Tile-Panel. Neu: Rückbau bzw. Bauabbruch mit Bestätigungsdialog (zeigt die tatsächlich wirkenden Folgen), Deep-Link „Zum Tile" aus Techtree und Kommandozentrale, Instanzliste im Techtree. Fix: Instanzanzeige im Techtree („2 / 6" statt „2 / 3"), kaputte Chip-Links mit Query-Parametern, JS-Fehler in der Kolonieansicht.
 
 ## 2026-09-23
 

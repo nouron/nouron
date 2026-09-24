@@ -368,6 +368,11 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 - **Hartes Gate:** kein Regolith → Reparatur-Button gesperrt, Tooltip verweist auf Harvester-Reparatur. Kein Negativ-Saldo, kein Schuldensystem.
 - **CC + Harvester ausgenommen** (AP-only) → die Regolith-Quelle bleibt immer reparierbar, die Decay-Spirale ist ein erholbarer Rückschlag, kein Hard-Deadlock.
 
+**4. Rückbau (Spieleraktion, kostenlos):**
+- Senkt die Stufe einer Instanz um eins, ohne Kosten, ohne Voraussetzungen, ohne Rückerstattung. Die CC bleibt mindestens auf Stufe 1. Ein Rückbau auf Stufe 0 räumt das Tile, und derselbe Rückbau bricht eine platzierte Baustelle ab. Investierte AP eines laufenden Ausbaus verfallen. Der Rückbau löst kein Vertrauens-Ereignis aus, es gilt Bestandsschutz für bereits Bestehendes, und der Spieler bestätigt ihn in einem Modal-Dialog, der die Folgen nennt. Vollständige Regeln: §11.5 ([`docs/gdd/techtree.md`](gdd/techtree.md)).
+
+Alle vier Aktionen finden ausschließlich im Tile-Panel der Kolonieansicht statt, nicht im Techtree (§11).
+
 > **Designziel:** Regolith ist das „Mehl" (reichlich, lokal, Dauer-Sink über Bau + Reparatur), Werkstoffe das „Salz" (knapp, importiert, nur als Akzent). Schiffe kosten ausschließlich Credits.
 
 > **Entschieden (2026-06-22):** Ein Resource-Cap-System (Lagerlimit für Regolith/Werkstoffe/Organika) wurde geprüft und **verworfen** — siehe Owner-Entscheidung unter §16 Befund 1. Das Depot-Gebäude (`building_id=30`), das diese Mechanik getragen hätte, ist ersatzlos aus dem Spiel entfernt (Migration `2026_06_22_000001_remove_depot_building.php`). Begründung: Das eigentliche Spielproblem ist Ressourcenknappheit, nicht -überschuss; ein Lagerlimit hätte aktive Produktion bestraft statt belohnt — Widerspruch zum Roguelike-Designprinzip "kein Leerlauf, aktives Spielen wird belohnt". Bei Bedarf (z. B. neue Run-Modifier, die Überschuss als Mechanik nutzen) kann Depot + Cap-System später erneut eingeführt werden.
@@ -838,7 +843,7 @@ Der Personalanteil ist 1, solange keine Kolonisten abgewandert sind; nach einer 
 >
 > Harvester peakt breit in der Mitte (Lv3-4) — Regolith wird über den ganzen Run in Schüben gebraucht (CC-Upgrades, Pfadgebäude, Reparatur). Agrardom peakt früh (Lv2-3) — Organika/Nahrungssicherheit muss schnell stehen, bevor die Hunger→Trust-Spirale greift; die Kurve bleibt danach bewusst flacher als beim Harvester, damit die Hunger-Mechanik (einzige "weiche" Verlustspirale des Spiels) nicht entwertet wird. Kein Level liefert 0 Zusatzertrag — Ausbau bleibt bis Lv8 immer lohnend, nur graduell weniger.
 
-> **UI-Anforderung:** Der Grenzertrag des nächsten Levels muss vor dem Levelup sichtbar sein (analog AP-Cost-Chip-Convention) — Spieler soll entscheiden können, ob sich z.B. Lv6→Lv7 noch lohnt, bevor er investiert. **TODO Implementierung:** Techtree-UI (`techtree/index.blade.php` + `techtree-view.js`) zeigt das aktuell noch nicht an.
+> **UI-Anforderung:** Der Grenzertrag des nächsten Levels muss vor dem Levelup sichtbar sein (analog AP-Cost-Chip-Convention) — Spieler soll entscheiden können, ob sich z.B. Lv6→Lv7 noch lohnt, bevor er investiert. Ort dafür ist das Tile-Panel der Kolonieansicht, denn dort wird ausgebaut (§11.5). Das Techtree-Detailpanel darf den Wert zusätzlich als Planungsinfo zeigen. **TODO Implementierung:** wird aktuell an keiner der beiden Stellen angezeigt.
 
 > **Designentscheidung (unverändert):** Der Harvester produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
 
@@ -1020,7 +1025,7 @@ Die Mechanismen sind bewusst unabhängig voneinander — mit einer Ausnahme, die
 
 > **Status: Konzept entschieden 2026-09-24, umgesetzt (Branch `feat/a14-ueberkapazitaet`).** Dieser Abschnitt beschreibt, was mit Kolonisten geschieht, für die kein Wohnraum mehr da ist (anwesende Kolonisten > `supply_cap`): Frist mit Vertrauens-Malus, danach Abwanderung als Unterbesetzung.
 
-**Wie Überkapazität entsteht.** Weil Platzieren **und** jeder weitere Ausbau freies Supply voraussetzen (siehe „Supply als Bau-Gate" oben), kann der Spieler die Kolonie nicht selbst über ihren Cap bauen. Überkapazität entsteht nur noch, wenn **Wohnraum verloren geht**: Ein Wohnhabitat verliert durch Verfall (§7) oder ein Sturm-Ereignis (§9) eine Ausbaustufe, der Cap sinkt unter die bestehende Last. (Die Kommandozentrale zählt im aktuellen Code flach, ihr Stufenverlust senkt den Cap nicht — siehe Balance-Hinweis bei „Supply-Cap-Quellen".) Die überzähligen Kolonisten sind dann **obdachlos** — ihre Arbeitsplätze existieren weiter, sie selbst haben keine Unterkunft. Überkapazität ist damit immer die Folge eines Schadens, nie ein Baufehler: Die Frage an den Spieler lautet nicht „Warum hast du zu viel gebaut?", sondern „Wie reagierst du auf den Verlust?".
+**Wie Überkapazität entsteht.** Weil Platzieren **und** jeder weitere Ausbau freies Supply voraussetzen (siehe „Supply als Bau-Gate" oben), kann der Spieler die Kolonie nicht selbst über ihren Cap bauen. Überkapazität entsteht nur noch, wenn **Wohnraum verloren geht**: Ein Wohnhabitat verliert durch Verfall (§7), ein Sturm-Ereignis (§9) oder einen Rückbau durch den Direktor (§11.5) eine Ausbaustufe, der Cap sinkt unter die bestehende Last. (Die Kommandozentrale zählt im aktuellen Code flach, ihr Stufenverlust senkt den Cap nicht — siehe Balance-Hinweis bei „Supply-Cap-Quellen".) Die überzähligen Kolonisten sind dann **obdachlos** — ihre Arbeitsplätze existieren weiter, sie selbst haben keine Unterkunft. Überkapazität ist damit immer die Folge eines Schadens oder eines bewussten Rückbaus, nie ein Baufehler: Die Frage an den Spieler lautet nicht „Warum hast du zu viel gebaut?", sondern „Wie reagierst du auf den Verlust?". Beim Rückbau kündigt der Bestätigungsdialog die drohenden Obdachlosen vorher an (§11.5).
 
 **Frist — obdachlose Kolonisten.** Ab dem ersten Sol mit obdachlosen Kolonisten läuft ein Überkapazitäts-Streak. Er ist sichtbar in Ressourcenleiste, Dashboard (§13.4) und Kolonieprotokoll — mit der Zahl der Obdachlosen und den verbleibenden Solen bis zur Abwanderung. **Ab dem ersten Sol** wirkt ein eskalierender Vertrauens-Malus nach demselben Muster wie der Hunger-Malus (§14, „Einflussfaktoren: Verpflegung"): Basis-Malus, dann ein Schritt mehr je weiterem ununterbrochenen Sol, gedeckelt. Es gibt keine Schonfrist — der Schaden ist bereits eingetreten, die Kolonisten spüren ihn sofort. Dafür ist die Frist kurz: Nach wenigen Solen wandern die Obdachlosen ab, und der Streak endet. Innerhalb der Frist hat der Spieler drei Wege:
 
@@ -1527,7 +1532,7 @@ Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, heal
 
 ## 11. Techtree
 
-> **Ausgelagert:** Dieses Kapitel steht in [`docs/gdd/techtree.md`](gdd/techtree.md) — Entitäten-Übersicht (11.1), Abhängigkeitsregeln (11.2) und Grid-Layout der Techtree-Ansicht (11.3).
+> **Ausgelagert:** Dieses Kapitel steht in [`docs/gdd/techtree.md`](gdd/techtree.md) — Rolle des Techtrees als Freischalt-Übersicht und einziger Ort für Forschung, Entitäten-Übersicht (11.1), Abhängigkeitsregeln (11.2), Grid-Layout der Techtree-Ansicht (11.3), Detailpanel mit schreibgeschützter Instanzliste (11.4) sowie Gebäude-Aktionen im Tile-Panel der Kolonieansicht inkl. Rückbau (11.5).
 
 ---
 

@@ -1169,6 +1169,95 @@ button.btn-sol:hover,
     color: #777;
 }
 
+/* ── Rückbau (leveldown) ─────────────────────────────────────────────────── */
+
+/* Destructive action at the bottom of the built-tile panel: outlined in the
+   danger tone, never the solid primary accent. */
+.tile-building .tile-leveldown {
+    margin-top: var(--space-md, 1rem);
+    padding-top: var(--space-sm, 0.5rem);
+    border-top: 1px solid var(--color-border, #e8e8ec);
+}
+
+.tile-building .tile-leveldown__btn {
+    background: transparent;
+    border-color: var(--color-danger, #c0392b);
+    color: var(--color-danger-fg, #8c2030);
+}
+
+.tile-building .tile-leveldown__btn:hover:not(:disabled) {
+    background: var(--color-danger-bg, #fdf0f2);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__body {
+    padding-top: var(--space-md, 1rem);
+    font-size: 0.85rem;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__name {
+    margin: 0 0 var(--space-sm, 0.5rem);
+    font-weight: 700;
+    color: var(--color-anthracite, #333);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__loading,
+dialog.leveldown-dialog .leveldown-dialog__note {
+    margin: 0 0 var(--space-sm, 0.5rem);
+    color: var(--color-text-secondary, #6b6b7a);
+    font-size: 0.8rem;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__list {
+    margin: 0 0 var(--space-sm, 0.5rem);
+    padding: 0;
+    list-style: none;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__list li {
+    margin: 0 0 var(--space-xs, 0.25rem);
+    padding: var(--space-xs, 0.25rem) var(--space-sm, 0.5rem);
+    list-style: none;
+    border-left: 3px solid var(--color-border-strong, #d0d0dc);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__list li.leveldown-dialog__warn {
+    border-left-color: var(--color-warning, #d4a017);
+    background: var(--color-warning-bg, #fef9e7);
+    color: var(--color-warning-fg, #7a5500);
+    font-weight: 600;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm, 0.5rem);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__actions button {
+    width: auto;
+    margin: 0;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__cancel {
+    background: transparent;
+    border: 1px solid var(--color-border-strong, #d0d0dc);
+    color: var(--color-anthracite, #333);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__confirm {
+    background: var(--color-accent, #8c2030);
+    border: 1px solid var(--color-accent, #8c2030);
+    color: #fff;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 /* ── Build mode sidebar ──────────────────────────────────────────────────── */
 
 .build-mode-hint {
