@@ -216,6 +216,56 @@
     border-top: 1px solid var(--color-border, #e8e8ec);
 }
 
+/* Popup with an action button (e.g. "Wegschicken" in the colonist popup, A14):
+ * accepts pointer events, and an invisible bridge over the 6px gap to the chip
+ * keeps the hover alive while the pointer moves from the chip into the popup. */
+.res-popup--interactive {
+    pointer-events: auto;
+}
+.res-popup--interactive::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -8px;
+    height: 8px;
+}
+
+.res-popup-action {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.res-popup-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    margin: 0.35rem 0 0;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid var(--color-accent, #8c2030);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--color-accent, #8c2030);
+    cursor: pointer;
+}
+.res-popup-btn:hover:not(:disabled) {
+    background: #fdf0f2;
+}
+.res-popup-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.res-popup-error {
+    font-size: 0.75rem;
+    color: var(--color-accent, #8c2030);
+}
+
 /* Nexus breakdown row inside popup */
 .res-popup-nx-row {
     display: flex;
@@ -247,6 +297,7 @@
 }
 
 .res-popup-label {
+    text-align: left;
     opacity: 0.6;
     font-size: 0.75rem;
     text-transform: uppercase;

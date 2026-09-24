@@ -54,7 +54,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 
 ## 4. Gebäude: Decay-Raten & Status-Points
 
-Decay-Rate = **Status Points pro Tick** verloren (multipliziert ggü. Supply-Overcap ×1,5, `game.decay.overcap_factor`).
+Decay-Rate = **Status Points pro Tick** verloren. Überkapazität beschleunigt den Verfall nicht (A14, 2026-09-24). Level-Down endet bei Stufe 1 (`GameTick::applyLevelDown()`), ein platziertes Gebäude verfällt nie auf Stufe 0.
 
 | Gebäude | Klasse | Decay-Rate | Max SP | Tage bis Level-Down |
 |---|---|---|---|---|
@@ -258,22 +258,72 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 
 ## 10. Supply-Cap-Formel
 
+Stand Code (`GameTick::calculateSupply()`, Anzeige gespiegelt in `ResourcesService::getSupplyBreakdown()`):
+
 ```
 Cap = min(
-  CC-Level × 10  
-  + Wohnhabitate × (8 × ihre_Level)  
-  + Σ(Knowledge-Lv × Bonus per Lv)  
-  + 200  /* hard max */
-  , 200  /* absolute cap */
+  CC-Beitrag (flach, sobald CC-Stufe ≥ 1)
+  + Σ(Stufen aller Wohnhabitat-Instanzen) × Wohnhabitat-Wert
+  + Σ je Kenntnis Σ(Bonus je erreichter Stufe)
+  , game.supply.cap_max
 )
+CC-Stufe 0 → Cap = 0
 ```
 
-**Knowledge Supply-Cap Bonus** (pro Kenntnis): 3/5/5/4/3 = 20 max.
+### Supply-Cap-Quellen
 
-**Beispiel Phase 1 (CC Lv1, 1× Housing Lv1, keine Kenntnisse)**:
-- CC: 1 × 10 = 10
-- Housing: 1 × 8 = 8
-- Total: 18 Supply Cap
+| Quelle | Rechnung | Config-Key | Wert |
+|---|---|---|---|
+| Kommandozentrale | flach, unabhängig von der Stufe (nur Stufe ≥ 1) | `buildings.commandCenter.supply_cap` | 10 |
+| Wohnhabitat | Stufe × Wert, über alle Instanzen summiert (max. 6 × Stufe 3 × 8 = 144) | `buildings.housingComplex.supply_cap` | 8 je Stufe |
+| Kenntnisse | Bonus je erreichter Stufe, je Kenntnis kumuliert | `game.supply.knowledge_cap_per_level` | 3/5/5/4/3 = 20 je Kenntnis |
+| Hard-Cap | Deckel über alles | `game.supply.cap_max` | 200 |
+
+> **Achtung Drift:** `game.supply.cap_commandcenter` (10) und `game.supply.cap_housingcomplex` (8) werden vom Code nicht gelesen — maßgeblich sind die `buildings.*.supply_cap`-Keys. Die Kommentare an beiden Stellen sprechen beim CC von „pro Level", der Code rechnet flach (offene Owner-Frage, siehe GDD §6 „Supply-Cap-Quellen").
+
+**Beispiel Phase 1 (CC Lv1, 1× Wohnhabitat Lv1, keine Kenntnisse)**:
+- CC: 10 (flach)
+- Wohnhabitat: 1 × 8 = 8
+- Total: 18 Supply-Cap
+
+### Belegung (Arbeitsplätze)
+
+`ResourcesService::buildingWorkplaces()`:
+
+```
+Arbeitsplätze = Σ(Stufe × supply_cost)                             für Gebäude mit Stufe ≥ 1
+              + Σ(supply_cost)                                     für platzierte Gebäude auf Stufe 0 (Reserve, tile_x gesetzt)
+freies Supply = Cap − Arbeitsplätze − Σ(Forschungsstufe × supply_cost)
+```
+
+Bau-Gate: Platzieren und Ausbau n → n+1 (n ≥ 1) erfordern `freies Supply ≥ supply_cost`. Ausbau 0 → 1 wird nie geprüft (Reserve). Ausgenommen: CC, Wohnhabitat, erster Harvester (ungeprüft, reserviert aber). Bypass: `game.bypass.supply_checks`.
+
+---
+
+## 10a. Überkapazität / Unterbesetzung (A14)
+
+`config/game.php → overcap` und `trust.events`, Logik in `OvercapService` / `ResourcesService::colonistStatus()`.
+
+| Config-Key | Wert | Bedeutung |
+|---|---|---|
+| `game.overcap.departure_after_sols` | 3 | Sole mit Obdachlosen, bevor sie abwandern (Abwanderung im Sol danach) |
+| `game.overcap.trust_base_malus` | 2 | Vertrauens-Malus am ersten Sol mit Obdachlosen |
+| `game.overcap.trust_step` | 1 | +Malus je weiterem ununterbrochenen Sol |
+| `game.overcap.trust_cap` | 4 | Deckel des Streak-Malus (Verlauf 2 → 3 → 4) |
+| `game.overcap.dismiss_ap_cost` | 8 AP | Kosten „Wegschicken" |
+| `game.trust.events.colonists_left` | −3 | einmalig je Abwanderung |
+| `game.trust.events.colonists_dismissed` | −2 | einmalig je Wegschicken |
+
+```
+Arbeitsplätze = siehe Abschnitt 10 (inkl. Reserve)
+abgewandert   = min(glx_colonies.overcap_departed, max(0, Arbeitsplätze − Cap))
+anwesend      = Arbeitsplätze − abgewandert
+obdachlos     = max(0, anwesend − Cap)
+Personalanteil = anwesend / Arbeitsplätze   (1,0 solange niemand abgewandert ist; wirkt nur auf Regolith-/Organika-Produktion)
+food_need     = floor(anwesend / game.food.supply_per_eater)
+```
+
+DB-Spalten: `glx_colonies.overcap_streak`, `glx_colonies.overcap_departed`. Tick-Reihenfolge: Decay → Produktion → Verpflegung → Begegnungen → `settleLostWorkplaces()` (Stufenverlust nimmt unbesetzte Arbeitsplätze still mit) → Supply-Cap → `advanceStreaks()` (Rückkehr loggen, Streak/Abwanderung) → Vertrauen.
 
 ---
 
@@ -353,7 +403,7 @@ Gesamttrust = clamp(Σ buildings + Σ researches + clamp(Σ ships, −30, +30) +
 
 | Aspekt | Wert |
 |---|---|
-| **Verbrauch pro Tick** | floor(Used Supply / 4) Organika |
+| **Verbrauch pro Tick** | floor(anwesende Kolonisten / 4) Organika (`game.food.supply_per_eater`; anwesend = Arbeitsplätze inkl. Reserve − abgewandert, siehe Abschnitt 10a) |
 | **"Gut versorgt" Bonus** | +1 Trust (wenn Bestand ≥ Bedarf) |
 | **Hunger-Strafe Base** | −2 Trust auf erste hungrige Sol |
 | **Hunger-Strafe Step** | +1 pro weitere Sol in Streak |

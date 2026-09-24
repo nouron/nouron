@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\BuildingId;
+use App\Services\ResourcesService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +13,7 @@ class ValidateColony extends Command
 
     protected $description = 'Validate colony game state — detect supply overrun, AP inconsistencies, missing run, etc.';
 
-    public function handle(): int
+    public function handle(ResourcesService $resourcesService): int
     {
         $colonyIdArg = $this->argument('colony_id');
         $colonies = $colonyIdArg
@@ -47,12 +48,8 @@ class ValidateColony extends Command
                 ->first();
             $supplyCap = $userResource ? (int) $userResource->supply : 0;
 
-            $buildingUsage = DB::table('colony_buildings as cb')
-                ->join('buildings as b', 'cb.building_id', '=', 'b.id')
-                ->where('cb.colony_id', $id)
-                ->where('cb.level', '>', 0)
-                ->selectRaw('SUM(cb.level * b.supply_cost) as total_usage')
-                ->value('total_usage') ?? 0;
+            // Same building workplaces as the build gate, incl. level-0 reserves.
+            $buildingUsage = $resourcesService->buildingWorkplaces((int) $id)['total'];
 
             if ($buildingUsage > $supplyCap) {
                 $issues[] = ['ERROR', "Supply overrun: usage={$buildingUsage} > cap={$supplyCap} (deficit=".($buildingUsage - $supplyCap).')'];

@@ -90,6 +90,9 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     // Kolonisten-Zulage — spend Credits for a one-shot Trust event (max 1 tier/Sol)
     Route::post('/stipend', [ColonyController::class, 'purchaseStipend'])->name('stipend');
 
+    // "Wegschicken" — send homeless colonists away for AP (GDD §6 "Überkapazität", A14)
+    Route::post('/colonists/dismiss', [ColonyController::class, 'dismissColonists'])->name('colonists.dismiss');
+
     // Onboarding hint actions (AJAX)
     Route::post('/hint/dismiss', [ColonyController::class, 'dismissHint'])->name('hint.dismiss');
 

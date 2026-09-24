@@ -292,6 +292,32 @@ class OnboardingTriggersTest extends TestCase
     }
 
     /**
+     * Placed buildings on level 0 already reserve the workplaces of their first
+     * level (GDD §6 "Supply als Bau-Gate", A14) — the trigger sees the same load
+     * as the build gate. Two placed level-0 hangars (6 each) = 12 ≥ cap 10.
+     */
+    public function test_supply_trigger_counts_level_zero_reserves(): void
+    {
+        DB::table('buildings')->where('id', 44)->update(['supply_cost' => 6]);
+        foreach ([1, 2] as $instanceId) {
+            DB::table('colony_buildings')->insert([
+                'colony_id' => $this->colonyId,
+                'building_id' => 44,
+                'instance_id' => $instanceId,
+                'level' => 0,
+                'status_points' => 20,
+                'ap_spend' => 0,
+                'tile_x' => $instanceId,
+                'tile_y' => 0,
+            ]);
+        }
+
+        Artisan::call('game:tick', ['--run' => $this->runId]);
+
+        $this->assertTrue($this->triggerService->hasFired($this->userId, 'supply_cap_full'));
+    }
+
+    /**
      * If the trigger is already fired, a tick that would fire it again must not
      * write anything extra (idempotency at the markFired layer).
      */

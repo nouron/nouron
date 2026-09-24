@@ -161,6 +161,11 @@ return [
     'error_max_level' => 'Maximalstufe bereits erreicht.',
     'error_knowledge_cc_gate' => 'Kommandozentrale zu niedrig für diese Kenntnisstufe — erst ausbauen.',
     'error_insufficient_ap' => 'Nicht genug AP verfügbar für diese Investition.',
+    // TODO(content-writer): Platzhalter-Texte, Techtree-Gebäude-Orders (Instanz, Platzierung, Rückbau)
+    'error_instance_required' => 'Von diesem Gebäude gibt es mehrere — bitte eines auswählen.',
+    'error_instance_not_found' => 'Dieses Gebäude gibt es in deiner Kolonie nicht.',
+    'error_not_placed' => 'Das Gebäude steht noch nicht auf der Karte — erst in der Kolonie platzieren.',
+    'error_min_level' => 'Tiefer lässt sich dieses Gebäude nicht zurückbauen.',
 
     // Technische Abweisungen — erreichen den Spieler im Normalfall nicht.
     'error_entity_not_found' => 'Unbekannte Entität.',

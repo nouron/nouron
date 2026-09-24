@@ -64,7 +64,7 @@ class TechtreeControllerTest extends TestCase
         // Bart invests AP in oremine — ap_spend on colony 1 must change
         DB::table('colony_buildings')
             ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 27])
-            ->update(['ap_spend' => 0]);
+            ->update(['ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]); // placed: invest needs a tile
 
         $this->actingAs($bart)
             ->postJson(route('techtree.order', ['type' => 'building', 'id' => 27]), ['order' => 'add'])
@@ -95,9 +95,14 @@ class TechtreeControllerTest extends TestCase
     {
         config(['game.bypass.ap_checks' => false]);
 
-        // housingComplex (28): ap_spend=0, ap_for_levelup=10 → the invested-AP gate blocks.
+        // housingComplex (28) instance 1, placed: ap_spend=2 < ap_for_levelup=10 → the
+        // invested-AP gate blocks. Colony 1 has several housing instances, so the order
+        // names one.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 28, 'instance_id' => 1])
+            ->update(['tile_x' => 0, 'tile_y' => 1]);
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 28]), ['order' => 'levelup']);
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 28]), ['order' => 'levelup', 'instance_id' => 1]);
 
         $response->assertStatus(422);
         $response->assertJsonPath('success', false);
@@ -615,6 +620,10 @@ class TechtreeControllerTest extends TestCase
         $this->assertSame('locked', $geologyBefore['status'], 'precondition: geology must start locked');
 
         // sciencelab (building 31): ap_spend=0, ap_for_levelup=10 → invest exactly enough to auto-levelup to Lv2.
+        // Placed first: a building needs a tile to gain a level.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 31])
+            ->update(['tile_x' => 2, 'tile_y' => -1]);
         $response = $this->actingAs(User::find($this->userIdBart))
             ->postJson(route('techtree.order', ['type' => 'building', 'id' => 31]), ['order' => 'add', 'ap' => 10]);
 

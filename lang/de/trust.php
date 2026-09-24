@@ -23,4 +23,6 @@ return [
     'event_stipend_small' => 'Kolonisten-Zulage (Klein) ausgeschüttet.',
     'event_stipend_medium' => 'Kolonisten-Zulage (Mittel) ausgeschüttet.',
     'event_stipend_large' => 'Kolonisten-Zulage (Groß) ausgeschüttet.',
+    'event_colonists_left' => 'Kolonisten ohne Unterkunft haben die Siedlung verlassen – die Zurückgebliebenen fragen sich, wer als Nächstes geht.',
+    'event_colonists_dismissed' => 'Der Direktor hat Kolonisten ohne Unterkunft fortgeschickt – hart, aber geordnet.',
 ];

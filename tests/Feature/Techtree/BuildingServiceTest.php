@@ -36,6 +36,15 @@ class BuildingServiceTest extends TestCase
             'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
+
+        // A building needs a tile before it can gain a level (BuildingService::isPlaced()).
+        // The fixture carries no tile coordinates, so place the rows these tests level up.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => $this->entityId])
+            ->update(['tile_x' => 2, 'tile_y' => -1]);
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 28, 'instance_id' => 1])
+            ->update(['tile_x' => 0, 'tile_y' => 1]);
     }
 
     public function test_get_entities(): void
@@ -77,7 +86,7 @@ class BuildingServiceTest extends TestCase
         $colonyId = $this->createForeignColony([25 => 5, $this->entityId => 1])['colony_id'];
         DB::table('colony_buildings')
             ->where(['colony_id' => $colonyId, 'building_id' => $this->entityId])
-            ->update(['ap_spend' => 1]);
+            ->update(['ap_spend' => 1, 'tile_x' => 2, 'tile_y' => -1]);
 
         return $colonyId;
     }

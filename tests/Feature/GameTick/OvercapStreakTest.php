@@ -9,11 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * A14 stage 1 (GDD §6 "Überkapazität — Konsequenzen"): GameTick tracks
- * glx_colonies.overcap_streak — +1 per Sol the colony is over its supply cap
- * (free < 0), reset to 0 as soon as it is back within cap — and writes a
- * colony_log entry on exactly two transitions: entering over-capacity
- * (streak 1) and the end of the grace period (first Sol with a trust penalty).
+ * A14 (GDD §6 "Überkapazität — Konsequenzen"): GameTick tracks
+ * glx_colonies.overcap_streak — +1 per Sol the colony has homeless colonists,
+ * reset to 0 as soon as everyone is housed again — and writes a colony_log entry
+ * when the colony enters over-capacity (streak 1). The departure at the end of
+ * the deadline is covered by OvercapDepartureTest; the deadline is set high here
+ * so it never interferes.
  *
  * Over-cap setup: all supply costs zeroed, then the Harvester (27, colony 1
  * level 1) gets a supply cost far above any possible cap (cap_max 200).
@@ -39,6 +40,7 @@ class OvercapStreakTest extends TestCase
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
+        config(['game.overcap.departure_after_sols' => 50]);
     }
 
     private function goOverCap(): void
@@ -117,7 +119,8 @@ class OvercapStreakTest extends TestCase
         $this->assertSame(12630, (int) $entry->tick);
         $params = json_decode($entry->parameters, true);
         $this->assertSame(self::COLONY_ID, $params['colony_id']);
-        $this->assertGreaterThan(0, $params['deficit'], 'the log entry carries the colonist deficit');
+        $this->assertGreaterThan(0, $params['homeless'], 'the log entry carries the number of homeless colonists');
+        $this->assertSame(50, $params['sols'], 'and the Sols until departure');
 
         // New episode after recovering → logged again.
         $this->goWithinCap();
@@ -126,26 +129,6 @@ class OvercapStreakTest extends TestCase
         $this->tick(12634);
 
         $this->assertSame(2, $this->logCount('colony.overcap_started'));
-    }
-
-    public function test_end_of_grace_period_is_logged_exactly_once(): void
-    {
-        $grace = (int) config('game.overcap.grace_sols');
-        $this->goOverCap();
-
-        for ($i = 0; $i < $grace; $i++) {
-            $this->tick(12640 + $i);
-        }
-        $this->assertSame(0, $this->logCount('colony.overcap_trust_malus'), 'no malus entry during the grace period');
-
-        $this->tick(12640 + $grace);       // streak = grace + 1 → malus starts
-        $this->tick(12640 + $grace + 1);   // streak = grace + 2 → no new entry
-
-        $this->assertSame(1, $this->logCount('colony.overcap_trust_malus'));
-        $entry = DB::table('colony_log')->where('user', self::USER_ID)->where('event', 'colony.overcap_trust_malus')->first();
-        $this->assertSame(12640 + $grace, (int) $entry->tick);
-        $params = json_decode($entry->parameters, true);
-        $this->assertSame((int) config('game.overcap.trust_base_malus'), $params['malus']);
     }
 
     /**

@@ -9,18 +9,19 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * A14 stage 1 (GDD §6 "Überkapazität — Konsequenzen"): trust summand derived
- * from glx_colonies.overcap_streak.
+ * A14 (GDD §6 "Überkapazität — Konsequenzen"): trust summand derived from
+ * glx_colonies.overcap_streak. No grace period — the penalty applies from the
+ * first Sol with homeless colonists.
  *
- *   streak ≤ grace_sols            → 0
- *   streak = grace_sols + 1        → −trust_base_malus
+ *   streak 0                       → 0
+ *   streak 1                       → −trust_base_malus
  *   each further Sol               → −trust_step more
  *   capped at                      → −trust_cap
  *
  * Independent of the hunger penalty — both apply in full, no shared cap
  * (Owner decision 2026-09-23).
  *
- * Fixture: Colony 1 (Springfield). Config under test: grace 5, base 2, step 1, cap 4.
+ * Fixture: Colony 1 (Springfield). Config under test: base 2, step 1, cap 4.
  */
 class OvercapTrustPenaltyTest extends TestCase
 {
@@ -36,7 +37,6 @@ class OvercapTrustPenaltyTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
 
         config([
-            'game.overcap.grace_sols' => 5,
             'game.overcap.trust_base_malus' => 2,
             'game.overcap.trust_step' => 1,
             'game.overcap.trust_cap' => 4,
@@ -66,7 +66,7 @@ class OvercapTrustPenaltyTest extends TestCase
 
     public function test_penalty_formula_over_the_streak(): void
     {
-        $expected = [0 => 0, 1 => 0, 5 => 0, 6 => -2, 7 => -3, 8 => -4, 9 => -4, 30 => -4];
+        $expected = [0 => 0, 1 => -2, 2 => -3, 3 => -4, 4 => -4, 30 => -4];
 
         foreach ($expected as $streak => $penalty) {
             $this->setStreaks($streak);
@@ -74,20 +74,12 @@ class OvercapTrustPenaltyTest extends TestCase
         }
     }
 
-    public function test_no_trust_effect_during_grace_period(): void
+    public function test_trust_drops_from_the_first_sol_and_escalates_to_cap(): void
     {
         $baseline = $this->trustWith(0);
 
-        $this->assertSame($baseline, $this->trustWith(1));
-        $this->assertSame($baseline, $this->trustWith(5));
-    }
-
-    public function test_trust_drops_after_grace_period_and_escalates_to_cap(): void
-    {
-        $baseline = $this->trustWith(0);
-
-        $this->assertSame($baseline - 2, $this->trustWith(6), 'first Sol after grace → base malus');
-        $this->assertSame($baseline - 3, $this->trustWith(7), '+step per further Sol');
+        $this->assertSame($baseline - 2, $this->trustWith(1), 'first Sol with homeless colonists → base malus');
+        $this->assertSame($baseline - 3, $this->trustWith(2), '+step per further Sol');
         $this->assertSame($baseline - 4, $this->trustWith(12), 'capped at trust_cap');
     }
 

@@ -61,6 +61,20 @@ class ValidateColonyTest extends TestCase
             ->assertExitCode(1);
     }
 
+    public function test_supply_usage_counts_level_zero_reserves(): void
+    {
+        // Placed level-0 buildings reserve their first level (GDD §6 "Supply als Bau-Gate").
+        DB::table('buildings')->update(['supply_cost' => 0]);
+        DB::table('buildings')->where('id', 52)->update(['supply_cost' => 7]);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 52)
+            ->update(['level' => 0, 'tile_x' => 1, 'tile_y' => 0]);
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 5]);
+
+        $this->artisan('game:validate-colony', ['colony_id' => self::COLONY_ID])
+            ->expectsOutputToContain('Supply overrun: usage=7 > cap=5')
+            ->assertExitCode(1);
+    }
+
     public function test_missing_command_center_is_an_error(): void
     {
         DB::table('colony_buildings')

@@ -93,13 +93,14 @@ class TrustService
     }
 
     /**
-     * Escalating trust penalty from sustained over-capacity (GDD §6
-     * "Überkapazität — Konsequenzen", A14 stage 1).
+     * Escalating trust penalty from homeless colonists (GDD §6 "Überkapazität —
+     * Konsequenzen", A14).
      *
-     * Derived from glx_colonies.overcap_streak (maintained by GameTick). Zero for
-     * the first grace_sols over-cap Sols; from the first Sol after the grace period
-     * base + (streak − grace − 1) × step, capped. Independent of hungerPenalty() —
-     * no shared cap (Owner decision 2026-09-23). Returns a non-positive value.
+     * Derived from glx_colonies.overcap_streak (maintained by GameTick). No grace
+     * period: base on the first Sol, + step per further Sol, capped. The streak is
+     * bounded by the departure deadline, so the penalty never outlasts it.
+     * Independent of hungerPenalty() — no shared cap (Owner decision 2026-09-23).
+     * Returns a non-positive value.
      */
     public function overcapPenalty(int $colonyId): int
     {
@@ -114,8 +115,7 @@ class TrustService
      */
     public function overcapPenaltyForStreak(int $streak): int
     {
-        $grace = (int) config('game.overcap.grace_sols', 5);
-        if ($streak <= $grace) {
+        if ($streak < 1) {
             return 0;
         }
 
@@ -123,7 +123,7 @@ class TrustService
         $step = (int) config('game.overcap.trust_step', 1);
         $cap = (int) config('game.overcap.trust_cap', 4);
 
-        return -min($base + ($streak - $grace - 1) * $step, $cap);
+        return -min($base + ($streak - 1) * $step, $cap);
     }
 
     /**

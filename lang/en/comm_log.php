@@ -17,6 +17,10 @@ return [
             'renamed' => 'Colony renamed',
             'tile_explored' => 'Sector explored',
             'tile_deep_scanned' => 'Deep scan performed',
+            'overcap_started' => 'Housing shortage',
+            'colonists_left' => 'Colonists left',
+            'colonists_dismissed' => 'Colonists dismissed',
+            'colonists_returned' => 'Colonists returned',
         ],
         'merchant' => [
             'visit' => 'Travelling Merchant announced',
@@ -119,6 +123,10 @@ return [
 
     // Rich descriptions for Log entries (with :param placeholders)
     'desc' => [
+        'overcap_started' => 'Housing shortage: :homeless colonists without shelter — trust drops with every Sol. Without new housing they will leave in :sols Sol.',
+        'colonists_left' => ':count colonists without shelter have packed up and left the settlement. Their workplaces stay empty until new housing brings them back.',
+        'colonists_dismissed' => 'The director sent away :count colonists without shelter. Their workplaces stay empty until new housing brings them back.',
+        'colonists_returned' => ':count colonists have moved into the new housing — their workplaces are staffed again.',
         'building_placed' => ':name placed.',
         'building_invested' => ':ap AP invested in :name (:done / :total AP).',
         'building_repaired' => ':name repaired (:current / :max condition).',

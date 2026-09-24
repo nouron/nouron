@@ -23,4 +23,6 @@ return [
     'event_stipend_small' => 'Colonist Stipend (Small) paid out.',
     'event_stipend_medium' => 'Colonist Stipend (Medium) paid out.',
     'event_stipend_large' => 'Colonist Stipend (Large) paid out.',
+    'event_colonists_left' => 'Colonists without shelter have left the settlement — those who stayed wonder who will be next.',
+    'event_colonists_dismissed' => 'The director sent away colonists without shelter — harsh, but orderly.',
 ];

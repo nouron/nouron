@@ -20,7 +20,7 @@ return [
     'popup_nx_desc' => 'Was der Nexus geliehen hat, will er zurück. Überschreitest du das Schuldenlimit, entzieht er die Konzession — ohne Gnade, ohne Vorlaufzeit.',
 
     'popup_sup_title' => 'Kolonisten',
-    'popup_sup_desc' => 'Kolonisten im Einsatz / Kapazität der Siedlung. Jedes Gebäude und jede Forschung bindet pro Stufe Leute — ein größeres Labor braucht mehr als ein kleines. Ist die Kapazität erschöpft, kann nichts Neues in Betrieb genommen werden; wird sie überschritten, verfällt alles schneller.',
+    'popup_sup_desc' => 'Kolonisten im Einsatz / Kapazität der Siedlung. Jedes Gebäude und jede Forschung bindet pro Stufe Leute — ein Gebäude schon ab dem Moment, in dem es platziert wird. Ist die Kapazität erschöpft, ruhen Neubau und Ausbau, bis Wohnhabitat oder Kommandozentrale wachsen. Geht Wohnraum verloren, stehen Kolonisten ohne Unterkunft da: Das Vertrauen sinkt, und nach kurzer Frist ziehen sie fort.',
     'popup_sup_source_cc' => 'Kommandozentrale',
     'popup_sup_source_housing' => 'Wohnhabitat',
     'popup_sup_source_knowledge' => 'Kenntnisse',
@@ -28,11 +28,16 @@ return [
     'popup_sup_used_researches' => 'Forschung',
     'popup_sup_used_advisors' => 'Berater',
     'popup_sup_free' => 'Frei',
-    // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
-    'popup_sup_overcap_deficit' => 'Ohne Unterkunft',
-    'popup_sup_overcap_grace' => 'Schonfrist',
-    'popup_sup_overcap_grace_value' => 'noch :sols Sol',
-    'popup_sup_overcap_trust' => 'Vertrauensverlust',
+    'popup_sup_overcap_homeless' => 'Ohne Unterkunft',
+    'popup_sup_overcap_trust' => 'Vertrauen',
+    'popup_sup_overcap_departure' => 'Abwanderung',
+    'popup_sup_overcap_departure_value' => 'in :sols Sol',
+    'popup_sup_dismiss' => 'Wegschicken',
+    'popup_sup_dismissed' => 'Weggeschickt',
+    'popup_sup_understaffed' => 'Unbesetzte Arbeitsplätze',
+    'popup_sup_staffing' => 'Rohstoffproduktion',
+    'popup_sup_staffing_value' => ':pct %',
+    'popup_sup_dismiss_failed' => 'Wegschicken fehlgeschlagen.',
 
     'popup_ap_title' => 'Aktionspunkte',
     'popup_ap_desc' => 'Der gemeinsame Pool deiner Kolonie — Bau, Kenntnisse, Erkundung und Handel teilen sich dieselbe Kapazität.',
@@ -60,7 +65,6 @@ return [
 
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
-    // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
-    'popup_trust_overcap' => 'Überbelegung',
+    'popup_trust_overcap' => 'Wohnungsnot',
     'popup_trust_hunger' => 'Hunger',
 ];

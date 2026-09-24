@@ -13,9 +13,9 @@ use Tests\TestCase;
 /**
  * Supply over-cap penalty tests.
  *
- * Rule (GDD §6): When a colony's owner has consumed more supply than their cap
- * (getFreeSupply() < 0), buildings and researches decay at overcap_factor × the normal rate (config).
- * Ships are fleet-scoped and are not affected.
+ * Rule (GDD §7, A14 Owner decision 2026-09-24): over-capacity does NOT accelerate
+ * decay any more — the former decay.overcap_factor is gone. Buildings and
+ * researches of an over-cap colony (getFreeSupply() < 0) decay at the normal rate.
  *
  * Over-cap setup used throughout:
  *   1. Zero all supply_cost on buildings, researches, ships (clean slate).
@@ -126,10 +126,16 @@ class OverCapDecayTest extends TestCase
         $this->assertSame(0, $svc->getSupplyBreakdown(1)['used']['advisors'], 'advisors must never appear as a supply consumer');
     }
 
+    public function test_overcap_decay_factor_config_key_is_gone(): void
+    {
+        $this->assertNull(config('game.decay.overcap_factor'));
+    }
+
     // ── getOverCapColonyIds ───────────────────────────────────────────────────
 
     /**
-     * getOverCapColonyIds() returns only the colony IDs where free supply is negative.
+     * getOverCapColonyIds() returns only the colony IDs with homeless colonists
+     * (free supply negative and nobody departed yet).
      *
      * Colony 1: over-cap (oremine at level=5 × supply_cost=2 = 10, cap=0).
      * Foreign colony (second player, created in the test): only a CC with supply_cost=0
@@ -161,12 +167,11 @@ class OverCapDecayTest extends TestCase
     // ── Building decay with overcap ───────────────────────────────────────────
 
     /**
-     * Building status_points must decrease at decay_rate × overcap_factor when colony is over cap.
+     * Over cap, building status_points decrease at the plain decay_rate.
      *
-     * oremine (id 27): decay_rate=0.17, overcap_factor from config (1.5)
-     * Expected: SP = 10.0 - (0.17 × 1.5) = 9.745
+     * oremine (id 27): decay_rate=0.17 → SP = 10.0 - 0.17 = 9.83
      */
-    public function test_building_decays_faster_when_colony_is_over_cap(): void
+    public function test_building_decay_is_not_accelerated_when_colony_is_over_cap(): void
     {
         $this->zeroAllSupplyCosts();
         DB::table('buildings')->where('id', 27)->update(['supply_cost' => 2]);
@@ -181,9 +186,8 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->value('status_points');
 
-        $factor = (float) config('game.decay.overcap_factor');
-        $this->assertEqualsWithDelta(10.0 - (0.17 * $factor), $sp, 0.001,
-            'Building SP must decrease by rate × overcap_factor when over cap');
+        $this->assertEqualsWithDelta(10.0 - 0.17, $sp, 0.001,
+            'Building SP must decrease by decay_rate only, even when over cap');
     }
 
     /**
@@ -213,12 +217,11 @@ class OverCapDecayTest extends TestCase
     // ── Research decay with overcap ───────────────────────────────────────────
 
     /**
-     * Research status_points must decrease at decay_rate × overcap_factor when colony is over cap.
+     * Over cap, research status_points decrease at the plain decay_rate.
      *
-     * test_decay_placeholder (research_id=9901): decay_rate=0.13, overcap_factor from config (1.5)
-     * Expected: SP = 15.0 - (0.13 × 1.5) = 14.805
+     * test_decay_placeholder (research_id=9901): decay_rate=0.13 → SP = 15.0 - 0.13 = 14.87
      */
-    public function test_research_decays_faster_when_colony_is_over_cap(): void
+    public function test_research_decay_is_not_accelerated_when_colony_is_over_cap(): void
     {
         $this->zeroAllSupplyCosts();
         DB::table('buildings')->where('id', 27)->update(['supply_cost' => 2]);
@@ -237,9 +240,8 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('research_id', 9901)
             ->value('status_points');
 
-        $factor = (float) config('game.decay.overcap_factor');
-        $this->assertEqualsWithDelta(15.0 - (0.13 * $factor), $sp, 0.001,
-            'Research SP must decrease by rate × overcap_factor when over cap');
+        $this->assertEqualsWithDelta(15.0 - 0.13, $sp, 0.001,
+            'Research SP must decrease by decay_rate only, even when over cap');
     }
 
     /**

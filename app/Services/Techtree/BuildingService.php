@@ -2,11 +2,21 @@
 
 namespace App\Services\Techtree;
 
+use App\Enums\BuildingId;
+use App\Services\ResourcesService;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+
 /**
  * BuildingService — manages colony buildings.
  *
  * Buildings require construction AP (engineers) to be invested before a
  * levelup can be triggered. Level is capped by building.max_level (if set).
+ *
+ * Every operation addresses exactly one colony_buildings row via
+ * (colony_id, building_id, instance_id). A null $instanceId means instance 1 —
+ * the only instance of a non-instanced building. Callers acting on instanced
+ * buildings resolve the instance first (instanceBlocker()/resolveInstanceId()).
  */
 class BuildingService extends AbstractTechnologyService
 {
@@ -31,10 +41,168 @@ class BuildingService extends AbstractTechnologyService
     }
 
     /**
+     * @return array<string, int>
+     */
+    protected function rowKeys(int $colonyId, int $entityId, ?int $instanceId = null): array
+    {
+        return parent::rowKeys($colonyId, $entityId) + ['instance_id' => $instanceId ?? 1];
+    }
+
+    /**
+     * Name the reason an order cannot be tied to one instance, or null if it can.
+     *
+     * An explicit $instanceId must belong to this colony and building (a foreign or
+     * unknown id is 'instance_not_found'). Without one, the order is only
+     * unambiguous while the colony has at most one row of this building —
+     * otherwise 'instance_required'.
+     */
+    public function instanceBlocker(int $colonyId, int $buildingId, ?int $instanceId): ?string
+    {
+        $rows = DB::table($this->colonyTable())
+            ->where('colony_id', $colonyId)
+            ->where('building_id', $buildingId);
+
+        if ($instanceId !== null) {
+            return $rows->where('instance_id', $instanceId)->exists() ? null : 'instance_not_found';
+        }
+
+        return $rows->count() > 1 ? 'instance_required' : null;
+    }
+
+    /**
+     * The instance an order acts on: the requested one, else the colony's single
+     * row of this building, else instance 1. Call instanceBlocker() first.
+     */
+    public function resolveInstanceId(int $colonyId, int $buildingId, ?int $instanceId): int
+    {
+        if ($instanceId !== null) {
+            return $instanceId;
+        }
+
+        $single = DB::table($this->colonyTable())
+            ->where('colony_id', $colonyId)
+            ->where('building_id', $buildingId)
+            ->value('instance_id');
+
+        return $single !== null ? (int) $single : 1;
+    }
+
+    /**
+     * Whether a building instance stands on a tile. The Command Center is anchored
+     * to the colony centre and never carries tile coordinates (OnboardingService
+     * seeds it with tile_x NULL), so it always counts as placed.
+     */
+    public function isPlaced(int $colonyId, int $buildingId, ?int $instanceId = null): bool
+    {
+        if ($buildingId === BuildingId::CommandCenter->value) {
+            return true;
+        }
+
+        return $this->getColonyEntity($colonyId, $buildingId, $instanceId)?->tile_x !== null;
+    }
+
+    /**
+     * A building must be placed on a tile before it can gain a level — the
+     * techtree must not raise a never-placed level-0 row to level 1.
+     */
+    public function levelupBlocker(int $colonyId, int $entityId, ?int $instanceId = null): ?string
+    {
+        if (! $this->isPlaced($colonyId, $entityId, $instanceId)) {
+            return 'not_placed';
+        }
+
+        return parent::levelupBlocker($colonyId, $entityId, $instanceId);
+    }
+
+    /**
+     * Investing toward a level ('add') needs a placed building, like levelup().
+     * Repair/remove only touch status points and keep the shared rules.
+     */
+    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false, ?int $instanceId = null): ?string
+    {
+        $this->validateId($colonyId);
+        $this->validateId($entityId);
+
+        if ($action === 'add'
+            && DB::table($this->masterTable())->find($entityId)
+            && ! $this->isPlaced($colonyId, $entityId, $instanceId)) {
+            return 'not_placed';
+        }
+
+        return parent::investBlocker($colonyId, $entityId, $action, $points, $bypassPoolCheck, $instanceId);
+    }
+
+    /**
+     * Demolishing a building level (Rückbau) only needs a level to remove: no
+     * levelup prerequisites, no invested AP, no resource check. Its workplace
+     * effect follows from the lower level alone (ResourcesService::buildingWorkplaces()).
+     */
+    public function leveldownBlocker(int $colonyId, int $entityId, ?int $instanceId = null): ?string
+    {
+        return $this->checkLevelDownLimit($colonyId, $entityId, $instanceId) ? null : 'min_level';
+    }
+
+    /**
+     * Rückbau charges no resources (and in particular no supply).
+     */
+    protected function leveldownCosts(int $entityId): Collection
+    {
+        return collect();
+    }
+
+    /**
+     * A placed level-0 building already reserves the workplaces of its first level
+     * (GDD §6 "Supply als Bau-Gate", A14) — the 0 → 1 level-up is never supply-checked.
+     */
+    protected function firstLevelAlreadyReserved(object $colonyEntity): bool
+    {
+        return ResourcesService::reservesFirstLevel($colonyEntity);
+    }
+
+    /**
+     * The Command Center is the colony's anchor — it can never be levelled down
+     * below 1. Every other building may go down to 0.
+     */
+    public function checkLevelDownLimit(int $colonyId, int $entityId, ?int $instanceId = null): bool
+    {
+        if (! parent::checkLevelDownLimit($colonyId, $entityId, $instanceId)) {
+            return false;
+        }
+
+        if ($entityId === BuildingId::CommandCenter->value) {
+            return (int) $this->getColonyEntity($colonyId, $entityId, $instanceId)?->level > 1;
+        }
+
+        return true;
+    }
+
+    /**
+     * A building levelled down to 0 is taken off its tile (A14 Owner decision
+     * 2026-09-24): it is "not placed" again, so the tile is free and it no longer
+     * reserves the workplaces of its first level (ResourcesService::reservesFirstLevel()).
+     * Harvester transit/outage state is tied to the tile and cleared with it.
+     *
+     * @return array<string, mixed>
+     */
+    protected function leveldownExtraUpdate(int $newLevel): array
+    {
+        if ($newLevel > 0) {
+            return [];
+        }
+
+        return [
+            'tile_x' => null,
+            'tile_y' => null,
+            'pending_until_tick' => null,
+            'instability_outage_until_tick' => null,
+        ];
+    }
+
+    /**
      * Invest construction points into a building (add AP, repair, or remove damage).
      */
-    public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1): bool
+    public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1, ?int $instanceId = null): bool
     {
-        return $this->_invest($colonyId, $entityId, $action, $points);
+        return $this->_invest($colonyId, $entityId, $action, $points, instanceId: $instanceId);
     }
 }

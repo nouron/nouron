@@ -43,12 +43,16 @@ use Illuminate\Support\Facades\DB;
  *  2. Hangar missions     — resolve dispatched missions (complete/abort), apply rewards
  *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
- *  5. Resource generation — produce colony resources per industry building level (trust multiplier applied)
- *  6. Food consumption    — deduct Organics per colonist; trust penalty on shortfall
+ *  5. Resource generation — produce colony resources per industry building level (trust multiplier × staffing share)
+ *  6. Food consumption    — deduct Organics per present colonist; trust penalty on shortfall
  *  7. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
+ *  7b. Lost workplaces   — workplaces lost this Sol drop unfilled ones from overcap_departed (silent)
  *  8. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model); runs after
  *                           every level-down source (decay, encounters) so the cap is current for this Sol
- *  8b. Over-capacity streak — overcap_streak +1 while free supply < 0, else reset (GDD §6, A14)
+ *  8b. Over-capacity streak — overcap_streak +1 while colonists are homeless, else reset; once the
+ *                           streak has reached overcap.departure_after_sols the homeless leave
+ *                           (overcap_departed, colonists_left, streak 0); departed colonists
+ *                           return once housing is free (GDD §6, A14)
  *  9. Trust calculation   — recalculate colony trust and store in colony_resources (resource_id=12)
  * 10. Passive Credits     — nexus_subsidy (config('game.credits.nexus_subsidy')) + Uplink Station level ×
  *                           relay_bonus_per_uplink_level, added to user Credits
@@ -163,6 +167,11 @@ class GameTick extends Command
             // Supply cap runs after the last step that can level a building down
             // (decay AND encounters) so the stored cap — and the over-capacity
             // streak derived from it right below — reflects this Sol's state.
+            // Before the cap changes: lost workplaces remove unfilled ones silently,
+            // so advanceStreaks() only logs real returns (A14).
+            $n = $this->overcapService->settleLostWorkplaces();
+            $this->line("  Vacancies settled:        {$n}");
+
             $n = $this->calculateSupply();
             $this->line("  Users supply updated:     {$n}");
 
@@ -608,14 +617,10 @@ class GameTick extends Command
     private function processBuildingDecay(int $tick): int
     {
         $fallbackRate = (float) config('game.decay.rate', 1);
-        $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
         $decayRates = DB::table('buildings')->pluck('decay_rate', 'id');
         $maxSPMap = DB::table('buildings')->pluck('max_status_points', 'id');
         $buildingNames = DB::table('buildings')->pluck('name', 'id');
         $levelled = 0;
-
-        // Build the over-cap set once before iterating — O(colonies), not O(buildings).
-        $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         // Sicherheits-Hub recycling: colonies that have securityHub built get a
         // fraction of build costs back on any building level-down (recycle_pct
@@ -642,8 +647,8 @@ class GameTick extends Command
 
         foreach ($buildings as $cb) {
             $rate = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
-            $overCapMult = in_array($cb->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
-            $newStatus = (float) $cb->status_points - ($rate * $overCapMult);
+            // Over-capacity no longer accelerates decay (GDD §7, A14 Owner decision 2026-09-24).
+            $newStatus = (float) $cb->status_points - $rate;
             $where = [
                 'colony_id' => $cb->colony_id,
                 'building_id' => $cb->building_id,
@@ -742,14 +747,10 @@ class GameTick extends Command
     private function processResearchDecay(int $tick): int
     {
         $fallbackRate = (float) config('game.decay.rate', 1);
-        $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
         $decayRates = DB::table('researches')->pluck('decay_rate', 'id');
         $maxSPMap = DB::table('researches')->pluck('max_status_points', 'id');
         $researchNames = DB::table('researches')->pluck('name', 'id');
         $levelled = 0;
-
-        // Build the over-cap set once before iterating — O(colonies), not O(researches).
-        $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
 
@@ -760,8 +761,7 @@ class GameTick extends Command
 
         foreach ($researches as $cr) {
             $rate = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
-            $overCapMult = in_array($cr->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
-            $newStatus = (float) $cr->status_points - ($rate * $overCapMult);
+            $newStatus = (float) $cr->status_points - $rate;
             $where = ['colony_id' => $cr->colony_id, 'research_id' => $cr->research_id];
 
             if ($newStatus <= 0) {
@@ -859,11 +859,8 @@ class GameTick extends Command
 
             // Trigger 2 — supply_cap_full: fires once when used supply >= cap.
             if (! $this->onboardingTriggerService->hasFired($userId, 'supply_cap_full')) {
-                $usedSupply = (int) DB::table('colony_buildings as cb')
-                    ->join('buildings as b', 'b.id', '=', 'cb.building_id')
-                    ->where('cb.colony_id', $colony->id)
-                    ->where('cb.level', '>', 0)
-                    ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+                // Same building workplaces as the build gate, incl. level-0 reserves.
+                $usedSupply = $this->resourcesService->buildingWorkplaces((int) $colony->id)['total'];
 
                 if ($usedSupply >= $cap) {
                     $this->onboardingTriggerService->markFired($userId, 'supply_cap_full');
@@ -947,9 +944,13 @@ class GameTick extends Command
 
         foreach ($colonies as $colony) {
             // Apply trust production multiplier based on the colony's CURRENT trust
-            // (stored from the previous tick's trust calculation — no circular dependency).
+            // (stored from the previous tick's trust calculation — no circular dependency),
+            // times the staffing share: colonists who left through over-capacity leave
+            // workplaces unfilled (GDD §5/§6 "Überkapazität", A14). Every consumer below
+            // produces Regolith or Organika only — AP, Credits and trust are unaffected.
             $trust = $this->trustService->getTrust($colony->id);
-            $multiplier = $this->trustService->getProductionMultiplier($trust);
+            $multiplier = $this->trustService->getProductionMultiplier($trust)
+                * $this->resourcesService->staffingShare($colony->id);
 
             $harvesterYield = $this->generateHarvesterYield($tick, $colony, $multiplier);
             if ($harvesterYield > 0) {
@@ -1127,9 +1128,10 @@ class GameTick extends Command
     // ── 8a. Food consumption (Organika provisioning) ──────────────────────────
 
     /**
-     * Each colony consumes Organika (resource 5) proportional to its used supply.
+     * Each colony consumes Organika (resource 5) proportional to its present colonists.
      *
-     * food_need = floor(used_supply / supply_per_eater). Runs AFTER production (the
+     * food_need = ResourcesService::foodNeed() = floor(present / supply_per_eater);
+     * colonists departed through over-capacity do not eat (GDD §6). Runs AFTER production (the
      * Sol's harvest is on hand) and BEFORE trust (the trust calc reads the resulting
      * hunger_streak via TrustService::hungerPenalty). Stock covers need → well_fed
      * event (+trust), streak reset. Stock short → consume what's left, streak grows

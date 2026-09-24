@@ -54,6 +54,8 @@ class SolReportService
 
     public function __construct(
         private readonly ColonyService $colonyService,
+        private readonly OvercapService $overcapService,
+        private readonly ResourcesService $resourcesService,
     ) {}
 
     /**
@@ -364,6 +366,35 @@ class SolReportService
             ];
         }
 
+        // Over-capacity (A14, GDD §6 "Überkapazität"): homeless colonists left after
+        // the deadline, were dismissed by the director, or came back to new housing.
+        foreach ($events['colony.colonists_left'] ?? [] as $params) {
+            $lines[] = [
+                'label' => __('colony.sol_report_event_colonists_left'),
+                'detail' => __('colony.sol_report_colonists_left_detail', ['count' => (int) ($params['count'] ?? 0)]),
+                'tone' => 'danger',
+                'beat' => true,
+            ];
+        }
+
+        foreach ($events['colony.colonists_dismissed'] ?? [] as $params) {
+            $lines[] = [
+                'label' => __('colony.sol_report_event_colonists_dismissed'),
+                'detail' => __('colony.sol_report_colonists_dismissed_detail', ['count' => (int) ($params['count'] ?? 0)]),
+                'tone' => 'warning',
+                'beat' => false,
+            ];
+        }
+
+        foreach ($events['colony.colonists_returned'] ?? [] as $params) {
+            $lines[] = [
+                'label' => __('colony.sol_report_event_colonists_returned'),
+                'detail' => __('colony.sol_report_colonists_returned_detail', ['count' => (int) ($params['count'] ?? 0)]),
+                'tone' => 'good',
+                'beat' => false,
+            ];
+        }
+
         if (empty($lines)) {
             return null;
         }
@@ -420,18 +451,39 @@ class SolReportService
         ];
 
         // Provisioning (Organika): make hunger visible — otherwise the escalating trust
-        // hit from food_shortage has no on-screen cause.
-        $usedSupply = (int) DB::table('colony_buildings as cb')
-            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
-            ->where('cb.colony_id', $colonyId)->where('cb.level', '>', 0)
-            ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
-        $foodNeed = intdiv($usedSupply, max(1, (int) config('game.food.supply_per_eater', 4)));
+        // hit from food_shortage has no on-screen cause. Present colonists only (§6).
+        $foodNeed = $this->resourcesService->foodNeed($colonyId);
         if ($foodNeed >= 1) {
             $hungry = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('hunger_streak') > 0;
             $lines[] = [
                 'label' => __('colony.sol_report_food'),
                 'detail' => $hungry ? __('colony.sol_report_food_shortage') : __('colony.sol_report_food_ok', ['amount' => $foodNeed]),
                 'tone' => $hungry ? 'warning' : 'neutral',
+            ];
+        }
+
+        // Over-capacity (A14, GDD §6): state lines like the provisioning line above —
+        // otherwise the trust penalty and the production cut have no on-screen cause.
+        $overcap = $this->overcapService->status($colonyId);
+        if ($overcap['over']) {
+            $lines[] = [
+                'label' => __('colony.sol_report_overcap'),
+                'detail' => __('colony.sol_report_overcap_homeless', [
+                    'homeless' => $overcap['homeless'],
+                    'malus' => -$overcap['trust_penalty'],
+                    'sols' => $overcap['sols_until_departure'],
+                ]),
+                'tone' => 'danger',
+            ];
+        }
+        if ($overcap['departed'] > 0) {
+            $lines[] = [
+                'label' => __('colony.sol_report_staffing'),
+                'detail' => __('colony.sol_report_understaffed', [
+                    'departed' => $overcap['departed'],
+                    'pct' => $overcap['staffing_pct'],
+                ]),
+                'tone' => 'warning',
             ];
         }
 

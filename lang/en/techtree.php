@@ -154,6 +154,10 @@ return [
     'error_max_level' => 'Maximum level already reached.',
     'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
     'error_insufficient_ap' => 'Not enough AP available for this investment.',
+    'error_instance_required' => 'There is more than one of this building — please pick one.',
+    'error_instance_not_found' => 'Your colony has no such building.',
+    'error_not_placed' => 'The building is not on the map yet — place it in the colony first.',
+    'error_min_level' => 'This building cannot be levelled down any further.',
 
     // Technical rejections — normally never seen by the player.
     'error_entity_not_found' => 'Unknown entity.',

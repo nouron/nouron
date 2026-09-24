@@ -132,7 +132,7 @@ return [
     // ── Onboarding — Inline trigger explanations ──────────────────────────────
 
     // Trigger 2 — Supply cap full (UI banner, 1 sentence)
-    'onboarding_trigger_supply_full' => 'Supply capacity exhausted — no further buildings or ships can be assigned. Upgrade the Residential Habitat or remove consumers.',
+    'onboarding_trigger_supply_full' => 'No free colonists left — no further buildings or research can be brought online or upgraded. Upgrade the Residential Habitat or the Command Center to create housing.',
 
     // Trigger 4 — AP limit (tooltip)
     'onboarding_trigger_ap_limit' => 'No more Construction AP available this Sol.',
@@ -169,6 +169,8 @@ return [
     'error_no_construction_ap' => 'Not enough Construction AP.',
     'error_building_not_found' => 'Building not found.',
     'error_max_level_reached' => 'Maximum level already reached.',
+    'error_supply_limit' => 'No free colonists for the next upgrade level — create housing first: upgrade the Residential Habitat or the Command Center.',
+    'error_no_homeless_colonists' => 'Every colonist has a roof over their head — nobody has to leave.',
     'error_insufficient_resources' => 'Not enough resources to build.',
     'error_repair_no_regolith' => 'No Regolith for repair — repair the Harvester or mine Regolith.',
 
@@ -319,11 +321,21 @@ return [
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Colonist Stipend',
     'sol_report_stipend_detail' => '-:cost Cr — +:trust Trust',
+    'sol_report_event_colonists_left' => 'Colonists departed',
+    'sol_report_colonists_left_detail' => ':count colonists without shelter have packed up and left the settlement. Their workplaces stay empty until new housing brings them back.',
+    'sol_report_event_colonists_dismissed' => 'Colonists sent away',
+    'sol_report_colonists_dismissed_detail' => 'On the director\'s orders, :count colonists without shelter have left the settlement. New housing will bring them back.',
+    'sol_report_event_colonists_returned' => 'Colonists returned',
+    'sol_report_colonists_returned_detail' => ':count colonists have moved into the new housing — their workplaces are staffed again.',
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
     'sol_report_food' => 'Provisions',
     'sol_report_food_ok' => ':amount Organics distributed to the kitchens — the colony is fed',
+    'sol_report_overcap' => 'Shelter',
+    'sol_report_overcap_homeless' => ':homeless colonists are sleeping without shelter — Trust −:malus. Without new housing they will leave in :sols Sol.',
+    'sol_report_staffing' => 'Personnel',
+    'sol_report_understaffed' => ':departed workplaces unfilled — raw-material production at :pct %. Construction and upgrades stay locked until new housing brings the departed back.',
     'sol_report_food_shortage' => 'Supplies exhausted — colonists are going hungry. Trust is falling. Build or repair the Agrarian Dome.',
 
     // Colony & Personnel

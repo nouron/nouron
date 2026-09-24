@@ -17,9 +17,10 @@ return [
             'renamed' => 'Kolonie umbenannt',
             'tile_explored' => 'Sektor erkundet',
             'tile_deep_scanned' => 'Tiefen-Scan durchgeführt',
-            // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
-            'overcap_started' => 'Überbelegung',
-            'overcap_trust_malus' => 'Überbelegung — Vertrauen sinkt',
+            'overcap_started' => 'Wohnungsnot',
+            'colonists_left' => 'Kolonisten abgewandert',
+            'colonists_dismissed' => 'Kolonisten weggeschickt',
+            'colonists_returned' => 'Kolonisten zurückgekehrt',
         ],
         'merchant' => [
             'visit' => 'Reisender Händler angekündigt',
@@ -161,9 +162,10 @@ return [
         'colony_renamed' => 'Kolonie umbenannt.',
         'instability_triggered' => 'Geologische Instabilität: Harvester-Ertrag für :sols Sole gestört.',
         'plague_triggered' => 'Seuchenausbruch: Kolonie bedroht, Aktionspunkte vorübergehend reduziert.',
-        // TODO(content-writer): A14 Überkapazität — Platzhaltertexte prüfen
-        'overcap_started' => 'Überbelegung: :deficit Kolonisten ohne Unterkunft. Nach :sols Sol ohne Abhilfe sinkt das Vertrauen.',
-        'overcap_trust_malus' => 'Überbelegung hält an: :deficit Kolonisten ohne Unterkunft — Vertrauen −:malus, steigend, solange die Kolonie überbelegt bleibt.',
+        'overcap_started' => 'Wohnungsnot: :homeless Kolonisten ohne Unterkunft — das Vertrauen sinkt mit jedem Sol. Ohne neuen Wohnraum wandern sie in :sols Sol ab.',
+        'colonists_left' => ':count Kolonisten ohne Unterkunft haben ihre Sachen gepackt und die Siedlung verlassen. Ihre Arbeitsplätze bleiben leer, bis neuer Wohnraum sie zurückholt.',
+        'colonists_dismissed' => 'Der Direktor hat :count Kolonisten ohne Unterkunft weggeschickt. Ihre Arbeitsplätze bleiben leer, bis neuer Wohnraum sie zurückholt.',
+        'colonists_returned' => ':count Kolonisten sind in den neuen Wohnraum eingezogen — ihre Arbeitsplätze sind wieder besetzt.',
 
         // Sturm (koloniweiter Scope, Owner-Entscheidung 2026-09-03): die
         // Warnung nennt kein einzelnes Gebäude mehr, die Auflösung fasst alle
