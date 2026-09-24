@@ -6,6 +6,7 @@ use App\Models\Run;
 use App\Models\User;
 use App\Services\AdvisorService;
 use App\Services\OnboardingService;
+use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Tests\TestCase;
 
@@ -60,6 +61,15 @@ class BotSession
 
         $test->actingAs(User::where('user_id', $userId)->firstOrFail());
         $test->postJson('/lobby/start')->assertRedirect();
+
+        // In a web request TickService is bound to the active run's current_tick
+        // (AppServiceProvider), but under PHPUnit runningInConsole() is true and the
+        // singleton falls back to the wall-clock tick (~20720) until the first
+        // /sol/next runs game:tick. Every Sol-0 action stamped with that tick — e.g.
+        // a harvester relocation's pending_until_tick — then never expires once the
+        // run clock restarts at 1 (found 2026-09-24: 8/8 seeds had zero harvester
+        // yield for the whole run). Align it to what a real player's request sees.
+        app(TickService::class)->setTickCount((int) $run->fresh()->current_tick);
 
         return new self($test, $userId, $colonyId, (int) $run->id);
     }
