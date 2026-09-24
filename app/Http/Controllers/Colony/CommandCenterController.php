@@ -75,6 +75,8 @@ class CommandCenterController extends BaseController
             )
             ->get()
             ->map(fn ($b) => [
+                'building_id' => (int) $b->building_id,
+                'instance_id' => (int) $b->instance_id,
                 'building_key' => $b->building_key,
                 'label' => __('techtree.'.$b->building_key),
                 'status_points' => (int) $b->status_points,

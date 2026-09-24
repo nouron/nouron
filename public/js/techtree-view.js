@@ -1,6 +1,8 @@
 function techtreeView(config) {
     return {
         phases: config.phases,
+        colonyViewUrl: config.colonyViewUrl ?? '/colony/view',
+        i18n: config.i18n ?? {},
         selectedTech: null,
         activePhase: 1,
         isMobile: false,
@@ -271,8 +273,8 @@ function techtreeView(config) {
             if (tech.is_instanced) {
                 if (tech.status !== 'built')
                     return { available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
-                if (tech.max_level === 1) return tech.instance_count > 0 ? 'Platziert' : 'Nicht gebaut';
-                return tech.instance_count + (tech.max_level ? ' / ' + tech.max_level : '');
+                if (tech.max_level === 1) return tech.instances.length > 0 ? 'Platziert' : 'Nicht gebaut';
+                return this.instanceCountLabel(tech);
             }
             const labels = {
                 built: tech.level > 0 ? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}` : 'Gebaut',
@@ -280,6 +282,48 @@ function techtreeView(config) {
                 locked: 'Gesperrt',
             };
             return labels[tech.status] ?? tech.status;
+        },
+
+        // Placed instances vs. the instance cap (max_instances, GDD §4c) — only the
+        // count when the building has no cap (Hangar).
+        instanceCountLabel(tech) {
+            const placed = tech.instances?.length ?? 0;
+            return tech.max_instances ? `${placed} / ${tech.max_instances}` : String(placed);
+        },
+
+        // "In der Kolonie errichten" (GDD techtree §11.4): shown while another
+        // instance is possible — below the instance cap (always when uncapped), or
+        // for a non-instanced building while none is placed.
+        canBuildMore(tech) {
+            const placed = tech.instances?.length ?? 0;
+            if (!tech.is_instanced) return placed === 0;
+            return tech.max_instances === null || tech.max_instances === undefined || placed < tech.max_instances;
+        },
+
+        instanceLevelLabel(inst) {
+            if (inst.level === 0) return this.i18n.instanceConstruction ?? '';
+            if (inst.max_level === null) return this.instanceText('instanceLevelUncapped', { level: inst.level });
+            return this.instanceText('instanceLevel', { level: inst.level, max: inst.max_level });
+        },
+
+        instanceConditionLabel(inst) {
+            return this.instanceText('instanceCondition', { sp: inst.status_points, max: inst.max_status_points });
+        },
+
+        // Deep link into the colony view with exactly this instance selected.
+        tileLink(tech, inst) {
+            const query = new URLSearchParams({ building: tech.id, instance: inst.instance_id });
+            return `${this.colonyViewUrl}?${query}`;
+        },
+
+        buildLink(tech) {
+            return `${this.colonyViewUrl}?${new URLSearchParams({ build: tech.id })}`;
+        },
+
+        instanceText(key, values = {}) {
+            let text = this.i18n[key] ?? key;
+            for (const [name, value] of Object.entries(values)) text = text.replaceAll(`:${name}`, value);
+            return text;
         },
 
         typeLabel(type) {

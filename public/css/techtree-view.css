@@ -638,6 +638,51 @@
     color: #fff;
 }
 
+/* Read-only instance list (A43): one row per placed instance — level,
+   condition, "Zum Tile" deep link. Same Pico list reset as .detail-list. */
+.tech-panel .detail-row.detail-row--instances {
+    margin-top: 1.25rem;
+}
+
+.tech-panel .detail-instance-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.tech-panel .detail-instance-list .detail-instance {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.3rem 0;
+    list-style: none;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #9a9aa4);
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
+    white-space: nowrap;
+}
+
+.tech-panel .detail-instance-list .detail-instance-level {
+    font-weight: 500;
+    color: var(--color-text-primary, #333);
+}
+
+.tech-panel .detail-instance-list .detail-instance-link {
+    margin-left: auto;
+    color: var(--detail-accent);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.tech-panel .detail-instance-list .detail-instance-link:hover {
+    text-decoration: underline;
+}
+
 /* Advisor-specific detail panel */
 .tech-panel .detail-advisor-hired {
     color: var(--color-success, #16a34a);

@@ -12,7 +12,14 @@
 
 @section("content")
     <script>
-        window.__techtreeData = @json($pageData)
+        window.__techtreeData = @json($pageData);
+        window.__techtreeData.colonyViewUrl = @json(route("colony.view"));
+        window.__techtreeData.i18n = {
+            instanceLevel: @json(__("techtree.detail_instance_level")),
+            instanceLevelUncapped: @json(__("techtree.detail_instance_level_uncapped")),
+            instanceConstruction: @json(__("techtree.detail_instance_construction")),
+            instanceCondition: @json(__("techtree.detail_instance_condition")),
+        };
     </script>
 
     <div class="techtree-page" x-data="techtreeView(window.__techtreeData)" x-cloak data-hint-rank="{{ $activeHintRank }}"
@@ -62,8 +69,8 @@
                                                 @else{{ __("techtree.advisor_not_placed") }}
                                             @endif
                                         @elseif($tech["status"] === "built")
-                                            {{ $tech["instance_count"] }}@if ($tech["max_level"])
-                                                / {{ $tech["max_level"] }}
+                                            {{ count($tech["instances"]) }}@if ($tech["max_instances"])
+                                                / {{ $tech["max_instances"] }}
                                             @endif
                                         @elseif($tech["status"] === "available")
                                             {{ __("techtree.status_available") }}
@@ -174,11 +181,31 @@
                                 {{-- Level moved to .detail-subhead right under the title,
                                  see above — kept only the instanced-count row here since
                                  that's a different metric (built count vs. level). --}}
-                                <template x-if="selectedTech.is_instanced && selectedTech.instance_count > 0">
+                                <template x-if="selectedTech.is_instanced && selectedTech.instances.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_instances") }}</span>
-                                        <span
-                                            x-text="selectedTech.instance_count + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
+                                        <span class="detail-instance-count"
+                                            x-text="instanceCountLabel(selectedTech)"></span>
+                                    </div>
+                                </template>
+                                {{-- Read-only instance list (GDD techtree §11.4): every action
+                                 lives in the colony view's tile panel, reached via "Zum Tile". --}}
+                                <template x-if="selectedTech.instances.length > 0">
+                                    <div class="detail-row detail-row--instances">
+                                        <span class="detail-row-label">{{ __("techtree.detail_instance_list") }}</span>
+                                        <ul class="detail-instance-list">
+                                            <template x-for="inst in selectedTech.instances" :key="inst.instance_id">
+                                                <li class="detail-instance">
+                                                    <span class="detail-instance-level"
+                                                        x-text="instanceLevelLabel(inst)"></span>
+                                                    <span class="detail-instance-condition" x-show="inst.level > 0"
+                                                        x-text="instanceConditionLabel(inst)"></span>
+                                                    <a class="detail-instance-link" :href="tileLink(selectedTech, inst)">
+                                                        {{ __("techtree.detail_instance_tile_link") }} &rarr;
+                                                    </a>
+                                                </li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                                 @include("partials.required-list-chips", ["expr" => "selectedTech"])
@@ -203,7 +230,8 @@
                                                         </span>
                                                     </template>
                                                     <template x-if="!line.chip">
-                                                        <span class="res-chip res-chip--neutral" x-text="line.text"></span>
+                                                        <span class="res-chip res-chip--neutral"
+                                                            x-text="line.text"></span>
                                                     </template>
                                                 </li>
                                             </template>
@@ -238,10 +266,13 @@
                                         </ul>
                                     </div>
                                 </template>
-                                {{-- Colony link: opens build mode with this building pre-selected --}}
-                                <a :href="'/colony/view?build=' + selectedTech.id" class="detail-cta-link">
-                                    {{ __("techtree.detail_colony_link") }} &rarr;
-                                </a>
+                                {{-- Colony link: opens build mode with this building pre-selected,
+                                 only while another instance is possible (GDD techtree §11.4). --}}
+                                <template x-if="canBuildMore(selectedTech)">
+                                    <a :href="buildLink(selectedTech)" class="detail-cta-link">
+                                        {{ __("techtree.detail_colony_link") }} &rarr;
+                                    </a>
+                                </template>
                             </div>
                         </template>
 

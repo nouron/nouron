@@ -92,6 +92,23 @@ class CommandCenterTest extends TestCase
         });
     }
 
+    /**
+     * A43: the building chip in the maintenance widget deep-links to the tile of
+     * exactly that instance (GDD entity-chips.md, building link target).
+     */
+    public function test_maintenance_widget_chip_links_to_the_instance_tile(): void
+    {
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', 27)
+            ->update(['status_points' => 2, 'tile_x' => 1, 'tile_y' => 0]);
+
+        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+
+        $response->assertSee(route('colony.view', ['building' => 27, 'instance' => 1]));
+        $response->assertSee(__('entity_chip.label_tile_link'));
+    }
+
     public function test_net_balance_widget_shows_no_data_before_first_sol_ends(): void
     {
         $response = $this->actingAs($this->bart())->get(route('colony.command_center'));

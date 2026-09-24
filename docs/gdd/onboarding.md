@@ -160,11 +160,13 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 3 (Harvester in Colony-Zone) | Harvester-Tile auf Koloniekarte + Ziel-Ring-2-Tile (2,0) |
 | 5 (Reparieren, < 70 % SP) | betroffenes Gebäude-Tile (gleiche Schwelle wie die Schadensanzeige, `game.repair.display_threshold`) |
 | 6 (Baustelle investieren) | aktive Baustelle (Level-0-Tile) bzw. CC-Tile bei begonnenem CC-Ausbau |
-| 9 (keine Cantina) | Cantina-Kachel im Techtree |
-| 11 (kein Hangar) | Hangar-Kachel im Techtree |
+| 9 (keine Cantina) | Bau-Einstieg für die Cantina in der Kolonieansicht (Ziel des Hint-Links) |
+| 11 (kein Hangar) | Bau-Einstieg für den Hangar in der Kolonieansicht (Ziel des Hint-Links) |
 | 12 (CC Level < 2) | CC-Tile auf Koloniekarte |
-| 14 (kein Wissen) | Analytik-Labor-Kachel im Techtree (wenn noch nicht gebaut) oder erste verfügbare Kenntnis-Kachel |
-| 15 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
+| 14 (kein Wissen) | Analytik-Labor: Bau-Einstieg in der Kolonieansicht (wenn noch nicht gebaut), sonst erste verfügbare Kenntnis-Kachel im Techtree |
+| 15 (Vertrauen < -20) | Bau-Einstieg des ersten verfügbaren positiven Vertrauensgebäudes in der Kolonieansicht |
+
+> Seit A43 (§11) hat eine Gebäude-Kachel im Techtree keine Bauaktion mehr. Ein Pulse auf eine Gebäude-Kachel würde auf ein Element zeigen, das die empfohlene Aktion gar nicht ausführen kann. Gebäude-Pulse liegen deshalb in der Kolonieansicht. Im Techtree pulsieren nur noch Kenntnis-Kacheln, weil dort geforscht wird.
 
 **Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
 
@@ -186,7 +188,7 @@ Kacheln werden in drei Gruppen dargestellt, visuell getrennt durch einen Zwische
 
 | Gruppe | Inhalt | Darstellung |
 |--------|--------|-------------|
-| **Jetzt verfügbar** | Gebäude, die Voraussetzungen erfüllt haben und sofort gebaut werden können | Normal hell, oben |
+| **Jetzt verfügbar** | Gebäude, deren Voraussetzungen erfüllt sind und die sofort in der Kolonie errichtet werden können (Link „In der Kolonie errichten", §11.4), sowie sofort erforschbare Kenntnisse | Normal hell, oben |
 | **Voraussetzung fehlt** | Gebäude, die noch gesperrt sind | Gedimmt (Opacity 0.6), Tooltip zeigt was fehlt |
 | **Bereits vorhanden** | Gebaute Gebäude | Grüner Statusring, unten oder ausgeblendet |
 

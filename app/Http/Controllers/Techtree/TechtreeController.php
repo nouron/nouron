@@ -6,12 +6,10 @@ use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\AdvisorService;
 use App\Services\OnboardingHintService;
-use App\Services\Techtree\AbstractTechnologyService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
 use App\Services\Techtree\KnowledgeEffectDescriptionService;
 use App\Services\Techtree\ResearchService;
-use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -29,7 +27,6 @@ class TechtreeController extends BaseController
         TickService $tick,
         private readonly BuildingService $buildingService,
         private readonly ResearchService $researchService,
-        private readonly ShipService $shipService,
         private readonly AdvisorService $advisorService,
         private readonly TechtreeColonyService $techtreeColonyService,
         private readonly OnboardingHintService $onboardingHintService,
@@ -116,6 +113,12 @@ class TechtreeController extends BaseController
         // Total hangar instances (building_id=44) = ship capacity
         $hangarCap = (int) ($instanceCounts[44] ?? 0);
 
+        // Read-only instance list for the detail panel (A43) — actions live in the colony view.
+        $placedInstances = $this->buildingService->placedInstances($colonyId);
+        $maxInstances = collect(config('buildings'))
+            ->filter(fn ($cfg) => is_array($cfg) && isset($cfg['id']))
+            ->mapWithKeys(fn ($cfg) => [(int) $cfg['id'] => isset($cfg['max_instances']) ? (int) $cfg['max_instances'] : null]);
+
         // Available AP for sidebar invest
         $colonyAp = $this->advisorService->getAvailableActionPoints($colonyId);
 
@@ -194,6 +197,8 @@ class TechtreeController extends BaseController
                     'hire_cost' => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
                     'is_instanced' => (bool) ($tech['is_instanced'] ?? false),
                     'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,
+                    'max_instances' => $type === 'building' ? ($maxInstances[(int) $id] ?? null) : null,
+                    'instances' => $type === 'building' ? ($placedInstances[(int) $id] ?? []) : [],
                     'hangar_cap' => $type === 'ship' ? $hangarCap : null,
                     'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
                     // Research/knowledge costs escalate per level (config/knowledge.php
@@ -408,51 +413,37 @@ class TechtreeController extends BaseController
     }
 
     /**
-     * Resolve the techtree service for a {type} route segment.
+     * Perform a research order (invest AP, levelup, or leveldown) via POST.
      *
-     * Only the types that actually implement the invest/levelup contract are listed.
-     * `personell` is deliberately absent: AdvisorService does not extend
-     * AbstractTechnologyService and has no invest()/levelup() at all — mapping it here
-     * turned `POST /techtree/personell/35/order` into a fatal "call to undefined method"
-     * (HTTP 500). Advisors are hired through AdvisorController, not the techtree.
-     */
-    private function serviceForType(string $type): ?AbstractTechnologyService
-    {
-        return match (strtolower($type)) {
-            'building' => $this->buildingService,
-            'research' => $this->researchService,
-            'ship' => $this->shipService,
-            default => null,
-        };
-    }
-
-    /**
-     * Perform a techtree order (invest AP, levelup, or leveldown) via POST.
+     * The techtree is overview plus research only (A43): building actions live in
+     * the colony view (ColonyController), ships in the hangar — `building` and
+     * `ship` orders answer `use_colony_view`. `personell` is not a technology at all
+     * (advisors are hired through AdvisorController) and, like any other type,
+     * answers `unknown_type`.
      *
      * Rejections answer 422 with a machine code in `error` and the player text in
-     * `message`, like the colony and hangar endpoints. It used to answer a bare
-     * `{success:false}` with no reason at all — neither the player nor a client could
-     * tell "not enough AP" from "wrong Command Center level".
+     * `message`, like the colony and hangar endpoints.
      *
      * An `'add'` investment that reaches the AP threshold auto-triggers the levelup
      * in the same request — invest() only ever advances ap_spend, it never increments
      * the level itself, and a separate follow-up request/page-reload left the level
      * permanently stuck whenever levelupBlocker() had a reason beyond "not enough AP
-     * yet" (e.g. a missing required building): ap_spend maxes out, invest() reports
-     * success every time thereafter, and nothing ever explains why the level never
-     * moves. Mirrors ColonyController::investBuilding()'s single-request invest+levelup
-     * flow, and returns the fresh tech/AP state so the techtree screen can update in
-     * place without reloading the page.
+     * yet": ap_spend maxes out, invest() reports success every time thereafter, and
+     * nothing ever explains why the level never moves. Returns the fresh tech/AP
+     * state so the techtree screen can update in place without reloading the page.
      */
     public function order(Request $request, string $type, int $id): JsonResponse
     {
         $colonyId = $this->resolveColonyId();
         $order = (string) $request->input('order');
         $ap = (int) $request->input('ap', 1);
+        $type = strtolower($type);
 
-        $service = $this->serviceForType($type);
+        if (in_array($type, ['building', 'ship'], true)) {
+            return $this->orderFailed('use_colony_view', $order);
+        }
 
-        if (! $service) {
+        if ($type !== 'research') {
             return $this->orderFailed('unknown_type', $order);
         }
 
@@ -460,41 +451,19 @@ class TechtreeController extends BaseController
             return $this->orderFailed('unknown_order', $order);
         }
 
-        // Buildings: every order acts on exactly one instance (colony_id,
-        // building_id, instance_id). instance_id is optional while the colony has a
-        // single row of the building; it must belong to the player's own colony.
-        $instanceId = null;
-        if ($service instanceof BuildingService) {
-            $requestedInstanceId = null;
-            $rawInstanceId = $request->input('instance_id');
-            if ($rawInstanceId !== null) {
-                $requestedInstanceId = filter_var($rawInstanceId, FILTER_VALIDATE_INT);
-                if ($requestedInstanceId === false) {
-                    return $this->orderFailed('instance_not_found', $order);
-                }
-            }
-
-            $instanceBlocker = $service->instanceBlocker($colonyId, $id, $requestedInstanceId);
-            if ($instanceBlocker !== null) {
-                return $this->orderFailed($instanceBlocker, $order);
-            }
-
-            $instanceId = $service->resolveInstanceId($colonyId, $id, $requestedInstanceId);
-        }
+        $service = $this->researchService;
 
         $result = match ($order) {
-            'add', 'repair', 'remove' => $service instanceof BuildingService
-                ? $service->invest($colonyId, $id, $order, $ap, $instanceId)
-                : $service->invest($colonyId, $id, $order, $ap),
-            'levelup' => $service->levelup($colonyId, $id, $instanceId),
-            'leveldown' => $service->leveldown($colonyId, $id, $instanceId),
+            'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
+            'levelup' => $service->levelup($colonyId, $id),
+            'leveldown' => $service->leveldown($colonyId, $id),
         };
 
         if (! $result) {
             $code = match ($order) {
-                'add', 'repair', 'remove' => $service->investBlocker($colonyId, $id, $order, $ap, instanceId: $instanceId),
-                'levelup' => $service->levelupBlocker($colonyId, $id, $instanceId),
-                'leveldown' => $service->leveldownBlocker($colonyId, $id, $instanceId),
+                'add', 'repair', 'remove' => $service->investBlocker($colonyId, $id, $order, $ap),
+                'levelup' => $service->levelupBlocker($colonyId, $id),
+                'leveldown' => $service->leveldownBlocker($colonyId, $id),
             };
 
             return $this->orderFailed($code ?? 'order_failed', $order);
@@ -504,9 +473,9 @@ class TechtreeController extends BaseController
         $levelupBlockedReason = null;
 
         if ($order === 'add') {
-            $blocker = $service->levelupBlocker($colonyId, $id, $instanceId);
+            $blocker = $service->levelupBlocker($colonyId, $id);
             if ($blocker === null) {
-                $leveledUp = $service->levelup($colonyId, $id, $instanceId);
+                $leveledUp = $service->levelup($colonyId, $id);
             } elseif ($blocker !== 'insufficient_ap_invested') {
                 // Threshold not reached yet is the expected, silent case. Anything
                 // else means the AP just invested is stuck behind an unmet

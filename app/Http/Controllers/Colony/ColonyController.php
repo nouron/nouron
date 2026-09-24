@@ -17,6 +17,7 @@ use App\Services\OnboardingTriggerService;
 use App\Services\OvercapService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
+use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
 use App\Services\TickService;
 use App\Services\TrustService;
@@ -48,6 +49,7 @@ class ColonyController extends BaseController
         private readonly CharacterCodexService $characterCodexService,
         private readonly NexusImportService $nexusImportService,
         private readonly OvercapService $overcapService,
+        private readonly BuildingService $buildingService,
     ) {
         parent::__construct($tick);
     }
@@ -936,6 +938,86 @@ class ColonyController extends BaseController
     }
 
     /**
+     * What a Rückbau of one building instance would change — the numbers for the
+     * confirmation dialog, computed by BuildingService::leveldownPreview() from the
+     * real leveldown (nothing is written). Rejects exactly what leveldownBuilding()
+     * rejects, with the same codes.
+     */
+    public function leveldownPreview(Request $request): JsonResponse
+    {
+        [$colonyId, $buildingId, $instanceId, $blocker] = $this->resolveLeveldownTarget($request);
+        if ($blocker !== null) {
+            return $this->fail($blocker);
+        }
+
+        return response()->json([
+            'ok' => true,
+            ...$this->buildingService->leveldownPreview($colonyId, $buildingId, $instanceId),
+        ]);
+    }
+
+    /**
+     * Rückbau (A43): lower one building instance of the player's own colony by one
+     * level, free of charge — or cancel a placed level-0 construction site
+     * (Bauabbruch: stays on 0, invested AP are forfeited). The rules live in
+     * BuildingService::leveldown(): reaching level 0 takes the building off its tile
+     * and drops the first-level workplace reserve, the Command Center never goes
+     * below 1. Nothing that depends on the building is touched (Bestandsschutz), no
+     * trust event. The freed supply and the colonist status are returned so the
+     * resourcebar can sync live.
+     */
+    public function leveldownBuilding(Request $request): JsonResponse
+    {
+        [$colonyId, $buildingId, $instanceId, $blocker] = $this->resolveLeveldownTarget($request);
+        if ($blocker !== null) {
+            return $this->fail($blocker);
+        }
+
+        $before = $this->buildingService->getColonyEntity($colonyId, $buildingId, $instanceId);
+
+        if (! $this->buildingService->leveldown($colonyId, $buildingId, $instanceId)) {
+            return $this->fail($this->buildingService->leveldownBlocker($colonyId, $buildingId, $instanceId) ?? 'building_not_found');
+        }
+
+        $building = $this->fetchBuildingRow($colonyId, $buildingId, $instanceId);
+        $tileReleased = $before?->tile_x !== null && $building->tile_x === null;
+
+        return response()->json([
+            'ok' => true,
+            'level' => (int) $building->level,
+            'construction_cancelled' => (int) $before?->level === 0,
+            'tile_released' => $tileReleased,
+            'released_tile' => $tileReleased ? ['q' => (int) $before->tile_x, 'r' => (int) $before->tile_y] : null,
+            'building' => $building,
+            'activeHint' => $this->resolveHint($colonyId),
+            ...$this->currentAp($colonyId),
+            'colonists' => $this->colonistsPayload($colonyId),
+        ]);
+    }
+
+    /**
+     * Validated Rückbau target of the player's own colony (colony from the session,
+     * never from the request) plus the reason it cannot be levelled down, if any.
+     *
+     * @return array{int, int, int, string|null} [colonyId, buildingId, instanceId, blocker]
+     */
+    private function resolveLeveldownTarget(Request $request): array
+    {
+        $data = $request->validate([
+            'building_id' => 'required|integer',
+            'instance_id' => 'required|integer',
+        ]);
+        $colonyId = (int) $this->colonyService->getPrimeColony(Auth::id())->id;
+        $buildingId = (int) $data['building_id'];
+        $instanceId = (int) $data['instance_id'];
+
+        $blocker = $this->buildingService->instanceBlocker($colonyId, $buildingId, $instanceId)
+            ?? $this->buildingService->leveldownBlocker($colonyId, $buildingId, $instanceId);
+
+        return [$colonyId, $buildingId, $instanceId, $blocker];
+    }
+
+    /**
      * Nexus direct import of Werkstoffe (compounds) against Credits.
      *
      * Guaranteed safety-net source (GDD §3): always available, fixed Credits price,
@@ -1163,19 +1245,11 @@ class ColonyController extends BaseController
             return $this->overcapService->dismiss($colony->id, (int) Auth::id(), $targetTick);
         });
 
-        $status = $this->resourcesService->colonistStatus($colony->id);
-
         return response()->json([
             'ok' => true,
             'dismissed' => $dismissed,
             ...$this->currentAp($colony->id),
-            'colonists' => [
-                'present' => $status['present'],
-                'cap' => $status['cap'],
-                'homeless' => $status['homeless'],
-                'departed' => $status['departed'],
-                'staffing_pct' => (int) round($status['staffing'] * 100),
-            ],
+            'colonists' => $this->colonistsPayload($colony->id),
         ]);
     }
 
@@ -1269,6 +1343,24 @@ class ColonyController extends BaseController
             'regolith' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)->value('amount') ?? 0),
             'werkstoffe' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 4)->value('amount') ?? 0),
             'freeSupply' => $this->resourcesService->getFreeSupply($colonyId),
+        ];
+    }
+
+    /**
+     * Colonist chip data for the resourcebar live sync (KOL chip).
+     *
+     * @return array{present: int, cap: int, homeless: int, departed: int, staffing_pct: int}
+     */
+    private function colonistsPayload(int $colonyId): array
+    {
+        $status = $this->resourcesService->colonistStatus($colonyId);
+
+        return [
+            'present' => $status['present'],
+            'cap' => $status['cap'],
+            'homeless' => $status['homeless'],
+            'departed' => $status['departed'],
+            'staffing_pct' => (int) round($status['staffing'] * 100),
         ];
     }
 

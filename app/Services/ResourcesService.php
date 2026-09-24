@@ -247,13 +247,16 @@ class ResourcesService
      * cap − workplaces — departed colonists leave unfilled workplaces that keep
      * occupying the cap (getFreeSupply()).
      *
+     * $capOverride evaluates the same numbers against another cap than the stored
+     * one — e.g. the cap the next Sol will set (calculateSupplyCap()), for a preview.
+     *
      * @return array{cap: int, workplaces: int, departed: int, present: int, homeless: int, staffing: float}
      */
-    public function colonistStatus(int $colonyId): array
+    public function colonistStatus(int $colonyId, ?int $capOverride = null): array
     {
         $breakdown = $this->getSupplyBreakdown($colonyId);
-        $cap = $breakdown['cap'];
-        $workplaces = max(0, $cap - $breakdown['free']);
+        $workplaces = max(0, $breakdown['cap'] - $breakdown['free']);
+        $cap = $capOverride ?? $breakdown['cap'];
 
         $stored = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('overcap_departed');
         $departed = min($stored, max(0, $workplaces - $cap));
@@ -342,6 +345,51 @@ class ResourcesService
             'sources' => ['cc' => $ccContribution, 'housing' => $housingContribution, 'knowledge' => $knowledgeContribution],
             'used' => ['buildings' => $usedBuildings, 'reserved' => $reservedBuildings, 'researches' => $usedResearches, 'advisors' => $usedAdvisors],
         ];
+    }
+
+    /**
+     * The supply cap a Sol stores for this colony (GDD §6), from its current state:
+     *   cap = CC_flat + housing_level × housing_cap + Σ(knowledge_cap_per_level), capped at cap_max
+     * 0 without a Command Center. GameTick::calculateSupply() persists this value.
+     */
+    public function calculateSupplyCap(int $colonyId): int
+    {
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->value('level');
+
+        if ($ccLevel <= 0) {
+            return 0;
+        }
+
+        $housingLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Housing->value)
+            ->sum('level');
+
+        $capPerLevel = config('game.supply.knowledge_cap_per_level', []);
+        $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
+        $knowledgeCap = 0;
+        if (! empty($knowledgeIds)) {
+            $levels = DB::table('colony_researches')
+                ->where('colony_id', $colonyId)
+                ->whereIn('research_id', $knowledgeIds)
+                ->pluck('level', 'research_id');
+
+            foreach ($levels as $level) {
+                for ($i = 1; $i <= min((int) $level, 5); $i++) {
+                    $knowledgeCap += $capPerLevel[$i] ?? 0;
+                }
+            }
+        }
+
+        return min(
+            (int) config('buildings.commandCenter.supply_cap', 10)
+                + $housingLevel * (int) config('buildings.housingComplex.supply_cap', 8)
+                + $knowledgeCap,
+            (int) config('game.supply.cap_max', 200)
+        );
     }
 
     /**

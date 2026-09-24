@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Manual level-down (techtree order 'leveldown') to level 0 takes the building off
- * its tile (A14 Owner decision 2026-09-24): only a freshly placed level-0 building
+ * Manual level-down (Rückbau, colony view) to level 0 takes the building off its
+ * tile (A14 Owner decision 2026-09-24): only a freshly placed level-0 building
  * reserves the workplaces of its first level, a demolished one frees tile and
- * reserve. The Command Center can never be levelled down to 0.
+ * reserve. A placed level-0 construction site can be cancelled the same way — the
+ * level stays 0, invested AP are forfeited. The Command Center can never be
+ * levelled down to 0.
  *
  * Fixture colony 1: CC 25 level 3, sciencelab 31 level 1, harvester 27 level 1.
  * Supply costs pinned in setUp: sciencelab 6, harvester 2.
@@ -124,6 +126,53 @@ class BuildingLeveldownTileReleaseTest extends TestCase
         $this->assertNull($row->tile_x);
         $this->assertNull($row->pending_until_tick);
         $this->assertNull($row->instability_outage_until_tick);
+    }
+
+    // ── Bauabbruch (Owner decision 2026-09-24): a placed level-0 construction site ──
+
+    public function test_cancelling_a_placed_construction_site_releases_tile_and_reserve(): void
+    {
+        $this->prepare(self::SCIENCELAB, 0, 2, -1);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::SCIENCELAB)->update(['ap_spend' => 3]);
+        $freeBefore = $this->freeSupply();
+
+        $this->assertNull($this->service->leveldownBlocker(self::COLONY_ID, self::SCIENCELAB));
+        $this->assertTrue($this->service->leveldown(self::COLONY_ID, self::SCIENCELAB));
+
+        $row = $this->row(self::SCIENCELAB);
+        $this->assertNotNull($row, 'the row stays, it is only no longer placed');
+        $this->assertSame(0, (int) $row->level, 'the level stays 0');
+        $this->assertNull($row->tile_x);
+        $this->assertNull($row->tile_y);
+        $this->assertSame(0, (int) $row->ap_spend, 'AP invested into the construction site are forfeited');
+        $this->assertFalse(ResourcesService::reservesFirstLevel($row));
+        $this->assertSame($freeBefore + 6, $this->freeSupply());
+    }
+
+    public function test_cancelling_a_harvester_construction_site_clears_transit_state(): void
+    {
+        $this->prepare(self::HARVESTER, 0, 1, 0);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::HARVESTER)
+            ->update(['pending_until_tick' => 99999, 'instability_outage_until_tick' => 99999]);
+
+        $this->assertTrue($this->service->leveldown(self::COLONY_ID, self::HARVESTER));
+
+        $row = $this->row(self::HARVESTER);
+        $this->assertSame(0, (int) $row->level);
+        $this->assertNull($row->tile_x);
+        $this->assertNull($row->pending_until_tick);
+        $this->assertNull($row->instability_outage_until_tick);
+    }
+
+    public function test_unplaced_level_zero_building_cannot_be_levelled_down(): void
+    {
+        $this->prepare(self::SCIENCELAB, 0, null, null);
+
+        $this->assertSame('not_placed', $this->service->leveldownBlocker(self::COLONY_ID, self::SCIENCELAB));
+        $this->assertFalse($this->service->leveldown(self::COLONY_ID, self::SCIENCELAB));
+        $this->assertSame(0, (int) $this->row(self::SCIENCELAB)->level);
     }
 
     public function test_command_center_cannot_be_levelled_down_to_zero(): void

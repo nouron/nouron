@@ -79,6 +79,8 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::post('/building/place', [ColonyController::class, 'placeBuilding'])->name('building.place');
     Route::post('/building/invest', [ColonyController::class, 'investBuilding'])->name('building.invest');
     Route::post('/building/repair', [ColonyController::class, 'repairBuilding'])->name('building.repair');
+    Route::get('/building/leveldown-preview', [ColonyController::class, 'leveldownPreview'])->name('building.leveldown-preview');
+    Route::post('/building/leveldown', [ColonyController::class, 'leveldownBuilding'])->name('building.leveldown');
 
     // Nexus direct import — Werkstoffe (compounds) against Credits, gated by Uplink Lv1
     Route::post('/nexus/import-compounds', [ColonyController::class, 'nexusImportCompounds'])->name('nexus.import');

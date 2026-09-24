@@ -141,6 +141,9 @@ function colonyHexView(config) {
         // just the first Harvester row in this.buildings.
         movingHarvesterInstanceId: null,
         buildTargetTile: null,
+        // Rückbau confirmation dialog (GDD techtree §11.5): the preview is loaded when
+        // the dialog opens, the leveldown POST only runs on confirm.
+        leveldownModal: { open: false, loading: false, submitting: false, building: null, preview: null },
         _svgPolygons: new Map(),
         _tilePositions: new Map(),
         _gridEl: null,
@@ -159,6 +162,13 @@ function colonyHexView(config) {
                     await this.toggleBuildMode();
                     const match = this.availableBuildings.find((b) => b.building_id === buildId);
                     if (match) this.selectPendingBuilding(match);
+                }
+                // Deep link to one building instance (?building=ID&instance=N), used by
+                // the techtree detail panel and building entity chips. An unknown or
+                // unplaced instance silently opens the view without a selection.
+                const linkedBuildingId = parseInt(params.get('building'), 10);
+                if (!buildId && linkedBuildingId) {
+                    this.selectBuildingInstance(linkedBuildingId, parseInt(params.get('instance'), 10) || 1);
                 }
             });
 
@@ -241,6 +251,39 @@ function colonyHexView(config) {
                 cur.setAttribute('stroke', '#c0392b');
                 cur.setAttribute('stroke-width', '3');
             }
+        },
+
+        // Selects the tile of a placed building instance and pans the grid to it
+        // if it lies outside the visible viewBox (mobile clips to the colony zone).
+        selectBuildingInstance(buildingId, instanceId) {
+            const building = this.buildings.find((b) => b.building_id === buildingId && b.instance_id === instanceId);
+            if (!building) return;
+            const isCc = building.building_id === this.ccBuildingId;
+            if (!isCc && (building.tile_x === null || building.tile_y === null)) return;
+            const q = isCc ? 0 : building.tile_x;
+            const r = isCc ? 0 : building.tile_y;
+            const tile = this.tiles.find((t) => t.q === q && t.r === r);
+            if (!tile) return;
+            this.revealTile(tile);
+            this.selectTile(tile);
+        },
+
+        revealTile(tile) {
+            const svg = this._gridEl?.querySelector('svg');
+            const pos = this._tilePositions.get(`${tile.q},${tile.r}`);
+            if (!svg || !pos) return;
+            const vb = svg.viewBox.baseVal;
+            const margin = 40;
+            const inside =
+                pos.cx >= vb.x + margin &&
+                pos.cx <= vb.x + vb.width - margin &&
+                pos.cy >= vb.y + margin &&
+                pos.cy <= vb.y + vb.height - margin;
+            if (inside) return;
+            // initHexGrid clamps the pan offset to the grid bounds.
+            this._panState.x = pos.cx - vb.width / 2;
+            this._panState.y = pos.cy - vb.height / 2;
+            this.redrawGrid();
         },
 
         // ── Build mode ────────────────────────────────────────────────────────
@@ -429,6 +472,94 @@ function colonyHexView(config) {
             }
         },
 
+        // ── Rückbau (leveldown) ───────────────────────────────────────────────
+
+        // Rückbau is possible for every placed instance (incl. a level-0 construction
+        // site = Bauabbruch); the Command Center never goes below level 1.
+        canLeveldown(building) {
+            if (!building) return false;
+            if (building.building_id === this.ccBuildingId) return building.level > 1;
+            return building.tile_x !== null && building.tile_x !== undefined;
+        },
+
+        async openLeveldown(building) {
+            this.leveldownModal = { open: true, loading: true, submitting: false, building, preview: null };
+            const query = new URLSearchParams({
+                building_id: building.building_id,
+                instance_id: building.instance_id ?? 1,
+            });
+            let res;
+            try {
+                res = await this.get(`${this.routes.leveldownPreview}?${query}`);
+            } catch {
+                this.closeLeveldown();
+                this.showToast(this.i18n.networkError ?? 'Network error.', 'error');
+                return;
+            }
+            if (!this.leveldownModal.open) return;
+            if (res.ok) {
+                this.leveldownModal.preview = res;
+                this.leveldownModal.loading = false;
+            } else {
+                this.closeLeveldown();
+                this.showToast(res.message ?? res.error, 'error');
+            }
+        },
+
+        closeLeveldown() {
+            this.leveldownModal = { open: false, loading: false, submitting: false, building: null, preview: null };
+        },
+
+        async confirmLeveldown() {
+            const building = this.leveldownModal.building;
+            if (!building || this.leveldownModal.submitting) return;
+            this.leveldownModal.submitting = true;
+            let res;
+            try {
+                res = await this.post(this.routes.leveldownBuilding, {
+                    building_id: building.building_id,
+                    instance_id: building.instance_id ?? 1,
+                });
+            } catch {
+                this.closeLeveldown();
+                this.showToast(this.i18n.networkError ?? 'Network error.', 'error');
+                return;
+            }
+            this.closeLeveldown();
+            if (!res.ok) {
+                this.showToast(res.message ?? res.error, 'error');
+                return;
+            }
+            this.updateBuilding(res.building);
+            this.updateAp(res);
+            this.syncResbarColonists(res.colonists);
+            this.updateHint(res);
+            // A released tile is empty now: buildingForTile() no longer finds the
+            // building, so the panel falls back to the terrain view on the same tile.
+            if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+            if (res.tile_released) document.querySelector('.tile-panel')?.scrollTo({ top: 0 });
+            this.showToast(
+                res.construction_cancelled ? this.i18n.leveldownCancelledDone : this.i18n.leveldownDone,
+                'info',
+            );
+            this.$nextTick(() => {
+                this.redrawGrid();
+                if (this.selectedTile) this.selectTile(this.selectedTile);
+            });
+        },
+
+        // Warning rows in the Rückbau dialog (GDD §11.5): level 0 / Bauabbruch,
+        // forfeited AP and looming over-capacity are highlighted.
+        leveldownWarnsHomeless(p) {
+            return !!p && p.homeless_after > p.homeless_now;
+        },
+
+        leveldownText(key, values = {}) {
+            let text = this.i18n[key] ?? key;
+            for (const [name, value] of Object.entries(values)) text = text.replaceAll(`:${name}`, value);
+            return text;
+        },
+
         // ── Harvester relocation ──────────────────────────────────────────────
 
         // `building` is the Harvester instance the player picked (selectedBuilding on
@@ -603,6 +734,21 @@ function colonyHexView(config) {
             if (res.freeSupply !== undefined) this.freeSupply = res.freeSupply;
         },
 
+        // Colonist chip (KOL) in the resource bar — same patch as overcap-dismiss.js.
+        syncResbarColonists(colonists) {
+            if (!colonists) return;
+            const chip = document.querySelector('.res-Sup');
+            const amount = chip?.querySelector('.res-amount');
+            if (!amount) return;
+            const fmt = (n) => Number(n).toLocaleString('de-DE');
+            const text = `${fmt(colonists.present)} / ${fmt(colonists.cap)}`;
+            const changed = amount.textContent.replace(/\s+/g, ' ').trim() !== text;
+            amount.textContent = text;
+            chip.classList.toggle('res-chip--over', colonists.homeless > 0);
+            chip.classList.toggle('res-chip--warning', colonists.homeless === 0 && colonists.departed > 0);
+            if (changed) this.flashResChip('.res-Sup');
+        },
+
         syncResbarAmount(selector, value) {
             const el = document.querySelector(`${selector} .res-amount`);
             if (el) el.textContent = value.toLocaleString('de-DE');
@@ -680,6 +826,8 @@ function colonyHexView(config) {
         },
 
         tileHeading(tile) {
+            // Alpine evaluates this binding before a tile is selected.
+            if (!tile) return '';
             if (tile.q === 0 && tile.r === 0) return 'Kommandozentrale';
             if (!tile.is_explored) return 'Unbekanntes Terrain';
             return TILE_LABELS[tile.tile_type] ?? tile.tile_type;
