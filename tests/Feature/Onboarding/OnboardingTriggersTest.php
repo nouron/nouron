@@ -292,6 +292,32 @@ class OnboardingTriggersTest extends TestCase
     }
 
     /**
+     * Placed buildings on level 0 already reserve the workplaces of their first
+     * level (GDD §6 "Supply als Bau-Gate", A14) — the trigger sees the same load
+     * as the build gate. Two placed level-0 hangars (6 each) = 12 ≥ cap 10.
+     */
+    public function test_supply_trigger_counts_level_zero_reserves(): void
+    {
+        DB::table('buildings')->where('id', 44)->update(['supply_cost' => 6]);
+        foreach ([1, 2] as $instanceId) {
+            DB::table('colony_buildings')->insert([
+                'colony_id' => $this->colonyId,
+                'building_id' => 44,
+                'instance_id' => $instanceId,
+                'level' => 0,
+                'status_points' => 20,
+                'ap_spend' => 0,
+                'tile_x' => $instanceId,
+                'tile_y' => 0,
+            ]);
+        }
+
+        Artisan::call('game:tick', ['--run' => $this->runId]);
+
+        $this->assertTrue($this->triggerService->hasFired($this->userId, 'supply_cap_full'));
+    }
+
+    /**
      * If the trigger is already fired, a tick that would fire it again must not
      * write anything extra (idempotency at the markFired layer).
      */
@@ -444,19 +470,14 @@ class OnboardingTriggersTest extends TestCase
     }
 
     /**
-     * NPC colonies (user_id = null / 0) must never trigger onboarding_trust.
+     * NPC colonies (user_id = null) must never trigger onboarding_trust.
      *
-     * Colony 2 (Shelbyville) has user_id = 0 in testdata — the GameTick guard requires
-     * $userId !== null before even reading trustBefore, so no event must be emitted.
+     * The GameTick guard requires $userId !== null before even reading
+     * trustBefore, so no event must be emitted.
      */
     public function test_trust_trigger_does_not_fire_for_npc_colony(): void
     {
-        // Shelbyville (id=2) has user_id=0 in testdata — the v_glx_colonies view
-        // exposes user_id=0 which the GameTick treats as a non-null value (0).
-        // To test the actual guard we need a colony where user_id IS NULL.
-        // Shelbyville's user_id stored as integer 0 means the PHP null check
-        // ($colony->user_id ?? null) returns 0 (truthy-ish), not null.
-        // We create a truly NPC colony with user_id = null.
+        // The fixture has no playerless colony, so create one with user_id = null.
         DB::table('glx_colonies')->insert([
             'id' => 9999,
             'name' => 'NpcColony',

@@ -17,10 +17,12 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class BarEncounterControllerTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     private const USER_ID_BART = 3;
@@ -108,8 +110,8 @@ class BarEncounterControllerTest extends TestCase
     public function test_accept_encounter_does_not_allow_foreign_colony_encounter(): void
     {
         $this->mockTick(10);
-        $foreignColonyId = 2; // Homer's colony
-        $id = $this->insertEncounter($foreignColonyId);
+        $foreign = $this->createForeignColony();
+        $id = $this->insertEncounter($foreign['colony_id']);
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.bar.accept-encounter', ['encounter' => $id]));

@@ -210,6 +210,13 @@ class CommLogController extends BaseController
                 'sols' => (int) config('game.encounter.instability.outage_sols', 3),
             ]))],
             'encounter.plague_triggered' => [$this->seg(__('comm_log.desc.plague_triggered'))],
+            'colony.overcap_started' => [$this->seg(__('comm_log.desc.overcap_started', [
+                'homeless' => (int) ($params['homeless'] ?? 0),
+                'sols' => (int) ($params['sols'] ?? config('game.overcap.departure_after_sols', 3)),
+            ]))],
+            'colony.colonists_left' => [$this->seg(__('comm_log.desc.colonists_left', ['count' => (int) ($params['count'] ?? 0)]))],
+            'colony.colonists_dismissed' => [$this->seg(__('comm_log.desc.colonists_dismissed', ['count' => (int) ($params['count'] ?? 0)]))],
+            'colony.colonists_returned' => [$this->seg(__('comm_log.desc.colonists_returned', ['count' => (int) ($params['count'] ?? 0)]))],
             'colony.passive_credits' => $this->descPassiveCredits($params),
             'colony.stipend_purchased' => $this->descStipendPurchased($params),
             default => [],

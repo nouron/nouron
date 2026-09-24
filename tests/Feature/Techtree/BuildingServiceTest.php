@@ -6,10 +6,12 @@ use App\Services\Techtree\BuildingService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class BuildingServiceTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     protected BuildingService $service;
@@ -17,8 +19,6 @@ class BuildingServiceTest extends TestCase
     protected int $entityId = 46; // infirmary (no max_level, upgradable)
 
     protected int $colonyId = 1;
-
-    protected int $colonyId2 = 2;
 
     protected function setUp(): void
     {
@@ -36,6 +36,15 @@ class BuildingServiceTest extends TestCase
             'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
+
+        // A building needs a tile before it can gain a level (BuildingService::isPlaced()).
+        // The fixture carries no tile coordinates, so place the rows these tests level up.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => $this->entityId])
+            ->update(['tile_x' => 2, 'tile_y' => -1]);
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 28, 'instance_id' => 1])
+            ->update(['tile_x' => 0, 'tile_y' => 1]);
     }
 
     public function test_get_entities(): void
@@ -68,6 +77,20 @@ class BuildingServiceTest extends TestCase
         $this->assertEquals(3, $result->level);  // infirmary level=3 on colony 1 per test data
     }
 
+    /**
+     * Second colony (CC 5) whose infirmary has only 1 of 10 AP invested — the
+     * "partially funded" case (was fixture colony 2 until its removal 2026-09-23).
+     */
+    private function colonyWithPartialInfirmary(): int
+    {
+        $colonyId = $this->createForeignColony([25 => 5, $this->entityId => 1])['colony_id'];
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $colonyId, 'building_id' => $this->entityId])
+            ->update(['ap_spend' => 1, 'tile_x' => 2, 'tile_y' => -1]);
+
+        return $colonyId;
+    }
+
     public function test_get_colony_entities(): void
     {
         $result = $this->service->getColonyEntities($this->colonyId);
@@ -80,8 +103,8 @@ class BuildingServiceTest extends TestCase
         $this->assertTrue($this->service->checkRequiredActionPoints($this->colonyId, 46));
         // housingComplex (28): ap_spend=0, ap_for_levelup=10 -> fails
         $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyId, 28));
-        // colony 2, infirmary: ap_spend=1, ap_for_levelup=10 -> fails
-        $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyId2, 46));
+        // second colony, infirmary: ap_spend=1, ap_for_levelup=10 -> fails
+        $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyWithPartialInfirmary(), 46));
     }
 
     public function test_levelup(): void
@@ -101,8 +124,8 @@ class BuildingServiceTest extends TestCase
         $result = $this->service->levelup($this->colonyId, 28);
         $this->assertFalse($result);
 
-        // colony 2, infirmary: ap_spend=1 fails AP check
-        $result = $this->service->levelup($this->colonyId2, $this->entityId);
+        // second colony, infirmary: ap_spend=1 fails AP check
+        $result = $this->service->levelup($this->colonyWithPartialInfirmary(), $this->entityId);
         $this->assertFalse($result);
     }
 

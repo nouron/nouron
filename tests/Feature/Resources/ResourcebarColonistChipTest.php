@@ -66,4 +66,23 @@ class ResourcebarColonistChipTest extends TestCase
 
         $this->assertStringNotContainsString('res-chip--over', $this->chipHtml());
     }
+
+    /**
+     * A14 "Unterbesetzung": after a departure the chip counts the colonists who are
+     * actually there (present / cap) and is marked as a warning, not as over-capacity.
+     */
+    public function test_chip_shows_present_colonists_and_warning_when_understaffed(): void
+    {
+        $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
+        $workplaces = $breakdown['cap'] - $breakdown['free'];
+        $cap = $workplaces - 8;
+        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => $cap]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_departed' => 8]);
+
+        $html = $this->chipHtml();
+
+        $this->assertSame('KOL|'.$cap.' / '.$cap, $this->chipText($html));
+        $this->assertStringNotContainsString('res-chip--over', $html);
+        $this->assertMatchesRegularExpression('/class="res-chip res-Sup res-chip--warning"/', $html);
+    }
 }

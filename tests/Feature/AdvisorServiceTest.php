@@ -352,7 +352,7 @@ class AdvisorServiceTest extends TestCase
         // Reset so there is room to invest.
         DB::table('colony_buildings')
             ->where(['colony_id' => $this->colonyId, 'building_id' => 27])
-            ->update(['ap_spend' => 0]);
+            ->update(['ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]); // placed: invest('add') needs a tile
 
         $before = $this->service->getAvailableActionPoints($this->colonyId);
         $buildingService->invest($this->colonyId, 27, 'add', 3);
@@ -370,7 +370,7 @@ class AdvisorServiceTest extends TestCase
 
         DB::table('colony_buildings')
             ->where(['colony_id' => $this->colonyId, 'building_id' => 27])
-            ->update(['ap_spend' => 0]);
+            ->update(['ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]); // placed: invest('add') needs a tile
 
         $before = $this->service->getAvailableActionPoints($this->colonyId);
         $buildingService->invest($this->colonyId, 27, 'add', 3);

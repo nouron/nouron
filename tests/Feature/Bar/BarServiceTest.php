@@ -28,10 +28,12 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class BarServiceTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     // ── Fixture constants ─────────────────────────────────────────────────────
@@ -622,9 +624,10 @@ class BarServiceTest extends TestCase
         $this->clearBarOffers();
         $this->mockTick(10);
 
-        // Insert offer for colony_id=2 (Shelbyville), not Springfield (1)
+        // Insert offer for another player's colony, not Springfield (1)
+        $foreign = $this->createForeignColony();
         $foreignOfferId = DB::table('bar_offers')->insertGetId([
-            'colony_id' => 2,
+            'colony_id' => $foreign['colony_id'],
             'give_resource_id' => self::RES_REGOLITH,
             'give_amount' => 10,
             'get_resource_id' => self::RES_COMPOUNDS,
@@ -635,7 +638,7 @@ class BarServiceTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Bart tries to accept an offer that belongs to colony 2
+        // Bart tries to accept an offer that belongs to the foreign colony
         $result = $this->barService->acceptOffer(self::COLONY_ID, $foreignOfferId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok'], 'Player must not be able to accept offers from a foreign colony');

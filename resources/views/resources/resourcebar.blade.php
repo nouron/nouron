@@ -73,6 +73,78 @@
                 $breakdownRows([__("resources.popup_sup_free") => $supplyBreakdown["free"]])
             : null;
 
+        // Over-capacity rows (GDD §6 "Überkapazität", A14) — see OvercapService::status().
+        // Homeless colonists: count, trust penalty, Sols until departure and the
+        // "Wegschicken" action (Alpine component overcapDismiss, public/js/overcap-dismiss.js).
+        // After a departure: unfilled workplaces and the staffing share.
+        $overcapOver = (bool) ($overcapStatus["over"] ?? false);
+        $overcapDeparted = (int) ($overcapStatus["departed"] ?? 0);
+        $understaffedRows = fn(int $departed, int $pct) => $breakdownRows([
+            __("resources.popup_sup_understaffed") => $departed,
+            __("resources.popup_sup_staffing") => __("resources.popup_sup_staffing_value", ["pct" => $pct]),
+        ]);
+        if ($supplyPopupExtra !== null && $overcapOver) {
+            $supplyPopupExtra .=
+                '<div class="res-popup-extra"></div>' .
+                '<div class="res-popup-action" x-data="overcapDismiss()" data-url="' .
+                e(route("colony.colonists.dismiss")) .
+                '" data-staffing-value="' .
+                e(__("resources.popup_sup_staffing_value", ["pct" => ":pct"])) .
+                '" data-failed="' .
+                e(__("resources.popup_sup_dismiss_failed")) .
+                '">' .
+                '<div x-show="!done">' .
+                $breakdownRows([__("resources.popup_sup_overcap_homeless") => $overcapStatus["homeless"]]) .
+                ($overcapStatus["trust_penalty"] < 0
+                    ? $breakdownRows([__("resources.popup_sup_overcap_trust") => $overcapStatus["trust_penalty"]])
+                    : "") .
+                $breakdownRows([
+                    __("resources.popup_sup_overcap_departure") => __("resources.popup_sup_overcap_departure_value", [
+                        "sols" => $overcapStatus["sols_until_departure"],
+                    ]),
+                ]) .
+                ($overcapDeparted > 0 ? $understaffedRows($overcapDeparted, $overcapStatus["staffing_pct"]) : "") .
+                '<button type="button" class="res-popup-btn" @click.stop="dismiss()" :disabled="busy">' .
+                e(__("resources.popup_sup_dismiss")) .
+                " " .
+                view("partials.ap-cost-chip", [
+                    "amount" => $overcapStatus["dismiss_ap_cost"],
+                    "type" => "neutral",
+                ])->render() .
+                "</button>" .
+                '<div class="res-popup-error" x-show="error" x-text="error" x-cloak></div>' .
+                "</div>" .
+                '<div x-show="done" x-cloak>' .
+                '<div class="res-popup-row"><span class="res-popup-label">' .
+                e(__("resources.popup_sup_dismissed")) .
+                '</span><span x-text="dismissed"></span></div>' .
+                '<div class="res-popup-row"><span class="res-popup-label">' .
+                e(__("resources.popup_sup_understaffed")) .
+                '</span><span x-text="departed"></span></div>' .
+                '<div class="res-popup-row"><span class="res-popup-label">' .
+                e(__("resources.popup_sup_staffing")) .
+                '</span><span x-text="staffing"></span></div>' .
+                "</div>" .
+                "</div>";
+        } elseif ($supplyPopupExtra !== null && $overcapDeparted > 0) {
+            $supplyPopupExtra .=
+                '<div class="res-popup-extra"></div>' .
+                $understaffedRows($overcapDeparted, $overcapStatus["staffing_pct"]);
+        }
+
+        // Trust chip popup extra: streak-based penalties as own rows (hunger, over-capacity).
+        $trustPopupExtra = isset($overcapStatus)
+            ? $breakdownRows(
+                array_filter(
+                    [
+                        __("resources.popup_trust_hunger") => $overcapStatus["hunger_penalty"],
+                        __("resources.popup_trust_overcap") => $overcapStatus["trust_penalty"],
+                    ],
+                    fn($v) => $v !== 0,
+                ),
+            )
+            : null;
+
         // AP chip popup extras: base + advisor + trust-multiplier composition —
         // see AdvisorService::getApBreakdown().
         $apPopupExtra = function (?array $breakdown) use ($breakdownRows) {
@@ -152,19 +224,28 @@
             </span>
         @endif
 
-        {{-- Colonist chip (GDD §6 Kolonisten-Framing, A15) — "used / cap" colonists, e.g. "47 / 60".
-         Flagged red when the colony is over its cap (free < 0). --}}
+        {{-- Colonist chip (GDD §6 Kolonisten-Framing, A15) — "present / cap" colonists, e.g. "47 / 60".
+         Present = workplaces minus colonists departed through over-capacity (A14).
+         Red while colonists are homeless, warning while workplaces are unfilled. --}}
         @if (isset($primary[2]))
             @php
-                $supplyOver = isset($supplyBreakdown) && $supplyBreakdown["free"] < 0;
+                $supplyOver = isset($overcapStatus)
+                    ? $overcapStatus["over"]
+                    : isset($supplyBreakdown) && $supplyBreakdown["free"] < 0;
+                $supplyUnderstaffed = !$supplyOver && ($overcapStatus["departed"] ?? 0) > 0;
+                $supplyPresent = isset($supplyBreakdown)
+                    ? $supplyBreakdown["cap"] - $supplyBreakdown["free"] - ($overcapStatus["departed"] ?? 0)
+                    : 0;
             @endphp
-            <span class="res-chip res-Sup{{ $supplyOver ? " res-chip--over" : "" }}" @mouseenter="openChip = 'sup'"
-                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'sup' ? null : 'sup'"
+            <span
+                class="res-chip res-Sup{{ $supplyOver ? " res-chip--over" : "" }}{{ $supplyUnderstaffed ? " res-chip--warning" : "" }}"
+                @mouseenter="openChip = 'sup'" @mouseleave="openChip = null"
+                @click.stop="openChip = openChip === 'sup' ? null : 'sup'"
                 @click.outside="openChip === 'sup' && (openChip = null)" style="position:relative;cursor:default">
                 <span class="res-abbr">KOL</span>
                 <span class="res-amount">
                     @if (isset($supplyBreakdown))
-                        {{ number_format($supplyBreakdown["cap"] - $supplyBreakdown["free"], 0, ",", ".") }}
+                        {{ number_format($supplyPresent, 0, ",", ".") }}
                         / {{ number_format($supplyBreakdown["cap"], 0, ",", ".") }}
                     @else
                         {{ number_format($primary[2]["amount"] ?? 0, 0, ",", ".") }}
@@ -175,6 +256,7 @@
                     "popup_title" => __("resources.popup_sup_title"),
                     "popup_desc" => __("resources.popup_sup_desc"),
                     "popup_extra" => $supplyPopupExtra,
+                    "popup_interactive" => $overcapOver,
                 ])
             </span>
         @endif
@@ -191,6 +273,7 @@
                     "popup_key" => "trust",
                     "popup_title" => __("resources.popup_trust_title"),
                     "popup_desc" => __("resources.popup_trust_desc"),
+                    "popup_extra" => $trustPopupExtra,
                 ])
             </span>
         @endif
@@ -242,4 +325,10 @@
         @endif
 
     </div>
+
+    @if ($overcapOver)
+        @push("scripts")
+            <script src="{{ asset("js/overcap-dismiss.js") }}?v={{ filemtime(public_path("js/overcap-dismiss.js")) }}"></script>
+        @endpush
+    @endif
 @endauth

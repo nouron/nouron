@@ -460,16 +460,41 @@ class TechtreeController extends BaseController
             return $this->orderFailed('unknown_order', $order);
         }
 
+        // Buildings: every order acts on exactly one instance (colony_id,
+        // building_id, instance_id). instance_id is optional while the colony has a
+        // single row of the building; it must belong to the player's own colony.
+        $instanceId = null;
+        if ($service instanceof BuildingService) {
+            $requestedInstanceId = null;
+            $rawInstanceId = $request->input('instance_id');
+            if ($rawInstanceId !== null) {
+                $requestedInstanceId = filter_var($rawInstanceId, FILTER_VALIDATE_INT);
+                if ($requestedInstanceId === false) {
+                    return $this->orderFailed('instance_not_found', $order);
+                }
+            }
+
+            $instanceBlocker = $service->instanceBlocker($colonyId, $id, $requestedInstanceId);
+            if ($instanceBlocker !== null) {
+                return $this->orderFailed($instanceBlocker, $order);
+            }
+
+            $instanceId = $service->resolveInstanceId($colonyId, $id, $requestedInstanceId);
+        }
+
         $result = match ($order) {
-            'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
-            'levelup' => $service->levelup($colonyId, $id),
-            'leveldown' => $service->leveldown($colonyId, $id),
+            'add', 'repair', 'remove' => $service instanceof BuildingService
+                ? $service->invest($colonyId, $id, $order, $ap, $instanceId)
+                : $service->invest($colonyId, $id, $order, $ap),
+            'levelup' => $service->levelup($colonyId, $id, $instanceId),
+            'leveldown' => $service->leveldown($colonyId, $id, $instanceId),
         };
 
         if (! $result) {
             $code = match ($order) {
-                'add', 'repair', 'remove' => $service->investBlocker($colonyId, $id, $order, $ap),
-                default => $service->levelupBlocker($colonyId, $id),
+                'add', 'repair', 'remove' => $service->investBlocker($colonyId, $id, $order, $ap, instanceId: $instanceId),
+                'levelup' => $service->levelupBlocker($colonyId, $id, $instanceId),
+                'leveldown' => $service->leveldownBlocker($colonyId, $id, $instanceId),
             };
 
             return $this->orderFailed($code ?? 'order_failed', $order);
@@ -479,9 +504,9 @@ class TechtreeController extends BaseController
         $levelupBlockedReason = null;
 
         if ($order === 'add') {
-            $blocker = $service->levelupBlocker($colonyId, $id);
+            $blocker = $service->levelupBlocker($colonyId, $id, $instanceId);
             if ($blocker === null) {
-                $leveledUp = $service->levelup($colonyId, $id);
+                $leveledUp = $service->levelup($colonyId, $id, $instanceId);
             } elseif ($blocker !== 'insufficient_ap_invested') {
                 // Threshold not reached yet is the expected, silent case. Anything
                 // else means the AP just invested is stuck behind an unmet

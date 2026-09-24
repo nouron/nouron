@@ -21,7 +21,6 @@ use Tests\TestCase;
  *     CC (building 25):      level=10, status_points=16
  *     oremine (building 27): level=5,  status_points=11
  *     housing (building 28): 3 instances, levels 2+3+2 = 7, status_points=10 (each)
- *   Colony 2 (Shelbyville), user_id=0 (no player)
  *   user_resources: user 3 → supply=1938 (will be overwritten by cap model)
  */
 class GameTickTest extends TestCase
@@ -81,7 +80,7 @@ class GameTickTest extends TestCase
 
         $supply = DB::table('user_resources')->where('user_id', 3)->value('supply');
 
-        // Total housing level sum = 7 (baseline) + 2 + 2 = 11; cap_housingcomplex = 8; cap_commandcenter = 10
+        // Total housing level sum = 7 (baseline) + 2 + 2 = 11; housingComplex.supply_cap = 8 per level; CC flat = 10
         // cap = 10 + (11 × 8) = 98
         $this->assertEquals(98, $supply);
     }
@@ -108,11 +107,11 @@ class GameTickTest extends TestCase
      * Building status_points decreases by decay_rate each tick.
      * oremine (id 27): decay_rate=0.17; starting SP=11 → 11 - 0.17 = 10.83
      *
-     * Supply costs are zeroed so colony 1 is never over-cap (overcap would double the rate).
+     * Supply costs are zeroed so colony 1 is never over-cap.
      */
     public function test_building_status_points_decrease_by_decay_rate(): void
     {
-        // Zero all supply costs so free-supply is always >= 0 and no overcap multiplier fires.
+        // Zero all supply costs so free-supply is always >= 0 (no over-capacity side effects).
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
@@ -190,11 +189,11 @@ class GameTickTest extends TestCase
      * Research status_points decreases by decay_rate each tick.
      * test_decay_placeholder (id 9901): decay_rate=0.13; level=2, SP=20 → 19.87
      *
-     * Supply costs are zeroed so colony 1 is never over-cap (overcap would double the rate).
+     * Supply costs are zeroed so colony 1 is never over-cap.
      */
     public function test_research_status_points_decrease_by_decay_rate(): void
     {
-        // Zero all supply costs so free-supply is always >= 0 and no overcap multiplier fires.
+        // Zero all supply costs so free-supply is always >= 0 (no over-capacity side effects).
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);

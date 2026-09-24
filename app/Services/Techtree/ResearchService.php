@@ -90,7 +90,7 @@ class ResearchService extends AbstractTechnologyService
      * Checked first so the player is told about the CC, not about a downstream gate.
      * levelup() needs no override — the base class refuses whenever this returns a code.
      */
-    public function levelupBlocker(int $colonyId, int $entityId): ?string
+    public function levelupBlocker(int $colonyId, int $entityId, ?int $instanceId = null): ?string
     {
         $entity = DB::table($this->masterTable())->find($entityId);
 
@@ -111,7 +111,7 @@ class ResearchService extends AbstractTechnologyService
             }
         }
 
-        return parent::levelupBlocker($colonyId, $entityId);
+        return parent::levelupBlocker($colonyId, $entityId, $instanceId);
     }
 
     /**

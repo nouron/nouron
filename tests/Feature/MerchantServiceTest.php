@@ -55,10 +55,12 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 class MerchantServiceTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     // ── Fixture constants ─────────────────────────────────────────────────────
@@ -791,9 +793,10 @@ class MerchantServiceTest extends TestCase
 
     public function test_mark_visited_does_not_affect_other_colony_visits(): void
     {
-        // Insert a visit for colony 2 (Shelbyville) — must not be touched.
+        // Insert a visit for another player's colony — must not be touched.
+        $foreign = $this->createForeignColony();
         $foreignVisitId = DB::table('merchant_visits')->insertGetId([
-            'colony_id' => 2,
+            'colony_id' => $foreign['colony_id'],
             'tick_start' => 20,
             'tick_end' => 21,
             'was_visited' => false,

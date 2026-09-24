@@ -25,6 +25,7 @@ namespace Tests\Feature;
 
 use App\Models\Run;
 use App\Models\User;
+use App\Services\ResourcesService;
 use App\Services\SolReportService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Console\Command;
@@ -380,6 +381,142 @@ class SolReportTest extends TestCase
 
         $this->assertNotNull($line);
         $this->assertSame('good', $line['tone']);
+    }
+
+    // ── Over-capacity (GDD §6 "Überkapazität", A14) ──────────────────────────
+
+    private function logEvent(int $tick, string $event, array $params): void
+    {
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => $tick,
+            'event' => $event,
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => self::COLONY_ID, ...$params]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+    }
+
+    private function eventLine(array $report, string $labelKey): ?array
+    {
+        $events = $this->groupByKey($report, 'events');
+
+        return $events === null ? null : collect($events['lines'])->first(fn ($l) => $l['label'] === __($labelKey));
+    }
+
+    private function productionLine(array $report, string $labelKey): ?array
+    {
+        return collect($this->groupByKey($report, 'production')['lines'])->first(fn ($l) => $l['label'] === __($labelKey));
+    }
+
+    /** Stored cap = workplaces − $homeless (negative $homeless = free room). */
+    private function setHomeless(int $homeless, int $departed = 0, int $streak = 0): void
+    {
+        $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
+        $workplaces = $breakdown['cap'] - $breakdown['free'];
+        DB::table('user_resources')->where('user_id', self::BART_ID)->update(['supply' => $workplaces - $homeless - $departed]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_streak' => $streak, 'overcap_departed' => $departed]);
+    }
+
+    public function test_colonists_left_shows_the_number_of_departed_colonists(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $this->logEvent(7, 'colony.colonists_left', ['count' => 7, 'departed' => 7]);
+
+        $line = $this->eventLine($this->service()->buildReport($run, $before), 'colony.sol_report_event_colonists_left');
+
+        $this->assertNotNull($line, 'Expected a colonists-left line in the events group');
+        $this->assertSame(__('colony.sol_report_colonists_left_detail', ['count' => 7]), $line['detail']);
+        $this->assertSame('danger', $line['tone']);
+        $this->assertTrue($line['beat']);
+    }
+
+    public function test_colonists_dismissed_and_returned_are_reported(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $this->logEvent(7, 'colony.colonists_dismissed', ['count' => 5, 'departed' => 5]);
+        $this->logEvent(7, 'colony.colonists_returned', ['count' => 3]);
+
+        $report = $this->service()->buildReport($run, $before);
+
+        $dismissed = $this->eventLine($report, 'colony.sol_report_event_colonists_dismissed');
+        $this->assertNotNull($dismissed);
+        $this->assertSame(__('colony.sol_report_colonists_dismissed_detail', ['count' => 5]), $dismissed['detail']);
+        $returned = $this->eventLine($report, 'colony.sol_report_event_colonists_returned');
+        $this->assertNotNull($returned);
+        $this->assertSame(__('colony.sol_report_colonists_returned_detail', ['count' => 3]), $returned['detail']);
+        $this->assertSame('good', $returned['tone']);
+    }
+
+    /** Homeless colonists: count, current trust penalty and Sols until departure. */
+    public function test_production_group_shows_homeless_colonists_with_malus_and_deadline(): void
+    {
+        config(['game.overcap.departure_after_sols' => 3, 'game.overcap.trust_base_malus' => 2, 'game.overcap.trust_step' => 1]);
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $this->setHomeless(6, 0, 2);
+
+        $line = $this->productionLine($this->service()->buildReport($run, $before), 'colony.sol_report_overcap');
+
+        $this->assertNotNull($line, 'Expected an over-capacity line in the production group');
+        $this->assertSame(
+            __('colony.sol_report_overcap_homeless', ['homeless' => 6, 'malus' => 3, 'sols' => 2]),
+            $line['detail']
+        );
+        $this->assertSame('danger', $line['tone']);
+    }
+
+    public function test_production_group_shows_understaffing_after_a_departure(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $this->setHomeless(0, 8);
+        $status = app(ResourcesService::class)->colonistStatus(self::COLONY_ID);
+
+        $report = $this->service()->buildReport($run, $before);
+
+        $this->assertNull($this->productionLine($report, 'colony.sol_report_overcap'), 'nobody homeless any more');
+        $line = $this->productionLine($report, 'colony.sol_report_staffing');
+        $this->assertNotNull($line);
+        $this->assertSame(
+            __('colony.sol_report_understaffed', ['departed' => 8, 'pct' => (int) round($status['staffing'] * 100)]),
+            $line['detail']
+        );
+        $this->assertSame('warning', $line['tone']);
+    }
+
+    public function test_food_line_counts_present_colonists_only(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $this->setHomeless(0, 8);
+
+        $line = $this->productionLine($this->service()->buildReport($run, $before), 'colony.sol_report_food');
+
+        $this->assertNotNull($line);
+        $this->assertSame(
+            __('colony.sol_report_food_ok', ['amount' => app(ResourcesService::class)->foodNeed(self::COLONY_ID)]),
+            $line['detail']
+        );
+        $this->assertStringContainsString((string) intdiv(
+            app(ResourcesService::class)->colonistStatus(self::COLONY_ID)['present'],
+            (int) config('game.food.supply_per_eater')
+        ), $line['detail']);
+    }
+
+    public function test_production_group_has_no_over_capacity_lines_within_cap(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $this->setHomeless(-10);
+
+        $report = $this->service()->buildReport($run, $before);
+
+        $this->assertNull($this->productionLine($report, 'colony.sol_report_overcap'));
+        $this->assertNull($this->productionLine($report, 'colony.sol_report_staffing'));
     }
 
     // ── Instability / plague outcomes (GDD §9, ROADMAP T7) ───────────────────

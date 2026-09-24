@@ -24,6 +24,8 @@ class BotStrategy
 
     private const RES_CREDITS = 1;
 
+    private const BIO_FACILITY = 41;
+
     // Engineer -> Scientist -> Pilot -> Trader: matches the sciencelab/hangar/bar
     // path buildings a fresh colony can reach first. Pilot (id 89, gated on
     // Hangar being placed) sits between Scientist and Trader so the bot picks
@@ -85,6 +87,23 @@ class BotStrategy
                 'do' => fn (BotSession $b, int $itemId) => $b->act('buy_merchant_item', 'POST', "/colony/merchant/buy/{$itemId}"),
             ],
             [
+                'name' => 'place_agrardom',
+                // C16 gate (ColonyController::investBuilding(), PR #349): CC Lv1 -> Lv2
+                // is rejected with agrardom_required until a bioFacility is placed,
+                // and path buildings are hidden from /colony/buildings/available until
+                // then as well. The Agrardom used to come only from place_building,
+                // which sits below explore_tile — so invest_cc ate a rejection every
+                // Sol while exploration drained the AP, and the Agrardom landed on the
+                // Sol's last AP point 2-3 Sols late (all 8 seeds, 2026-09-24). Placed
+                // right before invest_cc so the gate is cleared first.
+                'when' => fn (BotSession $b) => self::agrardomCandidate($b),
+                'do' => fn (BotSession $b, object $tile) => $b->act('place_agrardom', 'POST', '/colony/building/place', [
+                    'building_id' => self::BIO_FACILITY,
+                    'q' => $tile->q,
+                    'r' => $tile->r,
+                ]),
+            ],
+            [
                 'name' => 'invest_cc',
                 // Phase 1: cap at Lv3 (the completion requirement) — investing further
                 // here competed with path-building Regolith and broke Phase-1 pacing
@@ -95,7 +114,11 @@ class BotStrategy
                 // 13/16 coverage every run because it never invested past Lv3 (12 of
                 // the max 15 zone tiles), regardless of the exploreCandidate()
                 // zone-priority fix above.
-                'when' => fn (BotSession $b) => self::ccLevel($b) < (self::runPhase($b) >= 2 ? 5 : 3) && self::availableAp($b) >= 1,
+                // The Lv1 -> Lv2 step waits for place_agrardom (C16 gate) instead of
+                // collecting an agrardom_required rejection.
+                'when' => fn (BotSession $b) => self::ccLevel($b) < (self::runPhase($b) >= 2 ? 5 : 3)
+                    && self::availableAp($b) >= 1
+                    && (self::ccLevel($b) !== 1 || self::agrardomPlaced($b)),
                 'do' => fn (BotSession $b) => $b->act('invest_cc', 'POST', '/colony/building/invest', [
                     'building_id' => BuildingId::CommandCenter->value,
                 ]),
@@ -462,6 +485,62 @@ class BotStrategy
         return $eligible?->id;
     }
 
+    /** Mirrors ColonyController::agrardomPlaced() — the C16 gate condition. */
+    private static function agrardomPlaced(BotSession $b): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', self::BIO_FACILITY)
+            ->whereNotNull('tile_x')
+            ->exists();
+    }
+
+    /**
+     * Free colony-zone tile for the first Agrardom, or null when it is already
+     * placed, unaffordable (AP, build_cost, supply — the same gates
+     * ColonyController::placeBuilding() applies) or no zone tile is free. With no
+     * free zone tile the bot does nothing here and invest_cc stays blocked too —
+     * there is no way around the gate, so a rejection loop would only hide that.
+     */
+    private static function agrardomCandidate(BotSession $b): ?object
+    {
+        if (self::agrardomPlaced($b) || self::availableAp($b) < 1) {
+            return null;
+        }
+
+        $resourcesService = app(ResourcesService::class);
+        $costs = [];
+        foreach (config('buildings.bioFacility.build_cost', []) as $resourceId => $amount) {
+            $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
+        }
+        if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
+            return null;
+        }
+
+        $supplyCost = (int) (DB::table('buildings')->where('id', self::BIO_FACILITY)->value('supply_cost') ?? 0);
+        if ($supplyCost > 0 && $resourcesService->getFreeSupply($b->colonyId) < $supplyCost) {
+            return null;
+        }
+
+        return self::freeZoneTile($b);
+    }
+
+    /** First colony-zone tile without a building on it (fogged tiles allowed — placing reveals them). */
+    private static function freeZoneTile(BotSession $b): ?object
+    {
+        return DB::table('colony_tiles as ct')
+            ->where('ct.colony_id', $b->colonyId)
+            ->where('ct.is_colony_zone', 1)
+            ->whereNotExists(function ($query) use ($b) {
+                $query->select(DB::raw(1))
+                    ->from('colony_buildings as cb')
+                    ->where('cb.colony_id', $b->colonyId)
+                    ->whereColumn('cb.tile_x', 'ct.q')
+                    ->whereColumn('cb.tile_y', 'ct.r');
+            })
+            ->first();
+    }
+
     private static function exploreCandidate(BotSession $b): ?object
     {
         // No ring cap: harvesterRelocateCandidate() only ever offers already-explored
@@ -630,17 +709,7 @@ class BotStrategy
                     continue;
                 }
 
-                $tile = DB::table('colony_tiles as ct')
-                    ->where('ct.colony_id', $b->colonyId)
-                    ->where('ct.is_colony_zone', 1)
-                    ->whereNotExists(function ($query) use ($b) {
-                        $query->select(DB::raw(1))
-                            ->from('colony_buildings as cb')
-                            ->where('cb.colony_id', $b->colonyId)
-                            ->whereColumn('cb.tile_x', 'ct.q')
-                            ->whereColumn('cb.tile_y', 'ct.r');
-                    })
-                    ->first();
+                $tile = self::freeZoneTile($b);
 
                 if ($tile === null) {
                     return null;
@@ -672,7 +741,7 @@ class BotStrategy
         $pathIds = [31, 44, 52];
         $pathCase = 'CASE WHEN cb.building_id IN ('.implode(',', $pathIds).') AND cb.level = 0 THEN 0 ELSE 1 END';
 
-        return DB::table('colony_buildings as cb')
+        $rows = DB::table('colony_buildings as cb')
             ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
             ->where('cb.colony_id', $b->colonyId)
             ->where('cb.building_id', '!=', BuildingId::CommandCenter->value)
@@ -683,6 +752,48 @@ class BotStrategy
             ->orderByRaw($pathCase)
             ->orderByDesc('cb.level')
             ->orderBy('cb.building_id')
+            ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.tile_x', 'bld.supply_cost')
+            ->get();
+
+        // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
+        // server rejects a level-up with supply_limit while free supply is below the
+        // building's supply_cost; CC and housing are exempt, and so is the 0 -> 1
+        // step of a placed building (its workplaces were reserved on placement,
+        // ResourcesService::reservesFirstLevel()). The bot used to pick
+        // such a candidate anyway and eat the rejection every Sol. When the
+        // top-priority candidate is supply-blocked, supply is the bottleneck —
+        // expand housing (which raises the cap) before falling back to any
+        // lower-priority candidate that still fits.
+        $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
+        $blocked = fn (object $row): bool => ! ResourcesService::reservesFirstLevel($row)
+            && ! in_array((int) $row->building_id, [BuildingId::CommandCenter->value, BuildingId::Housing->value], true)
+            && (int) ($row->supply_cost ?? 0) > 0
+            && $freeSupply < (int) $row->supply_cost;
+
+        $first = $rows->first();
+        if ($first !== null && $blocked($first)) {
+            $housing = self::housingUpgradeCandidate($b);
+            if ($housing !== null) {
+                return $housing;
+            }
+        }
+
+        $row = $rows->first(fn (object $row) => ! $blocked($row));
+
+        return $row !== null ? (object) ['building_id' => $row->building_id, 'instance_id' => $row->instance_id] : null;
+    }
+
+    /** Lowest-level placed housing instance still below its max_level (supply-gate exempt). */
+    private static function housingUpgradeCandidate(BotSession $b): ?object
+    {
+        return DB::table('colony_buildings as cb')
+            ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $b->colonyId)
+            ->where('cb.building_id', BuildingId::Housing->value)
+            ->whereNotNull('cb.tile_x')
+            ->where(fn ($q) => $q->whereNull('bld.max_level')->orWhereColumn('cb.level', '<', 'bld.max_level'))
+            ->orderBy('cb.level')
+            ->orderBy('cb.instance_id')
             ->select('cb.building_id', 'cb.instance_id')
             ->first();
     }

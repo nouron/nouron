@@ -205,7 +205,8 @@ class ResourcesService
      * Calculate free supply for the user owning the given colony.
      *
      * user_resources.supply stores the supply cap (SET each tick by GameTick).
-     * Free supply = cap − Σ(active entity levels × supply_cost).
+     * Free supply = cap − workplaces (building levels × supply_cost incl. the level-0
+     * reserve of placed buildings, see buildingWorkplaces(), plus research usage).
      */
     public function getFreeSupply(int $colonyId): int
     {
@@ -213,11 +214,11 @@ class ResourcesService
     }
 
     /**
-     * Colony's Organika need for the current Sol (GDD §14 Hunger-Mechanik).
+     * Colony's Organika need for the current Sol (GDD §14 Hunger-Mechanik, §4a).
      *
-     * food_need = floor(used_supply / supply_per_eater), where used_supply sums
-     * cb.level × b.supply_cost over every colony_buildings row at level > 0. Kept
-     * as the single source of truth for this formula — GameTick::processFoodConsumption()
+     * food_need = floor(present_colonists / supply_per_eater) — colonists who left
+     * because of over-capacity do not eat (GDD §6 "Überkapazität — Konsequenzen").
+     * Kept as the single source of truth for this formula — GameTick::processFoodConsumption()
      * and any reserve-floor check gated on the food buffer (e.g. Corvan's Organika-Verkauf,
      * GDD §4b/§12) must read it from here rather than re-deriving it.
      */
@@ -225,13 +226,56 @@ class ResourcesService
     {
         $perEater = max(1, (int) config('game.food.supply_per_eater', 4));
 
-        $usedSupply = (int) DB::table('colony_buildings as cb')
-            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
-            ->where('cb.colony_id', $colonyId)
-            ->where('cb.level', '>', 0)
-            ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+        return intdiv($this->colonistStatus($colonyId)['present'], $perEater);
+    }
 
-        return intdiv($usedSupply, $perEater);
+    /**
+     * Colonists, homeless colonists and staffing share (GDD §6 "Überkapazität —
+     * Konsequenzen", A14) — the single place for these numbers.
+     *
+     *   workplaces = used supply (every workplace needs one colonist), including
+     *                the level-0 reserve of placed buildings (buildingWorkplaces()) —
+     *                their colonists have already moved in: they need housing and eat
+     *   departed   = min(glx_colonies.overcap_departed, max(0, workplaces − cap))
+     *   present    = workplaces − departed
+     *   homeless   = max(0, present − cap)
+     *   staffing   = present / workplaces (1.0 while nobody has departed)
+     *
+     * The departed count is clamped live: as soon as housing is free again the
+     * colonists count as returned (OvercapService::advanceStreaks() persists the
+     * return and logs it at the next Sol). Free supply for the build gate stays
+     * cap − workplaces — departed colonists leave unfilled workplaces that keep
+     * occupying the cap (getFreeSupply()).
+     *
+     * @return array{cap: int, workplaces: int, departed: int, present: int, homeless: int, staffing: float}
+     */
+    public function colonistStatus(int $colonyId): array
+    {
+        $breakdown = $this->getSupplyBreakdown($colonyId);
+        $cap = $breakdown['cap'];
+        $workplaces = max(0, $cap - $breakdown['free']);
+
+        $stored = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('overcap_departed');
+        $departed = min($stored, max(0, $workplaces - $cap));
+        $present = $workplaces - $departed;
+
+        return [
+            'cap' => $cap,
+            'workplaces' => $workplaces,
+            'departed' => $departed,
+            'present' => $present,
+            'homeless' => max(0, $present - $cap),
+            'staffing' => $workplaces > 0 && $departed > 0 ? $present / $workplaces : 1.0,
+        ];
+    }
+
+    /**
+     * Production factor from unfilled workplaces (GDD §5: produced amount × staffing
+     * share). Applies to raw-material production only (Regolith, Organika).
+     */
+    public function staffingShare(int $colonyId): float
+    {
+        return $this->colonistStatus($colonyId)['staffing'];
     }
 
     /**
@@ -239,7 +283,10 @@ class ResourcesService
      * SUP chip popup (so the player can see e.g. "CC → 10, 3× Wohnhabitat → 24" and
      * where the used supply actually goes, instead of just a single opaque number).
      *
-     * @return array{cap: int, free: int, sources: array{cc: int, housing: int, knowledge: int}, used: array{buildings: int, researches: int, advisors: int}}
+     * used.buildings includes the level-0 reserve (buildingWorkplaces()); used.reserved
+     * is that share on its own, for display only (not to be added again).
+     *
+     * @return array{cap: int, free: int, sources: array{cc: int, housing: int, knowledge: int}, used: array{buildings: int, reserved: int, researches: int, advisors: int}}
      */
     public function getSupplyBreakdown(int $colonyId): array
     {
@@ -248,7 +295,7 @@ class ResourcesService
             return [
                 'cap' => 0, 'free' => 0,
                 'sources' => ['cc' => 0, 'housing' => 0, 'knowledge' => 0],
-                'used' => ['buildings' => 0, 'researches' => 0, 'advisors' => 0],
+                'used' => ['buildings' => 0, 'reserved' => 0, 'researches' => 0, 'advisors' => 0],
             ];
         }
 
@@ -271,11 +318,7 @@ class ResourcesService
 
         $knowledgeContribution = max(0, $cap - $ccContribution - $housingContribution);
 
-        $usedBuildings = (int) DB::table('colony_buildings as cb')
-            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
-            ->where('cb.colony_id', $colonyId)
-            ->where('cb.level', '>', 0)
-            ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+        ['total' => $usedBuildings, 'reserved' => $reservedBuildings] = $this->buildingWorkplaces($colonyId);
 
         $usedResearches = (int) DB::table('colony_researches as cr')
             ->join('researches as r', 'r.id', '=', 'cr.research_id')
@@ -297,24 +340,57 @@ class ResourcesService
             'cap' => $cap,
             'free' => $cap - ($usedBuildings + $usedResearches + $usedAdvisors),
             'sources' => ['cc' => $ccContribution, 'housing' => $housingContribution, 'knowledge' => $knowledgeContribution],
-            'used' => ['buildings' => $usedBuildings, 'researches' => $usedResearches, 'advisors' => $usedAdvisors],
+            'used' => ['buildings' => $usedBuildings, 'reserved' => $reservedBuildings, 'researches' => $usedResearches, 'advisors' => $usedAdvisors],
         ];
     }
 
     /**
-     * Return all colony IDs where the owning user has consumed more supply than their cap.
+     * Whether a colony_buildings row is placed on the map but still on level 0 —
+     * it then already reserves the workplaces of its first level (GDD §6 "Supply
+     * als Bau-Gate", A14 Owner decision 2026-09-24). A level-0 row without a tile
+     * (seeded, never placed) reserves nothing.
+     */
+    public static function reservesFirstLevel(object $colonyBuilding): bool
+    {
+        return (int) $colonyBuilding->level === 0 && $colonyBuilding->tile_x !== null;
+    }
+
+    /**
+     * Workplaces of a colony's buildings — the single place for this number (build
+     * gate, supply display, colonists, onboarding trigger, colony validation):
+     * level × supply_cost per building, plus supply_cost × 1 for every placed
+     * building still on level 0 (reserve, see reservesFirstLevel()).
      *
-     * A negative free-supply value indicates over-cap status. These colonies receive
-     * the overcap_factor decay penalty every tick until supply usage drops back within cap.
+     * @return array{total: int, reserved: int} reserved is the level-0 share of total
+     */
+    public function buildingWorkplaces(int $colonyId): array
+    {
+        $row = DB::table('colony_buildings as cb')
+            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $colonyId)
+            ->selectRaw('SUM(CASE WHEN cb.level > 0 THEN cb.level * COALESCE(b.supply_cost, 0) ELSE 0 END) as built')
+            ->selectRaw('SUM(CASE WHEN cb.level = 0 AND cb.tile_x IS NOT NULL THEN COALESCE(b.supply_cost, 0) ELSE 0 END) as reserved')
+            ->first();
+
+        $built = (int) ($row->built ?? 0);
+        $reserved = (int) ($row->reserved ?? 0);
+
+        return ['total' => $built + $reserved, 'reserved' => $reserved];
+    }
+
+    /**
+     * Colony IDs with homeless colonists (GDD §6 "Überkapazität"): more colonists
+     * present than the cap houses. A colony whose over-capacity was resolved by
+     * departure (understaffed, nobody homeless) is not included.
      *
-     * @return int[] Colony IDs with getFreeSupply() < 0
+     * @return int[]
      */
     public function getOverCapColonyIds(): array
     {
         $colonyIds = DB::table('glx_colonies')->pluck('id');
 
         return $colonyIds
-            ->filter(fn ($id) => $this->getFreeSupply((int) $id) < 0)
+            ->filter(fn ($id) => $this->colonistStatus((int) $id)['homeless'] > 0)
             ->values()
             ->all();
     }

@@ -657,13 +657,12 @@ class GameTickEncounterTest extends TestCase
      * pattern) since the default cap (0.10) would clamp base_chance=1.0 back
      * down and the roll might not actually succeed.
      *
-     * The fixture has two real (non-NPC) colonies — colony 1/Bart and colony
-     * 2/Homer (see test 1's fixture-summary docblock) — so with base_chance
-     * forced globally to 1.0, BOTH colonies' users independently earn the
-     * hint. That is correct per-user behavior, not a bug; this test scopes
-     * its assertion to colony 1's owner (user 3) to keep the "exactly once"
-     * claim about a single user's onboarding, same isolation approach test 1
-     * uses for its "other colonies roll too" ambiguity.
+     * With base_chance forced globally to 1.0, every colony's owner would
+     * independently earn the hint (correct per-user behavior). The fixture
+     * has only colony 1/Bart today, but the assertion stays scoped to
+     * colony 1's owner (user 3) to keep the "exactly once" claim about a
+     * single user's onboarding, same isolation approach test 1 uses for its
+     * "other colonies roll too" ambiguity.
      */
     public function test_first_encounter_ever_fires_the_onboarding_hint_once(): void
     {

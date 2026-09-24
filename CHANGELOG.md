@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-24
+
+- Feature: A14 Überkapazität — Modell „Unterbesetzung" (GDD §6): Obdachlose Kolonisten senken das Vertrauen ab Sol 1 eskalierend, nach kurzer Frist wandern sie ab; danach sinken Rohstoffproduktion und Nahrungsbedarf anteilig und Bauen ist gesperrt, bis neuer Wohnraum die Kolonisten zurückholt. „Wegschicken" im Kolonisten-Popup kürzt die Frist gegen AP ab. Gebäude verlieren keine Stufen; `decay.overcap_factor` gestrichen. Nach dem Deploy `php artisan migrate`.
+- Fix: Supply-Gate gilt jetzt auch beim Ausbau und für den zweiten Harvester; platzierte Gebäude reservieren ihre ersten Arbeitsplätze schon beim Platzieren (kein Scheitern nach dem Bezahlen mehr).
+- Fix: Techtree-Order für Gebäude wirkt instanzgenau (`instance_id`); Rückbau kostet nichts mehr und gibt auf Stufe 0 das Tile frei; nie platzierte Gebäude lassen sich nicht mehr ausbauen.
+- Fix: PlaytestBot — Sol-0-Tick im Test-Harness korrigiert, Agrardom vor CC-Ausbau, Supply-Gate beachtet. 8-Seed-Batch: 7/8 Runs abgeschlossen (vorher 0/8).
+- Doku: GDD §2–§7/§13 und `docs/game-reference.md` (§10, neu §10a) auf den A14-Stand; CC-Kapazitätsbeitrag bleibt flach, tote Config-Keys entfernt.
+
 ## 2026-09-23
 
 - Doku: C14 — Zahlen aus GDD §6/§14/§18.2-Prosa entfernt (ADR 0004), durch qualitative Formulierungen + Fußnoten auf `config/*.php` ersetzt. Dabei mehrere Stellen gefunden, an denen das GDD bereits vom A37-Trust-Rebalance (2026-09-14) abwich.

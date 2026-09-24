@@ -5,8 +5,9 @@
  *
  * Fields:
  *   id               — DB primary key in `buildings` table
- *   supply_cap       — flat supply cap granted (commandCenter) or per-unit cap (housingComplex)
- *   supply_cost      — supply consumed while the building exists at level > 0
+ *   supply_cap       — flat supply cap granted (commandCenter) or cap per instance level (housingComplex)
+ *   supply_cost      — supply (workplaces) occupied per level; a placed building on level 0
+ *                      already reserves one level's worth (ResourcesService::buildingWorkplaces())
  *   build_cost       — one-time resource cost to erect (level 0→1), as [resource_id => amount]
  *                      (3 = Regolith, 4 = Werkstoffe/compounds). Absent = no resource cost
  *                      (CommandCenter + Harvester only — bootstrap exemption). Werkstoffe
@@ -49,7 +50,7 @@ return [
         // trägt CC-Ausbau jetzt als teuersten Einzelposten des Runs (Bilanz: 75% Sockel-
         // Deckung der Zielkolonie), s. Handoff docs/handoff-ap-ratenmodell.md §7.
         'cc_upgrade_regolith_per_level' => 30,
-        'supply_cap' => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
+        'supply_cap' => 10,      // flat cap once CC level >= 1 (does not scale with level)
         'supply_cost' => 0,
         'trust_per_lv' => 0,
         // Klasse "Robust" (GDD §13.7 decay_rate-Klassentabelle, 2026-08-03): 50 Sole bis Level-Down.

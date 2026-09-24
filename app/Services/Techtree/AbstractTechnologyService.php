@@ -68,13 +68,27 @@ abstract class AbstractTechnologyService
 
     /**
      * Return the colony-specific row for a given entity, or null if absent.
+     *
+     * $instanceId selects one instance of an instanced building (BuildingService);
+     * every other entity type has a single row per colony and ignores it.
      */
-    public function getColonyEntity(int $colonyId, int $entityId): ?object
+    public function getColonyEntity(int $colonyId, int $entityId, ?int $instanceId = null): ?object
     {
         return DB::table($this->colonyTable())
-            ->where('colony_id', $colonyId)
-            ->where($this->entityIdKey(), $entityId)
+            ->where($this->rowKeys($colonyId, $entityId, $instanceId))
             ->first();
+    }
+
+    /**
+     * Column => value pairs identifying exactly one colony-entity row. Every read
+     * and write of a single row goes through this, so an instanced building is never
+     * matched (or updated) across all of its instances.
+     *
+     * @return array<string, int>
+     */
+    protected function rowKeys(int $colonyId, int $entityId, ?int $instanceId = null): array
+    {
+        return ['colony_id' => $colonyId, $this->entityIdKey() => $entityId];
     }
 
     /**
@@ -161,7 +175,7 @@ abstract class AbstractTechnologyService
      * Personell entities never require AP investment before hiring.
      * For all other entities the colony row's ap_spend must reach ap_for_levelup.
      */
-    public function checkRequiredActionPoints(int $colonyId, int $entityId): bool
+    public function checkRequiredActionPoints(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
         if ($this->entityIdKey() === 'personell_id') {
             return true;
@@ -172,7 +186,7 @@ abstract class AbstractTechnologyService
             return false;
         }
 
-        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
         if (! $colonyEntity) {
             return false;
         }
@@ -189,7 +203,7 @@ abstract class AbstractTechnologyService
      * Supply is a capacity ceiling (SET each tick). Each entity level consumes
      * supply_cost slots. Bypassed in dev_mode.
      */
-    public function checkRequiredSupplyByEntityId(int $colonyId, int $entityId): bool
+    public function checkRequiredSupplyByEntityId(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
         if (config('game.bypass.supply_checks')) {
             return true;
@@ -200,14 +214,29 @@ abstract class AbstractTechnologyService
             return true;
         }
 
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
+        if ($colonyEntity !== null && $this->firstLevelAlreadyReserved($colonyEntity)) {
+            return true;
+        }
+
         return $this->resourcesService->getFreeSupply($colonyId) >= (int) $entity->supply_cost;
+    }
+
+    /**
+     * Whether the next level's supply is already part of the colony's workplaces,
+     * so the supply check must not count it a second time. Only buildings reserve
+     * (their first level once placed, BuildingService); other entities never do.
+     */
+    protected function firstLevelAlreadyReserved(object $colonyEntity): bool
+    {
+        return false;
     }
 
     /**
      * Check that a levelup would not exceed the entity's max_level cap.
      * Only enforced for buildings; all other entity types return true.
      */
-    public function checkLevelUpLimit(int $colonyId, int $entityId): bool
+    public function checkLevelUpLimit(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
         if ($this->entityIdKey() !== 'building_id') {
             return true;
@@ -218,7 +247,7 @@ abstract class AbstractTechnologyService
             return true;
         }
 
-        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
         if (! $colonyEntity) {
             return true;
         }
@@ -229,9 +258,9 @@ abstract class AbstractTechnologyService
     /**
      * Check that the current level is above zero (cannot leveldown below 0).
      */
-    public function checkLevelDownLimit(int $colonyId, int $entityId): bool
+    public function checkLevelDownLimit(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
-        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
         if (! $colonyEntity) {
             return false;
         }
@@ -262,7 +291,8 @@ abstract class AbstractTechnologyService
         int $entityId,
         string $changeMode = 'add',
         int $points = 1,
-        bool $bypassPoolCheck = false
+        bool $bypassPoolCheck = false,
+        ?int $instanceId = null,
     ): bool {
         // Single source for "may this proceed, and if not why" — investBlocker() covers
         // id validation, the entity lookup, the change mode and AP availability.
@@ -277,12 +307,12 @@ abstract class AbstractTechnologyService
         // pool-locking side effect below — see investBonus() for the earmarked-AP use case.
         $bypassAp = (bool) config('game.bypass.ap_checks') || $bypassPoolCheck;
 
-        if ($this->investBlocker($colonyId, $entityId, $changeMode, $points, $bypassPoolCheck) !== null) {
+        if ($this->investBlocker($colonyId, $entityId, $changeMode, $points, $bypassPoolCheck, $instanceId) !== null) {
             return false;
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
 
         $currentApSpend = $colonyEntity ? (int) $colonyEntity->ap_spend : 0;
         $currentStatus = $colonyEntity ? (int) $colonyEntity->status_points : 0;
@@ -321,11 +351,10 @@ abstract class AbstractTechnologyService
             'ap_spend' => $newApSpend,
         ];
 
-        DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $currentApSpend, $newApSpend, $bypassAp) {
-            DB::table($this->colonyTable())->updateOrInsert(
-                ['colony_id' => $colonyId, $this->entityIdKey() => $entityId],
-                $updateData
-            );
+        $rowKeys = $this->rowKeys($colonyId, $entityId, $instanceId);
+
+        DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $currentApSpend, $newApSpend, $bypassAp, $rowKeys) {
+            DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
 
             if ($changeMode === 'add' && ! $bypassAp) {
                 // Lock the AP actually spent toward levelup so they cannot be reused in the same tick
@@ -380,15 +409,15 @@ abstract class AbstractTechnologyService
      *                     insufficient_resources, insufficient_ap_invested,
      *                     insufficient_supply, max_level
      */
-    public function levelupBlocker(int $colonyId, int $entityId): ?string
+    public function levelupBlocker(int $colonyId, int $entityId, ?int $instanceId = null): ?string
     {
         return match (true) {
             ! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId) => 'requires_building',
             ! $this->checkRequiredResearchesByEntityId($colonyId, $entityId) => 'requires_research',
             ! $this->checkRequiredResourcesByEntityId($colonyId, $entityId) => 'insufficient_resources',
-            ! $this->checkRequiredActionPoints($colonyId, $entityId) => 'insufficient_ap_invested',
-            ! $this->checkRequiredSupplyByEntityId($colonyId, $entityId) => 'insufficient_supply',
-            ! $this->checkLevelUpLimit($colonyId, $entityId) => 'max_level',
+            ! $this->checkRequiredActionPoints($colonyId, $entityId, $instanceId) => 'insufficient_ap_invested',
+            ! $this->checkRequiredSupplyByEntityId($colonyId, $entityId, $instanceId) => 'insufficient_supply',
+            ! $this->checkLevelUpLimit($colonyId, $entityId, $instanceId) => 'max_level',
             default => null,
         };
     }
@@ -400,9 +429,12 @@ abstract class AbstractTechnologyService
      * investBonus() for earmarked AP that never came out of the pool in the first
      * place, so its availability must never gate the injection.
      *
+     * $instanceId is unused here; BuildingService uses it to check the placement of
+     * the addressed instance.
+     *
      * @return string|null one of: entity_not_found, insufficient_ap, invalid_mode
      */
-    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false): ?string
+    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false, ?int $instanceId = null): ?string
     {
         $this->validateId($colonyId);
         $this->validateId($entityId);
@@ -429,20 +461,21 @@ abstract class AbstractTechnologyService
      *
      * Resets ap_spend to 0 after levelup (except for personell).
      */
-    public function levelup(int $colonyId, int $entityId): bool
+    public function levelup(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
-        if ($this->levelupBlocker($colonyId, $entityId) !== null) {
+        if ($this->levelupBlocker($colonyId, $entityId, $instanceId) !== null) {
             return false;
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
         $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
         $maxStatus = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
 
         $costs = $this->getEntityCosts($entityId);
+        $rowKeys = $this->rowKeys($colonyId, $entityId, $instanceId);
 
-        DB::transaction(function () use ($colonyId, $entityId, $currentLevel, $maxStatus, $costs) {
+        DB::transaction(function () use ($colonyId, $currentLevel, $maxStatus, $costs, $rowKeys) {
             $this->resourcesService->payCosts($costs, $colonyId);
 
             $updateData = [
@@ -455,10 +488,7 @@ abstract class AbstractTechnologyService
                 $updateData['ap_spend'] = 0;
             }
 
-            DB::table($this->colonyTable())->updateOrInsert(
-                ['colony_id' => $colonyId, $this->entityIdKey() => $entityId],
-                $updateData
-            );
+            DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
 
         return true;
@@ -474,35 +504,57 @@ abstract class AbstractTechnologyService
     }
 
     /**
-     * Level down an entity: verify prerequisites + min-level limit, pay costs, decrement level.
+     * Name the reason a leveldown() call would be refused, or null when it may proceed.
+     *
+     * The default keeps the historic research/ship behaviour (levelup prerequisites
+     * re-checked). BuildingService overrides it: demolishing a building level only
+     * needs a level to remove.
+     *
+     * @return string|null one of: requires_building, requires_research,
+     *                     insufficient_resources, insufficient_ap_invested, min_level
      */
-    public function leveldown(int $colonyId, int $entityId): bool
+    public function leveldownBlocker(int $colonyId, int $entityId, ?int $instanceId = null): ?string
     {
-        if (! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredResearchesByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredResourcesByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredActionPoints($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkLevelDownLimit($colonyId, $entityId)) {
+        return match (true) {
+            ! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId) => 'requires_building',
+            ! $this->checkRequiredResearchesByEntityId($colonyId, $entityId) => 'requires_research',
+            ! $this->checkRequiredResourcesByEntityId($colonyId, $entityId) => 'insufficient_resources',
+            ! $this->checkRequiredActionPoints($colonyId, $entityId, $instanceId) => 'insufficient_ap_invested',
+            ! $this->checkLevelDownLimit($colonyId, $entityId, $instanceId) => 'min_level',
+            default => null,
+        };
+    }
+
+    /**
+     * Resource costs charged by a leveldown. Default: the entity's full cost rows
+     * (historic behaviour); BuildingService charges nothing.
+     */
+    protected function leveldownCosts(int $entityId): Collection
+    {
+        return $this->getEntityCosts($entityId);
+    }
+
+    /**
+     * Level down an entity: verify leveldownBlocker(), pay leveldownCosts(), decrement level.
+     */
+    public function leveldown(int $colonyId, int $entityId, ?int $instanceId = null): bool
+    {
+        if ($this->leveldownBlocker($colonyId, $entityId, $instanceId) !== null) {
             return false;
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId, $instanceId);
         $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
         $maxStatus = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
 
-        $costs = $this->getEntityCosts($entityId);
+        $costs = $this->leveldownCosts($entityId);
+        $rowKeys = $this->rowKeys($colonyId, $entityId, $instanceId);
 
-        DB::transaction(function () use ($colonyId, $entityId, $currentLevel, $maxStatus, $costs) {
-            $this->resourcesService->payCosts($costs, $colonyId);
+        DB::transaction(function () use ($colonyId, $currentLevel, $maxStatus, $costs, $rowKeys) {
+            if ($costs->isNotEmpty()) {
+                $this->resourcesService->payCosts($costs, $colonyId);
+            }
 
             $updateData = [
                 'level' => $currentLevel - 1,
@@ -513,12 +565,22 @@ abstract class AbstractTechnologyService
                 $updateData['ap_spend'] = 0;
             }
 
-            DB::table($this->colonyTable())->updateOrInsert(
-                ['colony_id' => $colonyId, $this->entityIdKey() => $entityId],
-                $updateData
-            );
+            $updateData += $this->leveldownExtraUpdate($currentLevel - 1);
+
+            DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
 
         return true;
+    }
+
+    /**
+     * Additional columns to write when an entity is levelled down to $newLevel.
+     * Default: none. BuildingService overrides this to release the tile on level 0.
+     *
+     * @return array<string, mixed>
+     */
+    protected function leveldownExtraUpdate(int $newLevel): array
+    {
+        return [];
     }
 }

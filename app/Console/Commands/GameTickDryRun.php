@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Services\OvercapService;
+use App\Services\ResourcesService;
 use App\Services\TrustService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +21,11 @@ class GameTickDryRun extends Command
 
     protected $description = 'Simulate one game tick and show a resource/decay diff (no DB writes)';
 
-    public function __construct(private readonly TrustService $trustService)
-    {
+    public function __construct(
+        private readonly TrustService $trustService,
+        private readonly OvercapService $overcapService,
+        private readonly ResourcesService $resourcesService,
+    ) {
         parent::__construct();
     }
 
@@ -151,7 +156,11 @@ class GameTickDryRun extends Command
 
         $production = config('game.production_curve', []);
         $trust = $this->trustService->getTrust($cid);
-        $multiplier = $this->trustService->getProductionMultiplier($trust);
+        $trustMultiplier = $this->trustService->getProductionMultiplier($trust);
+        // Staffing share (GDD §5/§6, A14): unfilled workplaces after an over-capacity
+        // departure scale raw-material production, like GameTick::generateResources().
+        $staffing = $this->resourcesService->staffingShare((int) $cid);
+        $multiplier = $trustMultiplier * $staffing;
 
         $resNames = [3 => 'Regolith', 4 => 'Werkstoffe', 5 => 'Organika'];
         $this->line('  Resources:');
@@ -175,29 +184,17 @@ class GameTickDryRun extends Command
         $trustColor = $trust >= 0 ? 'green' : 'red';
         $this->line(sprintf(
             '    Trust:        <fg=%s>%d</> (production ×%.2f)',
-            $trustColor, $trust, $multiplier
+            $trustColor, $trust, $trustMultiplier
         ));
 
-        // ── Building decay ────────────────────────────────────────────────
-        $overCapColonies = DB::table('user_resources')
-            ->whereRaw('supply < (
-                SELECT COALESCE(SUM(cb.level * b.supply_cost), 0)
-                FROM colony_buildings cb
-                JOIN buildings b ON b.id = cb.building_id
-                WHERE cb.colony_id = ? AND cb.level > 0
-            )', [$cid])
-            ->pluck('user_id');
-
-        $overcapFactor = in_array($colony->user_id, $overCapColonies->all())
-            ? (float) config('game.decay.overcap_factor', 2.0)
-            : 1.0;
-
+        // ── Building decay ──────────────────────────────────────────────
+        // Over-capacity no longer accelerates decay (GDD §7, A14).
         $this->line('  Building decay:');
         foreach ($buildings->sortBy('name') as $b) {
             $rate = (float) $b->decay_rate;
             $maxSP = (int) $b->max_status_points;
             $curSP = (float) $b->status_points;
-            $newSP = $curSP - ($rate * $overcapFactor);
+            $newSP = $curSP - $rate;
             $pct = $maxSP > 0 ? ($newSP / $maxSP) * 100 : 100;
 
             if ($newSP <= 0) {
@@ -220,10 +217,37 @@ class GameTickDryRun extends Command
             ));
         }
 
-        if ($overcapFactor > 1.0) {
+        $this->renderOvercapPreview((int) $cid);
+    }
+
+    /**
+     * A14 (GDD §6 "Überkapazität"): homeless colonists — next streak, its trust
+     * penalty and the Sols until departure (or the departure itself) — and
+     * understaffing after a departure.
+     */
+    private function renderOvercapPreview(int $colonyId): void
+    {
+        $status = $this->overcapService->status($colonyId);
+        $deadline = max(1, (int) config('game.overcap.departure_after_sols', 3));
+
+        if ($status['over'] && $status['streak'] >= $deadline) {
+            $this->line(sprintf('  <fg=red>Departure next Sol: %d colonists leave</>', $status['homeless']));
+        } elseif ($status['over']) {
             $this->line(sprintf(
-                '  <fg=red>Over supply cap — decay ×%.1f</>',
-                $overcapFactor
+                '  <fg=red>Over-capacity: %d homeless, streak %d → %d, trust penalty next Sol: %d, departure in %d Sol</>',
+                $status['homeless'],
+                $status['streak'],
+                $status['streak'] + 1,
+                $this->trustService->overcapPenaltyForStreak($status['streak'] + 1),
+                $status['sols_until_departure']
+            ));
+        }
+
+        if ($status['departed'] > 0) {
+            $this->line(sprintf(
+                '  <fg=yellow>Understaffed: %d workplaces unfilled, raw-material production at %d%%</>',
+                $status['departed'],
+                $status['staffing_pct']
             ));
         }
     }

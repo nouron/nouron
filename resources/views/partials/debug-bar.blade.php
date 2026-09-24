@@ -85,10 +85,10 @@
             <div style="color:#ff0;margin-bottom:4px;">Supply</div>
             <div><span style="color:#666;">cap_max:</span> <span style="color:#ddd;">{{ $cfgSupply["cap_max"] }}</span>
             </div>
-            <div><span style="color:#666;">per_cc_lv:</span> <span
-                    style="color:#ddd;">{{ $cfgSupply["cap_commandcenter"] }}</span></div>
+            <div><span style="color:#666;">cc_flat:</span> <span
+                    style="color:#ddd;">{{ config("buildings.commandCenter.supply_cap") }}</span></div>
             <div><span style="color:#666;">per_housing:</span> <span
-                    style="color:#ddd;">{{ $cfgSupply["cap_housingcomplex"] }}</span></div>
+                    style="color:#ddd;">{{ config("buildings.housingComplex.supply_cap") }}</span></div>
         </div>
 
         {{-- Credits --}}

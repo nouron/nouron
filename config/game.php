@@ -268,13 +268,13 @@ return [
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
-    // Formula: CC-Level × cap_commandcenter + Σ(housing instance levels) × cap_housingcomplex + Σ(knowledge_cap_per_level)
+    // Formula: CC flat (buildings.commandCenter.supply_cap, once CC level ≥ 1)
+    //   + Σ(housing instance levels) × buildings.housingComplex.supply_cap
+    //   + Σ(knowledge_cap_per_level), clamped to cap_max.
     // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
         'cap_max' => 200,   // absolute hard cap across the whole colony
-        'cap_commandcenter' => 10,    // supply cap per CC level (max Lv5 → 50)
-        'cap_housingcomplex' => 8,     // supply cap per housing LEVEL, summed over instances (6 instances × Lv3 → 144 theoretical; see GDD §6 / Audit C6)
         'knowledge_cap_per_level' => [  // non-linear cap bonus per knowledge level (bell curve)
             1 => 3,
             2 => 5,
@@ -300,11 +300,10 @@ return [
         'consul_ap_discount' => [1 => 50, 2 => 60, 3 => 70],
     ],
 
-    // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
-    // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
-    'decay' => [
-        'overcap_factor' => 1.5,  // decay multiplier when colony is over supply cap (GDD §13.1: 2.0 doubled the maintenance share of the AP pool; 1.5 keeps over-cap painful but not paralysing)
-    ],
+    // Building/ship/research decay: per-entity decay_rate values live in
+    // config/buildings.php, config/ships.php, config/techs.php. Over-capacity no
+    // longer accelerates decay (decay.overcap_factor removed, GDD §7, A14 Owner
+    // decision 2026-09-24).
 
     // GDD §9 "Begegnungen & Gefahren" — first-pass calibration figures (Richtwerte),
     // to be tuned after PlaytestBot runs, same convention as other "erste Fassung"
@@ -699,21 +698,45 @@ return [
             'stipend_large' => 4,
             'story_concern_resolved' => 3,  // Sorel/preacher Cantina-Anliegen (A41) resolved successfully
             'story_concern_failed' => -2,   // Sorel/preacher Cantina-Anliegen (A41) failed
+            'colonists_left' => -3,         // homeless colonists left after the over-capacity deadline (A14), once per departure
+            'colonists_dismissed' => -2,    // director dismissed the homeless colonists (A14 "Wegschicken"), once per dismissal
         ],
     ],
 
     // Organika provisioning — the colony eats Organika (resource 5) each Sol.
-    // Consumption = floor(used_supply / supply_per_eater). Stock covers it → well_fed
+    // Consumption = floor(present_colonists / supply_per_eater); present = used supply
+    // minus colonists departed through over-capacity (GDD §6). Stock covers it → well_fed
     // (+trust); stock short → hunger_streak grows and an escalating trust penalty bites
     // (see TrustService::hungerPenalty), making bioFacility a must-have. Missions also
     // burn Organika as crew provisions at dispatch.
     'food' => [
-        'supply_per_eater' => 4,     // 1 "eater" per 4 used supply → food_need = floor(used/4)
+        'supply_per_eater' => 4,     // 1 "eater" per 4 present colonists → food_need = floor(present/4)
         'well_fed_trust' => 1,       // (documented; actual bonus via trust.events.well_fed)
         'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
         'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol
         'hunger_cap' => 8,           // max penalty
         // mission dispatch costs moved to config/missions.php (nav_ap_per_sol, organika_per_sol)
+    ],
+
+    // Over-capacity consequences (GDD §6 "Überkapazität — Konsequenzen", A14).
+    // Colonists are homeless while more of them are present than the cap houses
+    // (ResourcesService::colonistStatus()). glx_colonies.overcap_streak counts
+    // consecutive Sols with homeless colonists; the escalating, capped trust
+    // penalty (TrustService::overcapPenalty) applies from the first Sol —
+    // independent of the hunger penalty (Owner decision 2026-09-23: no shared cap).
+    // Once the streak has reached departure_after_sols, all homeless colonists
+    // leave at the next Sol (glx_colonies.overcap_departed, trust event
+    // colonists_left, streak → 0): unfilled workplaces lower production and food
+    // need by the staffing share; they return automatically once housing is free.
+    // "Wegschicken" (dismiss_ap_cost AP) triggers the same departure immediately
+    // (trust event colonists_dismissed). Values confirmed by Owner 2026-09-24
+    // (GDD §6, docs/game-reference.md §10a).
+    'overcap' => [
+        'departure_after_sols' => 3,  // Sols with homeless colonists before they leave
+        'trust_base_malus' => 2,      // trust penalty on the first Sol with homeless colonists
+        'trust_step' => 1,            // +1 penalty per further consecutive Sol
+        'trust_cap' => 4,             // max penalty (deliberately below food.hunger_cap)
+        'dismiss_ap_cost' => 8,       // AP cost of "Wegschicken"
     ],
 
     // CC-Level gate for knowledge research levels 4 and 5.

@@ -7,6 +7,7 @@ use App\Services\Techtree\BuildingUnlockService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 /**
@@ -18,13 +19,12 @@ use Tests\TestCase;
  */
 class TechtreeControllerTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     protected int $userIdBart = 3;  // owns colony 1 (Springfield)
 
     protected int $colonyIdBart = 1;
-
-    protected int $colonyIdOther = 2;  // Shelbyville — no owner in test data
 
     protected function setUp(): void
     {
@@ -52,26 +52,30 @@ class TechtreeControllerTest extends TestCase
     {
         $bart = User::find($this->userIdBart);
 
-        // Record colony 2 (other colony) ap_spend before the request
+        // Another player's colony that also has a harvester (27)
+        $otherColonyId = $this->createForeignColony([25 => 3, 27 => 1])['colony_id'];
+
+        // Record the other colony's ap_spend before the request
         $before = DB::table('colony_buildings')
-            ->where(['colony_id' => $this->colonyIdOther, 'building_id' => 27])
+            ->where(['colony_id' => $otherColonyId, 'building_id' => 27])
             ->value('ap_spend');
+        $this->assertNotNull($before, 'precondition: other colony has a harvester row');
 
         // Bart invests AP in oremine — ap_spend on colony 1 must change
         DB::table('colony_buildings')
             ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 27])
-            ->update(['ap_spend' => 0]);
+            ->update(['ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]); // placed: invest needs a tile
 
         $this->actingAs($bart)
             ->postJson(route('techtree.order', ['type' => 'building', 'id' => 27]), ['order' => 'add'])
             ->assertSuccessful();
 
-        // Colony 2 must be untouched
+        // The other colony must be untouched
         $afterOther = DB::table('colony_buildings')
-            ->where(['colony_id' => $this->colonyIdOther, 'building_id' => 27])
+            ->where(['colony_id' => $otherColonyId, 'building_id' => 27])
             ->value('ap_spend');
 
-        $this->assertEquals($before, $afterOther, 'Colony 2 must not be affected by Bart\'s action');
+        $this->assertEquals($before, $afterOther, 'The other colony must not be affected by Bart\'s action');
 
         // Colony 1 must have changed (ap_spend increased by 1)
         $afterOwn = DB::table('colony_buildings')
@@ -91,9 +95,14 @@ class TechtreeControllerTest extends TestCase
     {
         config(['game.bypass.ap_checks' => false]);
 
-        // housingComplex (28): ap_spend=0, ap_for_levelup=10 → the invested-AP gate blocks.
+        // housingComplex (28) instance 1, placed: ap_spend=2 < ap_for_levelup=10 → the
+        // invested-AP gate blocks. Colony 1 has several housing instances, so the order
+        // names one.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 28, 'instance_id' => 1])
+            ->update(['tile_x' => 0, 'tile_y' => 1]);
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 28]), ['order' => 'levelup']);
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 28]), ['order' => 'levelup', 'instance_id' => 1]);
 
         $response->assertStatus(422);
         $response->assertJsonPath('success', false);
@@ -611,6 +620,10 @@ class TechtreeControllerTest extends TestCase
         $this->assertSame('locked', $geologyBefore['status'], 'precondition: geology must start locked');
 
         // sciencelab (building 31): ap_spend=0, ap_for_levelup=10 → invest exactly enough to auto-levelup to Lv2.
+        // Placed first: a building needs a tile to gain a level.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyIdBart, 'building_id' => 31])
+            ->update(['tile_x' => 2, 'tile_y' => -1]);
         $response = $this->actingAs(User::find($this->userIdBart))
             ->postJson(route('techtree.order', ['type' => 'building', 'id' => 31]), ['order' => 'add', 'ap' => 10]);
 

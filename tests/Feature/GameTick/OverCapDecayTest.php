@@ -7,14 +7,15 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 /**
  * Supply over-cap penalty tests.
  *
- * Rule (GDD §6): When a colony's owner has consumed more supply than their cap
- * (getFreeSupply() < 0), buildings and researches decay at overcap_factor × the normal rate (config).
- * Ships are fleet-scoped and are not affected.
+ * Rule (GDD §7, A14 Owner decision 2026-09-24): over-capacity does NOT accelerate
+ * decay any more — the former decay.overcap_factor is gone. Buildings and
+ * researches of an over-cap colony (getFreeSupply() < 0) decay at the normal rate.
  *
  * Over-cap setup used throughout:
  *   1. Zero all supply_cost on buildings, researches, ships (clean slate).
@@ -28,10 +29,10 @@ use Tests\TestCase;
  *   Colony 1 (Springfield) user_id=3
  *     oremine  (building_id=27): decay_rate=0.17, supply_cost=2 (after over-cap setup)
  *     test_decay_placeholder (research_id=9901): decay_rate=0.13
- *   Colony 2 (Shelbyville) user_id=0 — no user_resources row → cap=0
  */
 class OverCapDecayTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -125,13 +126,20 @@ class OverCapDecayTest extends TestCase
         $this->assertSame(0, $svc->getSupplyBreakdown(1)['used']['advisors'], 'advisors must never appear as a supply consumer');
     }
 
+    public function test_overcap_decay_factor_config_key_is_gone(): void
+    {
+        $this->assertNull(config('game.decay.overcap_factor'));
+    }
+
     // ── getOverCapColonyIds ───────────────────────────────────────────────────
 
     /**
-     * getOverCapColonyIds() returns only the colony IDs where free supply is negative.
+     * getOverCapColonyIds() returns only the colony IDs with homeless colonists
+     * (free supply negative and nobody departed yet).
      *
      * Colony 1: over-cap (oremine at level=5 × supply_cost=2 = 10, cap=0).
-     * Colony 2: within-cap — all entity levels and advisors zeroed so used=0, cap=0 → free=0.
+     * Foreign colony (second player, created in the test): only a CC with supply_cost=0
+     * → used=0, cap=0 → free=0, i.e. within cap.
      */
     public function test_get_over_cap_colony_ids_returns_correct_colonies(): void
     {
@@ -144,12 +152,8 @@ class OverCapDecayTest extends TestCase
             ->update(['level' => 5]);
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
 
-        // Colony 2 — within cap: zero all entity levels and remove its advisors
-        // so that used=0, cap=0 → free=0 (not over-cap).
-        DB::table('colony_buildings')->where('colony_id', 2)->update(['level' => 0]);
-        DB::table('colony_researches')->where('colony_id', 2)->update(['level' => 0]);
-        DB::table('colony_ships')->where('colony_id', 2)->update(['level' => 0]);
-        DB::table('advisors')->where('colony_id', 2)->delete();
+        // Foreign colony — within cap (used=0, cap=0 → free=0).
+        $foreign = $this->createForeignColony();
 
         /** @var ResourcesService $svc */
         $svc = $this->app->make(ResourcesService::class);
@@ -157,18 +161,17 @@ class OverCapDecayTest extends TestCase
         $ids = $svc->getOverCapColonyIds();
 
         $this->assertContains(1, $ids, 'Colony 1 must be in over-cap list');
-        $this->assertNotContains(2, $ids, 'Colony 2 must not be in over-cap list');
+        $this->assertNotContains($foreign['colony_id'], $ids, 'Within-cap foreign colony must not be in over-cap list');
     }
 
     // ── Building decay with overcap ───────────────────────────────────────────
 
     /**
-     * Building status_points must decrease at decay_rate × overcap_factor when colony is over cap.
+     * Over cap, building status_points decrease at the plain decay_rate.
      *
-     * oremine (id 27): decay_rate=0.17, overcap_factor from config (1.5)
-     * Expected: SP = 10.0 - (0.17 × 1.5) = 9.745
+     * oremine (id 27): decay_rate=0.17 → SP = 10.0 - 0.17 = 9.83
      */
-    public function test_building_decays_faster_when_colony_is_over_cap(): void
+    public function test_building_decay_is_not_accelerated_when_colony_is_over_cap(): void
     {
         $this->zeroAllSupplyCosts();
         DB::table('buildings')->where('id', 27)->update(['supply_cost' => 2]);
@@ -176,8 +179,6 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->update(['level' => 5, 'status_points' => 10.0]);
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
-        // Colony 2 must not interfere — zero all its levels so it isn't over-cap either.
-        DB::table('colony_buildings')->where('colony_id', 2)->update(['level' => 0]);
 
         Artisan::call('game:tick', ['--tick' => 9100]);
 
@@ -185,9 +186,8 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->value('status_points');
 
-        $factor = (float) config('game.decay.overcap_factor');
-        $this->assertEqualsWithDelta(10.0 - (0.17 * $factor), $sp, 0.001,
-            'Building SP must decrease by rate × overcap_factor when over cap');
+        $this->assertEqualsWithDelta(10.0 - 0.17, $sp, 0.001,
+            'Building SP must decrease by decay_rate only, even when over cap');
     }
 
     /**
@@ -217,12 +217,11 @@ class OverCapDecayTest extends TestCase
     // ── Research decay with overcap ───────────────────────────────────────────
 
     /**
-     * Research status_points must decrease at decay_rate × overcap_factor when colony is over cap.
+     * Over cap, research status_points decrease at the plain decay_rate.
      *
-     * test_decay_placeholder (research_id=9901): decay_rate=0.13, overcap_factor from config (1.5)
-     * Expected: SP = 15.0 - (0.13 × 1.5) = 14.805
+     * test_decay_placeholder (research_id=9901): decay_rate=0.13 → SP = 15.0 - 0.13 = 14.87
      */
-    public function test_research_decays_faster_when_colony_is_over_cap(): void
+    public function test_research_decay_is_not_accelerated_when_colony_is_over_cap(): void
     {
         $this->zeroAllSupplyCosts();
         DB::table('buildings')->where('id', 27)->update(['supply_cost' => 2]);
@@ -230,7 +229,6 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->update(['level' => 5]);
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
-        DB::table('colony_buildings')->where('colony_id', 2)->update(['level' => 0]);
 
         DB::table('colony_researches')
             ->where('colony_id', 1)->where('research_id', 9901)
@@ -242,9 +240,8 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('research_id', 9901)
             ->value('status_points');
 
-        $factor = (float) config('game.decay.overcap_factor');
-        $this->assertEqualsWithDelta(15.0 - (0.13 * $factor), $sp, 0.001,
-            'Research SP must decrease by rate × overcap_factor when over cap');
+        $this->assertEqualsWithDelta(15.0 - 0.13, $sp, 0.001,
+            'Research SP must decrease by decay_rate only, even when over cap');
     }
 
     /**

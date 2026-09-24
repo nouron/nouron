@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use RuntimeException;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 /**
@@ -16,10 +17,11 @@ use Tests\TestCase;
  *
  * Uses the canonical Simpsons test data (via TestSeeder):
  *   - Colony 1 "Springfield"  — user_id=3 (Bart), is_primary=1
- *   - Colony 2 "Shelbyville"  — user_id=0 (Homer), is_primary=1
+ * Tests that need a second colony create it via CreatesForeignColony.
  */
 class ColonyServiceTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     private ColonyService $service;
@@ -27,8 +29,6 @@ class ColonyServiceTest extends TestCase
     private int $colonyId = 1;
 
     private int $userId = 3;   // Bart
-
-    private int $homerUid = 0;   // Homer (user_id=0, legacy)
 
     protected function setUp(): void
     {
@@ -43,9 +43,11 @@ class ColonyServiceTest extends TestCase
 
     public function test_get_colonies_returns_collection(): void
     {
+        $foreign = $this->createForeignColony();
+
         $colonies = $this->service->getColonies();
         $this->assertInstanceOf(Collection::class, $colonies);
-        $this->assertGreaterThanOrEqual(2, $colonies->count());
+        $this->assertEqualsCanonicalizing([$this->colonyId, $foreign['colony_id']], $colonies->pluck('id')->all());
         $this->assertInstanceOf(Colony::class, $colonies->first());
     }
 
@@ -110,10 +112,13 @@ class ColonyServiceTest extends TestCase
         $this->assertTrue($colony->is_primary);
     }
 
-    public function test_get_prime_colony_for_homer(): void
+    public function test_get_prime_colony_for_second_player(): void
     {
-        $colony = $this->service->getPrimeColony($this->homerUid);
+        $foreign = $this->createForeignColony();
+
+        $colony = $this->service->getPrimeColony($foreign['user_id']);
         $this->assertInstanceOf(Colony::class, $colony);
+        $this->assertSame($foreign['colony_id'], (int) $colony->id);
     }
 
     public function test_get_prime_colony_throws_when_none_found(): void

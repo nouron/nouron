@@ -14,6 +14,7 @@ use App\Services\MerchantService;
 use App\Services\NexusImportService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
+use App\Services\OvercapService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingUnlockService;
@@ -46,6 +47,7 @@ class ColonyController extends BaseController
         private readonly BuildingUnlockService $buildingUnlockService,
         private readonly CharacterCodexService $characterCodexService,
         private readonly NexusImportService $nexusImportService,
+        private readonly OvercapService $overcapService,
     ) {
         parent::__construct($tick);
     }
@@ -503,6 +505,14 @@ class ColonyController extends BaseController
         $buildCost = $isHarvester ? [] : $this->buildCostFor((int) $data['building_id']);
         $chargesBuildCost = ! $isHarvester;
 
+        // The first Harvester is the unchecked bootstrap (GDD §6 "Supply als Bau-Gate");
+        // the fresh second instance occupies supply like any other building.
+        if ($isSecondInstanceFreshPlacement
+            && ! config('game.bypass.supply_checks')
+            && $this->resourcesService->getFreeSupply($colony->id) < (int) ($building->supply_cost ?? 0)) {
+            return $this->fail('supply_limit', __('colony.onboarding_trigger_supply_full'));
+        }
+
         if ($chargesBuildCost) {
             if (! config('game.bypass.resource_costs') && $buildCost !== []) {
                 $costs = [];
@@ -515,7 +525,10 @@ class ColonyController extends BaseController
             }
 
             // Supply is a cap, not a stockpile: a building may only be erected when the
-            // free cap covers its ongoing supply_cost (§6). Nothing is deducted here.
+            // free cap covers its ongoing supply_cost (§6). Nothing is deducted here —
+            // from now on the level-0 building reserves the workplaces of its first
+            // level (ResourcesService::buildingWorkplaces()), so the later 0 → 1 build
+            // can no longer fail on supply.
             if (! config('game.bypass.supply_checks')
                 && (int) ($building->supply_cost ?? 0) > 0
                 && $this->resourcesService->getFreeSupply($colony->id) < (int) $building->supply_cost) {
@@ -687,6 +700,18 @@ class ColonyController extends BaseController
 
         if ($building->max_level !== null && $row->level >= (int) $building->max_level) {
             return $this->fail('max_level_reached');
+        }
+
+        // Supply build gate (GDD §6 "Supply als Bau-Gate", A14): the next level must
+        // fit into the free cap (cap − workplaces). Unfilled workplaces after an
+        // over-capacity departure keep occupying the cap, so the gate stays closed
+        // until everyone is back. Command Center and housing are exempt — they create
+        // the housing that leads out of over-capacity. The first level of a placed
+        // building is never checked: its workplaces were reserved on placement
+        // (ResourcesService::reservesFirstLevel()). Checked before any write.
+        if (! ResourcesService::reservesFirstLevel($row)
+            && $this->levelUpBlockedBySupply($colony->id, $buildingId, (int) ($building->supply_cost ?? 0))) {
+            return $this->fail('supply_limit');
         }
 
         // Construction knowledge (plus any active discount voucher) discounts the AP
@@ -1101,6 +1126,59 @@ class ColonyController extends BaseController
         ]);
     }
 
+    /**
+     * "Wegschicken" (GDD §6 "Überkapazität — Konsequenzen", A14): every homeless
+     * colonist of the player's own colony leaves at once for overcap.dismiss_ap_cost
+     * AP from the shared pool — same result as the departure, but the streak ends
+     * now and the milder trust event colonists_dismissed takes effect next Sol.
+     * Only available while colonists are homeless. The colony always comes from
+     * the session, never from the request.
+     */
+    public function dismissColonists(): JsonResponse
+    {
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+
+        if ($this->resourcesService->colonistStatus($colony->id)['homeless'] <= 0) {
+            return $this->fail('no_homeless_colonists');
+        }
+
+        $apCost = (int) config('game.overcap.dismiss_ap_cost', 8);
+        $available = $this->advisorService->getAvailableActionPoints($colony->id);
+        if (! config('game.bypass.ap_checks') && $available < $apCost) {
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
+                'current' => $available,
+                'required' => $apCost,
+            ]);
+        }
+
+        // Trust event + log target the next Sol — the Sol the event takes effect on
+        // and whose Sol report shows it (same convention as purchaseStipend()).
+        $targetTick = $this->getTick() + 1;
+
+        $dismissed = DB::transaction(function () use ($colony, $apCost, $targetTick): int {
+            if (! config('game.bypass.ap_checks')) {
+                $this->advisorService->lockActionPoints($colony->id, $apCost);
+            }
+
+            return $this->overcapService->dismiss($colony->id, (int) Auth::id(), $targetTick);
+        });
+
+        $status = $this->resourcesService->colonistStatus($colony->id);
+
+        return response()->json([
+            'ok' => true,
+            'dismissed' => $dismissed,
+            ...$this->currentAp($colony->id),
+            'colonists' => [
+                'present' => $status['present'],
+                'cap' => $status['cap'],
+                'homeless' => $status['homeless'],
+                'departed' => $status['departed'],
+                'staffing_pct' => (int) round($status['staffing'] * 100),
+            ],
+        ]);
+    }
+
     public function dismissHint(Request $request): JsonResponse
     {
         $data = $request->validate(['hint_key' => 'required|string|max:20']);
@@ -1143,6 +1221,24 @@ class ColonyController extends BaseController
      * @param  string|null  $message  defaults to the `colony.error_<code>` line
      * @param  array<string, mixed>  $extra  extra context for the client (ap_type, cost, …)
      */
+    /**
+     * Whether the supply build gate blocks the next level of the given building:
+     * free supply (cap − workplaces) below its supply_cost. Command Center and
+     * housing are always allowed (GDD §6 "Supply als Bau-Gate").
+     */
+    private function levelUpBlockedBySupply(int $colonyId, int $buildingId, int $supplyCost): bool
+    {
+        if (config('game.bypass.supply_checks') || $supplyCost <= 0) {
+            return false;
+        }
+
+        if (in_array($buildingId, [BuildingId::CommandCenter->value, BuildingId::Housing->value], true)) {
+            return false;
+        }
+
+        return $this->resourcesService->getFreeSupply($colonyId) < $supplyCost;
+    }
+
     private function fail(string $code, ?string $message = null, array $extra = []): JsonResponse
     {
         return response()->json([

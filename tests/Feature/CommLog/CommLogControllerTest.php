@@ -8,6 +8,7 @@ use App\Services\EventService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -210,6 +211,42 @@ class CommLogControllerTest extends TestCase
 
         $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
         $this->assertNotEmpty($entries->first()['segments']);
+    }
+
+    public function test_overcap_started_description(): void
+    {
+        $this->log('colony.overcap_started', ['colony_id' => 1, 'homeless' => 6, 'sols' => 3]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+
+        $this->assertSame(
+            __('comm_log.desc.overcap_started', ['homeless' => 6, 'sols' => 3]),
+            $entries->first()['segments'][0]['value']
+        );
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function colonistEvents(): array
+    {
+        return [
+            'left' => ['colonists_left'],
+            'dismissed' => ['colonists_dismissed'],
+            'returned' => ['colonists_returned'],
+        ];
+    }
+
+    #[DataProvider('colonistEvents')]
+    public function test_colonist_movement_descriptions_name_the_count(string $event): void
+    {
+        $this->log('colony.'.$event, ['colony_id' => 1, 'count' => 7, 'departed' => 7]);
+
+        $entry = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first();
+
+        $this->assertSame(__('comm_log.desc.'.$event, ['count' => 7]), $entry['segments'][0]['value']);
+        $this->assertStringContainsString('7', $entry['segments'][0]['value']);
+        $this->assertNotSame('comm_log.events.colony.'.$event, __('comm_log.events.colony.'.$event), 'event title is translated');
     }
 
     public function test_level_up_finished_for_knowledge(): void

@@ -13,8 +13,8 @@ INSERT INTO "user" (user_id,username,display_name,role,password,email,state,fact
 INSERT INTO "user" (user_id,username,display_name,role,password,email,state,faction_id,description,note,disabled,activated,activation_key,first_time_login,last_activity,registration,theme,tooltips_enabled,remember_token) VALUES(18,'Lenny','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','lenny@nouron.de',NULL,0,'','',0,0,'',1,'2012-12-27 11:46:30','0000-00-00 00:00:00','darkred',1,NULL);
 INSERT INTO "user" (user_id,username,display_name,role,password,email,state,faction_id,description,note,disabled,activated,activation_key,first_time_login,last_activity,registration,theme,tooltips_enabled,remember_token) VALUES(19,'Carl','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','carl@nouron.de',NULL,1,'','',0,0,'',1,'2012-12-27 11:46:30','0000-00-00 00:00:00','darkred',1,NULL);
 -- glx_colonies: id, name, user_id, since_tick, is_primary, hunger_streak
+-- Only player colonies exist (colony 2 "Shelbyville", user_id=0, removed 2026-09-23).
 INSERT INTO "glx_colonies" (id,name,user_id,since_tick,is_primary,hunger_streak) VALUES(1,'Springfield',3,20582,1,0);
-INSERT INTO "glx_colonies" (id,name,user_id,since_tick,is_primary,hunger_streak) VALUES(2,'Shelbyville',0,20585,1,0);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(25,'civil','building_commandCenter',41,1,0,0,2,5,NULL,10,20,0.33,0,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(27,'industry','building_harvester',25,1,0,1,2,1,2,10,20,0.95,2,1,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(28,'civil','building_housingComplex',25,1,1,1,1,3,6,10,20,0.44,0,1,1);
@@ -123,16 +123,6 @@ INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spe
 -- by BuildingServiceTest/ColonyZoneDecoupleTest/BuildResourceSinkTest (ex-depot, removed 2026-06-22).
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,46,3,10,10);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,52,0,0,0);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,25,5,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,27,1,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,28,4,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,31,3,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,32,1,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,41,1,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,44,2,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,46,1,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,50,1,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,52,1,10,1);
 INSERT INTO "colony_resources" VALUES(3,1,250);
 INSERT INTO "colony_resources" VALUES(4,1,50);
 INSERT INTO "colony_resources" VALUES(5,1,50);
@@ -148,12 +138,6 @@ INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hanga
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,83,17,10,1,NULL,'docked',NULL,NULL);
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,84,16,10,1,NULL,'docked',NULL,NULL);
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,5,3,0,NULL,'docked',NULL,NULL);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,29,19,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,37,19,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,47,19,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,49,19,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,83,19,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,84,19,10,1,NULL,'docked',NULL,NULL);
 
 -- Assign hangar bays: corvette (ship_id=37) → hangar 1, freighter (ship_id=47) → hangar 2 on colony 1
 -- Drone (ship_id=85) dispatched from hangar 1, so ship_state=dispatched
@@ -170,10 +154,6 @@ INSERT INTO "colony_personell" VALUES(1,35,9,10);
 INSERT INTO "colony_personell" VALUES(1,36,2,10);
 INSERT INTO "colony_personell" VALUES(1,89,0,10);
 INSERT INTO "colony_personell" VALUES(1,92,17,10);
-INSERT INTO "colony_personell" VALUES(2,35,19,10);
-INSERT INTO "colony_personell" VALUES(2,36,19,10);
-INSERT INTO "colony_personell" VALUES(2,89,19,10);
-INSERT INTO "colony_personell" VALUES(2,92,19,10);
 INSERT INTO "colony_researches" VALUES(1,9901,1,20,0);
 INSERT INTO "colony_researches" VALUES(1,96,0,10,0);
 INSERT INTO "advisors" (user_id,colony_id,personell_id,rank,active_ticks) VALUES(3,1,35,1,0);
@@ -192,9 +172,6 @@ INSERT INTO "colony_log" VALUES(36,3,4,'techtree.level_down','techtree','{"entit
 INSERT INTO "colony_log" VALUES(37,3,4,'trade.bar_accepted','trade','{"colony_id":1,"give_resource_id":3,"give_amount":80,"get_resource_id":1,"get_amount":200}',NULL,1);
 INSERT INTO "colony_log" VALUES(38,3,5,'trade.merchant_purchase','trade','{"colony_id":1,"item_type":"ap_package","cost_credits":100}',NULL,1);
 INSERT INTO "colony_log" VALUES(39,3,5,'colony.tile_deep_scanned','colony','{"colony_id":1,"q":2,"r":0}',NULL,1);
-INSERT INTO "trade_resources" VALUES(2,0,3,11,11,0);
-INSERT INTO "trade_resources" VALUES(2,1,5,123,32,0);
-INSERT INTO "trade_resources" VALUES(2,0,4,45,45,0);
 INSERT INTO "trade_resources" VALUES(1,0,5,4,3,0);
 INSERT INTO "trade_resources" VALUES(1,0,3,100,50,0);
 
@@ -257,7 +234,8 @@ INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id
 -- Active run for Bart (user_id=3) on Springfield (colony_id=1).
 -- Exactly ONE active run exists in the fixture, deliberately: the game is singleplayer,
 -- and `game:tick` without --run refuses to guess between several active runs.
--- Homer's active run on Shelbyville was removed here (2026-07-17) — a leftover from the
--- multiplayer era, which is out of scope. Homer and Shelbyville themselves stay: the
--- cross-colony tests need a foreign colony to prove Bart cannot reach it.
+-- Homer's active run on Shelbyville was removed here (2026-07-17) and Shelbyville
+-- (colony 2, playerless multiplayer-era leftover) itself on 2026-09-23 (A14): the game
+-- only knows player colonies. Tests that need a foreign colony create one themselves
+-- (with its own user) instead of relying on the fixture.
 INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,5,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
