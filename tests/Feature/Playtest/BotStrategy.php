@@ -2,10 +2,14 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
+use App\Services\BuildingCostService;
+use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
+use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -101,6 +105,21 @@ class BotStrategy
                     'building_id' => self::BIO_FACILITY,
                     'q' => $tile->q,
                     'r' => $tile->r,
+                ]),
+            ],
+            [
+                'name' => 'feed_colony',
+                // T9 (2026-09-25): the Agrardom used to stay on Lv0 for the whole of
+                // Phase 1 — placed only because C16 demands it, then outranked by
+                // every other level-up. Organika sat at 0 and the hunger streak grew
+                // every Sol. A human builds it to Lv1 right away (0 -> 1 costs AP
+                // only, the Regolith was paid on placement) and levels it again as
+                // soon as stock + next production no longer cover the colony's
+                // need. Sits before invest_cc: feeding the colony beats CC tempo.
+                'when' => fn (BotSession $b) => self::availableAp($b) >= 1 ? self::feedColonyCandidate($b) : null,
+                'do' => fn (BotSession $b, object $row) => $b->act('feed_colony', 'POST', '/colony/building/invest', [
+                    'building_id' => $row->building_id,
+                    'instance_id' => $row->instance_id,
                 ]),
             ],
             [
@@ -509,10 +528,7 @@ class BotStrategy
         }
 
         $resourcesService = app(ResourcesService::class);
-        $costs = [];
-        foreach (config('buildings.bioFacility.build_cost', []) as $resourceId => $amount) {
-            $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
-        }
+        $costs = self::costList(self::buildingCosts()->placementCost(self::BIO_FACILITY));
         if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
             return null;
         }
@@ -698,10 +714,8 @@ class BotStrategy
                     continue;
                 }
 
-                $costs = [];
-                foreach ($building['build_cost'] as $resourceId => $amount) {
-                    $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
-                }
+                // Placing pays the erection and the 0 -> 1 Regolith in one go (T9).
+                $costs = self::costList(self::buildingCosts()->placementCost((int) $building['building_id']));
                 if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
                     continue;
                 }
@@ -725,13 +739,15 @@ class BotStrategy
     private static function productionInvestCandidate(BotSession $b): ?object
     {
         // Hold back Regolith if a path building is still needed — but only
-        // enough for the cheapest unplaced one, not a flat 100.
+        // enough for the cheapest unplaced one, not a flat 100. Only steps that
+        // actually charge Regolith are held back: continuing a running cycle or
+        // building a placed level-0 building costs AP only (T9, 2026-09-25 — the
+        // buffer used to idle the AP of every such step as well).
         $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
+        $buffered = false;
         if ($activeAdvisors < 3) {
             $needed = self::cheapestPendingPathBuildingCost($b);
-            if ($needed !== null && self::regolith($b) < $needed) {
-                return null;
-            }
+            $buffered = $needed !== null && self::regolith($b) < $needed;
         }
 
         // Path buildings at level 0 jump the queue — that 0→1 step is what actually
@@ -739,7 +755,6 @@ class BotStrategy
         // is affordable it shouldn't lose the ordering race to an unrelated
         // building's level-up just because that one happens to have a lower id.
         $pathIds = [31, 44, 52];
-        $pathCase = 'CASE WHEN cb.building_id IN ('.implode(',', $pathIds).') AND cb.level = 0 THEN 0 ELSE 1 END';
 
         $rows = DB::table('colony_buildings as cb')
             ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
@@ -749,11 +764,14 @@ class BotStrategy
             ->whereNotNull('cb.tile_x')
             ->where('cb.level', '<', 2)
             ->where(fn ($q) => $q->whereNull('bld.max_level')->orWhereColumn('cb.level', '<', 'bld.max_level'))
-            ->orderByRaw($pathCase)
             ->orderByDesc('cb.level')
             ->orderBy('cb.building_id')
-            ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.tile_x', 'bld.supply_cost')
+            ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.ap_for_levelup')
             ->get();
+
+        if ($buffered) {
+            $rows = $rows->filter(fn (object $row): bool => self::levelupRegolith($row) === 0)->values();
+        }
 
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
         // server rejects a level-up with supply_limit while free supply is below the
@@ -766,21 +784,171 @@ class BotStrategy
         // lower-priority candidate that still fits.
         $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
         $blocked = fn (object $row): bool => ! ResourcesService::reservesFirstLevel($row)
-            && ! in_array((int) $row->building_id, [BuildingId::CommandCenter->value, BuildingId::Housing->value], true)
-            && (int) ($row->supply_cost ?? 0) > 0
+            && self::supplyGated($row)
             && $freeSupply < (int) $row->supply_cost;
 
+        // T9 (2026-09-25): which building reaches Lv2 next (Phase-1 condition "2
+        // non-CC buildings >= Lv2") used to follow "level DESC, building_id" —
+        // blind to Regolith already paid for a running cycle, AP still missing and
+        // the supply gate, so the Agrardom never competed and a supply-blocked
+        // Sciencelab pulled housing levels in first. Now: path buildings on Lv0
+        // first (advisor slots), then the cheapest way to Lv2 in Regolith, then AP
+        // — a supply deficit is priced as the housing levels needed to clear it.
+        $housing = self::housingUpgradeCandidate($b);
+        $housingAp = self::effectiveApForLevelup($b, (int) (DB::table('buildings')->where('id', BuildingId::Housing->value)->value('ap_for_levelup') ?? 10));
+        $rows = $rows->sortBy([
+            fn (object $x, object $y): int => self::pathFirst($x, $pathIds) <=> self::pathFirst($y, $pathIds),
+            fn (object $x, object $y): int => self::costToLevel2($b, $x, $freeSupply, $housing !== null, $housingAp)
+                <=> self::costToLevel2($b, $y, $freeSupply, $housing !== null, $housingAp),
+        ])->values();
+
         $first = $rows->first();
-        if ($first !== null && $blocked($first)) {
-            $housing = self::housingUpgradeCandidate($b);
-            if ($housing !== null) {
-                return $housing;
-            }
+        if ($first !== null && $blocked($first)
+            && $housing !== null
+            && (! $buffered || self::levelupRegolith($housing) === 0)) {
+            return (object) ['building_id' => $housing->building_id, 'instance_id' => $housing->instance_id];
         }
 
         $row = $rows->first(fn (object $row) => ! $blocked($row));
 
         return $row !== null ? (object) ['building_id' => $row->building_id, 'instance_id' => $row->instance_id] : null;
+    }
+
+    private static function pathFirst(object $row, array $pathIds): int
+    {
+        return in_array((int) $row->building_id, $pathIds, true) && (int) $row->level === 0 ? 0 : 1;
+    }
+
+    /** CC and housing are exempt from the A14 supply build gate (ColonyController::levelUpBlockedBySupply()). */
+    private static function supplyGated(object $row): bool
+    {
+        return ! in_array((int) $row->building_id, [BuildingId::CommandCenter->value, BuildingId::Housing->value], true)
+            && (int) ($row->supply_cost ?? 0) > 0;
+    }
+
+    /**
+     * [Regolith, AP] still needed to bring a placed building from its level
+     * (0 or 1) to Lv2, in the order the bot compares them. A supply deficit on
+     * the gated 1 -> 2 step adds the housing levels that would clear it; with
+     * no housing level left the target is unreachable (sorted last).
+     *
+     * @return array{0:int, 1:int, 2:int} [unreachable 0|1, Regolith, AP]
+     */
+    private static function costToLevel2(BotSession $b, object $row, int $freeSupply, bool $housingAvailable, int $housingAp): array
+    {
+        $apPerLevel = self::effectiveApForLevelup($b, (int) ($row->ap_for_levelup ?? 10));
+        $regolith = self::levelupRegolith($row);
+        $ap = max(0, $apPerLevel - (int) $row->ap_spend);
+
+        if ((int) $row->level === 0) {
+            // The 1 -> 2 cycle after the free-of-Regolith 0 -> 1 step.
+            $regolith += self::buildingCosts()->levelupRegolith((int) $row->building_id, 2);
+            $ap += $apPerLevel;
+        }
+
+        $deficit = self::supplyGated($row) ? (int) $row->supply_cost - $freeSupply : 0;
+        if ($deficit > 0) {
+            if (! $housingAvailable) {
+                return [1, $regolith, $ap];
+            }
+            $housingLevels = (int) ceil($deficit / max(1, (int) config('buildings.housingComplex.supply_cap', 8)));
+            $regolith += $housingLevels * self::buildingCosts()->levelupRegolith(BuildingId::Housing->value, 2);
+            $ap += $housingLevels * $housingAp;
+        }
+
+        return [0, $regolith, $ap];
+    }
+
+    /**
+     * Regolith the next invest click on this row charges (ColonyController::
+     * investBuilding(): paid on the click that starts a cycle). A running cycle
+     * has already paid; the 0 -> 1 step of a placed site was paid together with
+     * the erection (BuildingCostService::levelupRegolithDue()).
+     */
+    private static function levelupRegolith(object $row): int
+    {
+        if ((int) ($row->ap_spend ?? 0) > 0) {
+            return 0;
+        }
+
+        return self::buildingCosts()->levelupRegolithDue($row);
+    }
+
+    private static function effectiveApForLevelup(BotSession $b, int $baseAp): int
+    {
+        return app(ProjectBonusService::class)->effectiveApForLevelup($b->colonyId, $baseAp);
+    }
+
+    private static function buildingCosts(): BuildingCostService
+    {
+        return app(BuildingCostService::class);
+    }
+
+    /**
+     * @param  array<int, int>  $cost  [resource_id => amount]
+     * @return array<int, array{resource_id:int, amount:int}>
+     */
+    private static function costList(array $cost): array
+    {
+        $costs = [];
+        foreach ($cost as $resourceId => $amount) {
+            $costs[] = ['resource_id' => (int) $resourceId, 'amount' => (int) $amount];
+        }
+
+        return $costs;
+    }
+
+    /**
+     * The Agrardom to invest into for food: its 0 -> 1 step right after placing,
+     * later the next level once stock + the coming Sol's production no longer
+     * cover the colony's need (GameTick::generateResources() runs before
+     * processFoodConsumption()). Skipped when the supply gate or Regolith would
+     * reject the click.
+     */
+    private static function feedColonyCandidate(BotSession $b): ?object
+    {
+        $row = DB::table('colony_buildings as cb')
+            ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $b->colonyId)
+            ->where('cb.building_id', self::BIO_FACILITY)
+            ->whereNotNull('cb.tile_x')
+            ->orderBy('cb.instance_id')
+            ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.max_level')
+            ->first();
+
+        if ($row === null) {
+            return null;
+        }
+        if ((int) $row->level === 0) {
+            return $row;
+        }
+        if ($row->max_level !== null && (int) $row->level >= (int) $row->max_level) {
+            return null;
+        }
+
+        $resourcesService = app(ResourcesService::class);
+        if (self::organics($b) + self::projectedOrganics($b, (int) $row->level) >= $resourcesService->foodNeed($b->colonyId)) {
+            return null;
+        }
+        if ($resourcesService->getFreeSupply($b->colonyId) < (int) $row->supply_cost) {
+            return null;
+        }
+        if (self::regolith($b) < self::levelupRegolith($row)) {
+            return null;
+        }
+
+        return $row;
+    }
+
+    /** Next Sol's Agrardom output at $level (GameTick::generateResources(), without the agronomy bonus). */
+    private static function projectedOrganics(BotSession $b, int $level): int
+    {
+        $curve = config('game.production_curve.'.self::BIO_FACILITY.'.'.self::RES_ORGANICS, []);
+        $trust = app(TrustService::class)->getTrust($b->colonyId);
+        $multiplier = app(TrustService::class)->getProductionMultiplier($trust)
+            * app(ResourcesService::class)->staffingShare($b->colonyId);
+
+        return (int) round(GameTick::cumulativeCurveYield($curve, $level) * $multiplier);
     }
 
     /** Lowest-level placed housing instance still below its max_level (supply-gate exempt). */
@@ -794,7 +962,7 @@ class BotStrategy
             ->where(fn ($q) => $q->whereNull('bld.max_level')->orWhereColumn('cb.level', '<', 'bld.max_level'))
             ->orderBy('cb.level')
             ->orderBy('cb.instance_id')
-            ->select('cb.building_id', 'cb.instance_id')
+            ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x')
             ->first();
     }
 
@@ -1299,55 +1467,37 @@ class BotStrategy
     }
 
     /**
-     * Return the Regolith cost of the cheapest path building not yet placed in
-     * the colony (sciencelab/hangar/bar all 95 Rg — from config('buildings')).
-     * Returns null when all three path buildings are already placed (no saving needed).
-     */
-    /**
-     * Rg still needed to bring the cheapest not-yet-active path building to
-     * level >= 1 (the state that actually unlocks its advisor slot) — NOT just
-     * "not yet placed". A path building placed at level 0 (ColonyController::
-     * placeBuilding always starts at 0, the 0→1 step is a separate investBuilding()
-     * call with its own flat 25-Rg cost, LEVELUP_REGOLITH_FLAT) used to be treated
-     * as "done" here the moment tile_x was set, releasing the Rg buffer early and
-     * letting productionInvestCandidate() spend the reserved Rg on an unrelated
-     * building instead of the 25-Rg step that actually unlocks the slot — found
-     * empirically (GDD §13.7 Nachtrag 2026-08-13): 2nd advisor arrived Sol 23
-     * instead of the ≈Sol 18 the (corrected) demand chain predicts.
+     * Regolith still needed to bring the cheapest not-yet-active path building
+     * to level >= 1 (the state that actually unlocks its advisor slot), or null
+     * when none still needs any. A path building placed on level 0 needs no more
+     * Regolith: the erection and its 0 -> 1 step are paid together on placement
+     * (ColonyController::placeBuilding(), T9 fix 2026-09-25), the remaining
+     * build is AP only — so the buffer protects the next unplaced one instead.
+     * (Before, a placed level-0 building kept a 25-Rg buffer for a 0 -> 1 charge
+     * the server never made.)
      */
     private static function cheapestPendingPathBuildingCost(BotSession $b): ?int
     {
         // IDs mirror AdvisorController::PATH_BUILDINGS
         $pathBuildingIds = [31, 44, 52];
 
-        $placedLevels = DB::table('colony_buildings')
+        $placedIds = DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->whereIn('building_id', $pathBuildingIds)
             ->whereNotNull('tile_x')
-            ->pluck('level', 'building_id');
+            ->pluck('building_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        $pendingIds = array_filter(
-            $pathBuildingIds,
-            fn ($id) => (int) ($placedLevels[$id] ?? -1) < 1
+        $unplacedIds = array_diff($pathBuildingIds, $placedIds);
+        if ($unplacedIds === []) {
+            return null;
+        }
+
+        $costs = array_map(
+            fn (int $id): int => (int) (self::buildingCosts()->placementCost($id)[self::RES_REGOLITH] ?? 0),
+            $unplacedIds,
         );
-        if (empty($pendingIds)) {
-            return null; // All path buildings at level >= 1 — no Rg buffer needed
-        }
-
-        $buildCosts = collect(config('buildings'))
-            ->filter(fn ($data) => in_array($data['id'] ?? null, $pendingIds, true))
-            ->pluck('build_cost', 'id');
-
-        $levelupFlat = 25; // ColonyController::LEVELUP_REGOLITH_FLAT — not exposed, mirrored here
-
-        $costs = [];
-        foreach ($pendingIds as $id) {
-            $costs[] = isset($placedLevels[$id])
-                // Already placed (level 0) — only the 0→1 level-up is still needed.
-                ? $levelupFlat
-                // Not yet placed — build cost plus the immediate 0→1 level-up.
-                : (int) ($buildCosts[$id][self::RES_REGOLITH] ?? 0) + $levelupFlat;
-        }
 
         return min($costs);
     }

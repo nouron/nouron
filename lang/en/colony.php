@@ -9,6 +9,9 @@ return [
     'invest_ap' => 'Invest AP',
     'levelup_cost_label' => 'Cost:',
     'levelup_cost_suffix' => 'at construction start',
+    'build_cost_erect' => 'build',
+    'build_cost_first_level' => 'level 1',
+    'first_level_prepaid' => 'Level 1 was paid on placement — completing it only costs AP.',
     'repair' => 'Repair',
     'ap_per_tile' => '1 AP/tile',
 

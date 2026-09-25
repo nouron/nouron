@@ -243,6 +243,14 @@ return [
 
     // Manual building repair — Regolith cost per click (1 SP), on top of 1 Construction-AP.
     // CommandCenter + Harvester are exempt (AP-only, bootstrap anchor against decay spiral).
+    'build' => [
+        // Flat Regolith for a level-up of any non-CC, non-Harvester building (GDD §13.7),
+        // independent of build_cost. The 0 -> 1 step is paid together with the erect
+        // cost on placement (Owner rule 2026-09-25, T9) — see BuildingCostService.
+        // CC scales separately (config/buildings.php cc_upgrade_regolith_per_level).
+        'levelup_regolith_flat' => 25,
+    ],
+
     'repair' => [
         // 2 → 1 (GDD §13.7, 2026-08-03): with repair also costing 1 Construction-AP,
         // 1 Rg/click makes Instandhaltung [Rg/Sol] = Instandhaltung [AP/Sol] = Σ decay_rate —

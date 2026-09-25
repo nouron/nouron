@@ -45,7 +45,8 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 
 | Aspekt | Wert |
 |---|---|
-| **Levelup-Kosten (alle außer CC)** | 25 Rg (flat) |
+| **Levelup-Kosten (alle außer CC)** | 25 Rg (flat, `game.build.levelup_regolith_flat`) |
+| **Platzieren (Neubau)** | Errichtungskosten + 25 Rg für Stufe 1, in einer Zahlung beim Platzieren (T9, 2026-09-25); Ausbau 0→1 danach nur AP |
 | **CC-Levelup-Kosten** | Ziel-Level × 30 Rg |
 | **Reparatur pro Punkt (SP)** | 1 Rg / Klick |
 | **CC-Lv2 Regolith Total** | 60 Rg (von 200 Startwert) |

@@ -12,8 +12,9 @@ use Tests\TestCase;
  * Resource-sink economy for the hex build flow (PR 1).
  *
  * Rules under test (GDD §3/§4/§6):
- *  - Erecting a building deducts Regolith (+ Werkstoffe on late buildings); CC/Harvester
- *    are bootstrap-exempt. A shortfall is rejected with no DB write.
+ *  - Erecting a building deducts Regolith (+ Werkstoffe on late buildings) plus the
+ *    flat 0 -> 1 level-up Regolith in one payment (T9); CC/Harvester are
+ *    bootstrap-exempt. A shortfall is rejected with no DB write.
  *  - Supply is a cap gate (free cap ≥ supply_cost), not a stockpile deduction.
  *  - Level-up deducts flat Regolith (flat 25 for non-CC/non-Harvester; CC scales
  *    target_level × 30), charged only on the completing click — a shortfall never
@@ -108,7 +109,8 @@ class BuildResourceSinkTest extends TestCase
 
         $this->place(46, 1, 0)->assertOk()->assertJsonPath('ok', true);   // infirmary = 60 Rg + 25 Wk
 
-        $this->assertSame($rg - 60, $this->colonyRes(self::RES_REGOLITH));
+        // Placement also prepays the flat 25 Rg of the 0 -> 1 step (T9, Owner rule 2026-09-25).
+        $this->assertSame($rg - 60 - 25, $this->colonyRes(self::RES_REGOLITH));
         $this->assertSame($wk - 25, $this->colonyRes(self::RES_COMPOUNDS));
     }
 
@@ -130,7 +132,8 @@ class BuildResourceSinkTest extends TestCase
 
         $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 95 Rg
 
-        $this->assertSame($rg - 95, $this->colonyRes(self::RES_REGOLITH));
+        // + 25 Rg first-level step, prepaid on placement (T9).
+        $this->assertSame($rg - 95 - 25, $this->colonyRes(self::RES_REGOLITH));
         $this->assertSame($wk, $this->colonyRes(self::RES_COMPOUNDS));   // Wk unchanged
     }
 

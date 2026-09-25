@@ -278,6 +278,8 @@ class RunReport
             'credits' => BotStrategy::credits($bot),
             'regolith' => BotStrategy::regolith($bot),
             'organics' => BotStrategy::organics($bot),
+            // T9: consecutive hungry Sols as of the last tick (GameTick::processFoodConsumption()).
+            'hunger_streak' => (int) (DB::table('glx_colonies')->where('id', $colonyId)->value('hunger_streak') ?? 0),
             'compounds' => BotStrategy::compounds($bot),
             'ap' => [
                 'total' => $apAvailable,
