@@ -622,16 +622,9 @@ class GameTick extends Command
         $buildingNames = DB::table('buildings')->pluck('name', 'id');
         $levelled = 0;
 
-        // Leitstelle (securityHub) recycling: colonies that have securityHub built get a
-        // fraction of build costs back on any building level-down (recycle_pct
-        // itself is read inside applyLevelDown()).
-        $secHubId = (int) config('buildings.securityHub.id', 53);
-        $secHubColonies = DB::table('colony_buildings')
-            ->where('building_id', $secHubId)
-            ->where('level', '>', 0)
-            ->pluck('colony_id')
-            ->flip()
-            ->all();
+        // Leitstelle (securityHub) recycling: colony_id => hub level. applyLevelDown()
+        // only recycles from recycle_min_level on (Ausbaustufe 3, "Bergungsdienst").
+        $secHubColonies = $this->securityHubLevels();
 
         // Build cost map for recycling: building_id → [resource_id => amount]
         // Only tradeable colony resources (3=regolith, 4=compounds, 5=organics).
@@ -687,9 +680,10 @@ class GameTick extends Command
 
     /**
      * Levels a building down by 1 (min 0), restores its status_points to max, logs
-     * a techtree.level_down event, and applies securityHub build-cost recycling if
-     * active. Shared by processBuildingDecay() (SP hits 0 from ordinary decay) and
-     * processEncounters() (SP hits 0 from a Kritisch-tier danger, GDD §9).
+     * a techtree.level_down event, and applies securityHub build-cost recycling once
+     * the hub has reached recycle_min_level. Shared by processBuildingDecay() (SP
+     * hits 0 from ordinary decay) and processEncounters() (SP hits 0 from a
+     * Kritisch-tier danger, GDD §9).
      */
     private function applyLevelDown(
         object $cb,
@@ -731,7 +725,9 @@ class GameTick extends Command
             ]),
         ]);
 
-        if (isset($secHubColonies[$cb->colony_id]) && isset($buildCostMap[$cb->building_id])) {
+        $recycleMinLevel = (int) config('buildings.securityHub.recycle_min_level', 3);
+        $hubLevel = (int) ($secHubColonies[$cb->colony_id] ?? 0);
+        if ($hubLevel >= $recycleMinLevel && isset($buildCostMap[$cb->building_id])) {
             $recyclePct = (float) config('buildings.securityHub.recycle_pct', 0.10);
             foreach ($buildCostMap[$cb->building_id] as $resId => $baseAmount) {
                 $returned = (int) max(1, floor($baseAmount * $recyclePct));
@@ -741,6 +737,22 @@ class GameTick extends Command
                 );
             }
         }
+    }
+
+    /**
+     * Built Leitstellen per colony: colony_id => level (level > 0 only). Presence
+     * (isset) means "hub active" for event mitigation; the level gates recycling.
+     *
+     * @return array<int, int>
+     */
+    private function securityHubLevels(): array
+    {
+        return DB::table('colony_buildings')
+            ->where('building_id', (int) config('buildings.securityHub.id', 53))
+            ->where('level', '>', 0)
+            ->pluck('level', 'colony_id')
+            ->map(fn ($level) => (int) $level)
+            ->all();
     }
 
     // ── 6. Research decay ────────────────────────────────────────────────────
@@ -1179,12 +1191,7 @@ class GameTick extends Command
         $processed = 0;
         $encounterService = new EncounterService;
         $cooldownSols = (int) config('game.encounter.cooldown_sols', 3);
-        $securityHubColonies = DB::table('colony_buildings')
-            ->where('building_id', (int) config('buildings.securityHub.id', 53))
-            ->where('level', '>', 0)
-            ->pluck('colony_id')
-            ->flip()
-            ->all();
+        $securityHubColonies = $this->securityHubLevels();
 
         // Phase 1: the colony has no infrastructure yet (no securityHub/geology/
         // defense mitigation is realistically obtainable — those hang off the

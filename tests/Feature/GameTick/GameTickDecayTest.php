@@ -192,10 +192,10 @@ class GameTickDecayTest extends TestCase
      */
     public function test_security_hub_recycles_resources_on_building_level_down(): void
     {
-        // Install SecurityHub at level 1 on colony 1
+        // Install SecurityHub at the recycling tier (Ausbaustufe 3 "Bergungsdienst")
         DB::table('colony_buildings')->updateOrInsert(
             ['colony_id' => 1, 'building_id' => 53, 'instance_id' => 1],
-            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0]
+            ['level' => (int) config('buildings.securityHub.recycle_min_level'), 'status_points' => 20, 'ap_spend' => 0]
         );
 
         // Drive bioFacility to level-down threshold
@@ -221,6 +221,38 @@ class GameTickDecayTest extends TestCase
 
         $this->assertGreaterThan($regolithBefore, $regolithAfter,
             'Colony must receive recycled resources when SecurityHub is present and building levels down');
+    }
+
+    /**
+     * T15: recycling is the Ausbaustufe-3 effect ("Bergungsdienst", tiers => [3]).
+     * A Leitstelle below recycle_min_level must not return anything on a level-down.
+     */
+    public function test_security_hub_below_recycle_tier_does_not_recycle(): void
+    {
+        $minLevel = (int) config('buildings.securityHub.recycle_min_level');
+        $this->assertSame(3, $minLevel, 'Recycling is the Stufe-3 tier effect (config tiers => [3])');
+
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => 1, 'building_id' => 53, 'instance_id' => 1],
+            ['level' => $minLevel - 1, 'status_points' => 20, 'ap_spend' => 0]
+        );
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => 1, 'building_id' => 41, 'instance_id' => 1],
+            ['level' => 2, 'status_points' => 0.1, 'ap_spend' => 0]
+        );
+
+        $regolithBefore = (int) DB::table('colony_resources')
+            ->where('colony_id', 1)->where('resource_id', 3)->value('amount');
+
+        Artisan::call('game:tick', ['--tick' => 11004]);
+
+        $this->assertEquals(1, $this->getBuildingRow(1, 41)->level, 'Building must have leveled down');
+
+        $regolithAfter = (int) DB::table('colony_resources')
+            ->where('colony_id', 1)->where('resource_id', 3)->value('amount');
+
+        $this->assertLessThanOrEqual($regolithBefore, $regolithAfter,
+            'A Leitstelle below the recycling tier must not return build materials');
     }
 
     /**

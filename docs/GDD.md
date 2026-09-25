@@ -387,7 +387,7 @@ Die Leitstelle ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv3, m
 Ein Bonus pro Level (kumulativ). Thematisch: "Die Bevölkerung fühlt sich durch Schutzinfrastruktur sicherer." Bewusst niedriger als andere Wohlfahrts-Gebäude — Sicherheitsinfrastruktur ist utilitaristisch, kein Luxus-Bonus. Exakte Werte: `config/buildings.php`.
 
 **Passiv — Event-Dämpfung:**
-Wenn der Hub aktiv ist, werden negative Vertrauensverluste aus Zwischenfällen reduziert (prozentual; siehe `config/buildings.php`). Gilt für die Events `building_level_down`, `encounter_lost` und `colony_threatened`. Thematisch: "Der Hub sorgt nicht dafür, dass Vorfälle ausbleiben — er verhindert, dass sie eskalieren."
+Wenn der Hub aktiv ist, werden negative Vertrauensverluste aus Zwischenfällen reduziert (prozentual; siehe `config/buildings.php`). Gilt für die Events `encounter_lost` und `colony_threatened`. Thematisch: "Der Hub sorgt nicht dafür, dass Vorfälle ausbleiben — er verhindert, dass sie eskalieren."
 
 **Passiv — Level-Down-Recycling:**
 Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch einen kleinen Ressourcenanteil zurück (handelbare Ressourcen: Regolith, Werkstoffe, Organika). Der Anteil liegt bewusst deutlich unter dem Reparaturwert, damit kein Anreiz entsteht, Verfall absichtlich zu provozieren. Exakte Prozentsätze: `config/buildings.php`.
@@ -1111,7 +1111,7 @@ max_status_points=5, decay_rate=0.5
 
 > **Effekte skalieren mit dem aktuellen Level, kein separater Effekt-Schalter (Owner-Entscheidung F2, revidiert 2026-09-08):** Eine zwischenzeitlich erwogene Hysterese — Effekt fällt bei SP 0 komplett aus und kehrt erst ab einem größeren Reparaturanteil zurück — wurde verworfen. Weil ein Exemplar bei SP 0 sofort auf die niedrigere, aber wieder volle Stufe herunterklappt (siehe oben), hängt es nie über mehrere Sole in einem funktionslosen Zwischenzustand; sein Effekt (z. B. der Supply-Beitrag des Wohnhabitats) skaliert einfach automatisch mit dem neuen, niedrigeren Level. Die Konsequenz bleibt real: das verlorene Level zurückzuholen kostet normale Level-Up-Kosten (AP + Ressourcen), kein billiger Reparatur-Klick. Grund für die Revision: Die Hysterese hätte ein eigenes Kaskaden-/Softlock-Risiko erzeugt (kaputtes Wohnhabitat → gesamter Supply-Cap-Beitrag sofort weg statt nur einer Stufe → große Überkapazität mit allen Folgen aus §6), das der bestehende Level-Down-Mechanismus samt Level-1-Untergrenze nicht hat.
 >
-> **Ausnahme Hangar-Schiffe:** Schiffe bleiben ein bewusster binärer Sonderfall — ein Schiff ist entweder voll einsatzfähig oder vollständig deaktiviert (abhängig vom Zustand des Hangars), es gibt keinen Teil-Zustand.
+> **Ausnahme Hangar-Schiffe:** Schiffe bleiben ein bewusster binärer Sonderfall — ein Schiff ist entweder einsatzbereit oder inaktiv (abhängig von der Stufe seines Hangars, siehe „Hangar unter Schiffsstufe" unten), es gibt keinen Teil-Zustand.
 >
 > ⚠️ BALANCE CONCERN: Ein sinkender Supply-Cap-Beitrag durch Level-Down braucht eine Dämpfung gegen eine Verfalls-Kaskade (Vertrauen sinkt → mehr Verfall → noch weniger Vertrauen). Diese Dämpfung ist noch ungeklärt und muss vor einer tieferen Verzahnung beider Systeme geklärt werden.
 
@@ -1119,7 +1119,10 @@ max_status_points=5, decay_rate=0.5
 
 > **Notreparatur (CC und Wohnhabitat):** Wenn SP dieser kritischen Strukturen unter einen Schwellwert fällt, wird automatisch eine Notreparatur ausgelöst — kostet Credits statt AP. Verhindert unbeabsichtigten Verlust, nicht aber bewusste Vernachlässigung (Credits müssen vorhanden sein).
 
-> **Hangar-Decay-Detail:** Levelt der Hangar durch Decay herunter, wird ein zugewiesenes Schiff deaktiviert, nicht zerstört — es bleibt in der Datenbank erhalten. Sobald der Hangar wieder auf sein vorheriges Level zurück ausgebaut ist, ist das Schiff wieder einsatzbereit.
+> **Hangar unter Schiffsstufe:** Die Hangar-Stufe ist die Schiffsklasse (§4c). Sinkt ein Hangar unter die Stufe des Schiffs, das ihm zugewiesen ist, wird das Schiff **inaktiv**. Das gilt für Stufenverlust durch Verfall ebenso wie für einen Rückbau (§11.5). Inaktiv heißt:
+> - Das Schiff kann keine neue Mission starten. Es wird nicht zerstört und bleibt dem Hangar zugewiesen.
+> - Eine laufende Mission läuft unverändert weiter und endet regulär, mit Rückkehr, Ergebnis und Verschleiß. Das Schiff ist danach inaktiv, solange der Hangar noch zu niedrig ist.
+> - Erreicht der Hangar wieder die Stufe des Schiffs, ist das Schiff automatisch wieder einsatzbereit. Der Spieler muss dafür nichts tun.
 
 > **Schiffe haben keinen passiven Decay.** Schiffs-Verschleiß entsteht durch aktiven Einsatz (Außenmissionen), nicht durch Zeitablauf — siehe §7 "Schiffs-Verschleiß".
 
@@ -2380,7 +2383,7 @@ Verfügbar(N) = Startbestand + 17 × (N − 1) − 2,94 × N
 **Empirisch:** PlaytestBot über mehrere Seeds erreicht `phase2_start_sol` 20–22 — innerhalb Sol 25, an der Grenze zum Sol-20-Exzellenzziel. Ein Bot-Befund oberhalb des Korridors ist nur dann ein Gegenbeweis gegen den Startbestand, wenn der Bot nach dem Errichten eines Pfadgebäudes dessen Lv0→1-Sprung tatsächlich zuerst fertigstellt (wie ein menschlicher Spieler) — Bot-Ausführungsdefekte sind kein Balance-Hebel.
 
 **Nebenbefunde:**
-- Der Supply-Cap zwingt in Phase 1 weder eine zweite Wohnhabitat-Instanz noch ein Vorziehen des Wohnhabitat-Levelups: der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv2 und zwei Pfadgebäude auf Lv1 exakt.
+- Der Supply-Cap zwingt in Phase 1 keine zweite Wohnhabitat-Instanz: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv2 und zwei Pfadgebäude auf Lv1 exakt, ohne jeden Puffer. Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben `supply_cost` tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freier Supply und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 (etwa eine zweite Harvester-Instanz) setzt das Wohnhabitat-Levelup ebenfalls voraus.
 - Die Pfadgebäude sind in Regolith gleich, in AP nicht: Analytik-Labor und Hangar sind AP-Klasse „Groß", Cantina „Mittel". Da AP in Phase 1 nicht bindet, ändert das nichts am Pacing, ist aber eine Inkonsistenz gegen die Paritäts-Anforderung (§4b) — bei Gelegenheit prüfen.
 - Das im Config-Kommentar beschriebene „harte" Agrardom-Gate für den CC-Lv2-Ausbau (§4) ist im Code nicht vorhanden — `placeBuilding()` erzwingt den Agrardom nur vor den Pfadgebäuden, der CC-Levelup prüft ihn nicht. Owner-Frage in ROADMAP (C16).
 
@@ -2552,13 +2555,13 @@ Datenmodell: `innn_events` kann über das `data`-Feld bereits Vertrauen-Deltas t
 
 **Geplante Event-Kategorien:**
 
-Events sind nach Kategorie gruppiert: Bauwesen/Forschung (Gebäude/Kenntnisse abgeschlossen oder verfallen), Handel (Handelsrouten erfolgreich oder blockiert), Diplomatie (Verträge), Begegnungen (Zwischenfälle gelöst oder eskaliert), Spieleraktionen (freiwillige Kolonisten-Zulagen). 
+Events sind nach Kategorie gruppiert: Bauwesen/Forschung (Gebäude-Stufe oder Kenntnis abgeschlossen; ein Stufenverlust durch Verfall oder Rückbau hat bewusst kein eigenes Vertrauens-Event, seine Folgen laufen über das System: sinkende Produktion, wegfallender Stufenbeitrag von Vertrauensgebäuden, ggf. Überkapazität, §6/§7), Handel (Handelsrouten erfolgreich oder blockiert), Diplomatie (Verträge), Begegnungen (Zwischenfälle gelöst oder eskaliert), Spieleraktionen (freiwillige Kolonisten-Zulagen). 
 
 Alle Effekte wirken exakt 1 Sol (werden nach der Vertrauen-Berechnung verworfen). Mehrere Events desselben Typs im selben Sol summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
 
-Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Verfall oder Fehler, Bonus für Erfolg oder Zuwendung) stehen in `config/game.php → trust.events.*` — exakte Werte nach erstem Playtest kalibrieren.
+Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Fehlschläge und Zwischenfälle, Bonus für Erfolg oder Zuwendung) stehen in `config/game.php → trust.events.*` — exakte Werte nach erstem Playtest kalibrieren.
 
-> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** dämpft diese drei Events (+ `building_level_down`) um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
+> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** dämpft `encounter_lost` und `colony_threatened` um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
 
 **Rationale für neue Events:**
 - `trade_blocked` macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.

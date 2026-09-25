@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Colony;
 
+use App\Exceptions\GameRuleException;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
 use App\Services\ColonyService;
@@ -183,6 +184,8 @@ class HangarController extends BaseController
                 $validated['target'] ?? null,
                 $validated['difficulty'],
             );
+        } catch (GameRuleException $e) {
+            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()], 422);
         } catch (\RuntimeException $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
         }

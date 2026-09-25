@@ -564,8 +564,8 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_negative_event_contribution(): void
     {
-        // building_level_down: -3
-        $this->service->fireEvent($this->colonyId, 'building_level_down', $this->tick);
+        // trade_blocked: -3
+        $this->service->fireEvent($this->colonyId, 'trade_blocked', $this->tick);
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 

@@ -1212,7 +1212,7 @@ $offerFlavorKey =
                                 this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
                             }
                         } else {
-                            this.encounterError = data.error ?? 'Fehler';
+                            this.encounterError = data.message ?? data.error ?? 'Fehler';
                         }
                     } catch {
                         this.encounterError = 'Verbindungsfehler';
@@ -1312,7 +1312,7 @@ $offerFlavorKey =
                             this.syncResbarAmount(3, data.regolith_balance);
                             this.syncResbarAmount(4, data.compounds_balance);
                         } else {
-                            this.concernError = data.error ?? 'Fehler';
+                            this.concernError = data.message ?? data.error ?? 'Fehler';
                         }
                     } catch {
                         this.concernError = 'Verbindungsfehler';
@@ -1368,7 +1368,7 @@ $offerFlavorKey =
                             this.informationResolved = true;
                             this.informationOutcome = data;
                         } else {
-                            this.informationError = data.error ?? 'Fehler';
+                            this.informationError = data.message ?? data.error ?? 'Fehler';
                         }
                     } catch {
                         this.informationError = 'Verbindungsfehler';
@@ -1464,7 +1464,7 @@ $offerFlavorKey =
                             this.syncResbarAmount(data.get_resource_id, data.get_resource_amount);
                             this.syncAp(data.ap_available);
                         } else {
-                            this.error[offerId] = data.error ?? 'Fehler';
+                            this.error[offerId] = data.message ?? data.error ?? 'Fehler';
                         }
                     } catch {
                         this.error[offerId] = 'Verbindungsfehler';
@@ -1507,7 +1507,7 @@ $offerFlavorKey =
                             // Shown inline in the dialog (persistent) — no extra toast that would repeat it.
                             this.negotiateFailedText[offerId] = failedText;
                         } else {
-                            this.error[offerId] = data.error ?? 'Fehler';
+                            this.error[offerId] = data.message ?? data.error ?? 'Fehler';
                         }
                     } catch {
                         this.error[offerId] = 'Verbindungsfehler';

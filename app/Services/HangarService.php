@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Exceptions\GameRuleException;
 use App\Models\Advisor;
 use App\Models\Colony;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,9 @@ class HangarService
         47 => 2,
         37 => 3,
     ];
+
+    /** Machine code for a dispatch refused because the ship's hangar is below its class. */
+    public const ERROR_SHIP_INACTIVE = 'ship_inactive';
 
     public function __construct(
         private readonly TickService $tickService,
@@ -111,6 +115,8 @@ class HangarService
                     $mission['mission_name'] = __("missions.{$mission['destination']}_name");
                     $mission['return_tick'] = (int) $mission['dispatch_tick'] + 2 * (int) $mission['sol_distance'];
                 }
+                $requiredLevel = $this->requiredHangarLevel((int) $ship->ship_id);
+                $inactive = $this->isShipInactive((int) $ship->ship_id, (int) $hangar->level);
                 $shipData = [
                     'id' => (int) $ship->id,
                     'ship_id' => (int) $ship->ship_id,
@@ -121,6 +127,9 @@ class HangarService
                     'ap_spend' => (int) $ship->ap_spend,
                     'deliver_at_tick' => $ship->deliver_at_tick !== null ? (int) $ship->deliver_at_tick : null,
                     'active_mission' => $mission,
+                    'required_hangar_level' => $requiredLevel,
+                    'inactive' => $inactive,
+                    'inactive_reason' => $inactive ? $this->inactiveReason((int) $ship->ship_id) : null,
                 ];
             }
 
@@ -164,6 +173,53 @@ class HangarService
                 'pending_until_tick' => $row->pending_until_tick !== null ? (int) $row->pending_until_tick : null,
             ])
             ->all();
+    }
+
+    /**
+     * Hangar level a ship class needs (GDD §4c: the hangar level IS the ship
+     * class — Lv1 Drohne, Lv2 Frachter, Lv3 Korvette).
+     */
+    public function requiredHangarLevel(int $shipId): int
+    {
+        return self::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL[$shipId] ?? 1;
+    }
+
+    /**
+     * "Hangar unter Schiffsstufe" (GDD §7): a ship whose hangar sits below its
+     * class is inactive — it can't start a mission until the hangar is back on
+     * that level. Derived from the two levels, never stored, so a rebuilt hangar
+     * reactivates the ship by itself whatever lowered it (decay, storm, Rückbau).
+     */
+    public function isShipInactive(int $shipId, int $hangarLevel): bool
+    {
+        return $hangarLevel < $this->requiredHangarLevel($shipId);
+    }
+
+    /**
+     * Row ids (colony_ships.id) of this colony's hangar-assigned ships that are
+     * currently inactive (isShipInactive()).
+     *
+     * @return array<int, int>
+     */
+    public function inactiveShipRowIds(int $colonyId): array
+    {
+        return DB::table('colony_ships as cs')
+            ->join('colony_buildings as cb', function ($join): void {
+                $join->on('cb.colony_id', '=', 'cs.colony_id')
+                    ->on('cb.instance_id', '=', 'cs.hangar_instance_id')
+                    ->where('cb.building_id', '=', self::HANGAR_BUILDING_ID);
+            })
+            ->where('cs.colony_id', $colonyId)
+            ->get(['cs.id', 'cs.ship_id', 'cb.level'])
+            ->filter(fn (object $row): bool => $this->isShipInactive((int) $row->ship_id, (int) $row->level))
+            ->map(fn (object $row): int => (int) $row->id)
+            ->values()
+            ->all();
+    }
+
+    private function inactiveReason(int $shipId): string
+    {
+        return __('colony.hangar_ship_inactive', ['level' => $this->requiredHangarLevel($shipId)]);
     }
 
     /**
@@ -594,6 +650,17 @@ class HangarService
                 throw new RuntimeException(
                     "Ship in hangar {$instanceId} cannot be dispatched (current state: {$ship->ship_state})."
                 );
+            }
+
+            // GDD §7 "Hangar unter Schiffsstufe": checked only here, at mission
+            // start — a mission already under way is never aborted by it.
+            $hangarLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colonyId)
+                ->where('building_id', self::HANGAR_BUILDING_ID)
+                ->where('instance_id', $instanceId)
+                ->value('level');
+            if ($this->isShipInactive((int) $ship->ship_id, $hangarLevel)) {
+                throw new GameRuleException(self::ERROR_SHIP_INACTIVE, $this->inactiveReason((int) $ship->ship_id));
             }
 
             $shipKey = self::SHIP_ID_TO_CONFIG_KEY[(int) $ship->ship_id] ?? null;

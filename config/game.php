@@ -691,7 +691,6 @@ return [
         // Multiple events of the same key in one tick do NOT stack — strongest wins.
         'events' => [
             'building_level_up' => 1,
-            'building_level_down' => -3,
             'research_level_up' => 2,
             'trade_success' => 2,
             'trade_blocked' => -3,

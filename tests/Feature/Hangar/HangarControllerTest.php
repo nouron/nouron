@@ -104,13 +104,14 @@ class HangarControllerTest extends TestCase
             ->delete();
     }
 
+    /** Lv3 by default: the fixtures dock a corvette, which needs a Lv3 hangar to fly (GDD §7). */
     private function insertHangar(int $instanceId, float $statusPoints = 20.0): void
     {
         DB::table('colony_buildings')->insert([
             'colony_id' => self::COLONY_ID_BART,
             'building_id' => self::HANGAR_BUILDING,
             'instance_id' => $instanceId,
-            'level' => 1,
+            'level' => 3,
             'status_points' => $statusPoints,
             'ap_spend' => 0,
         ]);

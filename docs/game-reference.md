@@ -523,7 +523,7 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 | Krankenstation | +5/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
 | Religiöse Stätte | +3/Lv | Besinnlichkeit (Lv1 only) |
 | Kolonialdenkmal | +3/Lv | Stolz (Lv1 only) |
-| Leitstelle | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |
+| Leitstelle | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost ab Ausbaustufe 3 (Bergungsdienst, `recycle_min_level`) |
 | Uplink Station | 0 | Deep-Scan −1 AP (Lv2+); Merchant frequency ↑ |
 | Trading Post | 0 | Handelsvorteil-Kanalrabatt 12% je Ausbaustufe: Lv1 Bar-Kanal, Lv2 + Merchant-Kanal, Lv3 + Nexus-Kanal (kumulativ, additiv mit Konsul-Rang/`trade`-Kenntnis im Handelsvorteil, A13) |
 

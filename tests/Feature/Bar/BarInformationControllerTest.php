@@ -91,6 +91,8 @@ class BarInformationControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false])
-            ->assertJsonStructure(['ok', 'error']);
+            ->assertJsonStructure(['ok', 'error', 'message'])
+            ->assertJsonPath('error', 'bar_information_not_found')
+            ->assertJsonPath('message', __('colony.bar_information_not_found'));
     }
 }

@@ -560,6 +560,7 @@ return [
     'hangar_dispatch' => 'Entsenden',
     'hangar_dispatch_no_nav_ap' => 'Nicht genug AP für diese Mission.',
     'hangar_dispatch_no_organika' => 'Nicht genug Organika für die Crew-Verpflegung dieser Mission.',
+    'hangar_ship_inactive' => 'Inaktiv: Dieses Schiff braucht einen Hangar der Stufe :level. Baue den Hangar wieder aus, um Missionen zu starten.',
     'hangar_request_level_too_low' => 'Dieser Schiffstyp erfordert einen höheren Hangar-Ausbau.',
     'hangar_request_min_level' => 'Erfordert Hangar-Ausbaustufe :level',
     'hangar_recall' => 'Zurückrufen',
