@@ -286,6 +286,7 @@ return [
     'hangar_dispatch' => 'Dispatch',
     'hangar_dispatch_no_nav_ap' => 'Not enough Navigation AP for this mission.',
     'hangar_dispatch_no_organika' => 'Not enough Organics for this mission\'s crew provisions.',
+    'hangar_ship_inactive' => 'Inactive: this ship needs a level :level hangar. Upgrade the hangar again to start missions.',
     'hangar_recall' => 'Recall',
     'hangar_repair' => 'Repair',
     'hangar_destination' => 'Destination',

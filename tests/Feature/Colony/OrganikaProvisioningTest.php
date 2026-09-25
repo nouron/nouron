@@ -165,7 +165,7 @@ class OrganikaProvisioningTest extends TestCase
     {
         DB::table('colony_buildings')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'building_id' => 44, 'instance_id' => 1],
-            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0]
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0] // Lv3: any ship class may fly (GDD §7)
         );
         // TestSeeder pre-populates hangar_instance_id=1 with several fixture ships
         // (a real hangar bay only ever holds one) — free the bay before assigning ours.

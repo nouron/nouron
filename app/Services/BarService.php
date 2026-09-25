@@ -175,14 +175,14 @@ class BarService
             ->first();
 
         if (! $offer) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_not_found')];
+            return $this->fail('bar_offer_not_found');
         }
         if ($offer->is_accepted) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_already_accepted')];
+            return $this->fail('bar_offer_already_accepted');
         }
 
         if ($offer->expires_tick <= $currentTick) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
+            return $this->fail('bar_offer_expired');
         }
 
         // Economy-AP check — waived when the offer was already negotiated
@@ -192,7 +192,7 @@ class BarService
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($availableAp < $apCost) {
-                return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_ap')];
+                return $this->fail('bar_offer_insufficient_ap');
             }
         }
 
@@ -206,7 +206,7 @@ class BarService
         // Check player can afford the give side
         $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
         if ($giveBalance < $giveAmount) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
+            return $this->fail('bar_offer_insufficient_resources');
         }
 
         // Reserve floor (GDD §4b) — only for Corvan's Organika sell offers
@@ -219,7 +219,7 @@ class BarService
                 $reserveMultiplier = (int) config('game.merchant.commodity.sell_reserve_multiplier', 2);
                 $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
                 if (($giveBalance - $giveAmount) < $reserve) {
-                    return ['ok' => false, 'error' => __('colony.bar_offer_reserve_floor')];
+                    return $this->fail('bar_offer_reserve_floor');
                 }
             }
         }
@@ -286,37 +286,37 @@ class BarService
             ->first();
 
         if (! $offer) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_not_found')];
+            return $this->fail('bar_offer_not_found');
         }
         if ($offer->is_accepted) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_already_accepted')];
+            return $this->fail('bar_offer_already_accepted');
         }
         if ($offer->is_negotiated) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_already_negotiated')];
+            return $this->fail('bar_offer_already_negotiated');
         }
         if ($offer->expires_tick <= $currentTick) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
+            return $this->fail('bar_offer_expired');
         }
         if ($this->isFixedPriceOffer($offer)) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_not_negotiable')];
+            return $this->fail('bar_offer_not_negotiable');
         }
 
         if ($this->traderRank($colonyId) < 1) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_no_consul')];
+            return $this->fail('bar_offer_no_consul');
         }
 
         $apCost = (int) config('game.bar.ap_cost_negotiate', 2);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($availableAp < $apCost) {
-                return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_ap')];
+                return $this->fail('bar_offer_insufficient_ap');
             }
         }
 
         // The Give side never changes (neither by Handelsvorteil nor by negotiation).
         $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
         if ($giveBalance < $offer->give_amount) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
+            return $this->fail('bar_offer_insufficient_resources');
         }
 
         $chancePercent = $this->negotiateChance($colonyId)['total_percent'];
@@ -616,27 +616,27 @@ class BarService
             ->first();
 
         if (! $encounter) {
-            return ['ok' => false, 'error' => __('colony.bar_encounter_not_found')];
+            return $this->fail('bar_encounter_not_found');
         }
         if ($encounter->is_accepted) {
-            return ['ok' => false, 'error' => __('colony.bar_encounter_already_accepted')];
+            return $this->fail('bar_encounter_already_accepted');
         }
         if ($encounter->expires_tick <= $currentTick) {
-            return ['ok' => false, 'error' => __('colony.bar_encounter_expired')];
+            return $this->fail('bar_encounter_expired');
         }
 
         $apCost = (int) config('game.bar.encounter.ap_cost_accept', 0);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($availableAp < $apCost) {
-                return ['ok' => false, 'error' => __('colony.bar_encounter_insufficient_ap')];
+                return $this->fail('bar_encounter_insufficient_ap');
             }
         }
 
         if ($encounter->give_resource_id !== null) {
             $balance = $this->getResourceBalance($colonyId, $userId, $encounter->give_resource_id);
             if ($balance < $encounter->give_amount) {
-                return ['ok' => false, 'error' => __('colony.bar_encounter_insufficient_resources')];
+                return $this->fail('bar_encounter_insufficient_resources');
             }
         }
 
@@ -846,13 +846,13 @@ class BarService
             ->first();
 
         if (! $concern) {
-            return ['ok' => false, 'error' => __('colony.bar_concern_not_found')];
+            return $this->fail('bar_concern_not_found');
         }
         if ($concern->is_resolved) {
-            return ['ok' => false, 'error' => __('colony.bar_concern_already_resolved')];
+            return $this->fail('bar_concern_already_resolved');
         }
         if ($concern->expires_tick <= $currentTick) {
-            return ['ok' => false, 'error' => __('colony.bar_concern_expired')];
+            return $this->fail('bar_concern_expired');
         }
 
         $slug = $concern->character_slug;
@@ -861,7 +861,7 @@ class BarService
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($availableAp < $apCost) {
-                return ['ok' => false, 'error' => __('colony.bar_concern_insufficient_ap')];
+                return $this->fail('bar_concern_insufficient_ap');
             }
         }
 
@@ -874,7 +874,7 @@ class BarService
             $strangerStake = $this->pseudoRand($concern->id * 11 + $currentTick * 13, (int) ($cfg['stake_min'] ?? 0), (int) ($cfg['stake_max'] ?? 0));
             $balance = $this->getResourceBalance($colonyId, $userId, self::RES_COMPOUNDS);
             if ($balance < $strangerStake) {
-                return ['ok' => false, 'error' => __('colony.bar_concern_insufficient_resources')];
+                return $this->fail('bar_concern_insufficient_resources');
             }
         }
 
@@ -1193,13 +1193,13 @@ class BarService
             ->first();
 
         if (! $encounter) {
-            return ['ok' => false, 'error' => __('colony.bar_information_not_found')];
+            return $this->fail('bar_information_not_found');
         }
         if ($encounter->is_resolved) {
-            return ['ok' => false, 'error' => __('colony.bar_information_already_resolved')];
+            return $this->fail('bar_information_already_resolved');
         }
         if ($encounter->expires_tick <= $currentTick) {
-            return ['ok' => false, 'error' => __('colony.bar_information_expired')];
+            return $this->fail('bar_information_expired');
         }
 
         return DB::transaction(function () use ($encounter, $colonyId, $userId, $knowledgeId): array {
@@ -1454,5 +1454,17 @@ class BarService
         $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
 
         return $min + ($hash % ($max - $min + 1));
+    }
+
+    /**
+     * Rule-refusal result following the AJAX contract (docs/frontend-conventions.md §2):
+     * `error` is the stable machine code, `message` the translated player text.
+     * The code doubles as the lang key suffix (colony.<code>).
+     *
+     * @return array{ok: false, error: string, message: string}
+     */
+    private function fail(string $code): array
+    {
+        return ['ok' => false, 'error' => $code, 'message' => __("colony.{$code}")];
     }
 }

@@ -10,7 +10,6 @@ return [
 
     // Trust event descriptions (shown in INNN event log)
     'event_building_level_up' => 'A building was upgraded — the population is pleased.',
-    'event_building_level_down' => 'A building has decayed — the population is dissatisfied.',
     'event_research_level_up' => 'A research breakthrough lifts morale.',
     'event_trade_success' => 'A trade deal was successfully concluded.',
     'event_trade_blocked' => 'A trade route was blocked.',

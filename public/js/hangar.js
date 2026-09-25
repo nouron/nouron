@@ -315,7 +315,7 @@ function hangarCarousel(config) {
                     this.syncHangarResources(res);
                     this.closeMissionDialog();
                 } else {
-                    this.missionModal.error = res.error ?? 'Error.';
+                    this.missionModal.error = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
                 this.missionModal.error = 'Network error.';
@@ -374,7 +374,7 @@ function hangarCarousel(config) {
                     this.pendingShips = res.pending;
                     this.closeRequestModal();
                 } else {
-                    this.requestModal.error = res.error ?? 'Error.';
+                    this.requestModal.error = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
                 this.requestModal.error = 'Network error.';
@@ -420,7 +420,7 @@ function hangarCarousel(config) {
                 if (res.ok) {
                     this._updateSlot(instanceId, res.slot);
                 } else {
-                    this.error[instanceId] = res.error ?? 'Error.';
+                    this.error[instanceId] = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
                 this.error[instanceId] = 'Network error.';
@@ -443,7 +443,7 @@ function hangarCarousel(config) {
                     this._updateSlot(instanceId, res.slot);
                     this.syncHangarResources(res);
                 } else {
-                    this.error[instanceId] = res.error ?? 'Error.';
+                    this.error[instanceId] = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
                 this.error[instanceId] = 'Network error.';
@@ -479,7 +479,7 @@ function hangarCarousel(config) {
                     }
                     delete this.pendingAssignTarget[shipRowId];
                 } else {
-                    this.pendingError[shipRowId] = res.error ?? 'Error.';
+                    this.pendingError[shipRowId] = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
                 this.pendingError[shipRowId] = 'Network error.';

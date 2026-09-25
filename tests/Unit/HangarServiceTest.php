@@ -690,7 +690,7 @@ class HangarServiceTest extends TestCase
     public function test_dispatch_ship_throws_for_wrong_ship_type(): void
     {
         // mission_courier_run only allows drone; corvette must be rejected.
-        $this->insertHangar(1);
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $this->expectException(\RuntimeException::class);
@@ -781,8 +781,8 @@ class HangarServiceTest extends TestCase
 
     public function test_dispatch_ship_throws_when_ruin_target_already_consumed(): void
     {
-        $this->insertHangar(1);
-        $this->insertHangar(2);
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
+        $this->insertHangar(2, 3);
         $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
         $this->assignShip(2, self::SHIP_CORVETTE, 'docked');
         $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
@@ -803,7 +803,7 @@ class HangarServiceTest extends TestCase
         // GDD §4c "Harvester-Zweitinstanz: Bezugsquelle" (2026-08-05): the salvage
         // mission must not be dispatchable once the colony already holds both
         // Harvester instances — the entitlement would be earned for nothing.
-        $this->insertHangar(1);
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
         $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
         $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
 
@@ -823,7 +823,7 @@ class HangarServiceTest extends TestCase
 
     public function test_dispatch_ship_succeeds_for_harvester_salvage_when_only_one_instance_placed(): void
     {
-        $this->insertHangar(1);
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
         $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
         $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
 
@@ -847,7 +847,7 @@ class HangarServiceTest extends TestCase
         // Regression guard: instance_count alone doesn't catch an earned-but-not-yet-
         // placed entitlement (e.g. Orin's offer already bought, GDD §4c) — dispatching
         // the salvage mission on top would earn a second, unusable entitlement.
-        $this->insertHangar(1);
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
         $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
         $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
 

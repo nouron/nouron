@@ -337,7 +337,7 @@ class BarTradeAdvantageTest extends TestCase
         $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok']);
-        $this->assertSame(__('colony.bar_offer_not_negotiable'), $result['error']);
+        $this->assertSame('bar_offer_not_negotiable', $result['error']);
         $this->assertTrue(DB::table('bar_offers')->where('id', $offerId)->exists(), 'the lot must survive the rejected attempt');
         $this->assertSame($before, (int) DB::table('locked_actionpoints')->sum('spend_ap'), 'no AP is spent on a rejected negotiation');
         $this->assertSame(700, (int) DB::table('bar_offers')->where('id', $offerId)->value('get_amount'));

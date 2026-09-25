@@ -45,7 +45,7 @@ return [
     // ── Phase 3g — implemented (May 2026) ────────────────────────────────────
 
     'securityHub' => 'Response Center',
-    'securityHub_desc' => 'This is where the reports come in when something goes wrong outside — and because someone responds in time, incidents do less damage and setbacks shake the colonists less. The crew also ensures that a portion of the materials is recovered when a building loses a level to decay. Just knowing that someone is keeping an eye on things strengthens trust in the colony.',
+    'securityHub_desc' => 'This is where the reports come in when something goes wrong outside — and because someone responds in time, incidents do less damage and setbacks shake the colonists less. Once upgraded to a Salvage Crew, the crew also ensures that a portion of the materials is recovered when a building loses a level to decay. Just knowing that someone is keeping an eye on things strengthens trust in the colony.',
 
     'uplinkStation' => 'Uplink Station',
     'uplinkStation_desc' => 'High-powered communications and scanning array. Enables more precise deep scans of the surroundings and improves trade connections to Nexus convoys. From upgrade level three onward: direct access to the Nexus final transmission.',

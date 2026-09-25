@@ -104,7 +104,10 @@ class BarEncounterControllerTest extends TestCase
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.bar.accept-encounter', ['encounter' => 9999]));
 
-        $response->assertStatus(422)->assertJson(['ok' => false]);
+        $response->assertStatus(422)
+            ->assertJson(['ok' => false])
+            ->assertJsonPath('error', 'bar_encounter_not_found')
+            ->assertJsonPath('message', __('colony.bar_encounter_not_found'));
     }
 
     public function test_accept_encounter_does_not_allow_foreign_colony_encounter(): void

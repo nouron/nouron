@@ -256,11 +256,15 @@
                                                 </span>
                                             </div>
 
+                                            {{-- Inactive (GDD §7): hangar below the ship class — no mission start --}}
+                                            <div class="hangar-error" x-show="slot.ship.inactive"
+                                                x-text="slot.ship.inactive_reason"></div>
+
                                             {{-- Action buttons — dispatch opens the mission catalog dialog --}}
                                             <div class="hangar-card-footer">
                                                 <button class="btn-hangar-action"
                                                     @click="openMissionDialog(slot.instance_id)"
-                                                    :disabled="loading[slot.instance_id]">
+                                                    :disabled="loading[slot.instance_id] || slot.ship.inactive">
                                                     {{ __("colony.hangar_dispatch") }}
                                                 </button>
                                                 <button class="btn-hangar-action btn-hangar-action--secondary"

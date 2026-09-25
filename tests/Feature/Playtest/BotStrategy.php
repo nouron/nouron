@@ -6,6 +6,7 @@ use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
 use App\Services\BuildingCostService;
+use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
@@ -709,13 +710,21 @@ class BotStrategy
             $pendingPathCost = $activeAdvisors < 3 ? self::cheapestPendingPathBuildingCost($b) : null;
             $bufferedRegolith = $pendingPathCost !== null && self::regolith($b) < $pendingPathCost;
 
+            // T17: while the next CC level is what locks research, only the Regolith
+            // above that level-up's price may go into new buildings.
+            $ccReserve = self::ccResearchReserve($b);
+
             foreach ($buildings as $building) {
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
                     continue;
                 }
 
                 // Placing pays the erection and the 0 -> 1 Regolith in one go (T9).
-                $costs = self::costList(self::buildingCosts()->placementCost((int) $building['building_id']));
+                $placementCost = self::buildingCosts()->placementCost((int) $building['building_id']);
+                if (! self::fitsAboveCcReserve($b, $ccReserve, (int) ($placementCost[self::RES_REGOLITH] ?? 0))) {
+                    continue;
+                }
+                $costs = self::costList($placementCost);
                 if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
                     continue;
                 }
@@ -773,6 +782,11 @@ class BotStrategy
             $rows = $rows->filter(fn (object $row): bool => self::levelupRegolith($row) === 0)->values();
         }
 
+        // T17: a Regolith-charging level-up may only use the surplus above the
+        // CC level-up that currently locks research; AP-only steps stay open.
+        $ccReserve = self::ccResearchReserve($b);
+        $rows = $rows->filter(fn (object $row): bool => self::fitsAboveCcReserve($b, $ccReserve, self::levelupRegolith($row)))->values();
+
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
         // server rejects a level-up with supply_limit while free supply is below the
         // building's supply_cost; CC and housing are exempt, and so is the 0 -> 1
@@ -805,7 +819,8 @@ class BotStrategy
         $first = $rows->first();
         if ($first !== null && $blocked($first)
             && $housing !== null
-            && (! $buffered || self::levelupRegolith($housing) === 0)) {
+            && (! $buffered || self::levelupRegolith($housing) === 0)
+            && self::fitsAboveCcReserve($b, $ccReserve, self::levelupRegolith($housing))) {
             return (object) ['building_id' => $housing->building_id, 'instance_id' => $housing->instance_id];
         }
 
@@ -983,6 +998,18 @@ class BotStrategy
             }
         }
 
+        return self::researchOptions($b)['candidate'];
+    }
+
+    /**
+     * The knowledge research could take right now, and whether any knowledge is
+     * held back only by the CC gate (game.knowledge_cc_level_cap). Ignores the
+     * path-building Regolith buffer — that's researchCandidate()'s concern.
+     *
+     * @return array{candidate: int|null, cc_blocked: bool}
+     */
+    private static function researchOptions(BotSession $b): array
+    {
         $sciencelabLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::Sciencelab->value)
@@ -1018,17 +1045,58 @@ class BotStrategy
             ->orderBy('r.id')
             ->get(['r.id', 'cr.level']);
 
+        $ccBlocked = false;
         foreach ($candidates as $candidate) {
             $currentLevel = (int) ($candidate->level ?? 0);
             $targetLevel = $currentLevel + 1;
             $requiredCc = $ccCaps[$targetLevel] ?? null;
 
             if ($requiredCc === null || $ccLevel >= $requiredCc) {
-                return (int) $candidate->id;
+                return ['candidate' => (int) $candidate->id, 'cc_blocked' => $ccBlocked];
             }
+            $ccBlocked = true;
         }
 
-        return null;
+        return ['candidate' => null, 'cc_blocked' => $ccBlocked];
+    }
+
+    /**
+     * T17 (2026-09-25): Regolith to keep for the next CC level-up while that
+     * level-up is the research bottleneck — Phase 2, CC below its max level, no
+     * knowledge researchable right now and at least one held back only by the
+     * CC gate, so the AP have nowhere else to go. Before this, placeCandidate()
+     * and friends kept spending the Regolith on new buildings (seed 5: CC5 only
+     * on Sol 83, ~30 Sols with 26-28 AP idle). 0 when the rule doesn't apply or
+     * the CC cycle's Regolith is already paid.
+     */
+    private static function ccResearchReserve(BotSession $b): int
+    {
+        if (self::runPhase($b) < 2) {
+            return 0;
+        }
+
+        $cc = DB::table('colony_buildings as cb')
+            ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $b->colonyId)
+            ->where('cb.building_id', BuildingId::CommandCenter->value)
+            ->select('cb.building_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.max_level')
+            ->first();
+        if ($cc === null || ($cc->max_level !== null && (int) $cc->level >= (int) $cc->max_level)) {
+            return 0;
+        }
+
+        $research = self::researchOptions($b);
+        if ($research['candidate'] !== null || ! $research['cc_blocked']) {
+            return 0;
+        }
+
+        return self::levelupRegolith($cc);
+    }
+
+    /** Whether spending $regolith leaves at least the CC reserve (ccResearchReserve()) in stock. */
+    private static function fitsAboveCcReserve(BotSession $b, int $ccReserve, int $regolith): bool
+    {
+        return $ccReserve === 0 || $regolith === 0 || self::regolith($b) - $regolith >= $ccReserve;
     }
 
     private static function dispatchCandidate(BotSession $b): ?object
@@ -1045,6 +1113,8 @@ class BotStrategy
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
             ->where('status_points', '>=', $minSp)
+            // T14: a ship in a hangar below its class can't start a mission (GDD §7).
+            ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
             ->first();
     }
 
@@ -1075,12 +1145,17 @@ class BotStrategy
         }
 
         $tick = app(TickService::class)->getTickCount();
+        // T17: Regolith-giving trades may only use the surplus above the CC reserve.
+        $ccReserve = self::ccResearchReserve($b);
+        $regolithSurplus = self::regolith($b) - $ccReserve;
 
         return DB::table('bar_offers')
             ->where('colony_id', $b->colonyId)
             ->where('expires_tick', '>', $tick)
             ->where('is_accepted', false)
             ->when($guardBlocks, fn ($q) => $q->where('get_resource_id', self::RES_CREDITS))
+            ->when($ccReserve > 0, fn ($q) => $q->where(fn ($q) => $q->where('give_resource_id', '!=', self::RES_REGOLITH)
+                ->orWhere('give_amount', '<=', $regolithSurplus)))
             ->orderByRaw('CASE WHEN get_resource_id = ? THEN 0 ELSE 1 END', [self::RES_CREDITS])
             ->orderBy('id')
             ->first();
@@ -1287,6 +1362,8 @@ class BotStrategy
             ->where('ship_state', 'docked')
             ->whereIn('ship_id', $eligibleShipIds)
             ->where('status_points', '>=', $minSp)
+            // T14: a ship in a hangar below its class can't start a mission (GDD §7).
+            ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
             ->first();
     }
 
@@ -1314,6 +1391,8 @@ class BotStrategy
             ->where('ship_state', 'docked')
             ->whereIn('ship_id', $eligibleShipIds)
             ->where('status_points', '>=', $minSp)
+            // T14: a ship in a hangar below its class can't start a mission (GDD §7).
+            ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
             ->first();
         if ($ship === null) {
             return null;

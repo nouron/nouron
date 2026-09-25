@@ -336,11 +336,11 @@ return [
     //
     // Effects:
     //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).
-    //   2. Event mitigation: negative trust events (building_level_down,
-    //      encounter_lost, colony_threatened) reduced by 25% when Hub active
+    //   2. Event mitigation: negative trust events (encounter_lost,
+    //      colony_threatened, ...) reduced by 25% when Hub active
     //      (TrustService::eventContribution()).
     //   3. recycle_pct: on building level-down by decay, return 10% of build
-    //      cost in tradeable resources (GameTick — partially implemented).
+    //      cost in tradeable resources (GameTick, only from recycle_min_level on).
     //
     // Former defend-order discount removed with the fleet/galaxy layer 2026-06.
     // TODO Balance: trust_per_lv, event_mitigation_pct, recycle_pct, supply_cost
@@ -354,10 +354,11 @@ return [
         'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
-        // Ausbaustufen-Beiname nur bei Stufe 3 (Recycling-Effekt, aktuell nur
-        // konfiguriert — siehe securityHub Folge-Plan zum Verdrahten von
-        // recycle_pct) — Stufen 1/2 sind reine Trust-Bonus-Mengensteigerung.
+        // Ausbaustufen-Beiname nur bei Stufe 3 ("Bergungsdienst" = Recycling-Effekt,
+        // GameTick::applyLevelDown() gated by recycle_min_level) — Stufen 1/2 sind
+        // reine Trust-Bonus-Mengensteigerung.
         'tiers' => [3],
+        'recycle_min_level' => 3,              // recycling only from this Ausbaustufe on (keep in sync with tiers)
         'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
         'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TrustService::eventContribution())
     ],

@@ -702,7 +702,7 @@ class BarServiceTest extends TestCase
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok']);
-        $this->assertStringContainsStringIgnoringCase('ap', $result['error']);
+        $this->assertSame('bar_offer_insufficient_ap', $result['error']);
     }
 
     public function test_accept_locks_economy_ap(): void
@@ -884,7 +884,7 @@ class BarServiceTest extends TestCase
         $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok']);
-        $this->assertStringContainsStringIgnoringCase('ap', $result['error']);
+        $this->assertSame('bar_offer_insufficient_ap', $result['error']);
     }
 
     public function test_negotiate_costs_the_same_ap_as_accept(): void
@@ -1035,7 +1035,7 @@ class BarServiceTest extends TestCase
         $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok']);
-        $this->assertSame(__('colony.bar_offer_not_negotiable'), $result['error']);
+        $this->assertSame('bar_offer_not_negotiable', $result['error']);
     }
 
     public function test_negotiate_rejects_an_already_negotiated_offer(): void
@@ -1379,7 +1379,7 @@ class BarServiceTest extends TestCase
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok']);
-        $this->assertSame(__('colony.bar_offer_insufficient_resources'), $result['error']);
+        $this->assertSame('bar_offer_insufficient_resources', $result['error']);
         $this->assertSame(450, $this->getCredits());
     }
 

@@ -317,7 +317,9 @@ class BarControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false])
-            ->assertJsonStructure(['ok', 'error']);
+            ->assertJsonStructure(['ok', 'error', 'message'])
+            ->assertJsonPath('error', 'bar_offer_not_found')
+            ->assertJsonPath('message', __('colony.bar_offer_not_found'));
     }
 
     public function test_accept_returns_error_when_insufficient_resources(): void
@@ -335,7 +337,9 @@ class BarControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false])
-            ->assertJsonStructure(['ok', 'error']);
+            ->assertJsonStructure(['ok', 'error', 'message'])
+            ->assertJsonPath('error', 'bar_offer_insufficient_resources')
+            ->assertJsonPath('message', __('colony.bar_offer_insufficient_resources'));
     }
 
     public function test_accept_does_not_allow_foreign_colony_offer(): void
@@ -459,7 +463,9 @@ class BarControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false])
-            ->assertJsonStructure(['ok', 'error']);
+            ->assertJsonStructure(['ok', 'error', 'message'])
+            ->assertJsonPath('error', 'bar_offer_no_consul')
+            ->assertJsonPath('message', __('colony.bar_offer_no_consul'));
     }
 
     public function test_negotiate_returns_error_for_nonexistent_offer(): void
@@ -475,7 +481,9 @@ class BarControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false])
-            ->assertJsonStructure(['ok', 'error']);
+            ->assertJsonStructure(['ok', 'error', 'message'])
+            ->assertJsonPath('error', 'bar_offer_not_found')
+            ->assertJsonPath('message', __('colony.bar_offer_not_found'));
     }
 
     public function test_negotiate_resolves_offer_when_consul_assigned(): void
