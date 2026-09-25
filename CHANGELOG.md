@@ -8,6 +8,7 @@
 - Fix: PlaytestBot — Sol-0-Tick im Test-Harness korrigiert, Agrardom vor CC-Ausbau, Supply-Gate beachtet. 8-Seed-Batch: 7/8 Runs abgeschlossen (vorher 0/8).
 - Doku: GDD §2–§7/§13 und `docs/game-reference.md` (§10, neu §10a) auf den A14-Stand; CC-Kapazitätsbeitrag bleibt flach, tote Config-Keys entfernt.
 - Feature: A43 — Techtree ist Übersicht + Forschung; Gebäude-Aktionen nur noch im Tile-Panel. Neu: Rückbau bzw. Bauabbruch mit Bestätigungsdialog (zeigt die tatsächlich wirkenden Folgen), Deep-Link „Zum Tile" aus Techtree und Kommandozentrale, Instanzliste im Techtree. Fix: Instanzanzeige im Techtree („2 / 6" statt „2 / 3"), kaputte Chip-Links mit Query-Parametern, JS-Fehler in der Kolonieansicht.
+- Aufräumen: A43-Reste — Gebäude-Chips im Kolonieprotokoll springen aufs Tile; Harvester-Hinweis statt totem Baulink im Techtree; Toast bei nicht baubarem `?build=`-Link. Security-Hub heißt jetzt „Leitstelle" (Ausbaustufe 3 „Bergungsdienst"), Beschreibung auf die tatsächlichen Effekte korrigiert.
 
 ## 2026-09-23
 

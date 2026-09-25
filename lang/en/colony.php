@@ -163,6 +163,7 @@ return [
     'harvester_move_no_targets' => 'No free explored Regolith tile available — explore new tiles first (Nav AP).',
     'harvester_move_invalid_target' => 'Not a valid target — the Harvester needs a free, explored Regolith tile (highlighted in light blue).',
     'network_error' => 'Network error — please try again.',
+    'build_link_unavailable' => 'You cannot build this right now — check prerequisites and the instance limit in the techtree.',
     'error_harvester_in_transit' => 'The Harvester is still in transit — relocation possible after arrival.',
     'harvester_in_transit' => 'In transit — arrives next Sol.',
     'error_tile_occupied' => 'Tile already occupied.',

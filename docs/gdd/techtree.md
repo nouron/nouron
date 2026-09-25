@@ -41,13 +41,13 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `bar` | Cantina | CC Lv 2 (Pfadwahl) | max. Lv 3 |
 | `infirmary` | Krankenstation | CC Lv 2 | max. Lv 3 |
 | `hangar` | Hangar | CC Lv 2 (Pfadwahl) | max. Lv 3, Instanzen ungedeckelt |
-| `securityHub` | Sicherheits-Hub | CC Lv 3 | max. Lv 3 |
+| `securityHub` | Leitstelle | CC Lv 3 | max. Lv 3 |
 | `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 |
 | `temple` | Religiöse Stätte | CC Lv 4 | Lv 1 |
 | `tradingPost` | Handelsposten | CC Lv 4 | max. Lv 3 |
 | `monument` | Kolonialdenkmal | CC Lv 5 | Lv 1 |
 
-Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
+Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Leitstelle), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
 #### Kenntnisse
 
@@ -103,7 +103,7 @@ Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. 
 |---|---|
 | 1 | Wohnhabitat, Harvester |
 | 2 | Analytik-Labor, Krankenstation, Cantina, Hangar (alle drei Pfadwahl-Gebäude ab Lv2 baubar, gestaffelt — siehe §13), Uplink-Station (Lv1) |
-| 3 | Sicherheits-Hub; Uplink-Station Lv2 freischaltbar |
+| 3 | Leitstelle; Uplink-Station Lv2 freischaltbar |
 | 4 | Religiöse Stätte, Handelsposten |
 | 5 | Denkmal; Uplink-Station Lv3 freischaltbar |
 
@@ -257,7 +257,7 @@ Der Direktor kann jede Instanz eines Gebäudes bewusst um eine Stufe zurückbaue
 
 **Wofür der Rückbau da ist:** Der Rückbau ist ein Werkzeug zum Umplanen, nicht zum Sparen. Er macht Bauplatz frei (ein Gebäude auf Stufe 0 räumen, um das Tile anders zu nutzen), er senkt die Instandhaltungslast (§13.5) und er setzt Kolonisten frei, wenn Supply gebraucht wird. Weil er nichts zurückgibt, ist er nie ein Gewinngeschäft. Er tauscht Investition gegen Spielraum. Das passt zu „Entscheidungen ohne Optimalpfad": Ein Gebäude abzureißen, das man teuer gebaut hat, soll sich wie eine echte Abwägung anfühlen.
 
-> ⚠️ BALANCE CONCERN: Weil die verbleibende Stufe mit vollem Zustand dasteht, ist ein Rückbau bei fast verfallenem Gebäude ein kostenloser Ersatz für die Reparatur, mit Stufenverlust. Das Ergebnis ist identisch mit dem, was der Verfall ohnehin gleich tun würde. Der Rückbau zieht den Verlust also nur vor, er schafft keinen neuen Vorteil. Relevant wird das erst, wenn der Stufenverlust durch Verfall eine zusätzliche Folge bekommt, die der Rückbau nicht hat (`building_level_down`, falls T13 es aktiviert; Recycling des Sicherheits-Hubs, §4). Dann wird „kurz vor dem Verfall selbst zurückbauen" zur Ausweichtaktik. Da der Rückbau bewusst kein Vertrauens-Ereignis auslöst (siehe Regeln oben), ist diese Ausweichtaktik akzeptiert: Wer den Stufenverlust aktiv vorzieht, handelt nicht nachlässig. Nach einer Aktivierung von T13 prüfen, ob sie im Playtest zur Routine wird.
+> ⚠️ BALANCE CONCERN: Weil die verbleibende Stufe mit vollem Zustand dasteht, ist ein Rückbau bei fast verfallenem Gebäude ein kostenloser Ersatz für die Reparatur, mit Stufenverlust. Das Ergebnis ist identisch mit dem, was der Verfall ohnehin gleich tun würde. Der Rückbau zieht den Verlust also nur vor, er schafft keinen neuen Vorteil. Relevant wird das erst, wenn der Stufenverlust durch Verfall eine zusätzliche Folge bekommt, die der Rückbau nicht hat (`building_level_down`, falls T13 es aktiviert; Recycling der Leitstelle, §4). Dann wird „kurz vor dem Verfall selbst zurückbauen" zur Ausweichtaktik. Da der Rückbau bewusst kein Vertrauens-Ereignis auslöst (siehe Regeln oben), ist diese Ausweichtaktik akzeptiert: Wer den Stufenverlust aktiv vorzieht, handelt nicht nachlässig. Nach einer Aktivierung von T13 prüfen, ob sie im Playtest zur Routine wird.
 
 > ⚠️ BALANCE CONCERN: Harvester (`max_level` 1) — jeder Rückbau ist hier ein Rückbau auf Stufe 0 und räumt das Tile. Zu prüfen ist, ob „zurückbauen und woanders neu errichten" billiger oder schneller ist als das reguläre Verlegen (AP je Hex plus ein Sol Stillstand, §4). Dann würde die Verlege-Mechanik umgangen. Ebenso offen: ob eine zurückgebaute zweite Harvester-Instanz neu errichtet werden darf, obwohl ihre Bezugsquelle (Orin bzw. Bergungsmission, §4c) schon verbraucht ist.
 ---

@@ -174,6 +174,7 @@ return [
     'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
     'regolith_fallback_tile_hint' => 'Erkundetes Regolith-Vorkommen — Ausweichziel für Harvester-Verlegung.',
     'network_error' => 'Netzwerkfehler — bitte erneut versuchen.',
+    'build_link_unavailable' => 'Dieses Gebäude kannst du gerade nicht errichten — Voraussetzungen und Instanz-Obergrenze im Techtree prüfen.',
     'error_harvester_in_transit' => 'Der Harvester ist noch unterwegs — Verlegen erst nach Ankunft möglich.',
     'harvester_in_transit' => 'Unterwegs — Ankunft nächsten Sol.',
     'error_tile_occupied' => 'Tile bereits belegt.',

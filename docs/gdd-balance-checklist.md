@@ -37,7 +37,7 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 
 | Thema | Ort |
 |---|---|
-| Sicherheits-Hub: Vertrauens-Bonus, Event-Dämpfung, Recycling-Anteil | §4 |
+| Leitstelle: Vertrauens-Bonus, Event-Dämpfung, Recycling-Anteil | §4 |
 | Uplink-Station: Tiefenscan-Basiskosten, Händler-Erscheinungsrate | §4 |
 | Handelsposten: Baukosten, Decay, Supply, Handelswert-Bonus | §4 |
 | Korvetten-Stacking ohne Supply-Limiter | §6 |

@@ -273,6 +273,11 @@
                                         {{ __("techtree.detail_colony_link") }} &rarr;
                                     </a>
                                 </template>
+                                {{-- Buildings the build menu never offers (Harvester, GDD §4c):
+                                 how the next instance is obtained instead of a dead link. --}}
+                                <template x-if="acquireHint(selectedTech)">
+                                    <p class="detail-ap-hint" x-text="acquireHint(selectedTech)"></p>
+                                </template>
                             </div>
                         </template>
 

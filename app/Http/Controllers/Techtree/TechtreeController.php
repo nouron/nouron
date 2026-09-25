@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Techtree;
 
+use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\AdvisorService;
@@ -199,6 +200,12 @@ class TechtreeController extends BaseController
                     'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,
                     'max_instances' => $type === 'building' ? ($maxInstances[(int) $id] ?? null) : null,
                     'instances' => $type === 'building' ? ($placedInstances[(int) $id] ?? []) : [],
+                    // "In der Kolonie errichten" opens the build menu — only for buildings
+                    // it offers; the Harvester explains how its next instance is obtained.
+                    'menu_buildable' => $type === 'building' && BuildingId::isBuildMenuBuilding((int) $id),
+                    'acquire_hint' => $type === 'building' && (int) $id === BuildingId::Harvester->value
+                        ? __('techtree.detail_harvester_acquire_hint')
+                        : null,
                     'hangar_cap' => $type === 'ship' ? $hangarCap : null,
                     'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
                     // Research/knowledge costs escalate per level (config/knowledge.php

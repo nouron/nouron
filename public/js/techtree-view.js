@@ -291,13 +291,25 @@ function techtreeView(config) {
             return tech.max_instances ? `${placed} / ${tech.max_instances}` : String(placed);
         },
 
-        // "In der Kolonie errichten" (GDD techtree §11.4): shown while another
-        // instance is possible — below the instance cap (always when uncapped), or
-        // for a non-instanced building while none is placed.
-        canBuildMore(tech) {
+        // Another instance is possible — below the instance cap (always when
+        // uncapped), or for a non-instanced building while none is placed.
+        hasInstanceRoom(tech) {
             const placed = tech.instances?.length ?? 0;
             if (!tech.is_instanced) return placed === 0;
             return tech.max_instances === null || tech.max_instances === undefined || placed < tech.max_instances;
+        },
+
+        // "In der Kolonie errichten" (GDD techtree §11.4): only for buildings the
+        // colony build menu offers — "?build=ID" for anything else opens nothing.
+        canBuildMore(tech) {
+            return tech.menu_buildable !== false && this.hasInstanceRoom(tech);
+        },
+
+        // Replaces the build link for buildings obtained outside the build menu
+        // (Harvester, GDD §4c) while another instance is still possible.
+        acquireHint(tech) {
+            if (tech.menu_buildable !== false || !tech.acquire_hint) return '';
+            return this.hasInstanceRoom(tech) ? tech.acquire_hint : '';
         },
 
         instanceLevelLabel(inst) {

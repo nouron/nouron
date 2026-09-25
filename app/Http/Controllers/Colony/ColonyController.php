@@ -323,12 +323,10 @@ class ColonyController extends BaseController
                 'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
             ->filter(function ($b) use ($ccLevel, $placedCounts, $agrardomPlaced) {
-                if ($b->id === BuildingId::CommandCenter->value) {
+                // CC already exists; Harvester is placed from a regolith tile.
+                if (! BuildingId::isBuildMenuBuilding((int) $b->id)) {
                     return false;
-                }  // CC — already exists
-                if ($b->id === BuildingId::Harvester->value) {
-                    return false;
-                }  // Harvester — regolith placement only
+                }
                 $count = $placedCounts[$b->id] ?? 0;
                 if ($b->is_instanced) {
                     if ($count >= ($b->max_instances ?? PHP_INT_MAX)) {
@@ -639,7 +637,11 @@ class ColonyController extends BaseController
             'tick' => $this->getTick(),
             'event' => 'colony.building_placed',
             'area' => 'colony',
-            'parameters' => json_encode(['colony_id' => $colony->id, 'building_id' => $data['building_id']]),
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'building_id' => $data['building_id'],
+                'instance_id' => $nextInstanceId,
+            ]),
         ]);
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
@@ -788,6 +790,7 @@ class ColonyController extends BaseController
             'area' => 'colony',
             'parameters' => json_encode([
                 'building_id' => $buildingId,
+                'instance_id' => $instanceId,
                 'building_name' => $building->name ?? '',
                 'ap_spend' => $newApSpend,
                 'ap_for_levelup' => $effectiveApForLevelup,
@@ -923,6 +926,7 @@ class ColonyController extends BaseController
             'area' => 'colony',
             'parameters' => json_encode([
                 'building_id' => $buildingId,
+                'instance_id' => $instanceId,
                 'building_name' => $building->name ?? '',
                 'status_points' => $newSp,
                 'max_status_points' => $maxSp,

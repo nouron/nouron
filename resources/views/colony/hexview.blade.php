@@ -81,6 +81,7 @@
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
                 regolithFallbackTileHint: @json(__("colony.regolith_fallback_tile_hint")),
                 networkError: @json(__("colony.network_error")),
+                buildLinkUnavailable: @json(__("colony.build_link_unavailable")),
                 leveldownNewLevel: @json(__("colony.leveldown_new_level")),
                 leveldownApForfeited: @json(__("colony.leveldown_ap_forfeited")),
                 leveldownFreedWorkplaces: @json(__("colony.leveldown_freed_workplaces")),

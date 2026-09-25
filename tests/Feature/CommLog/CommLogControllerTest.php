@@ -505,4 +505,125 @@ class CommLogControllerTest extends TestCase
         $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
         $this->assertSame([], $entries->first()['params']);
     }
+
+    // ── Building chips: deep link to the tile (GDD entity-chips "Zum Tile") ──
+
+    /** @return array<string, mixed> tooltip of the first building chip in the newest entry */
+    private function firstBuildingChipTooltip(): array
+    {
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $chip = collect($entries->first()['segments'])->firstWhere('type', 'building');
+        $this->assertNotNull($chip, 'entry must render a building chip');
+
+        return $chip['tooltip'];
+    }
+
+    public function test_building_chip_deep_links_to_instance_when_known(): void
+    {
+        $this->log('colony.building_placed', ['colony_id' => 1, 'building_id' => 28, 'instance_id' => 4]);
+
+        $tooltip = $this->firstBuildingChipTooltip();
+
+        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 4]), $tooltip['link']);
+        $this->assertSame(__('entity_chip.label_tile_link'), $tooltip['link_label']);
+    }
+
+    public function test_building_chip_links_to_building_without_instance(): void
+    {
+        $this->log('colony.building_repaired', [
+            'building_id' => 25, 'building_name' => 'building_commandCenter',
+            'status_points' => 15, 'max_status_points' => 20,
+        ]);
+
+        $tooltip = $this->firstBuildingChipTooltip();
+
+        $this->assertSame(route('colony.view', ['building' => 25]), $tooltip['link']);
+        $this->assertSame(__('entity_chip.label_tile_link'), $tooltip['link_label']);
+    }
+
+    public function test_building_invested_chip_deep_links_to_instance(): void
+    {
+        $this->log('colony.building_invested', [
+            'building_id' => 28, 'instance_id' => 2, 'building_name' => 'building_housingComplex',
+            'ap_spend' => 3, 'ap_for_levelup' => 10, 'level_up' => false,
+        ]);
+
+        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 2]), $this->firstBuildingChipTooltip()['link']);
+    }
+
+    public function test_building_level_down_chip_deep_links_via_tech_id(): void
+    {
+        $this->log('techtree.level_down', [
+            'entity_type' => 'building', 'entity_name' => 'building_housingComplex',
+            'new_level' => 1, 'tech_id' => 28, 'instance_id' => 3, 'colony_id' => 1,
+        ]);
+
+        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 3]), $this->firstBuildingChipTooltip()['link']);
+    }
+
+    public function test_knowledge_level_down_chip_keeps_nexus_db_link(): void
+    {
+        $this->log('techtree.level_down', [
+            'entity_type' => 'knowledge', 'entity_name' => 'knowledge_construction', 'new_level' => 1, 'tech_id' => 90,
+        ]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $chip = collect($entries->first()['segments'])->firstWhere('type', 'knowledge');
+
+        $this->assertSame('/nexus-db', $chip['tooltip']['link']);
+        $this->assertArrayNotHasKey('link_label', $chip['tooltip']);
+    }
+
+    public function test_storm_outcome_chip_deep_links_to_instance(): void
+    {
+        $this->log('encounter.storm_beschaedigt', ['building_id' => 28, 'instance_id' => 5], area: 'encounter');
+
+        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 5]), $this->firstBuildingChipTooltip()['link']);
+    }
+
+    /** Legacy entries without building_id/instance_id keep the old link and never crash. */
+    public function test_legacy_building_entry_without_ids_keeps_nexus_db_link(): void
+    {
+        $this->log('colony.building_invested', ['building_name' => 'building_commandCenter', 'ap_spend' => 1]);
+
+        $tooltip = $this->firstBuildingChipTooltip();
+
+        $this->assertSame('/nexus-db', $tooltip['link']);
+        $this->assertArrayNotHasKey('link_label', $tooltip);
+    }
+
+    public function test_legacy_building_entries_with_empty_params_render(): void
+    {
+        foreach (['colony.building_placed', 'colony.building_repaired', 'techtree.level_down', 'encounter.storm_kritisch'] as $event) {
+            ColonyLog::create([
+                'user' => self::USER_ID, 'tick' => 5, 'event' => $event, 'area' => 'colony', 'parameters' => '',
+            ]);
+        }
+
+        $response = $this->actingAs($this->user())->get(route('comm.log'));
+
+        $response->assertOk();
+        $response->assertDontSee('colony/view?building', false);
+    }
+
+    public function test_rendered_building_chip_contains_tile_deep_link(): void
+    {
+        $this->log('colony.building_placed', ['colony_id' => 1, 'building_id' => 28, 'instance_id' => 4]);
+
+        $response = $this->actingAs($this->user())->get(route('comm.log'));
+
+        $response->assertSee('href="'.e(route('colony.view', ['building' => 28, 'instance' => 4])).'"', false);
+        $response->assertSee(__('entity_chip.label_tile_link'));
+    }
+
+    /** Invests into different instances of the same building link to different tiles — never merged. */
+    public function test_building_invested_entries_for_different_instances_do_not_collapse(): void
+    {
+        $this->log('colony.building_invested', ['building_id' => 28, 'instance_id' => 1, 'ap_spend' => 1]);
+        $this->log('colony.building_invested', ['building_id' => 28, 'instance_id' => 2, 'ap_spend' => 1]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+
+        $this->assertCount(2, $entries);
+    }
 }

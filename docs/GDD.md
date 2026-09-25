@@ -315,7 +315,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 44 | hangar | Hangar | Hangar | 3 (Instanzen ungedeckelt) | **CC Lv2**, Teil der **Pfadwahl** (siehe unten) |
 | 32 | temple | Religiöse Stätte | Sacred Site | 1 | CC Lv4 |
 | 50 | monument | Kolonialdenkmal | Colonial Monument | 1 | CC Lv5 |
-| 53 | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv3 |
+| 53 | securityHub | Leitstelle | Response Center | 3 | CC Lv3 |
 | 54 | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 |
 | 55 | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 |
 
@@ -323,7 +323,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 >
 > **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar , aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Was die drei Pfade inhaltlich sind, steht in **§4b „Die drei Pfade"**; die Slot- und Gate-Mechanik in §13 „Slot-System".
 >
-> **Sicherheits-Hub (CC Lv3) — optionaler Resilienz-Baustein:** Der Sicherheits-Hub ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
+> **Leitstelle (CC Lv3) — optionaler Resilienz-Baustein:** Die Leitstelle ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
 >
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Kosten: 1 Construction-AP **pro Hex Distanz**, keine Ressourcenabzüge; Transit-Zeit: **1 Sol flat**, unabhängig von der Distanz — der Harvester produziert im Transit-Sol nicht). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
@@ -379,9 +379,9 @@ Alle vier Aktionen finden ausschließlich im Tile-Panel der Kolonieansicht statt
 
 ---
 
-### Sicherheits-Hub (securityHub) — Mechanik
+### Leitstelle (securityHub) — Mechanik
 
-Der Sicherheits-Hub ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv3, max. Lv3). Er ist kein Pfadwahl-Kandidat und unterliegt keinem Pfadwahl-Bau-Gate. Er öffnet **keinen Berater-Slot** — er trägt sich vollständig über seine drei unabhängigen Effekte:
+Die Leitstelle ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv3, max. Lv3). Sie ist kein Pfadwahl-Kandidat und unterliegt keinem Pfadwahl-Bau-Gate. Sie öffnet **keinen Berater-Slot** — sie trägt sich vollständig über ihre drei unabhängigen Effekte:
 
 **Passiv — Vertrauen-Bonus:**
 Ein Bonus pro Level (kumulativ). Thematisch: "Die Bevölkerung fühlt sich durch Schutzinfrastruktur sicherer." Bewusst niedriger als andere Wohlfahrts-Gebäude — Sicherheitsinfrastruktur ist utilitaristisch, kein Luxus-Bonus. Exakte Werte: `config/buildings.php`.
@@ -690,9 +690,9 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 **Offen:** Pfad A hat keine eigene Credits-Quelle (Tabelle oben); Owner-Entscheidung: Sciencelab- und Hangar-Pfad sollen ein eigenes Credits-Einkommen bekommen, unabhängig von der Cantina — Mechanismus noch nicht spezifiziert (ROADMAP „Offene Pfad-Paritäts-Fragen").
 
-### Der Sicherheits-Hub ist kein vierter Pfad
+### Die Leitstelle ist kein vierter Pfad
 
-Der Sicherheits-Hub (CC Lv3) ist ein **optionaler Resilienz-Baustein** ohne Berater-Kopplung und ohne Pfadwahl-Gate (Stratege zurückgestellt, §13). Er steht außerhalb dieser Systematik.
+Die Leitstelle (CC Lv3) ist ein **optionaler Resilienz-Baustein** ohne Berater-Kopplung und ohne Pfadwahl-Gate (Stratege zurückgestellt, §13). Sie steht außerhalb dieser Systematik.
 
 ---
 ## 4c. Instanzen oder Level — die Wachstumsachse je Gebäude
@@ -734,7 +734,7 @@ Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes f
 | **Hangar** | **Instanz + Level** | Instanzen offen, Lv3 | Der einzige Fall, der beide Achsen braucht — siehe unten. |
 | **Analytik-Labor** | Level | Lv3+ | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Lv4/5 haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt, §13.3), keine reinen Gate-Stufen mehr. |
 | **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
-| **Sicherheits-Hub** | Level | Lv3 | Eine pro Kolonie. |
+| **Leitstelle** | Level | Lv3 | Eine pro Kolonie. |
 | **Handelsposten** | Level | Lv3 | Eine pro Kolonie. |
 | **Cantina** | Level | Lv3 | Zwei Kneipen in einer Kleinkolonie wirken falsch; eine bessere Kneipe nicht. |
 | **Krankenstation** | Level | Lv3 | Besser ausgestattet, nicht doppelt vorhanden. |
@@ -1410,7 +1410,7 @@ Statt gegen eine gegnerische Stärke gewürfelt wird, wirkt jede Kolonistengefah
 | Mittel | Beschädigt | `encounter_lost` | SP-Verlust |
 | Niedrig | Kritisch | `colony_threatened` | SP-Verlust + ggf. sofortiger Level-Down bzw. Instanzverlust (§7-Regeln) |
 
-Damit werden zugleich die in §14 markierten Trust-Events mit Anwendungsfällen unterlegt. Der Sicherheits-Hub schwächt alle drei Ausgänge ab (bestehende Regel, §14).
+Damit werden zugleich die in §14 markierten Trust-Events mit Anwendungsfällen unterlegt. Die Leitstelle schwächt alle drei Ausgänge ab (bestehende Regel, §14).
 
 ### Gefahrentypen
 
@@ -1940,7 +1940,7 @@ Berater-Slots öffnen nicht allein über CC-Level, sondern analog zu den Pfad-Ge
 | CC Lv3 + 2. Pfad-Gebäude | Slot 3 | **generisch:** Analytiker/Raumfahrer/Konsul |
 | CC Lv4 + 3. Pfad-Gebäude | Slot 4 | **generisch:** Analytiker/Raumfahrer/Konsul |
 
-> Es gibt **vier** Berater-Slots. Der Sicherheits-Hub ist kein Slot-Gate (Stratege zurückgestellt, siehe „Die vier Berater-Typen").
+> Es gibt **vier** Berater-Slots. Die Leitstelle ist kein Slot-Gate (Stratege zurückgestellt, siehe „Die vier Berater-Typen").
 
 **Die drei Pfade** (siehe §4 "Pfadwahl ab Sol 3"):
 
@@ -1997,7 +1997,7 @@ advisors
 
 > **Stratege zurückgestellt:** Ein fünfter Beratertyp (`strategy`) ist **nicht im Spiel**. Ob er später als eigener Pfad oder als Modifikator der drei anderen Pfade kommt, ist offen (`docs/gdd-balance-checklist.md` A.4).
 >
-> **Was das konkret heißt:** Berater-Slot 5 entfällt; es gibt maximal **vier** gleichzeitig zugewiesene Berater. Der **Sicherheits-Hub bleibt als Gebäude bestehen** — er behält seine drei eigenständigen Effekte (Vertrauens-Bonus, Event-Dämpfung, Recycling, §4), verliert aber seine Funktion als Slot-Gate. Die vom Strategen getragenen Informationsleistungen (Gefahren-Vorwarnung mit Prognose, Ziel-Erreichbarkeits-Prognose) wandern in das Kommandozentrale-Dashboard (13.4), wo sie ohnehin besser aufgehoben sind.
+> **Was das konkret heißt:** Berater-Slot 5 entfällt; es gibt maximal **vier** gleichzeitig zugewiesene Berater. Die **Leitstelle bleibt als Gebäude bestehen** — sie behält ihre drei eigenständigen Effekte (Vertrauens-Bonus, Event-Dämpfung, Recycling, §4), verliert aber ihre Funktion als Slot-Gate. Die vom Strategen getragenen Informationsleistungen (Gefahren-Vorwarnung mit Prognose, Ziel-Erreichbarkeits-Prognose) wandern in das Kommandozentrale-Dashboard (13.4), wo sie ohnehin besser aufgehoben sind.
 >
 
 Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
@@ -2237,7 +2237,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | **G1** | **Regolith ist nie bequem und nie tödlich.** Der Bestand schwingt um eine niedrige zweistellige Zahl. Ein wachsender Haufen heißt, die Kolonie ist fertig; eine Null heißt, sie stirbt. Beides beendet die Spannung. Im Sockel-only-Spätspiel kriecht der Bestand statt zu schwingen — G1 setzt einen aktiven Pfad-Hebel voraus, wie G2 und G6. |
 | **G2** | **Instandhaltung ist Routine, nicht Krise.** Gemessen am Gesamteinkommen (Sockel + aktiver Pfad-Hebel): Sie bindet ~15 % früh und ~40 % bei der Zielkolonie. Unter 10 % ist Verfall Dekoration und die USP fällt weg; über 60 % ist er eine Strafe fürs Bauen. |
 | **G3** | **Vernachlässigung kostet ein Level, nicht den Run.** Ein Level-Down ist in 5–8 Solen aufgeholt, ohne Kaskadenrisiko. |
-| **G4** | **Errichten ist eine Entscheidung, Level-Up ein Schritt.** Die Errichtung eines Pfadgebäudes kostet 5–8 Sole Sparen, ein Level-Up 1–2. Gilt für die drei Pfadgebäude Sciencelab/Hangar/Bar (einheitlich bepreist). Der Agrardom ist als Pflicht-Ramp-Gate vor CC Lv2 ausdrücklich ausgenommen — kein Pfadgebäude, steht nicht zur Abwägung; reine Infrastrukturgebäude (Wohnhabitat, Krankenstation, Sicherheits-Hub, Tempel, Monument) folgen anderen Kriterien. |
+| **G4** | **Errichten ist eine Entscheidung, Level-Up ein Schritt.** Die Errichtung eines Pfadgebäudes kostet 5–8 Sole Sparen, ein Level-Up 1–2. Gilt für die drei Pfadgebäude Sciencelab/Hangar/Bar (einheitlich bepreist). Der Agrardom ist als Pflicht-Ramp-Gate vor CC Lv2 ausdrücklich ausgenommen — kein Pfadgebäude, steht nicht zur Abwägung; reine Infrastrukturgebäude (Wohnhabitat, Krankenstation, Leitstelle, Tempel, Monument) folgen anderen Kriterien. |
 | **G5** | **Der Spieler soll 2–4 Mal pro Run an Regolith scheitern** — nicht dauernd (Grind), nicht einmal (Gate). Playtest-Trigger: mehr als 4 blockierte Sole pro Run. G5 dient zugleich als Toleranzbudget für die Restlücke eines einzelnen Hebels (Punkt 5 unten). |
 | **G6** | **Der Sockel trägt das Überleben, der Pfad-Hebel das Wachstum.** Der Sockel allein trägt eine spielbare, aber unterdimensionierte Kolonie (~57 % der Zielgröße) — genug, um nicht zu scheitern, zu wenig für die Zielkolonie. Der gewählte Pfad-Hebel schließt die Lücke auf annähernd 100 %, sobald er aktiv genutzt wird. Ein Run ohne jede Pfad-Aktivität ist im Design nicht vorgesehen (die Pfadwahl ist ab CC Lv2 verpflichtend, §4b). |
 | **G7** | **Der Spieler muss im Kopf rechnen können.** „Ich mache 20 pro Sol, das kostet 95, das sind fünf Sole." (Illustrativer Platzhalter für runde Kopfrechenzahlen — die Referenzwerte sind Frischwert und Zyklusmittel des Harvesters, siehe unten; 95 ist der einheitliche Preis der drei Pfadgebäude.) |
@@ -2280,7 +2280,7 @@ Das Dashboard (§13.4) braucht keine zwei Zeilen und §13.5 keine zwei Tabellen.
 | Klasse | Sole bis Level-Down | Rate | Gebäude |
 |---|---|---|---|
 | Robust | 50 | 0,40 | Kommandozentrale, Wohnhabitat, Kolonialdenkmal |
-| Standard | 33 | 0,60 | Agrardom, Uplink-Station, Hangar, Handelsposten, Sicherheits-Hub |
+| Standard | 33 | 0,60 | Agrardom, Uplink-Station, Hangar, Handelsposten, Leitstelle |
 | Beansprucht | 25 | 0,80 | Harvester, Analytik-Labor, Cantina, Krankenstation |
 | Fragil | 17 | 1,20 | Religiöse Stätte |
 
@@ -2558,7 +2558,7 @@ Alle Effekte wirken exakt 1 Sol (werden nach der Vertrauen-Berechnung verworfen)
 
 Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Verfall oder Fehler, Bonus für Erfolg oder Zuwendung) stehen in `config/game.php → trust.events.*` — exakte Werte nach erstem Playtest kalibrieren.
 
-> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Der **Sicherheits-Hub** dämpft diese drei Events (+ `building_level_down`) um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
+> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** dämpft diese drei Events (+ `building_level_down`) um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
 
 **Rationale für neue Events:**
 - `trade_blocked` macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
