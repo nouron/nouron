@@ -17,7 +17,7 @@ use Tests\TestCase;
  *   2. tick >= first_appearance_min (15)
  *   3. No active or future visit exists
  *   4. If a previous visit existed: current_tick - last_tick_end >= interval_min (10)
- *   5. Random chance: ~1/interval_avg per tick (deterministic seed: colony*1664525 + tick*1013904223)
+ *   5. Random chance: ~1/interval_avg per tick (deterministic, seeded via SeededRandom from colony + anchor tick)
  *
  * spawnVisit() creates a merchant_visits row (tick_start=tick, tick_end=tick+duration-1=tick+1)
  * and merchant_items rows (3 items picked from config pool).

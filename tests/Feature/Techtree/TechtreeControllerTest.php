@@ -270,10 +270,11 @@ class TechtreeControllerTest extends TestCase
 
     // Regression (Owner-Playtest 2026-08-31, follow-up): reverse of
     // required_desc — what leveling up a building unlocks (e.g. "Hangar
-    // Lv1→2 unlocks Frachter"). Colony 1's hangar (id=44) is seeded at Lv1.
+    // Lv1→2 unlocks Frachter"). The test pins colony 1's hangars (id=44) to Lv1.
     public function test_index_building_items_include_unlocks_next_level(): void
     {
         $this->app->setLocale('de');
+        $this->pinHangarsToLevelOne();
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
@@ -325,6 +326,7 @@ class TechtreeControllerTest extends TestCase
     public function test_index_building_items_include_effects_current_level(): void
     {
         $this->app->setLocale('de');
+        $this->pinHangarsToLevelOne();
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
@@ -712,5 +714,11 @@ class TechtreeControllerTest extends TestCase
         // reinvestable either until the missing building is built.
         $this->assertSame(12, DB::table('colony_researches')
             ->where('colony_id', $this->colonyIdBart)->where('research_id', 92)->value('ap_spend'));
+    }
+
+    /** The fixture's hangar 1 sits on Lv3 (active corvette, T20); these tests need Lv1. */
+    private function pinHangarsToLevelOne(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', $this->colonyIdBart)->where('building_id', 44)->update(['level' => 1]);
     }
 }

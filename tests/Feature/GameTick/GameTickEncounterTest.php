@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\GameTick;
 
+use App\Support\SeededRandom;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,18 +76,13 @@ class GameTickEncounterTest extends TestCase
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Replicates GameTick::seededRoll()'s LCG hash locally so tests can
-     * pre-select deterministic tick numbers without reflection into the
-     * private method.
+     * Mirrors GameTick::seededRoll() (shared SeededRandom helper, A44/T20) so
+     * tests can pre-select deterministic tick numbers without reflection into
+     * the private method.
      */
     private function seededRoll(int $seed, int $min, int $max): int
     {
-        if ($max <= $min) {
-            return $min;
-        }
-        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
-
-        return $min + ($hash % ($max - $min + 1));
+        return SeededRandom::int($seed, $min, $max);
     }
 
     /** Roll fraction in [0, 1) for (colony_id=1, tick=$tick, rngSeed=0) — mirrors rollStorm(). */
@@ -364,19 +360,22 @@ class GameTickEncounterTest extends TestCase
      * trigger chance is a flat 0.5 at defense Lv0 and 0.5 × (1 - 0.20) = 0.4 at
      * defense Lv5 (cumulative curve [1=>3,2=>5,3=>5,4=>4,5=>3] = 20%).
      *
-     * Ticks 11718, 11721, 11722, 11741 were pre-selected (see rollFor()) because
-     * their roll for (colony_id=1, rngSeed=0) falls in [0.4, 0.5): below the Lv0
+     * The curated ticks are selected by scanning (see rollFor()) for ticks whose
+     * roll for (colony_id=1, rngSeed=0) falls in [0.4, 0.5): below the Lv0
      * chance (must trigger) but at/above the Lv5 chance (must not trigger). This
      * is a deterministic partition, not a statistical sample — every tick in the
      * set is expected to flip outcome, none are expected to behave the same.
      */
     public function test_defense_knowledge_reduces_storm_trigger_probability(): void
     {
-        $curatedTicks = [11718, 11721, 11722, 11741];
-        foreach ($curatedTicks as $t) {
-            $this->assertGreaterThanOrEqual(0.4, $this->rollFor($t), "tick {$t} roll must be >= 0.4 (test fixture assumption)");
-            $this->assertLessThan(0.5, $this->rollFor($t), "tick {$t} roll must be < 0.5 (test fixture assumption)");
+        $curatedTicks = [];
+        for ($t = 11710; $t < 11800 && count($curatedTicks) < 4; $t++) {
+            $roll = $this->rollFor($t);
+            if ($roll >= 0.4 && $roll < 0.5) {
+                $curatedTicks[] = $t;
+            }
         }
+        $this->assertCount(4, $curatedTicks, 'test fixture assumption: at least 4 ticks with roll in [0.4, 0.5) must exist in the scanned window');
 
         config([
             'game.encounter.storm.base_chance' => 0.5,
@@ -535,6 +534,10 @@ class GameTickEncounterTest extends TestCase
             'game.encounter.instability.chance_per_sol_since_relocation' => 0.5,
             'game.encounter.instability.chance_cap' => 0.5,
             'game.encounter.cooldown_sols' => 0,
+            // Storm rolls first and wins the Sol — keep it out of the way so the
+            // curated ticks depend on the instability roll alone.
+            'game.encounter.storm.base_chance' => 0.0,
+            'game.encounter.storm.chance_per_building' => 0.0,
         ]);
 
         $harvesterOutage = function () {

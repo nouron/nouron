@@ -6,6 +6,8 @@
 - Fix: PlaytestBot ernährt die Kolonie (Agrardom Lv1 in Sol 0) und wählt die Lv2-Stufe nach echten Kosten; Phase 1 im Batch jetzt Sol 11–13 entlang der GDD-Bedarfskette.
 - Fix: T11 Bar-Fehler liefern Machine-Codes; T13 ungenutztes Vertrauens-Event `building_level_down` entfernt; T14 Schiffe in einem Hangar unter ihrer Schiffsstufe sind inaktiv (keine neuen Missionen, laufende laufen weiter); T15 Leitstellen-Recycling erst ab Ausbaustufe 3 (Bergungsdienst).
 - Fix: T17 PlaytestBot spart Regolith für den CC-Ausbau, wenn Kenntnisse daran hängen. GDD: T19 Supply-Satz §13.7 präzisiert.
+- Fix: A44 Schritt 1 — Zufallszahlen für Karte, Begegnungen, Missionen, Cantina und Corvan kommen aus einem sauber geseedeten Generator (`SeededRandom`). Vorher gab es bei echten Spielern nur wenige Dutzend Kartenvarianten, Begegnungen lösten zu oft aus und Missionen gelangen fast immer.
+- Fix: T20 — Test-/Bot-Datenbank übernimmt Gebäude- und Schiffswerte jetzt immer aus der Config (`game:sync-config` im TestSeeder); vorher liefen Tests und Bot-Batches mit veralteten, deutlich zu niedrigen Verfallsraten.
 
 ## 2026-09-24
 

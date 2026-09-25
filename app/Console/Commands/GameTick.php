@@ -25,6 +25,7 @@ use App\Services\ResourcesService;
 use App\Services\RunProgressService;
 use App\Services\TickService;
 use App\Services\TrustService;
+use App\Support\SeededRandom;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -600,16 +601,11 @@ class GameTick extends Command
     }
 
     /**
-     * Deterministic integer roll in [min, max] — LCG hash, same pattern as BarService.
+     * Deterministic integer roll in [min, max] — see SeededRandom (A44/T20).
      */
     private function seededRoll(int $seed, int $min, int $max): int
     {
-        if ($max <= $min) {
-            return $min;
-        }
-        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
-
-        return $min + ($hash % ($max - $min + 1));
+        return SeededRandom::int($seed, $min, $max);
     }
 
     // ── 4. Building decay ────────────────────────────────────────────────────

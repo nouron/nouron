@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -197,12 +198,7 @@ class MerchantService
 
     private function pseudoRand(int $seed, int $min, int $max): int
     {
-        if ($min >= $max) {
-            return $min;
-        }
-        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
-
-        return $min + ($hash % ($max - $min + 1));
+        return SeededRandom::int($seed, $min, $max);
     }
 
     public function shouldSpawn(int $colonyId, int $currentTick): bool
@@ -347,13 +343,7 @@ class MerchantService
      */
     private function deterministicTarget(int $colonyId, int $anchor, int $min, int $max): int
     {
-        if ($min >= $max) {
-            return $min;
-        }
-
-        $seed = abs(($colonyId * 1664525 + ($anchor + 1) * 1013904223) & 0x7FFFFFFF);
-
-        return $min + ($seed % ($max - $min + 1));
+        return SeededRandom::int($colonyId * 1009 + ($anchor + 1) * 7919, $min, $max);
     }
 
     public function buyItem(int $itemId, int $colonyId, int $userId): array
@@ -491,9 +481,8 @@ class MerchantService
         $picked = [];
 
         for ($i = 0; $i < $count; $i++) {
-            $seed = abs(($colonyId * 997 + $tick * 31 + $i * 127) * 1664525 + 1013904223) & 0x7FFFFFFF;
-            $idx = $seed % count($available);
-            $picked[] = array_splice($available, (int) $idx, 1)[0];
+            $idx = SeededRandom::int($colonyId * 997 + $tick * 31 + $i * 127, 0, count($available) - 1);
+            $picked[] = array_splice($available, $idx, 1)[0];
         }
 
         return $picked;

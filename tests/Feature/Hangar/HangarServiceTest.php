@@ -22,8 +22,8 @@ class HangarServiceTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
-        // TestSeeder docks a corvette at hangar instance 1 but builds the hangar on
-        // Lv1 — lift it to the corvette's class so the ship is active (GDD §7).
+        // TestSeeder docks a corvette at hangar instance 1 on Lv3 (T20); pin it
+        // explicitly so the ship stays active regardless of fixture edits (GDD §7).
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
             ->where('building_id', 44)->where('instance_id', self::HANGAR_INSTANCE)->update(['level' => 3]);
     }

@@ -202,6 +202,8 @@ class BuildResourceSinkTest extends TestCase
         // regardless of the erect cost.
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 31)
             ->update(['level' => 1, 'ap_spend' => 0, 'status_points' => 20]);
+        // The fixture leaves only 4 free supply (T20); this test is about Regolith, not the supply gate.
+        DB::table('user_resources')->where('user_id', self::BART_USER_ID)->update(['supply' => 100]);
         $before = $this->colonyRes(self::RES_REGOLITH);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 31])

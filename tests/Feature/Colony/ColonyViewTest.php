@@ -129,10 +129,12 @@ class ColonyViewTest extends TestCase
     // Regression (Owner-Playtest 2026-08-31, follow-up to the description
     // fix): "Voraussetzung" was already shown, but never the reverse — what
     // leveling THIS building up unlocks (e.g. "Hangar Lv1→2 unlocks
-    // Frachter"). Colony 1's hangar (building_id=44) is seeded at level 1.
+    // Frachter"). The test pins colony 1's hangars (building_id=44) to level 1.
     public function test_hexview_buildings_include_unlocks_next_level(): void
     {
         $this->app->setLocale('de');
+        // The fixture's hangar 1 sits on Lv3 (active corvette, T20) — pin all hangars to Lv1.
+        DB::table('colony_buildings')->where('colony_id', 1)->where('building_id', 44)->update(['level' => 1]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
             ->get(route('colony.view'));
