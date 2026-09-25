@@ -12,7 +12,7 @@ return [
     'building_infirmary' => 'Medical Station',
     'building_monument' => 'Colonial Monument',
     'building_bar' => 'Cantina',
-    'building_securityHub' => 'Security Hub',
+    'building_securityHub' => 'Response Center',
     'building_uplinkStation' => 'Uplink Station',
     'building_tradingPost' => 'Trading Post',
 
@@ -20,7 +20,7 @@ return [
     'tier_hangar_1' => 'Launch Module',
     'tier_hangar_2' => 'Cargo Bay',
     'tier_hangar_3' => 'Docking Berth',
-    'tier_securityHub_3' => 'Recycling Module',
+    'tier_securityHub_3' => 'Salvage Crew',
     'tier_infirmary_3' => 'Fully Equipped',
     'tier_bioFacility_3' => 'Emergency Reserve',
     'tier_uplinkStation_1' => 'Open Line',
@@ -39,7 +39,7 @@ return [
     'desc_techs_hangar' => 'Ships need a place to land, refuel, and be maintained. The Hangar is the starting point of every mission and gives the colony eyes to the outside.',
     'desc_techs_temple' => 'Some things cannot be paid for in Regolith and Credits. The Sacred Site provides space for what keeps colonists sane — ritual, community, a moment of stillness.',
     'desc_techs_monument' => 'At some point you ask yourself: what is all this for? The Colonial Monument provides an answer — visible, lasting, for everyone. It anchors the history of this colony in the soil of the planet.',
-    'desc_techs_securityHub' => 'No Security Hub makes the colony invulnerable — but it ensures that incidents don\'t escalate. Its operation dampens negative events and gives colonists the feeling that someone is watching.',
+    'desc_techs_securityHub' => 'No Response Center makes the colony invulnerable — but it ensures that incidents don\'t escalate. Its operation dampens negative events and gives colonists the feeling that someone is watching.',
     'desc_techs_uplinkStation' => 'Without an Uplink Station the colony is silent to the Nexus — and the Nexus only acts on request. It unlocks direct Compound import and keeps the only communication channel open.',
     'desc_techs_tradingPost' => 'A well-maintained Trading Post signals to all travellers that this colony does business. The Consul works more efficiently, the Travelling Merchant trades on better terms.',
 
@@ -149,6 +149,7 @@ return [
     'detail_count' => 'Count',
     'detail_ap_invest' => 'Invest AP',
     'detail_colony_link' => 'Build on colony',
+    'detail_harvester_acquire_hint' => 'Harvesters are not built from the build menu: another one is only available through Orin\'s offer or a salvage mission. Then place it on an explored regolith tile.',
 
     // ── Error messages (techtree.error_<code>, see TechtreeController::orderFailed)
     // Apply to buildings, knowledge and ships alike — deliberately worded without

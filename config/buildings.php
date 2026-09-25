@@ -330,10 +330,9 @@ return [
 
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
 
-    // Security Hub — CC Lv3, max 1 instance (is_instanced=0).
-    // Gate raised from CC Lv2 → Lv3 (2026-06-28): Hub is the prerequisite for the
-    // Stratege advisor slot (Slot 5), analogous to the three path buildings (Pfad
-    // A/B/C) that open Slots 2–4. Not part of the Pfadwahl build-gate group.
+    // Leitstelle (securityHub, EN "Response Center") — CC Lv3, max 1 instance
+    // (is_instanced=0). Opens no advisor slot (Stratege deferred, GDD §4/§13) and
+    // is not part of the Pfadwahl build-gate group.
     //
     // Effects:
     //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).

@@ -346,4 +346,18 @@ class ColonyViewTest extends TestCase
 
         $response->assertRedirect(route('lobby'));
     }
+
+    /**
+     * "?build=ID" deep links (techtree, hints) for a building the build menu does
+     * not offer right now must not silently open an empty build mode — the view
+     * shows this toast instead (colony-hexgrid.js init()).
+     */
+    public function test_hexview_passes_build_link_unavailable_text(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view', ['build' => 27]));
+
+        $response->assertOk();
+        $response->assertSee('buildLinkUnavailable: '.json_encode(__('colony.build_link_unavailable'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), false);
+    }
 }

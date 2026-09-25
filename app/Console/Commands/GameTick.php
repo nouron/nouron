@@ -622,7 +622,7 @@ class GameTick extends Command
         $buildingNames = DB::table('buildings')->pluck('name', 'id');
         $levelled = 0;
 
-        // Sicherheits-Hub recycling: colonies that have securityHub built get a
+        // Leitstelle (securityHub) recycling: colonies that have securityHub built get a
         // fraction of build costs back on any building level-down (recycle_pct
         // itself is read inside applyLevelDown()).
         $secHubId = (int) config('buildings.securityHub.id', 53);
@@ -726,6 +726,7 @@ class GameTick extends Command
                 'entity_name' => $buildingNames[$cb->building_id] ?? '',
                 'new_level' => $newLevel,
                 'tech_id' => $cb->building_id,
+                'instance_id' => (int) $cb->instance_id,
                 'colony_id' => $cb->colony_id,
             ]),
         ]);

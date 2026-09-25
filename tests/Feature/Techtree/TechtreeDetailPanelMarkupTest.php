@@ -105,4 +105,43 @@ class TechtreeDetailPanelMarkupTest extends TestCase
         $response->assertSee(':href="buildLink(selectedTech)"', false);
         $response->assertDontSee("'/colony/view?build='", false);
     }
+
+    /** @return array<string, mixed> */
+    private function buildingItem(int $buildingId): array
+    {
+        $item = collect($this->techtree()->viewData('pageData')['phases'])
+            ->flatMap(fn ($phase) => $phase['items'])
+            ->first(fn ($item) => $item['type'] === 'building' && (int) $item['id'] === $buildingId);
+        $this->assertNotNull($item, "building {$buildingId} must be a techtree node");
+
+        return $item;
+    }
+
+    /**
+     * The Harvester never appears in the colony build menu — the first instance
+     * exists from colony start, the second is earned via Orin or the salvage
+     * mission and placed from the tile panel of a regolith tile (GDD §4c). A
+     * "?build=27" link would open an empty build mode, so the panel shows how the
+     * next instance is obtained instead.
+     */
+    public function test_harvester_is_not_offered_via_build_menu_and_explains_acquisition(): void
+    {
+        $harvester = $this->buildingItem(27);
+
+        $this->assertFalse($harvester['menu_buildable']);
+        $this->assertSame(__('techtree.detail_harvester_acquire_hint'), $harvester['acquire_hint']);
+    }
+
+    public function test_menu_buildable_buildings_keep_the_build_link_without_hint(): void
+    {
+        $housing = $this->buildingItem(28);
+
+        $this->assertTrue($housing['menu_buildable']);
+        $this->assertNull($housing['acquire_hint']);
+    }
+
+    public function test_detail_panel_renders_acquire_hint_for_non_menu_buildings(): void
+    {
+        $this->techtree()->assertSee('x-if="acquireHint(selectedTech)"', false);
+    }
 }

@@ -161,14 +161,23 @@ function colonyHexView(config) {
                 if (buildId) {
                     await this.toggleBuildMode();
                     const match = this.availableBuildings.find((b) => b.building_id === buildId);
-                    if (match) this.selectPendingBuilding(match);
+                    if (match) {
+                        this.selectPendingBuilding(match);
+                    } else if (this.buildMode) {
+                        // Not in the build menu right now (prerequisite, instance cap,
+                        // or never menu-built like the Harvester): leave build mode
+                        // and say so instead of an empty build list.
+                        this.cancelBuildMode();
+                        this.showToast(this.i18n.buildLinkUnavailable, 'info');
+                    }
                 }
                 // Deep link to one building instance (?building=ID&instance=N), used by
-                // the techtree detail panel and building entity chips. An unknown or
-                // unplaced instance silently opens the view without a selection.
+                // the techtree detail panel and building entity chips. Without an
+                // instance the first placed one is selected; an unknown or unplaced
+                // instance silently opens the view without a selection.
                 const linkedBuildingId = parseInt(params.get('building'), 10);
                 if (!buildId && linkedBuildingId) {
-                    this.selectBuildingInstance(linkedBuildingId, parseInt(params.get('instance'), 10) || 1);
+                    this.selectBuildingInstance(linkedBuildingId, parseInt(params.get('instance'), 10) || null);
                 }
             });
 
@@ -255,8 +264,15 @@ function colonyHexView(config) {
 
         // Selects the tile of a placed building instance and pans the grid to it
         // if it lies outside the visible viewBox (mobile clips to the colony zone).
+        // instanceId null → the lowest placed instance of that building.
         selectBuildingInstance(buildingId, instanceId) {
-            const building = this.buildings.find((b) => b.building_id === buildingId && b.instance_id === instanceId);
+            const isPlaced = (b) => b.building_id === this.ccBuildingId || (b.tile_x !== null && b.tile_y !== null);
+            const building =
+                instanceId === null
+                    ? this.buildings
+                          .filter((b) => b.building_id === buildingId && isPlaced(b))
+                          .sort((a, b) => a.instance_id - b.instance_id)[0]
+                    : this.buildings.find((b) => b.building_id === buildingId && b.instance_id === instanceId);
             if (!building) return;
             const isCc = building.building_id === this.ccBuildingId;
             if (!isCc && (building.tile_x === null || building.tile_y === null)) return;

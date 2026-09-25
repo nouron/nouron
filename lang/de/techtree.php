@@ -12,7 +12,7 @@ return [
     'building_infirmary' => 'Krankenstation',
     'building_monument' => 'Kolonialdenkmal',
     'building_bar' => 'Cantina',
-    'building_securityHub' => 'Sicherheits-Hub',
+    'building_securityHub' => 'Leitstelle',
     'building_uplinkStation' => 'Uplink-Station',
     'building_tradingPost' => 'Handelsposten',
 
@@ -20,7 +20,7 @@ return [
     'tier_hangar_1' => 'Startmodul',
     'tier_hangar_2' => 'Ladebucht',
     'tier_hangar_3' => 'Anlegestelle',
-    'tier_securityHub_3' => 'Recyclingmodul',
+    'tier_securityHub_3' => 'Bergungsdienst',
     'tier_infirmary_3' => 'Vollausstattung',
     'tier_bioFacility_3' => 'Notvorrat',
     'tier_uplinkStation_1' => 'Erster Draht',
@@ -39,7 +39,7 @@ return [
     'desc_techs_hangar' => 'Schiffe brauchen einen Ort zum Landen, Auftanken, Warten. Der Hangar ist Ausgangspunkt jeder Mission und verleiht der Kolonie Augen nach draußen.',
     'desc_techs_temple' => 'Manche Dinge lassen sich nicht mit Regolith und Credits bezahlen. Die Religiöse Stätte bietet Raum für das, was Kolonisten bei Verstand hält — Ritual, Gemeinschaft, Innehalten.',
     'desc_techs_monument' => 'Irgendwann fragt man sich: wofür das alles? Das Kolonialdenkmal gibt eine Antwort — sichtbar, dauerhaft, für alle. Es verankert die Geschichte dieser Kolonie im Boden des Planeten.',
-    'desc_techs_securityHub' => 'Kein Sicherheits-Hub macht die Kolonie unverwundbar — aber er sorgt dafür, dass Zwischenfälle nicht eskalieren. Sein Betrieb dämpft negative Ereignisse und gibt den Kolonisten das Gefühl, dass jemand aufpasst.',
+    'desc_techs_securityHub' => 'Keine Leitstelle macht die Kolonie unverwundbar — aber sie sorgt dafür, dass Zwischenfälle nicht eskalieren. Ihr Betrieb dämpft negative Ereignisse und gibt den Kolonisten das Gefühl, dass jemand aufpasst.',
     'desc_techs_uplinkStation' => 'Ohne Uplink-Station ist die Kolonie stumm gegenüber dem Nexus — und der Nexus handelt nur auf Anfrage. Sie schaltet den Werkstoff-Direktimport frei und hält den einzigen Kommunikationskanal offen.',
     'desc_techs_tradingPost' => 'Ein gut gepflegter Handelsposten ist ein Signal an alle Durchreisenden, dass diese Kolonie Geschäfte macht. Der Konsul arbeitet effizienter, der Reisende Händler handelt zu besseren Konditionen.',
 
@@ -156,6 +156,7 @@ return [
     'detail_count' => 'Anzahl',
     'detail_ap_invest' => 'AP investieren',
     'detail_colony_link' => 'Auf Kolonie bauen',
+    'detail_harvester_acquire_hint' => 'Harvester entstehen nicht im Baumenü: Eine weitere Anlage gibt es nur über Orins Angebot oder eine Bergungsmission. Danach platzierst du sie auf einem erkundeten Regolith-Tile.',
 
     // ── Fehlermeldungen (techtree.error_<code>, siehe TechtreeController::orderFailed)
     // Gelten für Gebäude, Kenntnisse und Schiffe gleichermaßen — bewusst ohne

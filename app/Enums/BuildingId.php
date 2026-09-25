@@ -23,4 +23,15 @@ enum BuildingId: int
     case Bar = 52;
     case UplinkStation = 54;
     case TradingPost = 55;
+
+    /**
+     * Whether the colony build menu offers this building. The Command Center is
+     * anchored at colony start; Harvester instances are never built from the menu —
+     * the first exists from colony start, the second is earned (Orin / salvage
+     * mission) and placed from the tile panel of a regolith tile (GDD §4c).
+     */
+    public static function isBuildMenuBuilding(int $buildingId): bool
+    {
+        return ! in_array($buildingId, [self::CommandCenter->value, self::Harvester->value], true);
+    }
 }

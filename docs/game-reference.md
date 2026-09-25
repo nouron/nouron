@@ -32,7 +32,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Hangar** | Lv2 | 95 Rg | 6 | 3 | ∞ |
 | **Religiöse Stätte** | Lv4 | 50 Rg / 15 Wk | 4 | 1 | 1 |
 | **Kolonialdenkmal** | Lv5 | 60 Rg / 25 Wk | 2 | 1 | 1 |
-| **Security Hub** | Lv3 | 80 Rg / 25 Wk | 8 | 3 | 1 |
+| **Leitstelle** | Lv3 | 80 Rg / 25 Wk | 8 | 3 | 1 |
 | **Uplink Station** | Lv2 | 80 Rg | 6 | 3 | 1 |
 | **Trading Post** | Lv4 | 100 Rg / 25 Wk | 6 | 3 | 1 |
 
@@ -68,7 +68,7 @@ Decay-Rate = **Status Points pro Tick** verloren. Überkapazität beschleunigt d
 | Krankenstation | Beansprucht | 0.80 | 20 | ~25 Sol |
 | Religiöse Stätte | Fragil | 1.20 | 20 | ~17 Sol |
 | Kolonialdenkmal | Robust | 0.40 | 20 | ~50 Sol |
-| Security Hub | Standard | 0.60 | 20 | ~33 Sol |
+| Leitstelle | Standard | 0.60 | 20 | ~33 Sol |
 | Uplink Station | Standard | 0.60 | 20 | ~33 Sol |
 | Trading Post | Standard | 0.60 | 20 | ~33 Sol |
 
@@ -522,7 +522,7 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 | Krankenstation | +5/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
 | Religiöse Stätte | +3/Lv | Besinnlichkeit (Lv1 only) |
 | Kolonialdenkmal | +3/Lv | Stolz (Lv1 only) |
-| Security Hub | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |
+| Leitstelle | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |
 | Uplink Station | 0 | Deep-Scan −1 AP (Lv2+); Merchant frequency ↑ |
 | Trading Post | 0 | Handelsvorteil-Kanalrabatt 12% je Ausbaustufe: Lv1 Bar-Kanal, Lv2 + Merchant-Kanal, Lv3 + Nexus-Kanal (kumulativ, additiv mit Konsul-Rang/`trade`-Kenntnis im Handelsvorteil, A13) |
 

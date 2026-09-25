@@ -140,7 +140,7 @@ class CommLogController extends BaseController
     private function collapseKey(array $entry): ?string
     {
         return match ($entry['event']) {
-            'colony.building_invested' => $entry['sol'].':building_invested:'.($entry['params']['building_id'] ?? ''),
+            'colony.building_invested' => $entry['sol'].':building_invested:'.($entry['params']['building_id'] ?? '').':'.($entry['params']['instance_id'] ?? ''),
             'colony.tile_explored' => $entry['sol'].':tile_explored',
             default => null,
         };
@@ -277,6 +277,34 @@ class CommLogController extends BaseController
         ];
     }
 
+    /**
+     * Tooltip of a building chip (GDD entity-chips "Zum Tile"): deep link into the
+     * colony view when the log entry names the building — with the instance when
+     * the entry recorded it, otherwise the colony view picks the first placed
+     * instance. Legacy entries without a building_id keep the Nexus-Db link.
+     *
+     * @param  array<string, mixed>  $params
+     * @return array<string, mixed>
+     */
+    private function buildingTooltip(array $params, ?int $buildingId, ?int $level): array
+    {
+        if ($buildingId === null || $buildingId <= 0) {
+            return ['level' => $level, 'link' => '/nexus-db'];
+        }
+
+        $query = ['building' => $buildingId];
+        $instanceId = isset($params['instance_id']) && is_numeric($params['instance_id']) ? (int) $params['instance_id'] : 0;
+        if ($instanceId > 0) {
+            $query['instance'] = $instanceId;
+        }
+
+        return [
+            'level' => $level,
+            'link' => route('colony.view', $query),
+            'link_label' => __('entity_chip.label_tile_link'),
+        ];
+    }
+
     /** @return array<int, array<string, mixed>> */
     private function descBuildingPlaced(array $params): array
     {
@@ -288,10 +316,7 @@ class CommLogController extends BaseController
 
         // lang: comm_log.desc.building_placed = ':name platziert.'
         return [
-            $this->entitySeg('building', (string) $bKey, $name, [
-                'level' => null,
-                'link' => '/nexus-db',
-            ]),
+            $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, null)),
             $this->seg(' platziert.'),
         ];
     }
@@ -313,10 +338,7 @@ class CommLogController extends BaseController
             return [
                 $this->amountSeg('AP', $ap, 'ap'),
                 $this->seg(' in '),
-                $this->entitySeg('building', (string) $bKey, $name, [
-                    'level' => $newLevel,
-                    'link' => '/nexus-db',
-                ]),
+                $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, $newLevel)),
                 $this->seg(' investiert. Bau abgeschlossen — Level '.$newLevel.' erreicht.'),
             ];
         }
@@ -327,10 +349,7 @@ class CommLogController extends BaseController
         return [
             $this->amountSeg('AP', $ap, 'ap'),
             $this->seg(' in '),
-            $this->entitySeg('building', (string) $bKey, $name, [
-                'level' => null,
-                'link' => '/nexus-db',
-            ]),
+            $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, null)),
             $this->seg(' investiert ('.$done.' / '.$total.' AP).'),
         ];
     }
@@ -348,10 +367,7 @@ class CommLogController extends BaseController
 
         // lang: comm_log.desc.building_repaired = ':name repariert (:current / :max Zustand).'
         return [
-            $this->entitySeg('building', (string) $bKey, $name, [
-                'level' => null,
-                'link' => '/nexus-db',
-            ]),
+            $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, null)),
             $this->seg(' repariert ('.$sp.' / '.($maxSp ?: '?').' Zustand).'),
         ];
     }
@@ -479,10 +495,7 @@ class CommLogController extends BaseController
 
         return [
             $this->seg('Sturm: '),
-            $this->entitySeg('building', (string) $bKey, $name, [
-                'level' => null,
-                'link' => '/nexus-db',
-            ]),
+            $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, null)),
             $this->seg($suffix),
         ];
     }
@@ -510,17 +523,18 @@ class CommLogController extends BaseController
         }
 
         $chipType = ($entityType === 'knowledge') ? 'knowledge' : 'building';
-        $link = '/nexus-db';
+        // Building level-downs name the building by tech_id (GameTick::applyLevelDown()).
+        $buildingId = $chipType === 'building' && is_numeric($techId) ? (int) $techId : null;
+        $tooltip = $chipType === 'building'
+            ? $this->buildingTooltip($params, $buildingId, $newLevel)
+            : ['level' => $newLevel, 'link' => '/nexus-db'];
         $suffix = $newLevel !== null
             ? ' mangels Wartung auf '.$newLevel.' gesunken.'
             : ' mangels Wartung gesunken.';
 
         return [
             $this->seg('Level für '),
-            $this->entitySeg($chipType, (string) $entityKey, $name, [
-                'level' => $newLevel,
-                'link' => $link,
-            ]),
+            $this->entitySeg($chipType, (string) $entityKey, $name, $tooltip),
             $this->seg($suffix),
         ];
     }
