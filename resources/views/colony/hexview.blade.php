@@ -431,8 +431,14 @@
                                         <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"
                                                 x-text="`${b.supply_cost} KOL`"></span>
-                                            <span class="building-list-cost" x-show="b.build_cost && b.build_cost[3]"
-                                                x-text="`${b.build_cost?.[3]} Rg`"></span>
+                                            {{-- Placement pays erect cost + level 1 in one go (T9):
+                                             total first, breakdown next to it. --}}
+                                            <span class="building-list-cost"
+                                                x-show="b.placement_cost && b.placement_cost[3]"
+                                                x-text="`${b.placement_cost?.[3]} Rg`"></span>
+                                            <span class="building-list-cost-breakdown"
+                                                x-show="b.build_cost && b.build_cost[3] && b.first_level_regolith > 0"
+                                                x-text="`(${b.build_cost?.[3]} {{ __("colony.build_cost_erect") }} + ${b.first_level_regolith} {{ __("colony.build_cost_first_level") }})`"></span>
                                             <span class="building-list-cost building-list-cost--compounds"
                                                 x-show="b.build_cost && b.build_cost[4]"
                                                 x-text="`${b.build_cost?.[4]} Wk`"></span>
@@ -483,6 +489,15 @@
                                         x-if="buildingCanLevelUp(selectedBuilding) && selectedBuilding.unlocks_next_level && selectedBuilding.unlocks_next_level.length > 0">
                                         <p class="tile-building-unlocks"
                                             x-text="`{{ __("techtree.detail_unlocks_next_level") }}: ${selectedBuilding.unlocks_next_level.map((l) => l.text).join(', ')}`">
+                                        </p>
+                                    </template>
+
+                                    {{-- The 0 -> 1 step of a placed site was paid on
+                                     placement (T9) — say so instead of a cost line. --}}
+                                    <template
+                                        x-if="buildingCanLevelUp(selectedBuilding) && selectedBuilding.first_level_prepaid">
+                                        <p class="tile-building-levelup-cost">
+                                            {{ __("colony.first_level_prepaid") }}
                                         </p>
                                     </template>
 

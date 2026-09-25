@@ -44,6 +44,18 @@ class RunReportResourceSourcesTest extends TestCase
         ], $overrides);
     }
 
+    public function test_snapshot_reports_the_hunger_streak(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $report = new RunReport(1);
+        DB::table('glx_colonies')->where('id', $bot->colonyId)->update(['hunger_streak' => 3]);
+
+        $report->snapshot($bot);
+        $data = $report->build($bot);
+
+        $this->assertSame(3, $data['sols'][0]['hunger_streak']);
+    }
+
     public function test_trade_source_counted_from_accept_bar_offer_delta(): void
     {
         $bot = BotSession::boot($this, 1);

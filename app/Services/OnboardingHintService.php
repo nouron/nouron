@@ -21,6 +21,7 @@ class OnboardingHintService
         private readonly OnboardingTriggerService $onboardingTriggerService,
         private readonly ColonyTileService $colonyTileService,
         private readonly TickService $tickService,
+        private readonly BuildingCostService $buildingCostService,
     ) {}
 
     /**
@@ -936,8 +937,9 @@ class OnboardingHintService
      * "Build X" hints (Cantina/Agrardom/Analytik) must not nag the player to
      * place a building they can't currently afford — same bug class as the
      * Sol-1 Agrardom leak, generalized: checks remaining Bau-AP this Sol AND
-     * Regolith/Werkstoffe/Supply against the building's actual cost
-     * (config/buildings.php, canonical — mirrors ColonyController::placeBuilding).
+     * Regolith/Werkstoffe/Supply against the building's actual placement cost
+     * (BuildingCostService::placementCost() — erect cost + first-level Regolith,
+     * the same amount ColonyController::placeBuilding charges, T9).
      * Placing always costs exactly 1 Bau-AP regardless of building type.
      */
     private function canAffordBuildingPlacement(int $colonyId, int $buildingId): bool
@@ -952,8 +954,9 @@ class OnboardingHintService
             return true; // unknown building — don't block on a config lookup miss
         }
 
-        $regolithNeeded = (int) ($cfg['build_cost'][3] ?? 0);
-        $compoundsNeeded = (int) ($cfg['build_cost'][4] ?? 0);
+        $placementCost = $this->buildingCostService->placementCost($buildingId);
+        $regolithNeeded = (int) ($placementCost[3] ?? 0);
+        $compoundsNeeded = (int) ($placementCost[4] ?? 0);
         $supplyNeeded = (int) ($cfg['supply_cost'] ?? 0);
 
         if ($regolithNeeded > 0) {

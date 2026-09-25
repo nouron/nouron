@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
+use App\Services\BuildingCostService;
 use App\Services\CharacterCodexService;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
@@ -50,6 +51,7 @@ class ColonyController extends BaseController
         private readonly NexusImportService $nexusImportService,
         private readonly OvercapService $overcapService,
         private readonly BuildingService $buildingService,
+        private readonly BuildingCostService $buildingCostService,
     ) {
         parent::__construct($tick);
     }
@@ -65,19 +67,6 @@ class ColonyController extends BaseController
      */
     private const PATH_BUILDING_IDS = [31, 44, 52];
 
-    /**
-     * One-time erect cost for a building, as [resource_id => amount].
-     * Canonical source: config/buildings.php `build_cost`. CC + Harvester have none.
-     *
-     * @return array<int, int>
-     */
-    private function buildCostFor(int $buildingId): array
-    {
-        $cfg = collect(config('buildings'))->firstWhere('id', $buildingId);
-
-        return array_map('intval', $cfg['build_cost'] ?? []);
-    }
-
     /** Whether an Agrardom (bioFacility) has been placed in the given colony. */
     private function agrardomPlaced(int $colonyId): bool
     {
@@ -86,29 +75,6 @@ class ColonyController extends BaseController
             ->where('building_id', (int) config('buildings.bioFacility.id', 41))
             ->whereNotNull('tile_x')
             ->exists();
-    }
-
-    /** Flat Regolith cost for a level-up on any non-CC, non-Harvester building (GDD §13.7). */
-    private const LEVELUP_REGOLITH_FLAT = 25;
-
-    /**
-     * Regolith consumed when a building completes a level-up.
-     * Rules: CommandCenter scales as target_level × cc_upgrade_regolith_per_level;
-     * Harvester is free (bootstrap); all others pay a flat rate, independent of build_cost.
-     */
-    private function levelupRegolithFor(int $buildingId, int $targetLevel): int
-    {
-        if ($buildingId === BuildingId::Harvester->value) {
-            return 0;
-        }
-
-        if ($buildingId === BuildingId::CommandCenter->value) {
-            $perLevel = (int) (collect(config('buildings'))->firstWhere('id', $buildingId)['cc_upgrade_regolith_per_level'] ?? 30);
-
-            return $targetLevel * $perLevel;
-        }
-
-        return self::LEVELUP_REGOLITH_FLAT;
     }
 
     public function hexview(): View
@@ -225,7 +191,9 @@ class ColonyController extends BaseController
                     $buildingNames
                 );
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
-                $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
+                // The 0 -> 1 step of a placed site was paid on placement (T9) — 0 then.
+                $b->levelup_cost = $this->buildingCostService->levelupRegolithDue($b);
+                $b->first_level_prepaid = BuildingCostService::firstLevelPrepaid($b);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
                 $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
 
@@ -356,7 +324,12 @@ class ColonyController extends BaseController
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
                 'supply_cost' => (int) $b->supply_cost,
-                'build_cost' => $this->buildCostFor($b->id),   // [resource_id => amount]
+                // Placing pays erect cost + first-level Regolith in one go (T9):
+                // build_cost/first_level_regolith are the breakdown, placement_cost
+                // the amount actually charged. All [resource_id => amount].
+                'build_cost' => $this->buildingCostService->erectCost((int) $b->id),
+                'first_level_regolith' => $this->buildingCostService->firstLevelRegolith((int) $b->id),
+                'placement_cost' => $this->buildingCostService->placementCost((int) $b->id),
             ])
             ->values();
 
@@ -384,6 +357,14 @@ class ColonyController extends BaseController
         if (! $tile) {
             return $this->fail('tile_not_found');
         }
+
+        // The CC centre (0,0) is always occupied: the Command Center has no tile row
+        // (tile_x = null) and is only drawn there by the client — never trust the
+        // client to keep it free. Covers every placement path, Harvester included.
+        if ((int) $data['q'] === 0 && (int) $data['r'] === 0) {
+            return $this->fail('tile_occupied');
+        }
+
         $isHarvester = (int) $data['building_id'] === BuildingId::Harvester->value;
 
         if ($isHarvester) {
@@ -500,9 +481,11 @@ class ColonyController extends BaseController
         // Resource + supply gate. Harvester relocation (and both instances — the first
         // stays the bootstrap exemption, the second is now paid in Credits via Orin or
         // in reparation effort via the salvage mission, not in Regolith at placement
-        // time, GDD §4c 2026-08-05) is free — CC/Harvester carry no build_cost. Checked
-        // before any DB write so a failed gate leaves the colony untouched.
-        $buildCost = $isHarvester ? [] : $this->buildCostFor((int) $data['building_id']);
+        // time, GDD §4c 2026-08-05) is free — CC/Harvester carry no build_cost. Every
+        // other placement pays erect cost + the 0 -> 1 level-up Regolith in one go
+        // (Owner rule 2026-09-25, T9) — the first invest cycle afterwards is free.
+        // Checked before any DB write so a failed gate leaves the colony untouched.
+        $buildCost = $isHarvester ? [] : $this->buildingCostService->placementCost((int) $data['building_id']);
         $chargesBuildCost = ! $isHarvester;
 
         // The first Harvester is the unchecked bootstrap (GDD §6 "Supply als Bau-Gate");
@@ -622,8 +605,9 @@ class ColonyController extends BaseController
             $this->advisorService->lockActionPoints($colony->id, $apCost);
         }
 
-        // Deduct erect cost (Regolith + any Werkstoffe). Harvester relocation (and its
-        // bootstrap instance) is free — the second instance's flat Regolith cost is not.
+        // Deduct the placement cost (erect cost + first-level Regolith, plus any
+        // Werkstoffe). Every Harvester placement — relocation, bootstrap instance,
+        // entitlement-based second instance — is Regolith-free.
         if ($chargesBuildCost && ! config('game.bypass.resource_costs') && $buildCost !== []) {
             $costs = [];
             foreach ($buildCost as $resourceId => $amount) {
@@ -724,10 +708,12 @@ class ColonyController extends BaseController
         // STARTS the cycle (ap_spend 0 → >0) — mirrors the erect-cost pattern (paid at
         // build start, not completion) so the sidebar's "Kosten bei Baubeginn" copy is
         // accurate. A shortfall blocks the invest entirely, before any AP is spent.
+        // The 0 -> 1 cycle of a placed site was already paid on placement (T9) —
+        // levelupRegolithDue() returns 0 for it, whatever its ap_spend reads.
         $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $building->ap_for_levelup);
         $isCycleStart = (int) $row->ap_spend === 0;
         $levelupRegolith = $isCycleStart
-            ? $this->levelupRegolithFor($buildingId, (int) $row->level + 1)
+            ? $this->buildingCostService->levelupRegolithDue($row)
             : 0;
 
         if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
@@ -1456,7 +1442,8 @@ class ColonyController extends BaseController
             DB::table('buildings')->pluck('name', 'id')
         );
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
-        $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
+        $row->levelup_cost = $this->buildingCostService->levelupRegolithDue($row);
+        $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
         $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
 

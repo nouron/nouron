@@ -773,10 +773,13 @@ function colonyHexView(config) {
         // Build chip affordability: placing always costs exactly 1 AP
         // (see ColonyController::placeBuilding) — full resource/supply cost is
         // paid on placement too, so all three gates must clear up front.
+        // placement_cost = erect cost + first-level Regolith (T9), the amount
+        // the server actually charges.
         canAffordBuilding(b) {
+            const cost = b.placement_cost ?? b.build_cost;
             if (this.apAvailable < 1) return false;
-            if ((b.build_cost?.[3] ?? 0) > this.regolith) return false;
-            if ((b.build_cost?.[4] ?? 0) > this.werkstoffe) return false;
+            if ((cost?.[3] ?? 0) > this.regolith) return false;
+            if ((cost?.[4] ?? 0) > this.werkstoffe) return false;
             if ((b.supply_cost ?? 0) > this.freeSupply) return false;
             return true;
         },

@@ -1288,6 +1288,47 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_agrardome', $hint['key'] ?? null);
     }
 
+    /**
+     * T9 (Owner rule 2026-09-25): placing pays erect cost + the 0 -> 1 level-up
+     * Regolith in one go (bioFacility: 70 + 25). Enough for the erect cost alone
+     * is not enough to place — the hint must not nag then.
+     */
+    public function test_agrardome_hint_silent_when_regolith_covers_only_the_erect_cost(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 41)->delete();
+        DB::table('colony_resources')
+            ->where('colony_id', $this->colonyId)->where('resource_id', 3)->update(['amount' => 94]);
+        $this->setRunTick(6);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_agrardome', $hint['key'] ?? null);
+    }
+
+    public function test_agrardome_hint_fires_when_regolith_covers_the_full_placement_cost(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 41)->delete();
+        DB::table('colony_resources')
+            ->where('colony_id', $this->colonyId)->where('resource_id', 3)->update(['amount' => 95]);
+        $this->setRunTick(6);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_agrardome', $hint['key'] ?? null);
+    }
+
     // ── Rank priority ─────────────────────────────────────────────────────────
 
     public function test_higher_rank_wins_over_lower_rank(): void

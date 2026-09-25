@@ -159,7 +159,8 @@ class OnboardingService
         $colonyResources = [
             // 200 → 300 → 340 (GDD §13.7 Nachtrag 2026-08-12 + Korrektur 2026-08-13):
             // die erste Bedarfsrechnung hatte den 0→1-Level-Up-Schritt (25 Rg,
-            // ColonyController::LEVELUP_REGOLITH_FLAT) für die Pfadgebäude komplett
+            // config('game.build.levelup_regolith_flat'), seit T9 beim Platzieren
+            // bezahlt) für die Pfadgebäude komplett
             // und für bioFacility teilweise unterschlagen — korrigierte Bedarfssumme
             // 535 Rg statt 500. Verschiebt den Floor auf ≈Sol 15,1.
             // 340 → 370 (Nachtrag 2026-08-16, game-designer review): GDD §9-Begegnungen

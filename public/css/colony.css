@@ -1441,6 +1441,12 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     border-color: #a8cfe6;
 }
 
+/* Erect cost + level 1 breakdown next to the placement total (T9). */
+.building-list-cost-breakdown {
+    font-size: 0.68rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
 /* ── Signal chip ─────────────────────────────────────────────────────────── */
 
 .chip--signal {

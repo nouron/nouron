@@ -9,6 +9,10 @@ return [
     'invest_ap' => 'Ausbauen',
     'levelup_cost_label' => 'Kosten:',
     'levelup_cost_suffix' => 'bei Baubeginn',
+    // T9 (Owner-Regel 2026-09-25): Platzieren bezahlt Errichtung + Stufe 1 in einem.
+    'build_cost_erect' => 'Bau',
+    'build_cost_first_level' => 'Stufe 1',
+    'first_level_prepaid' => 'Stufe 1 ist mit der Platzierung bezahlt — der Ausbau kostet nur noch AP.',
     'repair' => 'Reparieren',
     'ap_per_tile' => '1 AP/Feld',
     // Owner-Fund 2026-09-05: sichtbare Zustandsanzeige über dem Reparieren-Button.

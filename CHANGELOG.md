@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-25
+
+- Fix: T9 — beim Platzieren wird jetzt der volle Regolith bis Stufe 1 abgebucht (Errichtung + Stufe-1-Kosten in einer Zahlung, vorher kostete der Sprung 0→1 nie Regolith); Bauliste zeigt die Summe mit Aufschlüsselung, Seitenleiste „Stufe 1 bezahlt". Wert `game.build.levelup_regolith_flat`. Tile (0,0) ist serverseitig gesperrt.
+- Fix: PlaytestBot ernährt die Kolonie (Agrardom Lv1 in Sol 0) und wählt die Lv2-Stufe nach echten Kosten; Phase 1 im Batch jetzt Sol 11–13 entlang der GDD-Bedarfskette.
+
 ## 2026-09-24
 
 - Feature: A14 Überkapazität — Modell „Unterbesetzung" (GDD §6): Obdachlose Kolonisten senken das Vertrauen ab Sol 1 eskalierend, nach kurzer Frist wandern sie ab; danach sinken Rohstoffproduktion und Nahrungsbedarf anteilig und Bauen ist gesperrt, bis neuer Wohnraum die Kolonisten zurückholt. „Wegschicken" im Kolonisten-Popup kürzt die Frist gegen AP ab. Gebäude verlieren keine Stufen; `decay.overcap_factor` gestrichen. Nach dem Deploy `php artisan migrate`.
