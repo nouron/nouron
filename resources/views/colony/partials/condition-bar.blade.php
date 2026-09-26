@@ -2,7 +2,8 @@
     Condition (status points) bar, embedded as a segmented footer strip inside
     the Reparieren button. One segment per status point; gaps reveal the button
     background as notches. On desktop hover ($hoverExpr true) the next segment
-    lights up as a ghost to preview the +1 a repair adds. Filled-segment color
+    lights up as a ghost to preview the +1 a repair adds (floored, since
+    decay leaves fractional SP and a click adds exactly one full point). Filled-segment color
     tracks conditionTone() (neutral/warning/danger — Owner-Fund 2026-09-05):
     healthy stays white, damaged turns amber, critical uses a dark fill with a
     light outline since red segments would be invisible on the red button.
@@ -20,7 +21,7 @@
         <span class="btn-seg"
             :class="{
                 'btn-seg--filled': i <= selectedBuilding.status_points,
-                'btn-seg--ghost': ({{ $hoverExpr }}) && i === selectedBuilding.status_points + 1,
+                'btn-seg--ghost': ({{ $hoverExpr }}) && i === Math.floor(selectedBuilding.status_points) + 1,
             }"></span>
     </template>
 </span>

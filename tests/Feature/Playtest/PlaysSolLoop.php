@@ -16,7 +16,11 @@ namespace Tests\Feature\Playtest;
  */
 trait PlaysSolLoop
 {
-    private const MAX_ACTIONS_PER_SOL = 50;
+    // Safety net against a rule that keeps "succeeding" without changing state, not
+    // a pacing limit. 50 aborted a legitimate Sol (baseline 2026-09-26, seed 7 Sol 74:
+    // 63 actions on ~33 AP plus bar/merchant bonus AP); 200 leaves ample headroom
+    // while an endless loop still trips it within a fraction of a second.
+    private const MAX_ACTIONS_PER_SOL = 200;
 
     /**
      * Advance Sols by firing rules each Sol until the run ends, tick_limit+5

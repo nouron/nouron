@@ -37,6 +37,23 @@ class BotStrategy
     // up whichever path building is placed first without starving either hire.
     private const HIRE_ORDER = [35, 36, 89, 92];
 
+    // Repair tiers as a share of max_status_points: below CRITICAL a building is
+    // repaired first thing; below MAINTENANCE it is topped up once the Sol's
+    // building work is done (baseline 2026-09-26, B3).
+    private const REPAIR_CRITICAL_PCT = 0.3;
+
+    private const REPAIR_MAINTENANCE_PCT = 0.6;
+
+    // Below this Regolith stock the bot sends a Regolith mission if a ship can fly one.
+    private const REGOLITH_SCARCE_BELOW = 50;
+
+    // [mission_key, difficulty] in preference order — each needs its own ship class
+    // (config/missions.php `ships`), so the first one a docked ship can fly wins.
+    private const REGOLITH_MISSIONS = [
+        ['mission_supply_run', 'easy'],
+        ['mission_prospecting_flight', 'normal'],
+    ];
+
     /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
@@ -45,9 +62,11 @@ class BotStrategy
         return [
             [
                 'name' => 'repair_critical',
+                // Below REPAIR_CRITICAL_PCT a building is close to losing a level —
+                // repaired before anything else. CC and Harvester repairs are
+                // AP-only, so they don't wait for Regolith (see repairCandidate()).
                 'when' => fn (BotSession $b) => self::availableAp($b) >= 1
-                    && self::regolith($b) >= config('game.repair.regolith_per_click', 2)
-                    ? self::repairCandidate($b)
+                    ? self::repairCandidate($b, self::REPAIR_CRITICAL_PCT, true)
                     : null,
                 'do' => fn (BotSession $b, object $row) => $b->act('repair_critical', 'POST', '/colony/building/repair', [
                     'building_id' => $row->building_id,
@@ -191,6 +210,19 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'dispatch_regolith_mission',
+                // Baseline 2026-09-26 (B5): dispatch_mission only ever sent recon, so
+                // the Regolith missions (freighter supply run = Path B, drone
+                // prospecting flight) never flew and a colony past harvester
+                // exhaustion had no Regolith alternative. Ahead of the compounds
+                // mission: while Regolith is scarce it is the tighter bottleneck.
+                'when' => fn (BotSession $b) => self::regolithMissionCandidate($b),
+                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_regolith_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                    'mission_key' => $candidate['mission_key'],
+                    'difficulty' => $candidate['difficulty'],
+                ]),
+            ],
+            [
                 'name' => 'dispatch_compounds_mission',
                 // Round 2 of A37-Rest (2026-09-14, task_colony_prosperity):
                 // Werkstoffe/compounds is the scarcest resource by design (GDD §3
@@ -248,6 +280,21 @@ class BotStrategy
                 'name' => 'invest_production',
                 'when' => fn (BotSession $b) => self::availableAp($b) >= 1 ? self::productionInvestCandidate($b) : null,
                 'do' => fn (BotSession $b, object $row) => $b->act('invest_production', 'POST', '/colony/building/invest', [
+                    'building_id' => $row->building_id,
+                    'instance_id' => $row->instance_id,
+                ]),
+            ],
+            [
+                'name' => 'repair_maintenance',
+                // Baseline 2026-09-26 (B3): with repair only below 30 %, every
+                // building idled at ~6/20 SP and one critical storm took several
+                // levels at once (seed 9: 8). A player keeps some headroom when AP
+                // and Regolith allow — after the Sol's building work, but before
+                // research, which would otherwise soak up every remaining AP.
+                'when' => fn (BotSession $b) => self::availableAp($b) >= 1
+                    ? self::repairCandidate($b, self::REPAIR_MAINTENANCE_PCT, self::maintenanceMaySpendRegolith($b))
+                    : null,
+                'do' => fn (BotSession $b, object $row) => $b->act('repair_maintenance', 'POST', '/colony/building/repair', [
                     'building_id' => $row->building_id,
                     'instance_id' => $row->instance_id,
                 ]),
@@ -414,17 +461,62 @@ class BotStrategy
         return self::advisorService()->getAvailableActionPoints($b->colonyId);
     }
 
-    private static function repairCandidate(BotSession $b): ?object
+    /**
+     * Most at-risk placed building below $belowPct of its max SP, or null.
+     *
+     * - The CC counts as placed without a tile (tile_x NULL, BuildingService::isPlaced()) —
+     *   it used to be filtered out and was never repaired (baseline B2).
+     * - A harvester on an exhausted (or non-Regolith) tile yields nothing; repairing it
+     *   only burns AP (B4). Moving it is relocate_harvester's job.
+     * - Regolith-charging repairs (everything but CC and Harvester,
+     *   ColonyController::repairBuilding()) need $mayPayRegolith and the click price
+     *   in stock; the AP-only ones don't.
+     * - Order: lowest SP share first, CC and housing first among equals — losing a CC
+     *   or housing level costs the most (research gate, supply cap).
+     */
+    private static function repairCandidate(BotSession $b, float $belowPct, bool $mayPayRegolith): ?object
     {
+        $apOnlyIds = [BuildingId::CommandCenter->value, BuildingId::Harvester->value];
+        $canPayRegolith = $mayPayRegolith && self::regolith($b) >= (int) config('game.repair.regolith_per_click', 1);
+
         return DB::table('colony_buildings as cb')
             ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
+            ->leftJoin('colony_tiles as ct', function ($join) {
+                $join->on('ct.colony_id', '=', 'cb.colony_id')
+                    ->on('ct.q', '=', 'cb.tile_x')
+                    ->on('ct.r', '=', 'cb.tile_y');
+            })
             ->where('cb.colony_id', $b->colonyId)
-            ->whereNotNull('cb.tile_x')
+            ->where(fn ($q) => $q->whereNotNull('cb.tile_x')->orWhere('cb.building_id', BuildingId::CommandCenter->value))
             ->where('cb.level', '>=', 1)
-            ->whereColumn('cb.status_points', '<', DB::raw('bld.max_status_points * 0.3'))
-            ->orderBy('cb.status_points')
+            ->whereColumn('cb.status_points', '<', DB::raw('bld.max_status_points * '.$belowPct))
+            ->where(fn ($q) => $q->where('cb.building_id', '!=', BuildingId::Harvester->value)
+                ->orWhere(fn ($q) => $q->where('ct.tile_type', 'like', 'regolith_%')->where('ct.resource_amount', '>', 0)))
+            ->when(! $canPayRegolith, fn ($q) => $q->whereIn('cb.building_id', $apOnlyIds))
+            ->orderByRaw('cb.status_points * 1.0 / bld.max_status_points')
+            ->orderByRaw('CASE WHEN cb.building_id IN (?, ?) THEN 0 ELSE 1 END', [BuildingId::CommandCenter->value, BuildingId::Housing->value])
+            ->orderBy('cb.building_id')
+            ->orderBy('cb.instance_id')
             ->select('cb.building_id', 'cb.instance_id')
             ->first();
+    }
+
+    /**
+     * Maintenance (not critical) repairs may spend Regolith only when it isn't earmarked:
+     * not while a still-missing path building is being saved for (same buffer as
+     * placeCandidate()) and never below the T17 CC reserve.
+     */
+    private static function maintenanceMaySpendRegolith(BotSession $b): bool
+    {
+        $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
+        if ($activeAdvisors < 3) {
+            $pendingPathCost = self::cheapestPendingPathBuildingCost($b);
+            if ($pendingPathCost !== null && self::regolith($b) < $pendingPathCost) {
+                return false;
+            }
+        }
+
+        return self::fitsAboveCcReserve($b, self::ccResearchReserve($b), (int) config('game.repair.regolith_per_click', 1));
     }
 
     private static function nextHireCandidate(BotSession $b): ?int
@@ -542,12 +634,22 @@ class BotStrategy
         return self::freeZoneTile($b);
     }
 
-    /** First colony-zone tile without a building on it (fogged tiles allowed — placing reveals them). */
+    /**
+     * First colony-zone tile ColonyController::placeBuilding() would accept for a
+     * regular building (fogged tiles allowed — placing reveals them): buildable
+     * terrain, no building on it, and not the CC centre (0,0) — the CC has no tile
+     * row (tile_x NULL), so the not-exists check alone offered (0,0) once every
+     * other zone tile was built on, and place_building ate tile_occupied every Sol
+     * (baseline 2026-09-26, B7/T23).
+     */
     private static function freeZoneTile(BotSession $b): ?object
     {
         return DB::table('colony_tiles as ct')
             ->where('ct.colony_id', $b->colonyId)
             ->where('ct.is_colony_zone', 1)
+            ->where(fn ($q) => $q->where('ct.q', '!=', 0)->orWhere('ct.r', '!=', 0))
+            ->where('ct.tile_type', 'like', 'terrain_%')
+            ->where('ct.tile_type', '!=', 'terrain_impassable')
             ->whereNotExists(function ($query) use ($b) {
                 $query->select(DB::raw(1))
                     ->from('colony_buildings as cb')
@@ -1112,10 +1214,75 @@ class BotStrategy
         return DB::table('colony_ships')
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
+            // mission_recon_flight is drone-only; any other ship would collect a
+            // wrong_ship_type rejection.
+            ->where('ship_id', (int) config('ships.drone.id'))
             ->where('status_points', '>=', $minSp)
             // T14: a ship in a hangar below its class can't start a mission (GDD §7).
             ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
             ->first();
+    }
+
+    /**
+     * A Regolith mission to fly while the stock is below REGOLITH_SCARCE_BELOW:
+     * the first REGOLITH_MISSIONS entry a docked, active, intact ship can fly
+     * whose knowledge gate, Nav-AP and Organika provisions are covered — the same
+     * gates HangarService::dispatchShip() enforces.
+     *
+     * @return array{ship: object, mission_key: string, difficulty: string}|null
+     */
+    private static function regolithMissionCandidate(BotSession $b): ?array
+    {
+        if (self::regolith($b) >= self::REGOLITH_SCARCE_BELOW) {
+            return null;
+        }
+
+        $hangar = app(HangarService::class);
+        $minSp = 20 * (float) config('missions.dispatch_min_sp_pct', 0.25); // HangarService::SHIP_MAX_STATUS
+        $ships = DB::table('colony_ships')
+            ->where('colony_id', $b->colonyId)
+            ->where('ship_state', 'docked')
+            ->where('status_points', '>=', $minSp)
+            ->whereNotIn('id', $hangar->inactiveShipRowIds($b->colonyId))
+            ->orderBy('id')
+            ->get();
+        if ($ships->isEmpty()) {
+            return null;
+        }
+
+        foreach (self::REGOLITH_MISSIONS as [$missionKey, $difficulty]) {
+            $mission = config("missions.catalog.{$missionKey}");
+            if ($mission === null) {
+                continue;
+            }
+
+            $gate = $mission['requires']['knowledge'] ?? [];
+            foreach ($gate as $knowledgeKey => $requiredLevel) {
+                $level = (int) (DB::table('colony_researches')
+                    ->where('colony_id', $b->colonyId)
+                    ->where('research_id', (int) config("knowledge.{$knowledgeKey}.id", 0))
+                    ->value('level') ?? 0);
+                if ($level < (int) $requiredLevel) {
+                    continue 2;
+                }
+            }
+
+            $navAp = app(ProjectBonusService::class)->effectiveNavigationApCost(
+                $b->colonyId,
+                (int) $mission['sol_distance'] * (int) config('missions.nav_ap_per_sol', 2),
+            );
+            if (self::availableAp($b) < $navAp || self::organics($b) < $hangar->organikaCostFor($b->colonyId, $mission)) {
+                continue;
+            }
+
+            $shipIds = array_map(fn (string $key): int => (int) config("ships.{$key}.id"), $mission['ships']);
+            $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true));
+            if ($ship !== null) {
+                return ['ship' => $ship, 'mission_key' => $missionKey, 'difficulty' => $difficulty];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1158,7 +1325,24 @@ class BotStrategy
                 ->orWhere('give_amount', '<=', $regolithSurplus)))
             ->orderByRaw('CASE WHEN get_resource_id = ? THEN 0 ELSE 1 END', [self::RES_CREDITS])
             ->orderBy('id')
-            ->first();
+            ->get()
+            // T24: BarService::acceptOffer() rejects an unpayable give side with
+            // bar_offer_insufficient_resources (40x in the 2026-09-26 baseline).
+            // The give side is never changed by Handelsvorteil or negotiation.
+            ->first(fn (object $offer): bool => self::resourceBalance($b, (int) $offer->give_resource_id) >= (int) $offer->give_amount);
+    }
+
+    /** Balance as BarService::getResourceBalance() reads it: Credits user-level, the rest colony-level. */
+    private static function resourceBalance(BotSession $b, int $resourceId): int
+    {
+        if ($resourceId === self::RES_CREDITS) {
+            return self::credits($b);
+        }
+
+        return (int) (DB::table('colony_resources')
+            ->where('colony_id', $b->colonyId)
+            ->where('resource_id', $resourceId)
+            ->value('amount') ?? 0);
     }
 
     private static function hangarLevel(BotSession $b): int

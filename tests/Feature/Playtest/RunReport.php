@@ -29,6 +29,7 @@ class RunReport
      */
     private const AP_CATEGORY_MAP = [
         'repair_critical' => 'repair',
+        'repair_maintenance' => 'repair',
         'invest_cc' => 'project',
         'invest_production' => 'project',
         'place_building' => 'project',
@@ -39,6 +40,8 @@ class RunReport
         'deep_scan_signal_tile' => 'action',
         'dispatch_mission' => 'action',
         'dispatch_salvage_mission' => 'action',
+        'dispatch_compounds_mission' => 'action',
+        'dispatch_regolith_mission' => 'action',
         'request_ship' => 'action',
     ];
 
@@ -150,7 +153,7 @@ class RunReport
         $sources = ['agrardom' => 0, 'mission' => 0, 'trade' => 0, 'event' => 0];
         $consumption = ['hunger_consumed' => 0, 'mission_dispatch_consumed' => 0];
 
-        $dispatchRules = ['dispatch_mission', 'dispatch_salvage_mission', 'request_ship'];
+        $dispatchRules = ['dispatch_mission', 'dispatch_salvage_mission', 'dispatch_compounds_mission', 'dispatch_regolith_mission', 'request_ship'];
 
         foreach ($bot->log as $entry) {
             if ($entry['sol'] !== $bot->sol || ! $entry['ok']) {
