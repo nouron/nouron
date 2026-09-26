@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-26
+
+- Fix: Reparatur stellt pro Klick genau 1 Statuspunkt wieder her (vorher weniger bei gebrochenen Werten). PlaytestBot: repariert auch die Kommandozentrale, wartet früher, wählt Regolith-/Prospektionsmissionen nach Bedarf, meidet belegte Tiles und unbezahlbare Bar-Angebote; Testumgebung mit höherer Aktionsgrenze und lesbarer Fehlerausgabe. Dev-DB-Stammdaten per `game:sync-config` an die Config angeglichen.
+- Doku: A45 — Sieg-Korridor (Sol 70–85 sehr gut, realistisch 85–95), Kalibrierregel für Siegziele, Nexus-Kontrollpunkte auf Fortschritt, Korrektur „Nexus-Schuld wird nicht automatisch getilgt" (GDD §15/§18, game-reference §18).
+
 ## 2026-09-25
 
 - Fix: T9 — beim Platzieren wird jetzt der volle Regolith bis Stufe 1 abgebucht (Errichtung + Stufe-1-Kosten in einer Zahlung, vorher kostete der Sprung 0→1 nie Regolith); Bauliste zeigt die Summe mit Aufschlüsselung, Seitenleiste „Stufe 1 bezahlt". Wert `game.build.levelup_regolith_flat`. Tile (0,0) ist serverseitig gesperrt.

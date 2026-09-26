@@ -1896,9 +1896,9 @@ Die AP-Struktur ist Owner-Entscheidung: Grundwert des gemeinsamen Pools (`config
 
 **Stellschrauben, wenn sich das System im Playtest als unausgewogen erweist** — in dieser Reihenfolge: Basis-Wert, dann Gebäude-Klassen, dann Kurvensteilheit, dann Berater-Beiträge. Alle sind einzeln in `config/` kalibrierbar, ohne den Regeltext zu ändern.
 
-#### Ziel-Endzustand (guter Run, Sol ~75–80)
+#### Ziel-Endzustand (solider Run zum Sieg-Zeitpunkt, Sol ~85–95)
 
-Ein typischer erfolgreicher Run erreicht: die Mehrheit der Gebäudetypen (nicht alle), moderate Gebäude-Level, volle Berater-Slots (hauptsächlich Rang 2), einige Kenntnisse auf mittlerem Level, ungefähr zwei Drittel der Bauplätze belegt. Ungenutzte Optionen sind Absicht: Der Spieler soll sehen, was offenblieb — kein Erreichen einer perfekten Optimalität, sondern ein befriedigender Zustand mit sichtbarem „hätte ich auch noch tun können".
+Der Sieg-Korridor ist in §18.4 festgelegt: Sol 70–85 nur bei einem sehr guten Run mit Glück, realistisch Sol 85–95. Ein typischer erfolgreicher Run erreicht zum Sieg-Zeitpunkt: die Mehrheit der Gebäudetypen (nicht alle), moderate Gebäude-Level und volle Berater-Slots, überwiegend auf mittlerem Rang (den höchsten Rang für alle erreicht nur, wer gezielt auf „Expertenstab" spielt), einige Kenntnisse auf mittlerem Level, ungefähr zwei Drittel der Bauplätze belegt. Ungenutzte Optionen sind Absicht: Der Spieler soll sehen, was offenblieb — kein Erreichen einer perfekten Optimalität, sondern ein befriedigender Zustand mit sichtbarem „hätte ich auch noch tun können".
 
 #### AP-Grundwert und Berater-Beitrag
 
@@ -2291,7 +2291,7 @@ Bei den robusten Gebäuden ist ein Level-Down überproportional teuer (Supply-Ca
 
 #### Bilanz über den Run (1-Instanz-Baseline)
 
-Rechnung über 80 Sole — die Fensterbreite entspricht der Phase-2-Sol-80-Konvention (§18.4).
+Rechnung über 80 Sole. Die Fensterbreite entspricht grob der Strecke vom typischen Phase-1-Ende bis zur Frist bzw. zum realistischen Sieg-Korridor (§18.4).
 
 **1. Zielkolonie-Bedarf.** Errichtungen, Level-Ups und Reibung (Reparaturen, Fehlplatzierungen, Verlegungen) über den Gebäude- und Level-Katalog der Zielkolonie; die Harvester-Zweitinstanz zählt nicht zum Bedarf, weil sie kein Bestandteil der Standard-Zielkolonie ist.
 
@@ -2664,7 +2664,7 @@ Phase 1 endet automatisch, sobald beide Bedingungen gleichzeitig erfüllt sind. 
 
 Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 müssen bis zu einem Run-spezifischen Sol erfullt werden.**
 
-**Runlänge:** Das Spiel ist auf eine moderate Runlänge (typischerweise 60–100 Sole) kalibriert — lang genug für strategische Tiefe, kurz genug, um Wiederholbarkeit zu unterstützen. Das ist auch die Referenzgröße für alle AP- und Ressourcen-Balancingwerte.
+**Runlänge:** Die Frist beträgt 100 Sole (`run.tick_limit`). Ein Sieg um Sol 70–85 gelingt nur mit einem sehr guten Run und etwas Glück; realistisch fällt der Sieg zwischen Sol 85 und 95 (Owner-Vorgabe, Korridor-Tabelle in §18.4). Das ist lang genug für strategische Tiefe und kurz genug für Wiederholbarkeit. Dieser Korridor ist auch die Referenzgröße für alle AP- und Ressourcen-Balancingwerte.
 
 **Konfiguration:** Jeder Run ist über `config/game.php → run` konfigurierbar: Gesamtsole, Echtzeit pro Sol (für Multiplayer), Player-Mode (Singleplayer oder Multiplayer), Play-by-Mail-Modus (Turn-basiert vs. Echtzeit-Synchronisation).
 
@@ -2674,22 +2674,32 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 
 ### Aufgabenpool
 
-8 Aufgabentypen (Pool, `RunProgressService::TASK_CATEGORIES`/`TASK_TARGETS`). Pro Run werden 3 gezogen — Varianz reduziert Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf mehr — Flotte/Systemkarte gestrichen, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+8 Aufgabentypen bilden den Pool. Pro Run werden 3 zufällig gezogen, das reduziert das Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf mehr, Flotte und Systemkarte sind gestrichen, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+
+**Kalibrierregel (Owner-Entscheidung 2026-09-26):** Alle Aufgaben sind gleich schwer, gemessen an einer gemeinsamen Regel:
+- Wer **nicht** auf eine Aufgabe hinspielt, erreicht sie frühestens um Sol ~90 oder gar nicht.
+- Wer **gezielt** auf sie hinspielt, erreicht sie um Sol 70–85.
+
+Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwischen Runs entsteht über zwei Dinge: wie gut die gezogenen Aufgaben zum gewählten Pfad (§4b) passen, und wie die Karte ausfällt. Eine Aufgabe, die der PlaytestBot ohne gezielte Strategie deutlich vor Sol 90 „mitnimmt", ist zu leicht. Eine, die er auch gezielt nicht bis Sol 85 schafft, ist zu schwer.
 
 | Aufgabe (`task_key`) | Kategorie | Kernmechanik |
 |---|---|---|
 | Handelsnetz (`task_trade_volume`) | Wirtschaft | Abgeschlossene Transaktionen mit dem Reisenden Händler im laufenden Run über einer Schwelle |
 | Forschungsvorsprung (`task_research_lead`) | Forschung/Aufbau | Mindestens einige Kenntnisse auf Höchstlevel gebracht |
 | Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen über einer Schwelle für mehrere aufeinanderfolgende Sole |
-| Selbstversorgung (`task_self_sufficiency`) | Wirtschaft/Aufbau | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen **und** Supply > 0 — alle drei Bedingungen gleichzeitig, für mehrere aufeinanderfolgende Sole; jeder einzelne Ausfall setzt den Streak zurück |
-| Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Alle Tiles der Kolonie-Zone erkundet |
-| Ingenieursleistung (`task_engineering_output`) | Aufbau/Optimierung | Gesamt-SP-Kapazität aller Gebäude (Summe `status_points` aller `colony_buildings`) über einer Schwelle |
-| Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole (kein einmaliger Peak, sondern anhaltender Wohlstand) |
-| Expertenstab (`task_senior_advisors`) | Aufbau/Personal | Alle Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher |
+| Selbstversorgung (`task_self_sufficiency`) | Überleben | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen **und** Supply > 0. Alle drei Bedingungen müssen gleichzeitig für mehrere aufeinanderfolgende Sole gelten, jeder einzelne Ausfall setzt die Serie zurück |
+| Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
+| Ingenieursleistung (`task_engineering_output`) | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
+| Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole: anhaltender Wohlstand statt eines einmaligen Peaks |
+| Expertenstab (`task_senior_advisors`) | Personal | Eine volle Berater-Mannschaft, deren Mitglieder alle den höchsten Rang erreicht haben |
 
-Exakte Schwellen, Streak-Längen und Herleitung: `docs/game-reference.md#18-run-struktur`, vollständige Balancing-Historie unten in §18.4.
+**Quelle der Wahrheit:** Alle Aufgaben-Parameter (Kategorie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks`. Die aktuell vorgeschlagenen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
 
-> ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Die Kombo-Blacklist ist implementiert (`RunProgressService::TASK_CATEGORIES`, max. 1 Wirtschafts-Aufgabe pro Ziehung).
+> **Implementierungsstand:** Die Umstellung ist beschlossen, aber noch nicht umgesetzt. Heute liegen Zielwerte und Kategorien noch als Konstanten in `RunProgressService`. `task_engineering_output` misst dort noch die Summe der Status-Punkte, `task_expedition_coverage` noch die erkundeten Tiles der Kolonie-Zone, und `task_senior_advisors` verlangt noch volle Slots plus zwei Berater ab Rang 2.
+
+> **Folgeschritt (Owner-Entscheidung 2026-09-26):** `task_credit_reserve` ist vorerst eine Serie. Später soll daraus „Nexus-Vorschuss tilgen" werden. Das setzt eine Tilgungsmechanik für `nexus_debt` voraus, die es noch nicht gibt (siehe Nexus-Schulden-Mechanik unten).
+
+> ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Die Kombo-Blacklist ist implementiert (höchstens 1 Wirtschafts-Aufgabe pro Ziehung; Kategorien heute in `RunProgressService::TASK_CATEGORIES`, künftig in `run.tasks`).
 
 ---
 
@@ -2697,13 +2707,19 @@ Exakte Schwellen, Streak-Längen und Herleitung: `docs/game-reference.md#18-run-
 
 **Bewertung: gut.** Die Mechanik gibt dem Spieler echte Wahlfreiheit, ohne den Run zu trivial zu machen. Eine verfehlte Aufgabe beendet den Run nicht — das reduziert Frustration und fuhrt zu mehr strategischen Entscheidungen ("Welche zwei lohnen sich fur meine aktuelle Ausgangslage?").
 
-**Milestones gegen zu fruhen Fokus-Verlust:**
-- Phase-2-Sol 30: Mindestens 1 Aufgabe muss zu > 50 % erfüllt sein. Sonst: Nexus-Warnung im Nexus-Funk.
-- Phase-2-Sol 50: Wenn noch keine Aufgabe vollständig erfüllt, zweite Nexus-Warnung.
+**Kontrollpunkte gegen zu frühen Fokus-Verlust:** Nexus prüft in Phase 2 mehrfach, ob die Kolonie auf mindestens eine Aufgabe hinarbeitet. Geprüft wird **Fortschritt, nicht Erfüllung** (Owner-Entscheidung 2026-09-26). Der Grund: Laut Kalibrierregel erreicht auch ein gezielt spielender Direktor seine erste Aufgabe erst um Sol 70–85. Ein Kontrollpunkt, der zu dieser Zeit schon eine erfüllte Aufgabe verlangt, würde genau das beabsichtigte Tempo bestrafen.
 
-Alle Nexus-Kontrollpunkte zählen in **Phase-2-Sol** (Sole seit Phasenübergang), nicht in Gesamt-Sol — Tabelle in §18.4.
+- **Phase-2-Sol 30:** Keine Aufgabe über der Hälfte → erste Nexus-Warnung.
+- **Phase-2-Sol 50:** Immer noch keine Aufgabe über der Hälfte → zweite Nexus-Warnung.
+- **Phase-2-Sol 65:** Immer noch keine Aufgabe über der Hälfte → Sanktion (siehe „Gnadenfrist" unten).
 
-Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeitsgefuhl ohne Frustration. **Nexus ist der Absender** — die Nachrichten kommen nicht anonym vom System, sondern von der übergeordneten Instanz, die den Spieler ausgesandt hat.
+Die drei Punkte bilden eine Eskalationsleiter mit demselben Kriterium. Wer nach der ersten Warnung Fortschritt aufbaut, hört von Nexus nichts mehr. **Bei Serien-Aufgaben** (Kreditreserve, Selbstversorgung, Kolonieblüte) zählt als Fortschritt die bisher längste Serie im Run, nicht die gerade laufende. Ein einzelner schlechter Sol kurz vor dem Kontrollpunkt löscht also nicht den Nachweis, dass die Kolonie auf das Ziel hinarbeitet. Die Schwelle je Kontrollpunkt steht in der Config (`run.nexus_checkpoints`, Vorschlag in `docs/game-reference.md#18-run-struktur`).
+
+Alle Nexus-Kontrollpunkte zählen in **Phase-2-Sol** (Sole seit Phasenübergang), nicht in Gesamt-Sol. Die Tabelle steht in §18.4.
+
+Die Warnungen sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeit ohne Frustration. **Nexus ist der Absender:** Die Nachrichten kommen nicht anonym vom System, sondern von der übergeordneten Instanz, die den Spieler ausgesandt hat.
+
+> **Implementierungsstand:** Phase-2-Sol 30 prüft bereits Fortschritt, dort allerdings noch am aktuellen Serienstand statt an der besten Serie. Phase-2-Sol 50 und 65 prüfen heute noch „0 Aufgaben erfüllt". Die Umstellung braucht einen gespeicherten Serien-Höchststand je Aufgabe.
 
 ---
 
@@ -2747,12 +2763,12 @@ Sanktionen erscheinen nie ohne vorherige Nexus-Funk-Warnung.
 
 Der Countdown zum Missionsende ist sichtbar, sobald die letzten 20 Sole des Tick-Limits beginnen (§18.2 Fail State 3). Nexus tritt jetzt aktiver in Erscheinung (Phase-2-Sol, §18.4):
 
-- **Phase-2-Sol 65:** Wenn noch keine Aufgabe vollständig erfüllt ist → Sanktion (1 Berater 1 Sol abgezogen). *Geplant, noch nicht implementiert:* zusätzlich Verkürzung des effektiven Endes („Nexus Command hat die Frist vorgezogen").
-- **Phase-2-Sol 80:** Countdown-Meldung.
-- *Geplant, noch nicht implementiert:* letzte Warnung 10 Sole vor dem Ende, falls immer noch 0 Aufgaben erfüllt.
-- **Tick-Limit:** Run endet — Fail State 3.
+- **Phase-2-Sol 65:** Wenn noch keine Aufgabe über der Hälfte liegt (Fortschrittsprüfung, siehe „2 von 3"-Mechanik oben), folgt eine Sanktion: 1 Berater wird für 1 Sol abgezogen. *Geplant, noch nicht implementiert:* zusätzlich eine Verkürzung des effektiven Endes („Nexus Command hat die Frist vorgezogen").
+- **Gesamt-Sol `tick_limit` − 20:** Countdown-Meldung (§18.2 Fail State 3).
+- *Geplant, noch nicht implementiert:* letzte Warnung 10 Sole vor dem Ende, falls immer noch keine Aufgabe erfüllt ist.
+- **Tick-Limit:** Run endet mit Fail State 3.
 
-Wer bei der Sanktionsprüfung bereits 1 Aufgabe erfüllt hat, erhält eine neutrale Statusmeldung ohne Sanktion.
+Wer die Fortschrittsschwelle bei der Sanktionsprüfung erreicht, erhält eine neutrale Statusmeldung ohne Sanktion.
 
 > **TODO (Implementierung):** Nexus-Trigger-Tabelle definieren — welche Metrik, welcher Schwellwert, welche Reaktion, welche Phase. Muss vor der Implementierung als Config-Tabelle in `config/game.php → run.nexus_triggers` abgelegt werden.
 
@@ -2774,7 +2790,7 @@ Genau vier Fail States — kanonische Definition, Warnstufen und Auslösung in *
 **Nexus-Schulden-Mechanik:**
 - Schulden akkumulieren durch: Startkapital (Vorschuss, initialer `nexus_debt`), Nexus-Deals (Schiffskauf auf Nexus-Kredit, §8b) und — Owner-Entscheidung F3 — jedes Berater-Upkeep-Defizit, das die Credits nicht mehr deckt können: Credits werden dabei auf 0 geklemmt statt negativ zu werden, das Defizit fließt stattdessen in `nexus_debt`. `nexus_debt` ist damit das alleinige Schulden-Ledger der Kolonie; Credits selbst bleiben immer nutzbares, nicht-negatives Kapital (§13.1).
 - Keine Zinsen
-- Rückzahlung (Owner-Entscheidung F3, beantwortet ROADMAP A8): kein eigenes Rückzahlungs-Feature nötig — normales positives Sol-Einkommen tilgt `nexus_debt` automatisch mit, sobald wieder ein Überschuss entsteht. Kein separater manueller Rückzahlungs-Workflow geplant.
+- **Tilgung: gibt es derzeit nicht.** `nexus_debt` kann im laufenden Run nur wachsen. Positives Sol-Einkommen fließt vollständig in die Credits und senkt die Schuld nicht. Auch einen manuellen Rückzahlungsweg gibt es nicht. Die frühere Annahme (F3/A8), Überschüsse würden die Schuld automatisch mit tilgen, entspricht nicht dem Code. Eine Tilgungsmechanik ist ein künftiger Schritt. Sie ist Voraussetzung dafür, `task_credit_reserve` in „Nexus-Vorschuss tilgen" umzubauen (Aufgabenpool oben). Ob die Tilgung automatisch oder als Spieleraktion kommt, ist offen.
 - Schuldenlimit: fester Wert (`config/game.php`), als Balken im UI kommuniziert („Nexus-Kredit: X / Cap"), Farbwechsel bei moderaten und hohen Schwellen
 - Lose Kopplung mit Vertrauen: kein automatischer Zusammenhang, der Spieler managt beide Achsen aktiv. Ein Schiffskauf auf Kredit löst einen einmaligen kleinen Trust-Malus aus (`nexus_credit`-Event).
 
@@ -2834,7 +2850,7 @@ Ein Modal bietet keinen Platz für die spätere Erweiterung (Highscores, Run-Lis
 ### Implementierungshinweise
 
 - Tabellen: `runs` (Phase, `current_tick`, Status, `fail_reason`, `nexus_debt`, `phase2_start_tick`, Score) und `run_objectives` (aktive Aufgaben des Runs)
-- `config/game.php → run` — Tick-Limit, Tick-Dauer, Spieleranzahl, PbM-Modus, Score-Formel-Gewichte; Nexus-Kontrollpunkte sind in `RunProgressService` gesetzt (Verdrahtung über `run.nexus_milestones` offen, ROADMAP A7)
+- `config/game.php → run`: Tick-Limit, Tick-Dauer, Spieleranzahl, PbM-Modus, Score-Formel-Gewichte, künftig auch `run.tasks` (Aufgaben-Parameter) und `run.nexus_checkpoints` (Kontrollpunkte). Heute sind die Kontrollpunkte noch in `RunProgressService` hartcodiert, und der Block `run.nexus_milestones` ist toter Code (ROADMAP A7). Er wird durch `run.nexus_checkpoints` ersetzt.
 - Run-Struktur läuft als Schritt 15 nach der Tick-Transaktion (`GameTick.php`): Phase-1-Check, Objective-Fortschritt, Nexus-Interventionen, Sieg-/Fail-Prüfung
 - Nexus-Interventionen erzeugen Nexus-Funk-Nachrichten mit `sender = 'nexus'`
 - Lobby-Route: `GET /lobby` (LobbyController@show) + `POST /lobby/start` (LobbyController@start). Auth-Middleware, kein Game-Loop-Zugriff vor `started_at != null`.
@@ -2889,7 +2905,7 @@ if run.phase == 2 and completed >= 2:
 
 Der Run endet in demselben Tick, in dem die zweite Objective abgeschlossen wird. Alle drei Objectives vollständig zu erfüllen ist möglich und ergibt einen höheren Score (Faktor `task_completed × 1000` pro Objective, §15).
 
-**Frühzeitiger Sieg belohnt Effizienz:** Die Score-Formel enthält `(tick_limit − done_tick) × 10` — ein Sieg bei Sol 60 ergibt mehr Punkte als derselbe Sieg bei Sol 90. Das schafft permanenten Anreiz für schnelles Spielen, ohne Erkundung und Aufbau zu bestrafen.
+**Frühzeitiger Sieg belohnt Effizienz:** Die Score-Formel enthält `(tick_limit − done_tick) × 10` — ein Sieg bei Sol 75 ergibt mehr Punkte als derselbe Sieg bei Sol 95. Das schafft permanenten Anreiz für schnelles Spielen, ohne Erkundung und Aufbau zu bestrafen.
 
 **Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte — sowie Phase-1-Fristbruch, Sol 30, Fail State 4 unten, der einzige der vier Fail States, der ausschließlich in Phase 1 auslösen kann).
 
@@ -2940,7 +2956,7 @@ Exakte Schwellwerte: `config/game.php → run.trust_fail_threshold`, `run.trust_
 
 Exakte Schwellwerte für die UI-Warnstufen: Implementierung in `RunProgressService`, relativ zu `config('game.run.nexus_debt_fail_threshold')`.
 
-> **Implementierungsstand:** Akkumulation (Startkapital als initiale Schuld, Nexus-Kredit-Schiffskauf, Berater-Upkeep-Defizit — Owner-Entscheidung F3, §15 Nexus-Schulden-Mechanik) und Fail-State-Prüfung sind implementiert. Rückzahlung braucht kein eigenes Feature (F3, beantwortet A8) — normales positives Einkommen tilgt automatisch. Offen bleibt nur die Warnmeldung kurz vor dem Limit.
+> **Implementierungsstand:** Implementiert sind die Akkumulation (Startkapital als initiale Schuld, Nexus-Kredit-Schiffskauf, Berater-Upkeep-Defizit; Owner-Entscheidung F3, §15 Nexus-Schulden-Mechanik) und die Fail-State-Prüfung. **Eine Tilgung gibt es nicht:** Die Schuld sinkt im Run nie, positives Einkommen ändert daran nichts. Der Schuldenstand ist damit eine reine Einbahnstraße zum Limit. Offen sind die Tilgungsmechanik (künftiger Schritt, §15) und die Warnmeldung kurz vor dem Limit.
 
 **Narrativer Ausgang:** "Nexus hat die Konzession entzogen. Der Direktor wurde zurückgerufen."
 
@@ -3005,8 +3021,8 @@ Der Run-Ende-Screen ersetzt die Kolonie-Ansicht unmittelbar nach `endRun()`. Er 
 | Ergebnis | Nexus-Kommentar (Entwurf — finale Formulierung via `content-writer`) |
 |----------|----------------------------------------------------------------------|
 | Sieg 3/3 | "Alle Direktiven erfüllt. Konzession verlängert. Ihre Akte wird dem Zentralbüro übermittelt." |
-| Sieg 2/3, schnell (< 70 % des Zeitlimits verbraucht) | "Zwei Direktiven erfüllt. Konzession bestätigt. Effizienzrating: überdurchschnittlich." |
-| Sieg 2/3, langsam (≥ 70 % des Zeitlimits verbraucht) | "Zwei Direktiven erfüllt. Konzession bestätigt. Leistungsrating: ausreichend. Weitere Bewertung folgt." |
+| Sieg 2/3, schnell (im Korridor „sehr guter Run", §18.4) | "Zwei Direktiven erfüllt. Konzession bestätigt. Effizienzrating: überdurchschnittlich." |
+| Sieg 2/3, regulär (später als dieser Korridor) | "Zwei Direktiven erfüllt. Konzession bestätigt. Leistungsrating: ausreichend. Weitere Bewertung folgt." |
 | Niederlage: Trust | "Kolonie destabilisiert. Direktorsabsetzung registriert. Nachfolge wird organisiert." |
 | Niederlage: Schulden | "Kreditlimit überschritten. Konzession eingezogen. Schulden sind ausstehend." |
 | Niederlage: Zeit | "Frist abgelaufen. Kolonie übernommen. Keine weiteren Informationen verfügbar." |
@@ -3035,41 +3051,55 @@ Der Run-Ende-Screen ersetzt die Kolonie-Ansicht unmittelbar nach `endRun()`. Er 
 | Phase | Sols | Anmerkung |
 |-------|------|-----------|
 | Phase 1 — Stabilisierung | 15–25 | CC Lv3 + 2 weitere Gebäude ≥ Lv2 (Code-Bedingung; Wortlaut „Produktionsgebäude" ist Owner-Frage F7) + 3 Berater — Ziel Sol 15–20, hart Sol 30 |
-| Phase 2 früh — Einrichten | 10–20 | Pfad-Gebäude ausbauen, Berater optimieren |
-| Phase 2 mitte — Objectives | 20–35 | Kernarbeit an den zwei Ziel-Objectives |
-| Phase 2 spät — Optimierung | 5–15 | Dritte Objective optional; Score verbessern |
-| **Guter Gesamtrun** | **50–80 Sols** | |
+| Phase 2 früh — Einrichten | ~15–20 | Pfad-Gebäude ausbauen, Berater einstellen, die zwei Ziel-Aufgaben wählen |
+| Phase 2 mitte — Aufgaben | ~30–40 | Kernarbeit an den zwei Ziel-Aufgaben |
+| Phase 2 spät — Abschluss | ~10–15 | Zweite Aufgabe abschließen, dritte optional |
 
-Das Tick-Limit von 100 gibt 20–50 Sols Puffer für schlechtere Starts und langsamere Spieler.
+**Sieg-Korridor (Owner-Vorgabe, verbindlich für alle Pacing-Aussagen im GDD):**
+
+| Run-Qualität | Sieg um | Anmerkung |
+|---|---|---|
+| Sehr guter Run mit Glück (Pfad passt zu den gezogenen Aufgaben, günstige Karte) | Sol 70–85 | Die Ausnahme, nicht der Normalfall |
+| Realistischer, solider Run | Sol 85–95 | Der Referenzfall für Balancing |
+| Frist | Sol 100 (`run.tick_limit`) | Danach Fail State 3 |
+
+**Wie Sieg-Korridor und Kalibrierregel zusammenpassen:** Die Kalibrierregel (§15 Aufgabenpool: gezielt Sol 70–85) misst jede Aufgabe einzeln, so als würde nur auf sie gespielt. Ein Sieg braucht aber zwei Aufgaben, die um denselben AP-Pool und dieselben Ressourcen konkurrieren. Nur wenn beide gezogenen Aufgaben vom gewählten Pfad gleichzeitig bedient werden und die Karte mitspielt, fallen beide in den Einzel-Korridor. Im Normalfall bremst die zweite Aufgabe die erste, und der Sieg rutscht in den realistischen Korridor.
+
+Die Frist lässt bewusst wenig Puffer über dem realistischen Korridor. Ein holpriger Start oder eine unpassende Aufgaben-Ziehung soll spürbar knapp werden, aber nicht aussichtslos.
 
 **Pacing-Kontrollpunkte (Nexus-Interventionen in Phase-2-Sol):**
 
-`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht Gesamt-Sol, nicht absolute Tick-Nummer). Bei einem Phase-1-Abschluss um Gesamt-Sol 20 ergibt sich:
+`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht in Gesamt-Sol und nicht mit absoluten Tick-Nummern). Die Warnungen und die Sanktion prüfen **Fortschritt statt Erfüllung** (Owner-Entscheidung 2026-09-26; Begründung und Serien-Regel in §15 „2 von 3"-Mechanik). Bei einem Phase-1-Abschluss um Gesamt-Sol 20 ergibt sich:
 
 | Phase-2-Sol | Gesamt-Sol (bei Phase-1-Ende Sol 20) | Bedeutung |
 |-------------|--------------------------------------|-----------|
-| 30 | ~50 | Mindestens 1 Objective > 50 % — sonst Nexus-Warnung |
-| 50 | ~70 | Mindestens 1 Objective vollständig — sonst zweite Warnung |
-| 65 | ~85 | Berater-Sanktion wenn 0 Objectives abgeschlossen |
-| 80 | ~100 | Countdown-Meldung (= Gesamtticklimit bei normalem Phase-1-Tempo) |
+| 30 | ~50 | Keine Aufgabe über der Hälfte → erste Nexus-Warnung |
+| 50 | ~70 | Immer noch keine Aufgabe über der Hälfte → zweite Warnung |
+| 55 | ~75 | Zusätzliche Prüfung der Schuldengrenze (Fail State 2) |
+| 65 | ~85 | Immer noch keine Aufgabe über der Hälfte → Berater-Sanktion |
 
-Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das ist kein Zufall, sondern die gewünschte Kalibrierung: der Countdown erscheint genau wenn das Limit erreicht wird.
+Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt an der Gesamt-Frist und erscheint bei `tick_limit` − 20 (§18.2 Fail State 3).
 
-**Anpassungsrichtlinien nach Playtest:**
+> ⚠️ BALANCE CONCERN: Im Code hängt der Countdown zusätzlich an Phase-2-Sol 80. Bei einem Phase-1-Ende um Sol 20 fällt er damit auf Gesamt-Sol 100, also auf das Run-Ende, und verliert seinen Zweck als Vorwarnung. Die Designabsicht ist allein die Gesamt-Sol-Bedingung.
+
+**Anpassungsrichtlinien nach Playtest:** Das `tick_limit` bleibt bei 100 (Owner-Entscheidung). Stellschrauben sind die Aufgaben-Parameter und die Phase-1-Bedingungen, nicht die Frist.
 
 | Beobachtung | Maßnahme |
 |-------------|---------|
-| Phase-1 endet typisch < Sol 15 | tick_limit auf 85–90 senken (mehr Druck in Phase 2) |
-| Phase-1 dauert typisch > Sol 25 | Phase-1-Abschlussbedingungen lockern, nicht tick_limit erhöhen |
-| Typischer Sieg > Sol 90 | `TASK_TARGETS`-Werte in `RunProgressService` senken (Objectives zu schwer) |
-| Typischer Sieg < Sol 55 | `TASK_TARGETS`-Werte erhöhen oder tick_limit auf 80 senken |
+| Phase 1 endet typisch vor Sol 15 | Phase-1-Abschlussbedingungen verschärfen oder den Regolith-Startbestand senken (§13.7) |
+| Phase 1 dauert typisch länger als Sol 25 | Phase-1-Abschlussbedingungen lockern |
+| Gezielt gespielte Aufgabe typisch erst nach Sol 85 | Zielwert dieser Aufgabe in `run.tasks` senken |
+| Aufgabe wird ohne gezieltes Spiel vor Sol ~90 erreicht | Zielwert dieser Aufgabe in `run.tasks` erhöhen |
 
-**Objective-Ziele — Kalibrierungsregeln (Werte in `RunProgressService::TASK_TARGETS` und `config/game.php → run`):**
+**Aufgaben-Ziele: Kalibrierregeln (Werte in `config/game.php → run.tasks`):**
 
-- `task_expedition_coverage` steht am mathematischen Maximum erreichbarer Colony-Zone-Tiles (Summe `colony_zone_expansion` + CC-Tile) und wird nicht erhöht; ein Regressionstest bindet den Zielwert an `colony_zone_expansion`. Die letzte Zone-Kachel schaltet bei CC Lv4 frei, damit das Objective vor dem typischen Run-Ende erreichbar bleibt.
-- Streak-Objectives (`task_self_sufficiency`, `task_credit_reserve`, `task_colony_prosperity`) sind so gesetzt, dass sie nicht nebenbei durch normales Spielen erfüllt werden — ein Objective, das der Bot in der Mehrheit der Läufe vor Sol 60 „mitnimmt", ist zu leicht. Zielkorridor für „completed": Sol 80–85.
-- `task_colony_prosperity` (Vertrauen über Schwelle) wird nicht am Zielwert kalibriert, solange die Trust-Ökonomie selbst nicht kalibriert ist (Trust bewegt sich im Bot nur um den Neutralbereich) — eigene Untersuchung.
-- `task_credit_reserve` liest die Schwelle aus `run.task_credit_reserve_threshold`.
+- **Grundregel für jede Aufgabe (§15 Aufgabenpool):** Ohne gezieltes Spiel frühestens um Sol ~90 oder gar nicht, mit gezieltem Spiel um Sol 70–85. Gemessen wird mit dem PlaytestBot: einmal mit einer Strategie, die gezielt auf die Aufgabe spielt, einmal mit einer, die sie ignoriert. Beide Messungen brauchen eine ausreichend große Seed-Stichprobe.
+- **`task_expedition_coverage`** misst erfolgreiche Außenmissionen ab Schwierigkeit „normal". Das ersetzt die frühere Messung „alle Tiles der Kolonie-Zone erkundet". Die hing vor allem am CC-Ausbau (die letzte Zonen-Kachel wird erst mit einer späten CC-Stufe frei), nicht an Erkundungsentscheidungen. Ihr Zielwert lag bereits am mathematischen Maximum und ließ sich deshalb nicht auf die Grundregel kalibrieren. Leichte Missionen zählen nicht, sonst wird die Aufgabe über risikoarmes Routine-Dispatching nebenbei erfüllt.
+- **`task_engineering_output`** misst die Summe der Ausbaustufen aller Gebäude. Die frühere Messung (Summe der Status-Punkte) hing am Verfall und an Reparaturen, war für Spieler nicht nachvollziehbar und schwankte von Sol zu Sol.
+- **`task_senior_advisors`** verlangt eine volle Mannschaft auf höchstem Rang. Das setzt den letzten Berater-Slot (CC-Ausbau) und ausreichend Dienstzeit aller Berater voraus. Wer Berater spät einstellt oder austauscht, schafft es nicht nebenbei.
+- **Serien-Aufgaben** (`task_self_sufficiency`, `task_credit_reserve`, `task_colony_prosperity`) sind so gesetzt, dass normales Spielen sie nicht nebenbei erfüllt. Für die Nexus-Kontrollpunkte zählt bei ihnen die beste bisherige Serie.
+- **Vorläufig bis zum nächsten Bot-Batch (Annahme, nicht final kalibriert):** die Zielwerte von `task_research_lead`, `task_self_sufficiency` und `task_colony_prosperity`. Für `task_colony_prosperity` kommt hinzu, dass die Trust-Ökonomie selbst noch nicht kalibriert ist.
+- **`task_credit_reserve`** bleibt vorerst eine Serie (Schwelle und Serienlänge in `run.tasks`). Der Folgeschritt „Nexus-Vorschuss tilgen" wartet auf die Tilgungsmechanik (§15 Nexus-Schulden-Mechanik).
 
 **Credits-Ökonomie — Break-even-Regel:** Der Berater-Unterhalt (`advisor.upkeep`, steigend mit dem Rang) muss spätestens mit ausgebauter Uplink-Station tragbar sein, unabhängig davon, ob die Cantina gebaut wurde — der frühere Handelsvertrag (Cantina-Bonuseinkommen) ist gestrichen (Owner-Entscheidung F3, §12 Kanal 1), Cantina liefert seither kein dediziertes Dauereinkommen mehr. Strukturelles Einkommen ist damit für alle drei Pfade gleich: `nexus_subsidy` (flat, bedingungslos) und die Relaisvergütung (`relay_bonus_per_uplink_level`). Herleitung mit vier Beratern (Werte `config/game.php`):
 
@@ -3090,8 +3120,10 @@ Ein Rang-2-Defizit bei niedrigem Uplink-Ausbau ist aus dem Phase-1-Reststand abs
 | Aufgabe | Verantwortung | Priorität |
 |---------|--------------|-----------|
 | Trust-Warnstufen (< −10 roter Chip, < −18 Nexus-Warnung; < 0 existiert als `onboarding_trust`) | game-developer | Mittel |
-| Manuelle Schulden-Rückzahlung (Nexus-UI) + 95 %-Warnmeldung | game-developer / ui-specialist | Mittel |
-| Sol-90-Letzte-Warnung + Fristverkürzung auf Sol 95 (§15 Gnadenfrist); toter Config-Block `run.nexus_milestones` verdrahten oder entfernen | game-developer | Mittel |
+| Warnmeldung kurz vor der Schuldengrenze; Tilgungsmechanik für `nexus_debt` (automatisch oder als Aktion: Design offen, Voraussetzung für „Nexus-Vorschuss tilgen", §15) | game-developer / ui-specialist | Mittel |
+| Sol-90-Letzte-Warnung + Fristverkürzung (§15 Gnadenfrist) | game-developer | Mittel |
+| A45: Aufgaben-Parameter nach `run.tasks`; neue Messungen für `task_engineering_output` (Summe Ausbaustufen), `task_expedition_coverage` (erfolgreiche Missionen ab „normal") und `task_senior_advisors` (volle Mannschaft auf höchstem Rang) | game-developer | Hoch |
+| A45: Kontrollpunkte Phase-2-Sol 50/65 auf Fortschritt umstellen, Serien-Höchststand je Aufgabe speichern, `run.nexus_milestones` durch `run.nexus_checkpoints` ersetzen, Countdown nur an `tick_limit` − 20 koppeln | game-developer / db-migration-agent | Hoch |
 
 Vollständige Liste: `docs/audit-implementierungsstand-2026-09-06.md` (A6–A8).
 
@@ -3117,6 +3149,9 @@ Vollständige Liste: `docs/audit-implementierungsstand-2026-09-06.md` (A6–A8).
 | Harvester ohne Level-Up (`max_level = 1`) | §13.5 |
 | CC `max_level = 5` | §4 |
 | Run-Länge 100 Sole | §18.4 |
+| Sieg-Korridor: Sol 70–85 nur mit sehr gutem Run und Glück, realistisch Sol 85–95 | §18.4 |
+| Aufgaben-Kalibrierregel (ohne gezieltes Spiel frühestens Sol ~90, gezielt Sol 70–85; kein Mindest-Sol; „2 von 3" bei zufälliger Ziehung) | §15 |
+| Expertenstab = 4 Berater auf Rang 3 | §15, `run.tasks` |
 | Ein gemeinsamer AP-Pool | §13.1 |
 | Vier Beratertypen (Stratege zurückgestellt) | §13 |
 | Werkstoffe bleiben als Ressource | §3 |
