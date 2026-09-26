@@ -862,7 +862,7 @@ class ColonyController extends BaseController
         $building = DB::table('buildings')->where('id', $buildingId)->first();
         $maxSp = (int) ($building->max_status_points ?? 20);
 
-        if ((int) $row->status_points >= $maxSp) {
+        if ((float) $row->status_points >= $maxSp) {
             return $this->fail('repair_full');
         }
 
@@ -880,7 +880,9 @@ class ColonyController extends BaseController
             return $this->fail('repair_no_regolith');
         }
 
-        $newSp = min((int) $row->status_points + 1, $maxSp);
+        // Decay leaves fractional SP; one click adds exactly one full point (capped),
+        // so the +1 the UI promises is the +1 the player gets.
+        $newSp = min((float) $row->status_points + 1, $maxSp);
 
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)

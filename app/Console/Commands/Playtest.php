@@ -32,6 +32,8 @@ class Playtest extends Command
         {--seeds=4242 : Comma-separated integer seeds}
         {--concurrency=10 : How many profile×seed combos to run at once}';
 
+    private const OUTPUT_TAIL_CHARS = 4000;
+
     protected $description = 'Run the PlaytestBot across seeds/profiles (in parallel batches) and print a comparison table';
 
     public function handle(): int
@@ -108,7 +110,10 @@ class Playtest extends Command
 
                 if (! $result->successful()) {
                     $this->error("profile={$profile} seed={$seed} failed to run:");
-                    $this->line($result->errorOutput());
+                    // PHPUnit reports test failures on stdout, not stderr — printing
+                    // only errorOutput() left this message empty (baseline 2026-09-26).
+                    $this->line(self::tail($result->output()));
+                    $this->line(self::tail($result->errorOutput()));
 
                     continue;
                 }
@@ -130,6 +135,16 @@ class Playtest extends Command
         );
 
         return self::SUCCESS;
+    }
+
+    /** Last OUTPUT_TAIL_CHARS of a child's output — the failure summary sits at the end. */
+    private static function tail(string $output): string
+    {
+        $output = trim($output);
+
+        return strlen($output) > self::OUTPUT_TAIL_CHARS
+            ? '...'.substr($output, -self::OUTPUT_TAIL_CHARS)
+            : $output;
     }
 
     private function latestReportFor(string $profile, string $seed): ?array

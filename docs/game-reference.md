@@ -464,6 +464,8 @@ Ertrag = FreshYield × (0.5 + 0.5 × Restvorkommen / ResourceMax)
 
 ## 18. Run-Struktur
 
+*Abschnitt aktualisiert 2026-09-26 (A45).*
+
 | Aspekt | Wert |
 |---|---|
 | **Tick Limit** | 100 Ticks (default) |
@@ -473,16 +475,71 @@ Ertrag = FreshYield × (0.5 + 0.5 × Restvorkommen / ResourceMax)
 | **Trust Fail Threshold** | Trust < −20 (instant fail) |
 | **Nexus Debt Cap** | 12000 Cr (instant fail) |
 
+| **Sieg-Korridor** (Owner) | Sol 70–85 nur sehr guter Run + Glück; realistisch Sol 85–95 |
+
 ### Objectives (GDD §15)
-Player muss 8 Task Pools durchsuchen; jede Task ein streamed Ziel.
+Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens 1 aus der Kategorie `economy`). Sieg bei 2 von 3 erfüllten Aufgaben.
 
-**Task Credit Reserve**: 4000 Cr (14 Sols halten)
+**Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85. Kein Mindest-Sol.
 
-**Nexus Milestones**:
-- Sol 30: ≥1 Task >50% done oder WARNING
-- Sol 50: ≥1 Task complete oder WARNING
-- Sol 85: ≥1 Task complete oder Advisor Penalty + Deadline→95
-- Sol 90: Last warning
+#### Ist-Stand (Code, `RunProgressService::TASK_TARGETS` + `run.task_credit_reserve_threshold`)
+
+| Task | Messung heute | Ziel |
+|---|---|---|
+| `task_senior_advisors` | alle Slots (`advisor.max_slots` = 4) besetzt + ≥ 2 Berater Rang ≥ 2 | 1 (bool) |
+| `task_credit_reserve` | Credits ≥ 4000, Serie | 14 Sole |
+| `task_colony_prosperity` | Vertrauen > 70 (hartcodiert), Serie | 10 Sole |
+| `task_research_lead` | Kenntnisse auf Lv ≥ 5 | 3 |
+| `task_self_sufficiency` | Regolith > 25 **und** Organika > 75 (hartcodiert) **und** Supply > 0, Serie | 15 Sole |
+| `task_expedition_coverage` | erkundete Kolonie-Zone-Tiles | 16 (= Maximum) |
+| `task_engineering_output` | Summe `status_points` aller Gebäude | 320 |
+| `task_trade_volume` | gekaufte Händler-Items im Run | 5 |
+
+#### Config-Vorschlag `run.tasks`: VORLÄUFIG bis zur Kalibrierung (A45)
+
+Zielstruktur: alle Parameter in `config/game.php → run.tasks`, die Konstanten in `RunProgressService` entfallen, `run.task_credit_reserve_threshold` wandert in den Task-Eintrag. Fettgedruckte Werte folgen aus einer Owner-Entscheidung. Alle übrigen sind Vorschläge (Annahme) und werden mit dem nächsten Bot-Batch gegen die Kalibrierregel geprüft.
+
+| Task | `category` | Messung (neu) | Parameter (Vorschlag) | Status |
+|---|---|---|---|---|
+| `task_senior_advisors` | personal | Berater mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
+| `task_credit_reserve` | economy | Credits ≥ `threshold`, Serie | `threshold` 4000, `target` 14 Sole | vorläufig; Folgeschritt „Nexus-Vorschuss tilgen" |
+| `task_colony_prosperity` | diplomacy | Vertrauen > `threshold`, Serie | `threshold` 70, `target` 10 Sole | vorläufig bis Bot-Batch |
+| `task_research_lead` | research | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 3 | vorläufig bis Bot-Batch |
+| `task_self_sufficiency` | survival | Regolith > `regolith_min` **und** Organika > `organics_min` **und** Supply > 0, Serie | `regolith_min` 25, `organics_min` 75, `target` 15 Sole | vorläufig bis Bot-Batch |
+| `task_expedition_coverage` | exploration | **erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty`** | `min_difficulty` normal, `target` 10 | vorläufig (neue Messung, noch ohne Bot-Daten) |
+| `task_engineering_output` | research | **Summe der Ausbaustufen (`level`) aller `colony_buildings`** | `target` 30 | vorläufig (neue Messung, noch ohne Bot-Daten) |
+| `task_trade_volume` | economy | gekaufte Händler-Items im Run | `target` 5 | vorläufig |
+
+Herleitung der Vorschläge für die neuen Messungen (Annahme, grob):
+- `task_engineering_output` 30: Zum Phase-1-Ende liegt die Summe bei ungefähr 10 (CC Lv3, zwei Gebäude auf Lv2, Harvester, Startgebäude). Der GDD-Endzustand eines soliden Runs (Mehrheit der Gebäudetypen, moderate Stufen, §13.6) landet grob bei 25. Für 30 muss gezielt Ausbau priorisiert werden.
+- `task_expedition_coverage` 10: Ab Hangar und erstem Schiff (frühe Phase 2) bleiben rund 50 Sole. Kurze Missionen dauern 2–4 Sole hin und zurück, die Grundchance bei „normal" liegt bei 70 %. Eine dauerhaft beschäftigte Drohne kommt damit auf etwa 10 Erfolge bis Sol ~75–80. Wer nur gelegentlich oder auf „leicht" schickt, bleibt deutlich darunter. Eine zweite Drohne beschleunigt stark. Das ist beim Bot-Batch zu prüfen.
+- `task_senior_advisors`: Rang 3 braucht 45 Rangpunkte (`advisor.rank_thresholds`). Der vierte Slot kommt erst mit CC Lv4. Ein spät eingestellter oder ausgetauschter Berater verhindert das Ziel praktisch.
+
+#### Nexus-Kontrollpunkte (Phase-2-Sol, nicht Gesamt-Sol)
+
+Ist-Stand (hartcodiert in `RunProgressService::checkNexusInterventions()`; der Config-Block `run.nexus_milestones` mit 30/50/85/90 ist toter Code, ROADMAP A7):
+
+| Phase-2-Sol | Prüfung heute | Folge |
+|---|---|---|
+| 30 | < 1 Aufgabe mit Fortschritt > 50 % (aktueller Serienstand) | Warnung |
+| 50 | 0 Aufgaben erfüllt | 2. Warnung |
+| 55 | `nexus_debt` > `nexus_debt_fail_threshold` | Fail |
+| 65 | 0 Aufgaben erfüllt | Sanktion: 1 Berater 1 Sol gesperrt |
+| 80 | zusätzlich `current_tick` ≥ `tick_limit` − 20 | Countdown (fällt praktisch aufs Run-Ende, siehe GDD §18.4) |
+
+Config-Vorschlag `run.nexus_checkpoints` (ersetzt `run.nexus_milestones`), Prüfung auf **Fortschritt statt Erfüllung**; bei Serien-Aufgaben zählt die **beste bisherige Serie**:
+
+| Phase-2-Sol | `min_objectives` | `min_progress_pct` | Folge |
+|---|---|---|---|
+| 30 | 1 | 50 | Warnung |
+| 50 | 1 | 50 | 2. Warnung |
+| 65 | 1 | 50 | Sanktion |
+
+Der Countdown hängt künftig nur noch an `tick_limit` − 20 (Gesamt-Sol 80), nicht an einem Phase-2-Sol. Die Schwelle „mindestens ein Ziel über der Hälfte" hat der Owner für Sol 50/65 als Beispiel genannt. Dass alle drei Punkte dieselbe Schwelle nutzen (Eskalationsleiter statt steigender Anforderung), ist eine Annahme.
+
+### Nexus-Schulden
+
+`nexus_debt` startet mit dem Vorschuss (`OnboardingService`, 3000) und wächst durch Nexus-Kredit-Schiffskäufe und Upkeep-Defizite. **Eine Tilgung gibt es nicht:** Die Schuld sinkt im Run nie. Eine Tilgungsmechanik ist ein künftiger Schritt (GDD §15).
 
 ### Score Formula
 ```

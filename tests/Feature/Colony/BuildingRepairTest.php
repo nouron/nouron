@@ -123,6 +123,26 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(self::CC_MAX_SP, (int) $this->ccRow()->status_points);
     }
 
+    public function test_repair_restores_exactly_one_point_on_fractional_status(): void
+    {
+        // Decay leaves fractional SP (e.g. 5.6). One click must add a full point
+        // (5.6 -> 6.6), not truncate to 5 and add 1 (= only +0.4 for the same price).
+        $this->setCcState(['status_points' => 5.6]);
+
+        $this->repair()->assertJsonPath('ok', true);
+
+        $this->assertEqualsWithDelta(6.6, (float) $this->ccRow()->status_points, 0.0001);
+    }
+
+    public function test_repair_on_fractional_status_caps_at_max(): void
+    {
+        $this->setCcState(['status_points' => self::CC_MAX_SP - 0.4]);
+
+        $this->repair()->assertJsonPath('ok', true);
+
+        $this->assertEqualsWithDelta(self::CC_MAX_SP, (float) $this->ccRow()->status_points, 0.0001);
+    }
+
     public function test_repair_dismisses_teaching_hint_after_first_click(): void
     {
         $this->setCcState(['status_points' => 16]);
