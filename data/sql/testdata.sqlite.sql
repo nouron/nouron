@@ -15,19 +15,19 @@ INSERT INTO "user" (user_id,username,display_name,role,password,email,state,fact
 -- glx_colonies: id, name, user_id, since_tick, is_primary, hunger_streak
 -- Only player colonies exist (colony 2 "Shelbyville", user_id=0, removed 2026-09-23).
 INSERT INTO "glx_colonies" (id,name,user_id,since_tick,is_primary,hunger_streak) VALUES(1,'Springfield',3,20582,1,0);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(25,'civil','building_commandCenter',41,1,0,0,2,5,NULL,10,20,0.33,0,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(27,'industry','building_harvester',25,1,0,1,2,1,2,10,20,0.95,2,1,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(28,'civil','building_housingComplex',25,1,1,1,1,3,6,10,20,0.44,0,1,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(31,'civil','building_sciencelab',25,2,0,2,2,5,NULL,10,20,0.95,8,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(32,'civil','building_temple',25,4,0,4,2,NULL,NULL,10,20,2.0,4,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(41,'industry','building_bioFacility',27,1,0,2,1,3,NULL,10,20,0.95,2,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(44,'civil','building_hangar',25,2,0,3,3,NULL,NULL,10,20,0.60,6,1,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(46,'civil','building_infirmary',25,3,0,3,2,3,NULL,10,20,0.80,10,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(50,'civil','building_monument',25,5,0,6,2,NULL,NULL,20,20,0.33,2,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(52,'civil','building_bar',25,2,0,2,3,3,NULL,10,20,0.80,6,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(53,'civil','building_securityHub',25,2,0,4,1,3,NULL,10,20,0.67,8,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(54,'civil','building_uplinkStation',25,2,0,4,2,3,NULL,10,20,0.67,6,0,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(55,'civil','building_tradingPost',25,4,0,1,3,3,NULL,10,20,0.67,6,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(25,'civil','building_commandCenter',41,1,0,0,2,5,NULL,10,20,0.4,0,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(27,'industry','building_harvester',25,1,0,1,2,1,2,10,20,0.8,2,1,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(28,'civil','building_housingComplex',25,1,1,1,1,3,6,10,20,0.4,0,1,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(31,'civil','building_sciencelab',25,2,0,2,2,5,NULL,10,20,0.8,6,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(32,'civil','building_temple',25,4,0,4,2,1,NULL,10,20,1.2,4,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(41,'industry','building_bioFacility',27,1,0,2,1,3,NULL,10,20,0.6,2,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(44,'civil','building_hangar',25,2,0,3,3,3,NULL,10,20,0.6,6,1,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(46,'civil','building_infirmary',25,3,0,3,2,3,NULL,10,20,0.8,10,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(50,'civil','building_monument',25,5,0,6,2,1,NULL,20,20,0.4,2,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(52,'civil','building_bar',25,2,0,2,3,3,NULL,10,20,0.8,6,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(53,'civil','building_securityHub',25,2,0,4,1,3,NULL,10,20,0.6,8,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(54,'civil','building_uplinkStation',25,2,0,4,2,3,NULL,10,20,0.6,6,0,1);
+INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(55,'civil','building_tradingPost',25,4,0,1,3,3,NULL,10,20,0.6,6,0,1);
 -- Credits (1) + Supply (2): legacy base costs (not consumed by the hex build flow).
 INSERT INTO "building_costs" VALUES(25,1,100);
 INSERT INTO "building_costs" VALUES(25,2,15);
@@ -53,18 +53,16 @@ INSERT INTO "building_costs" VALUES(55,1,400);
 -- Regolith (3) + Werkstoffe (4): construction cost (canonical: config/buildings.php build_cost).
 -- CC (25) + Harvester (27) carry none (bootstrap). Organika is never a build cost.
 INSERT INTO "building_costs" VALUES(28,3,40);
-INSERT INTO "building_costs" VALUES(41,3,40);
-INSERT INTO "building_costs" VALUES(52,3,50);
-INSERT INTO "building_costs" VALUES(31,3,60);
-INSERT INTO "building_costs" VALUES(31,4,20);
+INSERT INTO "building_costs" VALUES(41,3,70);
+INSERT INTO "building_costs" VALUES(52,3,95);
+INSERT INTO "building_costs" VALUES(31,3,95);
 INSERT INTO "building_costs" VALUES(32,3,50);
 INSERT INTO "building_costs" VALUES(32,4,15);
 INSERT INTO "building_costs" VALUES(46,3,60);
 INSERT INTO "building_costs" VALUES(46,4,25);
 INSERT INTO "building_costs" VALUES(50,3,60);
 INSERT INTO "building_costs" VALUES(50,4,25);
-INSERT INTO "building_costs" VALUES(44,3,80);
-INSERT INTO "building_costs" VALUES(44,4,25);
+INSERT INTO "building_costs" VALUES(44,3,95);
 INSERT INTO "building_costs" VALUES(53,3,80);
 INSERT INTO "building_costs" VALUES(53,4,25);
 INSERT INTO "building_costs" VALUES(54,3,80);
@@ -79,12 +77,12 @@ INSERT INTO "researches" (id,purpose,name,required_building_id,required_building
 INSERT INTO "researches" (id,purpose,name,required_building_id,required_building_level,required_building2_id,required_building2_level,"row","column",ap_for_levelup,max_status_points,decay_rate,supply_cost,is_active) VALUES(96,'knowledge','knowledge_defense',31,3,44,2,8,4,3,20,0,0,1);
 INSERT INTO "researches" (id,purpose,name,required_building_id,required_building_level,required_building2_id,required_building2_level,"row","column",ap_for_levelup,max_status_points,decay_rate,supply_cost,is_active) VALUES(9901,'civil','test_decay_placeholder',NULL,NULL,NULL,NULL,99,99,1,20,0.13,NULL,0);
 INSERT INTO "ships" VALUES(29,'military','techs_frigate1',NULL,NULL,NULL,NULL,0,10,5,15,10,500,NULL,NULL,0,0);
-INSERT INTO "ships" VALUES(37,'military','ship_corvette',44,3,NULL,NULL,0,6,5,15,10,500,NULL,NULL,1,0);
-INSERT INTO "ships" VALUES(47,'economy','ship_freighter',44,2,NULL,NULL,0,5,5,15,10,500,NULL,NULL,1,0);
+INSERT INTO "ships" VALUES(37,'military','ship_corvette',44,3,NULL,NULL,0,6,5,15,10,4,NULL,0,1,0);
+INSERT INTO "ships" VALUES(47,'economy','ship_freighter',44,2,NULL,NULL,0,5,5,15,10,3,NULL,0,1,0);
 INSERT INTO "ships" VALUES(49,'military','techs_battlecruiser1',NULL,NULL,NULL,NULL,0,12,5,15,10,500,NULL,NULL,0,0);
 INSERT INTO "ships" VALUES(83,'economy','techs_mediumTransporter',NULL,NULL,NULL,NULL,0,9,4,15,10,500,NULL,NULL,0,0);
 INSERT INTO "ships" VALUES(84,'economy','techs_largeTransporter',NULL,NULL,NULL,NULL,0,11,4,15,10,500,NULL,NULL,0,0);
-INSERT INTO "ships" VALUES(85,'military','ship_drone',44,1,NULL,NULL,0,4,5,3,10,5,NULL,NULL,1,0);
+INSERT INTO "ships" VALUES(85,'military','ship_drone',44,1,NULL,NULL,0,4,5,3,10,5,NULL,0,1,0);
 -- Ships cost Credits only (owner rule: Schiffe nur Credits — no resource cost).
 INSERT INTO "ship_costs" VALUES(85,1,500);
 INSERT INTO "ship_costs" VALUES(37,1,5000);
@@ -109,7 +107,7 @@ INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spe
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,28,2,20,2);
 -- Two more housingComplex instances for colony 1 (ROADMAP T8, 2026-09-22): the single
 -- level-2 instance above only funds a 26 supply cap (10 CC flat + 16), far below what
--- colony 1's other buildings actually use (52, see infirmary/sciencelab/hangar below) —
+-- colony 1's other buildings actually use (62, see infirmary/sciencelab/hangar below) —
 -- building out housing further is the normal in-game way a player raises the cap, and
 -- is the only lever besides CC (CC's contribution is flat, not ×level, regardless of CC
 -- level — see ResourcesService::getSupplyBreakdown()). Total housing level sum = 2+3+2 = 7
@@ -127,8 +125,11 @@ INSERT INTO "colony_resources" VALUES(3,1,250);
 INSERT INTO "colony_resources" VALUES(4,1,50);
 INSERT INTO "colony_resources" VALUES(5,1,50);
 INSERT INTO "colony_resources" VALUES(12,1,0);
--- colony_buildings: two hangar bays (building_id=44) for colony 1 (Springfield)
-INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,1,1,20,0,1);
+-- colony_buildings: two hangar bays (building_id=44) for colony 1 (Springfield).
+-- Hangar 1 sits on Lv3 so every ship docked there is active: corvette needs Lv3,
+-- freighter Lv2, drone Lv1 (HangarService::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL, T14/T20).
+-- Hangar 2 stays Lv1 (only a history row in colony_hangar_missions references it).
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,1,3,20,0,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,2,1,20,0,1);
 
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,29,0,10,1,NULL,'docked',NULL,NULL);
@@ -139,15 +140,16 @@ INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hanga
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,84,16,10,1,NULL,'docked',NULL,NULL);
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,5,3,0,NULL,'docked',NULL,NULL);
 
--- Assign hangar bays: corvette (ship_id=37) → hangar 1, freighter (ship_id=47) → hangar 2 on colony 1
+-- Assign hangar bays: corvette (ship_id=37) + freighter (ship_id=47) → hangar 1 (Lv3) on colony 1.
+-- Both used to sit in Lv1 hangars and were therefore inactive since T14.
 -- Drone (ship_id=85) dispatched from hangar 1, so ship_state=dispatched
 UPDATE "colony_ships" SET hangar_instance_id=1, ship_state='dispatched' WHERE colony_id=1 AND ship_id=85;
 UPDATE "colony_ships" SET hangar_instance_id=1, ship_state='docked'     WHERE colony_id=1 AND ship_id=37;
-UPDATE "colony_ships" SET hangar_instance_id=2, ship_state='docked'     WHERE colony_id=1 AND ship_id=47;
+UPDATE "colony_ships" SET hangar_instance_id=1, ship_state='docked'     WHERE colony_id=1 AND ship_id=47;
 
 -- Hangar missions for colony 1:
 -- Mission 1: drone dispatched from hangar 1, currently active
--- Mission 2: freighter recalled from hangar 2, completed
+-- Mission 2: freighter recalled from hangar 2, completed (history row; the freighter now docks in hangar 1)
 INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
 INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
 INSERT INTO "colony_personell" VALUES(1,35,9,10);
@@ -177,9 +179,9 @@ INSERT INTO "trade_resources" VALUES(1,0,3,100,50,0);
 
 -- supply=66 (ROADMAP T8, 2026-09-22): matches the GameTick-computed cap for colony 1's
 -- CC lvl3 (flat 10) + housing sum=7 (56) = 66 — was 18, which was far below the colony's
--- own building usage (52) and unreachable in normal play (build/levelup is supply-gated).
--- Used supply for colony 1 = 52 (harvester 2 + sciencelab 8 + infirmary 30 + 2x hangar 12),
--- leaving a 14-point buffer. See data/sql notes above the colony_buildings housing rows.
+-- own building usage (62 since T20) and unreachable in normal play (build/levelup is supply-gated).
+-- Used supply for colony 1 = 62 (harvester 2 + sciencelab 6 + infirmary 30 + hangar Lv3 18
+-- + hangar Lv1 6; supply_cost × level, values from config/buildings.php), leaving a 4-point buffer. See data/sql notes above the colony_buildings housing rows.
 INSERT INTO "user_resources" VALUES(3,2700,66);
 
 INSERT OR REPLACE INTO "user_preferences" VALUES(1,0,1,NULL,NULL,NULL,NULL,0);

@@ -74,8 +74,8 @@ class GameTickDecayTest extends TestCase
 
     /**
      * Building status_points must decrease by the building's decay_rate per tick.
-     * harvester (id 27): decay_rate=0.17 (from MasterDataSeeder), starting SP=10
-     * → expected 10 - 0.17 = 9.83
+     * harvester (id 27): decay_rate from config/buildings.php (synced by TestSeeder), starting SP=10
+     * → expected 10 - decay_rate
      */
     public function test_building_status_points_decrease_by_decay_rate(): void
     {

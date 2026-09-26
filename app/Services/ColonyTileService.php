@@ -6,6 +6,7 @@ use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
+use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -325,22 +326,7 @@ class ColonyTileService
      */
     public function randomTileType(int $ring, int $seed): string
     {
-        return $this->resolveTileType($ring, $this->pseudoRand($seed, 0, 99));
-    }
-
-    /**
-     * Deterministic integer roll in [min, max] — same LCG-hash pattern as
-     * BarService::pseudoRand()/GameTick::cumulativeCurveYield() callers use
-     * elsewhere for seeded game randomness.
-     */
-    private function pseudoRand(int $seed, int $min, int $max): int
-    {
-        if ($min >= $max) {
-            return $min;
-        }
-        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
-
-        return $min + ($hash % ($max - $min + 1));
+        return $this->resolveTileType($ring, SeededRandom::int($seed, 0, 99));
     }
 
     /**
@@ -412,11 +398,13 @@ class ColonyTileService
      */
     public function randomizeOuterRingRows(int $seed): array
     {
+        // One seeded generator per map; rolls are drawn in a fixed order so the
+        // same seed always reproduces the same map (A44/T20).
+        $rng = SeededRandom::generator($seed);
         $rows = [];
-        $salt = 0;
 
         foreach ($this->ringCoords(2) as [$q, $r]) {
-            $tileType = $this->randomTileType(2, $seed + $salt++);
+            $tileType = $this->resolveTileType(2, $rng->getInt(0, 99));
             $resourceMax = $this->resourceMaxFor($tileType);
             $rows[] = [
                 'q' => $q, 'r' => $r, 'ring' => 2,
@@ -429,17 +417,17 @@ class ColonyTileService
         $ring3Coords = $this->ringCoords(3);
         // Seeded Fisher-Yates — replaces shuffle(), which has no seed argument.
         for ($i = count($ring3Coords) - 1; $i > 0; $i--) {
-            $j = $this->pseudoRand($seed + $salt++, 0, $i);
+            $j = $rng->getInt(0, $i);
             [$ring3Coords[$i], $ring3Coords[$j]] = [$ring3Coords[$j], $ring3Coords[$i]];
         }
         $ring3Coords = array_slice($ring3Coords, 0, self::RING3_FRONTIER_COUNT);
 
         $ring3Rows = [];
         foreach ($ring3Coords as [$q, $r]) {
-            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->randomTileType(3, $seed + $salt++)];
+            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->resolveTileType(3, $rng->getInt(0, 99))];
         }
 
-        $targetIndex = $this->pseudoRand($seed + $salt++, 0, count($ring3Rows) - 1);
+        $targetIndex = $rng->getInt(0, count($ring3Rows) - 1);
         if (! str_starts_with($ring3Rows[$targetIndex]['tile_type'], 'regolith_')) {
             $ring3Rows[$targetIndex]['tile_type'] = 'regolith_normal';
         }

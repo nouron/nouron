@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -39,5 +40,10 @@ class TestSeeder extends Seeder
         }
 
         $this->call(MasterDataSeeder::class);
+
+        // config/*.php is the canonical source for master-data values (decay_rate,
+        // supply_cost, max_level, build_cost, ...). Sync last so neither the SQL
+        // fixture nor MasterDataSeeder can silently drift from config (ROADMAP T20).
+        Artisan::call('game:sync-config');
     }
 }

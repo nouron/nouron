@@ -27,7 +27,7 @@ use Tests\TestCase;
  *
  * Test data (TestSeeder):
  *   Colony 1 (Springfield) user_id=3
- *     oremine  (building_id=27): decay_rate=0.17, supply_cost=2 (after over-cap setup)
+ *     harvester (building_id=27): decay_rate from config, supply_cost=2 (after over-cap setup)
  *     test_decay_placeholder (research_id=9901): decay_rate=0.13
  */
 class OverCapDecayTest extends TestCase
@@ -169,7 +169,7 @@ class OverCapDecayTest extends TestCase
     /**
      * Over cap, building status_points decrease at the plain decay_rate.
      *
-     * oremine (id 27): decay_rate=0.17 → SP = 10.0 - 0.17 = 9.83
+     * harvester (id 27): SP = 10.0 - config('buildings.harvester.decay_rate')
      */
     public function test_building_decay_is_not_accelerated_when_colony_is_over_cap(): void
     {
@@ -186,7 +186,7 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->value('status_points');
 
-        $this->assertEqualsWithDelta(10.0 - 0.17, $sp, 0.001,
+        $this->assertEqualsWithDelta(10.0 - config('buildings.harvester.decay_rate'), $sp, 0.001,
             'Building SP must decrease by decay_rate only, even when over cap');
     }
 
@@ -194,8 +194,8 @@ class OverCapDecayTest extends TestCase
      * Building status_points must decrease at normal rate when colony is within cap.
      *
      * All supply costs zeroed → used=0, cap=0 → free=0, not over-cap.
-     * oremine (id 27): decay_rate=0.17
-     * Expected: SP = 10.0 - 0.17 = 9.83
+     * harvester (id 27): decay_rate from config('buildings.harvester.decay_rate')
+     * Expected: SP = 10.0 - decay_rate
      */
     public function test_building_decays_normally_when_colony_is_within_cap(): void
     {
@@ -210,7 +210,7 @@ class OverCapDecayTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->value('status_points');
 
-        $this->assertEqualsWithDelta(10.0 - 0.17, $sp, 0.001,
+        $this->assertEqualsWithDelta(10.0 - config('buildings.harvester.decay_rate'), $sp, 0.001,
             'Building SP must decrease by decay_rate only when within cap');
     }
 

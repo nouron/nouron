@@ -8,6 +8,7 @@ use App\Models\BarEncounter;
 use App\Models\BarInformationEncounter;
 use App\Models\BarOffer;
 use App\Services\Techtree\ResearchService;
+use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1448,12 +1449,7 @@ class BarService
 
     private function pseudoRand(int $seed, int $min, int $max): int
     {
-        if ($min >= $max) {
-            return $min;
-        }
-        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
-
-        return $min + ($hash % ($max - $min + 1));
+        return SeededRandom::int($seed, $min, $max);
     }
 
     /**

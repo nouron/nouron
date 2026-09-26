@@ -105,7 +105,7 @@ class GameTickTest extends TestCase
 
     /**
      * Building status_points decreases by decay_rate each tick.
-     * oremine (id 27): decay_rate=0.17; starting SP=11 → 11 - 0.17 = 10.83
+     * harvester (id 27): starting SP=11 → 11 - config('buildings.harvester.decay_rate')
      *
      * Supply costs are zeroed so colony 1 is never over-cap.
      */
@@ -126,7 +126,7 @@ class GameTickTest extends TestCase
             ->where('colony_id', 1)->where('building_id', 27)
             ->value('status_points');
 
-        $this->assertEqualsWithDelta(11.0 - 0.17, $sp, 0.001);
+        $this->assertEqualsWithDelta(11.0 - config('buildings.harvester.decay_rate'), $sp, 0.001);
     }
 
     // ── Domain events (ADR 0003) ─────────────────────────────────────────────

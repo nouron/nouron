@@ -33,7 +33,9 @@ class OrganikaProvisioningTest extends TestCase
 
     private const RES_ORGANIKA = 5;
 
-    private const SCIENCELAB = 31;   // supply_cost 8 → used_supply 8 → food_need 2
+    private const SCIENCELAB = 31;   // supply_cost 6 (config/buildings.php)
+
+    private const HARVESTER = 27;    // supply_cost 2 → together used_supply 8 → food_need 2
 
     private const SHIP_DRONE = 85;
 
@@ -91,7 +93,7 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_well_fed_consumes_organika_and_resets_streak(): void
     {
-        $this->onlyBuildings([['building_id' => self::SCIENCELAB]]);   // used 8 → need 2
+        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);   // used 8 → need 2
         $this->setOrganika(10);
         $this->setHungerStreak(3);
 
@@ -106,7 +108,7 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_hunger_increments_streak_and_drains_stock(): void
     {
-        $this->onlyBuildings([['building_id' => self::SCIENCELAB]]);   // need 2
+        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);   // need 2
         $this->setOrganika(1);                                        // short
         $this->setHungerStreak(0);
 
@@ -118,7 +120,7 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_hunger_streak_escalates(): void
     {
-        $this->onlyBuildings([['building_id' => self::SCIENCELAB]]);
+        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);
         $this->setOrganika(0);
         $this->setHungerStreak(3);
 

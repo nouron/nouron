@@ -124,8 +124,8 @@ class OnboardingTriggersTest extends TestCase
      * of decay must generate an onboarding_decay INNN event and mark the trigger fired.
      *
      * max_status_points for building 28 (housingComplex) = 20.
-     * 80 % threshold = 16.0. MasterDataSeeder sets decay_rate=0.13.
-     * Starting at 16.1 (just above), one tick leaves 16.1 - 0.13 = 15.97 — below the threshold.
+     * 80 % threshold = 16.0. decay_rate comes from config/buildings.php (0.4, synced by TestSeeder).
+     * Starting at 16.1 (just above), one tick leaves 16.1 - 0.4 = 15.7 — below the threshold.
      */
     public function test_decay_trigger_fires_when_building_crosses_80_percent_threshold(): void
     {
@@ -192,14 +192,14 @@ class OnboardingTriggersTest extends TestCase
      * When a building level-downs (SP <= 0), the tick emits a techtree.level_down event
      * but must NOT emit an onboarding_decay event — the two branches are mutually exclusive.
      *
-     * MasterDataSeeder sets housingComplex (building_id=28) decay_rate=0.13.
-     * SP=0.1 → 0.1 - 0.13 = -0.03 → level-down path (not the SP-update path).
+     * housingComplex (building_id=28) decay_rate = 0.4 (config/buildings.php).
+     * SP=0.1 → 0.1 - 0.4 = -0.3 → level-down path (not the SP-update path).
      */
     public function test_decay_trigger_does_not_fire_on_level_down(): void
     {
         // SP so low it will reach 0 after decay — triggers the level-down branch.
-        // MasterDataSeeder sets building 28 (housingComplex) decay_rate = 0.13.
-        // Starting at 0.1 ensures newStatus = 0.1 - 0.13 = -0.03 ≤ 0 → level-down.
+        // Building 28 (housingComplex) decay_rate = 0.4 (config/buildings.php).
+        // Starting at 0.1 ensures newStatus = 0.1 - 0.4 = -0.3 ≤ 0 → level-down.
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 28,
@@ -222,12 +222,12 @@ class OnboardingTriggersTest extends TestCase
      * A building well above the threshold (e.g. at full 20 SP)
      * must not trigger onboarding_decay even though SP decreases.
      *
-     * MasterDataSeeder sets housingComplex (building_id=28) decay_rate=0.13.
-     * SP = 20 → 20 - 0.13 = 19.87, still > 16 (80 % threshold).
+     * housingComplex (building_id=28) decay_rate = 0.4 (config/buildings.php).
+     * SP = 20 → 20 - 0.4 = 19.6, still > 16 (80 % threshold).
      */
     public function test_decay_trigger_silent_when_still_above_threshold(): void
     {
-        // SP = 20 (100 %). After one tick with decay 0.13 → 19.87 — still > 16.
+        // SP = 20 (100 %). After one tick with decay 0.4 → 19.6 — still > 16.
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 28,
