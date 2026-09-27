@@ -2,36 +2,1090 @@
 
 namespace Tests\Feature\Hangar;
 
+/**
+ * HangarService unit tests.
+ *
+ * Covered scenarios:
+ *
+ *  getHangarSlots
+ *    - test_get_hangar_slots_returns_empty_when_no_hangars
+ *    - test_get_hangar_slots_returns_sorted_by_instance_id
+ *    - test_get_hangar_slots_empty_bay_has_null_ship
+ *    - test_get_hangar_slots_occupied_bay_has_ship_data
+ *    - test_get_hangar_slots_active_mission_is_populated
+ *    - test_get_hangar_slots_recalled_mission_is_not_active_mission
+ *
+ *  requestShip
+ *    - test_request_ship_creates_row_with_building_state
+ *    - test_request_ship_throws_for_invalid_ship_id
+ *    - test_request_ship_throws_for_insufficient_credits
+ *    - test_request_ship_deducts_credits_on_success
+ *    - test_request_ship_second_of_same_type_is_allowed
+ *    - test_request_ship_creates_pending_when_no_free_slot
+ *    - test_request_ship_throws_when_hangar_level_too_low_for_ship_class
+ *    - test_request_ship_succeeds_when_hangar_level_matches_ship_class
+ *
+ *  grantFreeShip (A41 Dax/smuggler concern reward)
+ *    - test_grant_free_ship_creates_row_without_charging_credits
+ *    - test_grant_free_ship_creates_pending_when_no_free_slot
+ *    - test_grant_free_ship_throws_for_invalid_ship_id
+ *
+ *  dispatchShip (mission catalog, GDD §8b)
+ *    - test_dispatch_ship_sets_dispatched_state_and_creates_mission
+ *    - test_dispatch_ship_throws_when_no_ship_in_bay
+ *    - test_dispatch_ship_throws_when_ship_not_docked_dispatched
+ *    - test_dispatch_ship_throws_when_ship_not_docked_building
+ *    - test_dispatch_ship_throws_for_unknown_mission_key
+ *    - test_dispatch_ship_throws_for_wrong_ship_type
+ *    - test_dispatch_ship_throws_for_sp_too_low
+ *    - test_dispatch_ship_allows_sp_exactly_at_threshold
+ *    - test_dispatch_ship_throws_for_missing_knowledge_gate
+ *    - test_dispatch_ship_succeeds_with_knowledge_gate_met
+ *    - test_dispatch_ship_throws_for_missing_target
+ *    - test_dispatch_ship_throws_for_invalid_target
+ *    - test_dispatch_ship_succeeds_with_valid_signal_tile_target
+ *    - test_dispatch_ship_throws_when_ruin_target_already_consumed
+ *
+ *  organikaCostFor (kenntnis-skalierung, GDD §8b)
+ *    - test_organika_cost_scales_down_with_knowledge_level_above_gate
+ *    - test_organika_cost_respects_floor
+ *    - test_organika_cost_includes_extra_cost
+ *
+ *  recallShip
+ *    - test_recall_ship_sets_mission_recalled_and_ship_docked
+ *    - test_recall_ship_throws_when_no_active_mission
+ *
+ *  repairShip (fixed cost: 1 call = 1 Construction-AP -> +REPAIR_SP_PER_AP)
+ *    - test_repair_ship_restores_fixed_amount_per_call
+ *    - test_repair_ship_caps_status_points_at_max
+ *    - test_repair_ship_throws_when_no_ship_in_bay
+ *    - test_repair_ship_throws_when_ship_dispatched
+ *    - test_repair_ship_throws_when_already_at_full_status
+ */
+
+use App\Console\Commands\GameTick;
+use App\Services\AdvisorService;
 use App\Services\HangarService;
+use App\Services\HarvesterEntitlementService;
+use App\Services\ProjectBonusService;
+use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class HangarServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    // ── Fixture constants ─────────────────────────────────────────────────────
+
+    /** Springfield colony — user_id = 3 (Bart) */
     private const COLONY_ID = 1;
 
     private const USER_ID = 3;
 
-    private const HANGAR_INSTANCE = 1;
+    private const HANGAR_BUILDING = 44;
+
+    private const SHIP_CORVETTE = 37;
+
+    private const SHIP_FREIGHTER = 47;
+
+    private const SHIP_DRONE = 85;
+
+    private const FIXED_TICK = 100;
+
+    private HangarService $hangarService;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
-        // TestSeeder docks a corvette at hangar instance 1 on Lv3 (T20); pin it
-        // explicitly so the ship stays active regardless of fixture edits (GDD §7).
-        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
-            ->where('building_id', 44)->where('instance_id', self::HANGAR_INSTANCE)->update(['level' => 3]);
+
+        // Pin tick to a deterministic value — TickService accepts it via constructor
+        $this->app->instance(TickService::class, new TickService(self::FIXED_TICK));
+        $this->hangarService = $this->app->make(HangarService::class);
+
+        // Start each test with a clean hangar slate for colony 1
+        $this->clearHangarFixtures();
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Remove all hangar buildings, hangar-assigned ships and missions for
+     * colony 1 so every test builds its own state from scratch.
+     */
+    private function clearHangarFixtures(): void
+    {
+        DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)
+            ->delete();
+
+        DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->whereIn('ship_id', [self::SHIP_CORVETTE, self::SHIP_FREIGHTER, self::SHIP_DRONE])
+            ->delete();
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::HANGAR_BUILDING)
+            ->delete();
+    }
+
+    /**
+     * Insert a hangar bay row and return its instance_id.
+     */
+    private function insertHangar(int $instanceId, int $level = 1, float $statusPoints = 20.0): int
+    {
+        DB::table('colony_buildings')->insert([
+            'colony_id' => self::COLONY_ID,
+            'building_id' => self::HANGAR_BUILDING,
+            'instance_id' => $instanceId,
+            'level' => $level,
+            'status_points' => $statusPoints,
+            'ap_spend' => 0,
+        ]);
+
+        return $instanceId;
+    }
+
+    /**
+     * Assign a ship to a hangar bay.
+     */
+    private function assignShip(
+        int $instanceId,
+        int $shipId,
+        string $state = 'docked',
+        float $statusPoints = 20.0,
+        int $level = 1
+    ): void {
+        // Use updateOrInsert because the seeder may have inserted the ship without instance_id
+        DB::table('colony_ships')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'ship_id' => $shipId],
+            [
+                'hangar_instance_id' => $instanceId,
+                'ship_state' => $state,
+                'level' => $level,
+                'status_points' => $statusPoints,
+                'ap_spend' => 0,
+            ]
+        );
+    }
+
+    /**
+     * Insert an active mission row and return its id. destination carries a
+     * real mission_key so getHangarSlots()'s lang lookup resolves cleanly.
+     */
+    private function insertMission(int $instanceId, int $shipId, string $state = 'active', ?int $recallTick = null): int
+    {
+        return DB::table('colony_hangar_missions')->insertGetId([
+            'colony_id' => self::COLONY_ID,
+            'instance_id' => $instanceId,
+            'ship_id' => $shipId,
+            'destination' => 'mission_courier_run',
+            'sol_distance' => 3,
+            'dispatch_tick' => self::FIXED_TICK - 10,
+            'recall_tick' => $recallTick,
+            'state' => $state,
+            'created_at' => now(),
+        ]);
+    }
+
+    /**
+     * Sets a colony_researches level for a given knowledge config key
+     * (config/knowledge.php) — used to satisfy/unsatisfy mission gates.
+     */
+    private function setKnowledgeLevel(string $knowledgeKey, int $level): void
+    {
+        $researchId = (int) config("knowledge.{$knowledgeKey}.id");
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => $researchId],
+            ['level' => $level]
+        );
+    }
+
+    /**
+     * Inserts an explored colony tile with the given event_type, ready to be
+     * picked as a mission target (signal_tile) unless already deep-scanned.
+     */
+    private function insertTile(int $q, int $r, ?string $eventType, bool $deepScanned = false): void
+    {
+        DB::table('colony_tiles')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'q' => $q, 'r' => $r],
+            [
+                'ring' => 3,
+                'tile_type' => 'terrain_empty',
+                'event_type' => $eventType,
+                'is_colony_zone' => 0,
+                'is_explored' => 1,
+                'is_deep_scanned' => $deepScanned ? 1 : 0,
+            ]
+        );
+    }
+
+    // ── getHangarSlots ────────────────────────────────────────────────────────
+
+    public function test_get_hangar_slots_returns_empty_when_no_hangars(): void
+    {
+        // clearHangarFixtures() already removed all hangars for colony 1
+        $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
+
+        $this->assertSame([], $slots, 'Colony with no hangars must return empty array');
+    }
+
+    public function test_get_hangar_slots_returns_sorted_by_instance_id(): void
+    {
+        // Insert in reverse order — service must sort ascending
+        $this->insertHangar(10);
+        $this->insertHangar(5);
+        $this->insertHangar(1);
+
+        $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
+
+        $this->assertCount(3, $slots);
+        $this->assertSame(1, $slots[0]['instance_id']);
+        $this->assertSame(5, $slots[1]['instance_id']);
+        $this->assertSame(10, $slots[2]['instance_id']);
+    }
+
+    public function test_get_hangar_slots_empty_bay_has_null_ship(): void
+    {
+        $this->insertHangar(1);
+
+        $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
+
+        $this->assertCount(1, $slots);
+        $this->assertNull($slots[0]['ship'], 'Empty bay must have ship = null');
+    }
+
+    public function test_get_hangar_slots_occupied_bay_has_ship_data(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 15.0);
+
+        $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
+
+        $this->assertCount(1, $slots);
+        $ship = $slots[0]['ship'];
+        $this->assertNotNull($ship, 'Occupied bay must have non-null ship');
+        $this->assertSame(self::SHIP_CORVETTE, $ship['ship_id']);
+        $this->assertSame('docked', $ship['ship_state']);
+        $this->assertSame(15.0, $ship['status_points']);
+        $this->assertArrayHasKey('name', $ship);
+        $this->assertArrayHasKey('level', $ship);
+        $this->assertArrayHasKey('ap_spend', $ship);
+        $this->assertArrayHasKey('active_mission', $ship);
+    }
+
+    public function test_get_hangar_slots_active_mission_is_populated(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'dispatched');
+        $missionId = $this->insertMission(1, self::SHIP_DRONE, 'active');
+
+        $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
+
+        $ship = $slots[0]['ship'];
+        $this->assertNotNull($ship['active_mission'], 'Dispatched ship must have active_mission populated');
+        $this->assertSame((int) $missionId, (int) $ship['active_mission']['id']);
+        $this->assertSame('active', $ship['active_mission']['state']);
+    }
+
+    public function test_get_hangar_slots_recalled_mission_is_not_active_mission(): void
+    {
+        $this->insertHangar(2);
+        $this->assignShip(2, self::SHIP_FREIGHTER, 'docked');
+        // Insert a past mission that was recalled — must NOT appear as active_mission
+        $this->insertMission(2, self::SHIP_FREIGHTER, 'recalled', self::FIXED_TICK - 2);
+
+        $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
+
+        $ship = $slots[0]['ship'];
+        $this->assertNull($ship['active_mission'], 'Recalled mission must not populate active_mission');
+    }
+
+    // ── requestShip: rank-scaled Konsul negotiation (A13 P5) ────────────────
+
+    /**
+     * @return array<string, array{0: int, 1: int, 2: int, 3: int}> rank, ship id, base cost, expected max AP
+     */
+    public static function consulRankShipProvider(): array
+    {
+        return [
+            'rank 1 drone' => [1, self::SHIP_DRONE, 300, 6],
+            'rank 2 drone' => [2, self::SHIP_DRONE, 300, 5],
+            'rank 3 drone' => [3, self::SHIP_DRONE, 300, 5],
+            'rank 1 freighter' => [1, self::SHIP_FREIGHTER, 500, 10],
+            'rank 2 freighter' => [2, self::SHIP_FREIGHTER, 500, 9],
+            'rank 3 freighter' => [3, self::SHIP_FREIGHTER, 500, 8],
+            'rank 1 corvette' => [1, self::SHIP_CORVETTE, 800, 16],
+            'rank 2 corvette' => [2, self::SHIP_CORVETTE, 800, 14],
+            'rank 3 corvette' => [3, self::SHIP_CORVETTE, 800, 12],
+        ];
+    }
+
+    private function assignConsul(int $rank, ?int $unavailableUntilTick = null): void
+    {
+        DB::table('advisors')->where('colony_id', self::COLONY_ID)->where('personell_id', 92)->delete();
+        if ($rank > 0) {
+            DB::table('advisors')->insert([
+                'user_id' => 3,
+                'colony_id' => self::COLONY_ID,
+                'personell_id' => 92,
+                'rank' => $rank,
+                'active_ticks' => 0,
+                'unavailable_until_tick' => $unavailableUntilTick,
+            ]);
+        }
+    }
+
+    private function setCredits(int $credits): void
+    {
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => $credits]);
+    }
+
+    private function credits(): int
+    {
+        return (int) DB::table('user_resources')->where('user_id', 3)->value('credits');
+    }
+
+    private function lockedConsulAp(): int
+    {
+        return (int) DB::table('locked_actionpoints')
+            ->where('scope_type', 'colony')
+            ->where('scope_id', self::COLONY_ID)
+            ->sum('spend_ap');
+    }
+
+    public function test_consul_ap_discount_config_is_rank_scaled(): void
+    {
+        $this->assertSame([1 => 50, 2 => 60, 3 => 70], config('game.hangar.consul_ap_discount'));
+    }
+
+    #[DataProvider('consulRankShipProvider')]
+    public function test_consul_max_negotiation_ap_per_rank_and_ship(int $rank, int $shipId, int $baseCost, int $expectedMaxAp): void
+    {
+        $this->assignConsul($rank);
+
+        $this->assertSame($expectedMaxAp, $this->hangarService->maxConsulAp(self::COLONY_ID, $shipId));
+        $this->assertSame(config('game.hangar.consul_ap_discount')[$rank], $this->hangarService->consulApDiscountPerAp(self::COLONY_ID));
+    }
+
+    #[DataProvider('consulRankShipProvider')]
+    public function test_request_ship_deducts_rank_scaled_discount_and_locks_ap(int $rank, int $shipId, int $baseCost, int $expectedMaxAp): void
+    {
+        config(['game.bypass.ap_checks' => true]);
+        $this->insertHangar(1, 3);
+        $this->assignConsul($rank);
+        $this->setCredits(10000);
+        $perAp = config('game.hangar.consul_ap_discount')[$rank];
+        // Invest one AP less than the maximum so a residual cost remains.
+        $ap = $expectedMaxAp - 1;
+
+        $this->hangarService->requestShip(self::COLONY_ID, $shipId, false, $ap);
+
+        $this->assertSame(10000 - ($baseCost - $ap * $perAp), $this->credits(), "rank {$rank}: {$perAp} Cr per AP");
+        $this->assertSame($ap, $this->lockedConsulAp());
+    }
+
+    #[DataProvider('consulRankShipProvider')]
+    public function test_request_ship_max_negotiation_ap_makes_ship_free(int $rank, int $shipId, int $baseCost, int $expectedMaxAp): void
+    {
+        $this->insertHangar(1, 3);
+        $this->assignConsul($rank);
+        $this->setCredits(10000);
+        config(['game.bypass.ap_checks' => true]);
+
+        $this->hangarService->requestShip(self::COLONY_ID, $shipId, false, $expectedMaxAp);
+
+        $this->assertSame(10000, $this->credits(), 'max AP reduces the price to 0, never below');
+    }
+
+    public function test_display_path_matches_execution_path_for_all_ranks(): void
+    {
+        config(['game.bypass.ap_checks' => true]);
+        foreach ([1, 2, 3] as $rank) {
+            foreach ([self::SHIP_DRONE, self::SHIP_FREIGHTER, self::SHIP_CORVETTE] as $shipId) {
+                $this->clearHangarFixtures();
+                $this->insertHangar(1, 3);
+                $this->assignConsul($rank);
+                $this->setCredits(10000);
+
+                // Display values (what the modal shows) ...
+                $catalog = $this->hangarService->getShipRequestCatalog(self::COLONY_ID);
+                $perAp = $catalog['consul_ap_discount'];
+                $baseCost = $catalog['ships'][$shipId]['cost'];
+                $displayedMaxAp = $catalog['ships'][$shipId]['max_consul_ap'];
+                $displayedCost = max(0, $baseCost - 3 * $perAp);
+
+                // ... must equal what execution actually charges.
+                $this->hangarService->requestShip(self::COLONY_ID, $shipId, false, 3);
+
+                $this->assertSame(10000 - $displayedCost, $this->credits(), "rank {$rank} ship {$shipId}");
+                $this->assertSame(config('game.hangar.consul_ap_discount')[$rank], $perAp);
+                $this->assertSame($this->hangarService->maxConsulAp(self::COLONY_ID, $shipId), $displayedMaxAp);
+            }
+        }
+    }
+
+    public function test_request_ship_without_consul_offers_no_negotiation(): void
+    {
+        $this->insertHangar(1);
+        $this->assignConsul(0);
+        $this->setCredits(10000);
+        config(['game.bypass.ap_checks' => true]);
+
+        $this->assertSame(0, $this->hangarService->consulRank(self::COLONY_ID));
+        $this->assertSame(0, $this->hangarService->consulApDiscountPerAp(self::COLONY_ID));
+        $this->assertSame(0, $this->hangarService->maxConsulAp(self::COLONY_ID, self::SHIP_DRONE));
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+        $this->assertSame(10000 - 300, $this->credits(), 'without Konsul the full price is charged');
+
+        $this->expectException(\RuntimeException::class);
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 3);
+    }
+
+    public function test_request_ship_with_unavailable_consul_offers_no_negotiation(): void
+    {
+        $this->insertHangar(1);
+        $this->assignConsul(3, self::FIXED_TICK + 5);
+        config(['game.bypass.ap_checks' => true]);
+
+        $this->assertSame(0, $this->hangarService->consulRank(self::COLONY_ID));
+    }
+
+    // ── requestShip ───────────────────────────────────────────────────────────
+
+    public function test_request_ship_creates_row_with_building_state(): void
+    {
+        // Free slot available — ship must be auto-assigned to it.
+        $this->insertHangar(1);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->first();
+
+        $this->assertNotNull($row, 'colony_ships row must be created after requestShip');
+        $this->assertSame('building', $row->ship_state);
+        $this->assertSame(1, (int) $row->hangar_instance_id);
+        // deliver_at_tick = currentTick + delivery_ticks (drone = 1)
+        $this->assertSame(self::FIXED_TICK + 1, (int) $row->deliver_at_tick);
+    }
+
+    public function test_request_ship_throws_when_hangar_level_too_low_for_ship_class(): void
+    {
+        // Hangar level 1 only unlocks the drone class — corvette requires level 3.
+        $this->insertHangar(1, 1);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_CORVETTE, false, 0);
+    }
+
+    public function test_request_ship_succeeds_when_hangar_level_matches_ship_class(): void
+    {
+        $this->insertHangar(1, 3);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_CORVETTE, false, 0);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_CORVETTE)
+            ->first();
+
+        $this->assertNotNull($row, 'colony_ships row must be created once hangar level requirement is met');
+        $this->assertSame('building', $row->ship_state);
+    }
+
+    public function test_request_ship_throws_for_invalid_ship_id(): void
+    {
+        $this->insertHangar(1);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->requestShip(self::COLONY_ID, 999, false, 0);
+    }
+
+    // ── grantFreeShip (A41) ──────────────────────────────────────────────────
+
+    public function test_grant_free_ship_creates_row_without_charging_credits(): void
+    {
+        $this->insertHangar(1);
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => 42]);
+
+        $this->hangarService->grantFreeShip(self::COLONY_ID, self::SHIP_DRONE);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->first();
+
+        $this->assertNotNull($row, 'colony_ships row must be created after grantFreeShip');
+        $this->assertSame('building', $row->ship_state);
+        $this->assertSame(1, (int) $row->hangar_instance_id);
+        $this->assertSame(self::FIXED_TICK + 1, (int) $row->deliver_at_tick);
+        $this->assertSame(42, (int) DB::table('user_resources')->where('user_id', 3)->value('credits'));
+    }
+
+    public function test_grant_free_ship_creates_pending_when_no_free_slot(): void
+    {
+        // No hangar row at all — there is no free slot to assign to.
+        $this->hangarService->grantFreeShip(self::COLONY_ID, self::SHIP_DRONE);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->first();
+
+        $this->assertSame('pending', $row->ship_state);
+        $this->assertNull($row->hangar_instance_id);
+        $this->assertNotNull($row->pending_until_tick);
+    }
+
+    public function test_grant_free_ship_throws_for_invalid_ship_id(): void
+    {
+        $this->insertHangar(1);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->grantFreeShip(self::COLONY_ID, 999);
+    }
+
+    public function test_request_ship_throws_for_insufficient_credits(): void
+    {
+        $this->insertHangar(1);
+        // Zero out credits for Bart (user_id=3)
+        DB::table('user_resources')
+            ->where('user_id', 3)
+            ->update(['credits' => 0]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+    }
+
+    public function test_request_ship_deducts_credits_on_success(): void
+    {
+        $this->insertHangar(1);
+        // Drone costs 300 Cr; test seeder gives Bart 2700 Cr
+        $before = (int) DB::table('user_resources')->where('user_id', 3)->value('credits');
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+
+        $after = (int) DB::table('user_resources')->where('user_id', 3)->value('credits');
+        $this->assertSame($before - 300, $after, 'Credits must be reduced by nexus_cost (drone=300)');
+    }
+
+    public function test_request_ship_second_of_same_type_is_allowed(): void
+    {
+        // requestShip has no per-type uniqueness constraint — two drones are valid.
+        $this->insertHangar(1);
+        $this->insertHangar(2);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+        // Second request of same ship type must not throw.
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+
+        $count = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->count();
+
+        $this->assertSame(2, $count, 'Two separate colony_ships rows must exist for two drones');
+    }
+
+    public function test_request_ship_creates_pending_when_no_free_slot(): void
+    {
+        // All hangar slots occupied — ship must be created in pending state with no hangar.
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        // No further free slots.
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->whereNull('hangar_instance_id')
+            ->first();
+
+        $this->assertNotNull($row, 'Pending ship must be created when no free hangar slot');
+        $this->assertSame('pending', $row->ship_state);
+        $this->assertNotNull($row->pending_until_tick, 'pending_until_tick must be set');
+    }
+
+    // ── dispatchShip ──────────────────────────────────────────────────────────
+
+    public function test_dispatch_ship_sets_dispatched_state_and_creates_mission(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+
+        $ship = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('hangar_instance_id', 1)
+            ->first();
+
+        $this->assertSame('dispatched', $ship->ship_state);
+
+        $mission = DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('instance_id', 1)
+            ->where('state', 'active')
+            ->first();
+
+        $this->assertNotNull($mission, 'An active mission row must be created after dispatch');
+        $this->assertSame('mission_courier_run', $mission->destination);
+        $this->assertSame(1, (int) $mission->sol_distance, 'sol_distance comes from the catalog, not player input');
+        $this->assertSame(self::FIXED_TICK, (int) $mission->dispatch_tick);
+        $this->assertNull($mission->recall_tick);
+    }
+
+    public function test_dispatch_ship_throws_when_no_ship_in_bay(): void
+    {
+        $this->insertHangar(1);
+        // Bay is empty
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+    }
+
+    public function test_dispatch_ship_throws_when_ship_not_docked_dispatched(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'dispatched');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+    }
+
+    public function test_dispatch_ship_throws_when_ship_not_docked_building(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'building');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+    }
+
+    public function test_dispatch_ship_throws_for_unknown_mission_key(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_does_not_exist');
+    }
+
+    public function test_dispatch_ship_throws_for_wrong_ship_type(): void
+    {
+        // mission_courier_run only allows drone; corvette must be rejected.
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+    }
+
+    public function test_dispatch_ship_throws_for_sp_too_low(): void
+    {
+        // dispatch_min_sp_pct = 0.25 of max 20 = 5. 4.9 SP must be blocked.
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked', 4.9);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+    }
+
+    public function test_dispatch_ship_allows_sp_exactly_at_threshold(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked', 5.0);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+
+        $ship = DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('hangar_instance_id', 1)->first();
+        $this->assertSame('dispatched', $ship->ship_state, 'exactly 25% SP must still be dispatchable');
+    }
+
+    public function test_dispatch_ship_throws_for_missing_knowledge_gate(): void
+    {
+        // mission_prospecting_flight requires geology Lv1 — colony has none by default.
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_prospecting_flight');
+    }
+
+    public function test_dispatch_ship_succeeds_with_knowledge_gate_met(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->setKnowledgeLevel('geology', 1);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_prospecting_flight');
+
+        $ship = DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('hangar_instance_id', 1)->first();
+        $this->assertSame('dispatched', $ship->ship_state);
+    }
+
+    public function test_dispatch_ship_throws_for_missing_target(): void
+    {
+        // mission_deep_survey requires a signal-tile target.
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_deep_survey');
+    }
+
+    public function test_dispatch_ship_throws_for_invalid_target(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        // Tile has no event_type — not a valid signal tile.
+        $this->insertTile(3, -3, null);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_deep_survey', ['q' => 3, 'r' => -3]);
+    }
+
+    public function test_dispatch_ship_succeeds_with_valid_signal_tile_target(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->insertTile(3, -3, 'event_signal');
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_deep_survey', ['q' => 3, 'r' => -3]);
+
+        $mission = DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)->where('state', 'active')->first();
+        $this->assertSame('{"q":3,"r":-3}', $mission->target);
+    }
+
+    public function test_dispatch_ship_throws_when_ruin_target_already_consumed(): void
+    {
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
+        $this->insertHangar(2, 3);
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->assignShip(2, self::SHIP_CORVETTE, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        // First expedition to this ruin succeeds and is marked completed.
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_ruin_expedition', ['q' => 5, 'r' => -2]);
+        DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)
+            ->update(['state' => 'completed']);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 2, 'mission_ruin_expedition', ['q' => 5, 'r' => -2]);
+    }
+
+    public function test_dispatch_ship_throws_for_harvester_salvage_when_two_instances_already_placed(): void
+    {
+        // GDD §4c "Harvester-Zweitinstanz: Bezugsquelle" (2026-08-05): the salvage
+        // mission must not be dispatchable once the colony already holds both
+        // Harvester instances — the entitlement would be earned for nothing.
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 1]
+        );
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 2],
+            ['level' => 0, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => 2]
+        );
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_harvester_salvage', ['q' => 5, 'r' => -2]);
+    }
+
+    public function test_dispatch_ship_succeeds_for_harvester_salvage_when_only_one_instance_placed(): void
+    {
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 27)->where('instance_id', 2)
+            ->delete();
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 1]
+        );
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_harvester_salvage', ['q' => 5, 'r' => -2]);
+
+        $mission = DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)->where('state', 'active')->first();
+        $this->assertNotNull($mission);
+    }
+
+    public function test_dispatch_ship_throws_for_harvester_salvage_when_user_already_has_entitlement(): void
+    {
+        // Regression guard: instance_count alone doesn't catch an earned-but-not-yet-
+        // placed entitlement (e.g. Orin's offer already bought, GDD §4c) — dispatching
+        // the salvage mission on top would earn a second, unusable entitlement.
+        $this->insertHangar(1, 3); // ship class needs a Lv3 hangar (GDD §7)
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 27)->where('instance_id', 2)
+            ->delete();
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 1]
+        );
+
+        // Colony 1 belongs to user_id=3 (Bart) — TestSeeder fixture.
+        $this->app->make(HarvesterEntitlementService::class)->grantPurchase(3);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_harvester_salvage', ['q' => 5, 'r' => -2]);
+    }
+
+    // ── organikaCostFor ───────────────────────────────────────────────────────
+
+    public function test_organika_cost_scales_down_with_knowledge_level_above_gate(): void
+    {
+        $mission = config('missions.catalog.mission_prospecting_flight'); // geology Lv1 gate, dist 2
+
+        $this->setKnowledgeLevel('geology', 1);
+        $this->assertSame(6, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv1 (at gate): full rate 3/sol × 2');
+
+        $this->setKnowledgeLevel('geology', 2);
+        $this->assertSame(4, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv2: 1 level above gate → 2/sol × 2');
+
+        $this->setKnowledgeLevel('geology', 3);
+        $this->assertSame(2, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv3: 2 levels above gate → 1/sol × 2');
+    }
+
+    public function test_organika_cost_respects_floor(): void
+    {
+        $mission = config('missions.catalog.mission_prospecting_flight');
+        $this->setKnowledgeLevel('geology', 5); // far above gate — must not go below the floor
+
+        $this->assertSame(2, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'floor is 1/sol × 2 sol_distance');
+    }
+
+    public function test_organika_cost_includes_extra_cost(): void
+    {
+        $mission = config('missions.catalog.mission_aid_transport'); // ungegatet (Stufe 1b), dist 2, +10 extra
+        $this->setKnowledgeLevel('health', 1);
+
+        // Base 3/sol × 2 = 6, plus 10 extra cargo = 16
+        $this->assertSame(16, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission));
+    }
+
+    // ── recallShip ────────────────────────────────────────────────────────────
+
+    public function test_recall_ship_sets_mission_recalled_and_ship_docked(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'dispatched');
+        $missionId = $this->insertMission(1, self::SHIP_DRONE, 'active');
+
+        $this->hangarService->recallShip(self::COLONY_ID, 1);
+
+        $mission = DB::table('colony_hangar_missions')->find($missionId);
+        $this->assertSame('recalled', $mission->state);
+        $this->assertSame(self::FIXED_TICK, (int) $mission->recall_tick);
+
+        $ship = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('hangar_instance_id', 1)
+            ->first();
+        $this->assertSame('docked', $ship->ship_state);
+    }
+
+    public function test_recall_ship_throws_when_no_active_mission(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        // No mission inserted
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->recallShip(self::COLONY_ID, 1);
+    }
+
+    public function test_recall_ship_throws_when_only_recalled_mission_exists(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        // Insert an already-recalled mission (not 'active')
+        $this->insertMission(1, self::SHIP_CORVETTE, 'recalled', self::FIXED_TICK - 5);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->recallShip(self::COLONY_ID, 1);
+    }
+
+    // ── repairShip ────────────────────────────────────────────────────────────
+
+    public function test_repair_ship_restores_fixed_amount_per_call(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 10.0);
+
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('hangar_instance_id', 1)
+            ->first();
+
+        // Fixed per call: 10.0 + REPAIR_SP_PER_AP (2) = 12.0, ap_spend +1
+        $this->assertSame(12.0, (float) $row->status_points);
+        $this->assertSame(1, (int) $row->ap_spend);
+    }
+
+    public function test_repair_ship_caps_status_points_at_max(): void
+    {
+        $this->insertHangar(1);
+        // 19 + 2 would be 21 — must clamp to 20
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 19.0);
+
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
+
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('hangar_instance_id', 1)
+            ->first();
+
+        $this->assertSame(20.0, (float) $row->status_points, 'status_points must not exceed 20');
+    }
+
+    public function test_repair_ship_throws_when_no_ship_in_bay(): void
+    {
+        $this->insertHangar(1);
+        // Bay is empty
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
+    }
+
+    public function test_repair_ship_throws_when_ship_dispatched(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'dispatched', 10.0);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
+    }
+
+    public function test_repair_ship_throws_when_already_at_full_status(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 20.0); // already full
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
+    }
+
+    // ── cartography Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) ────────
+
+    public function test_dispatch_ship_costs_less_nav_ap_with_cartography(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->setKnowledgeLevel('cartography', 5);
+
+        $advisorService = $this->app->make(AdvisorService::class);
+        $before = $advisorService->getAvailableActionPoints(self::COLONY_ID);
+
+        // mission_courier_run: sol_distance=1 (siehe test_dispatch_ship_sets_dispatched_state_and_creates_mission).
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+
+        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
+        $curve = config('knowledge.cartography.nav_ap_reduction_per_lv');
+        $discountPercent = GameTick::cumulativeCurveYield($curve, 5);
+        $expectedCost = ProjectBonusService::applyDiscount($baseNavApCost, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
+
+        $this->assertLessThan($baseNavApCost, $expectedCost, 'precondition: discount must actually lower the base nav AP cost');
+        $this->assertSame($before - $expectedCost, $advisorService->getAvailableActionPoints(self::COLONY_ID));
+    }
+
+    public function test_dispatch_ship_costs_full_nav_ap_without_cartography(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $advisorService = $this->app->make(AdvisorService::class);
+        $before = $advisorService->getAvailableActionPoints(self::COLONY_ID);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+
+        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
+        $this->assertSame($before - $baseNavApCost, $advisorService->getAvailableActionPoints(self::COLONY_ID), 'no cartography → unchanged base nav AP cost');
+    }
+
+    /**
+     * Regression: getMissionCatalogFor() is the read/preview sibling of dispatchShip()
+     * and must report the same discounted nav AP cost, otherwise the UI shows a wrong
+     * chip and can falsely disable missions the player could actually afford.
+     */
+    public function test_get_mission_catalog_for_reports_same_nav_ap_as_dispatch_ship_charges(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->setKnowledgeLevel('cartography', 5);
+
+        $advisorService = $this->app->make(AdvisorService::class);
+        $before = $advisorService->getAvailableActionPoints(self::COLONY_ID);
+
+        $catalog = $this->hangarService->getMissionCatalogFor(self::COLONY_ID);
+        $entry = collect($catalog)->firstWhere('key', 'mission_courier_run');
+        $this->assertNotNull($entry);
+
+        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
+        $this->assertLessThan($baseNavApCost, $entry['nav_ap'], 'precondition: catalog must reflect the cartography discount');
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+        $actualCharged = $before - $advisorService->getAvailableActionPoints(self::COLONY_ID);
+
+        $this->assertSame($actualCharged, $entry['nav_ap'], 'catalog nav_ap must match what dispatchShip() actually charges');
+    }
+
+    // ── Mission success chance & difficulty options (consolidated from Feature/Hangar) ──
 
     public function test_success_chance_uses_base_chance_when_no_bonuses_apply(): void
     {
         $mission = config('missions.catalog.mission_courier_run'); // ungegatet
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
         $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'easy');
 
@@ -50,7 +1104,9 @@ class HangarServiceTest extends TestCase
             'active_ticks' => 0,
         ]);
         $mission = config('missions.catalog.mission_courier_run');
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
         $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'easy');
 
@@ -65,7 +1121,9 @@ class HangarServiceTest extends TestCase
             ['level' => 3, 'ap_spend' => 0]
         );
         $mission = config('missions.catalog.mission_prospecting_flight');
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
         $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'normal');
 
@@ -86,7 +1144,9 @@ class HangarServiceTest extends TestCase
             ['level' => 5, 'ap_spend' => 0]
         );
         $mission = config('missions.catalog.mission_prospecting_flight');
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
         // easy base_chance 0.85 + rank3*0.05=0.15 + 4 levels above gate*0.03=0.12 = 1.12 uncapped,
         // must clamp to chance_cap 0.95. ('hard' base 0.60 would only reach 0.87 here — not high
@@ -98,7 +1158,9 @@ class HangarServiceTest extends TestCase
 
     public function test_dispatch_rejects_a_difficulty_not_offered_by_the_mission(): void
     {
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
         // TestSeeder docks a corvette (ship_id 37) at hangar instance 1 (colony 1's
         // seeded drone sits dispatched there instead — see HangarMissionResolutionTest
         // fixture comment), so mission_escort_convoy (ships => ['corvette'], no
@@ -107,21 +1169,23 @@ class HangarServiceTest extends TestCase
         // (config/missions.php) — 'easy' must be rejected.
         $this->expectException(\RuntimeException::class);
 
-        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'easy');
+        $service->dispatchShip(self::COLONY_ID, 1, 'mission_escort_convoy', null, 'easy');
     }
 
     public function test_dispatch_persists_the_chosen_difficulty(): void
     {
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
-        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'hard');
+        $service->dispatchShip(self::COLONY_ID, 1, 'mission_escort_convoy', null, 'hard');
 
         // TestSeeder already seeds a (recalled/inactive-irrelevant) mission row for
         // colony 1 / instance 1 (mission_recon_flight, default difficulty 'normal') —
         // scope to the freshly dispatched row via destination + state to avoid picking
         // that stale fixture row up instead.
         $this->assertSame('hard', DB::table('colony_hangar_missions')
-            ->where('colony_id', self::COLONY_ID)->where('instance_id', self::HANGAR_INSTANCE)
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)
             ->where('destination', 'mission_escort_convoy')->where('state', 'active')
             ->value('difficulty'));
     }
@@ -145,11 +1209,13 @@ class HangarServiceTest extends TestCase
 
     public function test_dispatch_rejects_mission_perimeter_patrol_below_defense_gate(): void
     {
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
         $this->expectException(\RuntimeException::class);
 
-        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_perimeter_patrol', null, 'normal');
+        $service->dispatchShip(self::COLONY_ID, 1, 'mission_perimeter_patrol', null, 'normal');
     }
 
     public function test_dispatch_accepts_mission_perimeter_patrol_at_defense_lv1(): void
@@ -158,12 +1224,14 @@ class HangarServiceTest extends TestCase
             ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.defense.id')],
             ['level' => 1, 'ap_spend' => 0]
         );
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
-        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_perimeter_patrol', null, 'normal');
+        $service->dispatchShip(self::COLONY_ID, 1, 'mission_perimeter_patrol', null, 'normal');
 
         $this->assertSame('normal', DB::table('colony_hangar_missions')
-            ->where('colony_id', self::COLONY_ID)->where('instance_id', self::HANGAR_INSTANCE)
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)
             ->where('destination', 'mission_perimeter_patrol')->where('state', 'active')
             ->value('difficulty'));
     }
@@ -174,7 +1242,9 @@ class HangarServiceTest extends TestCase
         // assertion checks the German label, so scope the locale to this test only.
         $this->app->setLocale('de');
 
-        $service = $this->app->make(HangarService::class);
+        $this->insertHangar(1, 3);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $service = $this->hangarService;
 
         $entries = $service->getMissionCatalogFor(self::COLONY_ID);
         $courierRun = collect($entries)->firstWhere('key', 'mission_courier_run');

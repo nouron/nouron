@@ -150,6 +150,34 @@ class GameTickDecayTest extends TestCase
             'Level-0 building SP must not change');
     }
 
+    public function test_hangar_instances_decay_independently(): void
+    {
+        $this->zeroAllSupplyCosts();
+
+        $hangarBuildingId = 44;
+        $decayRate = (float) DB::table('buildings')->where('id', $hangarBuildingId)->value('decay_rate');
+        $this->assertGreaterThan(0.0, $decayRate, 'Hangar must have a positive decay_rate for this test to be meaningful');
+
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => 1, 'building_id' => $hangarBuildingId, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20.0, 'ap_spend' => 0]
+        );
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => 1, 'building_id' => $hangarBuildingId, 'instance_id' => 2],
+            ['level' => 1, 'status_points' => 10.0, 'ap_spend' => 0]
+        );
+
+        Artisan::call('game:tick', ['--tick' => 11099]);
+
+        $inst1 = DB::table('colony_buildings')->where('colony_id', 1)->where('building_id', $hangarBuildingId)->where('instance_id', 1)->first();
+        $inst2 = DB::table('colony_buildings')->where('colony_id', 1)->where('building_id', $hangarBuildingId)->where('instance_id', 2)->first();
+
+        $this->assertEqualsWithDelta(20.0 - $decayRate, (float) $inst1->status_points, 0.001,
+            'Instance 1 status_points must decrease by decay_rate from 20.0');
+        $this->assertEqualsWithDelta(10.0 - $decayRate, (float) $inst2->status_points, 0.001,
+            'Instance 2 status_points must decrease by decay_rate from 10.0, not be overwritten by instance 1');
+    }
+
     /**
      * A techtree.level_down event must be created for the colony owner when a
      * building loses a level.
