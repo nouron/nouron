@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Playtest;
 
+use PHPUnit\Framework\TestCase;
 use Tests\Feature\Playtest\BotProfile;
-use Tests\TestCase;
 
 class BotProfileTest extends TestCase
 {

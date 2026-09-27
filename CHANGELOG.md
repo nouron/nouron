@@ -4,6 +4,7 @@
 
 - Feature: A45 — Siegziele als Config (`run.tasks`), neue Messgrößen (Ingenieursleistung = Summe Ausbaustufen, Expeditionen = erfolgreiche Außenmissionen ab Schwierigkeit "normal", Expertenstab = 4 Berater Rang 3), Nexus-Kontrollpunkte prüfen jetzt Fortschritt statt Erfüllung (steigende Leiter Sol 30/50/65), Countdown-Bug behoben. PlaytestBot: neues Profil `focus` für gezielte Ziel-Verfolgung. Kalibrier-Batch (12 Seeds × 2 Profile) korrigiert 4 Zielwerte; zwei strukturelle Ziele (Expertenstab, Kreditreserve) bleiben vorerst unverändert bzw. unkalibriert (A45b).
 - Doku: GDD §15/§18 und `game-reference.md` §18 auf den A45-Stand; Korrektur "Nexus-Schuld wird nicht automatisch getilgt".
+- Chore: Testsuite aufgeräumt und beschleunigt — redundante Tests entfernt/gemergt (Coverage-Abgleich gegen `MasterDataConfigParityTest`/`BuildingInstanceCapTest` geprüft), Reflection-Aufrufe gecacht, `BotProfileTest` ohne Laravel-Boot, `defaultTestSuite` zieht Playtest-Suite nicht mehr automatisch mit (PR #358).
 
 ## 2026-09-26
 

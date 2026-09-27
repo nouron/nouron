@@ -12,11 +12,17 @@ use Tests\TestCase;
  */
 class MerchantRngDistributionTest extends TestCase
 {
+    private ?MerchantService $merchant = null;
+
+    /** @var array<string, \ReflectionMethod> */
+    private array $methods = [];
+
     private function invoke(string $method, mixed ...$args): mixed
     {
-        $merchant = app(MerchantService::class);
+        $this->merchant ??= app(MerchantService::class);
+        $this->methods[$method] ??= (new \ReflectionClass($this->merchant))->getMethod($method);
 
-        return (new \ReflectionClass($merchant))->getMethod($method)->invoke($merchant, ...$args);
+        return $this->methods[$method]->invoke($this->merchant, ...$args);
     }
 
     public function test_visit_interval_covers_range_across_consecutive_visits(): void

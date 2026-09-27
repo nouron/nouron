@@ -14,12 +14,16 @@ use Tests\TestCase;
  */
 class GameTickSeededRollTest extends TestCase
 {
+    private static ?GameTick $tick = null;
+
+    private static ?\ReflectionMethod $seededRoll = null;
+
     private function roll(int $seed): float
     {
-        $tick = app(GameTick::class);
-        $method = (new \ReflectionClass($tick))->getMethod('seededRoll');
+        self::$tick ??= app(GameTick::class);
+        self::$seededRoll ??= (new \ReflectionClass(self::$tick))->getMethod('seededRoll');
 
-        return $method->invoke($tick, $seed, 0, 9999) / 10000;
+        return self::$seededRoll->invoke(self::$tick, $seed, 0, 9999) / 10000;
     }
 
     public function test_encounter_rolls_are_uniform_for_real_run_seeds(): void
