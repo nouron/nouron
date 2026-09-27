@@ -224,6 +224,9 @@ class ResetPlayerTest extends TestCase
         $this->assertNotNull($objectives->first()->completed_at);
         $this->assertGreaterThan(0, $objectives->get(1)->current_value);
         $this->assertNull($objectives->get(1)->completed_at);
+        if (config('game.run.tasks.'.$objectives->get(1)->task_key.'.type') === 'streak') {
+            $this->assertSame($objectives->get(1)->streak_value, $objectives->get(1)->best_streak_value);
+        }
 
         // 4th advisor (trader/Konsul) hired after Cantina built.
         $this->assertSame(4, DB::table('advisors')->where('colony_id', $run->colony_id)->count());
@@ -251,13 +254,19 @@ class ResetPlayerTest extends TestCase
             $this->assertSame($objective->target_value, $objective->current_value);
         }
 
-        // engineer + scientist upgraded to Senior (rank 2) for the "Expertenstab" objective.
+        // A45 "Expertenstab": the full staff at the configured top rank.
         $seniorCount = DB::table('advisors')
             ->where('colony_id', $run->colony_id)
-            ->whereIn('personell_id', [(int) config('advisors.engineer.id'), (int) config('advisors.scientist.id')])
-            ->where('rank', 2)
+            ->where('rank', '>=', (int) config('game.run.tasks.task_senior_advisors.min_rank'))
             ->count();
-        $this->assertSame(2, $seniorCount);
+        $this->assertSame((int) config('game.run.tasks.task_senior_advisors.target'), $seniorCount);
+
+        // Streak objectives carry their record (best streak) as well.
+        foreach ($objectives as $objective) {
+            if (config("game.run.tasks.{$objective->task_key}.type") === 'streak') {
+                $this->assertSame($objective->target_value, $objective->best_streak_value);
+            }
+        }
 
         // 4 advisors total (engineer, scientist, pilot, trader) — strategist retired.
         $this->assertSame(4, DB::table('advisors')->where('colony_id', $run->colony_id)->count());

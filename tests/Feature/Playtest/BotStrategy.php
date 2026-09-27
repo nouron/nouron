@@ -9,6 +9,7 @@ use App\Services\BuildingCostService;
 use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
+use App\Services\RunTaskCatalog;
 use App\Services\TickService;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +60,7 @@ class BotStrategy
      */
     public static function default(BotProfile $profile = new BotProfile): array
     {
-        return [
+        $rules = [
             [
                 'name' => 'repair_critical',
                 // Below REPAIR_CRITICAL_PCT a building is close to losing a level —
@@ -379,6 +380,219 @@ class BotStrategy
                 ]),
             ],
         ];
+
+        if ($profile->objectiveFocus <= 0.0) {
+            return $rules;
+        }
+
+        // A45 focus profile: objective-driven rules go in right before the
+        // generic Phase-2 work (harvester relocation, exploration, building,
+        // research) — after the survival/economy rules, so they never starve
+        // Phase 1 or the colony's food and repairs. Each rule only fires while
+        // its objective is drawn and open.
+        $at = array_search('relocate_harvester', array_column($rules, 'name'), true);
+        array_splice($rules, $at === false ? count($rules) : (int) $at, 0, self::focusRules());
+
+        return $rules;
+    }
+
+    /**
+     * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
+     */
+    private static function focusRules(): array
+    {
+        return [
+            [
+                'name' => 'focus_expedition_mission',
+                'when' => fn (BotSession $b) => self::hasActiveObjective($b, 'task_expedition_coverage')
+                    ? self::expeditionMissionCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, array $candidate) => $b->act('focus_expedition_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                    'mission_key' => $candidate['mission_key'],
+                    'difficulty' => $candidate['difficulty'],
+                ]),
+            ],
+            [
+                'name' => 'focus_engineering_levelup',
+                'when' => fn (BotSession $b) => self::hasActiveObjective($b, 'task_engineering_output') && self::availableAp($b) >= 1
+                    ? self::engineeringLevelupCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, object $row) => $b->act('focus_engineering_levelup', 'POST', '/colony/building/invest', [
+                    'building_id' => $row->building_id,
+                    'instance_id' => $row->instance_id,
+                ]),
+            ],
+            [
+                'name' => 'focus_trust_building',
+                'when' => fn (BotSession $b) => self::hasActiveObjective($b, 'task_colony_prosperity') && self::availableAp($b) >= 1
+                    ? self::trustBuildingCandidate($b)
+                    : null,
+                'do' => function (BotSession $b, array $candidate) {
+                    [$building, $tile] = $candidate;
+
+                    return $b->act('focus_trust_building', 'POST', '/colony/building/place', [
+                        'building_id' => $building['building_id'],
+                        'q' => $tile->q,
+                        'r' => $tile->r,
+                    ]);
+                },
+            ],
+        ];
+    }
+
+    /**
+     * task_expedition_coverage counts successful missions at a counted difficulty
+     * (run.tasks min_difficulty and harder). Picks the shortest repeatable,
+     * target-free catalog mission a docked, active, intact ship can fly at the
+     * EASIEST counted difficulty (highest success chance), with the knowledge
+     * gate, Nav-AP and Organika provisions covered — the gates
+     * HangarService::dispatchShip() enforces.
+     *
+     * @return array{ship: object, mission_key: string, difficulty: string}|null
+     */
+    private static function expeditionMissionCandidate(BotSession $b): ?array
+    {
+        $hangar = app(HangarService::class);
+        $minSp = 20 * (float) config('missions.dispatch_min_sp_pct', 0.25); // HangarService::SHIP_MAX_STATUS
+        $ships = DB::table('colony_ships')
+            ->where('colony_id', $b->colonyId)
+            ->where('ship_state', 'docked')
+            ->where('status_points', '>=', $minSp)
+            ->whereNotIn('id', $hangar->inactiveShipRowIds($b->colonyId))
+            ->orderBy('id')
+            ->get();
+        if ($ships->isEmpty()) {
+            return null;
+        }
+
+        $counted = app(RunTaskCatalog::class)->countedDifficulties();
+        $missions = collect(config('missions.catalog'))
+            ->filter(fn (array $m): bool => ($m['repeatable'] ?? false)
+                && ! isset($m['requires']['target'])
+                && ! isset($m['target_type']))
+            ->sortBy(fn (array $m): int => (int) $m['sol_distance']);
+
+        foreach ($missions as $missionKey => $mission) {
+            $difficulty = collect($counted)->first(fn (string $d): bool => in_array($d, $mission['difficulties'] ?? [], true));
+            if ($difficulty === null) {
+                continue;
+            }
+
+            foreach ($mission['requires']['knowledge'] ?? [] as $knowledgeKey => $requiredLevel) {
+                $level = (int) (DB::table('colony_researches')
+                    ->where('colony_id', $b->colonyId)
+                    ->where('research_id', (int) config("knowledge.{$knowledgeKey}.id", 0))
+                    ->value('level') ?? 0);
+                if ($level < (int) $requiredLevel) {
+                    continue 2;
+                }
+            }
+
+            $navAp = app(ProjectBonusService::class)->effectiveNavigationApCost(
+                $b->colonyId,
+                (int) $mission['sol_distance'] * (int) config('missions.nav_ap_per_sol', 2),
+            );
+            if (self::availableAp($b) < $navAp || self::organics($b) < $hangar->organikaCostFor($b->colonyId, $mission)) {
+                continue;
+            }
+
+            $shipIds = array_map(fn (string $key): int => (int) config("ships.{$key}.id"), $mission['ships']);
+            $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true));
+            if ($ship !== null) {
+                return ['ship' => $ship, 'mission_key' => (string) $missionKey, 'difficulty' => $difficulty];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * task_engineering_output sums building levels. invest_production stops at
+     * Lv2 (the Phase-1 condition); this levels any placed building further up to
+     * its max_level — a running cycle first (Regolith already paid), then the
+     * lowest level, then the cheapest Regolith. Skips steps the A14 supply gate
+     * would reject and Regolith the CC research reserve still needs.
+     */
+    private static function engineeringLevelupCandidate(BotSession $b): ?object
+    {
+        $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
+        $ccReserve = self::ccResearchReserve($b);
+        $regolith = self::regolith($b);
+
+        return DB::table('colony_buildings as cb')
+            ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $b->colonyId)
+            ->where('cb.building_id', '!=', BuildingId::CommandCenter->value)
+            ->where('cb.building_id', '!=', BuildingId::Harvester->value)
+            ->whereNotNull('cb.tile_x')
+            ->where('cb.level', '>=', 1)
+            ->where(fn ($q) => $q->whereNull('bld.max_level')->orWhereColumn('cb.level', '<', 'bld.max_level'))
+            ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.ap_for_levelup')
+            ->get()
+            ->reject(fn (object $row): bool => self::supplyGated($row) && $freeSupply < (int) $row->supply_cost)
+            ->filter(function (object $row) use ($b, $ccReserve, $regolith): bool {
+                $cost = self::levelupRegolith($row);
+
+                return $cost <= $regolith && self::fitsAboveCcReserve($b, $ccReserve, $cost);
+            })
+            ->sortBy([
+                fn (object $x, object $y): int => ((int) $y->ap_spend > 0) <=> ((int) $x->ap_spend > 0),
+                fn (object $x, object $y): int => (int) $x->level <=> (int) $y->level,
+                fn (object $x, object $y): int => self::levelupRegolith($x) <=> self::levelupRegolith($y),
+                fn (object $x, object $y): int => (int) $x->building_id <=> (int) $y->building_id,
+            ])
+            ->first();
+    }
+
+    /**
+     * task_colony_prosperity: place a trust building that isn't placed yet —
+     * placeCandidate() only ranks them above generic buildings, this spends the
+     * stock on them first. Same gates as placeCandidate() (build menu, costs,
+     * supply, CC reserve, free zone tile).
+     *
+     * @return array{0: array, 1: object}|null [building row from availableBuildings(), tile row]
+     */
+    private static function trustBuildingCandidate(BotSession $b): ?array
+    {
+        $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
+
+        $placed = DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->whereIn('building_id', $trustBuildingIds)
+            ->whereNotNull('tile_x')
+            ->pluck('building_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        $available = $b->peek('/colony/buildings/available')['body']['buildings'] ?? [];
+        $resourcesService = app(ResourcesService::class);
+        $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
+        $ccReserve = self::ccResearchReserve($b);
+
+        foreach ($available as $building) {
+            $id = (int) $building['building_id'];
+            if (! in_array($id, $trustBuildingIds, true) || in_array($id, $placed, true)) {
+                continue;
+            }
+
+            $placementCost = self::buildingCosts()->placementCost($id);
+            if (! self::fitsAboveCcReserve($b, $ccReserve, (int) ($placementCost[self::RES_REGOLITH] ?? 0))) {
+                continue;
+            }
+            $costs = self::costList($placementCost);
+            if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
+                continue;
+            }
+            if ((int) $building['supply_cost'] > $freeSupply) {
+                continue;
+            }
+
+            $tile = self::freeZoneTile($b);
+
+            return $tile !== null ? [$building, $tile] : null;
+        }
+
+        return null;
     }
 
     /**
@@ -1723,7 +1937,7 @@ class BotStrategy
             return false;
         }
 
-        $threshold = (int) config('game.run.task_credit_reserve_threshold', 3000);
+        $threshold = (int) config('game.run.tasks.task_credit_reserve.threshold', 4000);
         $buffer = (int) round($threshold * (1 + 0.5 * $profile->savingsAggressiveness));
 
         return self::credits($b) < $buffer;

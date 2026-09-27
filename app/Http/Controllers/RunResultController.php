@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Run;
 use App\Services\RunProgressService;
+use App\Services\RunTaskCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -32,10 +33,11 @@ class RunResultController extends Controller
 
         $score = app(RunProgressService::class)->calculateScore($run);
 
-        $objectives = $run->objectives->map(function ($obj) {
+        $taskCatalog = app(RunTaskCatalog::class);
+        $objectives = $run->objectives->map(function ($obj) use ($taskCatalog) {
             return [
                 'model' => $obj,
-                'label' => trans('run.'.$obj->task_key),
+                'label' => $taskCatalog->label($obj->task_key, $obj->target_value),
             ];
         });
 

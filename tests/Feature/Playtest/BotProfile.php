@@ -18,6 +18,10 @@ final class BotProfile
         // awareness). 1.0 = maximum thrift: hold back discretionary spends
         // once task_credit_reserve is drawn and not yet complete.
         public readonly float $savingsAggressiveness = 0.0,
+        // 0.0 = generalist (today's behaviour). > 0.0 = plays towards the drawn,
+        // still-open Phase-2 objectives (A45 focus rules in BotStrategy) — the
+        // "targeted play" half of the GDD §15 calibration rule.
+        public readonly float $objectiveFocus = 0.0,
     ) {}
 
     public static function named(string $name): self
@@ -25,6 +29,7 @@ final class BotProfile
         return match ($name) {
             'default' => new self('default'),
             'thrifty' => new self('thrifty', savingsAggressiveness: 1.0),
+            'focus' => new self('focus', savingsAggressiveness: 1.0, objectiveFocus: 1.0),
             default => throw new \InvalidArgumentException("Unknown bot profile: {$name}"),
         };
     }

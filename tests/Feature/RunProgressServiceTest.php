@@ -18,7 +18,8 @@ namespace Tests\Feature;
  *   - drawObjectives sets correct target values
  *
  * UPDATE OBJECTIVE PROGRESS
- *   - task_senior_advisors completes when 4 advisors with 2 senior
+ *   (task_senior_advisors, task_expedition_coverage, task_engineering_output and
+ *   all config-driven thresholds: see RunObjectivesTest — A45)
  *   - task_research_lead completes when 3 researches at level 5
  *   - task_credit_reserve increments streak when credits above threshold
  *   - task_credit_reserve resets streak when credits below threshold
@@ -40,14 +41,6 @@ namespace Tests\Feature;
  *   - streak resets to 0 when regolith fails (<= 25)
  *   - completes (completed_at set) when streak reaches target_value (15)
  *
- * TASK_EXPEDITIONSSTATUS (counter)
- *   - completes when 19+ explored colony-zone tiles exist
- *   - does not complete with only 10 such tiles
- *
- * TASK_INGENIEURSLEISTUNG (counter)
- *   - completes when sum of status_points >= 320
- *   - does not complete when sum < 320
- *
  * TASK_HANDELSPARTNER (counter)
  *   - completes when 5+ sold items from visits after run.started_at
  *   - items from visits before run.started_at are not counted
@@ -58,9 +51,10 @@ namespace Tests\Feature;
  * NEXUS INTERVENTIONS
  *   - sol 30 warning fires when no task above 50% progress
  *   - sol 30 warning does NOT fire when a task is above 50%
- *   - sol 50 warning fires when 0 objectives completed
+ *   - sol 50 warning fires when no objective has progressed
  *   - sol 65 sanction fires and locks advisor when 0 objectives completed
- *   - sol 65 sanction does NOT fire when at least one objective is completed
+ *   - sol 65 sanction does NOT fire with one completed + a second at 75 %
+ *   (full checkpoint ladder: RunNexusCheckpointTest — A45)
  *   - nexus_debt > 12000 triggers failed run status
  *   - sol 80 countdown fires when current_tick >= tick_limit - 20
  */
@@ -360,10 +354,10 @@ class RunProgressServiceTest extends TestCase
         ]]);
 
         $expectedTargets = [
-            'task_senior_advisors' => 1,
-            'task_credit_reserve' => 14,
-            'task_colony_prosperity' => 10,
-            'task_research_lead' => 3,
+            'task_senior_advisors' => config('game.run.tasks.task_senior_advisors.target'),
+            'task_credit_reserve' => config('game.run.tasks.task_credit_reserve.target'),
+            'task_colony_prosperity' => config('game.run.tasks.task_colony_prosperity.target'),
+            'task_research_lead' => config('game.run.tasks.task_research_lead.target'),
         ];
 
         $run = $this->makeRun(['phase' => 2]);
@@ -384,43 +378,6 @@ class RunProgressServiceTest extends TestCase
     }
 
     // ── updateObjectiveProgress: task_senior_advisors ────────────────────────────
-
-    public function test_task_senior_advisors_completes_when_4_advisors_with_2_senior(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_senior_advisors', 1);
-
-        // 4 advisors (= config('game.advisor.max_slots')): 2 rank-1, 2 rank-2 (senior).
-        // Each uses a distinct personell_id to satisfy the (colony_id, personell_id) unique constraint.
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 92, 'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 93, 'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 0]);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertNotNull($objective->completed_at, 'task_senior_advisors must be marked completed');
-        $this->assertEquals(1, $objective->current_value);
-    }
-
-    public function test_task_senior_advisors_does_not_complete_when_not_enough_senior_advisors(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_senior_advisors', 1);
-
-        // 5 advisors but only 1 senior — requirement is 2 senior
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 89, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 92, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 93, 'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 0]);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertNull($objective->completed_at, 'task_senior_advisors must not complete with only 1 senior advisor');
-    }
 
     // ── updateObjectiveProgress: task_research_lead ────────────────────
 
@@ -798,27 +755,6 @@ class RunProgressServiceTest extends TestCase
         );
     }
 
-    /**
-     * Insert N explored colony-zone tiles with distinct (q, r) coordinates.
-     * q is set to 100 + index and r to 0 to avoid conflicts with testdata tiles.
-     */
-    private function insertExploredColonyZoneTiles(int $count): void
-    {
-        for ($i = 0; $i < $count; $i++) {
-            DB::table('colony_tiles')->insert([
-                'colony_id' => $this->colonyId,
-                'q' => 100 + $i,
-                'r' => 0,
-                'ring' => 1,
-                'tile_type' => 'regolith',
-                'is_explored' => 1,
-                'is_colony_zone' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-
     // ── task_self_sufficiency (streak) ────────────────────────────────────────
 
     public function test_task_self_sufficiency_increments_streak_when_all_conditions_met(): void
@@ -826,10 +762,14 @@ class RunProgressServiceTest extends TestCase
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 0);
 
-        // regolith (resource_id=3) > 25 (30 passes new threshold, fails old >50 —
-        // a discriminating value, not just any passing value), organics > 75, supply > 0
-        $this->setColonyResource(3, 30);
-        $this->setColonyResource(5, 80);
+        $regolithMin = config('game.run.tasks.task_self_sufficiency.regolith_min');
+        $organicsMin = config('game.run.tasks.task_self_sufficiency.organics_min');
+
+        // regolith (resource_id=3) > regolith_min, organics (resource_id=5) >
+        // organics_min, supply > 0 — a discriminating margin, not just any
+        // passing value.
+        $this->setColonyResource(3, $regolithMin + 5);
+        $this->setColonyResource(5, $organicsMin + 5);
         $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
@@ -846,15 +786,18 @@ class RunProgressServiceTest extends TestCase
         // Pre-load a streak of 7
         $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 7);
 
-        // Regolith at exactly 25 — condition requires > 25, so this fails
-        $this->setColonyResource(3, 25);
-        $this->setColonyResource(5, 55);
+        $regolithMin = config('game.run.tasks.task_self_sufficiency.regolith_min');
+        $organicsMin = config('game.run.tasks.task_self_sufficiency.organics_min');
+
+        // Regolith at exactly regolith_min — condition requires > regolith_min, so this fails.
+        $this->setColonyResource(3, $regolithMin);
+        $this->setColonyResource(5, $organicsMin);
         $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when regolith <= 25');
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when regolith <= regolith_min');
         $this->assertEquals(0, $objective->current_value);
         $this->assertNull($objective->completed_at);
     }
@@ -865,8 +808,11 @@ class RunProgressServiceTest extends TestCase
         // Pre-load streak at 7 — one passing tick should complete it (target=8)
         $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 7);
 
-        $this->setColonyResource(3, 100);
-        $this->setColonyResource(5, 100);
+        $regolithMin = config('game.run.tasks.task_self_sufficiency.regolith_min');
+        $organicsMin = config('game.run.tasks.task_self_sufficiency.organics_min');
+
+        $this->setColonyResource(3, $regolithMin + 50);
+        $this->setColonyResource(5, $organicsMin + 50);
         $this->setSupply(5);
 
         $this->service->updateObjectiveProgress($run);
@@ -878,100 +824,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── task_expedition_coverage (counter) ──────────────────────────────────────
 
-    /**
-     * Regression guard: the hardcoded TASK_TARGETS value must never exceed the
-     * maximum number of is_colony_zone=1 tiles a colony can ever have (1 CC ring-0
-     * tile, always colony zone and pre-explored, + config('game.colony_zone_expansion')
-     * summed over all 5 CC levels) — otherwise the objective is mathematically
-     * unwinnable regardless of play skill. Found empirically 2026-08-14: target was
-     * 19, real max was 16 (colony_zone_expansion sums to 15 + the CC tile).
-     */
-    public function test_task_expedition_coverage_target_does_not_exceed_max_reachable_colony_zone_tiles(): void
-    {
-        $maxExpansion = array_sum(config('game.colony_zone_expansion'));
-        $maxReachable = $maxExpansion + 1; // +1 for the always-zone, pre-explored CC ring-0 tile
-
-        $reflection = new \ReflectionClass(RunProgressService::class);
-        $targets = $reflection->getConstant('TASK_TARGETS');
-        $realTarget = $targets['task_expedition_coverage'];
-
-        $this->assertLessThanOrEqual(
-            $maxReachable,
-            $realTarget,
-            "RunProgressService::TASK_TARGETS['task_expedition_coverage'] ({$realTarget}) must not exceed the maximum reachable colony-zone tile count ({$maxReachable}), or the objective can never complete."
-        );
-    }
-
-    public function test_task_expedition_coverage_completes_when_19_explored_colony_zone_tiles_exist(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_expedition_coverage', 19);
-
-        $this->insertExploredColonyZoneTiles(19);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(19, $objective->current_value);
-        $this->assertNotNull($objective->completed_at, 'task_expedition_coverage must complete when 19 explored colony-zone tiles exist');
-    }
-
-    public function test_task_expedition_coverage_does_not_complete_with_only_10_tiles(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_expedition_coverage', 19);
-
-        $this->insertExploredColonyZoneTiles(10);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(10, $objective->current_value);
-        $this->assertNull($objective->completed_at, 'task_expedition_coverage must not complete with only 10 tiles');
-    }
-
     // ── task_engineering_output (counter) ─────────────────────────────────────
-
-    public function test_task_engineering_output_completes_when_status_points_sum_reaches_200(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_engineering_output', 200);
-
-        // Remove all existing buildings to have full control over the sum
-        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->delete();
-
-        // Insert buildings whose status_points sum to exactly 200
-        DB::table('colony_buildings')->insert([
-            ['colony_id' => $this->colonyId, 'building_id' => 25, 'level' => 3, 'status_points' => 100],
-            ['colony_id' => $this->colonyId, 'building_id' => 28, 'level' => 2, 'status_points' => 100],
-        ]);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(200, $objective->current_value);
-        $this->assertNotNull($objective->completed_at, 'task_engineering_output must complete when status_points sum >= 200');
-    }
-
-    public function test_task_engineering_output_does_not_complete_when_status_points_below_200(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_engineering_output', 200);
-
-        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->delete();
-
-        // Sum = 199 — just below target
-        DB::table('colony_buildings')->insert([
-            ['colony_id' => $this->colonyId, 'building_id' => 25, 'level' => 3, 'status_points' => 100],
-            ['colony_id' => $this->colonyId, 'building_id' => 28, 'level' => 2, 'status_points' => 99],
-        ]);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(199, $objective->current_value);
-        $this->assertNull($objective->completed_at, 'task_engineering_output must not complete when status_points sum < 200');
-    }
 
     // ── task_trade_volume (counter) ─────────────────────────────────────────
 
@@ -1151,7 +1004,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertFalse($fired, 'nexus_warning_sol30 must NOT fire when at least one task is above 50% progress');
     }
 
-    public function test_nexus_sol50_warning_fires_when_0_objectives_completed(): void
+    public function test_nexus_sol50_warning_fires_when_no_objective_has_progressed(): void
     {
         $run = $this->makePhase2Run(50);
 
@@ -1195,11 +1048,11 @@ class RunProgressServiceTest extends TestCase
         );
     }
 
-    public function test_nexus_sol65_sanction_does_not_fire_when_objective_is_completed(): void
+    public function test_nexus_sol65_sanction_does_not_fire_when_one_objective_is_completed_and_a_second_at_75_percent(): void
     {
         $run = $this->makePhase2Run(65);
 
-        // One completed objective
+        // One completed objective plus a second at 75 % (A45 checkpoint ladder)
         RunObjective::create([
             'run_id' => $run->id,
             'task_key' => 'task_senior_advisors',
@@ -1207,6 +1060,14 @@ class RunProgressServiceTest extends TestCase
             'current_value' => 1,
             'streak_value' => 0,
             'completed_at' => 40,
+        ]);
+        RunObjective::create([
+            'run_id' => $run->id,
+            'task_key' => 'task_research_lead',
+            'target_value' => 4,
+            'current_value' => 3,
+            'streak_value' => 0,
+            'completed_at' => null,
         ]);
 
         $this->service->checkNexusInterventions($run);
@@ -1216,7 +1077,7 @@ class RunProgressServiceTest extends TestCase
             ->where('event', 'run.nexus_sanction_sol65')
             ->exists();
 
-        $this->assertFalse($fired, 'nexus_sanction_sol65 must NOT fire when at least one objective is already completed');
+        $this->assertFalse($fired, 'nexus_sanction_sol65 must NOT fire when one objective is completed and a second is at >= 75 %');
     }
 
     public function test_nexus_debt_above_12000_fails_run(): void

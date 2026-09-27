@@ -22,52 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 class RunProgressService
 {
-    // ── Task metadata ────────────────────────────────────────────────────────
-
-    private const TASK_CATEGORIES = [
-        'economy' => ['task_credit_reserve', 'task_trade_volume'],
-        'research' => ['task_research_lead', 'task_engineering_output'],
-        'exploration' => ['task_expedition_coverage'],
-        'diplomacy' => ['task_colony_prosperity'],
-        'survival' => ['task_self_sufficiency'],
-        'personal' => ['task_senior_advisors'],
-    ];
-
-    private const TASK_TARGETS = [
-        'task_senior_advisors' => 1,
-        // 10 → 14 (2026-08-17, game-designer review): threshold+streak were both
-        // lowered 2026-08-14 as an emergency measure against the (since-fixed)
-        // Post-Phase-1 Credit-Ökonomie collapse. With that bug gone, a 20-run
-        // PlaytestBot batch showed the task completing suspiciously fast (Sol
-        // 38-39) — raised the streak back up (not fully back to the old 10, as
-        // a safety margin) alongside the threshold (see task_credit_reserve_threshold).
-        'task_credit_reserve' => 14,
-        'task_colony_prosperity' => 10,
-        'task_research_lead' => 3,
-        // 8 → 15 (2026-08-17, game-designer review): reverts most of the
-        // 2026-08-16 halving — that fix addressed a genuinely unreachable old
-        // Regolith threshold, but a 20-run PlaytestBot batch after the fix
-        // showed the task completing in 8/20 runs, often as a passive
-        // side-effect of normal play rather than a deliberate goal. Regolith
-        // threshold stays at the 2026-08-16 value (25); only the streak length
-        // and the Organics threshold (see updateSelfSufficiency()) go back up.
-        'task_self_sufficiency' => 15,
-        // Max reachable is 1 (CC ring-0, always colony zone + pre-explored) + Σ
-        // config('game.colony_zone_expansion') over all 5 CC levels (15) = 16.
-        // Was 19 — mathematically unwinnable regardless of play skill (found
-        // empirically 2026-08-14, PlaytestBot stalled at 13/19 across all seeds).
-        // Already at that ceiling — cannot be raised further without expanding
-        // the colony zone itself (see game.colony_zone_expansion), a separate
-        // design change, not a task-difficulty tweak (2026-08-17).
-        'task_expedition_coverage' => 16,
-        // 200 → 320 (2026-08-17, game-designer review): a 20-run PlaytestBot
-        // batch showed this completing via normal incidental building leveling
-        // (no dedicated strategy needed) — 320 across ~11 active buildings
-        // (~29 status_points/building vs. the old ~18) requires deliberate
-        // prioritization instead.
-        'task_engineering_output' => 320,
-        'task_trade_volume' => 5,
-    ];
+    public function __construct(private readonly RunTaskCatalog $tasks) {}
 
     // ── Phase-1 completion check ─────────────────────────────────────────────
 
@@ -152,7 +107,7 @@ class RunProgressService
      * Draw 3 tasks from the configured task pool and insert RunObjective records.
      *
      * Combo-blacklist: no more than 1 economy task in a single draw set.
-     * Economy tasks: task_credit_reserve, task_trade_volume.
+     * Categories and targets come from config('game.run.tasks').
      * If the full shuffled pool yields < 3 valid tasks, fill up with non-economy tasks.
      *
      * The draw order is derived from run.rng_seed, so two runs with the same seed get
@@ -168,8 +123,8 @@ class RunProgressService
      */
     public function drawObjectives(Run $run): void
     {
-        $pool = config('game.run.task_pool', array_keys(self::TASK_TARGETS));
-        $economy = self::TASK_CATEGORIES['economy'];
+        $pool = $this->tasks->pool();
+        $isEconomy = fn (string $taskKey): bool => $this->tasks->category($taskKey) === 'economy';
 
         $seed = (int) ($run->rng_seed ?? random_int(1, PHP_INT_MAX));
 
@@ -185,16 +140,16 @@ class RunProgressService
                 break;
             }
 
-            $isEconomy = in_array($taskKey, $economy, true);
+            $economyTask = $isEconomy($taskKey);
 
-            if ($isEconomy && $economyCount >= 1) {
+            if ($economyTask && $economyCount >= 1) {
                 // Combo-blacklist: skip second economy task
                 continue;
             }
 
             $selected[] = $taskKey;
 
-            if ($isEconomy) {
+            if ($economyTask) {
                 $economyCount++;
             }
         }
@@ -205,7 +160,7 @@ class RunProgressService
                 if (count($selected) >= 3) {
                     break;
                 }
-                if (! in_array($taskKey, $selected, true) && ! in_array($taskKey, $economy, true)) {
+                if (! in_array($taskKey, $selected, true) && ! $isEconomy($taskKey)) {
                     $selected[] = $taskKey;
                 }
             }
@@ -216,9 +171,10 @@ class RunProgressService
             $rows[] = [
                 'run_id' => $run->id,
                 'task_key' => $taskKey,
-                'target_value' => self::TASK_TARGETS[$taskKey] ?? 1,
+                'target_value' => $this->tasks->target($taskKey),
                 'current_value' => 0,
                 'streak_value' => 0,
+                'best_streak_value' => 0,
                 'completed_at' => null,
             ];
         }
@@ -252,45 +208,38 @@ class RunProgressService
         }
     }
 
+    /**
+     * Counter task: advisors on this colony at rank >= min_rank (Owner decision:
+     * 4 advisors at rank 3 — a full staff at top rank).
+     */
     private function updateSeniorAdvisors(RunObjective $objective, Run $run): void
     {
-        $totalAdvisors = Advisor::where('colony_id', $run->colony_id)->count();
-        $seniorAdvisors = Advisor::where('colony_id', $run->colony_id)
-            ->where('rank', '>=', 2)
+        $minRank = (int) $this->tasks->param('task_senior_advisors', 'min_rank', 3);
+
+        $count = Advisor::where('colony_id', $run->colony_id)
+            ->where('rank', '>=', $minRank)
             ->count();
 
-        $fulfilled = $totalAdvisors >= config('game.advisor.max_slots') && $seniorAdvisors >= 2;
-
-        $objective->current_value = $fulfilled ? 1 : 0;
-
-        if ($fulfilled && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
+        $this->applyCounter($objective, $run, $count);
     }
 
+    /**
+     * Streak task: user credits >= threshold on consecutive Sols.
+     */
     private function updateCreditReserve(RunObjective $objective, Run $run): void
     {
         $credits = (int) (DB::table('user_resources')
             ->where('user_id', $run->user_id)
             ->value('credits') ?? 0);
 
-        if ($credits >= (int) config('game.run.task_credit_reserve_threshold', 3000)) {
-            $objective->streak_value++;
-        } else {
-            $objective->streak_value = 0;
-        }
+        $threshold = (int) $this->tasks->param('task_credit_reserve', 'threshold', 4000);
 
-        $objective->current_value = $objective->streak_value;
-
-        if ($objective->current_value >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
+        $this->applyStreak($objective, $run, $credits >= $threshold);
     }
 
+    /**
+     * Streak task: trust > threshold on consecutive Sols.
+     */
     private function updateColonyProsperity(RunObjective $objective, Run $run): void
     {
         $trust = (int) (DB::table('colony_resources')
@@ -298,41 +247,31 @@ class RunProgressService
             ->where('resource_id', 12)
             ->value('amount') ?? 0);
 
-        if ($trust > 70) {
-            $objective->streak_value++;
-        } else {
-            $objective->streak_value = 0;
-        }
+        $threshold = (int) $this->tasks->param('task_colony_prosperity', 'threshold', 70);
 
-        $objective->current_value = $objective->streak_value;
-
-        if ($objective->current_value >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
-    }
-
-    private function updateResearchLead(RunObjective $objective, Run $run): void
-    {
-        $count = (int) DB::table('colony_researches')
-            ->where('colony_id', $run->colony_id)
-            ->where('level', '>=', 5)
-            ->count();
-
-        $objective->current_value = $count;
-
-        if ($count >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
+        $this->applyStreak($objective, $run, $trust > $threshold);
     }
 
     /**
-     * Streak task: all three conditions must hold simultaneously each sol.
-     * Regolith (colony_resources, resource_id=3) > 25, Organika (resource_id=5) > 75,
-     * Supply (user_resources.supply) > 0. Any single failure resets the streak to 0.
+     * Counter task: knowledges at level >= min_level.
+     */
+    private function updateResearchLead(RunObjective $objective, Run $run): void
+    {
+        $minLevel = (int) $this->tasks->param('task_research_lead', 'min_level', 5);
+
+        $count = (int) DB::table('colony_researches')
+            ->where('colony_id', $run->colony_id)
+            ->where('level', '>=', $minLevel)
+            ->count();
+
+        $this->applyCounter($objective, $run, $count);
+    }
+
+    /**
+     * Streak task: all three conditions must hold simultaneously each sol —
+     * Regolith (resource_id=3) > regolith_min, Organika (resource_id=5) >
+     * organics_min, Supply (user_resources.supply) > 0. Any single failure resets
+     * the streak to 0.
      */
     private function updateSelfSufficiency(RunObjective $objective, Run $run): void
     {
@@ -350,64 +289,41 @@ class RunProgressService
             ->where('user_id', $run->user_id)
             ->value('supply') ?? 0);
 
-        // Regolith threshold 50 → 25 (2026-08-16, game-designer review): Regolith
-        // is a running-consumption resource (build/level-up), not a stable
-        // reserve — 50 was above the observed Sol-average (Ø 31.4). Organics
-        // threshold 50 → 75 (2026-08-17): see TASK_TARGETS['task_self_sufficiency']
-        // comment above — the streak length went back up alongside this.
-        $allMet = $regolith > 25 && $organics > 75 && $supply > 0;
+        $allMet = $regolith > (int) $this->tasks->param('task_self_sufficiency', 'regolith_min', 25)
+            && $organics > (int) $this->tasks->param('task_self_sufficiency', 'organics_min', 75)
+            && $supply > 0;
 
-        if ($allMet) {
-            $objective->streak_value++;
-        } else {
-            $objective->streak_value = 0;
-        }
-
-        $objective->current_value = $objective->streak_value;
-
-        if ($objective->current_value >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
+        $this->applyStreak($objective, $run, $allMet);
     }
 
     /**
-     * Counter task: number of explored colony-zone tiles >= target_value (19).
+     * Counter task: successful outside missions (GDD §8b) at difficulty >=
+     * min_difficulty. Easy missions, failed rolls and aborted/recalled missions
+     * don't count. Mission rows are colony-scoped and wiped on a new run.
      */
     private function updateExpeditionCoverage(RunObjective $objective, Run $run): void
     {
-        $count = (int) DB::table('colony_tiles')
+        $count = (int) DB::table('colony_hangar_missions')
             ->where('colony_id', $run->colony_id)
-            ->where('is_explored', 1)
-            ->where('is_colony_zone', 1)
+            ->where('state', 'completed')
+            ->where('succeeded', 1)
+            ->whereIn('difficulty', $this->tasks->countedDifficulties())
             ->count();
 
-        $objective->current_value = $count;
-
-        if ($count >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
+        $this->applyCounter($objective, $run, $count);
     }
 
     /**
-     * Counter task: sum of status_points across all colony buildings >= 200.
+     * Counter task: sum of building levels across the colony — every instance
+     * counts with its own level, so breadth and depth weigh the same.
      */
     private function updateEngineeringOutput(RunObjective $objective, Run $run): void
     {
         $total = (int) DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
-            ->sum('status_points');
+            ->sum('level');
 
-        $objective->current_value = $total;
-
-        if ($total >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
+        $this->applyCounter($objective, $run, $total);
     }
 
     /**
@@ -425,9 +341,34 @@ class RunProgressService
             ->where('merchant_visits.created_at', '>=', $run->started_at)
             ->count();
 
-        $objective->current_value = $count;
+        $this->applyCounter($objective, $run, $count);
+    }
 
-        if ($count >= $objective->target_value && $objective->completed_at === null) {
+    /**
+     * Persist a counter objective's current value; complete it at the target.
+     */
+    private function applyCounter(RunObjective $objective, Run $run, int $value): void
+    {
+        $objective->current_value = $value;
+
+        if ($value >= $objective->target_value && $objective->completed_at === null) {
+            $objective->completed_at = $run->current_tick;
+        }
+
+        $objective->save();
+    }
+
+    /**
+     * Extend or reset a streak objective, keep its best streak so far and
+     * complete it once the streak reaches the target.
+     */
+    private function applyStreak(RunObjective $objective, Run $run, bool $conditionMet): void
+    {
+        $objective->streak_value = $conditionMet ? $objective->streak_value + 1 : 0;
+        $objective->current_value = $objective->streak_value;
+        $objective->best_streak_value = max((int) $objective->best_streak_value, $objective->streak_value);
+
+        if ($objective->current_value >= $objective->target_value && $objective->completed_at === null) {
             $objective->completed_at = $run->current_tick;
         }
 
@@ -437,28 +378,25 @@ class RunProgressService
     // ── Nexus interventions ──────────────────────────────────────────────────
 
     /**
-     * Check Phase-2 Nexus intervention checkpoints and fire INNN events or penalties.
+     * Check the Phase-2 Nexus checkpoints, the debt ceiling and the countdown.
      *
-     * Called once per tick, only when run is in Phase 2.
-     * Each checkpoint fires at most once per run (guarded by colony_log lookup).
+     * Called once per tick, only when run is in Phase 2. Each message fires at
+     * most once per run (guarded by colony_log lookup).
      *
-     * Checkpoints by Phase-2 sol:
-     *  Sol 30  — < 1 task at > 50% progress → warning event
-     *  Sol 50  — 0 tasks completed           → warning event
-     *  Sol 55  — nexus_debt over threshold   → endRun failed (nexus_debt)
-     *  Sol 65  — 0 tasks completed           → sanction event + 1 random advisor locked 1 sol
-     *  Sol 80  — countdown warning           → event only when tick >= tick_limit - 20
+     *  - Checkpoints (config('game.run.nexus_checkpoints'), keyed by Phase-2 Sol):
+     *    evaluated on exactly that Sol; a progress miss fires the configured
+     *    event, a sanction additionally locks one advisor (GDD §15 "2 von 3").
+     *  - Phase-2 Sol 55+: nexus_debt over threshold → endRun failed (nexus_debt).
+     *  - Countdown: total Sol >= tick_limit − countdown_sols_before_limit
+     *    (GDD §18.2 Fail State 3) — independent of the Phase-2 Sol.
      */
     public function checkNexusInterventions(Run $run): void
     {
         $sol = $run->getPhase2Sol();
 
-        if ($sol >= 30) {
-            $this->maybeFireSol30Warning($run, $sol);
-        }
-
-        if ($sol >= 50) {
-            $this->maybeFireSol50Warning($run);
+        $checkpoint = $this->checkpointFor($sol);
+        if ($checkpoint !== null) {
+            $this->evaluateCheckpoint($run, $checkpoint);
         }
 
         if ($sol >= 55) {
@@ -469,78 +407,89 @@ class RunProgressService
             }
         }
 
-        if ($sol >= 65) {
-            $this->maybeFireSol65Sanction($run);
-        }
-
-        if ($sol >= 80) {
-            $this->maybeFireSol80Countdown($run);
-        }
+        $this->maybeFireCountdown($run);
     }
 
-    private function maybeFireSol30Warning(Run $run, int $sol): void
+    /**
+     * Checkpoint configured for exactly this Phase-2 Sol, or null.
+     *
+     * @return array{requirements: list<int>, event: string, advisor_lock_sols?: int}|null
+     */
+    private function checkpointFor(int $phase2Sol): ?array
     {
-        $eventKey = 'run.nexus_warning_sol30';
+        $checkpoints = (array) config('game.run.nexus_checkpoints', []);
+        $checkpoint = $checkpoints[$phase2Sol] ?? null;
+
+        return is_array($checkpoint) ? $checkpoint : null;
+    }
+
+    /**
+     * Fire the checkpoint's event (and sanction) unless the ladder is met.
+     *
+     * @param  array{requirements: list<int>, event: string, advisor_lock_sols?: int}  $checkpoint
+     */
+    private function evaluateCheckpoint(Run $run, array $checkpoint): void
+    {
+        $eventKey = (string) $checkpoint['event'];
 
         if ($this->eventAlreadyFired($run, $eventKey)) {
             return;
         }
 
-        // Only fire once, at the exact sol-30 boundary
-        if ($sol !== 30) {
+        if ($this->meetsProgressLadder($run, array_map('intval', (array) $checkpoint['requirements']))) {
             return;
         }
 
-        $objectives = $run->objectives()->get();
-        $aboveHalf = $objectives->filter(fn ($o) => $o->progressPct() > 50)->count();
-
-        if ($aboveHalf < 1) {
-            $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
-                'run_id' => $run->id,
-                'colony_id' => $run->colony_id,
-            ]);
-        }
-    }
-
-    private function maybeFireSol50Warning(Run $run): void
-    {
-        $eventKey = 'run.nexus_warning_sol50';
-
-        if ($this->eventAlreadyFired($run, $eventKey)) {
-            return;
-        }
-
-        $completed = $run->objectives()->whereNotNull('completed_at')->count();
-
-        if ($completed === 0) {
-            $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
-                'run_id' => $run->id,
-                'colony_id' => $run->colony_id,
-            ]);
-        }
-    }
-
-    private function maybeFireSol65Sanction(Run $run): void
-    {
-        $eventKey = 'run.nexus_sanction_sol65';
-
-        if ($this->eventAlreadyFired($run, $eventKey)) {
-            return;
-        }
-
-        $completed = $run->objectives()->whereNotNull('completed_at')->count();
-
-        if ($completed > 0) {
-            return;
-        }
-
-        // Fire sanction event
         $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
             'run_id' => $run->id,
             'colony_id' => $run->colony_id,
         ]);
 
-        // Apply penalty: pick a random active advisor and lock them for 1 sol
+        $lockSols = (int) ($checkpoint['advisor_lock_sols'] ?? 0);
+        if ($lockSols > 0) {
+            $this->lockRandomAdvisor($run, $lockSols);
+        }
+    }
+
+    /**
+     * True when every required percentage is met by a different objective.
+     *
+     * Greedy is exact here: requirements are matched strictest first, and any
+     * objective that meets a stricter requirement also meets every later, looser
+     * one — so which qualifying objective is consumed never matters.
+     *
+     * @param  list<int>  $requirements  minimum progress percentages
+     */
+    private function meetsProgressLadder(Run $run, array $requirements): bool
+    {
+        rsort($requirements);
+
+        $objectives = $run->objectives()->get()->all();
+
+        foreach ($requirements as $pct) {
+            $matchIndex = null;
+            foreach ($objectives as $index => $objective) {
+                if ($objective->reachesProgressPct($pct)) {
+                    $matchIndex = $index;
+                    break;
+                }
+            }
+
+            if ($matchIndex === null) {
+                return false;
+            }
+
+            unset($objectives[$matchIndex]);
+        }
+
+        return true;
+    }
+
+    /**
+     * Nexus sanction: one random active advisor becomes unavailable.
+     */
+    private function lockRandomAdvisor(Run $run, int $sols): void
+    {
         $advisor = Advisor::where('colony_id', $run->colony_id)
             ->where(function ($q) use ($run): void {
                 $q->whereNull('unavailable_until_tick')
@@ -550,20 +499,21 @@ class RunProgressService
             ->first();
 
         if ($advisor !== null) {
-            $advisor->unavailable_until_tick = $run->current_tick + 1;
+            $advisor->unavailable_until_tick = $run->current_tick + $sols;
             $advisor->save();
         }
     }
 
-    private function maybeFireSol80Countdown(Run $run): void
+    private function maybeFireCountdown(Run $run): void
     {
         $eventKey = 'run.nexus_countdown_sol80';
 
-        if ($this->eventAlreadyFired($run, $eventKey)) {
+        $lead = (int) config('game.run.countdown_sols_before_limit', 20);
+        if ($run->current_tick < $run->getTickLimit() - $lead) {
             return;
         }
 
-        if ($run->current_tick < $run->getTickLimit() - 20) {
+        if ($this->eventAlreadyFired($run, $eventKey)) {
             return;
         }
 
@@ -582,7 +532,7 @@ class RunProgressService
      *
      * Called once per tick, only while the run is in Phase 1 (see GameTick.php).
      * Fires at most once per run (guarded by colony_log lookup, same pattern
-     * as maybeFireSol30Warning() etc.).
+     * as the Nexus checkpoints).
      */
     public function checkPhase1DeadlineWarnings(Run $run): void
     {
@@ -806,7 +756,7 @@ class RunProgressService
         string $area,
         array $parameters = []
     ): void {
-        $isNexus = $area === 'nexus' || in_array($event, [
+        $isNexus = $area === 'nexus' || str_starts_with($event, 'run.nexus_') || in_array($event, [
             'run.nexus_warning_sol30', 'run.nexus_warning_sol50', 'run.nexus_trust_critical',
             'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80', 'run.nexus_phase1_warning',
             'run.run_completed', 'run.run_failed_trust',
