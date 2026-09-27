@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-27
+
+- Feature: A45 — Siegziele als Config (`run.tasks`), neue Messgrößen (Ingenieursleistung = Summe Ausbaustufen, Expeditionen = erfolgreiche Außenmissionen ab Schwierigkeit "normal", Expertenstab = 4 Berater Rang 3), Nexus-Kontrollpunkte prüfen jetzt Fortschritt statt Erfüllung (steigende Leiter Sol 30/50/65), Countdown-Bug behoben. PlaytestBot: neues Profil `focus` für gezielte Ziel-Verfolgung. Kalibrier-Batch (12 Seeds × 2 Profile) korrigiert 4 Zielwerte; zwei strukturelle Ziele (Expertenstab, Kreditreserve) bleiben vorerst unverändert bzw. unkalibriert (A45b).
+- Doku: GDD §15/§18 und `game-reference.md` §18 auf den A45-Stand; Korrektur "Nexus-Schuld wird nicht automatisch getilgt".
+
 ## 2026-09-26
 
 - Fix: Reparatur stellt pro Klick genau 1 Statuspunkt wieder her (vorher weniger bei gebrochenen Werten). PlaytestBot: repariert auch die Kommandozentrale, wartet früher, wählt Regolith-/Prospektionsmissionen nach Bedarf, meidet belegte Tiles und unbezahlbare Bar-Angebote; Testumgebung mit höherer Aktionsgrenze und lesbarer Fehlerausgabe. Dev-DB-Stammdaten per `game:sync-config` an die Config angeglichen.

@@ -2693,13 +2693,13 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 | Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole: anhaltender Wohlstand statt eines einmaligen Peaks |
 | Expertenstab (`task_senior_advisors`) | Personal | Eine volle Berater-Mannschaft, deren Mitglieder alle den höchsten Rang erreicht haben |
 
-**Quelle der Wahrheit:** Alle Aufgaben-Parameter (Kategorie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks`. Die aktuell vorgeschlagenen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
+**Quelle der Wahrheit:** Alle Aufgaben-Parameter (Kategorie, Typ Zähler/Serie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks` und werden über `RunTaskCatalog` gelesen. Die Aufgaben-Beschriftung im UI wird aus denselben Werten gebaut, die angezeigte Zahl ist also die gemessene. Die aktuellen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
 
-> **Implementierungsstand:** Die Umstellung ist beschlossen, aber noch nicht umgesetzt. Heute liegen Zielwerte und Kategorien noch als Konstanten in `RunProgressService`. `task_engineering_output` misst dort noch die Summe der Status-Punkte, `task_expedition_coverage` noch die erkundeten Tiles der Kolonie-Zone, und `task_senior_advisors` verlangt noch volle Slots plus zwei Berater ab Rang 2.
+> **Implementierungsstand (A45, umgesetzt):** Alle Aufgaben-Parameter kommen aus `run.tasks`, die früheren Konstanten in `RunProgressService` sind entfernt. `task_engineering_output` misst die Summe der Ausbaustufen, `task_expedition_coverage` erfolgreiche Missionen ab der Mindestschwierigkeit, und `task_senior_advisors` zählt Berater ab dem Mindestrang.
 
 > **Folgeschritt (Owner-Entscheidung 2026-09-26):** `task_credit_reserve` ist vorerst eine Serie. Später soll daraus „Nexus-Vorschuss tilgen" werden. Das setzt eine Tilgungsmechanik für `nexus_debt` voraus, die es noch nicht gibt (siehe Nexus-Schulden-Mechanik unten).
 
-> ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Die Kombo-Blacklist ist implementiert (höchstens 1 Wirtschafts-Aufgabe pro Ziehung; Kategorien heute in `RunProgressService::TASK_CATEGORIES`, künftig in `run.tasks`).
+> ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Die Kombo-Blacklist ist implementiert (höchstens 1 Wirtschafts-Aufgabe pro Ziehung; Kategorie je Aufgabe in `run.tasks`).
 
 ---
 
@@ -2709,17 +2709,25 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 
 **Kontrollpunkte gegen zu frühen Fokus-Verlust:** Nexus prüft in Phase 2 mehrfach, ob die Kolonie auf mindestens eine Aufgabe hinarbeitet. Geprüft wird **Fortschritt, nicht Erfüllung** (Owner-Entscheidung 2026-09-26). Der Grund: Laut Kalibrierregel erreicht auch ein gezielt spielender Direktor seine erste Aufgabe erst um Sol 70–85. Ein Kontrollpunkt, der zu dieser Zeit schon eine erfüllte Aufgabe verlangt, würde genau das beabsichtigte Tempo bestrafen.
 
-- **Phase-2-Sol 30:** Keine Aufgabe über der Hälfte → erste Nexus-Warnung.
-- **Phase-2-Sol 50:** Immer noch keine Aufgabe über der Hälfte → zweite Nexus-Warnung.
-- **Phase-2-Sol 65:** Immer noch keine Aufgabe über der Hälfte → Sanktion (siehe „Gnadenfrist" unten).
+Die Kontrollpunkte bilden eine **steigende Leiter** (Owner-Entscheidung 2026-09-26). Jeder Punkt verlangt mehr als der vorige, passend zum Tempo, in dem ein gezielt spielender Direktor seine zwei Ziel-Aufgaben voranbringt:
 
-Die drei Punkte bilden eine Eskalationsleiter mit demselben Kriterium. Wer nach der ersten Warnung Fortschritt aufbaut, hört von Nexus nichts mehr. **Bei Serien-Aufgaben** (Kreditreserve, Selbstversorgung, Kolonieblüte) zählt als Fortschritt die bisher längste Serie im Run, nicht die gerade laufende. Ein einzelner schlechter Sol kurz vor dem Kontrollpunkt löscht also nicht den Nachweis, dass die Kolonie auf das Ziel hinarbeitet. Die Schwelle je Kontrollpunkt steht in der Config (`run.nexus_checkpoints`, Vorschlag in `docs/game-reference.md#18-run-struktur`).
+- **Phase-2-Sol 30:** Mindestens eine Aufgabe hat mindestens die Hälfte erreicht. Sonst folgt die erste Nexus-Warnung.
+- **Phase-2-Sol 50:** Eine Aufgabe hat mindestens drei Viertel erreicht und eine zweite mindestens die Hälfte. Sonst folgt die zweite Nexus-Warnung.
+- **Phase-2-Sol 65:** Eine Aufgabe ist erfüllt und eine zweite hat mindestens drei Viertel erreicht. Sonst folgt eine Sanktion (siehe „Gnadenfrist" unten).
+
+**Lesart der Schwellen:** „Die Hälfte" und „drei Viertel" sind Mindestwerte. Wer genau auf der Schwelle steht, hat sie erreicht, es wird nicht gerundet. **Jede Anforderung muss eine andere Aufgabe erfüllen:** Eine einzelne Aufgabe auf 80 % deckt an Phase-2-Sol 50 nur die Drei-Viertel-Anforderung, nicht zusätzlich die Hälfte-Anforderung. Eine erfüllte Aufgabe zählt immer als volle 100 %.
+
+Geprüft wird **genau am jeweiligen Phase-2-Sol**, einmal pro Run. Ein verpasster Kontrollpunkt wird nicht nachgeholt, und ein später aufgeholter Rückstand hebt eine bereits ausgesprochene Warnung nicht auf. Wer nach einer Warnung aufholt, besteht dafür den nächsten Kontrollpunkt. Die Folgen eskalieren: Warnung, Warnung, Sanktion.
+
+**Bei Serien-Aufgaben** (Kreditreserve, Selbstversorgung, Kolonieblüte) zählt als Fortschritt die bisher längste Serie im Run, nicht die gerade laufende. Ein einzelner schlechter Sol kurz vor dem Kontrollpunkt löscht also nicht den Nachweis, dass die Kolonie auf das Ziel hinarbeitet. Die Schwellen je Kontrollpunkt stehen in `run.nexus_checkpoints` (aktuelle Werte in `docs/game-reference.md#18-run-struktur`).
 
 Alle Nexus-Kontrollpunkte zählen in **Phase-2-Sol** (Sole seit Phasenübergang), nicht in Gesamt-Sol. Die Tabelle steht in §18.4.
 
 Die Warnungen sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeit ohne Frustration. **Nexus ist der Absender:** Die Nachrichten kommen nicht anonym vom System, sondern von der übergeordneten Instanz, die den Spieler ausgesandt hat.
 
-> **Implementierungsstand:** Phase-2-Sol 30 prüft bereits Fortschritt, dort allerdings noch am aktuellen Serienstand statt an der besten Serie. Phase-2-Sol 50 und 65 prüfen heute noch „0 Aufgaben erfüllt". Die Umstellung braucht einen gespeicherten Serien-Höchststand je Aufgabe.
+> **Implementierungsstand (A45, umgesetzt):** Die Leiter wird aus `run.nexus_checkpoints` gelesen und prüft Fortschritt statt Erfüllung. Der beste Serienstand je Aufgabe wird gespeichert (`run_objectives.best_streak_value`) und zählt als Fortschritt.
+
+> ⚠️ BALANCE CONCERN: Die Leiter ist an einem Phase-1-Ende um Sol 15–20 ausgerichtet. Phase-2-Sol 65 entspricht dann Gesamt-Sol 80–85, also dem oberen Ende des Einzel-Korridors „gezielt Sol 70–85". Ein solider Run, der realistisch erst um Sol 85–95 siegt (§18.4), liegt am Sanktionspunkt eventuell noch knapp unter „eine Aufgabe erfüllt". Der laufende Kalibrier-Batch muss zeigen, wie oft ein gezielt spielender Bot die Sanktion trotzdem auslöst. Trifft sie solide Runs regelmäßig, bestraft sie das beabsichtigte Tempo. Stellschraube ist dann die Anforderung an Phase-2-Sol 65, nicht die Aufgaben-Zielwerte.
 
 ---
 
@@ -2761,14 +2769,14 @@ Sanktionen erscheinen nie ohne vorherige Nexus-Funk-Warnung.
 
 #### Gnadenfrist
 
-Der Countdown zum Missionsende ist sichtbar, sobald die letzten 20 Sole des Tick-Limits beginnen (§18.2 Fail State 3). Nexus tritt jetzt aktiver in Erscheinung (Phase-2-Sol, §18.4):
+Der Countdown zum Missionsende ist sichtbar, sobald die letzten Sole vor dem Tick-Limit beginnen (`run.countdown_sols_before_limit`, §18.2 Fail State 3). Nexus tritt jetzt aktiver in Erscheinung (Phase-2-Sol, §18.4):
 
-- **Phase-2-Sol 65:** Wenn noch keine Aufgabe über der Hälfte liegt (Fortschrittsprüfung, siehe „2 von 3"-Mechanik oben), folgt eine Sanktion: 1 Berater wird für 1 Sol abgezogen. *Geplant, noch nicht implementiert:* zusätzlich eine Verkürzung des effektiven Endes („Nexus Command hat die Frist vorgezogen").
-- **Gesamt-Sol `tick_limit` − 20:** Countdown-Meldung (§18.2 Fail State 3).
+- **Phase-2-Sol 65:** Wenn die letzte Stufe der Kontrollpunkt-Leiter verfehlt ist (eine Aufgabe erfüllt, eine zweite mindestens drei Viertel, siehe „2 von 3"-Mechanik oben), folgt eine Sanktion: Ein zufälliger Berater wird kurzzeitig abgezogen. *Geplant, noch nicht implementiert:* zusätzlich eine Verkürzung des effektiven Endes („Nexus Command hat die Frist vorgezogen").
+- **Gesamt-Sol `tick_limit` − `countdown_sols_before_limit`:** Countdown-Meldung (§18.2 Fail State 3), unabhängig vom Phase-2-Sol.
 - *Geplant, noch nicht implementiert:* letzte Warnung 10 Sole vor dem Ende, falls immer noch keine Aufgabe erfüllt ist.
 - **Tick-Limit:** Run endet mit Fail State 3.
 
-Wer die Fortschrittsschwelle bei der Sanktionsprüfung erreicht, erhält eine neutrale Statusmeldung ohne Sanktion.
+Wer die Leiter-Stufe bei der Sanktionsprüfung erreicht, bleibt ohne Sanktion.
 
 > **TODO (Implementierung):** Nexus-Trigger-Tabelle definieren — welche Metrik, welcher Schwellwert, welche Reaktion, welche Phase. Muss vor der Implementierung als Config-Tabelle in `config/game.php → run.nexus_triggers` abgelegt werden.
 
@@ -2850,7 +2858,8 @@ Ein Modal bietet keinen Platz für die spätere Erweiterung (Highscores, Run-Lis
 ### Implementierungshinweise
 
 - Tabellen: `runs` (Phase, `current_tick`, Status, `fail_reason`, `nexus_debt`, `phase2_start_tick`, Score) und `run_objectives` (aktive Aufgaben des Runs)
-- `config/game.php → run`: Tick-Limit, Tick-Dauer, Spieleranzahl, PbM-Modus, Score-Formel-Gewichte, künftig auch `run.tasks` (Aufgaben-Parameter) und `run.nexus_checkpoints` (Kontrollpunkte). Heute sind die Kontrollpunkte noch in `RunProgressService` hartcodiert, und der Block `run.nexus_milestones` ist toter Code (ROADMAP A7). Er wird durch `run.nexus_checkpoints` ersetzt.
+- `config/game.php → run`: Tick-Limit, Tick-Dauer, Spieleranzahl, PbM-Modus, Score-Formel-Gewichte, `run.tasks` (Aufgaben-Parameter, gelesen über `RunTaskCatalog`), `run.nexus_checkpoints` (Kontrollpunkt-Leiter) und `run.countdown_sols_before_limit` (Countdown). Der frühere tote Block `run.nexus_milestones` ist entfernt.
+- `run_objectives.best_streak_value`: bester Serienstand je Serien-Aufgabe im Run, zählt für die Kontrollpunkte als Fortschritt
 - Run-Struktur läuft als Schritt 15 nach der Tick-Transaktion (`GameTick.php`): Phase-1-Check, Objective-Fortschritt, Nexus-Interventionen, Sieg-/Fail-Prüfung
 - Nexus-Interventionen erzeugen Nexus-Funk-Nachrichten mit `sender = 'nexus'`
 - Lobby-Route: `GET /lobby` (LobbyController@show) + `POST /lobby/start` (LobbyController@start). Auth-Middleware, kein Game-Loop-Zugriff vor `started_at != null`.
@@ -2972,7 +2981,7 @@ Exakte Schwellwerte für die UI-Warnstufen: Implementierung in `RunProgressServi
 
 | Sol | Maßnahme |
 |-----|---------|
-| tick_limit − 20 (Sol 80) | Countdown-Anzeige erscheint im UI ("Noch 20 Sole bis Missionsende"); Nexus-Funk-Nachricht von Nexus |
+| tick_limit − `countdown_sols_before_limit` (Sol 80) | Countdown-Anzeige erscheint im UI ("Noch 20 Sole bis Missionsende"); Nexus-Funk-Nachricht von Nexus |
 | tick_limit − 10 (Sol 90) | *geplant:* letzte Nexus-Funk-Warnung, wenn 0 Objectives abgeschlossen |
 | tick_limit (Sol 100) | Fail State — Run endet |
 
@@ -3069,18 +3078,16 @@ Die Frist lässt bewusst wenig Puffer über dem realistischen Korridor. Ein holp
 
 **Pacing-Kontrollpunkte (Nexus-Interventionen in Phase-2-Sol):**
 
-`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht in Gesamt-Sol und nicht mit absoluten Tick-Nummern). Die Warnungen und die Sanktion prüfen **Fortschritt statt Erfüllung** (Owner-Entscheidung 2026-09-26; Begründung und Serien-Regel in §15 „2 von 3"-Mechanik). Bei einem Phase-1-Abschluss um Gesamt-Sol 20 ergibt sich:
+`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht in Gesamt-Sol und nicht mit absoluten Tick-Nummern). Die Kontrollpunkte bilden eine **steigende Leiter** und prüfen **Fortschritt statt Erfüllung** (Owner-Entscheidung 2026-09-26; Lesart der Schwellen, „je Anforderung eine andere Aufgabe" und Serien-Regel in §15 „2 von 3"-Mechanik). Jeder Kontrollpunkt wird genau an seinem Phase-2-Sol geprüft. Bei einem Phase-1-Abschluss um Gesamt-Sol 20 ergibt sich:
 
-| Phase-2-Sol | Gesamt-Sol (bei Phase-1-Ende Sol 20) | Bedeutung |
-|-------------|--------------------------------------|-----------|
-| 30 | ~50 | Keine Aufgabe über der Hälfte → erste Nexus-Warnung |
-| 50 | ~70 | Immer noch keine Aufgabe über der Hälfte → zweite Warnung |
-| 55 | ~75 | Zusätzliche Prüfung der Schuldengrenze (Fail State 2) |
-| 65 | ~85 | Immer noch keine Aufgabe über der Hälfte → Berater-Sanktion |
+| Phase-2-Sol | Gesamt-Sol (bei Phase-1-Ende Sol 20) | Anforderung (Mindestwerte, je Anforderung eine andere Aufgabe) | Bei Verfehlen |
+|-------------|--------------------------------------|------------------------------|---------------|
+| 30 | ~50 | eine Aufgabe mindestens zur Hälfte | erste Nexus-Warnung |
+| 50 | ~70 | eine Aufgabe mindestens zu drei Vierteln, eine zweite mindestens zur Hälfte | zweite Warnung |
+| 55 (und danach) | ~75 | Prüfung der Schuldengrenze (Fail State 2), kein Leiter-Schritt | Fail |
+| 65 | ~85 | eine Aufgabe erfüllt, eine zweite mindestens zu drei Vierteln | Berater-Sanktion |
 
-Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt an der Gesamt-Frist und erscheint bei `tick_limit` − 20 (§18.2 Fail State 3).
-
-> ⚠️ BALANCE CONCERN: Im Code hängt der Countdown zusätzlich an Phase-2-Sol 80. Bei einem Phase-1-Ende um Sol 20 fällt er damit auf Gesamt-Sol 100, also auf das Run-Ende, und verliert seinen Zweck als Vorwarnung. Die Designabsicht ist allein die Gesamt-Sol-Bedingung.
+Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt allein an der Gesamt-Frist und erscheint bei `tick_limit` − `countdown_sols_before_limit` (§18.2 Fail State 3), unabhängig davon, wann Phase 2 begonnen hat. Die frühere zusätzliche Kopplung an Phase-2-Sol 80, die den Countdown bei einem Phase-1-Ende um Sol 20 aufs Run-Ende schob, ist entfernt (A45).
 
 **Anpassungsrichtlinien nach Playtest:** Das `tick_limit` bleibt bei 100 (Owner-Entscheidung). Stellschrauben sind die Aufgaben-Parameter und die Phase-1-Bedingungen, nicht die Frist.
 
@@ -3098,7 +3105,7 @@ Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt an der Gesamt-Fr
 - **`task_engineering_output`** misst die Summe der Ausbaustufen aller Gebäude. Die frühere Messung (Summe der Status-Punkte) hing am Verfall und an Reparaturen, war für Spieler nicht nachvollziehbar und schwankte von Sol zu Sol.
 - **`task_senior_advisors`** verlangt eine volle Mannschaft auf höchstem Rang. Das setzt den letzten Berater-Slot (CC-Ausbau) und ausreichend Dienstzeit aller Berater voraus. Wer Berater spät einstellt oder austauscht, schafft es nicht nebenbei.
 - **Serien-Aufgaben** (`task_self_sufficiency`, `task_credit_reserve`, `task_colony_prosperity`) sind so gesetzt, dass normales Spielen sie nicht nebenbei erfüllt. Für die Nexus-Kontrollpunkte zählt bei ihnen die beste bisherige Serie.
-- **Vorläufig bis zum nächsten Bot-Batch (Annahme, nicht final kalibriert):** die Zielwerte von `task_research_lead`, `task_self_sufficiency` und `task_colony_prosperity`. Für `task_colony_prosperity` kommt hinzu, dass die Trust-Ökonomie selbst noch nicht kalibriert ist.
+- **Vorläufig bis zum laufenden Kalibrier-Batch (Annahme, nicht final kalibriert):** die Zielwerte aller Aufgaben außer den Owner-Vorgaben für `task_senior_advisors` und `task_credit_reserve`. Für die beiden neuen Messungen (`task_expedition_coverage`, `task_engineering_output`) gibt es noch gar keine Bot-Daten. Für `task_colony_prosperity` kommt hinzu, dass die Trust-Ökonomie selbst noch nicht kalibriert ist.
 - **`task_credit_reserve`** bleibt vorerst eine Serie (Schwelle und Serienlänge in `run.tasks`). Der Folgeschritt „Nexus-Vorschuss tilgen" wartet auf die Tilgungsmechanik (§15 Nexus-Schulden-Mechanik).
 
 **Credits-Ökonomie — Break-even-Regel:** Der Berater-Unterhalt (`advisor.upkeep`, steigend mit dem Rang) muss spätestens mit ausgebauter Uplink-Station tragbar sein, unabhängig davon, ob die Cantina gebaut wurde — der frühere Handelsvertrag (Cantina-Bonuseinkommen) ist gestrichen (Owner-Entscheidung F3, §12 Kanal 1), Cantina liefert seither kein dediziertes Dauereinkommen mehr. Strukturelles Einkommen ist damit für alle drei Pfade gleich: `nexus_subsidy` (flat, bedingungslos) und die Relaisvergütung (`relay_bonus_per_uplink_level`). Herleitung mit vier Beratern (Werte `config/game.php`):
@@ -3122,8 +3129,9 @@ Ein Rang-2-Defizit bei niedrigem Uplink-Ausbau ist aus dem Phase-1-Reststand abs
 | Trust-Warnstufen (< −10 roter Chip, < −18 Nexus-Warnung; < 0 existiert als `onboarding_trust`) | game-developer | Mittel |
 | Warnmeldung kurz vor der Schuldengrenze; Tilgungsmechanik für `nexus_debt` (automatisch oder als Aktion: Design offen, Voraussetzung für „Nexus-Vorschuss tilgen", §15) | game-developer / ui-specialist | Mittel |
 | Sol-90-Letzte-Warnung + Fristverkürzung (§15 Gnadenfrist) | game-developer | Mittel |
-| A45: Aufgaben-Parameter nach `run.tasks`; neue Messungen für `task_engineering_output` (Summe Ausbaustufen), `task_expedition_coverage` (erfolgreiche Missionen ab „normal") und `task_senior_advisors` (volle Mannschaft auf höchstem Rang) | game-developer | Hoch |
-| A45: Kontrollpunkte Phase-2-Sol 50/65 auf Fortschritt umstellen, Serien-Höchststand je Aufgabe speichern, `run.nexus_milestones` durch `run.nexus_checkpoints` ersetzen, Countdown nur an `tick_limit` − 20 koppeln | game-developer / db-migration-agent | Hoch |
+| ~~A45: Aufgaben-Parameter nach `run.tasks`; neue Messungen für `task_engineering_output` (Summe Ausbaustufen), `task_expedition_coverage` (erfolgreiche Missionen ab „normal") und `task_senior_advisors` (volle Mannschaft auf höchstem Rang)~~ **erledigt** | game-developer | — |
+| ~~A45: Kontrollpunkte auf steigende Fortschritts-Leiter umstellen, Serien-Höchststand je Aufgabe speichern (`best_streak_value`), `run.nexus_milestones` durch `run.nexus_checkpoints` ersetzen, Countdown nur an `tick_limit` − `countdown_sols_before_limit` koppeln~~ **erledigt** | game-developer / db-migration-agent | — |
+| A45-Kalibrierung: Zielwerte in `run.tasks` und Leiter-Stufen gegen die Kalibrierregel prüfen (Bot-Batch läuft) | game-developer | Hoch |
 
 Vollständige Liste: `docs/audit-implementierungsstand-2026-09-06.md` (A6–A8).
 

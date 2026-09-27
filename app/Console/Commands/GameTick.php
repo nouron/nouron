@@ -433,7 +433,7 @@ class GameTick extends Command
             DB::table('colony_ships')->where('id', $mission->colony_ship_id)
                 ->update(['ship_state' => 'docked']);
             DB::table('colony_hangar_missions')->where('id', $mission->mission_id)
-                ->update(['state' => 'completed']);
+                ->update(['state' => 'completed', 'succeeded' => $success]);
 
             if ($userId !== null) {
                 $this->eventService->createEvent([

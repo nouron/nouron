@@ -65,12 +65,12 @@ return [
             ],
             'nexus_warning_sol30' => [
                 'title' => 'Nexus Warning',
-                'body' => 'Nexus Protocol §12.4: your colony is showing insufficient progress. We demand demonstrable objective completion by Sol 50. Sanctions will follow otherwise.',
+                'body' => 'Nexus Protocol §12.4, checkpoint 1 of 3: no concession objective has reached half its target. Next review in 20 Sols — required: one objective at three quarters or more, a second at half or more. Final review 15 Sols later: one objective fulfilled, a second at three quarters, otherwise one advisor will be withdrawn. For streak objectives, the longest streak reached so far counts.',
                 'badge' => 'Warning',
             ],
             'nexus_warning_sol50' => [
                 'title' => 'Nexus Warning (critical)',
-                'body' => 'Final notice: no objectives reached by Sol 50. Sanctions take effect from Sol 65. This is your last opportunity to correct course.',
+                'body' => 'Final notice, checkpoint 2 of 3: requirement missed — one objective at three quarters and a second at half were required. Final review in 15 Sols: one objective fully met, a second at three quarters or more. Failure will result in one advisor being withdrawn.',
                 'badge' => 'Critical Warning',
             ],
             'nexus_trust_critical' => [
@@ -80,7 +80,7 @@ return [
             ],
             'nexus_sanction_sol65' => [
                 'title' => 'Nexus Sanction imposed',
-                'body' => 'Pursuant to concession contract §7: one advisor has been temporarily suspended. Debt balance under review. Fulfil outstanding objectives to avoid further measures.',
+                'body' => 'Pursuant to concession contract §7, checkpoint 3 of 3: requirement missed — one objective fulfilled and a second at three quarters were required. Sanction enforced: one advisor has been withdrawn for one Sol. The concession objectives remain binding until the deadline.',
                 'badge' => 'Sanction',
             ],
             'nexus_countdown_sol80' => [

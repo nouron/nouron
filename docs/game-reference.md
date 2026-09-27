@@ -464,7 +464,7 @@ Ertrag = FreshYield × (0.5 + 0.5 × Restvorkommen / ResourceMax)
 
 ## 18. Run-Struktur
 
-*Abschnitt aktualisiert 2026-09-26 (A45).*
+*Stand: 2026-09-26 (A45 im Code umgesetzt, Werte vorläufig bis zum Abschluss des Kalibrier-Batches).*
 
 | Aspekt | Wert |
 |---|---|
@@ -474,7 +474,7 @@ Ertrag = FreshYield × (0.5 + 0.5 × Restvorkommen / ResourceMax)
 | **Phase 1 Warning** | Sol 22 (Nexus escalates) |
 | **Trust Fail Threshold** | Trust < −20 (instant fail) |
 | **Nexus Debt Cap** | 12000 Cr (instant fail) |
-
+| **Countdown** | `countdown_sols_before_limit` 20 → Gesamt-Sol 80 |
 | **Sieg-Korridor** (Owner) | Sol 70–85 nur sehr guter Run + Glück; realistisch Sol 85–95 |
 
 ### Objectives (GDD §15)
@@ -482,33 +482,22 @@ Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens
 
 **Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85. Kein Mindest-Sol.
 
-#### Ist-Stand (Code, `RunProgressService::TASK_TARGETS` + `run.task_credit_reserve_threshold`)
+#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-09-26)
 
-| Task | Messung heute | Ziel |
-|---|---|---|
-| `task_senior_advisors` | alle Slots (`advisor.max_slots` = 4) besetzt + ≥ 2 Berater Rang ≥ 2 | 1 (bool) |
-| `task_credit_reserve` | Credits ≥ 4000, Serie | 14 Sole |
-| `task_colony_prosperity` | Vertrauen > 70 (hartcodiert), Serie | 10 Sole |
-| `task_research_lead` | Kenntnisse auf Lv ≥ 5 | 3 |
-| `task_self_sufficiency` | Regolith > 25 **und** Organika > 75 (hartcodiert) **und** Supply > 0, Serie | 15 Sole |
-| `task_expedition_coverage` | erkundete Kolonie-Zone-Tiles | 16 (= Maximum) |
-| `task_engineering_output` | Summe `status_points` aller Gebäude | 320 |
-| `task_trade_volume` | gekaufte Händler-Items im Run | 5 |
+**VORLÄUFIG, Kalibrier-Batch läuft (A45).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen, die früheren Konstanten (`RunProgressService::TASK_TARGETS`, `run.task_credit_reserve_threshold`) sind entfernt. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen Vorschläge (Annahme), die der Batch gegen die Kalibrierregel prüft.
 
-#### Config-Vorschlag `run.tasks`: VORLÄUFIG bis zur Kalibrierung (A45)
+| Task | `category` | `type` | Messung | Parameter | Status |
+|---|---|---|---|---|---|
+| `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
+| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 4000, `target` 10 Sole** | Owner-Entscheidung; Folgeschritt „Nexus-Vorschuss tilgen" |
+| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 70, `target` 10 Sole | vorläufig |
+| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 3 | vorläufig |
+| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` **und** Supply > 0 | `regolith_min` 25, `organics_min` 75, `target` 15 Sole | vorläufig |
+| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | `min_difficulty` normal, `target` 10 | vorläufig (neue Messung, noch ohne Bot-Daten) |
+| `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | `target` 30 | vorläufig (neue Messung, noch ohne Bot-Daten) |
+| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | `target` 5 | vorläufig |
 
-Zielstruktur: alle Parameter in `config/game.php → run.tasks`, die Konstanten in `RunProgressService` entfallen, `run.task_credit_reserve_threshold` wandert in den Task-Eintrag. Fettgedruckte Werte folgen aus einer Owner-Entscheidung. Alle übrigen sind Vorschläge (Annahme) und werden mit dem nächsten Bot-Batch gegen die Kalibrierregel geprüft.
-
-| Task | `category` | Messung (neu) | Parameter (Vorschlag) | Status |
-|---|---|---|---|---|
-| `task_senior_advisors` | personal | Berater mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
-| `task_credit_reserve` | economy | Credits ≥ `threshold`, Serie | `threshold` 4000, `target` 14 Sole | vorläufig; Folgeschritt „Nexus-Vorschuss tilgen" |
-| `task_colony_prosperity` | diplomacy | Vertrauen > `threshold`, Serie | `threshold` 70, `target` 10 Sole | vorläufig bis Bot-Batch |
-| `task_research_lead` | research | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 3 | vorläufig bis Bot-Batch |
-| `task_self_sufficiency` | survival | Regolith > `regolith_min` **und** Organika > `organics_min` **und** Supply > 0, Serie | `regolith_min` 25, `organics_min` 75, `target` 15 Sole | vorläufig bis Bot-Batch |
-| `task_expedition_coverage` | exploration | **erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty`** | `min_difficulty` normal, `target` 10 | vorläufig (neue Messung, noch ohne Bot-Daten) |
-| `task_engineering_output` | research | **Summe der Ausbaustufen (`level`) aller `colony_buildings`** | `target` 30 | vorläufig (neue Messung, noch ohne Bot-Daten) |
-| `task_trade_volume` | economy | gekaufte Händler-Items im Run | `target` 5 | vorläufig |
+Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 
 Herleitung der Vorschläge für die neuen Messungen (Annahme, grob):
 - `task_engineering_output` 30: Zum Phase-1-Ende liegt die Summe bei ungefähr 10 (CC Lv3, zwei Gebäude auf Lv2, Harvester, Startgebäude). Der GDD-Endzustand eines soliden Runs (Mehrheit der Gebäudetypen, moderate Stufen, §13.6) landet grob bei 25. Für 30 muss gezielt Ausbau priorisiert werden.
@@ -517,26 +506,22 @@ Herleitung der Vorschläge für die neuen Messungen (Annahme, grob):
 
 #### Nexus-Kontrollpunkte (Phase-2-Sol, nicht Gesamt-Sol)
 
-Ist-Stand (hartcodiert in `RunProgressService::checkNexusInterventions()`; der Config-Block `run.nexus_milestones` mit 30/50/85/90 ist toter Code, ROADMAP A7):
+Ist-Stand (Code, `config/game.php → run.nexus_checkpoints`, Stand 2026-09-26; **vorläufig, Kalibrier-Batch läuft**). Steigende Leiter (Owner 2026-09-26), Prüfung auf **Fortschritt statt Erfüllung**. `requirements` listet je Anforderung einen Mindest-Fortschritt in Prozent (`≥`, ganzzahlig, keine Rundung; 100 = erfüllt). Jede Anforderung muss durch eine **andere** Aufgabe erfüllt werden. Bei Serien-Aufgaben zählt die **beste bisherige Serie** (`best_streak_value`). Geprüft wird einmal, genau am jeweiligen Phase-2-Sol. `run.nexus_milestones` ist entfernt.
 
-| Phase-2-Sol | Prüfung heute | Folge |
-|---|---|---|
-| 30 | < 1 Aufgabe mit Fortschritt > 50 % (aktueller Serienstand) | Warnung |
-| 50 | 0 Aufgaben erfüllt | 2. Warnung |
-| 55 | `nexus_debt` > `nexus_debt_fail_threshold` | Fail |
-| 65 | 0 Aufgaben erfüllt | Sanktion: 1 Berater 1 Sol gesperrt |
-| 80 | zusätzlich `current_tick` ≥ `tick_limit` − 20 | Countdown (fällt praktisch aufs Run-Ende, siehe GDD §18.4) |
-
-Config-Vorschlag `run.nexus_checkpoints` (ersetzt `run.nexus_milestones`), Prüfung auf **Fortschritt statt Erfüllung**; bei Serien-Aufgaben zählt die **beste bisherige Serie**:
-
-| Phase-2-Sol | `min_objectives` | `min_progress_pct` | Folge |
+| Phase-2-Sol | `requirements` | Bedeutung | Folge bei Verfehlen (`event`) |
 |---|---|---|---|
-| 30 | 1 | 50 | Warnung |
-| 50 | 1 | 50 | 2. Warnung |
-| 65 | 1 | 50 | Sanktion |
+| 30 | `[50]` | ein Ziel ≥ 50 % | Warnung (`run.nexus_warning_sol30`) |
+| 50 | `[75, 50]` | ein Ziel ≥ 75 %, ein zweites ≥ 50 % | 2. Warnung (`run.nexus_warning_sol50`) |
+| 65 | `[100, 75]` | ein Ziel erfüllt, ein zweites ≥ 75 % | Sanktion (`run.nexus_sanction_sol65`): 1 zufälliger Berater `advisor_lock_sols` = 1 Sol gesperrt |
 
-Der Countdown hängt künftig nur noch an `tick_limit` − 20 (Gesamt-Sol 80), nicht an einem Phase-2-Sol. Die Schwelle „mindestens ein Ziel über der Hälfte" hat der Owner für Sol 50/65 als Beispiel genannt. Dass alle drei Punkte dieselbe Schwelle nutzen (Eskalationsleiter statt steigender Anforderung), ist eine Annahme.
+Weitere Nexus-Prüfungen außerhalb der Leiter:
 
+| Auslöser | Prüfung | Folge |
+|---|---|---|
+| ab Phase-2-Sol 55 (jeder Sol) | `nexus_debt` > `nexus_debt_fail_threshold` | Fail (`nexus_debt`) |
+| Gesamt-Sol ≥ `tick_limit` − `countdown_sols_before_limit` (= 100 − 20 = Sol 80) | unabhängig vom Phase-2-Sol, einmal pro Run | Countdown-Meldung |
+
+Bei einem Phase-1-Ende um Sol 15–20 liegt Phase-2-Sol 65 bei Gesamt-Sol 80–85.
 ### Nexus-Schulden
 
 `nexus_debt` startet mit dem Vorschuss (`OnboardingService`, 3000) und wächst durch Nexus-Kredit-Schiffskäufe und Upkeep-Defizite. **Eine Tilgung gibt es nicht:** Die Schuld sinkt im Run nie. Eine Tilgungsmechanik ist ein künftiger Schritt (GDD §15).

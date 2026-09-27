@@ -399,4 +399,39 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertSame(0.0, $this->shipStatusPoints());
         $this->assertSame('completed', $this->missionState($missionId), 'hard-fail wear floor must not retroactively trigger an abort');
     }
+
+    // ── Outcome record (A45: task_expedition_coverage counts successful missions) ──
+
+    public function test_successful_roll_records_the_mission_as_succeeded(): void
+    {
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21200, difficulty: 'normal');
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21202]);
+
+        $this->assertSame(1, (int) DB::table('colony_hangar_missions')->where('id', $missionId)->value('succeeded'));
+    }
+
+    public function test_failed_roll_records_the_mission_as_not_succeeded(): void
+    {
+        DB::table('runs')->where('id', 1)->update(['rng_seed' => 999]);
+        Config::set('game.missions.difficulty.base_chance', [
+            'easy' => 0.0, 'normal' => 0.0, 'hard' => 0.0,
+        ]);
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21300, difficulty: 'normal');
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21302]);
+
+        $row = DB::table('colony_hangar_missions')->where('id', $missionId)->first();
+        $this->assertNotNull($row->succeeded, 'a resolved mission records its outcome');
+        $this->assertSame(0, (int) $row->succeeded);
+    }
+
+    public function test_active_mission_has_no_outcome_yet(): void
+    {
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21400);
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21401]);
+
+        $this->assertNull(DB::table('colony_hangar_missions')->where('id', $missionId)->value('succeeded'));
+    }
 }

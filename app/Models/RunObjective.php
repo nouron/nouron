@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $target_value
  * @property int $current_value
  * @property int $streak_value
+ * @property int $best_streak_value
  * @property int|null $completed_at
  * @property-read Run $run
  */
@@ -32,6 +33,7 @@ class RunObjective extends Model
         'target_value',
         'current_value',
         'streak_value',
+        'best_streak_value',
         'completed_at',
     ];
 
@@ -42,6 +44,7 @@ class RunObjective extends Model
             'target_value' => 'integer',
             'current_value' => 'integer',
             'streak_value' => 'integer',
+            'best_streak_value' => 'integer',
             'completed_at' => 'integer',
         ];
     }
@@ -64,6 +67,25 @@ class RunObjective extends Model
     public function isCompleted(): bool
     {
         return $this->completed_at !== null;
+    }
+
+    /**
+     * Whether progress toward the target reaches at least $pct percent.
+     *
+     * Used by the Nexus checkpoints (GDD §15 "2 von 3"): a completed objective
+     * counts as 100 %, streak objectives count with their best streak so far
+     * (best_streak_value stays 0 for counter objectives). Integer comparison —
+     * no rounding at the threshold.
+     */
+    public function reachesProgressPct(int $pct): bool
+    {
+        if ($this->completed_at !== null) {
+            return true;
+        }
+
+        $value = max($this->current_value, $this->best_streak_value ?? 0);
+
+        return $value * 100 >= $pct * max(1, $this->target_value);
     }
 
     /**

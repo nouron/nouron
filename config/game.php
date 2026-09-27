@@ -773,17 +773,7 @@ return [
         'phase1_warning_sol' => 22,     // escalating Nexus warning if Phase 1 still incomplete by this Sol
         // Invariant: phase1_warning_sol must stay below phase1_deadline_sol, or the warning
         // and the hard fail would land on the same tick.
-        // task_credit_reserve: Credits threshold a colony must hold for the
-        // objective's streak (RunProgressService::TASK_TARGETS, 14 consecutive
-        // sols as of 2026-08-17). 5000 → 3000 (GDD §18.4 Nachtrag 2026-08-14) —
-        // 5000 was effectively unreachable under the pre-fix Post-Phase-1
-        // Credit-Ökonomie collapse. 3000 → 4000 (2026-08-17, game-designer
-        // review): that bug is fixed now, and a 20-run PlaytestBot batch showed
-        // the task completing suspiciously fast (Sol 38-39) — raised partway
-        // back up, not fully to the old 5000, as a safety margin against
-        // re-triggering the old collapse scenario.
-        'task_credit_reserve_threshold' => 4000,
-        'task_pool' => [       // all available Phase-2 task keys
+        'task_pool' => [       // all available Phase-2 task keys (each needs an entry in `tasks`)
             'task_senior_advisors',
             'task_credit_reserve',
             'task_colony_prosperity',
@@ -793,19 +783,78 @@ return [
             'task_engineering_output',
             'task_trade_volume',
         ],
+
+        // Phase-2 objective parameters (GDD §15 Aufgabenpool, §18.4 Kalibrierregeln,
+        // docs/game-reference.md §18). Read by RunTaskCatalog / RunProgressService;
+        // the objective labels show exactly these values.
+        //   category — combo blacklist: at most one 'economy' task per draw
+        //   type     — 'counter' (current state vs. target) or 'streak' (consecutive
+        //              Sols; the best streak so far counts for the Nexus checkpoints)
+        //   target   — completion value (count or streak length in Sols)
+        // Calibration rule (Owner 2026-09-26): without targeted play at Sol ~90 at
+        // the earliest, with targeted play at Sol 70–85. Values marked PROVISIONAL
+        // are unverified until the next PlaytestBot batch (A45).
+        'tasks' => [
+            // Owner decision 2026-09-26: 4 advisors at rank 3 (full staff at top rank).
+            // Promotion is already an active, credits-costing player decision
+            // (AdvisorService::promote(), A23) — the player can delay it, never
+            // accelerate it below rank_thresholds[2] (45 active Sols). Batch
+            // 2026-09-26: both profiles land at Sol 73-79 regardless of strategy,
+            // already inside the target corridor — no change needed (Owner
+            // 2026-09-27: no new acceleration mechanic, config-only).
+            'task_senior_advisors' => ['category' => 'personal', 'type' => 'counter', 'target' => 4, 'min_rank' => 3],
+            // Owner decision 2026-09-26: stays a streak for now (4000 Credits, 10 Sols);
+            // follow-up "Nexus-Vorschuss tilgen" waits for a debt repayment mechanic.
+            // UNMEASURED (Owner 2026-09-27): batch 2026-09-26 only ran default/focus
+            // profiles, neither plays a deliberate savings strategy (max Credits seen
+            // 1590-2490) — needs a savings-focused bot rule before the threshold can
+            // be calibrated. Do not guess a number; ROADMAP follow-up pending.
+            'task_credit_reserve' => ['category' => 'economy', 'type' => 'streak', 'target' => 10, 'threshold' => 4000],
+            // PROVISIONAL (2026-09-26 batch: trust maxed at 33–53 with the old
+            // threshold of 70, never completed): trust > threshold for `target` Sols.
+            'task_colony_prosperity' => ['category' => 'diplomacy', 'type' => 'streak', 'target' => 12, 'threshold' => 40],
+            // PROVISIONAL (2026-09-26 batch: target 3 was reached by Sol 48–72,
+            // far too early — level 5 is the knowledge cap): `target` knowledges at
+            // level >= min_level.
+            'task_research_lead' => ['category' => 'research', 'type' => 'counter', 'target' => 7, 'min_level' => 5],
+            // PROVISIONAL (2026-09-26 batch: old thresholds were trivially satisfied
+            // right at phase-2 start): Regolith > regolith_min AND Organika >
+            // organics_min AND supply > 0, held for `target` Sols.
+            'task_self_sufficiency' => ['category' => 'survival', 'type' => 'streak', 'target' => 45, 'regolith_min' => 150, 'organics_min' => 300],
+            // PROVISIONAL (new measurement, bot data confounded by a mission-choice
+            // bug fixed in this batch — recheck with the next run): successful
+            // missions at difficulty >= min_difficulty (order:
+            // game.missions.difficulty.order).
+            'task_expedition_coverage' => ['category' => 'exploration', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal'],
+            // PROVISIONAL (2026-09-26 batch: generalist reached Sol 92 median, one
+            // sample only — needs more seeds): sum of building levels, every
+            // instance with its own level.
+            'task_engineering_output' => ['category' => 'research', 'type' => 'counter', 'target' => 30],
+            // PROVISIONAL (2026-09-26 batch: target 5 reached by Sol 79–94, slightly
+            // too easy): purchased merchant items in this run.
+            'task_trade_volume' => ['category' => 'economy', 'type' => 'counter', 'target' => 7],
+        ],
         'tick_duration_hours' => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players' => 1,      // 1 = singleplayer; 2–4 = multiplayer
         'playbymailmode' => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
 
-        // Nexus intervention milestones (tick numbers, GDD §15 "Nexus-Eingriffe").
-        // NOTE (Audit 2026-09-06, A7): this block is currently NOT read anywhere —
-        // RunProgressService hard-codes Phase-2-Sol 30/50/65/80. Wire up or remove.
-        'nexus_milestones' => [
-            30 => 'warn_progress',   // at tick 30: at least 1 task must be >50% done, else INNN warning
-            50 => 'warn_none_done',  // at tick 50: if 0 tasks fully done, second INNN warning
-            85 => 'sanction',        // at tick 85: if 0 tasks done → advisor penalty + deadline shortened to 95
-            90 => 'final_warning',   // at tick 90: last warning if still 0 tasks done
+        // Nexus checkpoints in PHASE-2 Sols (GDD §15 "2 von 3", §18.4). Each is
+        // evaluated once, on exactly that Phase-2 Sol, and checks progress rather
+        // than completion as a rising ladder: `requirements` lists one minimum
+        // progress percentage per objective, each met by a different objective
+        // (100 = completed). Streak objectives count with their best streak.
+        // A miss fires `event`; `advisor_lock_sols` > 0 additionally locks one
+        // random active advisor for that many Sols (sanction).
+        // Owner-confirmed ladder (A45, 2026-09-26): Sol 65 as set by the Owner,
+        // Sol 30/50 proposed and confirmed. Phase-2 Sol 65 ≈ total Sol 80–85.
+        'nexus_checkpoints' => [
+            30 => ['requirements' => [50], 'event' => 'run.nexus_warning_sol30'],
+            50 => ['requirements' => [75, 50], 'event' => 'run.nexus_warning_sol50'],
+            65 => ['requirements' => [100, 75], 'event' => 'run.nexus_sanction_sol65', 'advisor_lock_sols' => 1],
         ],
+        // Countdown message at tick_limit − this many Sols (total Sol, not Phase-2
+        // Sol; GDD §18.2 Fail State 3).
+        'countdown_sols_before_limit' => 20,
 
         // Score formula weights (GDD §15 "Highscore").
         // score = (tasks_done × w_task) + (tick_limit - done_at_tick) × w_tick + (credits_remaining / w_credits) + (trust_at_end × w_trust)
@@ -969,6 +1018,9 @@ return [
     'missions' => [
         'difficulty' => [
             // Base success chance per mission difficulty level.
+            // Difficulty levels from easiest to hardest — ordering for
+            // run.tasks.task_expedition_coverage.min_difficulty.
+            'order' => ['easy', 'normal', 'hard'],
             'base_chance' => ['easy' => 0.85, 'normal' => 0.70, 'hard' => 0.60],
             // Reward multiplier (Credits, AP, Knowledge) per mission difficulty level.
             'reward_multiplier' => ['easy' => 0.7, 'normal' => 1.0, 'hard' => 1.4],

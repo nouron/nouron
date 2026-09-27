@@ -183,16 +183,18 @@ class ColonyService
             ];
         }
 
+        $taskCatalog = app(RunTaskCatalog::class);
+
         $objectives = DB::table('run_objectives')
             ->where('run_id', $run->id)
             ->orderBy('id')
             ->get(['task_key', 'current_value', 'target_value', 'completed_at'])
-            ->map(function ($obj): array {
+            ->map(function ($obj) use ($taskCatalog): array {
                 $revealed = (int) $obj->current_value > 0 || $obj->completed_at !== null;
 
                 return [
                     'revealed' => $revealed,
-                    'label' => $revealed ? __('run.'.$obj->task_key) : null,
+                    'label' => $revealed ? $taskCatalog->label($obj->task_key, (int) $obj->target_value) : null,
                     'current' => (int) $obj->current_value,
                     'target' => (int) $obj->target_value,
                     'done' => $obj->completed_at !== null,

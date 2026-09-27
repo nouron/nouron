@@ -83,4 +83,12 @@ return [
 
     'sol_report_completed' => 'Mission completed',
     'sol_report_aborted' => 'Mission aborted — ship returned unable to fly',
+
+    // ── Difficulty ───────────────────────────────────────────────────────────
+
+    'difficulty_easy' => 'Easy',
+    'difficulty_normal' => 'Normal',
+    'difficulty_hard' => 'Hard',
+    'difficulty_chance_label' => 'Success chance: :chance%',
+    'difficulty_reward_label' => 'Reward ×:multiplier',
 ];

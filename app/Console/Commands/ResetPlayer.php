@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ColonyTileService;
 use App\Services\OnboardingService;
 use App\Services\RunProgressService;
+use App\Services\RunTaskCatalog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -76,6 +77,7 @@ class ResetPlayer extends Command
         private readonly OnboardingService $onboardingService,
         private readonly RunProgressService $runProgressService,
         private readonly ColonyTileService $tileService,
+        private readonly RunTaskCatalog $runTaskCatalog,
     ) {
         parent::__construct();
     }
@@ -671,6 +673,9 @@ class ResetPlayer extends Command
             $half = (int) ceil($second->target_value / 2);
             $second->current_value = $half;
             $second->streak_value = $half;
+            if ($this->runTaskCatalog->isStreak($second->task_key)) {
+                $second->best_streak_value = $half;
+            }
             $second->save();
         }
     }
@@ -680,8 +685,8 @@ class ResetPlayer extends Command
      *
      * Buildings: Agrardom Lv3, Sciencelab Lv2, Housing Lv3,
      *   Hangar Lv2, Cantina Lv2, SecurityHub Lv1. 45 Sols past Phase-2 entry.
-     * All 5 advisors present; engineer + scientist upgraded to Senior (rank 2)
-     *   satisfying the "Expertenstab" objective (2 Seniors required).
+     * All 4 advisors present, all at the configured top rank
+     *   (run.tasks.task_senior_advisors.min_rank) — the "Expertenstab" objective.
      * All colony-zone + Ring-2 tiles explored; Harvester on Ring-2 regolith.
      * Supply cap: CC 10 + Housing Lv3 × 8 + knowledge ~16 pts ≈ 50.
      * Werkstoffe: some merchant purchases (20 units).
@@ -710,21 +715,20 @@ class ResetPlayer extends Command
 
         $this->transitionToPhase2($colony, $run);
 
-        // Upgrade engineer + scientist to Senior (rank 2) — needed for "Expertenstab" objective
-        DB::table('advisors')
-            ->where('colony_id', $cid)
-            ->whereIn('personell_id', [
-                (int) config('advisors.engineer.id', 35),
-                (int) config('advisors.scientist.id', 36),
-            ])
-            ->update(['rank' => 2]);
-
-        // Slot 4: trader (Konsul, rank 2)
+        // Slot 4: trader (Konsul)
         DB::table('advisors')->insert([
             'user_id' => $colony->user_id, 'personell_id' => 92,
-            'colony_id' => $cid, 'rank' => 2,
+            'colony_id' => $cid, 'rank' => 1,
             'active_ticks' => 40, 'unavailable_until_tick' => null,
         ]);
+
+        // "Expertenstab" (A45): the whole staff at the configured top rank.
+        DB::table('advisors')
+            ->where('colony_id', $cid)
+            ->update([
+                'rank' => (int) config('game.run.tasks.task_senior_advisors.min_rank', 3),
+                'active_ticks' => 45,
+            ]);
 
         // Cap: CC_flat(10) + Housing_Lv3(24) + knowledge(constr4=17+carto3=13+geo1=3+agro2=8+hlth1=3) = 78
         $this->setResources($colony, $run,
@@ -755,5 +759,13 @@ class ResetPlayer extends Command
             'streak_value' => DB::raw('target_value'),
             'completed_at' => 40,
         ]);
+
+        // Streak objectives also hold their record (best streak).
+        foreach ($run->objectives()->get() as $objective) {
+            if ($this->runTaskCatalog->isStreak($objective->task_key)) {
+                $objective->best_streak_value = $objective->target_value;
+                $objective->save();
+            }
+        }
     }
 }

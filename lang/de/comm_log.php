@@ -77,12 +77,12 @@ return [
             ],
             'nexus_warning_sol30' => [
                 'title' => 'Nexus-Warnung',
-                'body' => 'Nexus-Protokoll §12.4: Ihre Kolonie zeigt unzureichende Fortschritte. Wir fordern nachweisbare Zielerfüllung bis Sol 50. Andernfalls folgen Sanktionen.',
+                'body' => 'Nexus-Protokoll §12.4, Kontrollpunkt 1 von 3: Kein Konzessionsziel hat die Hälfte seines Solls erreicht. Nächste Prüfung in 20 Solen — verlangt wird ein Ziel zu mindestens drei Vierteln, ein zweites mindestens zur Hälfte. Schlussprüfung 15 Sole später: ein Ziel erfüllt, ein zweites zu drei Vierteln, andernfalls wird ein Berater abgezogen. Bei Serienzielen zählt die längste bisher erreichte Serie.',
                 'badge' => 'Warnung',
             ],
             'nexus_warning_sol50' => [
                 'title' => 'Nexus-Warnung (kritisch)',
-                'body' => 'Letzte Mahnung: Keine Ziele bis Sol 50 erreicht. Sanktionen treten ab Sol 65 in Kraft. Dies ist Ihre letzte Gelegenheit zur Kurskorrektur.',
+                'body' => 'Letzte Mahnung, Kontrollpunkt 2 von 3: Vorgabe verfehlt — verlangt waren ein Ziel zu drei Vierteln und ein zweites zur Hälfte. Schlussprüfung in 15 Solen: ein Ziel vollständig erfüllt, ein zweites zu mindestens drei Vierteln. Bei Verfehlen wird ein Berater abgezogen.',
                 'badge' => 'Kritische Warnung',
             ],
             'nexus_trust_critical' => [
@@ -92,7 +92,7 @@ return [
             ],
             'nexus_sanction_sol65' => [
                 'title' => 'Nexus-Sanktion verhängt',
-                'body' => 'Gemäß Konzessionsvertrag §7: Ein Berater wurde temporär gesperrt. Schuldensaldo wird überprüft. Erfüllen Sie die ausstehenden Ziele, um weitere Maßnahmen zu vermeiden.',
+                'body' => 'Gemäß Konzessionsvertrag §7, Kontrollpunkt 3 von 3: Vorgabe verfehlt — verlangt waren ein erfülltes Ziel und ein zweites zu drei Vierteln. Sanktion vollzogen: Ein Berater wurde für einen Sol abgezogen. Die Konzessionsziele bleiben bis Fristablauf verbindlich.',
                 'badge' => 'Sanktion',
             ],
             'nexus_countdown_sol80' => [
