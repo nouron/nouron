@@ -30,7 +30,7 @@ class ColonyTileServiceSolsRemainingTest extends TestCase
 
     public function test_returns_null_when_already_exhausted(): void
     {
-        $this->assertNull($this->service->solsRemaining('regolith_normal', 0, 300, 0, 1.0));
+        $this->assertNull($this->service->solsRemaining('regolith_y2_d2', 0, 300, 0, 1.0));
     }
 
     public function test_returns_null_for_unconfigured_tile_type(): void
@@ -40,20 +40,20 @@ class ColonyTileServiceSolsRemainingTest extends TestCase
 
     public function test_rounds_up_to_next_full_sol(): void
     {
-        // fresh_yield regolith_normal = 23, rate = 23 * 1.0 = 23. 111 / 23 = 4.826 → 5.
-        $this->assertSame(5, $this->service->solsRemaining('regolith_normal', 111, 300, 0, 1.0));
+        // fresh_yield regolith_y2_d2 = 23, rate = 23 * 1.0 = 23. 111 / 23 = 4.826 → 5.
+        $this->assertSame(5, $this->service->solsRemaining('regolith_y2_d2', 111, 300, 0, 1.0));
     }
 
     public function test_exact_division_does_not_add_an_extra_sol(): void
     {
         // 46 / 23 = 2.0 exactly → 2, not 3.
-        $this->assertSame(2, $this->service->solsRemaining('regolith_normal', 46, 300, 0, 1.0));
+        $this->assertSame(2, $this->service->solsRemaining('regolith_y2_d2', 46, 300, 0, 1.0));
     }
 
     public function test_geology_bonus_increases_rate_and_lowers_estimate(): void
     {
-        $withoutGeology = $this->service->solsRemaining('regolith_normal', 111, 300, 0, 1.0);
-        $withGeology = $this->service->solsRemaining('regolith_normal', 111, 300, 5, 1.0);
+        $withoutGeology = $this->service->solsRemaining('regolith_y2_d2', 111, 300, 0, 1.0);
+        $withGeology = $this->service->solsRemaining('regolith_y2_d2', 111, 300, 5, 1.0);
 
         $this->assertLessThan($withoutGeology, $withGeology, 'A higher geology bonus must shorten the estimate');
     }
@@ -61,8 +61,8 @@ class ColonyTileServiceSolsRemainingTest extends TestCase
     public function test_trust_multiplier_scales_the_estimate(): void
     {
         // Rate halved by trust penalty → roughly double the sols.
-        $fullTrust = $this->service->solsRemaining('regolith_normal', 92, 300, 0, 1.0);
-        $halfTrust = $this->service->solsRemaining('regolith_normal', 92, 300, 0, 0.5);
+        $fullTrust = $this->service->solsRemaining('regolith_y2_d2', 92, 300, 0, 1.0);
+        $halfTrust = $this->service->solsRemaining('regolith_y2_d2', 92, 300, 0, 0.5);
 
         $this->assertGreaterThan($fullTrust, $halfTrust);
     }
@@ -70,6 +70,6 @@ class ColonyTileServiceSolsRemainingTest extends TestCase
     public function test_returns_null_when_effective_rate_rounds_to_zero(): void
     {
         // A trust multiplier of 0 makes the effective rate 0 — no meaningful countdown.
-        $this->assertNull($this->service->solsRemaining('regolith_normal', 100, 300, 0, 0.0));
+        $this->assertNull($this->service->solsRemaining('regolith_y2_d2', 100, 300, 0, 0.0));
     }
 }

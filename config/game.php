@@ -101,15 +101,24 @@ return [
         // not enough surplus over build/repair/CC-upgrade consumption to ever
         // consider selling it. Moderate bump, not a doubling — the depletion/
         // relocation decision (GDD §4c) still has to matter.
+        //
+        // A44/H1 (2026-09-27): the former 3-value regolith_{poor,normal,rich}
+        // tile_type coupled yield and total deposit size 1:1 — a tile was
+        // either weak or strong in BOTH axes. Decoupled into two independent
+        // 3-tier axes (yield tier y1-y3, deposit tier d1-d3), combined into 8
+        // tile_type values `regolith_y{yield}_d{deposit}`. `y3_d3` ("perfect"
+        // deposit) is deliberately excluded — see ColonyTileService::
+        // pickRegolithCombo(). See docs/superpowers/plans/2026-09-27-a44-h1-h2-
+        // vorkommen-spec.md for the full derivation.
         'fresh_yield' => [
-            'regolith_rich' => 30,
-            'regolith_normal' => 23,
-            'regolith_poor' => 15,
+            'regolith_y1_d1' => 16, 'regolith_y1_d2' => 16, 'regolith_y1_d3' => 16,
+            'regolith_y2_d1' => 23, 'regolith_y2_d2' => 23, 'regolith_y2_d3' => 23,
+            'regolith_y3_d1' => 30, 'regolith_y3_d2' => 30,
         ],
         'resource_max' => [
-            'regolith_rich' => 500,
-            'regolith_normal' => 300,
-            'regolith_poor' => 160,
+            'regolith_y1_d1' => 160, 'regolith_y1_d2' => 300, 'regolith_y1_d3' => 440,
+            'regolith_y2_d1' => 160, 'regolith_y2_d2' => 300, 'regolith_y2_d3' => 440,
+            'regolith_y3_d1' => 160, 'regolith_y3_d2' => 300,
         ],
         // Verlegekosten 1 → 2 AP je Hex (GDD §4c, 2026-08-03) — the relocation-frequency
         // lever, not the depletion curve itself (see GDD §4c "Der eigentliche Regler...").

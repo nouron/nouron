@@ -30,7 +30,7 @@ use Tests\TestCase;
  *
  * Covered scenarios:
  *  Happy path:
- *  - harvester placed on a full-reserve regolith_normal tile produces its fresh value (18)
+ *  - harvester placed on a full-reserve regolith_y2_d2 tile produces its fresh value (18)
  *  - bioFacility at level N generates N×10 Organics per tick (neutral trust)
  *  - Stacking: both buildings produce in the same tick
  *
@@ -107,7 +107,7 @@ class GameTickResourceGenerationTest extends TestCase
     }
 
     /**
-     * Places the Harvester (instance 1) on a fresh regolith_normal tile
+     * Places the Harvester (instance 1) on a fresh regolith_y2_d2 tile
      * (fresh_yield 23, resource_max 300) — the fixture's default harvester
      * row has no tile_x/tile_y, so production requires explicit placement
      * under the §4c depletion mechanic.
@@ -132,7 +132,7 @@ class GameTickResourceGenerationTest extends TestCase
             ->delete();
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID, 'q' => self::HARVESTER_TILE_Q, 'r' => self::HARVESTER_TILE_R, 'ring' => 3,
-            'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+            'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0,
             'resource_amount' => 300, 'resource_max' => 300,
         ]);
     }
@@ -140,7 +140,7 @@ class GameTickResourceGenerationTest extends TestCase
     // ── Happy path ─────────────────────────────────────────────────────────────
 
     /**
-     * Harvester placed on a full-reserve regolith_normal tile produces exactly
+     * Harvester placed on a full-reserve regolith_y2_d2 tile produces exactly
      * its fresh value (23) per tick at neutral trust — GDD §4c.
      */
     public function test_harvester_generates_regolith_from_placed_tile(): void
@@ -152,7 +152,7 @@ class GameTickResourceGenerationTest extends TestCase
 
         $after = $this->getColonyResource(self::RES_REGOLITH);
         $this->assertEquals($before + 23, $after,
-            'Harvester on a full-reserve regolith_normal tile must produce exactly 23 Regolith per tick');
+            'Harvester on a full-reserve regolith_y2_d2 tile must produce exactly 23 Regolith per tick');
     }
 
     /**
@@ -196,8 +196,8 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         $organics = $this->getColonyResource(self::RES_ORGANICS);
 
-        // harvester on full-reserve regolith_normal tile → 23 Regolith; bioFacility level 1 → 8 Organics
-        $this->assertEquals(23, $regolith, 'Harvester on full-reserve regolith_normal tile must produce 23 Regolith');
+        // harvester on full-reserve regolith_y2_d2 tile → 23 Regolith; bioFacility level 1 → 8 Organics
+        $this->assertEquals(23, $regolith, 'Harvester on full-reserve regolith_y2_d2 tile must produce 23 Regolith');
         $this->assertEquals(8, $organics, 'BioFacility level 1 must produce 8 Organics');
     }
 

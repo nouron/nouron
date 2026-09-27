@@ -120,7 +120,7 @@ class ColonyZoneDecoupleTest extends TestCase
         // Unexplored regolith tile — harvester relocation must be refused.
         DB::table('colony_tiles')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => -1],
-            ['ring' => 3, 'tile_type' => 'regolith_normal', 'is_explored' => 0, 'is_colony_zone' => 0, 'is_deep_scanned' => 0]
+            ['ring' => 3, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 0, 'is_colony_zone' => 0, 'is_deep_scanned' => 0]
         );
 
         $response = $this->actingAs($this->bart())

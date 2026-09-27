@@ -31,10 +31,19 @@ return [
 
     // ── Regolith resource nodes ───────────────────────────────────────────────
     // resource_id 3 = res_regolith
+    // A44/H1: yield tier (y1-y3) decoupled from deposit tier (d1-d3), see
+    // config/game.php -> harvester.fresh_yield (single source of truth for
+    // the actual per-Sol value; base_yield here mirrors it for the hexview
+    // move-preview badge).
 
-    'regolith_rich' => ['resource_id' => 3, 'base_yield' => 15, 'event_eligible' => true],
-    'regolith_normal' => ['resource_id' => 3, 'base_yield' => 10, 'event_eligible' => true],
-    'regolith_poor' => ['resource_id' => 3, 'base_yield' => 5,  'event_eligible' => true],
+    'regolith_y1_d1' => ['resource_id' => 3, 'base_yield' => 16, 'event_eligible' => true],
+    'regolith_y1_d2' => ['resource_id' => 3, 'base_yield' => 16, 'event_eligible' => true],
+    'regolith_y1_d3' => ['resource_id' => 3, 'base_yield' => 16, 'event_eligible' => true],
+    'regolith_y2_d1' => ['resource_id' => 3, 'base_yield' => 23, 'event_eligible' => true],
+    'regolith_y2_d2' => ['resource_id' => 3, 'base_yield' => 23, 'event_eligible' => true],
+    'regolith_y2_d3' => ['resource_id' => 3, 'base_yield' => 23, 'event_eligible' => true],
+    'regolith_y3_d1' => ['resource_id' => 3, 'base_yield' => 30, 'event_eligible' => true],
+    'regolith_y3_d2' => ['resource_id' => 3, 'base_yield' => 30, 'event_eligible' => true],
 
     // ── Event overlays (revealed via deep scan only) ──────────────────────────
     // event_eligible = false: events cannot randomly re-occur on these tiles

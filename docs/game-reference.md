@@ -442,15 +442,24 @@ Trigger-Chancen ramp linear von 0 bis volle Stärke über erste 15 Sol.
 
 ### Depletion (GDD §4c)
 ```
-Ertrag = FreshYield × (0.5 + 0.5 × Restvorkommen / ResourceMax)
+Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter Cutoff — A24/A25)
 ```
 
-**Fresh Yields** (Regolith pro Sole):
+**A44/H1 (2026-09-27):** zwei entkoppelte Achsen — Ertragstier (`y1`-`y3`) und Mächtigkeitstier (`d1`-`d3`), kombiniert zu 8 `tile_type`-Werten. `y3_d3` (bestes Tier auf beiden Achsen) existiert bewusst nicht.
+
+**Fresh Yields** (Regolith pro Sol) und **Resource Max** (Gesamtvorkommen):
 | Tile-Typ | Fresh Yield | Resource Max |
 |---|---|---|
-| regolith_rich | 30 Rg | 500 Rg |
-| regolith_normal | 23 Rg | 300 Rg |
-| regolith_poor | 15 Rg | 160 Rg |
+| regolith_y1_d1 | 16 Rg | 160 Rg |
+| regolith_y1_d2 | 16 Rg | 300 Rg |
+| regolith_y1_d3 | 16 Rg | 440 Rg |
+| regolith_y2_d1 | 23 Rg | 160 Rg |
+| regolith_y2_d2 | 23 Rg | 300 Rg |
+| regolith_y2_d3 | 23 Rg | 440 Rg |
+| regolith_y3_d1 | 30 Rg | 160 Rg |
+| regolith_y3_d2 | 30 Rg | 300 Rg |
+
+**H2 — Sol-1-Gegensatzpaar:** zwei der 9 Ring-3-Frontier-Koordinaten werden immer pre-explored und mit einem Kontrast-Paar belegt (eine Kombi strikt höheres Ertragstier UND strikt niedrigeres Mächtigkeitstier als die andere) — welches konkrete Paar variiert pro Run/Seed (`ColonyTileService::pickH2Pair()`).
 
 **Relocation**: 1–2 AP pro Hex (GDD §4c: 2 AP/Hex)
 

@@ -122,9 +122,9 @@ class LobbyNewRunTest extends TestCase
         $this->actingAs($this->user())->post(route('run.new'));
 
         // Sol-1 canonical state (matches setupNewPlayer()): ring 0+1 fully
-        // explored via assignColonyZone(), plus the pre-explored ring-3
-        // regolith tile (Harvester relocation target). Ring 2 and the rest
-        // of ring 3 stay foggy.
+        // explored via assignColonyZone(), plus the two pre-explored ring-3
+        // regolith tiles (A44/H2 Rush/Steady relocation targets). Ring 2 and
+        // the rest of ring 3 stay foggy.
         $exploredRing2Plus = DB::table('colony_tiles')
             ->where('colony_id', $this->colonyId)
             ->where('ring', '>=', 2)
@@ -132,9 +132,9 @@ class LobbyNewRunTest extends TestCase
             ->count();
 
         $this->assertEquals(
-            1,
+            2,
             $exploredRing2Plus,
-            'Only the single pre-explored ring-3 regolith tile may be explored at ring >= 2 after newRun()'
+            'Only the two pre-explored ring-3 regolith tiles may be explored at ring >= 2 after newRun()'
         );
     }
 

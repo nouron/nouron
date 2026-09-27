@@ -137,7 +137,7 @@ class BotStrategyMissionChoiceTest extends TestCase
             ->update(['amount' => $organics]);
         // The start harvester sits on a productive deposit — scarcity comes from the stock alone.
         DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('q', 1)->where('r', 0)
-            ->update(['tile_type' => 'regolith_normal', 'resource_amount' => 200]);
+            ->update(['tile_type' => 'regolith_y2_d2', 'resource_amount' => 200]);
 
         return $bot;
     }

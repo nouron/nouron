@@ -178,7 +178,7 @@ class ColonyViewTest extends TestCase
             'q' => 5,
             'r' => 5,
             'ring' => 3,
-            'tile_type' => 'regolith_normal',
+            'tile_type' => 'regolith_y2_d2',
             'is_colony_zone' => 0,
             'is_explored' => 1,
             'is_deep_scanned' => 0,
@@ -218,7 +218,7 @@ class ColonyViewTest extends TestCase
      * A25: the active Harvester tile also carries a `sols_remaining` estimate
      * ("ca. N Sole bis Erschöpfung", A24/A25). Neutral trust + no geology so
      * the expected value matches the pure ColonyTileService::solsRemaining()
-     * formula exactly: fresh_yield(regolith_normal)=23, ceil(111/23)=5.
+     * formula exactly: fresh_yield(regolith_y2_d2)=23, ceil(111/23)=5.
      */
     public function test_hexview_tiles_include_sols_remaining_for_placed_harvester(): void
     {
@@ -237,7 +237,7 @@ class ColonyViewTest extends TestCase
             'q' => 5,
             'r' => 5,
             'ring' => 3,
-            'tile_type' => 'regolith_normal',
+            'tile_type' => 'regolith_y2_d2',
             'is_colony_zone' => 0,
             'is_explored' => 1,
             'is_deep_scanned' => 0,
@@ -285,7 +285,7 @@ class ColonyViewTest extends TestCase
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID_FOR_REGOLITH,
             'q' => 5, 'r' => 5, 'ring' => 3,
-            'tile_type' => 'regolith_normal',
+            'tile_type' => 'regolith_y2_d2',
             'is_colony_zone' => 0, 'is_explored' => 1, 'is_deep_scanned' => 0,
             'resource_amount' => 111, 'resource_max' => 300,
         ]);
@@ -298,7 +298,7 @@ class ColonyViewTest extends TestCase
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID_FOR_REGOLITH,
             'q' => 7, 'r' => 2, 'ring' => 3,
-            'tile_type' => 'regolith_poor',
+            'tile_type' => 'regolith_y1_d1',
             'is_colony_zone' => 0, 'is_explored' => 1, 'is_deep_scanned' => 0,
             'resource_amount' => 160, 'resource_max' => 160,
         ]);
@@ -307,7 +307,7 @@ class ColonyViewTest extends TestCase
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID_FOR_REGOLITH,
             'q' => 8, 'r' => 2, 'ring' => 3,
-            'tile_type' => 'regolith_poor',
+            'tile_type' => 'regolith_y1_d1',
             'is_colony_zone' => 0, 'is_explored' => 1, 'is_deep_scanned' => 0,
             'resource_amount' => 0, 'resource_max' => 160,
         ]);
@@ -316,9 +316,9 @@ class ColonyViewTest extends TestCase
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID_FOR_REGOLITH,
             'q' => 9, 'r' => 2, 'ring' => 3,
-            'tile_type' => 'regolith_rich',
+            'tile_type' => 'regolith_y3_d2',
             'is_colony_zone' => 0, 'is_explored' => 0, 'is_deep_scanned' => 0,
-            'resource_amount' => 500, 'resource_max' => 500,
+            'resource_amount' => 300, 'resource_max' => 300,
         ]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))

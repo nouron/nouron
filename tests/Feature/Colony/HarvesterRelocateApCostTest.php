@@ -57,7 +57,7 @@ class HarvesterRelocateApCostTest extends TestCase
 
         DB::table('colony_tiles')->insertOrIgnore([
             ['colony_id' => self::COLONY_ID, 'q' => 0, 'r' => 0, 'ring' => 0, 'tile_type' => 'terrain_empty', 'is_explored' => 1, 'is_colony_zone' => 1, 'is_deep_scanned' => 0, 'resource_amount' => null, 'resource_max' => null],
-            ['colony_id' => self::COLONY_ID, 'q' => 4, 'r' => 0, 'ring' => 4, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
+            ['colony_id' => self::COLONY_ID, 'q' => 4, 'r' => 0, 'ring' => 4, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
         ]);
     }
 
