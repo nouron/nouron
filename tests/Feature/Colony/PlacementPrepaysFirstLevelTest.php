@@ -233,8 +233,8 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
             ->where('building_id', self::HARVESTER)->where('instance_id', 2)->delete();
         DB::table('colony_tiles')->insertOrIgnore([
-            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
-            ['colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_poor', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 160, 'resource_max' => 160],
+            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
+            ['colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y1_d1', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 160, 'resource_max' => 160],
         ]);
         $this->app->make(HarvesterEntitlementService::class)->grantPurchase(self::BART_USER_ID);
 
@@ -252,8 +252,8 @@ class PlacementPrepaysFirstLevelTest extends TestCase
             ['level' => 1, 'status_points' => 16, 'ap_spend' => 0, 'tile_x' => 3, 'tile_y' => 0, 'pending_until_tick' => null]
         );
         DB::table('colony_tiles')->insertOrIgnore([
-            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
-            ['colony_id' => self::COLONY_ID, 'q' => 4, 'r' => 0, 'ring' => 4, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
+            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
+            ['colony_id' => self::COLONY_ID, 'q' => 4, 'r' => 0, 'ring' => 4, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
         ]);
 
         $this->place(self::HARVESTER, 4, 0)->assertOk()->assertJsonPath('ok', true);
@@ -359,7 +359,7 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         // fresh second instance may land on the CC centre.
         DB::table('colony_tiles')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'q' => 0, 'r' => 0],
-            ['ring' => 0, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 1, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300]
+            ['ring' => 0, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 1, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300]
         );
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
             ->where('building_id', self::HARVESTER)->where('instance_id', 2)->delete();

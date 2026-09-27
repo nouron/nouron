@@ -61,7 +61,7 @@ class StaffingProductionTest extends TestCase
         DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 3)->where('r', 0)->delete();
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3,
-            'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+            'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0,
             'resource_amount' => 300, 'resource_max' => 300,
         ]);
     }
@@ -90,7 +90,7 @@ class StaffingProductionTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 12900]);
 
-        $fresh = (int) config('game.harvester.fresh_yield.regolith_normal');
+        $fresh = (int) config('game.harvester.fresh_yield.regolith_y2_d2');
         $agrardomL1 = (int) config('game.production_curve.41.5.1');
         $this->assertSame((int) round($fresh * 0.5), $this->amount(self::RES_REGOLITH) - $regolith, 'Regolith × staffing 0.5');
         $this->assertSame((int) round($agrardomL1 * 0.5), $this->amount(self::RES_ORGANICS) - $organika, 'Organika × staffing 0.5');
@@ -102,7 +102,7 @@ class StaffingProductionTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 12905]);
 
-        $this->assertSame((int) config('game.harvester.fresh_yield.regolith_normal'), $this->amount(self::RES_REGOLITH) - $regolith);
+        $this->assertSame((int) config('game.harvester.fresh_yield.regolith_y2_d2'), $this->amount(self::RES_REGOLITH) - $regolith);
     }
 
     public function test_staffing_share_does_not_touch_credits_or_ap(): void

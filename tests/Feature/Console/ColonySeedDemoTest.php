@@ -51,7 +51,7 @@ class ColonySeedDemoTest extends TestCase
         $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID])->assertExitCode(0);
 
         $tile = DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 3)->where('r', 0)->first();
-        $this->assertSame('regolith_rich', $tile->tile_type);
+        $this->assertSame('regolith_y3_d2', $tile->tile_type);
         $this->assertGreaterThan(0, $tile->resource_max);
         $this->assertGreaterThan(0, $tile->resource_amount);
         $this->assertLessThan($tile->resource_max, $tile->resource_amount);

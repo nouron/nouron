@@ -9,6 +9,7 @@ use App\Models\ColonyTile;
 use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Random\Randomizer;
 
 class ColonyTileService
 {
@@ -267,7 +268,7 @@ class ColonyTileService
             return null;
         }
 
-        return (int) (config('game.harvester.resource_max')[$tileType] ?? config('game.harvester.resource_max.regolith_poor', 160));
+        return (int) (config('game.harvester.resource_max')[$tileType] ?? config('game.harvester.resource_max.regolith_y1_d1', 160));
     }
 
     /**
@@ -311,8 +312,11 @@ class ColonyTileService
     private function pickTileType(int $q, int $r, int $colonyId, int $ring = 3): string
     {
         $hash = abs($q * 7 + $r * 13 + $colonyId * 3) % 100;
+        // Independent second hash (different multipliers) so the combo roll
+        // does not correlate with the primary roll (A44/H1).
+        $comboHash = abs($q * 11 + $r * 17 + $colonyId * 5) % 100;
 
-        return $this->resolveTileType($ring, $hash);
+        return $this->resolveTileType($ring, $hash, $comboHash);
     }
 
     /**
@@ -326,15 +330,24 @@ class ColonyTileService
      */
     public function randomTileType(int $ring, int $seed): string
     {
-        return $this->resolveTileType($ring, SeededRandom::int($seed, 0, 99));
+        // A44/H1: a second, independent roll picks the yield/deposit combo
+        // when the primary roll lands on regolith. Salted seed keeps both
+        // rolls deterministic per $seed without correlating with each other.
+        $roll = SeededRandom::int($seed, 0, 99);
+        $comboRoll = SeededRandom::int($seed + 1, 0, 99);
+
+        return $this->resolveTileType($ring, $roll, $comboRoll);
     }
 
     /**
-     * Shared weight table for ring-based tile_type selection. $roll must be
-     * in [0, 99] — callers decide whether it's a deterministic hash
-     * (pickTileType) or a true random roll (randomTileType).
+     * Shared weight table for ring-based tile_type selection. $roll and
+     * $comboRoll must be in [0, 99] — callers decide whether they come from a
+     * deterministic hash (pickTileType) or a true random roll (randomTileType,
+     * randomizeOuterRingRows). $comboRoll is only consulted when $roll lands
+     * in the regolith band, but callers should always draw it (fixed roll
+     * order per tile keeps RNG streams stable across refactors — A44/H1).
      */
-    private function resolveTileType(int $ring, int $roll): string
+    private function resolveTileType(int $ring, int $roll, int $comboRoll = 0): string
     {
         // Ring 1: settled core — all buildable, no hazards (hazard mechanic not yet implemented)
         if ($ring <= 1) {
@@ -355,24 +368,85 @@ class ColonyTileService
             return 'terrain_empty';
         }
 
-        // Ring 3+: full mix including resource tiles
+        // Ring 3+: full mix including resource tiles. Bands unchanged since
+        // the old poor/normal/rich split (A44/H1 invariant d) — only the
+        // regolith band now picks one of 8 yield/deposit combos instead of
+        // directly encoding poor/normal/rich.
         if ($roll < 5) {
             return 'terrain_impassable';
         }
         if ($roll < 15) {
             return 'terrain_hazard';
         }
-        if ($roll < 35) {
-            return 'regolith_poor';
-        }
-        if ($roll < 55) {
-            return 'regolith_normal';
-        }
         if ($roll < 65) {
-            return 'regolith_rich';
+            return $this->pickRegolithCombo($comboRoll);
         }
 
         return 'terrain_empty';
+    }
+
+    /**
+     * Picks one of the 8 valid yield/deposit combos from a roll in [0, 99],
+     * split into equally-wide buckets. `regolith_y3_d3` (highest yield AND
+     * highest deposit) is deliberately excluded — no tile is ever the best on
+     * both axes (A44/H1 invariant b).
+     */
+    private function pickRegolithCombo(int $comboRoll): string
+    {
+        static $combos = [
+            'regolith_y1_d1', 'regolith_y1_d2', 'regolith_y1_d3',
+            'regolith_y2_d1', 'regolith_y2_d2', 'regolith_y2_d3',
+            'regolith_y3_d1', 'regolith_y3_d2',
+        ];
+
+        $index = intdiv(max(0, min(99, $comboRoll)) * count($combos), 100);
+
+        return $combos[$index];
+    }
+
+    /**
+     * A44/H2: picks two of the 8 regolith combos that form a genuine
+     * Pareto-contrast pair — one strictly higher yield tier AND strictly
+     * lower deposit tier than the other, so neither dominates. Small
+     * rejection-sampling loop over the fixed 8-combo list; a valid pair
+     * always exists, so this terminates quickly.
+     *
+     * @return array{0:string,1:string}
+     */
+    private function pickH2Pair(Randomizer $rng): array
+    {
+        static $combos = [
+            'regolith_y1_d1', 'regolith_y1_d2', 'regolith_y1_d3',
+            'regolith_y2_d1', 'regolith_y2_d2', 'regolith_y2_d3',
+            'regolith_y3_d1', 'regolith_y3_d2',
+        ];
+
+        do {
+            $i = $rng->getInt(0, count($combos) - 1);
+            $j = $rng->getInt(0, count($combos) - 1);
+        } while ($i === $j || ! $this->isContrastPair($combos[$i], $combos[$j]));
+
+        return [$combos[$i], $combos[$j]];
+    }
+
+    /** True if neither combo dominates the other on both the yield and deposit axis. */
+    private function isContrastPair(string $a, string $b): bool
+    {
+        [$yieldA, $depositA] = $this->comboTiers($a);
+        [$yieldB, $depositB] = $this->comboTiers($b);
+
+        $yieldCmp = $yieldA <=> $yieldB;
+        $depositCmp = $depositA <=> $depositB;
+
+        return $yieldCmp !== 0 && $depositCmp !== 0 && $yieldCmp !== $depositCmp;
+    }
+
+    /** @return array{0:int,1:int} [yield tier, deposit tier] parsed from a `regolith_y{n}_d{n}` combo. */
+    private function comboTiers(string $combo): array
+    {
+        preg_match('/^regolith_y(\d)_d(\d)$/', $combo, $matches);
+
+        return [(int) $matches[1], (int) $matches[2]];
     }
 
     /**
@@ -380,10 +454,13 @@ class ColonyTileService
      * for Sol-1 seeding (no DB write, no colony_id). Ring 0+1 stay fixed in
      * the caller — building placement safety + "no hazards in the core" rule.
      *
-     * Guarantees exactly one is_explored regolith_* tile among the Ring-3
-     * rows (the Nexus-Scout pre-explored Harvester relocation target) at a
-     * randomly chosen coordinate — onboarding's hint_2 and the Harvester
-     * move-mode UI depend on this tile existing, not on its location.
+     * A44/H2: guarantees exactly TWO is_explored regolith_* tiles among the
+     * Ring-3 rows — a genuine Pareto-contrast pair (see pickH2Pair()), not
+     * the same fixed two combos every run. This replaces the old single
+     * pre-explored "Nexus-Scout" tile: the player now always has a real
+     * Rush-vs-Steady tradeoff to pick from at Sol 1, not just one known spot.
+     * Onboarding's hint_2 and the Harvester move-mode UI depend on both
+     * tiles existing, not on their location or exact combo.
      *
      * Which 9 of the 18 Ring-3 coordinates exist is also randomized per call
      * (not just their content) — otherwise the "frontier" shape would look
@@ -404,7 +481,9 @@ class ColonyTileService
         $rows = [];
 
         foreach ($this->ringCoords(2) as [$q, $r]) {
-            $tileType = $this->resolveTileType(2, $rng->getInt(0, 99));
+            $roll = $rng->getInt(0, 99);
+            $comboRoll = $rng->getInt(0, 99); // discarded — Ring 2 never rolls regolith, but keeps the draw order stable
+            $tileType = $this->resolveTileType(2, $roll, $comboRoll);
             $resourceMax = $this->resourceMaxFor($tileType);
             $rows[] = [
                 'q' => $q, 'r' => $r, 'ring' => 2,
@@ -424,17 +503,27 @@ class ColonyTileService
 
         $ring3Rows = [];
         foreach ($ring3Coords as [$q, $r]) {
-            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->resolveTileType(3, $rng->getInt(0, 99))];
+            $roll = $rng->getInt(0, 99);
+            $comboRoll = $rng->getInt(0, 99);
+            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->resolveTileType(3, $roll, $comboRoll)];
         }
 
-        $targetIndex = $rng->getInt(0, count($ring3Rows) - 1);
-        if (! str_starts_with($ring3Rows[$targetIndex]['tile_type'], 'regolith_')) {
-            $ring3Rows[$targetIndex]['tile_type'] = 'regolith_normal';
+        // A44/H2: two distinct indices (no replacement), unconditionally overwritten
+        // with a contrast pair — the whole point is that these two combos are always
+        // markedly different, not "whatever the regular roll happened to produce".
+        $idx1 = $rng->getInt(0, count($ring3Rows) - 1);
+        $idx2 = $rng->getInt(0, count($ring3Rows) - 2);
+        if ($idx2 >= $idx1) {
+            $idx2++;
         }
+
+        [$comboA, $comboB] = $this->pickH2Pair($rng);
+        $ring3Rows[$idx1]['tile_type'] = $comboA;
+        $ring3Rows[$idx2]['tile_type'] = $comboB;
 
         foreach ($ring3Rows as $i => $row) {
             $row['is_colony_zone'] = 0;
-            $row['is_explored'] = ($i === $targetIndex) ? 1 : 0;
+            $row['is_explored'] = in_array($i, [$idx1, $idx2], true) ? 1 : 0;
             $resourceMax = $this->resourceMaxFor($row['tile_type']);
             $row['resource_amount'] = $resourceMax;
             $row['resource_max'] = $resourceMax;

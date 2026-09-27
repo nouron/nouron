@@ -167,7 +167,8 @@ class ColonySeedDemo extends Command
     /**
      * Rings 0–2 are the colony zone: terrain tiles only (no regolith).
      * Ring 3 is the exploration zone: regolith + hazards + impassable.
-     * The harvester tile at (3,0) is always regolith_rich.
+     * The harvester tile at (3,0) is always regolith_y3_d2 ("rich" replacement,
+     * A44/H1 — high yield tier, mid deposit tier).
      */
     private function tileTypeFor(int $q, int $r, int $ring, int $seed): array
     {
@@ -175,9 +176,9 @@ class ColonySeedDemo extends Command
             return ['terrain_empty', 0];
         }
 
-        // Force harvester tile to regolith_rich
+        // Force harvester tile to a high-yield regolith combo
         if ($q === self::HARVESTER_TILE[0] && $r === self::HARVESTER_TILE[1]) {
-            return ['regolith_rich', 80 + ($seed % 41)];
+            return ['regolith_y3_d2', 80 + ($seed % 41)];
         }
 
         // Colony zone (rings 1–2): terrain only, no resources
@@ -189,18 +190,18 @@ class ColonySeedDemo extends Command
 
         // Exploration zone (ring 3)
         $types = match ($ring) {
-            3 => ['regolith_normal', 'regolith_rich', 'regolith_poor', 'terrain_empty',
-                'terrain_hazard', 'regolith_normal', 'terrain_impassable', 'regolith_poor'],
-            default => ['terrain_empty', 'regolith_poor', 'terrain_hazard', 'terrain_impassable',
-                'regolith_normal', 'terrain_empty', 'terrain_impassable', 'regolith_poor'],
+            3 => ['regolith_y2_d2', 'regolith_y3_d2', 'regolith_y1_d1', 'terrain_empty',
+                'terrain_hazard', 'regolith_y2_d2', 'terrain_impassable', 'regolith_y1_d1'],
+            default => ['terrain_empty', 'regolith_y1_d1', 'terrain_hazard', 'terrain_impassable',
+                'regolith_y2_d2', 'terrain_empty', 'terrain_impassable', 'regolith_y1_d1'],
         };
 
         $type = $types[$seed % count($types)];
 
         $resourceMax = match ($type) {
-            'regolith_rich' => 80 + ($seed % 41),
-            'regolith_normal' => 40 + ($seed % 31),
-            'regolith_poor' => 10 + ($seed % 21),
+            'regolith_y3_d2' => 80 + ($seed % 41),
+            'regolith_y2_d2' => 40 + ($seed % 31),
+            'regolith_y1_d1' => 10 + ($seed % 21),
             default => 0,
         };
 

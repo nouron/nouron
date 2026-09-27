@@ -21,12 +21,19 @@ class ColonyTileMapDistributionTest extends TestCase
 {
     private const RING2_WEIGHTS = ['terrain_hazard' => 10, 'terrain_empty' => 90];
 
+    // A44/H1: the 50%-wide regolith band is now split evenly across 8 combo
+    // tile_types (~6.25% each) instead of the old 20/20/10 poor/normal/rich split.
     private const RING3_WEIGHTS = [
         'terrain_impassable' => 5,
         'terrain_hazard' => 10,
-        'regolith_poor' => 20,
-        'regolith_normal' => 20,
-        'regolith_rich' => 10,
+        'regolith_y1_d1' => 6.25,
+        'regolith_y1_d2' => 6.25,
+        'regolith_y1_d3' => 6.25,
+        'regolith_y2_d1' => 6.25,
+        'regolith_y2_d2' => 6.25,
+        'regolith_y2_d3' => 6.25,
+        'regolith_y3_d1' => 6.25,
+        'regolith_y3_d2' => 6.25,
         'terrain_empty' => 35,
     ];
 

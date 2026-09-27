@@ -2,6 +2,8 @@
 
 **Status:** Entwurf, Owner-approved (Brainstorming 2026-08-10), bereit für Implementierungsplan.
 
+> **A44/H1-H2-Update (2026-09-27):** Die hier beschriebenen drei Tile-Qualitätsstufen `regolith_rich`/`regolith_normal`/`regolith_poor` sind seit A44/H1 abgelöst durch acht `regolith_y{1-3}_d{1-3}`-Kombinationen mit entkoppelten Ertrags-/Mächtigkeits-Achsen; H2 ersetzt außerdem das einzelne vorerkundete Ring-3-Tile durch zwei gegensätzliche. Das konstante-Förderrate-Prinzip dieses Dokuments (Ertrag = Frischwert bis Erschöpfung, harter Cutoff) bleibt unverändert gültig — nur die Tile-Typ-Namen und ihre Werte sind veraltet. Siehe `docs/superpowers/plans/2026-09-27-a44-h1-h2-vorkommen-spec.md`.
+
 ## Kontext
 
 Aktuell (GDD §4c „Erschöpfungskurve und Umzugstakt", freigegeben 2026-08-03) sinkt die Förderrate eines Harvesters kontinuierlich, während das Tile-Vorkommen abgebaut wird:

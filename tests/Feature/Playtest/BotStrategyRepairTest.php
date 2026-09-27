@@ -119,7 +119,7 @@ class BotStrategyRepairTest extends TestCase
         $bot = $this->bootWithAllBuildingsIntact();
         $this->setSp($bot, BuildingId::Harvester->value, 1, 3);
         DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('q', 1)->where('r', 0)
-            ->update(['tile_type' => 'regolith_normal', 'resource_amount' => 0]);
+            ->update(['tile_type' => 'regolith_y2_d2', 'resource_amount' => 0]);
 
         $this->assertEmpty($this->rule('repair_critical')['when']($bot));
         $this->assertEmpty($this->rule('repair_maintenance')['when']($bot));
@@ -130,7 +130,7 @@ class BotStrategyRepairTest extends TestCase
         $bot = $this->bootWithAllBuildingsIntact();
         $this->setSp($bot, BuildingId::Harvester->value, 1, 3);
         DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('q', 1)->where('r', 0)
-            ->update(['tile_type' => 'regolith_normal', 'resource_amount' => 200]);
+            ->update(['tile_type' => 'regolith_y2_d2', 'resource_amount' => 200]);
 
         $candidate = $this->rule('repair_critical')['when']($bot);
 

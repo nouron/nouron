@@ -340,7 +340,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | Tile-Typ | Harvester | Andere Gebäude |
 |----------|-----------|----------------|
 | `terrain_empty`, `terrain_hazard` | ✗ nicht erlaubt | ✓ erlaubt |
-| `regolith_*` (rich / normal / poor) | ✓ erlaubt | ✗ nicht erlaubt |
+| `regolith_*` (alle Ertrags-/Mächtigkeits-Kombinationen) | ✓ erlaubt | ✗ nicht erlaubt |
 | `terrain_impassable` | ✗ | ✗ |
 
 - Der Harvester darf **ausschließlich** auf Ressource-Tiles (`regolith_*`) platziert werden. Terrain-Tiles sind für ihn keine gültige Platzierung.
@@ -549,11 +549,7 @@ Tile-Typen definieren die **Mechanik** eines Tiles — nicht sein Aussehen. Die 
 
 **Ressource-Tiles (für Harvester):**
 
-| Typ-Key | Ressource | Qualität |
-|---------|-----------|----------|
-| `regolith_rich` | Regolith | Reich |
-| `regolith_normal` | Regolith | Normal |
-| `regolith_poor` | Regolith | Arm |
+Zwei unabhängige Achsen, je drei Stufen: Ertrag (Rg pro Sol, `y1`-`y3`) und Mächtigkeit (Gesamtvorkommen, `d1`-`d3`). Typ-Key-Muster: `regolith_y{Ertragsstufe}_d{Mächtigkeitsstufe}`. Die höchste Kombination auf beiden Achsen gleichzeitig (höchster Ertrag UND größte Mächtigkeit) existiert bewusst nicht — es gibt kein "perfektes" Vorkommen. Konkrete Werte je Kombination: siehe `docs/game-reference.md`.
 
 **Event-Tiles** (werden durch Tiefenscan enthüllt — vorher nur als generisches Signal sichtbar):
 
@@ -615,7 +611,7 @@ Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
 | `q` | integer | Axial-Koordinate |
 | `r` | integer | Axial-Koordinate |
 | `ring` | integer | 0 = CC-Tile, 1–3 = Ring-Nummer (Karte hat max. 3 Ringe) |
-| `tile_type` | string | Primärer Typ, z.B. `regolith_rich` — sichtbar nach normalem Scan |
+| `tile_type` | string | Primärer Typ, z.B. `regolith_y2_d2` — sichtbar nach normalem Scan |
 | `event_type` | string nullable | Event-Overlay, NULL = kein Event — sichtbar erst nach Tiefenscan |
 | `is_colony_zone` | boolean | Tile gehört zur Kolonie-Zone (CC-Level-Expansion hat es freigeschaltet). Regolith- und impassable-Tiles sind immer false. |
 | `is_explored` | boolean | Normaler Scan (Nav-AP) abgeschlossen |
@@ -750,7 +746,7 @@ Der Harvester ist das einzige **bewegliche** Gebäude des Spiels (§4 „Harvest
 **Erschöpfung der Vorkommen.** Ein Regolith-Tile trägt einen Harvester eine begrenzte Zeit, dann sinkt der Ertrag:
 
 - `colony_tiles.resource_max` / `resource_amount` — Startvorkommen und Restvorkommen je Tile
-- drei Ergiebigkeitsstufen `regolith_rich` / `regolith_normal` / `regolith_poor` mit unterschiedlichem Frischwert und Vorkommen (`config/game.php → harvester`)
+- zwei unabhängige Achsen — Ertrag (Frischwert je Sol) und Mächtigkeit (Gesamtvorkommen), je drei Stufen kombiniert (`config/game.php → harvester`, siehe „Ressource-Tiles" oben) — ein Tile kann also hohen Ertrag bei geringer Mächtigkeit haben oder umgekehrt, nie beides maximal zugleich
 - die Verlege-Vorschau mit Ertragsvergleich und die distanzabhängigen Verlegekosten (`config/game.php`)
 
 Damit entsteht die gewollte Schleife: fördern → Ertrag sinkt → Umzug lohnt → ein Sol Produktion und einige AP kosten → neues Tile. **Erkundung bekommt einen konkreten wirtschaftlichen Zweck**, weil man wissen muss, wo das nächste ergiebige Tile liegt, *bevor* der Umzug erzwungen ist.
@@ -761,7 +757,7 @@ Damit entsteht die gewollte Schleife: fördern → Ertrag sinkt → Umzug lohnt 
 Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0
 ```
 
-Ein Tile fördert **konstant zum Frischwert**, bis das Vorkommen aufgebraucht ist — kein Abschwächen zur Mitte hin. Bei erschöpftem Vorkommen: harter Cutoff auf Produktion 0, der Umzug ist erzwungen. Ein `poor`-Tile erreicht den Boden früher als ein `normal`-Tile — derselbe Mechanismus, keine Sonderregel.
+Ein Tile fördert **konstant zum Frischwert**, bis das Vorkommen aufgebraucht ist — kein Abschwächen zur Mitte hin. Bei erschöpftem Vorkommen: harter Cutoff auf Produktion 0, der Umzug ist erzwungen. Ein Tile mit hohem Ertrag, aber geringer Mächtigkeit erreicht den Boden früher als eines mit niedrigerem Ertrag, aber großer Mächtigkeit — derselbe Mechanismus, keine Sonderregel.
 
 **Owner-Entscheidung (2026-08-10):** Vorher fiel der Ertrag mit sinkendem Restvorkommen bis auf die Hälfte des Frischwerts ab. Das war für den Spieler zu schwer zu durchschauen (unterschiedliche Förderrate pro Tick, ohne dass sich am Tile sichtbar etwas geändert hatte). Eine konstante Rate ist berechenbar; als Ausgleich für den Verlust der Vorwarnung durch die abfallende Kurve zeigt das Tile-Panel neu einen serverseitig berechneten „≈N Sole bis Erschöpfung"-Countdown (serverseitig, weil Geologie-Bonus und Vertrauens-Multiplikator nur dort zuverlässig bekannt sind). Herleitung: `docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md`.
 
@@ -772,7 +768,7 @@ Ein Tile fördert **konstant zum Frischwert**, bis das Vorkommen aufgebraucht is
 
 **Der eigentliche Regler ist die Umzugsgebühr, nicht die Kurve.** Verlegekosten sind pro Hex gesetzt (`config/game.php`) und machen einen Umzug samt Zielkundschaftung zu einer spürbaren Investition. Spielziel: mehrfache Umzüge pro Run, aber nicht als Routine — die Verlegung ist eine wiederkehrende Entscheidung, kein automatisches Refresh.
 
-**Sichtbarkeit für den Spieler.** Die Schleife funktioniert nur, wenn der Spieler *vor* dem Erschöpfen ein Ziel kennt. Dafür startet die Kolonie mit einem vorerkundeten Ausweich-Vorkommen (Ring 3, „Nexus-Scout"-Fund), ein Onboarding-Hint warnt, sobald das Restvorkommen des aktiven Tiles unter die Schwelle `game.harvester.low_regolith_warning_pct` fällt, und erkundete, nicht erschöpfte Ausweich-Tiles sind auf der Hex-Karte markiert. Gegen Ertragssorgen („zu wenig Regolith bei Sol N") wird nicht an `fresh_yield`/`resource_max` gedreht, solange nicht mehrere Messpunkte über verschiedene Tile-Typen und Pfadwahlen vorliegen — das Umzugs-Timing ist der Hebel.
+**Sichtbarkeit für den Spieler.** Die Schleife funktioniert nur, wenn der Spieler *vor* dem Erschöpfen ein Ziel kennt. Dafür startet die Kolonie mit zwei vorerkundeten Ausweich-Vorkommen (Ring 3, „Nexus-Scout"-Fund) — ein garantiertes Gegensatzpaar aus hohem Ertrag/geringer Mächtigkeit und niedrigem Ertrag/großer Mächtigkeit, damit die erste Verlege-Entscheidung ein echter Tradeoff ist, nicht nur ein einzelnes bekanntes Ziel. Ein Onboarding-Hint warnt zusätzlich, sobald das Restvorkommen des aktiven Tiles unter die Schwelle `game.harvester.low_regolith_warning_pct` fällt, und erkundete, nicht erschöpfte Ausweich-Tiles sind auf der Hex-Karte markiert. Gegen Ertragssorgen („zu wenig Regolith bei Sol N") wird nicht an `fresh_yield`/`resource_max` gedreht, solange nicht mehrere Messpunkte über verschiedene Tile-Typen und Pfadwahlen vorliegen — das Umzugs-Timing ist der Hebel.
 
 > **Hinweis zur Geologie-Kenntnis:** `geology` (Harvester-Bonus, §13.7) ist nicht CC-gegatet — Gate ist Analytik-Labor Lv2 + Harvester Lv1, beides ab CC Lv2 erreichbar. Kolonien, die zuerst Hangar oder Cantina bauen, laufen entsprechend länger ohne Kenntnis-Boost auf dem Harvester; das ist Teil der Pfadwahl, kein Fehler.
 
@@ -2253,7 +2249,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 
 | Wert | Festlegung | folgt aus |
 |---|---|---|
-| Harvester-Ertrag | Frischwert je Tile-Stufe (`rich`/`normal`/`poor`), konstant bis zur Erschöpfung, dann harter Cutoff (§4c), `max_level = 1` | G7 |
+| Harvester-Ertrag | Frischwert je Tile-Kombination aus Ertrags- und Mächtigkeits-Stufe (§4c), konstant bis zur Erschöpfung, dann harter Cutoff, `max_level = 1` | G7 |
 | Reparatur | 1 Rg je SP (zusätzlich 1 AP je SP) | G2 + „eine Zahl, zwei Währungen" |
 | `decay_rate` | vier Klassen 0,40 / 0,60 / 0,80 / 1,20 | G2, G3 |
 | Errichtung (Lv0→1) | 70 Agrardom (Ramp-Gate-Ausnahme) / 95 alle drei Pfadgebäude | G4 (5–8 Sole) |
@@ -2299,7 +2295,7 @@ Rechnung über 80 Sole. Die Fensterbreite entspricht grob der Strecke vom typisc
 Zielkolonie-Bedarf ≈ 835 (Errichtungen) + 720 (Level-Ups) + 240 (Reibung, ~15 %) ≈ 1.795 Rg
 ```
 
-**2. Sockel-Einnahmen** aus der Erschöpfungskurve, Standardfall 1 Instanz auf `regolith_normal` inklusive Transit-Sole: Zyklusmittel **~12,9 Rg/Sol**, konstant über den Run. *(Veraltet — Rampen-Zyklusmittel, siehe Hinweis am Kapitelanfang. Mit konstanter Förderrate liegt der Sockel-Durchschnitt höher; Neuherleitung steht aus.)*
+**2. Sockel-Einnahmen** aus der Erschöpfungskurve, Standardfall 1 Instanz auf einem mittleren Ertrags-/Mächtigkeits-Tile inklusive Transit-Sole: Zyklusmittel **~12,9 Rg/Sol**, konstant über den Run. *(Veraltet — Rampen-Zyklusmittel, siehe Hinweis am Kapitelanfang. Mit konstanter Förderrate liegt der Sockel-Durchschnitt höher; Neuherleitung steht aus. Seit A44/H1 zusätzlich veraltet durch die Ertrag/Mächtigkeit-Entkopplung — Neuherleitung ist Teil der noch offenen T9-Kalibrierung.)*
 
 ```
 Sockel-Einnahmen = 12,9 Rg/Sol × 80 Sole ≈ 1.032 Rg
@@ -2361,7 +2357,7 @@ Gemeinsam übersteigen A und B die benötigte Hebelhöhe um ~29 % — wenn beide
 | Pfadgebäude 2: Errichtung 95 + Lv0→1 (25) — öffnet Slot 3 | 120 |
 | **Summe** | **535** |
 
-Beide Pfadgebäude sind notwendig, nicht optional: Slot 2 öffnet mit dem ersten, Slot 3 (= dritter Berater) mit dem zweiten (§13 „Slot-System"). Der Harvester produziert ab Sol 2 nahe dem Frischwert (~17 Rg/Sol auf `regolith_normal`, solange das Vorkommen nicht knapp wird); Reparatur wird als konservative Marge angesetzt, obwohl frisch errichtete Gebäude im Fenster die Reparaturschwelle kaum erreichen:
+Beide Pfadgebäude sind notwendig, nicht optional: Slot 2 öffnet mit dem ersten, Slot 3 (= dritter Berater) mit dem zweiten (§13 „Slot-System"). Der Harvester produziert ab Sol 2 nahe dem Frischwert (~17 Rg/Sol auf einem mittleren Ertrags-Tile, solange das Vorkommen nicht knapp wird); Reparatur wird als konservative Marge angesetzt, obwohl frisch errichtete Gebäude im Fenster die Reparaturschwelle kaum erreichen:
 
 ```
 Verfügbar(N) = Startbestand + 17 × (N − 1) − 2,94 × N
@@ -2376,9 +2372,11 @@ Verfügbar(N) = Startbestand + 17 × (N − 1) − 2,94 × N
 
 **Startbestand 370.** 340 trifft den Floor an der unteren Kante des Zielkorridors, sodass die reale Ausführungsfriktion (Reihenfolgezwang, Erkundung/Verlegung) nach oben in den Korridor streut statt ihn zu verlassen. Der Aufschlag auf 370 ist eine Reserve gegen Begegnungen (§9): Stürme treffen auch in Phase 1 (die Phase-1-Rampe dämpft die Chance, setzt sie nie auf 0), und ein Kritisch-Treffer kostet in der Größenordnung eines Pfadgebäudes — die Reserve deckt etwa 40 % eines typischen Treffers, bewusst kein Vollschutz. *Offen:* Die Reserve ist gegen „ein Kritisch-Treffer, ein Gebäude" gerechnet; seit Sturm koloniweit wirkt (§9), kann ein ausgelöster Sturm bei vernachlässigter Kolonie mehrere Kritisch-Treffer bedeuten — nach dem nächsten PlaytestBot-Batch verifizieren, nicht vorab blind nachschärfen.
 
-**Poor-Tile-Start** (Frischwert und `resource_max` niedriger, die häufigste Einzelklasse): Das Vorkommen ist nach ~14 produktiven Solen erschöpft, eine frühe Zwangsverlegung ist eingebaut — gewollte Variabilität (G5), keine zu behebende Lücke. Mit Verlegung auf ein `normal`-Tile (1 Transit-Sol) schließt Phase 1 im Worst Case um Sol 18–20.
+**Poor-Tile-Start** (niedriges Ertrags- und Mächtigkeits-Tier, eine häufige Einzelklasse): Das Vorkommen ist nach ~14 produktiven Solen erschöpft, eine frühe Zwangsverlegung ist eingebaut — gewollte Variabilität (G5), keine zu behebende Lücke. Mit Verlegung auf ein mittleres Tile (1 Transit-Sol) schließt Phase 1 im Worst Case um Sol 18–20.
 
-**Bewusst nicht angefasst:** `resource_max['regolith_normal']` (bindet im Zielfenster nicht — kumulierte Extraktion beim Floor-Sol liegt deutlich unter der Mengengrenze; eine Anhebung kostete nur Umzugstakt, §4c); `fresh_yield` (mehr Rate = schnellerer Vorlauf auf dieselbe Mengenwand, kürzere Standzeit); Pfadgebäude-Preise (pro Gebäude gegen G4 kalibriert, das Phase-1-Problem ist kumulativ); CC-Ausbaukosten (kein Engpass); Hire-Credits (nicht bindend, und eine Senkung würde den späteren Rang-2/3-Unterhaltsdruck abschwächen).
+**Bewusst nicht angefasst:** `resource_max` der mittleren Tile-Kombinationen (bindet im Zielfenster nicht — kumulierte Extraktion beim Floor-Sol liegt deutlich unter der Mengengrenze; eine Anhebung kostete nur Umzugstakt, §4c); `fresh_yield` (mehr Rate = schnellerer Vorlauf auf dieselbe Mengenwand, kürzere Standzeit); Pfadgebäude-Preise (pro Gebäude gegen G4 kalibriert, das Phase-1-Problem ist kumulativ); CC-Ausbaukosten (kein Engpass); Hire-Credits (nicht bindend, und eine Senkung würde den späteren Rang-2/3-Unterhaltsdruck abschwächen).
+
+> **A44/H1-H2 (2026-09-27):** Diese gesamte Herleitung (Startbestand 370, Sockel-Einnahmen, Poor-Tile-Start) rechnet noch mit dem alten 3-stufigen `regolith_{poor,normal,rich}`-Modell. Seit der Ertrags-/Mächtigkeits-Entkopplung (§4, „Ressource-Tiles") und den zwei garantierten Gegensatzpaar-Tiles bei Sol 1 (H2) ist eine Neuherleitung fällig — bewusst zurückgestellt auf die noch offene T9-Regolith-Startbestand-Kalibrierung (siehe ROADMAP.md „A44").
 
 **Empirisch:** PlaytestBot über mehrere Seeds erreicht `phase2_start_sol` 20–22 — innerhalb Sol 25, an der Grenze zum Sol-20-Exzellenzziel. Ein Bot-Befund oberhalb des Korridors ist nur dann ein Gegenbeweis gegen den Startbestand, wenn der Bot nach dem Errichten eines Pfadgebäudes dessen Lv0→1-Sprung tatsächlich zuerst fertigstellt (wie ein menschlicher Spieler) — Bot-Ausführungsdefekte sind kein Balance-Hebel.
 

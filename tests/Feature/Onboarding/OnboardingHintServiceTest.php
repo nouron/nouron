@@ -112,7 +112,7 @@ class OnboardingHintServiceTest extends TestCase
         // Pre-explored ring-3 regolith (Nexus scout tile — guaranteed Harvester move target).
         DB::table('colony_tiles')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'q' => 3, 'r' => 0, 'ring' => 3,
-            'tile_type' => 'regolith_normal', 'is_explored' => 1,
+            'tile_type' => 'regolith_y2_d2', 'is_explored' => 1,
             'is_colony_zone' => 0, 'is_deep_scanned' => 0,
         ]);
     }
@@ -1502,7 +1502,7 @@ class OnboardingHintServiceTest extends TestCase
 
     private function moveHarvesterOutside(): void
     {
-        // Move Harvester to pre-explored ring-3 tile (3,0) — colony_zone=0, regolith_normal.
+        // Move Harvester to pre-explored ring-3 tile (3,0) — colony_zone=0, regolith_y2_d2.
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', 27)
