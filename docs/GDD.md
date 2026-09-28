@@ -1551,10 +1551,10 @@ Die Bar ist ab CC Lv2 verfügbar. Sie ist der Ort des Handels — verkörpert du
 
 **Zwei Angebotsquellen, klar getrennt:**
 
-1. **Corvan — der gesamte Credits-Handel.** Corvan erscheint regelmäßig (Intervall `config/game.php → merchant`) und bringt bei jedem Besuch zwei Ebenen mit:
+1. **Corvan — der strukturierte Credits-Handel.** Corvan erscheint regelmäßig (Intervall `config/game.php → merchant`) und bringt bei jedem Besuch zwei Ebenen mit:
    - **Alltagsgeschäft (bei jedem Besuch):** Commodity-Handel gegen Credits — Kauf (Credits→Ressource, mit Losgröße an die Zahlungsfähigkeit der Kolonie gebunden) und Verkauf (Organika→Credits, mehrere Lose je Besuch, §4b „Pfad-C-Hebel"). Ein unerschwingliches Kaufangebot entfällt einfach, es gibt keinen Barter-Fallback.
    - **Kuratiertes Sonderinventar (Sub-Chance je Besuch):** AP-Pakete, Schiffe, Information, Einmal-Items — die Kategorie-Tabelle unter Kanal 3.
-2. **Anonyme Gästerotation — nur Tauschhandel.** Pro Sol erscheinen 0–2 Gäste (Dax, Voss, …), jeder mit einem Ressource↔Ressource-Angebot, das 2–4 Sole gültig ist (abhängig vom Bar-Level). Kein Kauf, kein Verkauf gegen Credits ohne Corvan.
+2. **Anonyme Gästerotation — überwiegend Tauschhandel.** Pro Sol erscheinen 0–2 Gäste (Dax, Voss, …), jeder mit einem Ressource↔Ressource-Angebot, das 2–4 Sole gültig ist (abhängig vom Bar-Level). Eine seltene Ausnahme (T10, Owner-Entscheidung 2026-09-28, „Eher sollte man Regolith verkaufen um Credits zu bekommen, statt andersrum"): gelegentlich bietet ein Gast statt eines Tauschs einen Regolith-Verkauf gegen Credits an — deutlich seltener als die normale Tauschrotation und unabhängig von Corvan.
 
 **Konsul-Rang-Skalierung:** Corvans Besuchsrhythmus ist vom Konsul unabhängig — ein häufigerer Corvan wäre ein passiver Einkommens-Hebel und würde den Fehler des gestrichenen Handelsvertrags wiederholen (A22). Der Konsul wirkt stattdessen auf die *Qualität* der Geschäfte (bessere Kaufkonditionen über den Handelskonditionen-Pool, s.u.) und auf den *Planungsvorsprung* (Marktbericht, s.u.). Die genaue Losanzahl pro Besuch ist ein Playtest-Kandidat, bis eine Credits-Bilanz über den Run eine Zielgröße liefert (§4b).
 

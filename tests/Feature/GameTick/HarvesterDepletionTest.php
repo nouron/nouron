@@ -162,7 +162,8 @@ class HarvesterDepletionTest extends TestCase
 
     public function test_tick_clamps_stale_resource_max_down_to_current_config(): void
     {
-        // Legacy tile seeded before the 500/300/160 reduction (old regolith_y2_d2 max: 500).
+        // Legacy tile seeded before the 500/300/160 reduction (old regolith_y2_d2 max: 500,
+        // still above the current config value 450 after T10's 1.5x bump, 2026-09-28).
         DB::table('colony_tiles')
             ->where('colony_id', self::COLONY_ID)->where('q', 3)->where('r', 0)
             ->update(['resource_amount' => 500, 'resource_max' => 500]);
@@ -171,7 +172,7 @@ class HarvesterDepletionTest extends TestCase
 
         $this->assertSame(23, $this->regolithAmount(), 'yield must not exceed fresh value even with a stale over-cap remaining');
         $this->assertSame(
-            300,
+            450,
             (int) DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 3)->where('r', 0)->value('resource_max'),
             'resource_max must be clamped down to the current config value'
         );

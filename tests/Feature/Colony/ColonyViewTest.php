@@ -199,7 +199,11 @@ class ColonyViewTest extends TestCase
 
         $this->assertNotNull($tile);
         $this->assertSame(111, $tile['regolith_remaining']);
-        $this->assertSame(300, $tile['regolith_max']);
+        // The view clamps resource_max live to the current
+        // game.harvester.resource_max config value (regolith_y2_d2 = 450, T10
+        // 2026-09-28) — the stale DB fixture (300, inserted above) is
+        // deliberately different, to prove the clamp reads config, not the row.
+        $this->assertSame(450, $tile['regolith_max']);
     }
 
     // A26: the "≈N Sole bis Erschöpfung" countdown markup renders (Alpine-bound,

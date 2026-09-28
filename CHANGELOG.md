@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-28
+
+- Feature: T10 — Regolith→Credits-Verkaufskanal + Mächtigkeits-Rekalibrierung. Root Cause war ein fehlender Regolith→Credits-Kanal (nur Credits→Regolith existierte bei Corvan) — Owner-Entscheidung: die anonyme Cantina-Gästerotation bietet jetzt selten (12% pro Gast-Slot) ein Regolith-Verkaufsangebot gegen Credits an (`BarService::buildRegolithSellOffer()`), unabhängig von Corvan/`MerchantService`, die weiterhin nur Organika verkauft. `harvester.resource_max` (Regolith-Vorkommen) um ×1,5 angehoben (160/300/440 → 240/450/660), behebt separat das Kartenbudget-Problem. Details/Owner-Entscheidung: `docs/superpowers/plans/2026-09-27-t10-regolith-credits-rekalibrierung-spec.md`.
+
 ## 2026-09-27
 
 - Feature: A45 — Siegziele als Config (`run.tasks`), neue Messgrößen (Ingenieursleistung = Summe Ausbaustufen, Expeditionen = erfolgreiche Außenmissionen ab Schwierigkeit "normal", Expertenstab = 4 Berater Rang 3), Nexus-Kontrollpunkte prüfen jetzt Fortschritt statt Erfüllung (steigende Leiter Sol 30/50/65), Countdown-Bug behoben. PlaytestBot: neues Profil `focus` für gezielte Ziel-Verfolgung. Kalibrier-Batch (12 Seeds × 2 Profile) korrigiert 4 Zielwerte; zwei strukturelle Ziele (Expertenstab, Kreditreserve) bleiben vorerst unverändert bzw. unkalibriert (A45b).
