@@ -30,6 +30,11 @@ final class BotProfile
             'default' => new self('default'),
             'thrifty' => new self('thrifty', savingsAggressiveness: 1.0),
             'focus' => new self('focus', savingsAggressiveness: 1.0, objectiveFocus: 1.0),
+            // The one combination of the two existing dials 'default'/'thrifty'/'focus'
+            // didn't cover: targets the drawn, still-open objectives (like 'focus') but
+            // without the credit-reserve brake (like 'default') — plays fast and loose
+            // towards the goal instead of hoarding along the way.
+            'eager' => new self('eager', savingsAggressiveness: 0.0, objectiveFocus: 1.0),
             default => throw new \InvalidArgumentException("Unknown bot profile: {$name}"),
         };
     }

@@ -31,6 +31,15 @@ class BotProfileTest extends TestCase
         $this->assertSame(1.0, $profile->savingsAggressiveness);
     }
 
+    public function test_named_eager_targets_objectives_without_the_savings_brake(): void
+    {
+        $profile = BotProfile::named('eager');
+
+        $this->assertSame('eager', $profile->name);
+        $this->assertSame(0.0, $profile->savingsAggressiveness);
+        $this->assertSame(1.0, $profile->objectiveFocus);
+    }
+
     public function test_named_rejects_unknown_profile(): void
     {
         $this->expectException(\InvalidArgumentException::class);

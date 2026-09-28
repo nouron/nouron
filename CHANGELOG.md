@@ -3,6 +3,7 @@
 ## 2026-09-28
 
 - Feature: T10 — Regolith→Credits-Verkaufskanal + Mächtigkeits-Rekalibrierung. Root Cause war ein fehlender Regolith→Credits-Kanal (nur Credits→Regolith existierte bei Corvan) — Owner-Entscheidung: die anonyme Cantina-Gästerotation bietet jetzt selten (12% pro Gast-Slot) ein Regolith-Verkaufsangebot gegen Credits an (`BarService::buildRegolithSellOffer()`), unabhängig von Corvan/`MerchantService`, die weiterhin nur Organika verkauft. `harvester.resource_max` (Regolith-Vorkommen) um ×1,5 angehoben (160/300/440 → 240/450/660), behebt separat das Kartenbudget-Problem. Details/Owner-Entscheidung: `docs/superpowers/plans/2026-09-27-t10-regolith-credits-rekalibrierung-spec.md`.
+- Chore: PlaytestBot-Tooling — `research_knowledge`-Regel prüft ap_spend/ap_for_levelup jetzt lokal vor dem `levelup`-Request statt ihn blind zu versuchen (eliminiert ~1/3 der Bot-Requests als garantierte `insufficient_ap_invested`-Fehlschläge pro Lauf); neues Bot-Profil `eager` (objectiveFocus=1.0 ohne Spar-Bremse) ergänzt die bestehende Dial-Matrix. Kein Spielverhalten betroffen.
 
 ## 2026-09-27
 
