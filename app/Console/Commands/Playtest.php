@@ -82,7 +82,15 @@ class Playtest extends Command
                         // dead-ending the rule for the rest of the run), so it
                         // now succeeds far more often — a solo run again
                         // exceeded the old timeout with no contention involved.
-                        ->timeout(400)
+                        // 400 → 600 (2026-09-28): solo/4-parallel runs measured
+                        // 244-380s on this dev machine (WSL2, host CPU capped to
+                        // 85% power limit) — plenty of margin most of the time,
+                        // but close enough to 400s that ordinary run-to-run
+                        // variance occasionally tipped a whole batch into a
+                        // ProcessTimedOutException. Not a resource bottleneck
+                        // (measured CPU load ~32% during a 4-parallel batch) —
+                        // just insufficient safety margin on the old value.
+                        ->timeout(600)
                         ->command([
                             // opcache.enable_cli defaults to Off system-wide, so every
                             // spawned child cold-compiles the whole vendor tree from
