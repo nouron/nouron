@@ -96,12 +96,24 @@ class BarService
         $expiresTick = $tick + $duration;
         $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
 
+        $regolithSellChancePct = (int) config('game.bar.regolith_sell_offer_chance_pct', 12);
+
         for ($i = 0; $i < $guestCount; $i++) {
             $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
             // Base terms only — the Handelsvorteil (Konsul, Handelsposten, trade
             // knowledge) is applied at display/accept time by TradeAdvantageService.
-            [$giveResId, $giveAmount, $getResId, $getAmount] =
-                $this->buildBarterOffer($seed, $basePrices);
+            // T10 (2026-09-28, Owner-Entscheidung): a rare exception to the
+            // barter-only rule below — a Regolith->Credits sell offer, deliberately
+            // less frequent than the normal barter rotation. Not routed through
+            // Corvan (game.merchant.commodity stays Organika-only, unchanged).
+            $sellRoll = $this->pseudoRand($seed + 20, 0, 99);
+            if ($sellRoll < $regolithSellChancePct) {
+                [$giveResId, $giveAmount, $getResId, $getAmount] =
+                    $this->buildRegolithSellOffer($seed, $basePrices);
+            } else {
+                [$giveResId, $giveAmount, $getResId, $getAmount] =
+                    $this->buildBarterOffer($seed, $basePrices);
+            }
 
             BarOffer::create([
                 'colony_id' => $colonyId,
@@ -1428,6 +1440,31 @@ class BarService
         }
 
         return $bonus;
+    }
+
+    /**
+     * Rare generic-guest Regolith->Credits sell offer (T10, 2026-09-28
+     * Owner-Entscheidung: "Eher sollte man Regolith verkaufen um Credits zu
+     * bekommen, statt andersrum"). Deliberately separate from Corvan's
+     * structured commodity lots (game.merchant.commodity, Organika-only,
+     * unchanged) — this is the anonymous guest rotation occasionally offering
+     * to buy Regolith, gated by game.bar.regolith_sell_offer_chance_pct so it
+     * stays clearly rarer than the normal barter rotation. Pricing mirrors
+     * buildCorvanBuyOffer()'s pattern (base price ± price_variance).
+     *
+     * @return array{0:int,1:int,2:int,3:int} [give_resource_id, give_amount, get_resource_id, get_amount]
+     */
+    private function buildRegolithSellOffer(int $seed, array $basePrices): array
+    {
+        $variance = (float) config('game.bar.price_variance', 0.20);
+
+        $giveAmount = $this->pseudoRand($seed + 8, 2, 6) * 5; // 10-30 units, same range as buildBarterOffer
+        $basePrice = $basePrices[self::RES_REGOLITH] ?? 25;
+        $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 9, -10, 10) / 100) * ($variance / 0.2));
+        $unitPrice = max(0.01, (float) $rawPrice);
+        $getAmount = (int) max(1, round($unitPrice * $giveAmount));
+
+        return [self::RES_REGOLITH, $giveAmount, self::RES_CREDITS, $getAmount];
     }
 
     /** Barter: player gives one resource, gets another (no credits involved). */

@@ -145,13 +145,30 @@ class BarTradeAdvantageTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::BAR_BUILDING_ID)->update(['level' => 1]);
         $this->assignConsul(3); // would have baked +30 % into the Get amount before A13
         $basePrices = config('game.bar.base_prices');
+        // T10 (2026-09-28): the rare generic-guest Regolith->Credits sell offer
+        // doesn't follow the resource<->resource fair-market ratio (there is no
+        // "basePrices[Credits]") — it prices off basePrices[Regolith] ± price_variance
+        // (buildRegolithSellOffer()'s own formula), checked separately below.
+        $variance = (float) config('game.bar.price_variance', 0.20);
 
         $checked = 0;
+        $checkedRegolithSell = 0;
         for ($tick = 100; $tick < 140; $tick++) {
             DB::table('bar_offers')->where('colony_id', self::COLONY_ID)->delete();
             $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
 
             foreach (DB::table('bar_offers')->where('colony_id', self::COLONY_ID)->get() as $offer) {
+                if ((int) $offer->get_resource_id === self::RES_CREDITS) {
+                    $this->assertSame(self::RES_REGOLITH, (int) $offer->give_resource_id, 'a generic guest Credits offer must sell Regolith');
+                    $minGet = (int) max(1, round($offer->give_amount * $basePrices[self::RES_REGOLITH] * (1 - $variance)));
+                    $maxGet = (int) max(1, round($offer->give_amount * $basePrices[self::RES_REGOLITH] * (1 + $variance)));
+                    $this->assertGreaterThanOrEqual($minGet, (int) $offer->get_amount, 'no Konsul rate baked into the regolith sell offer');
+                    $this->assertLessThanOrEqual($maxGet, (int) $offer->get_amount, 'no Konsul rate baked into the regolith sell offer');
+                    $checkedRegolithSell++;
+
+                    continue;
+                }
+
                 $fairAmount = (int) max(1, round($offer->give_amount * $basePrices[$offer->give_resource_id] / $basePrices[$offer->get_resource_id]));
                 $this->assertSame($fairAmount, (int) $offer->get_amount, 'stored Get amount must be the fair-market base amount, no Konsul rate baked in');
                 $checked++;
@@ -159,6 +176,7 @@ class BarTradeAdvantageTest extends TestCase
         }
 
         $this->assertGreaterThan(10, $checked, 'fixture: enough generated offers must have been inspected');
+        $this->assertGreaterThan(0, $checkedRegolithSell, 'fixture: at least one regolith sell offer must have been generated over 40 ticks at rank 3');
     }
 
     public function test_corvan_buy_offer_does_not_bake_in_the_konsul_discount(): void

@@ -115,10 +115,16 @@ return [
             'regolith_y2_d1' => 23, 'regolith_y2_d2' => 23, 'regolith_y2_d3' => 23,
             'regolith_y3_d1' => 30, 'regolith_y3_d2' => 30,
         ],
+        // T10 (2026-09-28, docs/superpowers/plans/2026-09-27-t10-regolith-credits-
+        // rekalibrierung-spec.md §4/Anhang B): 160/300/440 -> 240/450/660 (x1.5).
+        // Addresses the "Baustoff" problem (map budget) — orthogonal to the
+        // regolith_sell_offer_chance_pct sell channel above, which addresses the
+        // "Handelsware" problem (monetizing an already-existing surplus). Yield
+        // tiers (fresh_yield above) stay unchanged.
         'resource_max' => [
-            'regolith_y1_d1' => 160, 'regolith_y1_d2' => 300, 'regolith_y1_d3' => 440,
-            'regolith_y2_d1' => 160, 'regolith_y2_d2' => 300, 'regolith_y2_d3' => 440,
-            'regolith_y3_d1' => 160, 'regolith_y3_d2' => 300,
+            'regolith_y1_d1' => 240, 'regolith_y1_d2' => 450, 'regolith_y1_d3' => 660,
+            'regolith_y2_d1' => 240, 'regolith_y2_d2' => 450, 'regolith_y2_d3' => 660,
+            'regolith_y3_d1' => 240, 'regolith_y3_d2' => 450,
         ],
         // Verlegekosten 1 → 2 AP je Hex (GDD §4c, 2026-08-03) — the relocation-frequency
         // lever, not the depletion curve itself (see GDD §4c "Der eigentliche Regler...").
@@ -453,10 +459,22 @@ return [
     //     get neither Handelsvorteil nor negotiation — Verkaufs-Credits are fixed.
     //   silent_cap: silent guard rail per channel, never a player-facing rule (current
     //     sources max out at 0.54 / 0.24 / 0.24, well below these).
-    // guest_count: [min, max] NPC guests per tick keyed by trader rank. Guests only
-    //   ever barter (resource↔resource) — Credits-Handel moved entirely to Corvan
-    //   (GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina",
-    //   Freigegeben 2026-08-05).
+    // guest_count: [min, max] NPC guests per tick keyed by trader rank. Guests
+    //   mostly barter (resource↔resource) — Credits-Handel is otherwise Corvan's
+    //   domain (GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der
+    //   Cantina", Freigegeben 2026-08-05) — with ONE deliberate, rare exception:
+    //   regolith_sell_offer_chance_pct (T10, Owner-Entscheidung 2026-09-28,
+    //   "Eher sollte man Regolith verkaufen um Credits zu bekommen, statt
+    //   andersrum"). NOT routed through Corvan/game.merchant.commodity (that
+    //   stays Organika-only) — a Regolith→Credits sell offer occasionally
+    //   appears in the anonymous guest rotation instead, clearly rarer than
+    //   the normal barter offers.
+    // regolith_sell_offer_chance_pct: per-guest-slot chance (0-99) that
+    //   generateOffersForColony() generates a Regolith->Credits sell offer
+    //   instead of a normal barter offer. 12 (~1 in 8 guest slots) — well
+    //   below the barter baseline (88%), matching the Owner's "seltener als
+    //   die normale Ressourcen-Rotation" requirement without being so rare it
+    //   never shows up within a run.
     // ap_cost_accept: Economy-AP consumed when the player accepts any bar offer (shown as chip on button).
     // level_offer_duration: how many ticks an offer stays valid, keyed by bar building level.
     // level_max_concurrent: max simultaneous active *guest* offers per colony, keyed by
@@ -477,6 +495,7 @@ return [
             'negotiate_chance_max' => 0.95,
         ],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
+        'regolith_sell_offer_chance_pct' => 12,
         'offer_duration' => 2,  // fallback when bar level unknown
         'ap_cost_accept' => 2,  // 1→2 with the shared AP pool (GDD §13.6 Handlungs-AP): trades compete with build/knowledge projects
         'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],

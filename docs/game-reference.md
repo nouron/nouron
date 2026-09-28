@@ -155,6 +155,8 @@ Stiller Deckel (nie im UI erklärt, `game.bar.trade_terms.silent_cap`): `bar` 60
 
 **Marktbericht** (`MerchantService::getForecast`, `game.merchant`): Vorlauf für Corvans nächsten Besuch je Konsul-Rang (`forecast_sols`) — Rang 0 → keine Ankündigung, Rang 1 → 1 Sol, Rang 2 → 2 Sole, Rang 3 → 3 Sole. Ab `forecast_inventory_min_rank` = 3 zusätzlich die Sonderinventar-Kategorien des kommenden Besuchs (nicht die Alltagsgeschäft-Lose).
 
+**Regolith→Credits-Verkauf (T10, 2026-09-28 Owner-Entscheidung):** die anonyme Gästerotation (nicht Corvan) generiert pro Gast-Slot mit `game.bar.regolith_sell_offer_chance_pct` = 12% statt eines normalen Tausch-Angebots ein seltenes Regolith→Credits-Verkaufsangebot (`BarService::buildRegolithSellOffer()`). Preis: `base_prices[Regolith]` (25) ± `price_variance` (±20%), analog `buildCorvanBuyOffer()`s Preisformel. Corvans strukturierte Sell-Lots (`game.merchant.commodity`) bleiben unverändert auf Organika beschränkt — dieser Kanal ist bewusst separat und läuft ausschließlich über die generische Gästerotation.
+
 ---
 
 ## 8. Missionen: Belohnungen
@@ -447,17 +449,17 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter 
 
 **A44/H1 (2026-09-27):** zwei entkoppelte Achsen — Ertragstier (`y1`-`y3`) und Mächtigkeitstier (`d1`-`d3`), kombiniert zu 8 `tile_type`-Werten. `y3_d3` (bestes Tier auf beiden Achsen) existiert bewusst nicht.
 
-**Fresh Yields** (Regolith pro Sol) und **Resource Max** (Gesamtvorkommen):
+**Fresh Yields** (Regolith pro Sol) und **Resource Max** (Gesamtvorkommen). **T10 (2026-09-28):** Resource Max ×1,5 (160/300/440 → 240/450/660) — behebt das Baustoff-/Kartenbudget-Problem, siehe `docs/superpowers/plans/2026-09-27-t10-regolith-credits-rekalibrierung-spec.md`:
 | Tile-Typ | Fresh Yield | Resource Max |
 |---|---|---|
-| regolith_y1_d1 | 16 Rg | 160 Rg |
-| regolith_y1_d2 | 16 Rg | 300 Rg |
-| regolith_y1_d3 | 16 Rg | 440 Rg |
-| regolith_y2_d1 | 23 Rg | 160 Rg |
-| regolith_y2_d2 | 23 Rg | 300 Rg |
-| regolith_y2_d3 | 23 Rg | 440 Rg |
-| regolith_y3_d1 | 30 Rg | 160 Rg |
-| regolith_y3_d2 | 30 Rg | 300 Rg |
+| regolith_y1_d1 | 16 Rg | 240 Rg |
+| regolith_y1_d2 | 16 Rg | 450 Rg |
+| regolith_y1_d3 | 16 Rg | 660 Rg |
+| regolith_y2_d1 | 23 Rg | 240 Rg |
+| regolith_y2_d2 | 23 Rg | 450 Rg |
+| regolith_y2_d3 | 23 Rg | 660 Rg |
+| regolith_y3_d1 | 30 Rg | 240 Rg |
+| regolith_y3_d2 | 30 Rg | 450 Rg |
 
 **H2 — Sol-1-Gegensatzpaar:** zwei der 9 Ring-3-Frontier-Koordinaten werden immer pre-explored und mit einem Kontrast-Paar belegt (eine Kombi strikt höheres Ertragstier UND strikt niedrigeres Mächtigkeitstier als die andere) — welches konkrete Paar variiert pro Run/Seed (`ColonyTileService::pickH2Pair()`).
 

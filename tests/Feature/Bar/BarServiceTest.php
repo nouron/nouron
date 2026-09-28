@@ -267,32 +267,50 @@ class BarServiceTest extends TestCase
         $this->assertNull($offer, 'buildCorvanBuyOffer must return null, not a barter offer, when unaffordable');
     }
 
-    public function test_generate_never_creates_credits_offers_for_generic_guest_rotation(): void
+    public function test_generate_never_creates_credits_offers_for_generic_guest_rotation_except_rare_regolith_sell(): void
     {
         // GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina"
         // (Freigegeben 2026-08-05): the anonymous guest rotation (Dax, Voss, ...)
-        // loses Credits-Handel entirely — barter (resource↔resource) only. No row
-        // may ever carry give/get resource_id = 1 (credits), regardless of rank.
+        // barters (resource<->resource) only — with ONE deliberate exception (T10,
+        // 2026-09-28 Owner-Entscheidung): a rare Regolith->Credits sell offer
+        // (give_resource_id=Regolith, get_resource_id=Credits), gated by
+        // game.bar.regolith_sell_offer_chance_pct. Credits must never appear on the
+        // GIVE side, and Credits on the GET side must never pair with any resource
+        // other than Regolith.
         $this->setBarLevel(5); // widest concurrent slot budget, most guests/sol
         DB::table('advisors')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'personell_id' => self::TRADER_ADVISOR_ID],
             ['rank' => 3, 'user_id' => self::USER_ID, 'active_ticks' => 0, 'unavailable_until_tick' => null]
         );
 
+        $regolithSellOffers = 0;
+
         for ($tick = 100; $tick <= 500; $tick++) {
             $this->clearBarOffers();
             $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
 
-            $creditOffers = DB::table('bar_offers')
+            $creditsAsGive = DB::table('bar_offers')
                 ->where('colony_id', self::COLONY_ID)
-                ->where(function ($q) {
-                    $q->where('give_resource_id', self::RES_CREDITS)
-                        ->orWhere('get_resource_id', self::RES_CREDITS);
-                })
+                ->where('give_resource_id', self::RES_CREDITS)
                 ->count();
+            $this->assertEquals(0, $creditsAsGive, "Credits may never be the GIVE side of a generic guest offer at tick {$tick}");
 
-            $this->assertEquals(0, $creditOffers, "No credits-involving bar_offer may be generated for generic guests at tick {$tick}");
+            $creditsAsGetOffers = DB::table('bar_offers')
+                ->where('colony_id', self::COLONY_ID)
+                ->where('get_resource_id', self::RES_CREDITS)
+                ->get();
+
+            foreach ($creditsAsGetOffers as $offer) {
+                $this->assertEquals(
+                    self::RES_REGOLITH,
+                    $offer->give_resource_id,
+                    "A generic guest Credits offer at tick {$tick} must be a Regolith sell offer"
+                );
+                $regolithSellOffers++;
+            }
         }
+
+        $this->assertGreaterThan(0, $regolithSellOffers, 'Regolith sell offers should appear at least once over 400 ticks at the widest slot budget');
     }
 
     public function test_generate_does_not_delete_accepted_expired_offers(): void

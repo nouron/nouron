@@ -63,4 +63,47 @@ class BarRngDistributionTest extends TestCase
             );
         }
     }
+
+    /**
+     * T10 (2026-09-28): buildRegolithSellOffer() is the rare generic-guest
+     * Regolith->Credits sell offer. Always gives Regolith, always gets Credits,
+     * deterministic per seed, and the give amount covers the same 10-30 range
+     * (step 5) as buildBarterOffer().
+     */
+    public function test_regolith_sell_offer_always_gives_regolith_for_credits(): void
+    {
+        $bar = app(BarService::class);
+        $build = (new \ReflectionClass($bar))->getMethod('buildRegolithSellOffer');
+        $basePrices = [3 => 25, 4 => 110, 5 => 50];
+
+        $giveAmounts = [];
+        for ($seed = 1; $seed <= 500; $seed++) {
+            [$giveResId, $giveAmount, $getResId, $getAmount] = $build->invoke($bar, $seed, $basePrices);
+
+            $this->assertSame(3, $giveResId, 'give side must always be Regolith');
+            $this->assertSame(1, $getResId, 'get side must always be Credits');
+            $this->assertGreaterThanOrEqual(10, $giveAmount);
+            $this->assertLessThanOrEqual(30, $giveAmount);
+            $this->assertGreaterThan(0, $getAmount);
+
+            $giveAmounts[$giveAmount] = true;
+        }
+
+        // give amount steps by 5 in [10, 30] -> 5 distinct values, all should occur over 500 seeds.
+        $this->assertCount(5, $giveAmounts, json_encode(array_keys($giveAmounts)));
+    }
+
+    public function test_regolith_sell_offer_is_deterministic_per_seed(): void
+    {
+        $bar = app(BarService::class);
+        $build = (new \ReflectionClass($bar))->getMethod('buildRegolithSellOffer');
+        $basePrices = [3 => 25, 4 => 110, 5 => 50];
+
+        foreach ([1, 42, 99_991] as $seed) {
+            $this->assertSame(
+                $build->invoke($bar, $seed, $basePrices),
+                $build->invoke($bar, $seed, $basePrices)
+            );
+        }
+    }
 }
