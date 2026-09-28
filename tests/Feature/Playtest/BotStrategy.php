@@ -10,6 +10,7 @@ use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunTaskCatalog;
+use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
@@ -303,31 +304,20 @@ class BotStrategy
             [
                 'name' => 'research_knowledge',
                 'when' => fn (BotSession $b) => self::availableAp($b) >= 1 ? self::researchCandidate($b) : null,
-                'do' => function (BotSession $b, int $researchId) {
-                    // Try to close out a level first (accumulated ap_spend may already
-                    // meet the threshold); investBlocker() doesn't cap 'add' on ap_spend,
-                    // so levelup is the only way to find out a level is actually done.
-                    $res = $b->act('research_knowledge', 'POST', "/techtree/research/{$researchId}/order", [
+                // Perf finding 2026-09-28: order:'levelup' used to be tried unconditionally
+                // first — a real HTTP/routing/controller round trip that is guaranteed to
+                // fail with 'insufficient_ap_invested' until ap_spend reaches the level's AP
+                // cost. ap_spend and the effective ap_for_levelup are both cheaply readable
+                // from the DB beforehand (researchLevelupReady()), so 'levelup' is only
+                // attempted once it can actually succeed — otherwise 'add' is used directly.
+                'do' => fn (BotSession $b, int $researchId) => self::researchLevelupReady($b, $researchId)
+                    ? $b->act('research_knowledge', 'POST', "/techtree/research/{$researchId}/order", [
                         'order' => 'levelup',
-                    ]);
-                    if ($res['ok']) {
-                        return $res;
-                    }
-
-                    // _invest() caps 'add' at ap_spend == ap_for_levelup and still
-                    // returns ok:true once capped — falling back to 'add' for any
-                    // OTHER reason (a hard gate like knowledge_cc_gate, a missing
-                    // building, max_level) would loop forever with no progress.
-                    // Only "not enough ap_spend yet" justifies another 'add'.
-                    if ($res['error'] !== 'insufficient_ap_invested') {
-                        return $res;
-                    }
-
-                    return $b->act('research_knowledge', 'POST', "/techtree/research/{$researchId}/order", [
+                    ])
+                    : $b->act('research_knowledge', 'POST', "/techtree/research/{$researchId}/order", [
                         'order' => 'add',
                         'ap' => 1,
-                    ]);
-                },
+                    ]),
             ],
             [
                 'name' => 'dispatch_mission',
@@ -1315,6 +1305,26 @@ class BotStrategy
         }
 
         return self::researchOptions($b)['candidate'];
+    }
+
+    /**
+     * Whether $researchId's accumulated ap_spend already meets its (effective,
+     * per-level) AP cost — i.e. order:'levelup' can succeed right now instead of
+     * failing with 'insufficient_ap_invested'. Mirrors the cost ResearchService
+     * itself resolves (config/knowledge.php levelup_costs + project bonuses via
+     * knowledgeLevelupCost()), read directly from the DB — no HTTP round trip.
+     */
+    private static function researchLevelupReady(BotSession $b, int $researchId): bool
+    {
+        $apSpend = (int) (DB::table('colony_researches')
+            ->where('colony_id', $b->colonyId)
+            ->where('research_id', $researchId)
+            ->value('ap_spend') ?? 0);
+
+        $fallback = (int) (DB::table('researches')->where('id', $researchId)->value('ap_for_levelup') ?? 0);
+        $apForLevelup = app(ResearchService::class)->knowledgeLevelupCost($b->colonyId, $researchId, $fallback);
+
+        return $apSpend >= $apForLevelup;
     }
 
     /**
