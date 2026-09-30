@@ -52,9 +52,9 @@ return [
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)
         'length' => 24,
-        // The daily calculation window (server time, hour of day, UTC)
+        // End of the daily calculation window (hour of day, UTC) — anchors the
+        // time-based tick fallback (TickService::calculateTickFromTimestamp()).
         'calculation' => [
-            'start' => 3,
             'end' => 4,
         ],
         // Fixed tick number used in test cases

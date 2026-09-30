@@ -75,9 +75,6 @@
             <div style="color:#ff0;margin-bottom:4px;">Tick</div>
             <div><span style="color:#666;">length:</span> <span style="color:#ddd;">{{ $cfgTick["length"] }}h</span>
             </div>
-            <div><span style="color:#666;">window:</span> <span
-                    style="color:#ddd;">{{ $cfgTick["calculation"]["start"] }}–{{ $cfgTick["calculation"]["end"] }}
-                    Uhr</span></div>
         </div>
 
         {{-- Supply --}}
