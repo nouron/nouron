@@ -10,7 +10,7 @@ return [
     'task_credit_reserve' => 'Credit Reserve: hold at least :threshold Credits for :target Sols in a row',
     'task_colony_prosperity' => 'Colony Prosperity: keep Trust above :threshold for :target Sols in a row',
     'task_research_lead' => 'Research Lead: :target knowledge fields at level :min_level or higher',
-    'task_self_sufficiency' => 'Self-Sufficiency: keep Regolith above :regolith_min, Organics above :organics_min and spare colonists available for :target Sols in a row',
+    'task_self_sufficiency' => 'Self-Sufficiency: keep Regolith above :regolith_min, Organics above :organics_min for :target Sols in a row',
     'task_expedition_coverage' => 'Expeditions: :target successful outside missions at difficulty ":min_difficulty" or higher',
     'task_engineering_output' => 'Engineering Output: combined upgrade levels of all buildings at least :target',
     'task_trade_volume' => 'Trade Partner: :target purchases from the Travelling Merchant',

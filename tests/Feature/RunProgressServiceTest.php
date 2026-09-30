@@ -37,7 +37,7 @@ namespace Tests\Feature;
  *   - calculateScore returns positive score for completed run with objectives
  *
  * TASK_SELBSTVERSORGUNG (streak)
- *   - streak increments when regolith>25 AND organics>75 AND supply>0
+ *   - streak increments when regolith > regolith_min AND organics > organics_min (supply ignored)
  *   - streak resets to 0 when regolith fails (<= 25)
  *   - completes (completed_at set) when streak reaches target_value (15)
  *
@@ -1115,19 +1115,24 @@ class RunProgressServiceTest extends TestCase
 
     // ── Additional coverage (BUG-fixes & test-gaps) ───────────────────────────
 
-    public function test_task_self_sufficiency_resets_streak_when_supply_is_zero(): void
+    /**
+     * user_resources.supply holds the supply CAP, which is > 0 for every colony
+     * with a Command Center — the old "supply > 0" condition never failed in
+     * play and was dropped (Owner 2026-09-30). Stocks alone decide the streak.
+     */
+    public function test_task_self_sufficiency_ignores_supply(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 5);
 
-        $this->setColonyResource(3, 60);
-        $this->setColonyResource(5, 55);
-        $this->setSupply(0); // supply = 0 — condition fails
+        $this->setColonyResource(3, (int) config('game.run.tasks.task_self_sufficiency.regolith_min') + 10);
+        $this->setColonyResource(5, (int) config('game.run.tasks.task_self_sufficiency.organics_min') + 10);
+        $this->setSupply(0);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset when supply = 0');
+        $this->assertEquals(6, $objective->streak_value, 'supply must not affect the self-sufficiency streak');
     }
 
     public function test_task_self_sufficiency_resets_streak_when_organics_fails(): void

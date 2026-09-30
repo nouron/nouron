@@ -847,17 +847,20 @@ return [
             'task_research_lead' => ['category' => 'research', 'type' => 'counter', 'target' => 7, 'min_level' => 5],
             // PROVISIONAL (2026-09-26 batch: old thresholds were trivially satisfied
             // right at phase-2 start): Regolith > regolith_min AND Organika >
-            // organics_min AND supply > 0, held for `target` Sols.
+            // organics_min, held for `target` Sols. The former "supply > 0" check was
+            // dropped (Owner 2026-09-30) — user_resources.supply is the cap, never 0
+            // with a Command Center.
             'task_self_sufficiency' => ['category' => 'survival', 'type' => 'streak', 'target' => 45, 'regolith_min' => 150, 'organics_min' => 300],
             // PROVISIONAL (new measurement, bot data confounded by a mission-choice
             // bug fixed in this batch — recheck with the next run): successful
             // missions at difficulty >= min_difficulty (order:
             // game.missions.difficulty.order).
             'task_expedition_coverage' => ['category' => 'exploration', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal'],
-            // PROVISIONAL (2026-09-26 batch: generalist reached Sol 92 median, one
-            // sample only — needs more seeds): sum of building levels, every
-            // instance with its own level.
-            'task_engineering_output' => ['category' => 'research', 'type' => 'counter', 'target' => 30],
+            // Owner decision 2026-09-30 (baseline batch 4 profiles × 8 seeds): targeted
+            // play hit 30 by Sol 48, far ahead of the 70–85 corridor; the curve then
+            // flattens (31 @ Sol 60, 35 @ Sol 70, 37 @ Sol 90), incidental play stays
+            // at 22–26. Sum of building levels, every instance with its own level.
+            'task_engineering_output' => ['category' => 'research', 'type' => 'counter', 'target' => 35],
             // PROVISIONAL (2026-09-26 batch: target 5 reached by Sol 79–94, slightly
             // too easy): purchased merchant items in this run.
             'task_trade_volume' => ['category' => 'economy', 'type' => 'counter', 'target' => 7],

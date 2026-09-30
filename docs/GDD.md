@@ -2685,7 +2685,7 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 | Handelsnetz (`task_trade_volume`) | Wirtschaft | Abgeschlossene Transaktionen mit dem Reisenden Händler im laufenden Run über einer Schwelle |
 | Forschungsvorsprung (`task_research_lead`) | Forschung/Aufbau | Mindestens einige Kenntnisse auf Höchstlevel gebracht |
 | Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen über einer Schwelle für mehrere aufeinanderfolgende Sole |
-| Selbstversorgung (`task_self_sufficiency`) | Überleben | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen **und** Supply > 0. Alle drei Bedingungen müssen gleichzeitig für mehrere aufeinanderfolgende Sole gelten, jeder einzelne Ausfall setzt die Serie zurück |
+| Selbstversorgung (`task_self_sufficiency`) | Überleben | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen. Beide Bedingungen müssen gleichzeitig für mehrere aufeinanderfolgende Sole gelten, jeder einzelne Ausfall setzt die Serie zurück |
 | Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
 | Ingenieursleistung (`task_engineering_output`) | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
 | Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole: anhaltender Wohlstand statt eines einmaligen Peaks |
@@ -2695,7 +2695,7 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 
 > **Implementierungsstand (A45, umgesetzt):** Alle Aufgaben-Parameter kommen aus `run.tasks`, die früheren Konstanten in `RunProgressService` sind entfernt. `task_engineering_output` misst die Summe der Ausbaustufen, `task_expedition_coverage` erfolgreiche Missionen ab der Mindestschwierigkeit, und `task_senior_advisors` zählt Berater ab dem Mindestrang.
 
-> **Folgeschritt (Owner-Entscheidung 2026-09-26):** `task_credit_reserve` ist vorerst eine Serie. Später soll daraus „Nexus-Vorschuss tilgen" werden. Das setzt eine Tilgungsmechanik für `nexus_debt` voraus, die es noch nicht gibt (siehe Nexus-Schulden-Mechanik unten).
+> **Folgeschritt (Owner-Entscheidung 2026-09-30, ersetzt die vom 2026-09-26):** `task_credit_reserve` bleibt als Serie im Pool. Damit sie erreichbar wird, werden die Credit-Belohnungen von Außenmissionen und Ereignissen angehoben: Die Kreditreserve soll über aktives Spielen (Missionen, Ereignisse) entstehen, nicht über reines Sparen. „Nexus-Vorschuss tilgen" wird ein **zusätzliches** Ziel im Pool, sobald es eine Tilgungsmechanik für `nexus_debt` gibt (siehe Nexus-Schulden-Mechanik unten).
 
 > ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Die Kombo-Blacklist ist implementiert (höchstens 1 Wirtschafts-Aufgabe pro Ziehung; Kategorie je Aufgabe in `run.tasks`).
 

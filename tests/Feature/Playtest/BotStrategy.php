@@ -57,10 +57,20 @@ class BotStrategy
     ];
 
     /**
+     * Whether the profile built by the last default() call keeps Regolith back
+     * for task_self_sufficiency (objective-focused profiles only). Static because
+     * the Regolith-spending helpers only receive the BotSession; every caller
+     * builds its rules via default() right before using them.
+     */
+    private static bool $holdsSelfSufficiencyReserve = false;
+
+    /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
     public static function default(BotProfile $profile = new BotProfile): array
     {
+        self::$holdsSelfSufficiencyReserve = $profile->objectiveFocus > 0.0;
+
         $rules = [
             [
                 'name' => 'repair_critical',
@@ -506,7 +516,7 @@ class BotStrategy
     private static function engineeringLevelupCandidate(BotSession $b): ?object
     {
         $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
         $regolith = self::regolith($b);
 
         return DB::table('colony_buildings as cb')
@@ -557,7 +567,7 @@ class BotStrategy
         $available = $b->peek('/colony/buildings/available')['body']['buildings'] ?? [];
         $resourcesService = app(ResourcesService::class);
         $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
 
         foreach ($available as $building) {
             $id = (int) $building['building_id'];
@@ -1018,7 +1028,7 @@ class BotStrategy
 
             // T17: while the next CC level is what locks research, only the Regolith
             // above that level-up's price may go into new buildings.
-            $ccReserve = self::ccResearchReserve($b);
+            $ccReserve = self::regolithReserve($b);
 
             foreach ($buildings as $building) {
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
@@ -1090,7 +1100,7 @@ class BotStrategy
 
         // T17: a Regolith-charging level-up may only use the surplus above the
         // CC level-up that currently locks research; AP-only steps stay open.
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
         $rows = $rows->filter(fn (object $row): bool => self::fitsAboveCcReserve($b, $ccReserve, self::levelupRegolith($row)))->values();
 
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
@@ -1419,7 +1429,31 @@ class BotStrategy
         return self::levelupRegolith($cc);
     }
 
-    /** Whether spending $regolith leaves at least the CC reserve (ccResearchReserve()) in stock. */
+    /**
+     * Regolith all non-repair spending must leave in stock: the larger of the
+     * CC research reserve (T17) and the self-sufficiency reserve.
+     */
+    private static function regolithReserve(BotSession $b): int
+    {
+        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b));
+    }
+
+    /**
+     * Baseline 2026-09-30: focus/eager spent Regolith down to ~100 in Phase 2 and
+     * never held the task_self_sufficiency streak (Regolith > regolith_min). While
+     * that objective is open, objective-focused profiles keep regolith_min plus a
+     * 10 % buffer against decay repairs. 0 when the rule doesn't apply.
+     */
+    private static function selfSufficiencyReserve(BotSession $b): int
+    {
+        if (! self::$holdsSelfSufficiencyReserve || ! self::hasActiveObjective($b, 'task_self_sufficiency')) {
+            return 0;
+        }
+
+        return (int) floor((int) config('game.run.tasks.task_self_sufficiency.regolith_min', 0) * 1.1) + 1;
+    }
+
+    /** Whether spending $regolith leaves at least the reserve (regolithReserve()) in stock. */
     private static function fitsAboveCcReserve(BotSession $b, int $ccReserve, int $regolith): bool
     {
         return $ccReserve === 0 || $regolith === 0 || self::regolith($b) - $regolith >= $ccReserve;
@@ -1537,7 +1571,7 @@ class BotStrategy
 
         $tick = app(TickService::class)->getTickCount();
         // T17: Regolith-giving trades may only use the surplus above the CC reserve.
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
         $regolithSurplus = self::regolith($b) - $ccReserve;
 
         return DB::table('bar_offers')

@@ -493,25 +493,25 @@ Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens
 
 **Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85. Kein Mindest-Sol.
 
-#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-09-26)
+#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-09-30)
 
-**VORLÄUFIG, Kalibrier-Batch läuft (A45).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen, die früheren Konstanten (`RunProgressService::TASK_TARGETS`, `run.task_credit_reserve_threshold`) sind entfernt. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen Vorschläge (Annahme), die der Batch gegen die Kalibrierregel prüft.
+**VORLÄUFIG, Kalibrierung läuft (A45/R1).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen vorläufig. Baseline-Batch 2026-09-30 (4 Profile × 8 Seeds) siehe ROADMAP R1.
 
 | Task | `category` | `type` | Messung | Parameter | Status |
 |---|---|---|---|---|---|
 | `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
-| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 4000, `target` 10 Sole** | Owner-Entscheidung; Folgeschritt „Nexus-Vorschuss tilgen" |
-| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 70, `target` 10 Sole | vorläufig |
-| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 3 | vorläufig |
-| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` **und** Supply > 0 | `regolith_min` 25, `organics_min` 75, `target` 15 Sole | vorläufig |
-| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | `min_difficulty` normal, `target` 10 | vorläufig (neue Messung, noch ohne Bot-Daten) |
-| `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | `target` 30 | vorläufig (neue Messung, noch ohne Bot-Daten) |
-| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | `target` 5 | vorläufig |
+| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 4000, `target` 10 Sole** | Owner-Entscheidung 2026-09-30: Schwelle bleibt, Missions-/Event-Belohnungen werden angehoben (Baseline: in Phase 2 nie ≥ 2000 gehalten) |
+| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 40, `target` 12 Sole | vorläufig |
+| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 7 | vorläufig |
+| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | `regolith_min` 150, `organics_min` 300, `target` 45 Sole | vorläufig; Bedingung „Supply > 0" gestrichen (Owner 2026-09-30, war wirkungslos) |
+| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | `min_difficulty` normal, `target` 10 | vorläufig |
+| `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 35** | Owner-Entscheidung 2026-09-30 (gezielt: 30 schon an Sol 48, 35 um Sol 70) |
+| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | `target` 7 | vorläufig |
 
 Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 
 Herleitung der Vorschläge für die neuen Messungen (Annahme, grob):
-- `task_engineering_output` 30: Zum Phase-1-Ende liegt die Summe bei ungefähr 10 (CC Lv3, zwei Gebäude auf Lv2, Harvester, Startgebäude). Der GDD-Endzustand eines soliden Runs (Mehrheit der Gebäudetypen, moderate Stufen, §13.6) landet grob bei 25. Für 30 muss gezielt Ausbau priorisiert werden.
+- `task_engineering_output` 35: Zum Phase-1-Ende liegt die Summe bei ungefähr 10–15. Nebenbei gespielt bleibt sie bei 22–26 (Baseline 2026-09-30). Gezielter Ausbau erreicht 30 um Sol 48, danach flacht die Kurve ab (Level-Deckel, Supply): 35 um Sol 70.
 - `task_expedition_coverage` 10: Ab Hangar und erstem Schiff (frühe Phase 2) bleiben rund 50 Sole. Kurze Missionen dauern 2–4 Sole hin und zurück, die Grundchance bei „normal" liegt bei 70 %. Eine dauerhaft beschäftigte Drohne kommt damit auf etwa 10 Erfolge bis Sol ~75–80. Wer nur gelegentlich oder auf „leicht" schickt, bleibt deutlich darunter. Eine zweite Drohne beschleunigt stark. Das ist beim Bot-Batch zu prüfen.
 - `task_senior_advisors`: Rang 3 braucht 45 Rangpunkte (`advisor.rank_thresholds`). Der vierte Slot kommt erst mit CC Lv4. Ein spät eingestellter oder ausgetauschter Berater verhindert das Ziel praktisch.
 
