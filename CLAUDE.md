@@ -14,7 +14,7 @@
 
 **Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System (ein gemeinsamer Pool), Berater-System, Decay-System, Trust-System (Vertrauen), Supply-System, Kolonieprotokoll + Nexus-Funk (`/comm-log`, ersetzt INNN), Hex-Grid Kolonieansicht, Reisender Händler (Corvan), Corporate Contact (Orin), jQuery-Migration (vollständig), Bootstrap-5-Migration (vollständig, kein Rest mehr), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System (2 Phasen, 8 Objectives, 4 Fail-States), Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Hangar + Außenmissionen (13 Missionen, Erfolgschance/Schwierigkeit), Encounters (Sturm/Instabilität/Seuche), Kenntnis-Effekte (6 von 7), Gebäude-Ausbaustufen (Tier-System), Harvester-Erschöpfung + Zweitinstanz, PlaytestBot + Dashboard, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt). **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Fleet-Overlay, Kommandanten-Zuweisung, INNN-Messaging — siehe `docs/gdd/archiv-flotten-systemkarte.md`.
 
-**Laufend:** Vorbereitung Closed Beta (gehostet, 10–20 Tester) — Tasks im ROADMAP-Abschnitt „Closed Beta — Vorbereitung" (P0: Run-Ziele, Hosting, Zugang, Bugs; P1: Einstieg, Feedback). Phase 4 AP-Ratenmodell (D1–D7) bis nach der Beta zurückgestellt; Abarbeitung des Implementierungsstand-Audits — offene Punkte (Kategorie A/C + Owner-Fragen) stehen in `docs/audit-implementierungsstand-2026-09-06.md` und ROADMAP „Nächste Woche". Onboarding: Triggers + Hints implementiert, kein dedizierter New-Player-Flow.
+**Laufend:** Vorbereitung Closed Beta — offene Tasks und Prioritäten ausschließlich in `ROADMAP.md`.
 
 ## Wichtige Korrekturen
 
