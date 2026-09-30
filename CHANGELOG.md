@@ -3,6 +3,7 @@
 ## 2026-09-30
 
 - Doku: ROADMAP auf Closed Beta ausgerichtet (Owner-Entscheidung: gehostet, 10–20 eingeladene Tester). Neuer Abschnitt „Closed Beta — Vorbereitung" mit P0 (Run-Ziele, Hosting & Betrieb, Zugang, Bugs) und P1 (Einstieg, Feedback, Tester-Anleitung), neue Tasks R1–R17; nötige A/C/T-Punkte mit unveränderter ID dorthin verschoben. Nicht benötigte Punkte (A1–A3, A7, A9, A11, A27, T12, T23, T24, T26 sowie Phase 4 D1–D7) unter „Nach der Beta" zurückgestellt. A45-Status nachgezogen (strukturell erledigt am 2026-09-27).
+- Doku: CLAUDE.md verschlankt — Projektstand-/Abgeschlossen-Listen durch Verweis auf ROADMAP ersetzt, doppelte jQuery-/Bootstrap-Hinweise zusammengefasst, Grafik-Asset-Details auf ADR 0001 verwiesen.
 
 ## 2026-09-28
 
