@@ -38,11 +38,15 @@ class OvercapService
      * count here can only come from lost workplaces. advanceStreaks() then only
      * sees drops caused by a larger cap — real returns.
      *
+     * @param  int|null  $colonyId  Limit to one colony (GameTick scopes to the run's colony, R18)
      * @return int Number of colonies whose departed count shrank
      */
-    public function settleLostWorkplaces(): int
+    public function settleLostWorkplaces(?int $colonyId = null): int
     {
-        $colonies = DB::table('glx_colonies')->where('overcap_departed', '>', 0)->get(['id', 'overcap_departed']);
+        $colonies = DB::table('glx_colonies')
+            ->when($colonyId !== null, fn ($q) => $q->where('id', $colonyId))
+            ->where('overcap_departed', '>', 0)
+            ->get(['id', 'overcap_departed']);
         $settled = 0;
 
         foreach ($colonies as $colony) {
@@ -66,12 +70,15 @@ class OvercapService
      * departure ends the streak penalty in the same Sol and colonists_left (fired
      * for $tick) counts in this Sol's trust.
      *
+     * @param  int|null  $colonyId  Limit to one colony (GameTick scopes to the run's colony, R18)
      * @return int Number of colonies with homeless colonists after this step
      */
-    public function advanceStreaks(int $tick): int
+    public function advanceStreaks(int $tick, ?int $colonyId = null): int
     {
         $deadline = max(1, (int) config('game.overcap.departure_after_sols', 3));
-        $colonies = DB::table('glx_colonies')->get(['id', 'user_id', 'overcap_streak', 'overcap_departed']);
+        $colonies = DB::table('glx_colonies')
+            ->when($colonyId !== null, fn ($q) => $q->where('id', $colonyId))
+            ->get(['id', 'user_id', 'overcap_streak', 'overcap_departed']);
         $overCount = 0;
 
         foreach ($colonies as $colony) {

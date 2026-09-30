@@ -161,34 +161,37 @@ Stiller Deckel (nie im UI erklärt, `game.bar.trade_terms.silent_cap`): `bar` 60
 
 ## 8. Missionen: Belohnungen
 
+Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credits sollen über Missionen und Ereignisse entstehen).
+
 ### Drohne
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_courier_run` | 1 | 3 Or | 90 Cr |
+| `mission_courier_run` | 1 | 3 Or | 180 Cr |
 | `mission_recon_flight` | 1 | 3 Or | 2 Tiles reveal |
 | `mission_deep_survey` | 2 | 6 Or | 1 Deep Scan |
 | `mission_prospecting_flight` (Geo Lv1+) | 2 | 6 Or | 20–30 Rg |
 | `mission_data_sweep` (Cart Lv1+) | 3 | 9 Or | 8 Research AP |
-| `mission_long_range_expedition` (Cart Lv3+) | 5 | 15 Or | 350–550 Cr / 8–12 Wk / 30–45 Rg (1 pick) |
+| `mission_long_range_expedition` (Cart Lv3+) | 5 | 15 Or | 700–1100 Cr / 8–12 Wk / 30–45 Rg (1 pick) |
 
 ### Frachter
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
 | `mission_supply_run` | 1 | 3 Or | 25 Rg / 10 Or |
-| `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 260 Cr + Trade Success (+2 Trust) |
-| `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 90 Cr + Encounter Won (+2 Trust) |
+| `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 520 Cr + Trade Success (+2 Trust) |
+| `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 180 Cr + Encounter Won (+2 Trust) |
 
 ### Frachter / Korvette
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
 | `mission_salvage_sweep` (Constr Lv1+) | 4 | 12 Or | 6–10 Wk |
-| `mission_ruin_expedition` | 4 | 12 Or | 220 Cr (1x pro Ruin) |
+| `mission_ruin_expedition` | 4 | 12 Or | 440 Cr (1x pro Ruin) |
 | `mission_harvester_salvage` | 4 | 12 Or | Harvester Instanz #2 (1x pro Ruin) |
 
 ### Korvette
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_escort_convoy` | 3 | 9 Or | 280 Cr |
+| `mission_escort_convoy` | 3 | 9 Or | 560 Cr |
+| `mission_perimeter_patrol` (Def Lv1+) | 3 | 9 Or | 440 Cr + Encounter Won (+2 Trust) |
 
 > **Organika-Kosten** (Provisions): base = sol_distance × 3 Oder, mit Knowledge-Scaling −1 pro Level (Floor 1)
 > **Dispatch Anforderung**: Schiff ≥25% Max-SP
@@ -231,8 +234,7 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | normal / hard |
 | `mission_harvester_salvage` | Bergungsauftrag: Förderanlage | Frachter o. Korvette | easy / normal |
 | `mission_escort_convoy` | Konvoi-Begleitung | Korvette | normal / hard |
-
-`mission_perimeter_patrol` ist zurückgestellt (kein Katalogeintrag, siehe GDD §8b) und trägt daher keine `difficulties`-Zuordnung.
+| `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | normal / hard |
 
 ---
 
@@ -493,25 +495,25 @@ Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens
 
 **Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85. Kein Mindest-Sol.
 
-#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-09-26)
+#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-09-30)
 
-**VORLÄUFIG, Kalibrier-Batch läuft (A45).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen, die früheren Konstanten (`RunProgressService::TASK_TARGETS`, `run.task_credit_reserve_threshold`) sind entfernt. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen Vorschläge (Annahme), die der Batch gegen die Kalibrierregel prüft.
+**VORLÄUFIG, Kalibrierung läuft (A45/R1).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen vorläufig. Baseline-Batch 2026-09-30 (4 Profile × 8 Seeds) siehe ROADMAP R1.
 
 | Task | `category` | `type` | Messung | Parameter | Status |
 |---|---|---|---|---|---|
 | `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
-| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 4000, `target` 10 Sole** | Owner-Entscheidung; Folgeschritt „Nexus-Vorschuss tilgen" |
-| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 70, `target` 10 Sole | vorläufig |
-| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 3 | vorläufig |
-| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` **und** Supply > 0 | `regolith_min` 25, `organics_min` 75, `target` 15 Sole | vorläufig |
-| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | `min_difficulty` normal, `target` 10 | vorläufig (neue Messung, noch ohne Bot-Daten) |
-| `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | `target` 30 | vorläufig (neue Messung, noch ohne Bot-Daten) |
-| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | `target` 5 | vorläufig |
+| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 4000, `target` 10 Sole** | Owner-Entscheidung 2026-09-30: Schwelle bleibt, Missions-/Event-Belohnungen werden angehoben (Baseline: in Phase 2 nie ≥ 2000 gehalten) |
+| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 40, `target` 12 Sole | vorläufig |
+| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 7 | vorläufig |
+| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | `regolith_min` 150, `organics_min` 300, `target` 45 Sole | vorläufig; Bedingung „Supply > 0" gestrichen (Owner 2026-09-30, war wirkungslos) |
+| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | `min_difficulty` normal, `target` 10 | vorläufig |
+| `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 35** | Owner-Entscheidung 2026-09-30 (gezielt: 30 schon an Sol 48, 35 um Sol 70) |
+| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | `target` 7 | vorläufig |
 
 Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 
 Herleitung der Vorschläge für die neuen Messungen (Annahme, grob):
-- `task_engineering_output` 30: Zum Phase-1-Ende liegt die Summe bei ungefähr 10 (CC Lv3, zwei Gebäude auf Lv2, Harvester, Startgebäude). Der GDD-Endzustand eines soliden Runs (Mehrheit der Gebäudetypen, moderate Stufen, §13.6) landet grob bei 25. Für 30 muss gezielt Ausbau priorisiert werden.
+- `task_engineering_output` 35: Zum Phase-1-Ende liegt die Summe bei ungefähr 10–15. Nebenbei gespielt bleibt sie bei 22–26 (Baseline 2026-09-30). Gezielter Ausbau erreicht 30 um Sol 48, danach flacht die Kurve ab (Level-Deckel, Supply): 35 um Sol 70.
 - `task_expedition_coverage` 10: Ab Hangar und erstem Schiff (frühe Phase 2) bleiben rund 50 Sole. Kurze Missionen dauern 2–4 Sole hin und zurück, die Grundchance bei „normal" liegt bei 70 %. Eine dauerhaft beschäftigte Drohne kommt damit auf etwa 10 Erfolge bis Sol ~75–80. Wer nur gelegentlich oder auf „leicht" schickt, bleibt deutlich darunter. Eine zweite Drohne beschleunigt stark. Das ist beim Bot-Batch zu prüfen.
 - `task_senior_advisors`: Rang 3 braucht 45 Rangpunkte (`advisor.rank_thresholds`). Der vierte Slot kommt erst mit CC Lv4. Ein spät eingestellter oder ausgetauschter Berater verhindert das Ziel praktisch.
 

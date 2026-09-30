@@ -19,8 +19,16 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="SESSION_DRIVER" value="array"/>
+        <!-- Forced: every test/bot process must use its own in-process cache and
+             session store. A shared store from .env (file/database) lets parallel
+             game:playtest processes — each with its own :memory: DB and run id 1 —
+             collide on the /sol/next lock and share cached Sol deltas. -->
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <!-- Laravel reads $_SERVER before getenv(), so the inherited value has to be
+             overridden there as well. -->
+        <server name="CACHE_STORE" value="array" force="true"/>
+        <server name="SESSION_DRIVER" value="array" force="true"/>
         <env name="DB_CONNECTION" value="sqlite" force="true"/>
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <!-- Bypass all game rule checks by default in tests.

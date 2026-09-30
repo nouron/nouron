@@ -105,13 +105,13 @@ class HangarControllerTest extends TestCase
     }
 
     /** Lv3 by default: the fixtures dock a corvette, which needs a Lv3 hangar to fly (GDD §7). */
-    private function insertHangar(int $instanceId, float $statusPoints = 20.0): void
+    private function insertHangar(int $instanceId, float $statusPoints = 20.0, int $level = 3): void
     {
         DB::table('colony_buildings')->insert([
             'colony_id' => self::COLONY_ID_BART,
             'building_id' => self::HANGAR_BUILDING,
             'instance_id' => $instanceId,
-            'level' => 3,
+            'level' => $level,
             'status_points' => $statusPoints,
             'ap_spend' => 0,
         ]);
@@ -629,5 +629,103 @@ class HangarControllerTest extends TestCase
             $creditsAfter = (int) DB::table('user_resources')->where('user_id', $userId)->value('credits');
             $this->assertSame((int) $creditsBefore, $creditsAfter, "Credits for user {$userId} must not change");
         }
+    }
+
+    // ── T21: Nexus-Kredit gate reads the real Command Center ─────────────────
+
+    public function test_index_offers_nexus_credit_when_command_center_meets_threshold(): void
+    {
+        // Fixture: Springfield's Command Center (building_id 25) is level 3,
+        // above game.hangar.nexus_credit_min_cc_level.
+        $this->insertHangar(1);
+
+        $this->actingAs($this->bart())
+            ->get(route('colony.hangar'))
+            ->assertOk()
+            ->assertViewHas('canUseNexusCredit', true);
+    }
+
+    public function test_index_hides_nexus_credit_when_command_center_below_threshold(): void
+    {
+        $this->insertHangar(1);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID_BART)
+            ->where('building_id', 25)
+            ->update(['level' => (int) config('game.hangar.nexus_credit_min_cc_level', 2) - 1]);
+
+        $this->actingAs($this->bart())
+            ->get(route('colony.hangar'))
+            ->assertOk()
+            ->assertViewHas('canUseNexusCredit', false);
+    }
+
+    // ── T22: delivered ship goes to a hangar that can operate it ─────────────
+
+    public function test_request_ship_skips_free_hangar_below_ship_class(): void
+    {
+        // Instance 1 is a free Lv1 hangar, instance 2 a free Lv2 hangar.
+        // A freighter (needs Lv2) must land in instance 2, not in the first free slot.
+        $this->insertHangar(1, level: 1);
+        $this->insertHangar(2, level: 2);
+
+        $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), ['ship_id' => self::SHIP_FREIGHTER])
+            ->assertOk();
+
+        $this->assertSame(2, (int) DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID_BART)
+            ->where('ship_id', self::SHIP_FREIGHTER)
+            ->value('hangar_instance_id'));
+    }
+
+    public function test_request_ship_goes_pending_when_only_too_low_hangars_are_free(): void
+    {
+        // The only Lv2 hangar is occupied by a drone; the free one is Lv1.
+        $this->insertHangar(1, level: 2);
+        $this->insertHangar(2, level: 1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+
+        $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), ['ship_id' => self::SHIP_FREIGHTER])
+            ->assertOk();
+
+        $ship = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID_BART)
+            ->where('ship_id', self::SHIP_FREIGHTER)
+            ->first();
+        $this->assertNull($ship->hangar_instance_id);
+        $this->assertSame('pending', $ship->ship_state);
+    }
+
+    // ── Nexus-Kredit debt lands on the requesting player's run ──────────────
+
+    public function test_nexus_credit_debt_is_booked_on_own_run_only(): void
+    {
+        $this->insertHangar(1);
+        $foreign = $this->createForeignColony();
+
+        // Foreign active run inserted with a lower id than Bart's, so an
+        // unfiltered "first active run" lookup would pick it.
+        $bartRun = DB::table('runs')->where('user_id', self::USER_ID_BART)->where('status', 'active')->first();
+        DB::table('runs')->where('id', $bartRun->id)->update(['id' => 9001]);
+        DB::table('runs')->insert([
+            'id' => 1,
+            'user_id' => $foreign['user_id'],
+            'colony_id' => $foreign['colony_id'],
+            'status' => 'active',
+            'current_tick' => 5,
+            'nexus_debt' => 0,
+        ]);
+        $bartDebtBefore = (int) DB::table('runs')->where('id', 9001)->value('nexus_debt');
+
+        $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), [
+                'ship_id' => self::SHIP_DRONE,
+                'use_nexus_credit' => 1,
+            ])
+            ->assertOk();
+
+        $this->assertSame(0, (int) DB::table('runs')->where('id', 1)->value('nexus_debt'));
+        $this->assertGreaterThan($bartDebtBefore, (int) DB::table('runs')->where('id', 9001)->value('nexus_debt'));
     }
 }

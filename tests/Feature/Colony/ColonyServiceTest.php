@@ -41,16 +41,6 @@ class ColonyServiceTest extends TestCase
         $this->service = $this->app->make(ColonyService::class);
     }
 
-    public function test_get_colonies_returns_collection(): void
-    {
-        $foreign = $this->createForeignColony();
-
-        $colonies = $this->service->getColonies();
-        $this->assertInstanceOf(Collection::class, $colonies);
-        $this->assertEqualsCanonicalizing([$this->colonyId, $foreign['colony_id']], $colonies->pluck('id')->all());
-        $this->assertInstanceOf(Colony::class, $colonies->first());
-    }
-
     public function test_get_colony_returns_colony(): void
     {
         $colony = $this->service->getColony($this->colonyId);

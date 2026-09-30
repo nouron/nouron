@@ -33,7 +33,7 @@
     </form>
 
     {{-- Trigger button --}}
-    <button type="button" class="btn-sol" @click="handleClick">
+    <button type="button" class="btn-sol" @click="handleClick" :disabled="loading">
         <i class="bi bi-skip-forward-fill"></i> {{ __("colony.next_sol_button") }}
     </button>
 
@@ -247,6 +247,8 @@
             },
 
             async handleClick() {
+                // Ignore clicks while a Sol is already being computed (R11).
+                if (this.loading) return;
                 const resp = await fetch(this.routes.remainingAp, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -278,6 +280,12 @@
                             Accept: 'application/json',
                         },
                     });
+                    if (resp.status === 409) {
+                        // Another tab/click is already advancing this Sol — the
+                        // page state is stale either way, so reload it.
+                        window.location.reload();
+                        return;
+                    }
                     const report = await resp.json();
                     this.report = report;
 

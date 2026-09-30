@@ -396,6 +396,7 @@ class HangarService
                 // NOTE: If no active run is found (edge case), debt tracking is skipped —
                 // the trust penalty still applies as a soft consequence.
                 $run = DB::table('runs')
+                    ->where('user_id', $userId)
                     ->where('status', 'active')
                     ->first(['id', 'nexus_debt']);
 
@@ -430,7 +431,8 @@ class HangarService
                 $deliverAtTick = $currentTick + $deliveryTicks;
             }
 
-            // Determine hangar slot: find the first free slot for this colony.
+            // Determine hangar slot: first free slot whose level can operate this
+            // ship class (T22) — a lower hangar would leave the ship inactive.
             $occupiedInstanceIds = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->whereNotNull('hangar_instance_id')
@@ -440,6 +442,7 @@ class HangarService
             $freeSlot = DB::table('colony_buildings')
                 ->where('colony_id', $colonyId)
                 ->where('building_id', self::HANGAR_BUILDING_ID)
+                ->where('level', '>=', $this->requiredHangarLevel($shipId))
                 ->when(! empty($occupiedInstanceIds), fn ($q) => $q->whereNotIn('instance_id', $occupiedInstanceIds))
                 ->orderBy('instance_id')
                 ->value('instance_id');

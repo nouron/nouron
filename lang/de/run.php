@@ -10,7 +10,7 @@ return [
     'task_credit_reserve' => 'Kreditreserve: mindestens :threshold Credits halten, :target Sole in Folge',
     'task_colony_prosperity' => 'Kolonieblüte: Vertrauen über :threshold halten, :target Sole in Folge',
     'task_research_lead' => 'Forschungsvorsprung: :target Kenntnisse auf mindestens Stufe :min_level',
-    'task_self_sufficiency' => 'Selbstversorgung: Regolith über :regolith_min, Organika über :organics_min und freie Kolonisten halten, :target Sole in Folge',
+    'task_self_sufficiency' => 'Selbstversorgung: Regolith über :regolith_min, Organika über :organics_min halten, :target Sole in Folge',
     'task_expedition_coverage' => 'Expeditionen: :target erfolgreiche Außenmissionen mit Schwierigkeit „:min_difficulty“ oder höher',
     'task_engineering_output' => 'Ingenieursleistung: Ausbaustufen aller Gebäude zusammen mindestens :target',
     'task_trade_volume' => 'Handelspartner: :target Einkäufe beim Reisenden Händler',

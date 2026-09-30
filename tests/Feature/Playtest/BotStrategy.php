@@ -57,10 +57,40 @@ class BotStrategy
     ];
 
     /**
+     * Credit missions without a target tile, most lucrative first (reward credits
+     * per config/missions.php). 'normal' so a success also counts for
+     * task_expedition_coverage.
+     */
+    private const CREDIT_MISSIONS = [
+        ['mission_escort_convoy', 'normal'],
+        ['mission_trade_convoy', 'normal'],
+        ['mission_perimeter_patrol', 'normal'],
+        ['mission_aid_transport', 'normal'],
+        ['mission_courier_run', 'normal'],
+    ];
+
+    /** Below this Werkstoffe stock a freighter stays on the compounds mission. */
+    private const COMPOUNDS_SCARCE_BELOW = 50;
+
+    /**
+     * Whether the profile built by the last default() call keeps Regolith back
+     * for task_self_sufficiency (objective-focused profiles only). Static because
+     * the Regolith-spending helpers only receive the BotSession; every caller
+     * builds its rules via default() right before using them.
+     */
+    private static bool $holdsSelfSufficiencyReserve = false;
+
+    /** savingsAggressiveness of the profile built by the last default() call (see spendableCredits()). */
+    private static float $creditSavings = 0.0;
+
+    /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
     public static function default(BotProfile $profile = new BotProfile): array
     {
+        self::$holdsSelfSufficiencyReserve = $profile->objectiveFocus > 0.0;
+        self::$creditSavings = $profile->savingsAggressiveness;
+
         $rules = [
             [
                 'name' => 'repair_critical',
@@ -225,6 +255,18 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'dispatch_credit_mission',
+                // Baseline 2026-09-30: credit missions almost never flew — dispatch_mission
+                // only sends recon. Owner: every profile plays missions and events.
+                // Phase 2 only (Phase 1 ships belong to the bootstrap); freighters
+                // keep flying the compounds mission while Werkstoffe are scarce.
+                'when' => fn (BotSession $b) => self::creditMissionCandidate($b),
+                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_credit_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                    'mission_key' => $candidate['mission_key'],
+                    'difficulty' => $candidate['difficulty'],
+                ]),
+            ],
+            [
                 'name' => 'dispatch_compounds_mission',
                 // Round 2 of A37-Rest (2026-09-14, task_colony_prosperity):
                 // Werkstoffe/compounds is the scarcest resource by design (GDD §3
@@ -325,6 +367,27 @@ class BotStrategy
                 'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
                     'mission_key' => 'mission_recon_flight',
                     'difficulty' => 'easy',
+                ]),
+            ],
+            [
+                'name' => 'accept_bar_encounter',
+                // Baseline 2026-09-30: no bot ever took a Cantina event (wager,
+                // auction, contract). Owner: every profile plays events.
+                'when' => fn (BotSession $b) => self::barEncounterCandidate($b),
+                'do' => fn (BotSession $b, object $encounter) => $b->act('accept_bar_encounter', 'POST', "/colony/bar/accept-encounter/{$encounter->id}"),
+            ],
+            [
+                'name' => 'resolve_bar_concern',
+                'when' => fn (BotSession $b) => self::barConcernCandidate($b),
+                'do' => fn (BotSession $b, array $candidate) => $b->act('resolve_bar_concern', 'POST', "/colony/bar/concern/{$candidate['concern']->id}", [
+                    'knowledge_id' => $candidate['knowledge_id'],
+                ]),
+            ],
+            [
+                'name' => 'resolve_information_encounter',
+                'when' => fn (BotSession $b) => self::informationEncounterCandidate($b),
+                'do' => fn (BotSession $b, array $candidate) => $b->act('resolve_information_encounter', 'POST', "/colony/bar/information-encounter/{$candidate['encounter']->id}", [
+                    'knowledge_id' => $candidate['knowledge_id'],
                 ]),
             ],
             [
@@ -506,7 +569,7 @@ class BotStrategy
     private static function engineeringLevelupCandidate(BotSession $b): ?object
     {
         $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
         $regolith = self::regolith($b);
 
         return DB::table('colony_buildings as cb')
@@ -557,7 +620,7 @@ class BotStrategy
         $available = $b->peek('/colony/buildings/available')['body']['buildings'] ?? [];
         $resourcesService = app(ResourcesService::class);
         $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
 
         foreach ($available as $building) {
             $id = (int) $building['building_id'];
@@ -595,7 +658,7 @@ class BotStrategy
     private static function merchantItemCandidate(BotSession $b): ?int
     {
         $tick = app(TickService::class)->getTickCount();
-        $credits = self::credits($b);
+        $credits = self::spendableCredits($b);
 
         $itemId = DB::table('merchant_items as mi')
             ->join('merchant_visits as mv', 'mv.id', '=', 'mi.visit_id')
@@ -735,7 +798,7 @@ class BotStrategy
         }
 
         $hired = DB::table('advisors')->where('colony_id', $b->colonyId)->pluck('personell_id')->all();
-        $credits = self::credits($b);
+        $credits = self::spendableCredits($b);
 
         foreach (self::HIRE_ORDER as $personellId) {
             if (in_array($personellId, $hired, true)) {
@@ -783,7 +846,7 @@ class BotStrategy
     {
         $thresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
         $costs = config('game.advisor.promotion_costs', [2 => 150, 3 => 250]);
-        $credits = self::credits($b);
+        $credits = self::spendableCredits($b);
 
         $eligible = DB::table('advisors')
             ->where('colony_id', $b->colonyId)
@@ -1018,7 +1081,7 @@ class BotStrategy
 
             // T17: while the next CC level is what locks research, only the Regolith
             // above that level-up's price may go into new buildings.
-            $ccReserve = self::ccResearchReserve($b);
+            $ccReserve = self::regolithReserve($b);
 
             foreach ($buildings as $building) {
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
@@ -1090,7 +1153,7 @@ class BotStrategy
 
         // T17: a Regolith-charging level-up may only use the surplus above the
         // CC level-up that currently locks research; AP-only steps stay open.
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
         $rows = $rows->filter(fn (object $row): bool => self::fitsAboveCcReserve($b, $ccReserve, self::levelupRegolith($row)))->values();
 
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
@@ -1419,7 +1482,31 @@ class BotStrategy
         return self::levelupRegolith($cc);
     }
 
-    /** Whether spending $regolith leaves at least the CC reserve (ccResearchReserve()) in stock. */
+    /**
+     * Regolith all non-repair spending must leave in stock: the larger of the
+     * CC research reserve (T17) and the self-sufficiency reserve.
+     */
+    private static function regolithReserve(BotSession $b): int
+    {
+        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b));
+    }
+
+    /**
+     * Baseline 2026-09-30: focus/eager spent Regolith down to ~100 in Phase 2 and
+     * never held the task_self_sufficiency streak (Regolith > regolith_min). While
+     * that objective is open, objective-focused profiles keep regolith_min plus a
+     * 10 % buffer against decay repairs. 0 when the rule doesn't apply.
+     */
+    private static function selfSufficiencyReserve(BotSession $b): int
+    {
+        if (! self::$holdsSelfSufficiencyReserve || ! self::hasActiveObjective($b, 'task_self_sufficiency')) {
+            return 0;
+        }
+
+        return (int) floor((int) config('game.run.tasks.task_self_sufficiency.regolith_min', 0) * 1.1) + 1;
+    }
+
+    /** Whether spending $regolith leaves at least the reserve (regolithReserve()) in stock. */
     private static function fitsAboveCcReserve(BotSession $b, int $ccReserve, int $regolith): bool
     {
         return $ccReserve === 0 || $regolith === 0 || self::regolith($b) - $regolith >= $ccReserve;
@@ -1461,6 +1548,44 @@ class BotStrategy
             return null;
         }
 
+        return self::firstFlyableMission($b, self::REGOLITH_MISSIONS);
+    }
+
+    /**
+     * Credit mission for any profile (Owner 2026-09-30): Phase 2 only, the first
+     * CREDIT_MISSIONS entry a docked, active, intact ship can fly. Freighter
+     * missions are skipped while the freighter's compounds job is available and
+     * Werkstoffe are scarce.
+     *
+     * @return array{ship: object, mission_key: string, difficulty: string}|null
+     */
+    private static function creditMissionCandidate(BotSession $b): ?array
+    {
+        if (self::runPhase($b) < 2) {
+            return null;
+        }
+
+        $missions = self::CREDIT_MISSIONS;
+        if (self::compounds($b) < self::COMPOUNDS_SCARCE_BELOW && self::compoundsMissionCandidate($b) !== null) {
+            $missions = array_values(array_filter(
+                $missions,
+                fn (array $m): bool => ! in_array('freighter', config("missions.catalog.{$m[0]}.ships", []), true),
+            ));
+        }
+
+        return self::firstFlyableMission($b, $missions);
+    }
+
+    /**
+     * The first of $missions a docked, active, intact ship can fly, checking the
+     * same gates HangarService::dispatchShip() enforces (knowledge, Nav-AP,
+     * Organika provisions, ship type).
+     *
+     * @param  array<int, array{0: string, 1: string}>  $missions  [mission_key, difficulty]
+     * @return array{ship: object, mission_key: string, difficulty: string}|null
+     */
+    private static function firstFlyableMission(BotSession $b, array $missions): ?array
+    {
         $hangar = app(HangarService::class);
         $minSp = 20 * (float) config('missions.dispatch_min_sp_pct', 0.25); // HangarService::SHIP_MAX_STATUS
         $ships = DB::table('colony_ships')
@@ -1474,7 +1599,7 @@ class BotStrategy
             return null;
         }
 
-        foreach (self::REGOLITH_MISSIONS as [$missionKey, $difficulty]) {
+        foreach ($missions as [$missionKey, $difficulty]) {
             $mission = config("missions.catalog.{$missionKey}");
             if ($mission === null) {
                 continue;
@@ -1537,7 +1662,7 @@ class BotStrategy
 
         $tick = app(TickService::class)->getTickCount();
         // T17: Regolith-giving trades may only use the surplus above the CC reserve.
-        $ccReserve = self::ccResearchReserve($b);
+        $ccReserve = self::regolithReserve($b);
         $regolithSurplus = self::regolith($b) - $ccReserve;
 
         return DB::table('bar_offers')
@@ -1554,6 +1679,111 @@ class BotStrategy
             // bar_offer_insufficient_resources (40x in the 2026-09-26 baseline).
             // The give side is never changed by Handelsvorteil or negotiation.
             ->first(fn (object $offer): bool => self::resourceBalance($b, (int) $offer->give_resource_id) >= (int) $offer->give_amount);
+    }
+
+    /**
+     * Open Cantina event (wager/auction/contract) the colony can take right now:
+     * Bar built, AP for the accept cost, the give side affordable (Regolith only
+     * from the surplus above regolithReserve()). Highest Credits payout first.
+     */
+    private static function barEncounterCandidate(BotSession $b): ?object
+    {
+        if (self::barLevel($b) < 1 || self::availableAp($b) < (int) config('game.bar.encounter.ap_cost_accept', 0)) {
+            return null;
+        }
+
+        $regolithSurplus = self::regolith($b) - self::regolithReserve($b);
+
+        return DB::table('bar_encounters')
+            ->where('colony_id', $b->colonyId)
+            ->where('is_accepted', false)
+            ->where('expires_tick', '>', app(TickService::class)->getTickCount())
+            ->orderByDesc('credits_amount')
+            ->orderBy('id')
+            ->get()
+            ->first(function (object $e) use ($b, $regolithSurplus): bool {
+                if ($e->give_resource_id === null) {
+                    return true;
+                }
+                $available = (int) $e->give_resource_id === self::RES_REGOLITH
+                    ? $regolithSurplus
+                    : self::resourceBalance($b, (int) $e->give_resource_id);
+
+                return $available >= (int) $e->give_amount;
+            });
+    }
+
+    /**
+     * Open character concern the colony can resolve: AP for its cost; the
+     * stranger's Werkstoffe stake must be coverable at its maximum.
+     *
+     * @return array{concern: object, knowledge_id: ?int}|null
+     */
+    private static function barConcernCandidate(BotSession $b): ?array
+    {
+        $concern = DB::table('bar_concerns')
+            ->where('colony_id', $b->colonyId)
+            ->where('is_resolved', false)
+            ->where('expires_tick', '>', app(TickService::class)->getTickCount())
+            ->orderBy('id')
+            ->get()
+            ->first(function (object $c) use ($b): bool {
+                if (self::availableAp($b) < (int) config("game.bar.concern.ap_cost.{$c->character_slug}", 0)) {
+                    return false;
+                }
+
+                return $c->character_slug !== 'stranger'
+                    || self::compounds($b) >= (int) config('game.bar.concern.stranger.stake_max', 0);
+            });
+
+        return $concern === null ? null : ['concern' => $concern, 'knowledge_id' => self::bonusKnowledgeId($b)];
+    }
+
+    /**
+     * Open Deva/Lenn information encounter (free to resolve).
+     *
+     * @return array{encounter: object, knowledge_id: ?int}|null
+     */
+    private static function informationEncounterCandidate(BotSession $b): ?array
+    {
+        $encounter = DB::table('bar_information_encounters')
+            ->where('colony_id', $b->colonyId)
+            ->where('is_resolved', false)
+            ->where('expires_tick', '>', app(TickService::class)->getTickCount())
+            ->orderBy('id')
+            ->first();
+
+        return $encounter === null ? null : ['encounter' => $encounter, 'knowledge_id' => self::bonusKnowledgeId($b)];
+    }
+
+    /**
+     * Knowledge to receive an AP bonus from a concern/encounter outcome: the
+     * lowest-level knowledge not yet at its cap (level 5), lowest id on ties.
+     */
+    private static function bonusKnowledgeId(BotSession $b): ?int
+    {
+        $ids = collect(config('knowledge'))->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $levels = DB::table('colony_researches')
+            ->where('colony_id', $b->colonyId)
+            ->whereIn('research_id', $ids)
+            ->pluck('level', 'research_id')
+            ->all();
+
+        $candidates = array_values(array_filter($ids, fn (int $id): bool => (int) ($levels[$id] ?? 0) < 5));
+        if ($candidates === []) {
+            return null;
+        }
+        usort($candidates, fn (int $x, int $y): int => [(int) ($levels[$x] ?? 0), $x] <=> [(int) ($levels[$y] ?? 0), $y]);
+
+        return $candidates[0];
+    }
+
+    private static function barLevel(BotSession $b): int
+    {
+        return (int) (DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', BuildingId::Bar->value)
+            ->value('level') ?? 0);
     }
 
     /** Balance as BarService::getResourceBalance() reads it: Credits user-level, the rest colony-level. */
@@ -1934,15 +2164,30 @@ class BotStrategy
     /**
      * True when accept_bar_offer/request_ship should hold back this Sol because
      * task_credit_reserve is an active goal and spending now would jeopardize
-     * reaching/holding the threshold. Scales the safety buffer with
-     * savingsAggressiveness (0.0 → gate never blocks, matches pre-profile
-     * behavior; 1.0 → 1.5× threshold buffer).
+     * reaching/holding the threshold. Applies to every profile (Owner
+     * 2026-09-30); the buffer scales with savingsAggressiveness (0.0 → the
+     * threshold itself, 1.0 → 1.5× threshold).
      */
+    /**
+     * Credits the bot may spend on promotions, hires and merchant buys. While
+     * task_credit_reserve is open, every profile keeps the threshold (thrifty/
+     * focus: 1.5× threshold) and only spends the surplus above it (Owner
+     * 2026-09-30 — before, Credits sank to ~100 by Sol 50 in every profile).
+     */
+    private static function spendableCredits(BotSession $b): int
+    {
+        $credits = self::credits($b);
+        if (! self::hasActiveObjective($b, 'task_credit_reserve')) {
+            return $credits;
+        }
+
+        $threshold = (int) config('game.run.tasks.task_credit_reserve.threshold', 4000);
+
+        return $credits - (int) round($threshold * (1 + 0.5 * self::$creditSavings));
+    }
+
     private static function creditReserveGuardBlocks(BotSession $b, BotProfile $profile): bool
     {
-        if ($profile->savingsAggressiveness <= 0.0) {
-            return false;
-        }
         if (! self::hasActiveObjective($b, 'task_credit_reserve')) {
             return false;
         }

@@ -21,11 +21,6 @@ class ColonyService
 {
     use ValidatesId;
 
-    public function getColonies(): Collection
-    {
-        return Colony::all();
-    }
-
     public function getColony(int|string $colonyId): Colony|false
     {
         $this->validateId($colonyId);

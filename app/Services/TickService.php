@@ -48,23 +48,6 @@ class TickService
     }
 
     /**
-     * Returns true if the daily tick calculation is currently running
-     * (i.e., we are between calculation.start and calculation.end).
-     *
-     * No DST handling needed: the runtime is pinned to UTC
-     * (AppServiceProvider::boot(), see config/game.php → tick), and UTC has no
-     * summer/winter time transitions.
-     */
-    public function calculationIsRunning(): bool
-    {
-        $time = time();
-        $calcBegin = (int) $this->config['calculation']['start'];
-        $calcEnd = (int) $this->config['calculation']['end'];
-
-        return $time >= mktime($calcBegin, 0, 0) && $time < mktime($calcEnd, 0, 0);
-    }
-
-    /**
      * Derive tick count from a Unix timestamp.
      *
      * Formula: (timestamp − calc_end_hours) / 86400 = days since epoch = tick

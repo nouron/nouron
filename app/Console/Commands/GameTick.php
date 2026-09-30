@@ -27,6 +27,7 @@ use App\Services\TickService;
 use App\Services\TrustService;
 use App\Support\SeededRandom;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -72,6 +73,14 @@ class GameTick extends Command
                                 {--tick= : Override the tick number (default: from run or time-based)}';
 
     protected $description = 'Process one game tick (decay, supply, resources, trust)';
+
+    /**
+     * The run's colony and owner — every tick step is scoped to them (R18): one
+     * player's Sol advance must never simulate another player's colony.
+     */
+    private int $colonyId;
+
+    private int $userId;
 
     public function __construct(
         private readonly TickService $tickService,
@@ -123,6 +132,9 @@ class GameTick extends Command
             return self::FAILURE;
         }
 
+        $this->colonyId = (int) $run->colony_id;
+        $this->userId = (int) $run->user_id;
+
         // Ensure started_at is set on the very first tick of a run.
         if ($run->started_at === null) {
             $run->started_at = now();
@@ -170,13 +182,13 @@ class GameTick extends Command
             // streak derived from it right below — reflects this Sol's state.
             // Before the cap changes: lost workplaces remove unfilled ones silently,
             // so advanceStreaks() only logs real returns (A14).
-            $n = $this->overcapService->settleLostWorkplaces();
+            $n = $this->overcapService->settleLostWorkplaces($this->colonyId);
             $this->line("  Vacancies settled:        {$n}");
 
             $n = $this->calculateSupply();
             $this->line("  Users supply updated:     {$n}");
 
-            $n = $this->overcapService->advanceStreaks($tick);
+            $n = $this->overcapService->advanceStreaks($tick, $this->colonyId);
             $this->line("  Colonies over capacity:   {$n}");
 
             $n = $this->calculateTrust($tick);
@@ -185,7 +197,7 @@ class GameTick extends Command
             $n = $this->generatePassiveCredits($tick);
             $this->line("  Users passive credits:    {$n}");
 
-            $n = $this->deductAdvisorUpkeep($tick);
+            $n = $this->deductAdvisorUpkeep($tick, (int) $run->id);
             $this->line("  Advisor upkeep deducted:  {$n}");
 
             $n = $this->incrementAdvisorTicks();
@@ -261,6 +273,16 @@ class GameTick extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * The colonies this tick simulates: only the run's own colony (R18).
+     *
+     * @return Collection<int, Colony>
+     */
+    private function tickColonies(): Collection
+    {
+        return Colony::where('id', $this->colonyId)->get();
+    }
+
     // ── 0. Hangar deliveries ────────────────────────────────────────────────
 
     /**
@@ -275,6 +297,7 @@ class GameTick extends Command
     {
         // 1. Deliver ships: building → docked (deliver_at_tick reached).
         $delivered = DB::table('colony_ships')
+            ->where('colony_id', $this->colonyId)
             ->where('ship_state', 'building')
             ->whereNotNull('deliver_at_tick')
             ->where('deliver_at_tick', '<=', $tick)
@@ -282,6 +305,7 @@ class GameTick extends Command
 
         // 2. Decay pending ships (no hangar assigned, deadline expired).
         $expired = DB::table('colony_ships')
+            ->where('colony_id', $this->colonyId)
             ->where('ship_state', 'pending')
             ->whereNotNull('pending_until_tick')
             ->where('pending_until_tick', '<', $tick)
@@ -299,7 +323,10 @@ class GameTick extends Command
      */
     private function processNexusImportDeliveries(int $tick): int
     {
-        $due = DB::table('nexus_imports')->where('deliver_at_tick', '<=', $tick)->get();
+        $due = DB::table('nexus_imports')
+            ->where('colony_id', $this->colonyId)
+            ->where('deliver_at_tick', '<=', $tick)
+            ->get();
 
         foreach ($due as $import) {
             $this->resourcesService->increaseAmount($import->colony_id, $import->resource_id, $import->amount);
@@ -317,7 +344,10 @@ class GameTick extends Command
             ]);
         }
 
-        DB::table('nexus_imports')->where('deliver_at_tick', '<=', $tick)->delete();
+        DB::table('nexus_imports')
+            ->where('colony_id', $this->colonyId)
+            ->where('deliver_at_tick', '<=', $tick)
+            ->delete();
 
         return $due->count();
     }
@@ -347,6 +377,7 @@ class GameTick extends Command
                 $join->on('cs.colony_id', '=', 'm.colony_id')
                     ->on('cs.hangar_instance_id', '=', 'm.instance_id');
             })
+            ->where('m.colony_id', $this->colonyId)
             ->where('m.state', 'active')
             ->where('cs.ship_state', 'dispatched')
             ->get([
@@ -632,7 +663,7 @@ class GameTick extends Command
             ->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())
             ->all();
 
-        $buildings = ColonyBuilding::where('level', '>', 0)->get();
+        $buildings = ColonyBuilding::where('colony_id', $this->colonyId)->where('level', '>', 0)->get();
 
         foreach ($buildings as $cb) {
             $rate = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
@@ -744,6 +775,7 @@ class GameTick extends Command
     private function securityHubLevels(): array
     {
         return DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
             ->where('building_id', (int) config('buildings.securityHub.id', 53))
             ->where('level', '>', 0)
             ->pluck('level', 'colony_id')
@@ -764,7 +796,8 @@ class GameTick extends Command
         $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
 
         // Kenntnisse (purpose='knowledge') never decay — GDD §10.
-        $researches = ColonyResearch::where('level', '>', 0)
+        $researches = ColonyResearch::where('colony_id', $this->colonyId)
+            ->where('level', '>', 0)
             ->whereNotIn('research_id', $knowledgeIds)
             ->get();
 
@@ -817,7 +850,7 @@ class GameTick extends Command
      */
     private function calculateSupply(): int
     {
-        $userIds = Colony::whereNotNull('user_id')->distinct()->pluck('user_id');
+        $userIds = Colony::where('id', $this->colonyId)->whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
             $colony = Colony::where('user_id', $userId)->first();
@@ -919,11 +952,12 @@ class GameTick extends Command
 
         // Buildings whose transit ended before this tick have arrived.
         DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
             ->whereNotNull('pending_until_tick')
             ->where('pending_until_tick', '<', $tick)
             ->update(['pending_until_tick' => null]);
 
-        $colonies = Colony::all();
+        $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
             // Apply trust production multiplier based on the colony's CURRENT trust
@@ -1122,7 +1156,7 @@ class GameTick extends Command
      */
     private function processFoodConsumption(int $tick): int
     {
-        $colonies = Colony::all();
+        $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
             $foodNeed = $this->resourcesService->foodNeed($colony->id);
@@ -1199,7 +1233,7 @@ class GameTick extends Command
         $phase1RampSols = max(1, (int) config('game.encounter.phase1_ramp_sols', 15));
         $rampMultiplier = $phase === 1 ? min(1.0, $tick / $phase1RampSols) : 1.0;
 
-        $colonies = Colony::all();
+        $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
             // Phase 1: resolve yesterday's storm warning, if any (not subject to
@@ -1627,7 +1661,7 @@ class GameTick extends Command
 
     private function calculateTrust(int $tick): int
     {
-        $colonies = Colony::all();
+        $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
             // Trigger 3 — onboarding_trust: fires once when trust crosses from
@@ -1698,7 +1732,7 @@ class GameTick extends Command
         $nexusSubsidy = (int) config('game.credits.nexus_subsidy', 30);
         $relayBonusPerLevel = (int) config('game.credits.relay_bonus_per_uplink_level', 20);
 
-        $colonies = Colony::whereNotNull('user_id')->get();
+        $colonies = $this->tickColonies()->whereNotNull('user_id');
         $processed = 0;
 
         foreach ($colonies as $colony) {
@@ -1763,11 +1797,11 @@ class GameTick extends Command
      *
      * @return int Number of advisors processed this tick.
      */
-    private function deductAdvisorUpkeep(int $tick): int
+    private function deductAdvisorUpkeep(int $tick, int $runId): int
     {
         $upkeepByRank = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
 
-        $advisors = Advisor::whereNotNull('colony_id')->with('colony')->get();
+        $advisors = Advisor::where('colony_id', $this->colonyId)->with('colony')->get();
 
         $upkeepByUser = [];
         foreach ($advisors as $advisor) {
@@ -1781,8 +1815,6 @@ class GameTick extends Command
         }
 
         if ($upkeepByUser !== []) {
-            $activeRunId = DB::table('runs')->where('status', 'active')->value('id');
-
             foreach ($upkeepByUser as $userId => $totalUpkeep) {
                 $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
                 $deduction = min($credits, $totalUpkeep);
@@ -1792,8 +1824,8 @@ class GameTick extends Command
                     ->where('user_id', $userId)
                     ->update(['credits' => $credits - $deduction]);
 
-                if ($shortfall > 0 && $activeRunId !== null) {
-                    DB::table('runs')->where('id', $activeRunId)
+                if ($shortfall > 0) {
+                    DB::table('runs')->where('id', $runId)
                         ->update(['nexus_debt' => DB::raw("nexus_debt + {$shortfall}")]);
                 }
             }
@@ -1809,6 +1841,7 @@ class GameTick extends Command
     private function processBarOffers(int $tick): int
     {
         $colonyIds = DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
             ->where('building_id', (int) config('buildings.bar.id', 52))
             ->where('level', '>', 0)
             ->pluck('colony_id');
@@ -1831,6 +1864,7 @@ class GameTick extends Command
     private function processBarEncounters(int $tick): int
     {
         $colonyIds = DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
             ->where('building_id', (int) config('buildings.bar.id', 52))
             ->where('level', '>', 0)
             ->pluck('colony_id');
@@ -1862,6 +1896,7 @@ class GameTick extends Command
         }
 
         $activeContracts = DB::table('bar_encounters')
+            ->where('colony_id', $this->colonyId)
             ->where('type', 'contract')
             ->where('is_accepted', true)
             ->where('resolved', false)
@@ -1891,7 +1926,7 @@ class GameTick extends Command
      */
     private function processMerchantSpawn(int $tick): int
     {
-        $colonies = Colony::whereNotNull('user_id')->get();
+        $colonies = $this->tickColonies()->whereNotNull('user_id');
         $spawned = 0;
 
         foreach ($colonies as $colony) {
@@ -1921,8 +1956,8 @@ class GameTick extends Command
     private function incrementAdvisorTicks(): int
     {
         return DB::table('advisors')
+            ->where('colony_id', $this->colonyId)
             ->whereNull('unavailable_until_tick')
-            ->whereNotNull('colony_id')
             ->increment('active_ticks');
     }
 }

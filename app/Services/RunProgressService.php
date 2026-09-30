@@ -268,10 +268,9 @@ class RunProgressService
     }
 
     /**
-     * Streak task: all three conditions must hold simultaneously each sol —
-     * Regolith (resource_id=3) > regolith_min, Organika (resource_id=5) >
-     * organics_min, Supply (user_resources.supply) > 0. Any single failure resets
-     * the streak to 0.
+     * Streak task: both conditions must hold simultaneously each sol —
+     * Regolith (resource_id=3) > regolith_min and Organika (resource_id=5) >
+     * organics_min. Either failure resets the streak to 0.
      */
     private function updateSelfSufficiency(RunObjective $objective, Run $run): void
     {
@@ -285,13 +284,8 @@ class RunProgressService
             ->where('resource_id', 5)
             ->value('amount') ?? 0);
 
-        $supply = (int) (DB::table('user_resources')
-            ->where('user_id', $run->user_id)
-            ->value('supply') ?? 0);
-
         $allMet = $regolith > (int) $this->tasks->param('task_self_sufficiency', 'regolith_min', 25)
-            && $organics > (int) $this->tasks->param('task_self_sufficiency', 'organics_min', 75)
-            && $supply > 0;
+            && $organics > (int) $this->tasks->param('task_self_sufficiency', 'organics_min', 75);
 
         $this->applyStreak($objective, $run, $allMet);
     }

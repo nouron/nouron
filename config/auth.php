@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Closed-Beta Invite Code
+    |--------------------------------------------------------------------------
+    |
+    | Shared code every beta tester needs to register (R9). When unset,
+    | registration stays open (local development, tests).
+    |
+    */
+
+    'invite_code' => env('BETA_INVITE_CODE') ?: null,
+
 ];

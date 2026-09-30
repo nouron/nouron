@@ -38,36 +38,47 @@ class SolController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        $before = $this->solReportService->snapshot(
-            (int) $run->colony_id,
-            (int) $run->user_id,
-            (int) $run->phase,
-        );
+        // One advance per run at a time: a double click or a second tab must not
+        // push the run two Sols forward (R11). Non-blocking — the loser gets 409.
+        $lock = Cache::lock("run:{$run->id}:sol-advance", 120);
+        if (! $lock->get()) {
+            return response()->json(['error' => 'sol_advance_in_progress'], 409);
+        }
 
-        $run->increment('current_tick');
-        $run->refresh();
+        try {
+            $before = $this->solReportService->snapshot(
+                (int) $run->colony_id,
+                (int) $run->user_id,
+                (int) $run->phase,
+            );
 
-        Artisan::call('game:tick', ['--run' => $run->id]);
-        $run->refresh();
+            $run->increment('current_tick');
+            $run->refresh();
 
-        // Kommandozentrale-Dashboard "Netto-Sol-Bilanz" widget — the before/after
-        // diff is only computable right now (colony state isn't snapshotted
-        // anywhere persistent), so cache it for the dashboard to read later.
-        Cache::put(
-            "colony:{$run->colony_id}:last_sol_deltas",
-            $this->solReportService->netDeltas((int) $run->colony_id, (int) $run->user_id, $before),
-            now()->addDays(2),
-        );
+            Artisan::call('game:tick', ['--run' => $run->id]);
+            $run->refresh();
 
-        $this->eventService->createEvent([
-            'user' => Auth::id(),
-            'tick' => $run->current_tick,
-            'event' => 'run.sol_advanced',
-            'area' => 'run',
-            'parameters' => json_encode(['colony_id' => $run->colony_id, 'sol' => $run->current_tick]),
-        ]);
+            // Kommandozentrale-Dashboard "Netto-Sol-Bilanz" widget — the before/after
+            // diff is only computable right now (colony state isn't snapshotted
+            // anywhere persistent), so cache it for the dashboard to read later.
+            Cache::put(
+                "colony:{$run->colony_id}:last_sol_deltas",
+                $this->solReportService->netDeltas((int) $run->colony_id, (int) $run->user_id, $before),
+                now()->addDays(2),
+            );
 
-        return response()->json($this->solReportService->buildReport($run, $before));
+            $this->eventService->createEvent([
+                'user' => Auth::id(),
+                'tick' => $run->current_tick,
+                'event' => 'run.sol_advanced',
+                'area' => 'run',
+                'parameters' => json_encode(['colony_id' => $run->colony_id, 'sol' => $run->current_tick]),
+            ]);
+
+            return response()->json($this->solReportService->buildReport($run, $before));
+        } finally {
+            $lock->release();
+        }
     }
 
     /**

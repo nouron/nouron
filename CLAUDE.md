@@ -5,16 +5,9 @@
 **Nouron** Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv.
 - GitHub: https://github.com/nouron/nouron
 - Techstack: PHP/Laravel, SQLite, Blade-Templates, Alpine.js + PicoCSS, SVG für Spielfelder
-- Frontend-Migration: jQuery vollständig entfernt (Mai 2026). Bootstrap-5-Migration ebenfalls abgeschlossen — inkl. `techtree/technology.blade.php` (2026-08-22 als toter Code entfernt, ersetzt durch das Alpine-Detailpanel in `techtree/index.blade.php`). Kein Bootstrap-CSS/JS mehr eingebunden (nur `bootstrap-icons`-Font, unabhängig vom Framework).
-- Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3 (UI) abgeschlossen (Mai 2026, siehe ROADMAP.md)
-
-## Aktueller Stand (Stand: 2026-09-06)
-
-**Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
-
-**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System (ein gemeinsamer Pool), Berater-System, Decay-System, Trust-System (Vertrauen), Supply-System, Kolonieprotokoll + Nexus-Funk (`/comm-log`, ersetzt INNN), Hex-Grid Kolonieansicht, Reisender Händler (Corvan), Corporate Contact (Orin), jQuery-Migration (vollständig), Bootstrap-5-Migration (vollständig, kein Rest mehr), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System (2 Phasen, 8 Objectives, 4 Fail-States), Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Hangar + Außenmissionen (13 Missionen, Erfolgschance/Schwierigkeit), Encounters (Sturm/Instabilität/Seuche), Kenntnis-Effekte (6 von 7), Gebäude-Ausbaustufen (Tier-System), Harvester-Erschöpfung + Zweitinstanz, PlaytestBot + Dashboard, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt). **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Fleet-Overlay, Kommandanten-Zuweisung, INNN-Messaging — siehe `docs/gdd/archiv-flotten-systemkarte.md`.
-
-**Laufend:** Phase 4 AP-Ratenmodell (Themen D3/D4/D6 offen) und Bot-Kalibrierung; Abarbeitung des Implementierungsstand-Audits — offene Punkte (Kategorie A/C + Owner-Fragen) stehen in `docs/audit-implementierungsstand-2026-09-06.md` und ROADMAP „Nächste Woche". Onboarding: Triggers + Hints implementiert, kein dedizierter New-Player-Flow.
+- **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
+- **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Kommandanten, INNN-Messaging — nicht wieder einführen, siehe `docs/gdd/archiv-flotten-systemkarte.md`.
+- **Projektstand, offene Tasks, Prioritäten:** ausschließlich `ROADMAP.md` (Historie: `CHANGELOG.md`).
 
 ## Wichtige Korrekturen
 
@@ -30,7 +23,7 @@
 
 ```
 app/
-  Http/Controllers/   -- Route Handler (Techtree, Colony, Fleet, INNN, ...)
+  Http/Controllers/   -- Route Handler (Colony, Techtree, Advisors, CommLog, ...)
   Services/           -- Game Logic (TickService, TrustService, AdvisorService, ...)
   Models/             -- Eloquent Models
   Console/Commands/   -- game:tick, game:sync-techs
@@ -51,8 +44,7 @@ Schichtung: `Controller → Service → Eloquent Model → SQLite`
 ## Technische Hinweise
 
 - `config/game.php` und `config/buildings.php` sind **canonical source of truth** für alle Spielwerte — GDD folgt Config, nicht umgekehrt
-- Neue Screens: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap
-- Legacy-Screens: Bootstrap-Migration vollständig abgeschlossen — jQuery vollständig entfernt
+- Frontend: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap (beide vollständig entfernt; nur der `bootstrap-icons`-Font bleibt)
 - `TestSeeder` führt `data/sql/testdata.sqlite.sql` aus (regex-filtered: nur INSERT/UPDATE Statements)
 - Techtree-Koordinaten phase-lokal (Zeile/Spalte innerhalb Phase), nicht global
 - Trust-Events (`game.trust.*`): Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
@@ -60,20 +52,7 @@ Schichtung: `Controller → Service → Eloquent Model → SQLite`
 
 ## Grafik-Assets
 
-Verbindliches Format für alle Spiel-Grafiken (Icons, Portraits, Tiles, Schiffe, Gebäude, Ressourcen):
-
-- **Format:** WebP, transparenter Hintergrund
-- **Auflösung:** 2× Zielgröße (Grafiker liefert doppelte Pixelzahl — HiDPI-ready)
-- **Kein SVG** für Illustrations-Assets — SVG nur für UI-Struktur (Hex-Grid, strukturelle Icons)
-- **CSS:** Container in `em`/`rem`, nie fixe `px`. Bilder: `width: 100%; height: 100%; object-fit: contain;`
-- **Ablage:** `public/img/icons/`, `public/img/buildings/`, `public/img/ships/`, `public/img/advisors/`, `public/img/tiles/`
-
-Richtwert-Größen (Zielgröße → Datei):
-`24×24 px` Ressourcen-Icons → 48×48 px | `32×32 px` Gebäude-Icon (Sidebar) → 64×64 px | `48×48 px` Gebäude/Schiff (Tile) → 96×96 px | `128×128 px` Berater-Portrait → 256×256 px
-
-Hex-Tile-Texturen: als `<image>` innerhalb SVG-`<clipPath>` eingebunden (siehe ADR 0001). Zielgröße abhängig von SIZE-Konstante in `colony-hexgrid.js`.
-
-Vollständige Entscheidung: `docs/adr/0001-graphics-asset-format.md`
+Spiel-Grafiken: **WebP**, transparent, **2× Zielgröße**; kein SVG für Illustrationen (SVG nur für UI-Struktur). Größen, CSS-Regeln und Ablagepfade → `docs/adr/0001-graphics-asset-format.md` (verbindlich).
 
 ## Sprachregeln
 
