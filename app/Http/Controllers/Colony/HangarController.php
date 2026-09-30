@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Colony;
 
+use App\Enums\BuildingId;
 use App\Exceptions\GameRuleException;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
@@ -56,7 +57,7 @@ class HangarController extends BaseController
         // Nexus-Kredit available if CC level >= threshold defined in game config.
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', 1) // CommandCenter building_id
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level');
         $canUseNexusCredit = $ccLevel >= (int) config('game.hangar.nexus_credit_min_cc_level', 2);
 

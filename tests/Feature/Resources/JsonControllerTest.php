@@ -5,6 +5,7 @@ namespace Tests\Feature\Resources;
 use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
 /**
@@ -14,6 +15,7 @@ use Tests\TestCase;
  */
 class JsonControllerTest extends TestCase
 {
+    use CreatesForeignColony;
     use RefreshDatabase;
 
     private const USER_ID = 3;
@@ -49,6 +51,15 @@ class JsonControllerTest extends TestCase
         $this->assertArrayHasKey(3, $json);
         $this->assertSame(3, $json[3]['resource_id']);
         $this->assertArrayHasKey('amount', $json[3]);
+    }
+
+    public function test_get_colony_resources_rejects_foreign_colony(): void
+    {
+        $foreign = $this->createForeignColony();
+
+        $this->actingAs($this->user())
+            ->getJson(route('resources.colony', ['id' => $foreign['colony_id']]))
+            ->assertForbidden();
     }
 
     public function test_reload_resourcebar_renders_partial_with_merged_metadata(): void

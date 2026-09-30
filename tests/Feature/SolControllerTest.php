@@ -44,6 +44,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -311,6 +312,44 @@ class SolControllerTest extends TestCase
             'id' => $margeRun->id,
             'current_tick' => 3,
         ]);
+    }
+
+    /**
+     * R11: a second /sol/next while the first is still running (double click,
+     * two tabs) must not advance the run a second time.
+     */
+    public function test_concurrent_advance_is_rejected_while_lock_is_held(): void
+    {
+        $this->fakeGameTick();
+        $this->deleteBartRuns();
+        $run = $this->insertRun(self::BART_ID, self::COLONY_ID, 'active', 5);
+
+        $lock = Cache::lock("run:{$run->id}:sol-advance", 60);
+        $this->assertTrue($lock->get(), 'precondition: lock acquired by "first request"');
+
+        try {
+            $this->actingAs($this->bart())
+                ->postJson(route('sol.next'))
+                ->assertStatus(409)
+                ->assertJsonPath('error', 'sol_advance_in_progress');
+        } finally {
+            $lock->release();
+        }
+
+        $this->assertDatabaseHas('runs', ['id' => $run->id, 'current_tick' => 5]);
+    }
+
+    public function test_lock_is_released_after_successful_advance(): void
+    {
+        $this->fakeGameTick();
+        $this->deleteBartRuns();
+        $run = $this->insertRun(self::BART_ID, self::COLONY_ID, 'active', 5);
+
+        $this->actingAs($this->bart())->postJson(route('sol.next'))->assertOk();
+
+        $lock = Cache::lock("run:{$run->id}:sol-advance", 60);
+        $this->assertTrue($lock->get(), 'lock must be free again after the request');
+        $lock->release();
     }
 
     // ── REMAINING AP (GET /sol/remaining-ap) ─────────────────────────────────

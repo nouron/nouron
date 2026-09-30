@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Resources;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
+use App\Models\Colony;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,11 @@ class JsonController extends BaseController
      */
     public function getColonyResources(int $id): JsonResponse
     {
+        $colony = Colony::findOrFail($id);
+        if ((int) $colony->user_id !== (int) auth()->id()) {
+            abort(403);
+        }
+
         $result = $this->resources->getColonyResources(['colony_id' => $id])
             ->keyBy('resource_id')
             ->map(fn ($r) => ['resource_id' => $r->resource_id, 'amount' => $r->amount]);
