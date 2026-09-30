@@ -46,7 +46,7 @@ Befund 2026-09-26: Sieg im Median bei Sol 31 statt im Korridor Sol 85–95; 3 Zi
 #### P0-2 — Hosting & Betrieb (existiert noch nicht)
 
 - [ ] **R3 Produktions-Konfiguration** — `.env`-Vorlage für Produktion (`APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` mit https, `LOG_LEVEL=warning`, `SESSION_SECURE_COOKIE=true`, `APP_LOCALE=de`); `config:cache`/`route:cache`/`view:cache` im Deploy. Sicherstellen, dass Dev-/Debug-Kommandos (`DbReset`, `ResetPlayer`, `ColonySeedDemo`) in Produktion nicht versehentlich laufen (Guard auf `APP_ENV`). `CACHE_STORE` muss Locks unterstützen (R11) — `file` auf Einzel-Server, oder `database` + fehlende `cache`/`cache_locks`-Migration anlegen (existiert aktuell nicht). — Klein
-- [ ] **R4 Server & Deployment** — Hoster wählen (kleiner VPS reicht), PHP 8.x + Webserver + HTTPS (Let's Encrypt), Deploy-Skript (`git pull`, `composer install --no-dev`, `migrate --force`, Caches), Anleitung in `docs/deployment.md`. Migrationen dürfen Tester-Daten nie verwerfen. — Mittel
+- [ ] **R4 Server & Deployment** — Hoster wählen (kleiner VPS reicht), PHP 8.x + Webserver + HTTPS (Let's Encrypt), Deploy-Skript (`git pull`, `composer install --no-dev`, `migrate --force`, Caches), Anleitung in `docs/deployment.md`. Migrationen dürfen Tester-Daten nie verwerfen. Owner-Account mit `role = admin` anlegen (Debug-Leiste, R10). — Mittel
 - [ ] **R5 Produktions-Datenbank evaluieren** (Owner 2026-09-30: für Produktion wird ohnehin eine neue DB gebraucht) — Kandidaten gegenüberstellen (z. B. PostgreSQL/MySQL vs. SQLite mit WAL) nach Betriebsaufwand, Backup, gleichzeitigen Schreibzugriffen (parallele `/sol/next`), Kosten beim Hoster; Entscheidung als ADR. Danach: Kompatibilität prüfen (SQLite-spezifisches SQL, Views wie `v_glx_colonies`, Raw-`DB::statement`-Migrationen), Test-Suite gegen die Ziel-DB laufen lassen. Bestimmt R6 (Backup-Verfahren) und den Cache-Store aus R3. — Mittel
 - [ ] **R6 Backups** (nach R5) — tägliches Backup der Produktions-DB mit Rotation, Restore einmal real testen. — Klein
 - [ ] **R7 Fehler-Monitoring** — tägliche Log-Rotation + Benachrichtigung bei Exceptions (Mail oder Sentry o. ä.), damit Beta-Fehler auffallen, bevor sie gemeldet werden. — Klein
@@ -54,8 +54,9 @@ Befund 2026-09-26: Sieg im Median bei Sol 31 statt im Korridor Sol 85–95; 3 Zi
 
 #### P0-3 — Zugang
 
-- [ ] **R9 Einladungs-Code bei Registrierung** — `/register` ist aktuell offen für jeden. Invite-Code (Config/Env oder Tabelle mit Einmal-Codes) als Pflichtfeld, TDD. — Klein
-- [ ] **R10 Passwort-Reset** — mindestens Admin-Kommando `user:reset-password`; Mail-basierter Reset optional. Owner-Account in Produktion mit `role = admin` anlegen (Debug-Leiste ist bereits admin-gated). — Klein
+- [x] **R9 Einladungs-Code bei Registrierung** ✅ 2026-09-30 — Owner-Wahl: ein gemeinsamer Code. `BETA_INVITE_CODE` (→ `config('auth.invite_code')`); gesetzt = Pflichtfeld im Registrierungsformular, Vergleich per `hash_equals` (Leerzeichen getrimmt), leer = Registrierung offen (Dev/Tests). `/register` wie Login gedrosselt (5/min) gegen Code-Raten. Tests: `RegistrationInviteCodeTest`. — Klein
+- [x] **R10 Passwort-Reset** ✅ 2026-09-30 — Owner-Wahl: Admin-Kommando jetzt, Mail-Reset später (R20). `php artisan user:reset-password <username|email>` setzt ein zufälliges 16-Zeichen-Passwort und gibt es einmal aus. Tests: `UserResetPasswordTest`. Owner-Account in Produktion mit `role = admin` anlegen → als Schritt in R4 (Deployment). — Klein
+- [ ] **R20 Mail-basierter Passwort-Reset** (nach R4 + Mail-Dienst) — Laravel-Standard „Passwort vergessen" mit Reset-Link per E-Mail; setzt einen Mail-Dienst (SMTP/Anbieter) auf dem Server voraus. Für die Beta nicht zwingend (R10 deckt den Notfall ab). — Mittel
 
 #### P0-4 — Bugs mit direkter Spielerwirkung
 

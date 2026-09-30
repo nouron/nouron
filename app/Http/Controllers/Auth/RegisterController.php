@@ -21,15 +21,28 @@ class RegisterController extends Controller
 
     public function showRegistrationForm()
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'inviteRequired' => config('auth.invite_code') !== null,
+        ]);
     }
 
     public function register(Request $request)
     {
+        $inviteCode = config('auth.invite_code');
+
         $validated = $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:user,username'],
             'email' => ['required', 'email', 'max:255', 'unique:user,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'invite_code' => $inviteCode === null ? ['nullable'] : [
+                'required',
+                'string',
+                function (string $attribute, mixed $value, \Closure $fail) use ($inviteCode): void {
+                    if (! hash_equals((string) $inviteCode, trim((string) $value))) {
+                        $fail(__('auth.invite_code_invalid'));
+                    }
+                },
+            ],
         ]);
 
         try {
