@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-30
+
+- Doku: ROADMAP auf Closed Beta ausgerichtet (Owner-Entscheidung: gehostet, 10–20 eingeladene Tester). Neuer Abschnitt „Closed Beta — Vorbereitung" mit P0 (Run-Ziele, Hosting & Betrieb, Zugang, Bugs) und P1 (Einstieg, Feedback, Tester-Anleitung), neue Tasks R1–R17; nötige A/C/T-Punkte mit unveränderter ID dorthin verschoben. Nicht benötigte Punkte (A1–A3, A7, A9, A11, A27, T12, T23, T24, T26 sowie Phase 4 D1–D7) unter „Nach der Beta" zurückgestellt. A45-Status nachgezogen (strukturell erledigt am 2026-09-27).
+
 ## 2026-09-28
 
 - Feature: T10 — Regolith→Credits-Verkaufskanal + Mächtigkeits-Rekalibrierung. Root Cause war ein fehlender Regolith→Credits-Kanal (nur Credits→Regolith existierte bei Corvan) — Owner-Entscheidung: die anonyme Cantina-Gästerotation bietet jetzt selten (12% pro Gast-Slot) ein Regolith-Verkaufsangebot gegen Credits an (`BarService::buildRegolithSellOffer()`), unabhängig von Corvan/`MerchantService`, die weiterhin nur Organika verkauft. `harvester.resource_max` (Regolith-Vorkommen) um ×1,5 angehoben (160/300/440 → 240/450/660), behebt separat das Kartenbudget-Problem. Details/Owner-Entscheidung: `docs/superpowers/plans/2026-09-27-t10-regolith-credits-rekalibrierung-spec.md`.
