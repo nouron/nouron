@@ -80,12 +80,16 @@ class BotStrategy
      */
     private static bool $holdsSelfSufficiencyReserve = false;
 
+    /** savingsAggressiveness of the profile built by the last default() call (see spendableCredits()). */
+    private static float $creditSavings = 0.0;
+
     /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
     public static function default(BotProfile $profile = new BotProfile): array
     {
         self::$holdsSelfSufficiencyReserve = $profile->objectiveFocus > 0.0;
+        self::$creditSavings = $profile->savingsAggressiveness;
 
         $rules = [
             [
@@ -654,7 +658,7 @@ class BotStrategy
     private static function merchantItemCandidate(BotSession $b): ?int
     {
         $tick = app(TickService::class)->getTickCount();
-        $credits = self::credits($b);
+        $credits = self::spendableCredits($b);
 
         $itemId = DB::table('merchant_items as mi')
             ->join('merchant_visits as mv', 'mv.id', '=', 'mi.visit_id')
@@ -794,7 +798,7 @@ class BotStrategy
         }
 
         $hired = DB::table('advisors')->where('colony_id', $b->colonyId)->pluck('personell_id')->all();
-        $credits = self::credits($b);
+        $credits = self::spendableCredits($b);
 
         foreach (self::HIRE_ORDER as $personellId) {
             if (in_array($personellId, $hired, true)) {
@@ -842,7 +846,7 @@ class BotStrategy
     {
         $thresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
         $costs = config('game.advisor.promotion_costs', [2 => 150, 3 => 250]);
-        $credits = self::credits($b);
+        $credits = self::spendableCredits($b);
 
         $eligible = DB::table('advisors')
             ->where('colony_id', $b->colonyId)
@@ -2160,15 +2164,30 @@ class BotStrategy
     /**
      * True when accept_bar_offer/request_ship should hold back this Sol because
      * task_credit_reserve is an active goal and spending now would jeopardize
-     * reaching/holding the threshold. Scales the safety buffer with
-     * savingsAggressiveness (0.0 → gate never blocks, matches pre-profile
-     * behavior; 1.0 → 1.5× threshold buffer).
+     * reaching/holding the threshold. Applies to every profile (Owner
+     * 2026-09-30); the buffer scales with savingsAggressiveness (0.0 → the
+     * threshold itself, 1.0 → 1.5× threshold).
      */
+    /**
+     * Credits the bot may spend on promotions, hires and merchant buys. While
+     * task_credit_reserve is open, every profile keeps the threshold (thrifty/
+     * focus: 1.5× threshold) and only spends the surplus above it (Owner
+     * 2026-09-30 — before, Credits sank to ~100 by Sol 50 in every profile).
+     */
+    private static function spendableCredits(BotSession $b): int
+    {
+        $credits = self::credits($b);
+        if (! self::hasActiveObjective($b, 'task_credit_reserve')) {
+            return $credits;
+        }
+
+        $threshold = (int) config('game.run.tasks.task_credit_reserve.threshold', 4000);
+
+        return $credits - (int) round($threshold * (1 + 0.5 * self::$creditSavings));
+    }
+
     private static function creditReserveGuardBlocks(BotSession $b, BotProfile $profile): bool
     {
-        if ($profile->savingsAggressiveness <= 0.0) {
-            return false;
-        }
         if (! self::hasActiveObjective($b, 'task_credit_reserve')) {
             return false;
         }

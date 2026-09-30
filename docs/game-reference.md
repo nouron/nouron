@@ -161,34 +161,37 @@ Stiller Deckel (nie im UI erklärt, `game.bar.trade_terms.silent_cap`): `bar` 60
 
 ## 8. Missionen: Belohnungen
 
+Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credits sollen über Missionen und Ereignisse entstehen).
+
 ### Drohne
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_courier_run` | 1 | 3 Or | 90 Cr |
+| `mission_courier_run` | 1 | 3 Or | 180 Cr |
 | `mission_recon_flight` | 1 | 3 Or | 2 Tiles reveal |
 | `mission_deep_survey` | 2 | 6 Or | 1 Deep Scan |
 | `mission_prospecting_flight` (Geo Lv1+) | 2 | 6 Or | 20–30 Rg |
 | `mission_data_sweep` (Cart Lv1+) | 3 | 9 Or | 8 Research AP |
-| `mission_long_range_expedition` (Cart Lv3+) | 5 | 15 Or | 350–550 Cr / 8–12 Wk / 30–45 Rg (1 pick) |
+| `mission_long_range_expedition` (Cart Lv3+) | 5 | 15 Or | 700–1100 Cr / 8–12 Wk / 30–45 Rg (1 pick) |
 
 ### Frachter
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
 | `mission_supply_run` | 1 | 3 Or | 25 Rg / 10 Or |
-| `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 260 Cr + Trade Success (+2 Trust) |
-| `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 90 Cr + Encounter Won (+2 Trust) |
+| `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 520 Cr + Trade Success (+2 Trust) |
+| `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 180 Cr + Encounter Won (+2 Trust) |
 
 ### Frachter / Korvette
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
 | `mission_salvage_sweep` (Constr Lv1+) | 4 | 12 Or | 6–10 Wk |
-| `mission_ruin_expedition` | 4 | 12 Or | 220 Cr (1x pro Ruin) |
+| `mission_ruin_expedition` | 4 | 12 Or | 440 Cr (1x pro Ruin) |
 | `mission_harvester_salvage` | 4 | 12 Or | Harvester Instanz #2 (1x pro Ruin) |
 
 ### Korvette
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_escort_convoy` | 3 | 9 Or | 280 Cr |
+| `mission_escort_convoy` | 3 | 9 Or | 560 Cr |
+| `mission_perimeter_patrol` (Def Lv1+) | 3 | 9 Or | 440 Cr + Encounter Won (+2 Trust) |
 
 > **Organika-Kosten** (Provisions): base = sol_distance × 3 Oder, mit Knowledge-Scaling −1 pro Level (Floor 1)
 > **Dispatch Anforderung**: Schiff ≥25% Max-SP
@@ -231,8 +234,7 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | normal / hard |
 | `mission_harvester_salvage` | Bergungsauftrag: Förderanlage | Frachter o. Korvette | easy / normal |
 | `mission_escort_convoy` | Konvoi-Begleitung | Korvette | normal / hard |
-
-`mission_perimeter_patrol` ist zurückgestellt (kein Katalogeintrag, siehe GDD §8b) und trägt daher keine `difficulties`-Zuordnung.
+| `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | normal / hard |
 
 ---
 

@@ -521,7 +521,8 @@ return [
         // for the mechanical skeleton, not a calibrated balance — see A34-style
         // recalibration after a real playtest batch.
         'encounter' => [
-            'spawn_chance_per_level' => [1 => 0.10, 2 => 0.14, 3 => 0.18, 4 => 0.22, 5 => 0.26],
+            // ×2 (Owner 2026-09-30: events more frequent) — was 0.10/0.14/0.18/0.22/0.26.
+            'spawn_chance_per_level' => [1 => 0.20, 2 => 0.28, 3 => 0.36, 4 => 0.44, 5 => 0.52],
             'offer_duration' => 2, // ticks an unaccepted encounter stays available
             'ap_cost_accept' => 2,
 
@@ -530,7 +531,8 @@ return [
                 'stake_resource_id' => 3, // regolith
                 'stake_amount_per_level' => [1 => 15, 2 => 20, 3 => 25, 4 => 30, 5 => 35],
                 'win_chance' => 0.45,
-                'payout_credits_per_level' => [1 => 40, 2 => 55, 3 => 70, 4 => 85, 5 => 100],
+                // ×2 (Owner 2026-09-30, task_credit_reserve: Credits come from missions/events)
+                'payout_credits_per_level' => [1 => 80, 2 => 110, 3 => 140, 4 => 170, 5 => 200],
             ],
 
             // Auktion / Ausschuss-Ankauf — bound to Voss (Scrap Dealer). Guaranteed,
@@ -538,14 +540,16 @@ return [
             'auction' => [
                 'give_resource_id' => 5, // organics — the colony's structural surplus
                 'give_amount_per_level' => [1 => 20, 2 => 30, 3 => 40, 4 => 50, 5 => 60],
-                'payout_credits_per_level' => [1 => 25, 2 => 38, 3 => 50, 4 => 63, 5 => 75],
+                // ×2 (Owner 2026-09-30, task_credit_reserve: Credits come from missions/events)
+                'payout_credits_per_level' => [1 => 50, 2 => 76, 3 => 100, 4 => 126, 5 => 150],
             ],
 
             // Kurzzeit-Kontrakt — deliberately NOT character-bound (generic "the
             // colony found a short-term buyer"). Credits/tick for a fixed window,
             // then ends automatically.
             'contract' => [
-                'credits_per_tick_per_level' => [1 => 8, 2 => 12, 3 => 16, 4 => 20, 5 => 24],
+                // ×2 (Owner 2026-09-30, task_credit_reserve: Credits come from missions/events)
+                'credits_per_tick_per_level' => [1 => 16, 2 => 24, 3 => 32, 4 => 40, 5 => 48],
                 'duration_ticks' => 3,
             ],
         ],
@@ -564,7 +568,7 @@ return [
         // run each — see colony_information_pool_state.*_used) + 2 NARRATIVE
         // (flavor-only, unlimited). See BarService::rollInformationOutcome().
         'information_pool' => [
-            'spawn_chance_per_tick' => 0.06,
+            'spawn_chance_per_tick' => 0.12, // ×2 (Owner 2026-09-30: events more frequent), was 0.06
             'character_split' => 0.50, // roll < split -> veteran (Deva), else ai_researcher (Lenn)
             'offer_duration' => 2, // ticks an unresolved encounter stays available
 
@@ -610,7 +614,8 @@ return [
         // preacher and stranger DO get a mechanical concern here (see the
         // corrected comment on config/characters.php).
         'concern' => [
-            'spawn_chance_per_level' => [1 => 0.05, 2 => 0.07, 3 => 0.09, 4 => 0.11, 5 => 0.13],
+            // ×2 (Owner 2026-09-30: events more frequent) — was 0.05/0.07/0.09/0.11/0.13.
+            'spawn_chance_per_level' => [1 => 0.10, 2 => 0.14, 3 => 0.18, 4 => 0.22, 5 => 0.26],
             'offer_duration' => 2, // ticks an unresolved concern stays available
             'character_cooldown_sols' => 5, // same figure not rolled again within N Sol
             'character_weights' => [
@@ -653,7 +658,7 @@ return [
             'prospector' => ['regolith_min' => 20, 'regolith_max' => 30],
 
             // Juno — security consulting fee.
-            'mercenary' => ['credits_min' => 30, 'credits_max' => 50],
+            'mercenary' => ['credits_min' => 60, 'credits_max' => 100], // ×2 (Owner 2026-09-30, task_credit_reserve: Credits come from missions/events)
 
             // Aldra — old founder blueprints. Smaller, time-limited voucher —
             // expires after voucher_expires_sols Sol if unused.

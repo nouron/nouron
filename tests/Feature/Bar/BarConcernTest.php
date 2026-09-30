@@ -380,8 +380,8 @@ class BarConcernTest extends TestCase
         $result = $this->barService->resolveConcern(self::COLONY_ID, $id, self::USER_ID, 10);
 
         $this->assertTrue($result['ok']);
-        $this->assertGreaterThanOrEqual(30, $this->getCredits());
-        $this->assertLessThanOrEqual(50, $this->getCredits());
+        $this->assertGreaterThanOrEqual((int) config('game.bar.concern.mercenary.credits_min'), $this->getCredits());
+        $this->assertLessThanOrEqual((int) config('game.bar.concern.mercenary.credits_max'), $this->getCredits());
     }
 
     // ── RESOLVE — founder (Aldra) ─────────────────────────────────────────────────

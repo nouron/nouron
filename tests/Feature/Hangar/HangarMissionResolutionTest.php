@@ -170,7 +170,7 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertNotNull($log);
         $params = json_decode($log->parameters, true);
         $this->assertSame('mission_courier_run', $params['mission_key']);
-        $this->assertSame(90, $params['rewards']['credits']);
+        $this->assertSame((int) config('missions.catalog.mission_courier_run.reward.credits'), $params['rewards']['credits']);
     }
 
     public function test_completion_does_not_fire_before_return_tick(): void
@@ -333,7 +333,7 @@ class HangarMissionResolutionTest extends TestCase
     public function test_success_rolls_pay_the_scaled_reward(): void
     {
         // base_chance forced to 1.0 in setUp() — success guaranteed regardless of seed.
-        // reward_multiplier['hard'] = 1.4 (config/game.php) → 90 * 1.4 = 126.
+        // reward_multiplier['hard'] (config/game.php) scales the courier run's base credits.
         $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21000, difficulty: 'hard');
 
         Artisan::call('game:tick', ['--run' => 1, '--tick' => 21002]);
@@ -344,7 +344,11 @@ class HangarMissionResolutionTest extends TestCase
             ->first();
         $this->assertNotNull($log);
         $params = json_decode($log->parameters, true);
-        $this->assertSame(126, $params['rewards']['credits'], 'hard multiplies the base 90 credits by 1.4');
+        $expected = (int) round(
+            (int) config('missions.catalog.mission_courier_run.reward.credits')
+            * (float) config('game.missions.difficulty.reward_multiplier.hard')
+        );
+        $this->assertSame($expected, $params['rewards']['credits'], 'hard multiplies the base credits by the hard reward multiplier');
     }
 
     public function test_failed_roll_pays_no_reward_and_fires_mission_failed_event(): void
