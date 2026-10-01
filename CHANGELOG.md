@@ -2,6 +2,7 @@
 
 ## 2026-10-01
 
+- Chore: R3 — Produktions-Vorlage `.env.production.example`; Dev-Kommandos (`db:reset`, `game:reset-player`, `colony:seed-demo`, `game:playtest`) und `DatabaseSeeder` brechen in Produktion ab; fehlende Migrationen für `sessions`, `cache` und `cache_locks` ergänzt (Database-Driver für Sessions und Cache inkl. `/sol/next`-Lock).
 - Messung nach A45b (32 Runs): 26/32 Siege, Sieg-Sol Median 86; `task_credit_reserve` 8/8 erfüllt an Sol 68–72 (Zielkorridor gezielt 70–85).
 - Chore: R8 — GitHub-Actions-CI (`.github/workflows/ci.yml`): Pint-Check und PHPUnit (Standard- und Playtest-Suite) auf jedem PR und Push nach `master`.
 - Balance: A45b — `task_credit_reserve` 4000/10 → 6000 Credits für 20 Sole (Owner; vorher mit Belohnungen ×2 schon an Sol 44–45 erfüllt). PlaytestBot hält bei aktivem Ziel mindestens 1,1 × Schwelle (vorher genau die Schwelle → default/eager pendelten knapp darunter, die Serie riss). Tests zur Kreditreserve lesen die Schwelle aus der Config.

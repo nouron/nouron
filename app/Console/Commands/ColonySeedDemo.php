@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RefusesInProduction;
 use App\Services\ColonyTileService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ColonySeedDemo extends Command
 {
+    use RefusesInProduction;
+
     protected $signature = 'colony:seed-demo {colony_id=1 : Colony ID to seed} {--path=all : Sol-2 path building to build (cantina|hangar|lab|all)}';
 
     protected $description = 'Seed a colony with a rich ~80% built-out demo state for testing';
@@ -68,6 +71,10 @@ class ColonySeedDemo extends Command
 
     public function handle(): int
     {
+        if ($this->refusesInProduction()) {
+            return self::FAILURE;
+        }
+
         $colonyId = (int) $this->argument('colony_id');
 
         if (! DB::table('glx_colonies')->where('id', $colonyId)->exists()) {

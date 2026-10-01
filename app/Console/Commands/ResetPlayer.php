@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RefusesInProduction;
 use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\Run;
@@ -43,6 +44,8 @@ use function Laravel\Prompts\table;
  */
 class ResetPlayer extends Command
 {
+    use RefusesInProduction;
+
     protected $signature = 'game:reset-player
         {user? : Username or user_id (omit for interactive select)}
         {--yes : Skip confirmation prompt}
@@ -84,6 +87,10 @@ class ResetPlayer extends Command
 
     public function handle(): int
     {
+        if ($this->refusesInProduction()) {
+            return self::FAILURE;
+        }
+
         // ── Resolve user ──────────────────────────────────────────────────────
 
         $input = $this->argument('user');

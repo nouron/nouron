@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RefusesInProduction;
 use Illuminate\Console\Command;
 use Illuminate\Process\Pool;
 use Illuminate\Support\Facades\Process;
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\Process;
  */
 class Playtest extends Command
 {
+    use RefusesInProduction;
+
     protected $signature = 'game:playtest
         {--profiles=default : Comma-separated BotProfile names}
         {--seeds=4242 : Comma-separated integer seeds}
@@ -38,6 +41,10 @@ class Playtest extends Command
 
     public function handle(): int
     {
+        if ($this->refusesInProduction()) {
+            return self::FAILURE;
+        }
+
         $profiles = array_filter(array_map('trim', explode(',', (string) $this->option('profiles'))));
         $seeds = array_filter(array_map('trim', explode(',', (string) $this->option('seeds'))));
         $concurrency = max(1, (int) $this->option('concurrency'));
