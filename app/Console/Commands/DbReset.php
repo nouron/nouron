@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RefusesInProduction;
 use Illuminate\Console\Command;
 
 /**
@@ -19,12 +20,18 @@ use Illuminate\Console\Command;
  */
 class DbReset extends Command
 {
+    use RefusesInProduction;
+
     protected $signature = 'db:reset {--force : Skip the confirmation prompt}';
 
     protected $description = 'Drop all tables, run migrations, and seed the development database';
 
     public function handle(): int
     {
+        if ($this->refusesInProduction()) {
+            return self::FAILURE;
+        }
+
         $db = config('database.connections.'.config('database.default').'.database');
 
         if (! $this->option('force')) {

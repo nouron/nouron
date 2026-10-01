@@ -11,7 +11,7 @@ use Tests\TestCase;
  * every profile — promotions, ship requests and merchant buys took whatever came
  * in, so task_credit_reserve never had a chance. Owner: every profile saves while
  * that objective is drawn and open. Credit spending may only use the surplus
- * above the threshold (thrifty/focus keep their larger 1.5x buffer).
+ * above 1.1x the threshold (thrifty/focus keep their larger 1.5x buffer).
  */
 class BotStrategyCreditReserveSavingTest extends TestCase
 {
@@ -33,9 +33,19 @@ class BotStrategyCreditReserveSavingTest extends TestCase
         $this->assertNull($this->rule('default', 'buy_merchant_item')['when']($bot));
     }
 
-    public function test_default_profile_buys_from_the_surplus_above_the_threshold(): void
+    public function test_default_profile_keeps_a_ten_percent_margin_above_the_threshold(): void
     {
-        $bot = $this->boot(credits: $this->threshold + 300);
+        // Baseline 2026-10-01: with a buffer of exactly the threshold, default/eager
+        // spent everything above it and hovered just below — the streak kept breaking.
+        $bot = $this->boot(credits: (int) round($this->threshold * 1.1) - 1);
+        $this->insertMerchantItem($bot, cost: 1);
+
+        $this->assertNull($this->rule('default', 'buy_merchant_item')['when']($bot));
+    }
+
+    public function test_default_profile_buys_from_the_surplus_above_the_margin(): void
+    {
+        $bot = $this->boot(credits: (int) round($this->threshold * 1.1) + 300);
         $this->insertMerchantItem($bot, cost: 200);
 
         $this->assertNotNull($this->rule('default', 'buy_merchant_item')['when']($bot));

@@ -70,8 +70,8 @@ class RunObjectivesTest extends TestCase
     {
         $this->assertSame(4, config('game.run.tasks.task_senior_advisors.target'));
         $this->assertSame(3, config('game.run.tasks.task_senior_advisors.min_rank'));
-        $this->assertSame(4000, config('game.run.tasks.task_credit_reserve.threshold'));
-        $this->assertSame(10, config('game.run.tasks.task_credit_reserve.target'));
+        $this->assertSame(6000, config('game.run.tasks.task_credit_reserve.threshold'));
+        $this->assertSame(20, config('game.run.tasks.task_credit_reserve.target'));
         $this->assertSame(35, config('game.run.tasks.task_engineering_output.target'));
         $this->assertSame(10, config('game.run.tasks.task_expedition_coverage.target'));
         $this->assertSame('normal', config('game.run.tasks.task_expedition_coverage.min_difficulty'));

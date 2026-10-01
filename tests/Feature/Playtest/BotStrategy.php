@@ -2165,13 +2165,13 @@ class BotStrategy
      * True when accept_bar_offer/request_ship should hold back this Sol because
      * task_credit_reserve is an active goal and spending now would jeopardize
      * reaching/holding the threshold. Applies to every profile (Owner
-     * 2026-09-30); the buffer scales with savingsAggressiveness (0.0 → the
-     * threshold itself, 1.0 → 1.5× threshold).
+     * 2026-09-30); the buffer comes from creditReserveBuffer() (1.1×–1.5×
+     * threshold).
      */
     /**
      * Credits the bot may spend on promotions, hires and merchant buys. While
-     * task_credit_reserve is open, every profile keeps the threshold (thrifty/
-     * focus: 1.5× threshold) and only spends the surplus above it (Owner
+     * task_credit_reserve is open, every profile keeps creditReserveBuffer()
+     * (1.1×–1.5× threshold) and only spends the surplus above it (Owner
      * 2026-09-30 — before, Credits sank to ~100 by Sol 50 in every profile).
      */
     private static function spendableCredits(BotSession $b): int
@@ -2183,7 +2183,18 @@ class BotStrategy
 
         $threshold = (int) config('game.run.tasks.task_credit_reserve.threshold', 4000);
 
-        return $credits - (int) round($threshold * (1 + 0.5 * self::$creditSavings));
+        return $credits - self::creditReserveBuffer($threshold, self::$creditSavings);
+    }
+
+    /**
+     * Credits to keep while task_credit_reserve is open: 1.1× the threshold for a
+     * profile without savings bias, up to 1.5× at savingsAggressiveness 1.0. The
+     * 10 % margin (Owner 2026-10-01) stops default/eager from spending everything
+     * above the threshold and hovering just below it, which broke the streak.
+     */
+    private static function creditReserveBuffer(int $threshold, float $savingsAggressiveness): int
+    {
+        return (int) round($threshold * (1.1 + 0.4 * $savingsAggressiveness));
     }
 
     private static function creditReserveGuardBlocks(BotSession $b, BotProfile $profile): bool
@@ -2193,7 +2204,7 @@ class BotStrategy
         }
 
         $threshold = (int) config('game.run.tasks.task_credit_reserve.threshold', 4000);
-        $buffer = (int) round($threshold * (1 + 0.5 * $profile->savingsAggressiveness));
+        $buffer = self::creditReserveBuffer($threshold, $profile->savingsAggressiveness);
 
         return self::credits($b) < $buffer;
     }

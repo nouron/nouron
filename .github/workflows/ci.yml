@@ -1,0 +1,53 @@
+name: CI
+
+# R8 (Closed-Beta-Vorbereitung): every PR and every push to master runs the
+# test suites and the Pint style check, so nothing red gets merged or deployed.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Pint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Composer install
+        uses: ramsey/composer-install@v3
+      - run: bin/pint --test
+
+  tests:
+    name: PHPUnit (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Default suites (feature + unit) and the PlaytestBot suite, which
+        # phpunit.xml keeps out of the default run because its full-run tests
+        # are slow.
+        suite: ['laravel-feature,laravel-unit', 'playtest']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, sqlite3
+          coverage: none
+      - name: Composer install
+        uses: ramsey/composer-install@v3
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Run tests
+        run: bin/phpunit --testsuite '${{ matrix.suite }}'
