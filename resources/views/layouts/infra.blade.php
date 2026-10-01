@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
     <link rel="stylesheet" href="{{ asset("css/dialogs.css") }}?v={{ filemtime(public_path("css/dialogs.css")) }}">
+    <link rel="stylesheet" href="{{ asset("css/feedback.css") }}?v={{ filemtime(public_path("css/feedback.css")) }}">
     <link rel="stylesheet" href="{{ asset("css/infra.css") }}">
     @stack("styles")
 </head>
@@ -71,6 +72,10 @@
         @if (Auth::user()->role === "admin")
             @include("partials.debug-bar")
         @endif
+    @endauth
+
+    @auth
+        @include("partials.feedback")
     @endauth
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>

@@ -1,0 +1,30 @@
+<?php
+
+return [
+    'button' => 'Feedback',
+    'button_title' => 'Feedback oder Fehler melden',
+    'title' => 'Feedback senden',
+    'intro' => 'Was ist dir aufgefallen? Run, Sol und Seite hängen wir automatisch an.',
+    'category' => 'Art',
+    'category_bug' => 'Fehler',
+    'category_balance' => 'Balance',
+    'category_idea' => 'Idee',
+    'category_other' => 'Sonstiges',
+    'message' => 'Deine Nachricht',
+    'message_placeholder' => 'Was ist passiert, was hast du erwartet?',
+    'send' => 'Senden',
+    'cancel' => 'Abbrechen',
+    'close' => 'Schließen',
+    'sending' => 'Wird gesendet …',
+    'thanks' => 'Danke! Dein Feedback ist angekommen.',
+    'error' => 'Senden fehlgeschlagen. Bitte versuche es gleich noch einmal.',
+    'rate_limited' => 'Du hast gerade viel gesendet — bitte warte eine Minute.',
+
+    'admin_title' => 'Beta-Feedback',
+    'admin_empty' => 'Noch kein Feedback.',
+    'admin_col_date' => 'Datum',
+    'admin_col_user' => 'Spieler',
+    'admin_col_context' => 'Run / Sol / Seite',
+    'admin_col_category' => 'Art',
+    'admin_col_message' => 'Nachricht',
+];

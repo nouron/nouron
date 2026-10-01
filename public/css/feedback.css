@@ -1,0 +1,64 @@
+/* In-game feedback trigger + dialog (R15, closed beta). */
+
+.feedback-trigger {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 900;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: auto;
+    margin: 0;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    color: #1a1a1e;
+    background: #ffffff;
+    border: 1px solid #e8e8ec;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-trigger:hover {
+    background: #f7f7f5;
+}
+
+/* Admins see the fixed debug bar at the bottom edge. */
+.feedback-trigger--above-debug {
+    bottom: 2.5rem;
+}
+
+.feedback-dialog__intro {
+    color: #6b6b7a;
+    font-size: 0.9rem;
+}
+
+.feedback-dialog__error {
+    color: #b00020;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+    .feedback-trigger span {
+        display: none;
+    }
+}
+
+/* Primary action in Nouron-red (design system: red only for primary actions). */
+.feedback-dialog footer button:not(.secondary) {
+    background: #8c2030;
+    border-color: #8c2030;
+}
+
+.feedback-dialog footer button:not(.secondary):hover {
+    opacity: 0.88;
+}
+
+/* Admin overview title — same display style as the other H1 page titles. */
+.feedback-admin-title {
+    font-family: var(--font-display, "Libre Baskerville", Georgia, serif);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.45em;
+    font-size: clamp(1.25rem, 5vw, 2rem);
+}

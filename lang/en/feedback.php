@@ -1,0 +1,30 @@
+<?php
+
+return [
+    'button' => 'Feedback',
+    'button_title' => 'Send feedback or report a bug',
+    'title' => 'Send feedback',
+    'intro' => 'What did you notice? Run, Sol and page are attached automatically.',
+    'category' => 'Type',
+    'category_bug' => 'Bug',
+    'category_balance' => 'Balance',
+    'category_idea' => 'Idea',
+    'category_other' => 'Other',
+    'message' => 'Your message',
+    'message_placeholder' => 'What happened, what did you expect?',
+    'send' => 'Send',
+    'cancel' => 'Cancel',
+    'close' => 'Close',
+    'sending' => 'Sending …',
+    'thanks' => 'Thanks! Your feedback has arrived.',
+    'error' => 'Sending failed. Please try again in a moment.',
+    'rate_limited' => 'You just sent a lot — please wait a minute.',
+
+    'admin_title' => 'Beta feedback',
+    'admin_empty' => 'No feedback yet.',
+    'admin_col_date' => 'Date',
+    'admin_col_user' => 'Player',
+    'admin_col_context' => 'Run / Sol / Page',
+    'admin_col_category' => 'Type',
+    'admin_col_message' => 'Message',
+];
