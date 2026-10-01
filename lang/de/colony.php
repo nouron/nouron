@@ -713,4 +713,23 @@ return [
     'codex_locked_entry' => '???',
     'codex_no_entries_yet' => 'Noch keine Einträge freigeschaltet.',
 
+    // T25 error contract (hangar/merchant codes)
+    'hangar_error_ship_not_orderable' => 'Diesen Schiffstyp liefert der Nexus nicht.',
+    'hangar_error_invalid_consul_ap' => 'Ungültiger AP-Einsatz für die Verhandlung.',
+    'hangar_error_insufficient_ap' => 'Nicht genug AP: :requested benötigt, :available verfügbar.',
+    'hangar_error_nexus_credit_cc_level' => 'Nexus-Kredit erfordert Kommandozentrale Stufe :level (aktuell :current).',
+    'hangar_error_insufficient_credits' => 'Nicht genug Credits: :need benötigt, :have vorhanden.',
+    'hangar_error_ship_not_pending' => 'Dieses Schiff wartet nicht auf einen Hangarplatz.',
+    'hangar_error_hangar_not_found' => 'Diesen Hangar gibt es in der Kolonie nicht.',
+    'hangar_error_hangar_occupied' => 'In diesem Hangar steht bereits ein Schiff.',
+    'hangar_error_unknown_mission' => 'Unbekannte Mission.',
+    'hangar_error_no_ship_in_hangar' => 'In diesem Hangar steht kein Schiff.',
+    'hangar_error_ship_not_docked' => 'Das Schiff ist nicht startbereit.',
+    'hangar_error_no_active_mission' => 'Für diesen Hangar läuft keine Mission.',
+    'hangar_error_no_docked_ship' => 'In diesem Hangar liegt kein Schiff vor Anker.',
+    'hangar_error_ship_full_status' => 'Das Schiff ist bereits voll instand.',
+    'hangar_error_action_failed' => 'Die Aktion konnte nicht ausgeführt werden.',
+    'merchant_error_item_not_found' => 'Dieses Angebot gibt es nicht.',
+    'merchant_error_item_sold' => 'Dieses Angebot ist bereits verkauft.',
+    'merchant_error_visit_over' => 'Der Händler ist nicht mehr anwesend.',
 ];

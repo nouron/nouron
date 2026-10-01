@@ -351,11 +351,11 @@ class MerchantService
         $item = DB::table('merchant_items')->where('id', $itemId)->first();
 
         if (! $item) {
-            return ['ok' => false, 'error' => 'Item nicht gefunden.'];
+            return $this->fail('merchant_item_not_found', 'colony.merchant_error_item_not_found');
         }
 
         if ($item->sold) {
-            return ['ok' => false, 'error' => 'Dieses Item wurde bereits gekauft.'];
+            return $this->fail('merchant_item_sold', 'colony.merchant_error_item_sold');
         }
 
         // Verify the visit is still active
@@ -368,7 +368,7 @@ class MerchantService
             ->first();
 
         if (! $visit) {
-            return ['ok' => false, 'error' => 'Der Händler ist nicht mehr anwesend.'];
+            return $this->fail('merchant_visit_over', 'colony.merchant_error_visit_over');
         }
 
         // Handelsvorteil, 'merchant' channel (GDD §12, A13) — computed BEFORE the
@@ -382,7 +382,7 @@ class MerchantService
             ->value('credits') ?? 0);
 
         if ($credits < $chargedCredits) {
-            return ['ok' => false, 'error' => 'Nicht genug Credits.'];
+            return $this->fail('insufficient_credits', 'colony.error_insufficient_credits');
         }
 
         // Deduct credits, apply effect and mark sold atomically.
@@ -595,5 +595,15 @@ class MerchantService
             ->where('building_id', $target->building_id)
             ->where('instance_id', $target->instance_id)
             ->update(['status_points' => $newSP]);
+    }
+
+    /**
+     * T25 error contract: machine code in `error`, translated text in `message`.
+     *
+     * @return array{ok: false, error: string, message: string}
+     */
+    private function fail(string $code, string $langKey): array
+    {
+        return ['ok' => false, 'error' => $code, 'message' => __($langKey)];
     }
 }

@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class HangarController extends BaseController
@@ -124,7 +125,7 @@ class HangarController extends BaseController
                 (int) ($validated['consul_ap_spent'] ?? 0),
             );
         } catch (\RuntimeException $e) {
-            return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->errorResponse($e);
         }
 
         return response()->json([
@@ -154,7 +155,7 @@ class HangarController extends BaseController
                 (int) $validated['instance_id'],
             );
         } catch (\RuntimeException $e) {
-            return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->errorResponse($e);
         }
 
         return response()->json([
@@ -185,10 +186,8 @@ class HangarController extends BaseController
                 $validated['target'] ?? null,
                 $validated['difficulty'],
             );
-        } catch (GameRuleException $e) {
-            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()], 422);
         } catch (\RuntimeException $e) {
-            return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->errorResponse($e);
         }
 
         return response()->json([
@@ -205,7 +204,7 @@ class HangarController extends BaseController
         try {
             $this->hangarService->recallShip($colony->id, $instanceId);
         } catch (\RuntimeException $e) {
-            return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->errorResponse($e);
         }
 
         return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);
@@ -229,7 +228,7 @@ class HangarController extends BaseController
         try {
             $this->hangarService->repairShip($colony->id, $instanceId);
         } catch (\RuntimeException $e) {
-            return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
+            return $this->errorResponse($e);
         }
 
         if (! config('game.bypass.ap_checks')) {
@@ -266,5 +265,24 @@ class HangarController extends BaseController
         }
 
         return null;
+    }
+
+    /**
+     * T25 error contract: `error` is a machine code, `message` the translated
+     * player text. Unexpected exceptions are logged and never leak their text.
+     */
+    private function errorResponse(\RuntimeException $e): JsonResponse
+    {
+        if ($e instanceof GameRuleException) {
+            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()], 422);
+        }
+
+        Log::warning('hangar_action_failed', ['exception' => $e->getMessage()]);
+
+        return response()->json([
+            'ok' => false,
+            'error' => 'hangar_action_failed',
+            'message' => __('colony.hangar_error_action_failed'),
+        ], 422);
     }
 }

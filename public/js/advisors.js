@@ -117,7 +117,7 @@ function advisorCarousel(config) {
                 this.syncApChip(res.apAvailable);
                 this.syncHint(res);
             } else {
-                this.errorMsg = res.error ?? 'Fehler beim Entlassen.';
+                this.errorMsg = res.message ?? res.error ?? 'Fehler beim Entlassen.';
             }
         },
 

@@ -389,7 +389,7 @@ class AdvisorController extends BaseController
 
         if (! $advisor) {
             if ($request->expectsJson()) {
-                return response()->json(['ok' => false, 'error' => 'Not found.'], 404);
+                return response()->json(['ok' => false, 'error' => 'advisor_not_found', 'message' => __('advisors.error_not_found')], 404);
             }
             abort(404);
         }

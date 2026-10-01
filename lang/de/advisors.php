@@ -71,5 +71,5 @@ return [
     // Hire-time warnings: AP-type has no consuming building yet
     'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — AP für Kenntnisse bleibt vorerst ungenutzt.',
     'warning_no_hangar' => 'Du hast noch keinen Hangar — AP wird vorerst nur für Erkundung genutzt.',
-
+    'error_not_found' => 'Berater nicht gefunden.',
 ];

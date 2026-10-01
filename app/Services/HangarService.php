@@ -217,6 +217,18 @@ class HangarService
             ->all();
     }
 
+    /**
+     * Player-facing rule violation (T25): a stable snake_case code for the
+     * client plus the translated message. Without an explicit key the message
+     * comes from colony.hangar_error_{code}.
+     *
+     * @param  array<string, mixed>  $replace
+     */
+    private function ruleError(string $code, ?string $langKey = null, array $replace = []): GameRuleException
+    {
+        return new GameRuleException($code, __($langKey ?? "colony.hangar_error_{$code}", $replace));
+    }
+
     private function inactiveReason(int $shipId): string
     {
         return __('colony.hangar_ship_inactive', ['level' => $this->requiredHangarLevel($shipId)]);
@@ -327,28 +339,26 @@ class HangarService
         int $consulApSpent = 0,
     ): void {
         if (! in_array($shipId, self::ALLOWED_SHIP_IDS, true)) {
-            throw new RuntimeException("Ship type {$shipId} is not orderable from the Nexus.");
+            throw $this->ruleError('ship_not_orderable');
         }
 
         $requiredLevel = self::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL[$shipId];
         if ($this->hangarMaxLevel($colonyId) < $requiredLevel) {
-            throw new RuntimeException(__('colony.hangar_request_level_too_low'));
+            throw $this->ruleError('hangar_level_too_low', 'colony.hangar_request_level_too_low');
         }
 
         if ($consulApSpent < 0) {
-            throw new RuntimeException('consulApSpent must be zero or positive.');
+            throw $this->ruleError('invalid_consul_ap');
         }
 
         if ($consulApSpent > 0 && $this->consulRank($colonyId) < 1) {
-            throw new RuntimeException(__('colony.hangar_consul_required'));
+            throw $this->ruleError('consul_required', 'colony.hangar_consul_required');
         }
 
         if ($consulApSpent > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($consulApSpent > $availableAp) {
-                throw new RuntimeException(
-                    "Insufficient economy AP: requested {$consulApSpent}, available {$availableAp}."
-                );
+                throw $this->ruleError('insufficient_ap', null, ['requested' => $consulApSpent, 'available' => $availableAp]);
             }
         }
 
@@ -382,9 +392,7 @@ class HangarService
                     ->value('level');
 
                 if ($ccLevel < $minCcLevel) {
-                    throw new RuntimeException(
-                        "Nexus-Kredit requires Command Center level {$minCcLevel} (current: {$ccLevel})."
-                    );
+                    throw $this->ruleError('nexus_credit_cc_level', null, ['level' => $minCcLevel, 'current' => $ccLevel]);
                 }
 
                 // Apply trust penalty (fire one-shot trust event).
@@ -417,9 +425,7 @@ class HangarService
                     ->value('credits');
 
                 if ($credits < $finalCost) {
-                    throw new RuntimeException(
-                        "Insufficient credits: need {$finalCost}, have {$credits}."
-                    );
+                    throw $this->ruleError('insufficient_credits', null, ['need' => $finalCost, 'have' => $credits]);
                 }
 
                 if ($finalCost > 0) {
@@ -492,7 +498,7 @@ class HangarService
     public function grantFreeShip(int $colonyId, int $shipId): void
     {
         if (! in_array($shipId, self::ALLOWED_SHIP_IDS, true)) {
-            throw new RuntimeException("Ship type {$shipId} is not orderable from the Nexus.");
+            throw $this->ruleError('ship_not_orderable');
         }
 
         $configKey = self::SHIP_ID_TO_CONFIG_KEY[$shipId];
@@ -556,9 +562,7 @@ class HangarService
                 ->first();
 
             if ($ship === null) {
-                throw new RuntimeException(
-                    "Ship row {$shipRowId} not found, not pending, or does not belong to this colony."
-                );
+                throw $this->ruleError('ship_not_pending');
             }
 
             // Verify the target hangar slot exists and is free.
@@ -569,7 +573,7 @@ class HangarService
                 ->exists();
 
             if (! $hangarExists) {
-                throw new RuntimeException("Hangar instance {$instanceId} does not exist for this colony.");
+                throw $this->ruleError('hangar_not_found');
             }
 
             $slotOccupied = DB::table('colony_ships')
@@ -578,7 +582,7 @@ class HangarService
                 ->exists();
 
             if ($slotOccupied) {
-                throw new RuntimeException("Hangar instance {$instanceId} already has a ship assigned.");
+                throw $this->ruleError('hangar_occupied');
             }
 
             DB::table('colony_ships')
@@ -632,11 +636,11 @@ class HangarService
     {
         $mission = config("missions.catalog.{$missionKey}");
         if ($mission === null) {
-            throw new RuntimeException("Unknown mission key: {$missionKey}.");
+            throw $this->ruleError('unknown_mission');
         }
 
         if (! in_array($difficulty, $mission['difficulties'] ?? [], true)) {
-            throw new RuntimeException(__('missions.error_invalid_difficulty'));
+            throw $this->ruleError('invalid_difficulty', 'missions.error_invalid_difficulty');
         }
 
         DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target, $difficulty): void {
@@ -646,13 +650,11 @@ class HangarService
                 ->first();
 
             if ($ship === null) {
-                throw new RuntimeException("No ship assigned to hangar instance {$instanceId}.");
+                throw $this->ruleError('no_ship_in_hangar');
             }
 
             if ($ship->ship_state !== 'docked') {
-                throw new RuntimeException(
-                    "Ship in hangar {$instanceId} cannot be dispatched (current state: {$ship->ship_state})."
-                );
+                throw $this->ruleError('ship_not_docked');
             }
 
             // GDD §7 "Hangar unter Schiffsstufe": checked only here, at mission
@@ -668,13 +670,13 @@ class HangarService
 
             $shipKey = self::SHIP_ID_TO_CONFIG_KEY[(int) $ship->ship_id] ?? null;
             if (! in_array($shipKey, $mission['ships'], true)) {
-                throw new RuntimeException(__('missions.error_wrong_ship_type'));
+                throw $this->ruleError('wrong_ship_type', 'missions.error_wrong_ship_type');
             }
 
             // §7 dispatch block: worn-down ships must be repaired first.
             $minSp = self::SHIP_MAX_STATUS * (float) config('missions.dispatch_min_sp_pct', 0.25);
             if ((float) $ship->status_points < $minSp) {
-                throw new RuntimeException(__('missions.error_sp_too_low'));
+                throw $this->ruleError('ship_sp_too_low', 'missions.error_sp_too_low');
             }
 
             // Knowledge gate.
@@ -682,7 +684,7 @@ class HangarService
             if ($gate !== null) {
                 [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
                 if ($this->knowledgeLevel($colonyId, $knowledgeKey) < $requiredLevel) {
-                    throw new RuntimeException(__('missions.error_knowledge_gate'));
+                    throw $this->ruleError('knowledge_gate', 'missions.error_knowledge_gate');
                 }
             }
 
@@ -700,12 +702,12 @@ class HangarService
                     ->count();
                 $maxInstances = (int) (collect(config('buildings'))->firstWhere('id', BuildingId::Harvester->value)['max_instances'] ?? 2);
                 if ($harvesterInstanceCount >= $maxInstances) {
-                    throw new RuntimeException(__('missions.error_harvester_instance_full'));
+                    throw $this->ruleError('harvester_instance_full', 'missions.error_harvester_instance_full');
                 }
 
                 $ownerUserId = Colony::find($colonyId)?->user_id;
                 if ($ownerUserId !== null && $this->harvesterEntitlementService->hasEntitlement($ownerUserId)) {
-                    throw new RuntimeException(__('missions.error_harvester_instance_full'));
+                    throw $this->ruleError('harvester_instance_full', 'missions.error_harvester_instance_full');
                 }
             }
 
@@ -722,14 +724,14 @@ class HangarService
 
             if (! config('game.bypass.ap_checks')
                 && $this->advisorService->getAvailableActionPoints($colonyId) < $navApCost) {
-                throw new RuntimeException(__('colony.hangar_dispatch_no_nav_ap'));
+                throw $this->ruleError('no_nav_ap', 'colony.hangar_dispatch_no_nav_ap');
             }
 
             if (! config('game.bypass.resource_costs')) {
                 $organika = (int) DB::table('colony_resources')
                     ->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount');
                 if ($organika < $organikaCost) {
-                    throw new RuntimeException(__('colony.hangar_dispatch_no_organika'));
+                    throw $this->ruleError('no_organika', 'colony.hangar_dispatch_no_organika');
                 }
             }
 
@@ -816,7 +818,7 @@ class HangarService
             $researchId = (int) ($target['research_id'] ?? 0);
             $knownIds = collect(config('knowledge'))->pluck('id')->map(fn ($id) => (int) $id)->all();
             if (! in_array($researchId, $knownIds, true)) {
-                throw new RuntimeException(__('missions.error_invalid_target'));
+                throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
             }
 
             return json_encode(['research_id' => $researchId]);
@@ -825,7 +827,7 @@ class HangarService
         $q = $target['q'] ?? null;
         $r = $target['r'] ?? null;
         if ($q === null || $r === null) {
-            throw new RuntimeException(__('missions.error_invalid_target'));
+            throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
         }
 
         $tile = DB::table('colony_tiles')
@@ -840,7 +842,7 @@ class HangarService
         };
 
         if (! $valid) {
-            throw new RuntimeException(__('missions.error_invalid_target'));
+            throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
         }
 
         $targetJson = json_encode(['q' => (int) $q, 'r' => (int) $r]);
@@ -853,7 +855,7 @@ class HangarService
                 ->whereIn('state', ['active', 'completed'])
                 ->where('target', $targetJson)
                 ->exists()) {
-            throw new RuntimeException(__('missions.error_target_consumed'));
+            throw $this->ruleError('target_consumed', 'missions.error_target_consumed');
         }
 
         return $targetJson;
@@ -1017,7 +1019,7 @@ class HangarService
                 ->first();
 
             if ($mission === null) {
-                throw new RuntimeException("No active mission found for hangar instance {$instanceId}.");
+                throw $this->ruleError('no_active_mission');
             }
 
             $currentTick = $this->tickService->getTickCount();
@@ -1051,15 +1053,13 @@ class HangarService
                 ->first();
 
             if ($ship === null || $ship->ship_state !== 'docked') {
-                throw new RuntimeException(
-                    "No docked ship found in hangar instance {$instanceId}."
-                );
+                throw $this->ruleError('no_docked_ship');
             }
 
             $current = (float) $ship->status_points;
 
             if ($current >= self::SHIP_MAX_STATUS) {
-                throw new RuntimeException("Ship in hangar {$instanceId} is already at full status.");
+                throw $this->ruleError('ship_full_status');
             }
 
             $newStatus = min(self::SHIP_MAX_STATUS, $current + self::REPAIR_SP_PER_AP);

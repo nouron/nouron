@@ -67,5 +67,5 @@ return [
     // Hire-time warnings: AP-type has no consuming building yet
     'warning_no_sciencelab' => 'You don\'t have an Analytics Lab yet — Research AP will go unused for now.',
     'warning_no_hangar' => 'You don\'t have a Hangar yet — Navigation AP will only be used for exploration for now.',
-
+    'error_not_found' => 'Advisor not found.',
 ];
