@@ -843,32 +843,33 @@ return [
             // to roughly Sol 72–77 — sustained prosperity rather than a peak.
             // "Nexus-Vorschuss tilgen" becomes a separate pool objective (ROADMAP R21).
             'task_credit_reserve' => ['category' => 'economy', 'type' => 'streak', 'target' => 20, 'threshold' => 6000],
-            // PROVISIONAL (2026-09-26 batch: trust maxed at 33–53 with the old
-            // threshold of 70, never completed): trust > threshold for `target` Sols.
+            // R1 (Owner 2026-10-01): confirmed by the batch 2026-10-01 — 8/8 completed
+            // at Sol 82–95 for incidental and targeted play alike (old threshold 70
+            // was unreachable). Trust > threshold for `target` Sols.
             'task_colony_prosperity' => ['category' => 'diplomacy', 'type' => 'streak', 'target' => 12, 'threshold' => 40],
-            // PROVISIONAL (2026-09-26 batch: target 3 was reached by Sol 48–72,
-            // far too early — level 5 is the knowledge cap): `target` knowledges at
-            // level >= min_level.
+            // R1 (Owner 2026-10-01): confirmed — targeted play reaches 7 knowledges at
+            // Lv5 around Sol 68, incidental play tops out at 6. `target` knowledges
+            // at level >= min_level.
             'task_research_lead' => ['category' => 'research', 'type' => 'counter', 'target' => 7, 'min_level' => 5],
-            // PROVISIONAL (2026-09-26 batch: old thresholds were trivially satisfied
-            // right at phase-2 start): Regolith > regolith_min AND Organika >
-            // organics_min, held for `target` Sols. The former "supply > 0" check was
-            // dropped (Owner 2026-09-30) — user_resources.supply is the cap, never 0
-            // with a Command Center.
-            'task_self_sufficiency' => ['category' => 'survival', 'type' => 'streak', 'target' => 45, 'regolith_min' => 150, 'organics_min' => 300],
-            // PROVISIONAL (new measurement, bot data confounded by a mission-choice
-            // bug fixed in this batch — recheck with the next run): successful
-            // missions at difficulty >= min_difficulty (order:
-            // game.missions.difficulty.order).
+            // R1 (Owner 2026-10-01): streak 45 → 35 Sols — 45 only completed at Sol
+            // ~96–97; 35 projects to ~86–87 (incidental and targeted). Regolith >
+            // regolith_min AND Organika > organics_min, held for `target` Sols. The
+            // former "supply > 0" check was dropped (Owner 2026-09-30) —
+            // user_resources.supply is the cap, never 0 with a Command Center.
+            'task_self_sufficiency' => ['category' => 'survival', 'type' => 'streak', 'target' => 35, 'regolith_min' => 150, 'organics_min' => 300],
+            // R1 (Owner 2026-10-01): stays 10 — targeted play completes at Sol 82–87.
+            // Incidental play sometimes reaches it earlier because credit missions at
+            // 'normal' count too. Successful missions at difficulty >= min_difficulty
+            // (order: game.missions.difficulty.order).
             'task_expedition_coverage' => ['category' => 'exploration', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal'],
             // Owner decision 2026-09-30 (baseline batch 4 profiles × 8 seeds): targeted
             // play hit 30 by Sol 48, far ahead of the 70–85 corridor; the curve then
             // flattens (31 @ Sol 60, 35 @ Sol 70, 37 @ Sol 90), incidental play stays
             // at 22–26. Sum of building levels, every instance with its own level.
             'task_engineering_output' => ['category' => 'research', 'type' => 'counter', 'target' => 35],
-            // PROVISIONAL (2026-09-26 batch: target 5 reached by Sol 79–94, slightly
-            // too easy): purchased merchant items in this run.
-            'task_trade_volume' => ['category' => 'economy', 'type' => 'counter', 'target' => 7],
+            // R1 (Owner 2026-10-01): 7 → 8 — with 7 incidental play completed at Sol
+            // 79–86, ahead of the ~90 rule. Purchased merchant items in this run.
+            'task_trade_volume' => ['category' => 'economy', 'type' => 'counter', 'target' => 8],
         ],
         'tick_duration_hours' => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players' => 1,      // 1 = singleplayer; 2–4 = multiplayer
