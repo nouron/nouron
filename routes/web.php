@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Colony\BarController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Colony\CorporateContactController;
 use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\CommLog\CommLogController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\NexusDbController;
 use App\Http\Controllers\Resources\JsonController as ResourcesController;
@@ -27,6 +29,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/lobby/{run}/abandon', [LobbyController::class, 'abandon'])->name('lobby.abandon');
     Route::get('/run/{id}/result', [RunResultController::class, 'show'])->name('run.result')->where('id', '[0-9]+');
     Route::post('/run/new', [LobbyController::class, 'newRun'])->name('run.new');
+});
+
+// ── Feedback (R15, closed beta) ──────────────────────────────────────────────
+
+Route::middleware('auth')->group(function () {
+    Route::post('/feedback', [FeedbackController::class, 'store'])->middleware('throttle:5,1')->name('feedback.store');
+    Route::get('/admin/feedback', [AdminFeedbackController::class, 'index'])->name('admin.feedback');
 });
 
 // ── Public ───────────────────────────────────────────────────────────────────
