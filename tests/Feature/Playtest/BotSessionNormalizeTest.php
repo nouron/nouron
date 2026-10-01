@@ -52,12 +52,11 @@ class BotSessionNormalizeTest extends TestCase
         $this->assertSame('ap_limit', end($bot->log)['error']);
     }
 
-    public function test_raw_exception_message_without_machine_code_is_captured(): void
+    public function test_hangar_rule_error_is_captured_as_machine_code(): void
     {
-        // Hangar isn't built at Sol 1 — dispatch to any instance throws a raw
-        // RuntimeException message (HangarController wraps it as 'error', no
-        // separate 'message' field). Proves normalize() doesn't assume the
-        // {error:code, message:text} shape everywhere.
+        // Hangar isn't built at Sol 1 — dispatch to any instance fails. Since
+        // T25 (2026-10-01) the hangar answers with the {error: code, message:
+        // text} contract instead of the raw exception text it used to send.
         $bot = BotSession::boot($this, seed: 1);
 
         $res = $bot->act('dispatch_mission', 'POST', '/colony/hangar/1/dispatch', [
@@ -67,7 +66,8 @@ class BotSessionNormalizeTest extends TestCase
 
         $this->assertFalse($res['ok']);
         $this->assertSame(422, $res['status']);
-        $this->assertStringContainsString('No ship assigned to hangar instance', $res['error']);
-        $this->assertArrayNotHasKey('message', $res['body']);
+        $this->assertSame('no_ship_in_hangar', $res['error']);
+        $this->assertSame('no_ship_in_hangar', end($bot->log)['error']);
+        $this->assertSame(__('colony.hangar_error_no_ship_in_hangar'), $res['body']['message']);
     }
 }

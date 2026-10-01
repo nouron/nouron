@@ -2,6 +2,7 @@
 
 ## 2026-10-01
 
+- Fix: T25 — Hangar-, Händler- und Berater-Endpoints liefern Fehler jetzt als Code + übersetzte Meldung statt Exception-Text bzw. hartkodiertem Deutsch; unerwartete Hangar-Fehler werden geloggt und nach außen nur generisch gemeldet.
 - Feature: R15 — Feedback im Spiel. Button „Feedback“ in beiden Layouts öffnet einen Dialog (Kategorie + Freitext); Run, Sol, Seite und Browser werden serverseitig angehängt. Admin-Übersicht unter `/admin/feedback`.
 - Chore: R3 — Produktions-Vorlage `.env.production.example`; Dev-Kommandos (`db:reset`, `game:reset-player`, `colony:seed-demo`, `game:playtest`) und `DatabaseSeeder` brechen in Produktion ab; fehlende Migrationen für `sessions`, `cache` und `cache_locks` ergänzt (Database-Driver für Sessions und Cache inkl. `/sol/next`-Lock).
 - Messung nach A45b (32 Runs): 26/32 Siege, Sieg-Sol Median 86; `task_credit_reserve` 8/8 erfüllt an Sol 68–72 (Zielkorridor gezielt 70–85).

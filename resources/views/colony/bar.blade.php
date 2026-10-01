@@ -1412,7 +1412,7 @@ $offerFlavorKey =
                             if (item) item.sold = true;
                             this.showToast(data.message ?? @json(__("colony.merchant_buy_success")), 'info');
                         } else {
-                            this.showToast(data.error ?? @json(__("colony.merchant_buy_error")), 'error');
+                            this.showToast(data.message ?? @json(__("colony.merchant_buy_error")), 'error');
                         }
                     } catch {
                         this.showToast(@json(__("colony.merchant_buy_error")), 'error');

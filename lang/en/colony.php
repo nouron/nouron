@@ -405,4 +405,23 @@ return [
     'condition' => 'Condition',
     'ap_invested' => 'AP invested',
 
+    // T25 error contract (hangar/merchant codes)
+    'hangar_error_ship_not_orderable' => 'The Nexus does not deliver this ship type.',
+    'hangar_error_invalid_consul_ap' => 'Invalid AP amount for the negotiation.',
+    'hangar_error_insufficient_ap' => 'Not enough AP: :requested needed, :available available.',
+    'hangar_error_nexus_credit_cc_level' => 'Nexus credit requires Command Center level :level (currently :current).',
+    'hangar_error_insufficient_credits' => 'Not enough Credits: :need needed, :have available.',
+    'hangar_error_ship_not_pending' => 'This ship is not waiting for a hangar slot.',
+    'hangar_error_hangar_not_found' => 'This hangar does not exist in the colony.',
+    'hangar_error_hangar_occupied' => 'This hangar already holds a ship.',
+    'hangar_error_unknown_mission' => 'Unknown mission.',
+    'hangar_error_no_ship_in_hangar' => 'There is no ship in this hangar.',
+    'hangar_error_ship_not_docked' => 'The ship is not ready for launch.',
+    'hangar_error_no_active_mission' => 'No mission is running for this hangar.',
+    'hangar_error_no_docked_ship' => 'No ship is docked in this hangar.',
+    'hangar_error_ship_full_status' => 'The ship is already fully repaired.',
+    'hangar_error_action_failed' => 'The action could not be carried out.',
+    'merchant_error_item_not_found' => 'This offer does not exist.',
+    'merchant_error_item_sold' => 'This offer is already sold.',
+    'merchant_error_visit_over' => 'The merchant has already left.',
 ];
