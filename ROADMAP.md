@@ -55,7 +55,7 @@ Befund 2026-09-26: Sieg im Median bei Sol 31 statt im Korridor Sol 85–95; 3 Zi
 - [ ] **R5 Produktions-Datenbank evaluieren** (Owner 2026-09-30: für Produktion wird ohnehin eine neue DB gebraucht) — Kandidaten gegenüberstellen (z. B. PostgreSQL/MySQL vs. SQLite mit WAL) nach Betriebsaufwand, Backup, gleichzeitigen Schreibzugriffen (parallele `/sol/next`), Kosten beim Hoster; Entscheidung als ADR. Danach: Kompatibilität prüfen (SQLite-spezifisches SQL, Views wie `v_glx_colonies`, Raw-`DB::statement`-Migrationen), Test-Suite gegen die Ziel-DB laufen lassen. Bestimmt R6 (Backup-Verfahren) und den Cache-Store aus R3. — Mittel
 - [ ] **R6 Backups** (nach R5) — tägliches Backup der Produktions-DB mit Rotation, Restore einmal real testen. — Klein
 - [ ] **R7 Fehler-Monitoring** — tägliche Log-Rotation + Benachrichtigung bei Exceptions (Mail oder Sentry o. ä.), damit Beta-Fehler auffallen, bevor sie gemeldet werden. — Klein
-- [ ] **R8 CI** — GitHub Action: PHPUnit + `pint --test` auf jedem PR, damit nichts Rotes deployt wird. — Klein
+- [x] **R8 CI** ✅ 2026-10-01 — `.github/workflows/ci.yml`: auf jedem PR und Push nach `master` Pint (`--test`) sowie PHPUnit getrennt für Standard-Suiten (feature + unit) und Playtest-Suite. Erster echter Lauf auf GitHub steht noch aus (lokal geprüft: Suite-Auswahl, `.env.example`-Werte). — Klein
 
 #### P0-3 — Zugang
 
