@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-01
+
+- Balance: A45b — `task_credit_reserve` 4000/10 → 6000 Credits für 20 Sole (Owner; vorher mit Belohnungen ×2 schon an Sol 44–45 erfüllt). PlaytestBot hält bei aktivem Ziel mindestens 1,1 × Schwelle (vorher genau die Schwelle → default/eager pendelten knapp darunter, die Serie riss). Tests zur Kreditreserve lesen die Schwelle aus der Config.
+
 ## 2026-09-30
 
 - Fix: Beta-Bugs T21 (Hangar prüfte falsche Gebäude-ID für die Kommandozentrale → Nexus-Kredit nie verfügbar), T22 (geliefertes Schiff landete in zu niedrigem Hangar) und Nexus-Kredit-Schuld auf fremdem Run. R11: `/sol/next` per Lock gegen Doppelausführung gesichert, Button während der Berechnung gesperrt. R12: `/resources/colony/{id}` liefert 403 für fremde Kolonien.

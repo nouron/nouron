@@ -445,30 +445,35 @@ class RunProgressServiceTest extends TestCase
      * threshold and must count as "above", 3800 sits below the new
      * threshold (but above the old 3000) and must NOT count as "above".
      */
-    public function test_task_credit_reserve_increments_streak_at_the_4000_threshold(): void
+    private function creditReserveThreshold(): int
     {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_credit_reserve', 14, 0);
-
-        $this->setCredits(4200);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment at the new 4000 threshold (4200 credits)');
+        return (int) config('game.run.tasks.task_credit_reserve.threshold');
     }
 
-    public function test_task_credit_reserve_does_not_increment_streak_below_the_4000_threshold(): void
+    public function test_task_credit_reserve_increments_streak_at_the_threshold(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         $objective = $this->makeObjective($run, 'task_credit_reserve', 14, 0);
 
-        $this->setCredits(3800);
+        $this->setCredits($this->creditReserveThreshold());
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must not increment below the 4000 threshold (3800 credits) even though it is above the old 3000 threshold');
+        $this->assertEquals(1, $objective->streak_value, 'credits exactly at the threshold count (>=)');
+    }
+
+    public function test_task_credit_reserve_does_not_increment_streak_below_the_threshold(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_credit_reserve', 14, 0);
+
+        $this->setCredits($this->creditReserveThreshold() - 1);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->streak_value, 'one credit below the threshold must not count');
     }
 
     public function test_task_credit_reserve_increments_streak_when_credits_above_threshold(): void
@@ -476,12 +481,12 @@ class RunProgressServiceTest extends TestCase
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         $objective = $this->makeObjective($run, 'task_credit_reserve', 10, 0);
 
-        $this->setCredits(6000);
+        $this->setCredits($this->creditReserveThreshold() + 2000);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment by 1 when credits >= 5000');
+        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment by 1 above the threshold');
         $this->assertEquals(1, $objective->current_value);
         $this->assertNull($objective->completed_at, 'objective must not be completed after only 1 streak tick');
     }
@@ -492,13 +497,12 @@ class RunProgressServiceTest extends TestCase
         // Pre-load a streak of 5
         $objective = $this->makeObjective($run, 'task_credit_reserve', 10, 5);
 
-        // Credits below the 5000 threshold
-        $this->setCredits(2000);
+        $this->setCredits($this->creditReserveThreshold() - 2000);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when credits < 5000');
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 below the threshold');
         $this->assertEquals(0, $objective->current_value);
         $this->assertNull($objective->completed_at);
     }
@@ -509,7 +513,7 @@ class RunProgressServiceTest extends TestCase
         // streak already at 9 — one more tick above threshold should complete it
         $objective = $this->makeObjective($run, 'task_credit_reserve', 10, 9);
 
-        $this->setCredits(5000);
+        $this->setCredits($this->creditReserveThreshold());
 
         $this->service->updateObjectiveProgress($run);
 

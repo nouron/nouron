@@ -495,14 +495,14 @@ Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens
 
 **Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85. Kein Mindest-Sol.
 
-#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-09-30)
+#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-10-01)
 
 **VORLÄUFIG, Kalibrierung läuft (A45/R1).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen vorläufig. Baseline-Batch 2026-09-30 (4 Profile × 8 Seeds) siehe ROADMAP R1.
 
 | Task | `category` | `type` | Messung | Parameter | Status |
 |---|---|---|---|---|---|
 | `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
-| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 4000, `target` 10 Sole** | Owner-Entscheidung 2026-09-30: Schwelle bleibt, Missions-/Event-Belohnungen werden angehoben (Baseline: in Phase 2 nie ≥ 2000 gehalten) |
+| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 6000, `target` 20 Sole** | Owner-Entscheidung 2026-10-01 (vorher 4000/10: mit Belohnungen ×2 und Sparen schon an Sol 44–45 erfüllt) |
 | `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 40, `target` 12 Sole | vorläufig |
 | `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 7 | vorläufig |
 | `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | `regolith_min` 150, `organics_min` 300, `target` 45 Sole | vorläufig; Bedingung „Supply > 0" gestrichen (Owner 2026-09-30, war wirkungslos) |

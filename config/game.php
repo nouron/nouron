@@ -836,13 +836,13 @@ return [
             // already inside the target corridor — no change needed (Owner
             // 2026-09-27: no new acceleration mechanic, config-only).
             'task_senior_advisors' => ['category' => 'personal', 'type' => 'counter', 'target' => 4, 'min_rank' => 3],
-            // Owner decision 2026-09-26: stays a streak for now (4000 Credits, 10 Sols);
-            // follow-up "Nexus-Vorschuss tilgen" waits for a debt repayment mechanic.
-            // UNMEASURED (Owner 2026-09-27): batch 2026-09-26 only ran default/focus
-            // profiles, neither plays a deliberate savings strategy (max Credits seen
-            // 1590-2490) — needs a savings-focused bot rule before the threshold can
-            // be calibrated. Do not guess a number; ROADMAP follow-up pending.
-            'task_credit_reserve' => ['category' => 'economy', 'type' => 'streak', 'target' => 10, 'threshold' => 4000],
+            // Owner decision 2026-10-01: 6000 Credits held for 20 Sols (was 4000/10).
+            // Batch 2026-09-30 (rewards ×2, bots saving while the objective is open):
+            // saving play builds ~110 Cr/Sol and hit 4000 around Sol 35, so 4000/10
+            // completed at Sol 44–45, far ahead of the 70–85 corridor. 6000/20 projects
+            // to roughly Sol 72–77 — sustained prosperity rather than a peak.
+            // "Nexus-Vorschuss tilgen" becomes a separate pool objective (ROADMAP R21).
+            'task_credit_reserve' => ['category' => 'economy', 'type' => 'streak', 'target' => 20, 'threshold' => 6000],
             // PROVISIONAL (2026-09-26 batch: trust maxed at 33–53 with the old
             // threshold of 70, never completed): trust > threshold for `target` Sols.
             'task_colony_prosperity' => ['category' => 'diplomacy', 'type' => 'streak', 'target' => 12, 'threshold' => 40],
