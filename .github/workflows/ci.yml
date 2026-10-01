@@ -24,7 +24,7 @@ jobs:
           coverage: none
       - name: Composer install
         uses: ramsey/composer-install@v3
-      - run: vendor/bin/pint --test
+      - run: bin/pint --test
 
   tests:
     name: PHPUnit (${{ matrix.suite }})
@@ -50,4 +50,4 @@ jobs:
           cp .env.example .env
           php artisan key:generate
       - name: Run tests
-        run: vendor/bin/phpunit --testsuite '${{ matrix.suite }}'
+        run: bin/phpunit --testsuite '${{ matrix.suite }}'
