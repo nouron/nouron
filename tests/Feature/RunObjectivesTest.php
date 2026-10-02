@@ -75,6 +75,12 @@ class RunObjectivesTest extends TestCase
         $this->assertSame(35, config('game.run.tasks.task_engineering_output.target'));
         $this->assertSame(10, config('game.run.tasks.task_expedition_coverage.target'));
         $this->assertSame('normal', config('game.run.tasks.task_expedition_coverage.min_difficulty'));
+        // R1 (Owner 2026-10-01)
+        $this->assertSame(35, config('game.run.tasks.task_self_sufficiency.target'));
+        $this->assertSame(8, config('game.run.tasks.task_trade_volume.target'));
+        $this->assertSame(7, config('game.run.tasks.task_research_lead.target'));
+        $this->assertSame(40, config('game.run.tasks.task_colony_prosperity.threshold'));
+        $this->assertSame(12, config('game.run.tasks.task_colony_prosperity.target'));
     }
 
     public function test_the_old_credit_reserve_threshold_key_is_gone(): void

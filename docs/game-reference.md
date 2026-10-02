@@ -497,18 +497,18 @@ Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens
 
 #### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-10-01)
 
-**VORLÄUFIG, Kalibrierung läuft (A45/R1).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. Fettgedruckte Werte sind Owner-Entscheidungen, alle übrigen vorläufig. Baseline-Batch 2026-09-30 (4 Profile × 8 Seeds) siehe ROADMAP R1.
+**Kalibriert (A45/A45b/R1, Stand 2026-10-01).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen; alle Werte sind Owner-Entscheidungen auf Basis der Bot-Batches (Kalibrierregel: nebenbei frühestens ~Sol 90, gezielt Sol 70–85). Baseline-Batch 2026-09-30 (4 Profile × 8 Seeds) siehe ROADMAP R1.
 
 | Task | `category` | `type` | Messung | Parameter | Status |
 |---|---|---|---|---|---|
 | `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
 | `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 6000, `target` 20 Sole** | Owner-Entscheidung 2026-10-01 (vorher 4000/10: mit Belohnungen ×2 und Sparen schon an Sol 44–45 erfüllt) |
-| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | `threshold` 40, `target` 12 Sole | vorläufig |
-| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | `min_level` 5, `target` 7 | vorläufig |
-| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | `regolith_min` 150, `organics_min` 300, `target` 45 Sole | vorläufig; Bedingung „Supply > 0" gestrichen (Owner 2026-09-30, war wirkungslos) |
-| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | `min_difficulty` normal, `target` 10 | vorläufig |
+| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | **`threshold` 40, `target` 12 Sole** | Owner 2026-10-01 bestätigt (8/8 @82–95) |
+| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | **`min_level` 5, `target` 7** | Owner 2026-10-01 bestätigt (gezielt ~Sol 68, nebenbei max. 6) |
+| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | **`regolith_min` 150, `organics_min` 300, `target` 35 Sole** | Owner 2026-10-01 (vorher 45 Sole, erst um Sol 96 erreicht) |
+| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` normal, `target` 10** | Owner 2026-10-01 bestätigt (gezielt @82–87) |
 | `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 35** | Owner-Entscheidung 2026-09-30 (gezielt: 30 schon an Sol 48, 35 um Sol 70) |
-| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | `target` 7 | vorläufig |
+| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | **`target` 8** | Owner 2026-10-01 (vorher 7, nebenbei schon @79–86) |
 
 Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 
