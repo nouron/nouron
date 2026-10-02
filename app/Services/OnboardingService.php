@@ -157,18 +157,8 @@ class OnboardingService
         // Colony-level resources.
         // Werkstoffe (4) and Organika (5) start at 0 — produced by Harvester/bioFacility.
         $colonyResources = [
-            // 200 → 300 → 340 (GDD §13.7 Nachtrag 2026-08-12 + Korrektur 2026-08-13):
-            // die erste Bedarfsrechnung hatte den 0→1-Level-Up-Schritt (25 Rg,
-            // config('game.build.levelup_regolith_flat'), seit T9 beim Platzieren
-            // bezahlt) für die Pfadgebäude komplett
-            // und für bioFacility teilweise unterschlagen — korrigierte Bedarfssumme
-            // 535 Rg statt 500. Verschiebt den Floor auf ≈Sol 15,1.
-            // 340 → 370 (Nachtrag 2026-08-16, game-designer review): GDD §9-Begegnungen
-            // können jetzt auch in Phase 1 einen Kritisch-Tier-Sturm-Treffer landen
-            // (Ø ~77,5 Rg Verlust, Band 60-95). +30 Puffer deckt ~40% eines typischen
-            // Treffers ab, verschiebt den No-Storm-Floor auf ≈Sol 12,9 — bewusst kein
-            // Vollschutz (das wäre eine Überkorrektur, siehe §13.7-Warnung bei 400).
-            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 370],  // regolith
+            // Start stock: config('game.onboarding.start_regolith') (GDD §13.7 Phase-1-Pacing).
+            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => (int) config('game.onboarding.start_regolith')],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
             ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],    // organika  — produced by bioFacility
             ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // trust

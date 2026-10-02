@@ -989,6 +989,11 @@ return [
     ],
 
     'onboarding' => [
+        // Starting regolith stock of a new colony (GDD §13.7 "Phase-1-Pacing").
+        // Calibrated so Phase 1 ends around Sol 15-20 (owner target); the binding
+        // constraint is regolith against the harvester rate cap.
+        'start_regolith' => 300,
+
         // Status-points threshold (absolute, max is 20) at or below which the urgent
         // repair hint fires — warns of imminent level-down. Self-clears once every
         // building is back above it; never written to dismissed_hints.
