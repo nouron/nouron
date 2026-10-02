@@ -3,6 +3,7 @@
 ## 2026-10-02
 
 - Docs: ADR 0005 — Produktions-DB und Hosting (Laravel Cloud, Laravel MySQL, EU-Frankfurt, `app.nouron.de`); ROADMAP R4–R7 angepasst, neuer Punkt R5b (MySQL-Portierung).
+- Balance: T9 Schritt 5 — Regolith-Startbestand 370 → 300, jetzt als `game.onboarding.start_regolith` in der Config. Bot-Messung (8 Seeds, default): Phase-1-Ende Median Sol 12,5 → 17,5, alle Läufe erreichen Phase 2. GDD §13.7 neu hergeleitet (empirisch am Median, ohne Sturm-Reserve), `game-reference.md` ergänzt. Verifikation (24 Läufe, Seeds 301–308 × default/focus/eager): Phase-1-Ende Median Sol 16, Spanne 14–18, keine Regolith-Sackgasse; Siegquote 14/24 ist separat zu untersuchen (kein Startbestand-Effekt, 370 auf denselben Seeds: 5/8 statt 4/8).
 
 ## 2026-10-01
 

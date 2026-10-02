@@ -49,7 +49,8 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Platzieren (Neubau)** | Errichtungskosten + 25 Rg für Stufe 1, in einer Zahlung beim Platzieren (T9, 2026-09-25); Ausbau 0→1 danach nur AP |
 | **CC-Levelup-Kosten** | Ziel-Level × 30 Rg |
 | **Reparatur pro Punkt (SP)** | 1 Rg / Klick |
-| **CC-Lv2 Regolith Total** | 60 Rg (von 200 Startwert) |
+| **Regolith-Startbestand** | 300 Rg (`game.onboarding.start_regolith`, T9-Kalibrierung 2026-10-02: Phase-1-Ende Median Sol ~17–18, vorher 370 → Sol ~12–13) |
+| **CC-Lv2 Regolith Total** | 60 Rg |
 
 ---
 

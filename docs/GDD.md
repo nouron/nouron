@@ -2257,7 +2257,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | CC-Ausbau | Ziel-Level × 30 | zentraler Progressionshebel |
 | Weitere Instanzen (Wohnhabitat, Hangar, Agrardom) | voller `build_cost`, linear | §4c: Instanzen sind eine Designachse, keine Level |
 | Harvester-Zweitinstanz | kein Regolith — Weg A Credits, Weg B AP (§4c) | Bootstrap-Sonderrolle |
-| Startbestand | 370 (Herleitung „Phase-1-Pacing" unten) | Phase-1-Ziel Sol 15–20 + Sturm-Reserve |
+| Startbestand | `game.onboarding.start_regolith` (Herleitung „Phase-1-Pacing" unten) | Phase-1-Ziel Sol 15–20 |
 | `mission_supply_run.sol_distance` | 1 | Hebel-Zielgröße, kurzer Entscheidungstakt |
 | `geology`-Effekt | +3/3/2/2/2 je Level, kumuliert max 12 Rg/Sol | ~60 % eines Harvesters (Merkregel für einen reifen Hebel) |
 | `knowledge.levelup_costs` | steigend je Level, Amortisation ~7 Sole | Kopplung an `ap.base` |
@@ -2360,25 +2360,22 @@ Gemeinsam übersteigen A und B die benötigte Hebelhöhe um ~29 % — wenn beide
 Beide Pfadgebäude sind notwendig, nicht optional: Slot 2 öffnet mit dem ersten, Slot 3 (= dritter Berater) mit dem zweiten (§13 „Slot-System"). Der Harvester produziert ab Sol 2 nahe dem Frischwert (~17 Rg/Sol auf einem mittleren Ertrags-Tile, solange das Vorkommen nicht knapp wird); Reparatur wird als konservative Marge angesetzt, obwohl frisch errichtete Gebäude im Fenster die Reparaturschwelle kaum erreichen:
 
 ```
-Verfügbar(N) = Startbestand + 17 × (N − 1) − 2,94 × N
+Verfügbar(N) = Startbestand + Ertrag × (N − 1) − Reparatur-Marge × N
 ```
 
-| Startbestand | Floor N (Verfügbar = 535) | Poor-Tile-Worst-Case |
-|---|---|---|
-| 300 | ≈ Sol 18 | ≈ Sol 23 |
-| 340 | ≈ Sol 15 | ≈ Sol 20 |
-| **370** (gesetzt) | ≈ Sol 13 ohne Sturm | ≈ Sol 18 |
-| 400 | ≈ Sol 11 — Überkorrektur, kollidiert mit G4/G5 |
+Phase 1 endet, sobald Verfügbar die Bedarfskette deckt und die Ausführung (Reihenfolgezwang, Erkundung, AP-Takt) nachgezogen hat. Jedes Regolith weniger im Startbestand verschiebt das Ende um den Kehrwert des Harvester-Ertrags nach hinten — der Startbestand ist deshalb der direkteste Pacing-Hebel.
 
-**Startbestand 370.** 340 trifft den Floor an der unteren Kante des Zielkorridors, sodass die reale Ausführungsfriktion (Reihenfolgezwang, Erkundung/Verlegung) nach oben in den Korridor streut statt ihn zu verlassen. Der Aufschlag auf 370 ist eine Reserve gegen Begegnungen (§9): Stürme treffen auch in Phase 1 (die Phase-1-Rampe dämpft die Chance, setzt sie nie auf 0), und ein Kritisch-Treffer kostet in der Größenordnung eines Pfadgebäudes — die Reserve deckt etwa 40 % eines typischen Treffers, bewusst kein Vollschutz. *Offen:* Die Reserve ist gegen „ein Kritisch-Treffer, ein Gebäude" gerechnet; seit Sturm koloniweit wirkt (§9), kann ein ausgelöster Sturm bei vernachlässigter Kolonie mehrere Kritisch-Treffer bedeuten — nach dem nächsten PlaytestBot-Batch verifizieren, nicht vorab blind nachschärfen.
+**Neuherleitung nach A44 H1/H2:** Das Bild „ein mittleres Tile mit Frischwert, plus Poor-Tile-Worst-Case" gilt nicht mehr. Der Ertrag hängt jetzt vom Ertrags-Tier des gewählten Start-Vorkommens ab, die Standzeit vom Mächtigkeits-Tier, und der Spieler wählt bei Sol 1 zwischen zwei bekannten Vorkommen mit Zielkonflikt (§4c). Der Startbestand wird deshalb nicht mehr aus einem Rechenwert gesetzt, sondern **empirisch am Median** kalibriert: PlaytestBot über einen Seed-Satz, Messgröße `phase2_start_sol` (Phase-1-Ende). Der Bot nimmt dabei jeweils das Vorkommen, das seine Regel wählt — damit streut die Messung automatisch über die neuen Kartenvarianten.
 
-**Poor-Tile-Start** (niedriges Ertrags- und Mächtigkeits-Tier, eine häufige Einzelklasse): Das Vorkommen ist nach ~14 produktiven Solen erschöpft, eine frühe Zwangsverlegung ist eingebaut — gewollte Variabilität (G5), keine zu behebende Lücke. Mit Verlegung auf ein mittleres Tile (1 Transit-Sol) schließt Phase 1 im Worst Case um Sol 18–20.
+**Kalibrierung (Messung 2026-10-02, 8–9 Seeds, Profil default):** Mit dem alten, noch auf das 3-stufige Modell gerechneten Startbestand lag das Phase-1-Ende im Median bei Sol 12–13 (Sol 11 bei guter Karte, Sol 14 sonst) — klar unter dem Zielkorridor. Ein um gut zwei Dutzend Sol-Erträge geringerer Startbestand (Größenordnung: Differenz ÷ Ertrag ≈ vier Sole) hebt den Median in den Korridor (Sol 14–18, Median ≈ Sol 17–18) und lässt die Streuung zwischen guter und schlechter Karte als gewollte Variabilität (G5) stehen. Alle gemessenen Läufe erreichen Phase 2, es gibt keine Regolith-Sackgasse in Phase 1.
+
+**Sturm-Reserve bewusst gestrichen:** Der frühere Aufschlag als Reserve gegen einen Kritisch-Treffer in Phase 1 entfällt. Stürme treffen weiterhin (die Rampe dämpft die Chance, §9), aber die Kalibrierung zielt auf den Korridor-Mittelwert statt auf eine Pufferlage an dessen unterer Kante; ein Treffer verschiebt das Phase-1-Ende innerhalb des Korridors nach hinten, bleibt aber deutlich vor der Fail-State-Grenze (Sol 30).
+
+**Schwaches Start-Vorkommen** (niedriges Ertrags- und Mächtigkeits-Tier): Das Vorkommen erschöpft sich vor Phase-1-Ende, eine frühe Zwangsverlegung ist eingebaut — gewollte Variabilität (G5), keine zu behebende Lücke; der Startbestand wird nicht auf diesen Fall ausgelegt.
 
 **Bewusst nicht angefasst:** `resource_max` der mittleren Tile-Kombinationen (bindet im Zielfenster nicht — kumulierte Extraktion beim Floor-Sol liegt deutlich unter der Mengengrenze; eine Anhebung kostete nur Umzugstakt, §4c); `fresh_yield` (mehr Rate = schnellerer Vorlauf auf dieselbe Mengenwand, kürzere Standzeit); Pfadgebäude-Preise (pro Gebäude gegen G4 kalibriert, das Phase-1-Problem ist kumulativ); CC-Ausbaukosten (kein Engpass); Hire-Credits (nicht bindend, und eine Senkung würde den späteren Rang-2/3-Unterhaltsdruck abschwächen).
 
-> **A44/H1-H2 (2026-09-27):** Diese gesamte Herleitung (Startbestand 370, Sockel-Einnahmen, Poor-Tile-Start) rechnet noch mit dem alten 3-stufigen `regolith_{poor,normal,rich}`-Modell. Seit der Ertrags-/Mächtigkeits-Entkopplung (§4, „Ressource-Tiles") und den zwei garantierten Gegensatzpaar-Tiles bei Sol 1 (H2) ist eine Neuherleitung fällig — bewusst zurückgestellt auf die noch offene T9-Regolith-Startbestand-Kalibrierung (siehe ROADMAP.md „A44").
-
-**Empirisch:** PlaytestBot über mehrere Seeds erreicht `phase2_start_sol` 20–22 — innerhalb Sol 25, an der Grenze zum Sol-20-Exzellenzziel. Ein Bot-Befund oberhalb des Korridors ist nur dann ein Gegenbeweis gegen den Startbestand, wenn der Bot nach dem Errichten eines Pfadgebäudes dessen Lv0→1-Sprung tatsächlich zuerst fertigstellt (wie ein menschlicher Spieler) — Bot-Ausführungsdefekte sind kein Balance-Hebel.
+**Empirisch:** Ein Bot-Befund außerhalb des Korridors ist nur dann ein Gegenbeweis gegen den Startbestand, wenn der Bot nach dem Errichten eines Pfadgebäudes dessen Lv0→1-Sprung tatsächlich zuerst fertigstellt (wie ein menschlicher Spieler) — Bot-Ausführungsdefekte sind kein Balance-Hebel.
 
 **Nebenbefunde:**
 - Der Supply-Cap zwingt in Phase 1 keine zweite Wohnhabitat-Instanz: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv2 und zwei Pfadgebäude auf Lv1 exakt, ohne jeden Puffer. Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben `supply_cost` tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freier Supply und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 (etwa eine zweite Harvester-Instanz) setzt das Wohnhabitat-Levelup ebenfalls voraus.
@@ -2993,7 +2990,7 @@ Exakte Schwellwerte für die UI-Warnstufen: Implementierung in `RunProgressServi
 
 **Auslösung:** Instant in dem Tick, in dem die Deadline erreicht wird, sofern Phase 1 noch nicht abgeschlossen ist (`RunProgressService::checkPhase1Completion()`).
 
-Owner-Vorgabe: Phase 1 im Normalfall Sol 15–20, spätestens Sol 30. Der bindende Engpass ist der Regolith-Startbestand — nicht der Harvester-Ertrag, nicht `resource_max`, nicht die Berater-Hire-Credits; Herleitung in §13.7 „Phase-1-Pacing". Empirisch erreicht der PlaytestBot `phase2_start_sol` 20–22.
+Owner-Vorgabe: Phase 1 im Normalfall Sol 15–20, spätestens Sol 30. Der bindende Engpass ist der Regolith-Startbestand — nicht der Harvester-Ertrag, nicht `resource_max`, nicht die Berater-Hire-Credits; Herleitung in §13.7 „Phase-1-Pacing". Empirisch erreicht der PlaytestBot `phase2_start_sol` im Korridor (Messung 2026-10-02, siehe §13.7).
 
 **Warnstufen (Nexus-Funk):**
 
