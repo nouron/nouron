@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-02
+
+- Docs: ADR 0005 — Produktions-DB und Hosting (Laravel Cloud, Laravel MySQL, EU-Frankfurt, `app.nouron.de`); ROADMAP R4–R7 angepasst, neuer Punkt R5b (MySQL-Portierung).
+
 ## 2026-10-01
 
 - Messung nach R1 (32 Runs): 26/32 Siege, Sieg-Sol Median 86; `task_self_sufficiency` gezielt 4/4 an Sol 85–86.
