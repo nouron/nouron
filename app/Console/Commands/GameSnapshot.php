@@ -47,7 +47,7 @@ class GameSnapshot extends Command
     // must go by user_id or fired advisors leak / collide on re-insert.
     private const COLONY_SCOPED_TABLES = [
         'colony_resources', 'colony_buildings', 'colony_tiles',
-        'colony_ships', 'colony_researches', 'colony_personell',
+        'colony_ships', 'colony_researches',
         'trade_resources', 'trust_events', 'merchant_visits', 'colony_hangar_missions',
     ];
 

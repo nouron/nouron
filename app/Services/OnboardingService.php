@@ -65,7 +65,6 @@ class OnboardingService
             DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
             DB::table('colony_ships')->where('colony_id', $colonyId)->delete();
             DB::table('colony_researches')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_personell')->where('colony_id', $colonyId)->delete();
             DB::table('trade_resources')->where('colony_id', $colonyId)->delete();
             DB::table('trust_events')->where('colony_id', $colonyId)->delete();
             DB::table('merchant_visits')->where('colony_id', $colonyId)->delete();

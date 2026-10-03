@@ -152,10 +152,6 @@ UPDATE "colony_ships" SET hangar_instance_id=1, ship_state='docked'     WHERE co
 -- Mission 2: freighter recalled from hangar 2, completed (history row; the freighter now docks in hangar 1)
 INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
 INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
-INSERT INTO "colony_personell" VALUES(1,35,9,10);
-INSERT INTO "colony_personell" VALUES(1,36,2,10);
-INSERT INTO "colony_personell" VALUES(1,89,0,10);
-INSERT INTO "colony_personell" VALUES(1,92,17,10);
 INSERT INTO "colony_researches" VALUES(1,9901,1,20,0);
 INSERT INTO "colony_researches" VALUES(1,96,0,10,0);
 INSERT INTO "advisors" (user_id,colony_id,personell_id,rank,active_ticks) VALUES(3,1,35,1,0);

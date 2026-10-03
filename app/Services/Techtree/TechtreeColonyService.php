@@ -25,7 +25,7 @@ class TechtreeColonyService
             'building' => $this->_gatherTechtreeInformations($colonyId, 'building'),
             'research' => $this->_gatherTechtreeInformations($colonyId, 'research'),
             'ship' => $this->_gatherTechtreeInformations($colonyId, 'ship'),
-            'personell' => $this->_gatherTechtreeInformations($colonyId, 'personell'),
+            'personell' => $this->_gatherPersonellNodes(),
         ];
     }
 
@@ -38,7 +38,6 @@ class TechtreeColonyService
             'building' => ['buildings',  'colony_buildings',  'building_id'],
             'research' => ['researches', 'colony_researches', 'research_id'],
             'ship' => ['ships',      'colony_ships',      'ship_id'],
-            'personell' => ['personell',  'colony_personell',  'personell_id'],
             default => throw new \InvalidArgumentException("Unknown type: $type"),
         };
 
@@ -68,5 +67,19 @@ class TechtreeColonyService
         }
 
         return $entities;
+    }
+
+    /**
+     * Personell nodes: master rows only. Advisors are hired via AdvisorService and
+     * carry no techtree level, so level/status_points/ap_spend are fixed at 0.
+     */
+    private function _gatherPersonellNodes(): array
+    {
+        return DB::table('personell')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($e) => (array) $e + ['level' => 0, 'status_points' => 0, 'ap_spend' => 0])
+            ->toArray();
     }
 }

@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * AbstractTechnologyService — base class for all techtree services.
  *
- * Implements the shared game mechanics for buildings, researches, ships and
- * personell: prerequisite checks, AP investment, levelup/leveldown and cost
+ * Implements the shared game mechanics for buildings and researches:
+ * prerequisite checks, AP investment, levelup/leveldown and cost
  * payment. Each concrete subclass supplies its table names and entity-id key.
  *
  * Rules:
@@ -172,15 +172,10 @@ abstract class AbstractTechnologyService
     /**
      * Check whether enough AP has been invested for a levelup.
      *
-     * Personell entities never require AP investment before hiring.
-     * For all other entities the colony row's ap_spend must reach ap_for_levelup.
+     * The colony row's ap_spend must reach ap_for_levelup.
      */
     public function checkRequiredActionPoints(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
-        if ($this->entityIdKey() === 'personell_id') {
-            return true;
-        }
-
         $entity = DB::table($this->masterTable())->find($entityId);
         if (! $entity) {
             return false;
@@ -459,7 +454,7 @@ abstract class AbstractTechnologyService
     /**
      * Level up an entity: verify all prerequisites, pay costs, increment level.
      *
-     * Resets ap_spend to 0 after levelup (except for personell).
+     * Resets ap_spend to 0 after levelup.
      */
     public function levelup(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
@@ -483,10 +478,7 @@ abstract class AbstractTechnologyService
                 'status_points' => $maxStatus,
             ];
 
-            // Reset ap_spend after levelup — not applicable for personell
-            if ($this->entityIdKey() !== 'personell_id') {
-                $updateData['ap_spend'] = 0;
-            }
+            $updateData['ap_spend'] = 0;
 
             DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
@@ -562,9 +554,7 @@ abstract class AbstractTechnologyService
                 'status_points' => $maxStatus,
             ];
 
-            if ($this->entityIdKey() !== 'personell_id') {
-                $updateData['ap_spend'] = 0;
-            }
+            $updateData['ap_spend'] = 0;
 
             $updateData += $this->leveldownExtraUpdate($newLevel);
 
