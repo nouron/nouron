@@ -38,7 +38,6 @@ class OnboardingHintServiceTest extends TestCase
             'password' => bcrypt('pw'),
             'email' => 'test@test.de',
             'activation_key' => 'testkey',
-            'faction_id' => 7,
         ]);
         DB::table('glx_colonies')->insertOrIgnore([
             'id' => $this->colonyId, 'user_id' => $this->userId,

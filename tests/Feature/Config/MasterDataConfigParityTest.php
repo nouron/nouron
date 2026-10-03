@@ -82,7 +82,7 @@ class MasterDataConfigParityTest extends TestCase
             $row = DB::table('ships')->where('id', $cfg['id'])->first();
             $this->assertNotNull($row, "ships row id={$cfg['id']} ({$key}) missing");
 
-            foreach (['moving_speed', 'decay_rate', 'supply_cost', 'max_status_points'] as $col) {
+            foreach (['max_status_points'] as $col) {
                 if (! array_key_exists($col, $cfg)) {
                     continue;
                 }

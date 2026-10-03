@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string|null $name
  * @property int|null $user_id
- * @property int $since_tick
  * @property bool $is_primary
  * @property int $hunger_streak
  * @property-read User $user
@@ -45,7 +44,6 @@ class Colony extends Model
     {
         return [
             'is_primary' => 'boolean',
-            'since_tick' => 'integer',
         ];
     }
 

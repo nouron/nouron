@@ -48,7 +48,7 @@ class GameSnapshot extends Command
     private const COLONY_SCOPED_TABLES = [
         'colony_resources', 'colony_buildings', 'colony_tiles',
         'colony_ships', 'colony_researches',
-        'trade_resources', 'trust_events', 'merchant_visits', 'colony_hangar_missions',
+        'trust_events', 'merchant_visits', 'colony_hangar_missions',
     ];
 
     public function handle(): int

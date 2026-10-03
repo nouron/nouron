@@ -29,16 +29,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'state',
-        'faction_id',
-        'description',
-        'note',
-        'disabled',
         'activated',
         'activation_key',
-        'first_time_login',
-        'theme',
-        'tooltips_enabled',
     ];
 
     protected $hidden = [
@@ -50,11 +42,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            'disabled' => 'boolean',
             'activated' => 'boolean',
-            'first_time_login' => 'boolean',
-            'tooltips_enabled' => 'boolean',
-            'last_activity' => 'datetime',
             'registration' => 'datetime',
         ];
     }

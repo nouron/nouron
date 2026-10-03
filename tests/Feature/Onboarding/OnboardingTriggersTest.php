@@ -68,7 +68,6 @@ class OnboardingTriggersTest extends TestCase
             'password' => bcrypt('pw'),
             'email' => 'trigger@test.local',
             'activation_key' => 'triggerkey',
-            'faction_id' => 7,
         ]);
 
         DB::table('glx_colonies')->insertOrIgnore([

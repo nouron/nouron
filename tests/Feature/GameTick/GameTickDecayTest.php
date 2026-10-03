@@ -51,7 +51,6 @@ class GameTickDecayTest extends TestCase
     {
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
     }
 
     private function getBuildingRow(int $colonyId, int $buildingId): ?object

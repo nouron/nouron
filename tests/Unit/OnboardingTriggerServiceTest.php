@@ -43,7 +43,6 @@ class OnboardingTriggerServiceTest extends TestCase
             'password' => bcrypt('pw'),
             'email' => 'trigger-unit@test.local',
             'activation_key' => 'triggerunitkey',
-            'faction_id' => 7,
         ]);
 
         $this->service = $this->app->make(OnboardingTriggerService::class);
@@ -176,7 +175,6 @@ class OnboardingTriggerServiceTest extends TestCase
                 'password' => bcrypt('pw'),
                 'email' => "{$uid}@test.local",
                 'activation_key' => "key{$uid}",
-                'faction_id' => 7,
             ]);
         }
 

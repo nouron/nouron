@@ -30,13 +30,14 @@ class SyncConfigTest extends TestCase
 
     public function test_updates_a_drifted_ship_column(): void
     {
-        DB::table('ships')->where('id', 37)->update(['moving_speed' => 999]);
+        config(['ships.corvette.max_status_points' => 12]);
+        DB::table('ships')->where('id', 37)->update(['max_status_points' => 999]);
 
         $this->artisan('game:sync-config')
             ->expectsOutputToContain('[ship]')
             ->assertExitCode(0);
 
-        $this->assertSame(4, (int) DB::table('ships')->where('id', 37)->value('moving_speed'));
+        $this->assertSame(12, (int) DB::table('ships')->where('id', 37)->value('max_status_points'));
     }
 
     public function test_updates_a_drifted_building_column(): void
@@ -52,19 +53,20 @@ class SyncConfigTest extends TestCase
 
     public function test_dry_run_previews_without_writing(): void
     {
-        DB::table('ships')->where('id', 37)->update(['moving_speed' => 999]);
+        config(['ships.corvette.max_status_points' => 12]);
+        DB::table('ships')->where('id', 37)->update(['max_status_points' => 999]);
 
         $this->artisan('game:sync-config', ['--dry-run' => true])
             ->expectsOutputToContain('DRY RUN')
             ->expectsOutputToContain('[ship]')
             ->assertExitCode(0);
 
-        $this->assertSame(999, (int) DB::table('ships')->where('id', 37)->value('moving_speed'));
+        $this->assertSame(999, (int) DB::table('ships')->where('id', 37)->value('max_status_points'));
     }
 
     public function test_ship_config_entry_missing_id_is_skipped_with_warning(): void
     {
-        config(['ships.broken' => ['moving_speed' => 1]]);
+        config(['ships.broken' => ['max_status_points' => 1]]);
 
         $this->artisan('game:sync-config')
             ->expectsOutputToContain("ships/broken: missing 'id' — skipped.")
@@ -188,7 +190,8 @@ class SyncConfigTest extends TestCase
 
     public function test_reports_total_row_count_across_ships_and_buildings(): void
     {
-        DB::table('ships')->where('id', 37)->update(['moving_speed' => 999]);
+        config(['ships.corvette.max_status_points' => 12]);
+        DB::table('ships')->where('id', 37)->update(['max_status_points' => 999]);
         DB::table('buildings')->where('id', 25)->update(['max_status_points' => 1]);
 
         // The summary line can word-wrap in the test runner's assumed terminal
@@ -196,7 +199,7 @@ class SyncConfigTest extends TestCase
         // on the actual DB effect instead of matching output text.
         $this->artisan('game:sync-config')->assertExitCode(0);
 
-        $this->assertSame(4, (int) DB::table('ships')->where('id', 37)->value('moving_speed'));
+        $this->assertSame(12, (int) DB::table('ships')->where('id', 37)->value('max_status_points'));
         $this->assertSame(20, (int) DB::table('buildings')->where('id', 25)->value('max_status_points'));
     }
 }

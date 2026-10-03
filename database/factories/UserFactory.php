@@ -21,13 +21,8 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'password' => bcrypt('password'),
             'role' => 'player',
-            'state' => 1,
             'activation_key' => Str::random(32),
             'activated' => true,
-            'disabled' => false,
-            'first_time_login' => false,
-            'theme' => 'darkred',
-            'tooltips_enabled' => true,
         ];
     }
 }

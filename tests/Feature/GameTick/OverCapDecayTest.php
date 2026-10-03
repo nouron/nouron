@@ -18,7 +18,7 @@ use Tests\TestCase;
  * researches of an over-cap colony (getFreeSupply() < 0) decay at the normal rate.
  *
  * Over-cap setup used throughout:
- *   1. Zero all supply_cost on buildings, researches, ships (clean slate).
+ *   1. Zero all supply_cost on buildings, researches (clean slate).
  *   2. Set oremine (building_id=27) supply_cost=2, colony 1 oremine level=5 → used=10.
  *   3. Set user_resources.supply=0 for user 3 → cap=0, free=-10.
  *
@@ -49,7 +49,6 @@ class OverCapDecayTest extends TestCase
     {
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
     }
 
     // ── getFreeSupply ─────────────────────────────────────────────────────────

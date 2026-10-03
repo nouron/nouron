@@ -18,7 +18,6 @@ class OnboardingService
 {
     public function __construct(
         private readonly ColonyService $colonyService,
-        private readonly TickService $tickService,
         private readonly EventService $eventService,
         private readonly ColonyTileService $tileService,
     ) {}
@@ -36,8 +35,7 @@ class OnboardingService
         return DB::transaction(function () use ($userId, $colonyName) {
             $name = $colonyName ?: 'Kolonie';
 
-            $globalTick = $this->tickService->getTickCount();
-            $colony = $this->colonyService->createColony($userId, $name, $globalTick);
+            $colony = $this->colonyService->createColony($userId, $name);
 
             $this->seedSol1State($userId, $colony->id);
 
@@ -65,7 +63,6 @@ class OnboardingService
             DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
             DB::table('colony_ships')->where('colony_id', $colonyId)->delete();
             DB::table('colony_researches')->where('colony_id', $colonyId)->delete();
-            DB::table('trade_resources')->where('colony_id', $colonyId)->delete();
             DB::table('trust_events')->where('colony_id', $colonyId)->delete();
             DB::table('merchant_visits')->where('colony_id', $colonyId)->delete();
             DB::table('colony_hangar_missions')->where('colony_id', $colonyId)->delete();

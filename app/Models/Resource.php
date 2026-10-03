@@ -16,12 +16,5 @@ class Resource extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['name', 'abbreviation', 'trigger', 'is_tradeable', 'start_amount', 'icon'];
-
-    protected function casts(): array
-    {
-        return [
-            'is_tradeable' => 'boolean',
-        ];
-    }
+    protected $fillable = ['name', 'abbreviation'];
 }

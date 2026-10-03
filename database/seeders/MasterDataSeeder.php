@@ -6,7 +6,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Seeds decay_rate, supply_cost, and max_status_points into the master data tables.
+ * Seeds decay_rate, supply_cost, and max_status_points into the master data tables
+ * (ships: max_status_points only).
  *
  * Values are derived from:
  *   - Supply costs: docs/GDD.md §6
@@ -26,21 +27,9 @@ class MasterDataSeeder extends Seeder
 
     private function seedShips(): void
     {
-        // [id => [max_status_points, decay_rate, supply_cost]]
-        $data = [
-            29 => [20, 0.16, 14],  // frigate1          — ticks_until_lost 125
-            49 => [20, 0.10, 25],  // battlecruiser1    — ticks_until_lost 200
-            83 => [20, 0.07, 4],   // mediumTransporter — ticks_until_lost ~285
-            84 => [20, 0.06, 7],   // largeTransporter  — ticks_until_lost 333
-        ];
-
-        foreach ($data as $id => [$msp, $decayRate, $supplyCost]) {
-            DB::table('ships')->where('id', $id)->update([
-                'max_status_points' => $msp,
-                'decay_rate' => $decayRate,
-                'supply_cost' => $supplyCost,
-            ]);
-        }
+        // Legacy ship rows (no config pendant). Ships neither decay nor cost supply,
+        // so only max_status_points is seeded.
+        DB::table('ships')->whereIn('id', [29, 49, 83, 84])->update(['max_status_points' => 20]);
     }
 
     private function seedResearches(): void
