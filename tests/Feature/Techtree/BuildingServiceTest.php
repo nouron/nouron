@@ -168,7 +168,7 @@ class BuildingServiceTest extends TestCase
 
         $this->assertSame(
             0,
-            DB::table('locked_actionpoints')->where('colony_id', $this->colonyId)->count(),
+            DB::table('locked_actionpoints')->where('scope_type', 'colony')->where('scope_id', $this->colonyId)->count(),
             'A bypassed invest must not lock AP either — otherwise dev mode still runs the pool dry.'
         );
     }

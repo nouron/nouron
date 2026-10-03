@@ -2,19 +2,31 @@
 
 namespace Tests\Feature\Console;
 
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Tests\TestCase;
 
 /**
- * DbReset had 0% test coverage. Safe to actually run here — the test environment
- * always points at the in-memory sqlite connection (phpunit.xml), never the real
- * dev database (data/db/nouron.db).
+ * DbReset had 0% test coverage. Safe to actually run here — phpunit.xml forces the
+ * test database (nouron_test, or nouron_test_test_N per parallel worker), never
+ * the dev database.
  *
- * Deliberately NOT using RefreshDatabase: migrate:fresh's underlying wipe (VACUUM)
- * cannot run inside RefreshDatabase's wrapping transaction ("cannot VACUUM from
- * within a transaction") — this command performs its own full reset per test.
+ * Deliberately NOT using RefreshDatabase: migrate:fresh is DDL, which cannot run
+ * inside RefreshDatabase's wrapping transaction (MySQL commits it implicitly) —
+ * this command performs its own full reset per test.
+ *
+ * A reset leaves the test database migrated AND seeded, while RefreshDatabase
+ * expects an empty schema once it has migrated. tearDown therefore marks the
+ * database as not migrated, so the next RefreshDatabase test runs migrate:fresh.
  */
 class DbResetTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        RefreshDatabaseState::$migrated = false;
+
+        parent::tearDown();
+    }
+
     public function test_aborts_without_confirmation(): void
     {
         $this->artisan('db:reset')
