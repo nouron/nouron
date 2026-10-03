@@ -4,7 +4,7 @@
 
 **Goal:** Entwicklung, Tests, CI, PlaytestBot und Produktion laufen auf genau einer DB-Engine (MySQL); SQLite verschwindet aus dem Projekt.
 
-**Architecture:** Zuerst alles dialektneutral machen, solange die Suite noch auf SQLite grün ist (portables SQL, Stammdaten/Fixtures trennen, Migrations-Baseline). Erst danach wird die Suite auf MySQL umgestellt (ein kleiner, messbarer Schritt, Fehlerklassen werden dort getrennt abgearbeitet). Zuletzt bekommt der PlaytestBot eine gemeinsame DB `nouron_playtest`, in der jeder Lauf einen eigenen User samt Kolonie anlegt (wie mehrere Spieler in Produktion).
+**Architecture:** Zuerst alles dialektneutral machen, solange die Suite noch auf SQLite grün ist (portables SQL, idempotenter Referenzdaten-Seeder statt SQL-Dump, Migrations-Baseline). Erst danach wird die Suite auf MySQL umgestellt (ein kleiner, messbarer Schritt, Fehlerklassen werden dort getrennt abgearbeitet). Zuletzt bekommt der PlaytestBot eine gemeinsame DB `nouron_playtest`, in der jeder Lauf einen eigenen User samt Kolonie anlegt (wie mehrere Spieler in Produktion).
 
 **Tech Stack:** PHP 8.4, Laravel 12, PHPUnit 11, MySQL 8 (nativ in WSL, kein Docker), GitHub Actions MySQL-Service.
 
@@ -18,14 +18,15 @@
 - TDD: Test zuerst, rot sehen, dann Code (CLAUDE.md). Ausnahmen: reine Config-/Doku-Änderungen.
 - Code/Kommentare Englisch; Doku, ROADMAP, CHANGELOG, ADRs Deutsch. Ein CHANGELOG-Block pro Tag, kurz.
 - Nie auf `master` committen: Branch `feat/r5b-mysql`, Pre-commit-Hook (Pint) nie mit `--no-verify` umgehen, nie `git add -A`.
-- Produktion wird nie mit Testdaten befüllt (R3/R4): Stammdaten und Fixtures bleiben getrennte Dateien.
+- Produktion wird nie mit Testdaten befüllt (R3/R4): Referenzdaten (Stammdaten) kommen aus dem idempotenten `ReferenceDataSeeder` (PHP-Datenstruktur + Config), Fixtures nur aus `data/sql/testdata.sql`.
+- Parallele Tests: `php artisan test --parallel` (paratest), jeder Worker eigene Datenbank `nouron_test_test_N`.
 - Schnelle Suite während der Arbeit: `bin/phpunit --testsuite=laravel-feature,laravel-unit`; volle Suite (+ `playtest`) vor dem PR.
 
 ## Review Focus
 
 Fehlerklassen, die der Wechsel SQLite → MySQL mit hoher Wahrscheinlichkeit aufdeckt und die kein bestehender Test gezielt prüft (die Tests dafür stehen in den genannten Tasks):
 
-1. `REPLACE INTO` löscht und fügt neu ein: Auf einer DB mit Spielerdaten würde ein erneutes Einspielen der Stammdaten in MySQL an Foreign Keys scheitern oder Kind-Zeilen mitlöschen. Erwartet: Stammdaten werden nur in eine leere DB geschrieben, nie über bestehende Daten (Task 3).
+1. Referenzdaten werden auf einer DB mit Spielerdaten erneut eingespielt (jeder Deploy): `REPLACE INTO` würde Fremdschlüssel verletzen oder Kind-Zeilen löschen; der Seeder muss per Upsert idempotent sein und Spielerdaten unangetastet lassen (Task 3). Zusätzlich kollidiert der Unique-Index `(phase,row,column)` beim Upsert, wenn zwei Zeilen Positionen tauschen.
 2. `SUM()`/`COUNT()`-Ergebnisse kommen unter MySQL als String (`"12"`) statt als int zurück; `assertSame(12, …)` und strikte Vergleiche in Services brechen (Task 5, Fehlerklasse B).
 3. SQLite liefert ohne `ORDER BY` stabil nach rowid, MySQL nicht: Tests/Logik mit `first()`/`pluck()` ohne Sortierung werden flaky (Task 5, Fehlerklasse C).
 4. Strict Mode: fehlende NOT-NULL-Werte, zu lange Strings und ungültige Datumswerte werden abgelehnt (SQLite akzeptiert alles) (Task 5, Fehlerklasse A).
@@ -53,11 +54,11 @@ Expected: aktuell leer (nicht installiert).
 - [ ] **Step 2: Owner installiert Server und PHP-Extension**
 
 ```bash
-sudo apt update && sudo apt install -y mysql-server php8.4-mysql
+sudo apt update && sudo apt install -y mysql-server php8.2-mysql
 sudo service mysql start
 ```
 
-(PHP-Minor-Version an `php -v` anpassen.) Prüfen: `php -m | grep pdo_mysql` zeigt `pdo_mysql`.
+(lokal läuft PHP 8.2; CI nutzt 8.4. Alternativ das fertige Skript: `sudo bash <scratchpad>/setup_mysql.sh`.) Prüfen: `php -m | grep pdo_mysql` zeigt `pdo_mysql`.
 
 - [ ] **Step 3: Datenbanken und User anlegen**
 
@@ -68,7 +69,7 @@ CREATE DATABASE nouron_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE nouron_playtest CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'nouron'@'localhost' IDENTIFIED BY 'nouron';
 GRANT ALL ON nouron.* TO 'nouron'@'localhost';
-GRANT ALL ON nouron_test.* TO 'nouron'@'localhost';
+GRANT ALL ON `nouron\_test%`.* TO 'nouron'@'localhost';  -- nouron_test + Worker-DBs nouron_test_test_N (paratest)
 GRANT ALL ON nouron_playtest.* TO 'nouron'@'localhost';
 SQL
 ```
@@ -162,147 +163,179 @@ git commit -m "refactor: Organika-Abzug im Hangar ohne SQLite-MAX() (R5b)"
 
 ---
 
-### Task 3: Stammdaten und Test-Fixtures trennen, dialektneutral, nur in leere DB
+### Task 3: Referenzdaten-Seeder (Upsert) statt SQL-Dump, Fixtures getrennt
+
+Befund des Audits (2026-10-03, `ac5fdd75…`): Die Configs enthalten nur `id` plus Mechanikwerte (Zerfall, Supply, max. Stufe, Regolith-/Werkstoff-Kosten). `game:sync-config` aktualisiert nur bestehende Zeilen. Name, purpose, Voraussetzungen, Techtree-Position (`phase/row/column`), `ap_for_levelup`, Credits-/Supply-Kosten und alle Ressourcen stehen in **keiner** Config, sondern im SQL-Dump und in Migrationen. Referenzdaten = 7 Tabellen: `resources, buildings, building_costs, personell, researches, ships, ship_costs` (ca. 40 Einträge). Nicht seeden: `trade_resources` (Laufzeitdaten, in `app/` nie gelesen), `personell_costs`/`research_costs` (in `app/` nie gelesen; Anwerbungskosten kommen aus `config/advisors.php`), `resources.start_amount` bleibt als Spalte unverändert.
 
 **Files:**
-- Create: `data/sql/masterdata.sql`
-- Rename: `data/sql/testdata.sqlite.sql` → `data/sql/testdata.sql` (nur Fixtures)
-- Modify: `database/seeders/MasterDataSeeder.php`, `database/seeders/TestSeeder.php`
-- Modify (Referenzen auf den alten Dateinamen): `CLAUDE.md`, `.claude/agents/db-migration-agent.md`, `tests/Concerns/CreatesForeignColony.php`, Kommentare in `tests/Feature/*` (Treffer: `grep -rn "testdata.sqlite" --include=*.php --include=*.md . | grep -v vendor`); `ROADMAP.md`/`CHANGELOG.md`/`docs/*` historisch nicht anfassen.
-- Test: `tests/Feature/Seeders/MasterDataSeederTest.php` (neu)
+- Create: `database/seeders/ReferenceDataSeeder.php`, `database/seeders/data/{resources,buildings,building_costs,personell,researches,ships,ship_costs}.php`
+- Modify: `database/seeders/TestSeeder.php`, `database/seeders/MasterDataSeeder.php` (Inhalt in den neuen Seeder überführt, Datei danach löschen), `data/sql/testdata.sqlite.sql` → `data/sql/testdata.sql` (nur Fixtures)
+- Modify (Referenzen auf den alten Dateinamen): `CLAUDE.md`, `.claude/agents/db-migration-agent.md`, `tests/Concerns/CreatesForeignColony.php`, Kommentare in `tests/Feature/*` (`grep -rn "testdata.sqlite" --include=*.php --include=*.md . | grep -v vendor`); `ROADMAP.md`/`CHANGELOG.md`/historische `docs/*` nicht anfassen.
+- Test: `tests/Feature/Seeders/ReferenceDataSeederTest.php` (neu)
+- Throwaway (Scratchpad, nicht committen): `golden_dump.php`, `extract_reference.php`
 
 **Interfaces:**
-- Produces: `MasterDataSeeder::run()` füllt Stammdaten (Tabellen `resources, buildings, building_costs, personell, personell_costs, researches, ships, ship_costs, trade_resources` inkl. der UPDATE-Zeilen dieser Tabellen) und schreibt **nichts**, wenn `resources` bereits Zeilen enthält. Danach führt es die bestehenden Updates und `game:sync-config` aus. `TestSeeder::run()` = `MasterDataSeeder` + Fixtures aus `testdata.sql` (Tabellen `user, user_resources, advisors, bar_offers, colony_*, glx_colonies`, UPDATEs auf `colony_ships`). Beide Dateien verwenden nur Syntax, die SQLite **und** MySQL verstehen: unquotierte Bezeichner, `REPLACE INTO`.
-- Consumes: nichts aus anderen Tasks.
+- Produces: `ReferenceDataSeeder::run()` — schreibt per `DB::table($t)->upsert($rows, $uniqueBy, $updateCols)` die 7 Tabellen aus den Dateien in `database/seeders/data/` (jede Datei: `return [ ['id' => 25, …], … ];`), in Fremdschlüssel-Reihenfolge `resources → buildings → personell → researches → ships → building_costs → ship_costs`, in einer Transaktion. Danach `Artisan::call('game:sync-config')`, sodass Mechanikwerte weiter aus der Config kommen. Idempotent: zweiter Lauf ändert nichts und berührt keine Spielerdaten. `TestSeeder::run()` = `ReferenceDataSeeder` + Fixtures aus `data/sql/testdata.sql` (nur Fixture-Tabellen, plain `INSERT INTO`, kein `REPLACE`). Fixtures und `ReferenceDataSeeder` überschneiden sich in keiner Tabelle (Ausnahme: Forschung 9901 `test_decay_placeholder` bleibt Fixture in `testdata.sql`).
+- Consumes: nichts aus anderen Tasks (arbeitet noch auf SQLite).
 
-- [ ] **Step 1: Failing Test schreiben**
+- [ ] **Step 1: Golden-Dump des Ist-Zustands (vor jeder Änderung)**
+
+`$S/golden_dump.php` (Scratchpad `$S` wie in Task 4) schreibt aus einer DB, die mit dem **heutigen** `TestSeeder` befüllt ist, die 7 Tabellen als sortierte JSON-Datei:
+
+```php
+<?php
+$tables = ['resources' => 'id', 'buildings' => 'id', 'building_costs' => 'building_id,resource_id', 'personell' => 'id',
+    'researches' => 'id', 'ships' => 'id', 'ship_costs' => 'ship_id,resource_id'];
+$d = [];
+foreach ($tables as $t => $order) {
+    $q = DB::table($t);
+    foreach (explode(',', $order) as $col) { $q->orderBy($col); }
+    $d[$t] = $q->get()->map(fn ($r) => (array) $r)->all();
+}
+file_put_contents($argv[1], json_encode($d, JSON_PRETTY_PRINT));
+```
+
+Aufruf: frische SQLite-Datei migrieren (`DB_DATABASE=$S/g.db php artisan migrate --force`), `DB_DATABASE=$S/g.db php artisan db:seed --force` (TestSeeder), dann das Skript per `php artisan tinker $S/golden_dump.php $S/golden_before.json` (oder als Bootstrap-Skript wie in Task 4). Die Forschung 9901 (Fixture) aus dem Vergleich ausnehmen, indem sie im Dump übersprungen wird (`->where('id', '!=', 9901)` für `researches`).
+
+- [ ] **Step 2: Datendateien erzeugen**
+
+`$S/extract_reference.php` schreibt aus `$S/golden_before.json` je Tabelle eine Datei `database/seeders/data/<tabelle>.php` im Format `<?php
+
+return [
+    ['id' => 25, 'name' => '…', …],
+];` (Spalten in Schemareihenfolge, `var_export` pro Wert, eine Zeile je Datensatz). Danach `bin/pint database/seeders/data` und stichprobenhaft prüfen, dass die Zahl der Einträge je Datei der Tabellengröße entspricht (resources 6, buildings 13, personell 5, researches 7 ohne 9901, ships 7, building_costs 37, ship_costs 3).
+
+- [ ] **Step 3: Failing Test (Golden-Vergleich + Idempotenz + Spielerdaten)**
 
 ```php
 <?php
 
 namespace Tests\Feature\Seeders;
 
-use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\ReferenceDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class MasterDataSeederTest extends TestCase
+class ReferenceDataSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_seeds_master_data_without_any_user_or_colony(): void
+    public function test_seeds_reference_data_without_any_player_data(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(ReferenceDataSeeder::class);
 
-        $this->assertGreaterThan(0, DB::table('buildings')->count());
-        $this->assertGreaterThan(0, DB::table('resources')->count());
+        $this->assertSame(13, DB::table('buildings')->count());
+        $this->assertSame(6, DB::table('resources')->count());
         $this->assertSame(0, DB::table('user')->count());
         $this->assertSame(0, DB::table('glx_colonies')->count());
+        // config values are applied (SyncConfig runs inside the seeder): command center
+        $this->assertSame((int) config('buildings.commandCenter.max_level'), (int) DB::table('buildings')->where('id', 25)->value('max_level'));
     }
 
-    public function test_second_run_does_not_touch_existing_data(): void
+    public function test_second_run_is_idempotent_and_keeps_player_data(): void
     {
-        $this->seed(MasterDataSeeder::class);
-        DB::table('buildings')->where('id', 25)->update(['name' => 'marker']);
+        $this->seed(ReferenceDataSeeder::class);
+        $before = DB::table('building_costs')->orderBy('building_id')->orderBy('resource_id')->get()->toArray();
+        DB::table('user')->insert([/* minimal valid user row, columns per Schema */]);
+        DB::table('colony_buildings')->insert([/* one row referencing building 25 and an existing colony */]);
 
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(ReferenceDataSeeder::class);
 
-        $this->assertSame('marker', DB::table('buildings')->where('id', 25)->value('name'));
+        $this->assertEquals($before, DB::table('building_costs')->orderBy('building_id')->orderBy('resource_id')->get()->toArray());
+        $this->assertSame(1, DB::table('colony_buildings')->count());
+        $this->assertSame(13, DB::table('buildings')->count());
     }
 }
 ```
 
-(Spaltenname `name` und Id 25 = `BuildingId::CommandCenter` gegen das Schema prüfen: `sqlite3 data/db/nouron.db ".schema buildings"`; passende Textspalte wählen.)
+Die `insert([...])`-Platzhalter beim Schreiben mit den Pflichtspalten aus `Schema::getColumns('user')` bzw. `('colony_buildings')` ausfüllen (kein Platzhalter im Commit). Zusätzlich ein dritter Test, der `buildings.name` einer Zeile ändert und prüft, dass der zweite Seeder-Lauf den Wert aus der Datendatei wiederherstellt (Drift-Schutz).
 
-- [ ] **Step 2: Rot bestätigen**
+- [ ] **Step 4: Rot bestätigen**
 
-Run: `bin/phpunit tests/Feature/Seeders/MasterDataSeederTest.php`
-Expected: FAIL (`buildings` leer — Stammdaten kommen heute nur über TestSeeder/Fixtures).
+Run: `bin/phpunit tests/Feature/Seeders/ReferenceDataSeederTest.php` → FAIL (Klasse existiert nicht).
 
-- [ ] **Step 3: Dateien aufteilen**
-
-`git mv data/sql/testdata.sqlite.sql data/sql/testdata.sql`. Danach die Zeilen der Stammdaten-Tabellen (Liste oben) aus `testdata.sql` nach `data/sql/masterdata.sql` verschieben, per Skript damit keine Zeile verloren geht:
-
-```bash
-cd data/sql
-grep -E '^(INSERT INTO|UPDATE) "?(resources|buildings|building_costs|personell|personell_costs|researches|ships|ship_costs|trade_resources)\b' testdata.sql > masterdata.sql
-grep -vE '^(INSERT INTO|UPDATE) "?(resources|buildings|building_costs|personell|personell_costs|researches|ships|ship_costs|trade_resources)\b' testdata.sql > testdata.tmp && mv testdata.tmp testdata.sql
-wc -l masterdata.sql testdata.sql   # Summe = 243 (vorher), keine Zeile verloren
-```
-
-Dann in beiden Dateien Bezeichner entquoten und `INSERT INTO` bleibt (die Seeder wandeln um, siehe Step 4):
-
-```bash
-sed -i -E 's/"([a-z_]+)"/\1/g' masterdata.sql testdata.sql
-grep -n '"' masterdata.sql testdata.sql | grep -v "'" | head   # darf nichts liefern; Treffer prüfen (Doppelte Anführungszeichen in String-Literalen NICHT ändern)
-```
-
-Wichtig: das `sed` darf nur Bezeichner treffen. Vorher `grep -c '"' data/sql/testdata.sql` vergleichen und stichprobenartig `git diff --stat` prüfen; enthält ein String-Literal ein `"`, die Zeile von Hand korrigieren.
-
-- [ ] **Step 3b: Gemeinsame Lade-Hilfe**
-
-Beide Seeder brauchen dieselbe Logik (Zeilen filtern, `INSERT INTO` → `REPLACE INTO`, ausführen). In `MasterDataSeeder` als `public static function runSqlFile(string $path): void` ablegen:
+- [ ] **Step 5: Seeder implementieren**
 
 ```php
-public static function runSqlFile(string $path): void
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Idempotent reference data (resources, buildings, techtree, ships, costs). Safe to run on every
+ * deploy and on a database that already holds player data: upsert only, never delete/replace.
+ * Mechanic values (decay, supply, max_level, regolith/werkstoffe cost) are applied afterwards from
+ * config/*.php via game:sync-config — config stays the source of truth for those.
+ */
+class ReferenceDataSeeder extends Seeder
 {
-    $lines = array_filter(
-        explode("\n", file_get_contents($path)),
-        fn (string $line) => (bool) preg_match('/^\s*(INSERT|UPDATE)\s/i', $line)
-    );
+    /** table => unique key columns, in foreign-key order. */
+    private const TABLES = [
+        'resources' => ['id'],
+        'buildings' => ['id'],
+        'personell' => ['id'],
+        'researches' => ['id'],
+        'ships' => ['id'],
+        'building_costs' => ['building_id', 'resource_id'],
+        'ship_costs' => ['ship_id', 'resource_id'],
+    ];
 
-    foreach ($lines as $line) {
-        $statement = rtrim(trim($line), ';').';';
-        // REPLACE INTO is valid in SQLite and MySQL; only ever run on an empty DB (see run()).
-        $statement = preg_replace('/^INSERT INTO\b/i', 'REPLACE INTO', $statement);
-        DB::statement($statement);
+    public function run(): void
+    {
+        DB::transaction(function () {
+            foreach (self::TABLES as $table => $uniqueBy) {
+                $rows = require database_path("seeders/data/{$table}.php");
+                $update = array_values(array_diff(array_keys($rows[0]), $uniqueBy));
+                DB::table($table)->upsert($rows, $uniqueBy, $update);
+            }
+        });
+
+        Artisan::call('game:sync-config');
     }
 }
 ```
 
-- [ ] **Step 4: Seeder umbauen**
+Die verbliebenen Updates aus `MasterDataSeeder` (Schiffe 29/49/83/84, Forschungen 33..96: Zerfall/Supply/Max-Status-Punkte) sind im Golden-Dump bereits enthalten und damit in den Datendateien; `MasterDataSeeder.php` danach löschen. Upsert-Reihenfolge und der Unique-Index `(phase,row,column) WHERE phase>0`: Beim ersten Lauf auf leerer DB kollidiert nichts; bei späteren Positionstauschen (Balance) vorher die betroffenen `phase` in derselben Transaktion auf 0 setzen — als Kommentar in der Seeder-Klasse festhalten.
 
-`MasterDataSeeder::run()` beginnt mit:
+- [ ] **Step 6: TestSeeder und Fixtures**
 
-```php
-if (DB::table('resources')->exists()) {
-    return; // never overwrite master data on a DB that already has data (REPLACE would cascade into player rows)
-}
-self::runSqlFile(base_path('data/sql/masterdata.sql'));
-```
-
-danach die bestehenden Aufrufe (`seedShips()`, `seedResearches()`, …) und am Ende `Artisan::call('game:sync-config')` (Letzteres aus `TestSeeder` hierher verschieben, damit auch Produktion es bekommt).
-
-`TestSeeder::run()` wird zu:
+`git mv data/sql/testdata.sqlite.sql data/sql/testdata.sql`; aus der Datei alle Zeilen der 7 Referenztabellen entfernen (Muster: `^(INSERT INTO|UPDATE) "?(resources|buildings|building_costs|personell|personell_costs|researches|ships|ship_costs|trade_resources)\b`, aber `INSERT INTO "researches"`-Zeile mit Id 9901 bleibt; `personell_costs` und `trade_resources`-Fixturezeilen werden mit entfernt bzw. bleiben nur, wenn ein Test sie braucht — danach Suite prüfen). Bezeichner entquoten (`sed -E 's/"([a-z_]+)"/\1/g'`, Vorher/Nachher-Diff prüfen, String-Literale nicht ändern). `TestSeeder::run()`:
 
 ```php
 public function run(): void
 {
-    $this->call(MasterDataSeeder::class);
-    MasterDataSeeder::runSqlFile(base_path('data/sql/testdata.sql'));
+    $this->call(ReferenceDataSeeder::class);
+
+    $lines = array_filter(
+        explode("\n", file_get_contents(base_path('data/sql/testdata.sql'))),
+        fn (string $line) => (bool) preg_match('/^\s*(INSERT|UPDATE)\s/i', $line)
+    );
+    foreach ($lines as $line) {
+        DB::statement(rtrim(trim($line), ';').';');
+    }
 }
 ```
 
-Der Kommentarblock im Kopf von `TestSeeder` auf die neuen Dateinamen anpassen. Bestehende Migrationen, die Stammdaten vorab einfügen (`buildings` 3, `researches` 7, …), können dazu führen, dass `resources` noch leer, `buildings` aber schon befüllt ist — `REPLACE INTO` überschreibt diese Zeilen absichtlich (Stand heute genauso).
+(Kein `REPLACE`, keine Dialektumschreibung: Fixtures laufen immer auf einer frisch migrierten DB.) Die verbliebenen `INSERT OR REPLACE`-Hinweise im Kopfkommentar entfernen. Referenzen auf den alten Dateinamen aktualisieren (siehe „Files").
 
-- [ ] **Step 5: Grün + Gesamtsuite auf SQLite**
+- [ ] **Step 7: Grün + Golden-Äquivalenz + Gesamtsuite auf SQLite**
 
-Run: `bin/phpunit tests/Feature/Seeders/MasterDataSeederTest.php` → PASS.
-Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → alles grün (Fixtures haben sich inhaltlich nicht geändert).
+Run: `bin/phpunit tests/Feature/Seeders/ReferenceDataSeederTest.php` → PASS.
+Golden: frische SQLite-DB migrieren, **nur** `ReferenceDataSeeder` ausführen, `golden_dump.php` → `$S/golden_after.json`; `diff $S/golden_before.json $S/golden_after.json` muss leer sein (Tabellen, Zeilen, Spalten, Werte identisch).
+Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → grün (144 Testdateien nutzen `TestSeeder`; IDs/Werte sind identisch).
 
-- [ ] **Step 6: Referenzen auf den alten Dateinamen aktualisieren**
-
-Die in „Files" genannten Stellen auf `data/sql/testdata.sql` bzw. `data/sql/masterdata.sql` ändern; `CLAUDE.md` (Architektur-Block und „Technische Hinweise") bekommt zusätzlich eine Zeile: „Stammdaten: `data/sql/masterdata.sql` (auch Produktion); Fixtures: `data/sql/testdata.sql` (nur Tests/Dev)".
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add data/sql database/seeders tests/Feature/Seeders tests/Concerns CLAUDE.md .claude/agents/db-migration-agent.md
-git commit -m "refactor: Stammdaten und Test-Fixtures getrennt, dialektneutral, Seeding nur in leere DB (R5b)"
+git add database/seeders data/sql tests/Feature/Seeders tests/Concerns CLAUDE.md .claude/agents/db-migration-agent.md
+git rm database/seeders/MasterDataSeeder.php
+git commit -m "refactor: Referenzdaten per idempotentem Upsert-Seeder, Fixtures getrennt (R5b)"
 ```
-
----
 
 ### Task 4: Migrations-Squash auf eine Baseline
 
@@ -313,7 +346,7 @@ git commit -m "refactor: Stammdaten und Test-Fixtures getrennt, dialektneutral, 
 
 **Interfaces:**
 - Produces: Eine Migration, die mit `Schema::create`/`DB::statement('CREATE VIEW …')` das heutige Endschema auf SQLite **und** MySQL erzeugt, in unveränderter Spaltenreihenfolge (die Fixtures nutzen positionelle `INSERT … VALUES(…)`). Sie fügt keine Daten ein. Spaltentypen: alle Integer signiert (`integer`, Auto-Increment-PKs als `$table->integer('id', true)`), damit Fremdschlüssel typgleich sind; Strings als `string(…, 255)`.
-- Consumes: Task 3 (Stammdaten kommen aus `masterdata.sql`, nicht aus Migrationen).
+- Consumes: Task 3 (Referenzdaten kommen aus `ReferenceDataSeeder`, nicht aus Migrationen).
 
 - [ ] **Step 1: Referenzschema bauen (alte Migrationen, SQLite)**
 
@@ -419,7 +452,7 @@ Dann `diff $S/old.json $S/new.json`. Expected: leer. Abweichungen im Generator b
 
 - [ ] **Step 5: Suite auf der neuen Baseline (noch SQLite)**
 
-Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → alles grün. Falls Tests von Stammdaten abhängen, die früher eine Migration eingefügt hat und `masterdata.sql` nicht enthält: Tabelle/Zeile in `masterdata.sql` nachziehen (Referenz: `$S/m.db`-Messung: `buildings` 3, `researches` 7, `building_costs` 21, `personell` 1, `personell_costs` 2, `ship_costs` 3, `ships` 1 Zeilen kamen vorab aus Migrationen).
+Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → alles grün. Falls Tests von Zeilen abhängen, die früher eine Migration eingefügt hat und die `database/seeders/data/*.php` nicht enthalten: Zeile in die Datendatei nachziehen (Referenz `$S/m.db`: `buildings` 3, `researches` 7, `building_costs` 21, `personell` 1, `personell_costs` 2, `ship_costs` 3, `ships` 1 Zeilen kamen vorab aus Migrationen; der Golden-Vergleich in Task 3 deckt die 7 Referenztabellen bereits ab).
 
 - [ ] **Step 6: Auf MySQL ausführen**
 
@@ -442,8 +475,8 @@ git commit -m "refactor: Migrations-Squash auf Baseline (SQLite- und MySQL-fähi
 - Test: gesamte Suite
 
 **Interfaces:**
-- Consumes: Task 1 (Datenbanken), Task 4 (Baseline), Task 3 (Seeder).
-- Produces: `bin/phpunit` läuft gegen `nouron_test` auf MySQL; CI gegen einen MySQL-Service.
+- Consumes: Task 1 (Datenbanken), Task 4 (Baseline), Task 3 (`ReferenceDataSeeder`/`TestSeeder`).
+- Produces: `bin/phpunit` und `php artisan test --parallel` laufen gegen MySQL (`nouron_test`, parallel `nouron_test_test_N`); CI gegen einen MySQL-Service.
 
 - [ ] **Step 1: phpunit.xml umstellen**
 
@@ -474,6 +507,10 @@ Je Klasse: Fehlschlag reproduzieren → Ursache beheben → betroffene Tests gr�
 
 Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → 0 Fehler; zweiter Lauf unmittelbar danach ebenfalls grün (Reihenfolge-/Zustandsunabhängigkeit).
 Run: `bin/phpunit --testsuite=playtest` → grün (noch mit den festen Fixture-IDs; Umbau erst in Task 6).
+
+- [ ] **Step 4b: Parallele Tests einrichten**
+
+Run: `composer require --dev brianium/paratest` (PHPUnit 11 → paratest 7.x; `composer.json`/`composer.lock` mitcommitten). Prüfen: `php artisan test --parallel --testsuite=laravel-feature,laravel-unit` legt pro Worker eine eigene Datenbank `nouron_test_test_N` an (Rechte stammen aus dem Grant `nouron\_test%` aus Task 1) und läuft grün. Gegenprobe: zweimal hintereinander (kein Zustand zwischen Läufen), plus `--processes=4`. Zeiten notieren (seriell vs. parallel). Tests, die nur wegen Parallelität scheitern (gemeinsamer Zustand außerhalb der DB, z. B. feste Dateipfade in `storage/`), beheben oder serialisieren. In CI `php artisan test --parallel` verwenden, falls der Runner mehr als 2 Kerne hat; sonst seriell lassen.
 
 - [ ] **Step 5: Laufzeit bewerten**
 
@@ -520,7 +557,7 @@ git commit -m "feat: Test-Suite und CI laufen gegen MySQL (R5b)"
 - Test: `tests/Feature/Playtest/BotSessionIsolationTest.php` (neu), `tests/Feature/Console/PlaytestCommandGuardTest.php` (neu)
 
 **Interfaces:**
-- Consumes: `OnboardingService::setupNewPlayer(int $userId, string $colonyName = ''): Colony` und `resetColonyToSol1(int $userId, int $colonyId, ?int $rngSeed = null): void` (existieren); Task 3 (`MasterDataSeeder`).
+- Consumes: `OnboardingService::setupNewPlayer(int $userId, string $colonyName = ''): Colony` und `resetColonyToSol1(int $userId, int $colonyId, ?int $rngSeed = null): void` (existieren); Task 3 (`ReferenceDataSeeder`).
 - Produces: `BotSession::boot()` legt pro Aufruf einen **neuen** User `bot_{profile}_{seed}_{uniqid}` mit eigener Kolonie an (keine festen IDs 3/1, kein `TestSeeder`). `game:playtest` setzt vor dem ersten Batch `nouron_playtest` per `migrate:fresh` zurück und übergibt den Kindern `DB_DATABASE=nouron_playtest` und `PLAYTEST_SHARED_DB=1`; mit dieser Variable verwendet `PlaytestBotTest` keine Transaktions-Rücksetzung (`RefreshDatabase`), die Daten werden committet und sind für parallele Läufe wie echte Spieler.
 
 - [ ] **Step 1: Failing Test — zwei Bots stören sich nicht**
@@ -563,7 +600,7 @@ public static function boot(TestCase $test, int $seed): self
 {
     // Master data only once per DB; shared-DB mode seeds it in game:playtest before the batch.
     if (! getenv('PLAYTEST_SHARED_DB')) {
-        app(MasterDataSeeder::class)->run();
+        app(ReferenceDataSeeder::class)->run();
     }
 
     $user = User::create([
@@ -627,7 +664,7 @@ if ($playtestDb === '' || $playtestDb === config('database.connections.'.config(
 config(['database.connections.mysql.database' => $playtestDb]);
 DB::purge('mysql');
 $this->call('migrate:fresh', ['--force' => true]);
-app(MasterDataSeeder::class)->run();
+app(ReferenceDataSeeder::class)->run();
 ```
 
 und in den `->env([...])`-Block der Kinder `'DB_CONNECTION' => 'mysql'`, `'DB_DATABASE' => $playtestDb`, `'PLAYTEST_SHARED_DB' => '1'` (statt `sqlite`/`:memory:`). Den Kommentar über der Env-Liste und den Klassen-Docblock (`:memory:`-Begründung) auf das neue Modell aktualisieren (jeder Lauf = eigener User in einer gemeinsamen DB).
@@ -667,11 +704,11 @@ git commit -m "feat: PlaytestBot in gemeinsamer MySQL-DB, jeder Lauf mit eigenem
 
 **Files:**
 - Modify: `CLAUDE.md` (Abschnitt „Wichtige Korrekturen": SQLite → MySQL, Dateinamen), `docs/adr/0005-produktions-datenbank-und-hosting.md` (Annahmen 1+2 → bestätigt/Entscheidung, Messwerte), `ROADMAP.md` (R5b ✅, Folgepunkte), `CHANGELOG.md` (Block des Tages), `.claude/agents/db-migration-agent.md` (SQLite-Hinweise → MySQL), `docs/game-reference.md` nur falls DB-Schema-Verweis dort steht.
-- Create: `docs/deployment-db.md` (Produktions-Seeding: einmalig `php artisan db:seed --class=MasterDataSeeder --force`, jeder Deploy `php artisan migrate --force && php artisan game:sync-config`).
+- Create: `docs/deployment-db.md` (Produktions-Seeding: jeder Deploy `php artisan migrate --force && php artisan db:seed --class=ReferenceDataSeeder --force` — idempotent, enthält `game:sync-config`; nie `DatabaseSeeder`/`TestSeeder`).
 
 - [ ] **Step 1: CLAUDE.md**
 
-`**Datenbank ist SQLite** (NICHT MySQL)` ersetzen durch: **Datenbank ist MySQL** (lokal `nouron` / `nouron_test` / `nouron_playtest`, Produktion Laravel Cloud, siehe `docs/dev-setup-mysql.md` und ADR 0005); „Schichtung … SQLite" → MySQL; `data/db/*.db`-Zeilen entfernen; TestSeeder-Satz anpassen (Stammdaten/Fixtures).
+`**Datenbank ist SQLite** (NICHT MySQL)` ersetzen durch: **Datenbank ist MySQL** (lokal `nouron` / `nouron_test` / `nouron_playtest`, Produktion Laravel Cloud, siehe `docs/dev-setup-mysql.md` und ADR 0005); „Schichtung … SQLite" → MySQL; `data/db/*.db`-Zeilen entfernen; TestSeeder-Satz anpassen (Referenzdaten per `ReferenceDataSeeder`, Fixtures in `data/sql/testdata.sql`).
 
 - [ ] **Step 2: ADR 0005**
 
