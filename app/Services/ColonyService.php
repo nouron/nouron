@@ -92,22 +92,20 @@ class ColonyService
     /**
      * Create a new colony row in glx_colonies.
      *
-     * glx_colonies uses a manual integer PK (not auto-increment). Writes go to the
-     * base table, not the v_glx_colonies view. There is no galaxy/system map any
-     * more — a colony has no coordinates (single home site per player).
+     * The id is assigned by the database (auto-increment), so concurrent sign-ups
+     * cannot collide. Writes go to the base table, not the v_glx_colonies view.
+     * There is no galaxy/system map any more — a colony has no coordinates
+     * (single home site per player).
      */
     public function createColony(int $userId, string $name): Colony
     {
-        $nextId = (int) DB::table('glx_colonies')->max('id') + 1;
-
-        DB::table('glx_colonies')->insert([
-            'id' => $nextId,
+        $id = DB::table('glx_colonies')->insertGetId([
             'name' => $name,
             'user_id' => $userId,
             'is_primary' => 1,
         ]);
 
-        return Colony::findOrFail($nextId);
+        return Colony::findOrFail($id);
     }
 
     /**

@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * schema builder and inserts no data — reference data comes from
  * ReferenceDataSeeder, fixtures from data/sql/testdata.sql.
  *
- * Column order is significant: fixtures use positional INSERTs. All integers
- * are signed (auto-increment PKs via integer('id', true)) so that foreign keys
+ * Fixtures insert with named columns. All integers are signed (auto-increment PKs via integer('id', true)) so that foreign keys
  * are type-compatible on MySQL.
  */
 return new class extends Migration
@@ -85,7 +84,7 @@ return new class extends Migration
         });
 
         Schema::create('glx_colonies', function (Blueprint $table) {
-            $table->integer('id');
+            $table->integer('id', true);
             $table->string('name', 255)->default('Colony');
             $table->integer('user_id')->nullable();
             $table->integer('is_primary')->default(0);
@@ -94,7 +93,6 @@ return new class extends Migration
             $table->float('plague_ap_reduction_pct')->nullable();
             $table->integer('overcap_streak')->default(0);
             $table->integer('overcap_departed')->default(0);
-            $table->primary('id');
             $table->foreign('user_id')->references('user_id')->on('user');
         });
 
@@ -531,6 +529,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Baseline: not reversible, use migrate:fresh.
+        throw new RuntimeException('Baseline is not reversible — use migrate:fresh');
     }
 };
