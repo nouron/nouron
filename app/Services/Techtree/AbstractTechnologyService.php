@@ -144,7 +144,7 @@ abstract class AbstractTechnologyService
 
     /**
      * Check whether the colony has the required research at the required level.
-     * Default implementation always returns true; only ShipService overrides this.
+     * Always returns true (the ship override was removed with the legacy ShipService).
      */
     public function checkRequiredResearchesByEntityId(int $colonyId, int $entityId): bool
     {

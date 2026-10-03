@@ -31,10 +31,4 @@ class TechtreeColonyServiceTest extends TestCase
         $this->assertIsArray($result['building']);
         $this->assertNotEmpty($result['building']);
     }
-
-    public function test_get_buildings(): void
-    {
-        $result = $this->service->getBuildings(1);
-        $this->assertTrue($result->isNotEmpty());
-    }
 }

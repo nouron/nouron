@@ -2,7 +2,6 @@
 
 namespace App\Services\Techtree;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,38 +12,6 @@ use Illuminate\Support\Facades\DB;
  */
 class TechtreeColonyService
 {
-    /**
-     * Return all colony_buildings rows for the given colony.
-     */
-    public function getBuildings(int $colonyId): Collection
-    {
-        return DB::table('colony_buildings')->where('colony_id', $colonyId)->get();
-    }
-
-    /**
-     * Return all colony_researches rows for the given colony.
-     */
-    public function getResearches(int $colonyId): Collection
-    {
-        return DB::table('colony_researches')->where('colony_id', $colonyId)->get();
-    }
-
-    /**
-     * Return all colony_ships rows for the given colony.
-     */
-    public function getShips(int $colonyId): Collection
-    {
-        return DB::table('colony_ships')->where('colony_id', $colonyId)->get();
-    }
-
-    /**
-     * Return all colony_personell rows for the given colony.
-     */
-    public function getPersonell(int $colonyId): Collection
-    {
-        return DB::table('colony_personell')->where('colony_id', $colonyId)->get();
-    }
-
     /**
      * Return the full techtree for a colony, merged from master + colony tables.
      *
