@@ -649,6 +649,29 @@ class HangarServiceTest extends TestCase
         $this->assertNull($mission->recall_tick);
     }
 
+    public function test_dispatch_ship_deducts_organika_and_never_goes_below_zero(): void
+    {
+        config(['game.bypass.resource_costs' => false]);
+        $cost = $this->hangarService->organikaCostFor(self::COLONY_ID, config('missions.catalog.mission_courier_run'));
+        $this->assertGreaterThan(0, $cost);
+
+        // Stock above cost: plain subtraction. Stock equal to cost: lands exactly on 0 (CASE ELSE branch).
+        foreach ([[$cost + 7, 7], [$cost, 0]] as [$stock, $expected]) {
+            $this->clearHangarFixtures();
+            $this->insertHangar(1);
+            $this->assignShip(1, self::SHIP_DRONE, 'docked');
+            DB::table('colony_resources')->updateOrInsert(
+                ['colony_id' => self::COLONY_ID, 'resource_id' => 5],
+                ['amount' => $stock]
+            );
+
+            $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+
+            $this->assertSame($expected, (int) DB::table('colony_resources')
+                ->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->value('amount'));
+        }
+    }
+
     public function test_dispatch_ship_throws_when_no_ship_in_bay(): void
     {
         $this->insertHangar(1);
