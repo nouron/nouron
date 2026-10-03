@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Idempotent reference data (resources, buildings, techtree, ships, costs). Safe to run on every
@@ -31,12 +32,17 @@ class ReferenceDataSeeder extends Seeder
 
     public function run(): void
     {
-        DB::transaction(function () {
-            foreach (self::TABLES as $table => $uniqueBy) {
-                $rows = require database_path("seeders/data/{$table}.php");
-                $update = array_values(array_diff(array_keys($rows[0]), $uniqueBy));
-                DB::table($table)->upsert($rows, $uniqueBy, $update);
-            }
+        // buildings.required_building_id forms a cycle (commandCenter -> bioFacility -> harvester
+        // -> commandCenter). MySQL checks foreign keys per row, so no insert order satisfies it;
+        // checks are switched off for the upsert and restored afterwards (also on failure).
+        Schema::withoutForeignKeyConstraints(function () {
+            DB::transaction(function () {
+                foreach (self::TABLES as $table => $uniqueBy) {
+                    $rows = require database_path("seeders/data/{$table}.php");
+                    $update = array_values(array_diff(array_keys($rows[0]), $uniqueBy));
+                    DB::table($table)->upsert($rows, $uniqueBy, $update);
+                }
+            });
         });
 
         Artisan::call('game:sync-config');
