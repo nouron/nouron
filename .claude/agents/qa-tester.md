@@ -50,14 +50,14 @@ Basis-Klasse: `Tests\TestCase` (extends `Illuminate\Foundation\Testing\TestCase`
 - `$this->actingAs($user)` für authentifizierte Requests
 - `$this->postJson('/route', [...])` / `$this->getJson(...)` für JSON-API-Tests
 
-Test-Fixtures aus `TestSeeder` → `data/sql/testdata.sqlite.sql`.
+Test-Fixtures aus `TestSeeder` → `data/sql/testdata.sql`.
 SQL-Datei für aktuelle Test-User-IDs prüfen (Homer, Marge, Bart).
 
 ## Kontext-Einstieg
 Beim Aufruf zuerst prüfen:
 - `tests/Feature/` — bestehende Test-Struktur und Benennungskonventionen
 - `phpunit.xml` — Test-Suite und Filter-Konfiguration
-- `data/sql/testdata.sqlite.sql` — Test-Fixture-Daten
+- `data/sql/testdata.sql` — Test-Fixture-Daten
 - Falls Implementierung schon existiert (Altbestand-Coverage-Fall): lesen vor Test-Schreiben. Im TDD-Standardfall existiert sie noch nicht — dann Spec/Verhalten-Beschreibung als Grundlage nehmen.
 
 ## Test-Anforderungen

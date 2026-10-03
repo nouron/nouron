@@ -1117,7 +1117,7 @@ class HangarServiceTest extends TestCase
 
     public function test_success_chance_adds_pilot_rank_bonus(): void
     {
-        // Real advisors table columns (see data/sql/testdata.sqlite.sql): user_id,
+        // Real advisors table columns (see data/sql/testdata.sql): user_id,
         // colony_id, personell_id, rank, active_ticks — no hired_tick column.
         DB::table('advisors')->insert([
             'user_id' => self::USER_ID,

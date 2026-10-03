@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
  * Creates a second player with their own colony for tests that must prove a
  * player cannot reach someone else's colony (cross-colony access guards).
  *
- * The fixture (data/sql/testdata.sqlite.sql) only contains player colonies of
+ * The fixture (data/sql/testdata.sql) only contains player colonies of
  * the test users; the old playerless colony 2 "Shelbyville" was removed
  * (2026-09-23). Tests that need a foreign colony build it themselves here.
  */

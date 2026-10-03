@@ -13,7 +13,7 @@
 
 - **Datenbank ist SQLite** (NICHT MySQL)
   - `data/db/nouron.db` — Entwicklungsdatenbank
-  - `data/db/test.db` — Testdatenbank (befüllt via `data/sql/testdata.sqlite.sql`)
+  - `data/db/test.db` — Testdatenbank (befüllt via `data/sql/testdata.sql`)
 - `Routen.txt` und `code/nouron_(pre_zend)/` veraltet — nur GitHub-Repo relevant
 - Vollständige Referenztabellen (Ressourcen, Gebäude, Schiffe, DB-Schema) → `docs/game-reference.md`
 - Design System (Farben, Typo, Spacing, Komponenten — verbindlich) → `docs/design-system/` (`readme.md` als Einstieg)
@@ -33,7 +33,7 @@ config/
   advisors.php        -- Berater-Stammdaten (ap_type, credits, rank_thresholds, ...)
 database/migrations/  -- Schema-Migrationen
 data/sql/
-  testdata.sqlite.sql -- Testdaten (INSERT + UPDATE, wird von TestSeeder ausgeführt)
+  testdata.sql -- Fixtures (INSERT + UPDATE, nur Spielerseite; Referenzdaten: database/seeders/data/)
 resources/views/      -- Blade-Templates
   partials/           -- sol-button.blade.php, res-popup.blade.php (wiederverwendbar)
 public/js|css/        -- techtree-view.js, advisors.js, techtree-view.css, resources.css, ...
@@ -45,7 +45,7 @@ Schichtung: `Controller → Service → Eloquent Model → SQLite`
 
 - `config/game.php` und `config/buildings.php` sind **canonical source of truth** für alle Spielwerte — GDD folgt Config, nicht umgekehrt
 - Frontend: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap (beide vollständig entfernt; nur der `bootstrap-icons`-Font bleibt)
-- `TestSeeder` führt `data/sql/testdata.sqlite.sql` aus (regex-filtered: nur INSERT/UPDATE Statements)
+- Referenzdaten (resources, buildings, building_costs, personell, researches, ships) kommen aus `ReferenceDataSeeder` (Upsert, Daten in `database/seeders/data/*.php`, danach `game:sync-config`); `TestSeeder` = `ReferenceDataSeeder` + Fixtures aus `data/sql/testdata.sql` (regex-filtered: nur INSERT/UPDATE Statements, nur Spielerseite)
 - Techtree-Koordinaten phase-lokal (Zeile/Spalte innerhalb Phase), nicht global
 - Trust-Events (`game.trust.*`): Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
 - `moral` in Code, Config und DB ist vollständig zu `trust` umbenannt; deutscher UI-Label ist `Vertrauen` (via `__('resources.res_trust')`)
@@ -84,7 +84,7 @@ Spiel-Grafiken: **WebP**, transparent, **2× Zielgröße**; kein SVG für Illust
 - `game-developer` — Game Logic, Services, Tick-Verarbeitung
 - `backend-coder` — Controller, Routes, API-Endpoints, Middleware
 - `ui-specialist` — Blade, Alpine.js + PicoCSS (kein jQuery/Bootstrap mehr)
-- `db-migration-agent` — Schema, Migrations, SQLite, testdata.sqlite.sql
+- `db-migration-agent` — Schema, Migrations, SQLite, testdata.sql
 - `qa-tester` — Tests schreiben: VOR der Implementierung (TDD-Pflicht, siehe unten) + danach für Security-/Adversarial-/Regressionstests
 - `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
 - `project-manager` — ROADMAP, CHANGELOG, ADRs, Feature-Breakdown

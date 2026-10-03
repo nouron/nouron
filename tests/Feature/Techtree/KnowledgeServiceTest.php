@@ -17,7 +17,7 @@ use Tests\TestCase;
  * Kenntnisse use the ResearchService (Wissenschaftler AP) with IDs 90–96.
  * Key properties: no decay (GDD §10), supply cap bonus per level (GDD §6).
  *
- * Fixture (TestSeeder / testdata.sqlite.sql):
+ * Fixture (TestSeeder / testdata.sql):
  *   Colony 1 (Springfield), user_id=3 (Bart), CC level=10, housing level=2
  */
 class KnowledgeServiceTest extends TestCase

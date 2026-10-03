@@ -16,7 +16,7 @@ use Tests\TestCase;
  * Each test sets up a specific DB state, runs the tick for a unique high tick number,
  * and asserts the result.
  *
- * Test data (from TestSeeder / testdata.sqlite.sql):
+ * Test data (from TestSeeder / testdata.sql):
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *     CC (building 25):      level=10, status_points=16
  *     oremine (building 27): level=5,  status_points=11

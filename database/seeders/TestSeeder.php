@@ -3,47 +3,31 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Populates the test database with the canonical Nouron test fixtures.
  *
- * Data source: data/sql/testdata.sqlite.sql
- * Contains: Simpsons test users (Homer/Marge/Bart), Springfield colony,
- *           buildings, researches, ships, resources, fleets, INNN messages, etc.
+ * Reference data (resources, buildings, techtree, ships, costs) comes from ReferenceDataSeeder;
+ * fixtures (data/sql/testdata.sql) cover player-side tables only: Simpsons test users
+ * (Homer/Marge/Bart), Springfield colony, colony buildings/ships, runs, logs, etc.
+ * The only reference-table row in the fixtures is research 9901 (test_decay_placeholder).
  *
+ * Fixtures are plain INSERT/UPDATE statements and expect a freshly migrated database.
  * Used by Laravel Feature tests via RefreshDatabase + $seeder = TestSeeder::class.
- * Keeps test data in sync with the migration schema automatically.
  */
 class TestSeeder extends Seeder
 {
     public function run(): void
     {
-        $sql = file_get_contents(base_path('data/sql/testdata.sqlite.sql'));
+        $this->call(ReferenceDataSeeder::class);
 
-        // Execute INSERT and UPDATE statements (schema is handled by migrations)
-        $statements = array_filter(
-            explode("\n", $sql),
+        $lines = array_filter(
+            explode("\n", file_get_contents(base_path('data/sql/testdata.sql'))),
             fn (string $line) => (bool) preg_match('/^\s*(INSERT|UPDATE)\s/i', $line)
         );
-
-        foreach ($statements as $statement) {
-            $statement = trim($statement);
-            if ($statement === '') {
-                continue;
-            }
-            $statement = rtrim($statement, ';').';';
-            // OR REPLACE: avoids UNIQUE violations when migrations pre-insert master rows (e.g. add_stratege)
-            $statement = preg_replace('/^INSERT INTO\b/i', 'INSERT OR REPLACE INTO', $statement);
-            DB::statement($statement);
+        foreach ($lines as $line) {
+            DB::statement(rtrim(trim($line), ';').';');
         }
-
-        $this->call(MasterDataSeeder::class);
-
-        // config/*.php is the canonical source for master-data values (decay_rate,
-        // supply_cost, max_level, build_cost, ...). Sync last so neither the SQL
-        // fixture nor MasterDataSeeder can silently drift from config (ROADMAP T20).
-        Artisan::call('game:sync-config');
     }
 }

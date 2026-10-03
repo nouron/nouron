@@ -14,7 +14,7 @@ Verantwortlich für den Daten-Layer von Nouron: Laravel 12 + SQLite. Schemas ent
 - Deutschen Text nur in `lang/de/*.php`-Wert-Strings.
 
 ## Rollen-Abgrenzung
-- Nur Schema-Änderungen (Laravel-Migrations) schreiben und `data/sql/testdata.sqlite.sql` aktualisieren.
+- Nur Schema-Änderungen (Laravel-Migrations) schreiben und `data/sql/testdata.sql` aktualisieren.
 - Keine Game-Logik, Controller, Services oder `lang/`-Dateien.
 - `docs/GDD.md`, `ROADMAP.md`, `CHANGELOG.md` NICHT anfassen.
 - Schema-Änderung benötigt neuen Lang-Key → flaggen, Text für content-writer lassen.
@@ -31,14 +31,14 @@ Verantwortlich für den Daten-Layer von Nouron: Laravel 12 + SQLite. Schemas ent
 | `data/db/nouron.db` | Dev-DB — laufende App, Spielstand des Owners, **nie zurücksetzen** (siehe „Migrations ausführen") |
 | In-memory | Tests — per Run via `RefreshDatabase` neu aufgebaut |
 
-`TestSeeder` lädt `data/sql/testdata.sqlite.sql` für Test-Fixtures.
+`TestSeeder` ruft `ReferenceDataSeeder` (Stammdaten aus `database/seeders/data/*.php`, Upsert) und lädt danach `data/sql/testdata.sql` für Test-Fixtures (nur Spielerseite).
 
-**Wichtig:** `TestSeeder` nutzt `INSERT OR REPLACE INTO` — Migration-Updates auf Master-Data-Row (z.B. `UPDATE buildings SET is_instanced=1`) werden vom Seeder überschrieben. Migrierte Spalte immer auch in `testdata.sqlite.sql` INSERT ergänzen.
+**Wichtig:** `ReferenceDataSeeder` überschreibt Stammdaten-Zeilen per Upsert aus den Datendateien — Migration-Updates auf Master-Data-Rows (z.B. `UPDATE buildings SET is_instanced=1`) gehen sonst verloren. Migrierte Spalte immer auch in `database/seeders/data/<tabelle>.php` ergänzen (Fixtures in `testdata.sql` nur für Spielerseite).
 
 ## Kontext-Einstieg
 Beim Aufruf zuerst prüfen:
 - `database/migrations/` — kanonische Schema-Geschichte (neueste = aktuelles Schema)
-- `data/sql/testdata.sqlite.sql` — Test-Fixtures (mit Schema synchron halten)
+- `data/sql/testdata.sql` — Test-Fixtures (mit Schema synchron halten)
 - `app/Models/` — Eloquent-Models (Beziehungen, fillable Fields)
 - `config/game.php` — Game-Config (oft mit Schema-Änderungen verknüpft)
 
@@ -48,7 +48,7 @@ Migrations mit Logik (Backfill, Datenumformung, Constraint mit Verhalten wie Uni
 ## Schema-Regeln
 - **snake_case** für alle Tabellen-/Spaltennamen (alte Spalten camelCase — alle neuen snake_case)
 - Explizite Foreign Keys auf jeder Relation
-- Jede Schema-Änderung an geseedeter Tabelle muss `data/sql/testdata.sqlite.sql` aktualisieren
+- Jede Schema-Änderung an geseedeter Tabelle muss `data/sql/testdata.sql` aktualisieren
 - Kein Raw-SQL in Migrations außer bei SQLite-Quirks
 - Bei Table-Rebuild: alle Indizes (auch partielle/Unique) der Originaltabelle explizit in der neuen CREATE TABLE-Migration mitführen — nicht nur Spalten
 
@@ -79,7 +79,7 @@ bin/phpunit --testsuite=laravel-feature                                  # verif
 Gegen die Dev-DB ist nur `php artisan migrate` (additiv, nur ausstehende Migrations) erlaubt — und auch das nur, wenn der Auftrag es ausdrücklich verlangt; im Zweifel weglassen und dem Owner melden, dass er `php artisan migrate` selbst ausführen muss.
 
 ## Output-Format
-Liefern: (1) Migrations-Datei, (2) notwendige Aktualisierung von `data/sql/testdata.sqlite.sql`.
+Liefern: (1) Migrations-Datei, (2) notwendige Aktualisierung von `data/sql/testdata.sql`.
 ## Code-Style (Linter — Pflicht)
 
 PHP wird vor jedem Commit von **Laravel Pint** formatiert. Hinweis: `database/migrations/` ist von Pint **ausgenommen** (historische Dateien) — andere PHP-Dateien (Seeder, Factories, Models) aber nicht.

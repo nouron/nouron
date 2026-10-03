@@ -23,7 +23,7 @@ use Tests\TestCase;
  * Trade-, fleet- and galaxy-route scenarios were removed together with the legacy
  * trade/fleet/galaxy screens (controllers + routes + models deleted 2026-06).
  *
- * Fixture (TestSeeder / testdata.sqlite.sql):
+ * Fixture (TestSeeder / testdata.sql):
  *   User 3 (Bart)  → colony 1 "Springfield"  (CC level=3)
  *
  * The CC-level-5 positive baselines used to run on colony 2 "Shelbyville" (CC=5);

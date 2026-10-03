@@ -8,6 +8,7 @@ use App\Services\AdvisorService;
 use App\Services\OnboardingService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -41,7 +42,12 @@ class BotSession
         $userId = 3;
         $colonyId = 1;
 
-        app(TestSeeder::class)->run();
+        // Fixtures are plain INSERTs (no REPLACE) — a second boot in the same database
+        // (e.g. two bots with the same seed) must not seed them again;
+        // resetColonyToSol1() below resets the colony anyway.
+        if (! DB::table('user')->where('user_id', $userId)->exists()) {
+            app(TestSeeder::class)->run();
+        }
 
         // Bypass flags must be off BEFORE the run is created — OnboardingService
         // snapshots config('game.bypass') into run.settings at creation time.
