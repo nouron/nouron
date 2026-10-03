@@ -211,6 +211,7 @@ Owner-Entscheidung 2026-09-30: Diese Punkte sind für die Closed Beta nicht nöt
 - [ ] **T23 Bot: `tile_occupied` bei `place_building`** (Fund T17, Seed 7) — freie-Zonen-Tile-Suche sieht Belegung nicht; Seed 7 hortet 478 Rg ab Sol 50, Credits-/Wohlstandsziele bei 0. Bot-Bug. — Klein
 - [ ] **T24 Bot: `barOfferCandidate` prüft Bezahlbarkeit nicht** (Fund T11) — 40× `bar_offer_insufficient_resources` im Batch. — Klein
 - [ ] **T26 Run-Seed nahe `PHP_INT_MAX` → TypeError in GameTick** (Fund RNG-Fix 2026-09-25) — `$rngSeed + mission_id + 1` bzw. `$rngSeed + colony*7919 + tick*104729` wird bei Seeds nahe `PHP_INT_MAX` zum Float. Wahrscheinlichkeit ~1e-9/Run; Abhilfe: Seed an der Quelle begrenzen. — Klein
+- [ ] **T27 Rest-Altlasten im Schema prüfen** (Fund R5b/3) — unklare Spalten bewusst behalten: `resources.abbreviation`, `personell.purpose/max_status_points`, `buildings.purpose`, `user_preferences.sol_report_skip`, `colony_building_discount_vouchers.granted_tick`, `ships.ap_for_levelup`, `ships.max_status_points` (nur noch von `SyncConfig` gelesen). `user.registration` bleibt (Profilseite liest es), wird aber nie geschrieben; Fixture-Werte `0000-00-00` sind unter MySQL-Strict-Mode ungültig. Hinweis: Anwerbungskosten kommen aus `config/advisors.php`, nicht aus der DB. — Klein
 
 ### D — Phase 4: AP-Ratenmodell & Regolith-Balance (offene Themen)
 
