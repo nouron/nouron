@@ -248,7 +248,7 @@ return new class extends Migration
             $table->string('fail_reason', 50)->nullable();
             $table->integer('nexus_debt')->default(3000);
             $table->integer('phase2_start_tick')->nullable();
-            $table->integer('rng_seed')->nullable();
+            $table->bigInteger('rng_seed')->nullable();
             $table->integer('score')->nullable();
             $table->index(['user_id', 'status'], 'runs_user_id_status_index');
             $table->foreign('colony_id')->references('id')->on('glx_colonies')->cascadeOnDelete();
@@ -319,7 +319,7 @@ return new class extends Migration
             $table->integer('colony_id');
             $table->integer('ship_id');
             $table->integer('level')->default(0);
-            $table->integer('status_points')->default(10);
+            $table->double('status_points')->default(10);
             $table->integer('ap_spend')->default(0);
             $table->integer('hangar_instance_id')->nullable();
             $table->string('ship_state', 255)->default('docked');
