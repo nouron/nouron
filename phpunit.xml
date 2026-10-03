@@ -29,8 +29,18 @@
              overridden there as well. -->
         <server name="CACHE_STORE" value="array" force="true"/>
         <server name="SESSION_DRIVER" value="array" force="true"/>
-        <env name="DB_CONNECTION" value="sqlite" force="true"/>
-        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <!-- Tests always run against the MySQL test database, never the dev DB from .env.
+             Connection and database name are forced (also in $_SERVER, which Laravel reads
+             first). Host, port and credentials are defaults only: an environment variable set
+             outside phpunit.xml (e.g. the CI job env) takes precedence. -->
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_DATABASE" value="nouron_test" force="true"/>
+        <server name="DB_CONNECTION" value="mysql" force="true"/>
+        <server name="DB_DATABASE" value="nouron_test" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_USERNAME" value="nouron"/>
+        <env name="DB_PASSWORD" value="nouron"/>
         <!-- Bypass all game rule checks by default in tests.
              Tests that specifically test AP/resource/supply behaviour
              override these via config(['game.bypass.ap_checks' => false]) in setUp(). -->

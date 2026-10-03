@@ -71,6 +71,28 @@ Erst nachdem `.env` auf MySQL zeigt (Task 6):
 php artisan db:reset --force
 ```
 
+## Tests
+
+`phpunit.xml` erzwingt `DB_CONNECTION=mysql` und `DB_DATABASE=nouron_test`; Host, Port, User und Passwort sind dort nur Vorgaben (`127.0.0.1:3306`, `nouron`/`nouron`), die eine gesetzte Umgebungsvariable ueberschreibt (CI nutzt `root`). Die lokale `.env` spielt fuer Tests keine Rolle.
+
+```bash
+bin/phpunit                                   # seriell, ca. 9,5 min
+php artisan test --parallel --processes=4     # paratest, ca. 3,5 min
+```
+
+Gemessen 2026-10-03 (WSL2, 24 Kerne): Ohne `--processes` startet paratest einen Worker pro Kern und wird durch die gleichzeitigen Migrationen langsamer (ca. 6 min); 4 Prozesse sind lokal am schnellsten. Jeder Worker migriert seine Datenbank `nouron_test_test_N` selbst.
+
+Langsam ist vor allem DDL: `migrate:fresh` der Baseline dauert ca. 25 s, weil MySQL jede DDL-Anweisung auf die Platte synchronisiert. Optional (nur Entwicklungsrechner, nicht verifiziert, erfordert sudo) laesst sich das abschwaechen, in `/etc/mysql/mysql.conf.d/zz-dev.cnf`:
+
+```ini
+[mysqld]
+innodb_flush_log_at_trx_commit = 0
+sync_binlog = 0
+skip-log-bin
+```
+
+Danach `sudo service mysql restart`. Ein Absturz kann dann die letzte Sekunde Schreibvorgaenge verlieren, fuer Dev/Test unkritisch.
+
 ## Regel: Tests und Bot nie gegen `nouron`
 
 Tests laufen nur gegen `nouron_test`, der Playtest-Bot nur gegen `nouron_playtest`, nie gegen `nouron`. Sonst wird der Dev-Spielstand ueberschrieben (siehe Vorfall 2026-09-17). Agenten duerfen `migrate:fresh`/`db:seed` nie gegen `nouron` ausfuehren.
