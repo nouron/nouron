@@ -370,7 +370,6 @@ class GameTickMerchantTest extends TestCase
         $npcColonyId = DB::table('glx_colonies')->insertGetId([
             'name' => 'NPC Colony Test',
             'user_id' => null,
-            'since_tick' => 0,
             'is_primary' => 0,
         ]);
 

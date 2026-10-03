@@ -74,7 +74,6 @@ class OnboardingTriggersTest extends TestCase
             'id' => $this->colonyId,
             'name' => 'TriggerTestColony',
             'user_id' => $this->userId,
-            'since_tick' => 1,
             'is_primary' => 1,
         ]);
 
@@ -481,7 +480,6 @@ class OnboardingTriggersTest extends TestCase
             'id' => 9999,
             'name' => 'NpcColony',
             'user_id' => null,
-            'since_tick' => 1,
             'is_primary' => 1,
         ]);
 

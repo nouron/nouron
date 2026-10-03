@@ -42,7 +42,7 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('glx_colonies')->insertOrIgnore([
             'id' => $this->colonyId, 'user_id' => $this->userId,
             'name' => 'TestColony',
-            'since_tick' => 1, 'is_primary' => 1,
+            'is_primary' => 1,
         ]);
 
         // Run at Sol 0 — keeps tick-gated hints (3/4/5/6) below their thresholds.

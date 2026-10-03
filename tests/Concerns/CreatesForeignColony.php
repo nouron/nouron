@@ -44,7 +44,6 @@ trait CreatesForeignColony
             'id' => $colonyId,
             'name' => 'Foreign Colony',
             'user_id' => $userId,
-            'since_tick' => 1,
             'is_primary' => 1,
         ]);
 

@@ -96,7 +96,7 @@ class ColonyService
      * base table, not the v_glx_colonies view. There is no galaxy/system map any
      * more — a colony has no coordinates (single home site per player).
      */
-    public function createColony(int $userId, string $name, int $sinceTick = 0): Colony
+    public function createColony(int $userId, string $name): Colony
     {
         $nextId = (int) DB::table('glx_colonies')->max('id') + 1;
 
@@ -104,7 +104,6 @@ class ColonyService
             'id' => $nextId,
             'name' => $name,
             'user_id' => $userId,
-            'since_tick' => $sinceTick,
             'is_primary' => 1,
         ]);
 

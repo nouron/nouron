@@ -1,9 +1,9 @@
-INSERT INTO "resources" (id,name,abbreviation,trigger,is_tradeable,start_amount,icon) VALUES(1,'res_credits','Cr','Event',0,3000,'resicon-credits');
-INSERT INTO "resources" (id,name,abbreviation,trigger,is_tradeable,start_amount,icon) VALUES(2,'res_supply','Sup','Event',0,200,'resicon-supply');
-INSERT INTO "resources" (id,name,abbreviation,trigger,is_tradeable,start_amount,icon) VALUES(3,'res_regolith','Rg','Level',1,200,'resicon-regolith');
-INSERT INTO "resources" (id,name,abbreviation,trigger,is_tradeable,start_amount,icon) VALUES(4,'res_werkstoffe','Co','Level',1,0,'resicon-iron');
-INSERT INTO "resources" (id,name,abbreviation,trigger,is_tradeable,start_amount,icon) VALUES(5,'res_organika','Or','Level',1,0,'resicon-silicates');
-INSERT INTO "resources" (id,name,abbreviation,trigger,is_tradeable,start_amount,icon) VALUES(12,'res_trust','Tr','Event',0,0,'resicon-moral');
+INSERT INTO "resources" (id,name,abbreviation) VALUES(1,'res_credits','Cr');
+INSERT INTO "resources" (id,name,abbreviation) VALUES(2,'res_supply','Sup');
+INSERT INTO "resources" (id,name,abbreviation) VALUES(3,'res_regolith','Rg');
+INSERT INTO "resources" (id,name,abbreviation) VALUES(4,'res_werkstoffe','Co');
+INSERT INTO "resources" (id,name,abbreviation) VALUES(5,'res_organika','Or');
+INSERT INTO "resources" (id,name,abbreviation) VALUES(12,'res_trust','Tr');
 INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(0,'Homer','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','homer@nouron.de',0,'adsfsdfsf','0000-00-00 00:00:00',NULL);
 INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(1,'Marge','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','marge@nouron.de',0,'gaqx2hwrf4env5i3','2009-12-23 14:00:00',NULL);
 INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(2,'Lisa','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','lisa@nouron.de',0,'abcdefg','0000-00-00 00:00:00',NULL);
@@ -12,9 +12,9 @@ INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,
 INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(5,'Moe','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','moe@nouron.de',1,'abcdefg','0000-00-00 00:00:00',NULL);
 INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(18,'Lenny','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','lenny@nouron.de',0,'','0000-00-00 00:00:00',NULL);
 INSERT INTO "user" (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(19,'Carl','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','carl@nouron.de',0,'','0000-00-00 00:00:00',NULL);
--- glx_colonies: id, name, user_id, since_tick, is_primary, hunger_streak
+-- glx_colonies: id, name, user_id, is_primary, hunger_streak
 -- Only player colonies exist (colony 2 "Shelbyville", user_id=0, removed 2026-09-23).
-INSERT INTO "glx_colonies" (id,name,user_id,since_tick,is_primary,hunger_streak) VALUES(1,'Springfield',3,20582,1,0);
+INSERT INTO "glx_colonies" (id,name,user_id,is_primary,hunger_streak) VALUES(1,'Springfield',3,1,0);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(25,'civil','building_commandCenter',41,1,0,2,5,NULL,10,20,0.4,0,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(27,'industry','building_harvester',25,1,1,2,1,2,10,20,0.8,2,1,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,"row","column",max_level,max_instances,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(28,'civil','building_housingComplex',25,1,1,1,3,6,10,20,0.4,0,1,1);
