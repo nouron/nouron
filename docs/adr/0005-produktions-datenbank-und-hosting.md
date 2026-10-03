@@ -1,7 +1,7 @@
 # ADR 0005: Produktions-Datenbank und Hosting (Closed Beta)
 
 **Datum:** 2026-10-02
-**Status:** Akzeptiert (Owner-Entscheidungen 2026-10-02; Annahmen des Assistenten sind als „Annahme / zu prüfen" markiert)
+**Status:** Akzeptiert (Owner-Entscheidungen 2026-10-02 und 2026-10-03; Annahmen des Assistenten sind als „Annahme / zu prüfen" markiert)
 **Bezug:** ROADMAP R3–R7, R5b, R20; Owner-Vorgabe 2026-10-01 „Release zunächst über Laravel Cloud"
 
 ## Kontext
@@ -34,11 +34,11 @@ Nouron läuft in Entwicklung und Tests auf SQLite. Für die Closed Beta (ca. 10�
 Grep über `app/`, `database/`, `config/`, `data/sql/`, Stand master 32b1ec7c:
 
 1. **Migrationen (größter Posten).** 131 Migrationsdateien; 38 verwenden `DB::statement`/`unprepared`, 27 davon SQLite-spezifisch (`PRAGMA foreign_keys`, `INTEGER PRIMARY KEY AUTOINCREMENT`, Tabelle-neu-anlegen-und-umbenennen, z. B. `2026_05_24_000002_add_phase_to_runs`, `2026_06_11_111449_make_system_object_id_nullable_on_glx_colonies`, `2026_06_20_000003_remove_galaxy_fleet`). Diese Migrationen laufen auf MySQL/Postgres **nicht**. Betroffen sind auch Migrationen, die Daten per SQL befüllen oder Views anlegen.
-2. **View `v_glx_colonies`** (Model `Colony` liest daraus, `MerchantService` per `DB::table`). Einfache Passthrough-View (`SELECT * FROM glx_colonies`) — portabel, muss aber nach jedem Umbau von `glx_colonies` neu angelegt werden (in SQLite wegen `SELECT *`-Einfrieren; MySQL/Postgres verhalten sich ähnlich). Weitere Views (`v_trade_resources`, ggf. Altlasten aus `0001_01_01_999999_create_views`) prüfen.
+2. **View `v_glx_colonies`** (Model `Colony` liest daraus, `MerchantService` per `DB::table`). Join-View über `glx_colonies` und `glx_system_objects` (`CREATE VIEW … JOIN`) — portables SQL; die Baseline legt sie mit an. Weitere Views (`v_trade_resources`, ggf. Altlasten aus `0001_01_01_999999_create_views`) prüfen.
 3. **Raw-SQL im App-Code:** `MAX(0, amount - x)` in `HangarService:751` ist die SQLite-Skalarfunktion — auf MySQL/Postgres ist das `GREATEST(0, ...)` (MySQL: Fehler/Aggregat-Fehlinterpretation, Postgres: Fehler). `orderByRaw('CASE id WHEN ...')`, `SUM(CASE ...)`, `COALESCE`, `LOWER(...)` sind portabel. `DB::raw('amount + N')`-Updates in `GameTick` sind portabel.
 4. **`insertOrIgnore`** (`ColonyTileService`, `CharacterCodexService`, `BarService`, `ColonySeedDemo`): Laravel übersetzt dies pro Treiber (MySQL `INSERT IGNORE`, Postgres `ON CONFLICT DO NOTHING`) — portabel, setzt aber echte Unique-Indizes voraus (bekannte Lücke: `advisors_colony_personell_unique`, siehe Memory).
 5. **Testdaten:** `data/sql/testdata.sqlite.sql` wird von `TestSeeder` zeilenweise per Regex gefiltert und als `INSERT OR REPLACE INTO` ausgeführt — **SQLite-Syntax**. Auf MySQL (`REPLACE INTO`) und Postgres (`ON CONFLICT`) nicht lauffähig. Zusätzlich auf Postgres: explizite IDs verschieben die Sequenzen (Sequenz-Reset nötig), strengere Typen (Text-/Integer-Vergleiche, Booleans). Die Tests hängen an festen IDs (Bart user_id=3, colony_id=1, ...).
-6. **Test-Infrastruktur:** `phpunit.xml` erzwingt `sqlite` + `:memory:`; Playtest-Bot startet Process-Pool-Kinder mit eigenen DB-Dateien. Beides ist durch die Entscheidung (ein Dialekt, MySQL) betroffen: Test-Suite-Dialekt offen (siehe „Annahme / zu prüfen"), Playtest-Bot-DB-Isolation unter MySQL in R5b zu klären.
+6. **Test-Infrastruktur:** `phpunit.xml` erzwingt `sqlite` + `:memory:`; Playtest-Bot startet Process-Pool-Kinder mit eigenen DB-Dateien. Beides ist durch die Entscheidung (ein Dialekt, MySQL) betroffen und wird in R5b umgestellt: Suite und CI laufen gegen MySQL, der Bot nutzt eine gemeinsame DB mit einem User pro Lauf (siehe „Entscheidung“).
 7. **Gleichzeitige Schreibzugriffe:** `/sol/next` sperrt pro Run über `Cache::lock` (R11). SQLite hat nur einen Schreiber (Datei-Lock); bei 10–20 Testspielern mit kurzen Transaktionen unkritisch, aber `busy_timeout`/`journal_mode` stehen in `config/database.php` auf `null`. MySQL/Postgres verhalten sich bei parallelen Runs besser (Zeilen-Locks), `lockForUpdate` bleibt dort wirksam (in SQLite ein No-Op).
 
 ## Optionen
@@ -64,6 +64,9 @@ Owner-Entscheidungen:
 - **Hosting:** Laravel Cloud, Region EU-Frankfurt.
 - **Datenbank:** Laravel MySQL. Postgres (Option C) und VPS mit SQLite (Option A) sind **verworfen**. Grund für den Verzicht auf den VPS: Der Owner will so wenig wie möglich selbst administrieren.
 - **Ein Dialekt:** Zwei Dialekte (SQLite lokal, MySQL Prod) sind nicht gewünscht. Lokal, CI und Produktion laufen alle auf MySQL.
+- **Tests, CI und Playtest-Bot (2026-10-03):** Die Test-Suite läuft gegen MySQL, nicht gegen SQLite-in-memory (Best Practice: dieselbe Engine wie Produktion; sonst kehrt der zweite Dialekt durch die Hintertür zurück). MySQL hat keinen echten In-Memory-Modus; bei Bedarf wird erst gemessen, dann das Datenverzeichnis auf tmpfs gelegt und die Durability abgeschaltet.
+- **Kein Docker lokal (YAGNI):** MySQL wird nativ in WSL installiert (eine Instanz, drei Datenbanken `nouron`, `nouron_test`, `nouron_playtest`). In CI genügt der MySQL-Service von GitHub Actions.
+- **Playtest-Bot wie echte Spieler:** Die Bots laufen parallel in **einer gemeinsamen** Datenbank (`nouron_playtest`), jeder Lauf legt einen eigenen User samt Kolonie an — dasselbe Mehrspieler-Modell wie in Produktion (Voraussetzung: R18/R19, Tick und Zugriffe pro Run). Das ersetzt die frühere Isolation über `:memory:` pro Prozess und ist zugleich ein Mehrspieler-Lasttest.
 - **Datensicherheit:** Bis zu 24 h Datenverlust sind akzeptabel (tägliche Snapshots genügen, kein PITR nötig).
 - **Budget:** 20 € pro Monat; Scale-to-Zero (App und DB) ist erlaubt.
 - **Daten:** Frische Produktions-DB, keine Dev-/Testdaten, keine Test-Accounts.
@@ -77,13 +80,13 @@ Begründung:
 
 ### Annahme / zu prüfen (Assistent, keine Owner-Entscheidung)
 
-1. **Migrations-Squash:** Da Produktion frisch ist, wird das Endschema als MySQL-Baseline erzeugt, statt 131 Migrationen (davon 27 SQLite-spezifisch) einzeln zu portieren. Annahme / zu prüfen: Vollständigkeit der Baseline gegenüber dem aktuellen Schema, Umgang mit Views (`v_glx_colonies`) und Master-Daten (`MasterDataSeeder` + `game:sync-config`, nicht `testdata.sqlite.sql`).
-2. **Test-Suite:** Läuft ebenfalls gegen MySQL **oder** bleibt vorerst SQLite-in-memory. Offen / zu prüfen: Laufzeit auf MySQL messen (Dev-Tempo vs. Dialekt-Drift). Dies widerspricht nicht dem Owner-Wunsch „kein Zwei-Dialekt-Betrieb", wenn die Suite nach der Messung auf MySQL umgestellt wird; bis dahin wäre SQLite-in-memory ein Übergangszustand.
+1. **Migrations-Squash:** Da Produktion frisch ist, wird das Endschema als **eine** Baseline-Migration (`Schema::create`, kein `schema:dump`, damit Produktion kein `mysql`-Kommandozeilenprogramm braucht) erzeugt statt 131 Migrationen (davon 27 SQLite-spezifisch) einzeln zu portieren. Zu prüfen: Äquivalenz der Baseline zum heutigen Schema (Spalten inkl. Reihenfolge, Indizes, Fremdschlüssel, Views) — im Umsetzungsplan als maschineller Vergleich vorgesehen. Die Baseline fügt **keine** Daten ein.
+2. **Stammdaten vs. Fixtures:** `data/sql/testdata.sqlite.sql` mischt heute Stammdaten (Ressourcen, Gebäude, Kosten, Berater-/Schiffs-/Forschungsdaten) und Test-Fixtures (Simpsons-User, Kolonien). Annahme: Aufteilung in `masterdata.sql` (auch Produktion) und `testdata.sql` (nur Tests/Dev), beide in dialektneutraler Syntax (`REPLACE INTO`, unquotierte Bezeichner). `REPLACE INTO` löscht und fügt neu ein und ist daher nur für eine **leere** DB zulässig; der Stammdaten-Seeder schreibt nichts, wenn bereits Daten existieren (sonst Foreign-Key-Fehler bzw. Löschen von Spielerdaten).
 3. **Budget-Risiko:** Die Kostenschätzung von 20–40 USD/Monat war unsicher und **kann über 20 € liegen**. Vor Buchung Preise live prüfen (Plan-Basis, MySQL-Compute, Scale-to-Zero-Verhalten). Der Starter-Plan hat nur **1 Tag Log-Retention**; Growth (7 Tage) kostet mehr.
 
 ### Folgearbeiten (Roadmap)
 
-1. **R5b MySQL-Portierung** (Aufwand Groß, TDD): Squash-Baseline (Annahme s. o.), `MAX(0, …)` in `HangarService` → `GREATEST`, Test-Seed ohne `INSERT OR REPLACE`, CI-Job/Suite gegen MySQL, lokale MySQL-Entwicklungsumgebung dokumentieren (inkl. Playtest-Bot/Process-Pool-DB-Isolation).
+1. **R5b MySQL-Portierung** (Aufwand Groß, TDD; Plan: `docs/superpowers/plans/2026-10-03-r5b-mysql-portierung.md`): lokale MySQL-Umgebung, `MAX(0, …)` in `HangarService` portabel, Stammdaten/Fixtures trennen, Migrations-Baseline, Suite und CI gegen MySQL, Playtest-Bot in gemeinsamer DB.
 2. **R4 Deployment:** Laravel Cloud, Domain `app.nouron.de`, Build-/Deploy-Commands, Owner-Admin per Kommando. `DatabaseSeeder` verweigert Produktion bereits (R3).
 3. **R6 Backups:** Laravel-Cloud-Snapshots (täglich), Aufbewahrung konfigurieren, Restore einmal in einen neuen Cluster testen, Export-Weg (`mysqldump` über Public Endpoint) dokumentieren.
 4. **R7 Monitoring:** siehe unten (offen).
