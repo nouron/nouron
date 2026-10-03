@@ -128,7 +128,7 @@ class BotStrategyResearchLevelupTest extends TestCase
         // Frees up the shared colony AP pool for the current tick — the bot
         // fixture's base AP (config('game.ap.base')) is already enough for
         // these tests, this only clears anything the boot fixture locked.
-        DB::table('locked_actionpoints')->where('colony_id', $bot->colonyId)->delete();
+        DB::table('locked_actionpoints')->where('scope_type', 'colony')->where('scope_id', $bot->colonyId)->delete();
     }
 
     /**
