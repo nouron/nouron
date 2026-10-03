@@ -163,29 +163,128 @@ git commit -m "refactor: Organika-Abzug im Hangar ohne SQLite-MAX() (R5b)"
 
 ---
 
+### Task 3a: Legacy-Bereinigung vor der Baseline (Owner-Freigabe 2026-10-03)
+
+Quelle: Reviews `a4073b02…` (Tabellen) und `a66f9d38…` (Pfade/Spalten), jeweils per Grep belegt. Owner: Gruppe 1 + 2 freigegeben, Flotten-Altlasten „definitiv weg" (es gibt nur noch einzelne Schiffe), unklare Spalten bleiben. Reihenfolge der Plan-Tasks: 1, 2, **3a**, 3, 4, … (der Golden-Dump aus Task 3 entsteht erst nach 3a). Jeder Unterschritt hat einen eigenen Commit und lässt die schnelle Suite grün (`bin/phpunit --testsuite=laravel-feature,laravel-unit`, noch SQLite). Vor jedem Löschen die Belege des Reviews mit `grep -rn` über `app routes resources public/js config database/seeders tests lang` selbst gegenprüfen; findet sich ein Leser, wird das Element **nicht** entfernt und im Bericht vermerkt.
+
+**Bleibt ausdrücklich unangetastet (Owner):** `user.activated`/`activation_key` (E-Mail-Aktivierung geplant), `resources.abbreviation`, `personell.purpose/max_status_points`, `buildings.purpose`, `user_preferences.sol_report_skip`, `colony_building_discount_vouchers.granted_tick`, `glx_colonies.is_primary`, `ships.ap_for_levelup`, `researches.decay_rate/supply_cost/ap_for_levelup`, `config/ships.php`-Keys `trust_per_unit`, `nexus_cost`, `nexus_delivery_ticks`, `wear_per_sol`, `id`.
+
+**Files (gesamt):**
+- Modify: `app/Services/Techtree/{AbstractTechnologyService,ResearchService,TechtreeColonyService}.php`, `app/Providers/AppServiceProvider.php`, `app/Services/OnboardingService.php`, `app/Console/Commands/{ResetPlayer,GameSnapshot,SyncConfig,ColonySeedDemo}.php`, `app/Services/ColonyService.php`, `app/Models/{User,Resource,Colony,Building,Ship}.php` (soweit vorhanden), `database/factories/UserFactory.php`, `config/ships.php`, `data/sql/testdata.sqlite.sql`
+- Delete: `app/Services/Techtree/ShipService.php`, `tests/Feature/Techtree/ShipServiceTest.php`, `app/Models/{Building,Research}.php` (nur wenn nach Gegenprüfung ohne Aufrufer)
+- Create: `database/migrations/2026_10_03_000001_drop_legacy_tables_and_columns.php`
+- Test: bestehende Suite + je Unterschritt die genannten Tests
+
+**Interfaces:**
+- Produces: Schema ohne Tabellen `trade_resources`, `personell_costs`, `colony_personell`, `research_costs`, `ship_costs`, View `v_trade_resources`; ohne Spalten `user.{faction_id,description,note,state,theme,tooltips_enabled,first_time_login,last_activity,registration,disabled}`, `glx_colonies.since_tick`, `resources.{start_amount,is_tradeable,trigger,icon}`, `buildings.prime_colony_only`, `ships.{prime_colony_only,required_research_id,required_research_level,moving_speed}` sowie — nur wenn die Gegenprüfung keinen Leser findet — `ships.decay_rate`, `ships.supply_cost` (Schiffe zerfallen nicht und haben keinen Supply-Unterhalt, GDD 2026-06-08). `ships.max_status_points` bleibt, solange `HangarService`/Reparatur es liest. Fixtures sind angepasst, die Suite grün.
+
+- [ ] **Step 1 (3a.1): Unerreichbaren Code entfernen**
+
+1. Absicherung zuerst: Existiert ein Test, dass `POST` auf die Techtree-Order-Route für `ship` mit `use_colony_view` abgelehnt wird (`TechtreeController::order`, ca. Z. 449–451)? Falls nein: Test schreiben (rot nicht möglich, da Verhalten existiert — Charakterisierungstest, muss grün sein und nach dem Löschen grün bleiben).
+2. Löschen: `ShipService.php`, `ShipServiceTest.php`, Binding in `AppServiceProvider.php` (ca. Z. 18/83–87), die Methoden `getBuildings/getResearches/getShips/getPersonell` in `TechtreeColonyService` samt `test_get_buildings` (`test_get_techtree` bleibt), Models `Building`/`Research` falls ohne Aufrufer (Gegenprüfung: `grep -rn "Models.Building\b\|Building::\|Research::" app tests routes database`).
+3. Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → grün; `vendor/bin/phpstan analyse` (bzw. `bin/phpstan`) → keine neuen Fehler.
+4. Commit: `refactor: ShipService und tote Techtree-Getter entfernt (R5b/3a)`
+
+- [ ] **Step 2 (3a.2): `colony_personell` und `personell_id`-Zweige**
+
+1. Charakterisierungstest (muss vor und nach dem Umbau grün sein): In `tests/Feature/Techtree/TechtreeColonyServiceTest.php` (oder `TechtreeControllerTest`) prüfen, dass `getTechtree()` Personell-Knoten mit `level` 0 liefert (genau das heutige Verhalten, `TechtreeColonyService.php:88-92`). Test schreiben, grün sehen.
+2. Umbau: In `_gatherTechtreeInformations` (`TechtreeColonyService.php` ca. Z. 68–75) die `personell`-Zeile von `colony_personell` lösen (Level fest 0, keine DB-Abfrage); Zweige `entityIdKey() === 'personell_id'` in `AbstractTechnologyService.php` (ca. Z. 180/487/565) entfernen. Löschaufrufe `colony_personell` in `OnboardingService.php:68`, `ResetPlayer.php:217`, Eintrag in `GameSnapshot.php:50`, Fixture-Zeilen `testdata.sqlite.sql:155-158` entfernen.
+3. Run: schnelle Suite → grün. Commit: `refactor: colony_personell und Personell-Zweige entfernt (R5b/3a)`
+
+- [ ] **Step 3 (3a.3): `research_costs` und `costsTable()`**
+
+1. Charakterisierungstests (grün vor und nach dem Umbau): Kenntnis-Levelup zahlt nur AP/Credits aus `config/knowledge.php` (bestehender `KnowledgeServiceTest` deckt das ab — prüfen); neu: `repair` einer Kenntnis/eines Gebäudes ohne Zusatzkosten in `AbstractTechnologyService` (Pfad Z. ~373) schlägt nicht fehl.
+2. Umbau: `ResearchService::costsTable()` (Z. ~39–43) entfernen; in `AbstractTechnologyService` den Kostenpfad (Z. ~110/167/373/475/534) so ändern, dass nur Dienste mit eigener Kostentabelle (`BuildingService` → `building_costs`) sie lesen und andere eine leere Kostenmenge bekommen (kleinste Änderung: `costsTable()` liefert `?string`, `null` → leere Collection).
+3. Run: schnelle Suite → grün. Commit: `refactor: research_costs-Lesepfad entfernt (R5b/3a)`
+
+- [ ] **Step 4 (3a.4): Spalten und Tabellen aus Code, Models, Factory und Config nehmen**
+
+Je Gruppe zuerst Gegenprüfung (grep), dann Code:
+- **user:** `faction_id, description, note, state, theme, tooltips_enabled, first_time_login, last_activity, registration, disabled` aus `User.php` (`$fillable`/`$casts`), `UserFactory.php:27-30` und den 5 Test-Setups (`faction_id` in `OnboardingE2ETest:58`, `OnboardingTriggerServiceTest:46/179`, `OnboardingTriggersTest:71`, `OnboardingHintServiceTest:41`) entfernen. `activated`/`activation_key` bleiben.
+- **glx_colonies:** `since_tick` aus `ColonyService.php:107`, `Colony.php` (`@property`/cast) und zugehörigem Test entfernen; View `v_glx_colonies` wird in der Migration (Step 5) neu erzeugt.
+- **resources:** `start_amount, is_tradeable, trigger, icon` aus `Resource.php:19/24` und aus den positionellen `INSERT INTO "resources"`-Zeilen in `testdata.sqlite.sql:1-6` (Spaltenreihenfolge beachten: nach dem Droppen stimmt die Spaltenzahl nicht mehr — Zeilen auf `INSERT INTO resources (id,name,abbreviation) VALUES …` umstellen; Task 3 ersetzt diese Zeilen später ohnehin durch `database/seeders/data/resources.php`).
+- **buildings/ships:** `buildings.prime_colony_only` aus `Building.php` (falls Model bleibt), `ships.{prime_colony_only,required_research_id,required_research_level,moving_speed}`; `ships.decay_rate/supply_cost` nur nach Gegenprüfung (Lesestellen außer `SyncConfig`?). `SyncConfig::syncShips()` (Z. ~55–90) auf die verbleibenden Spalten kürzen oder, falls keine Spalte übrig bleibt, den Zweig entfernen; `config/ships.php` die Keys `moving_speed` (und ggf. `decay_rate`, `supply_cost`) samt Erklärungskommentar entfernen. Positionelle `INSERT INTO "ships"`-Zeilen `testdata.sqlite.sql:79-85` auf benannte Spalten umstellen.
+- **Tabellen:** `trade_resources` (Löschzeilen `OnboardingService.php:69`, `ResetPlayer.php:217/218`, Namensliste `GameSnapshot.php:50-51`, Fixture-INSERTs `testdata.sqlite.sql:177-178`), `personell_costs` (Fixture-INSERTs `:95-104`), `ship_costs` (Fixture-INSERTs `:87-89`) aus Code und Fixtures nehmen.
+- Run: schnelle Suite (Schema ist noch alt, Code nutzt die Spalten nicht mehr) → grün. Commit: `refactor: Legacy-Spalten und -Tabellen aus Code, Models und Fixtures entfernt (R5b/3a)`
+
+- [ ] **Step 5 (3a.5): Drop-Migration**
+
+`database/migrations/2026_10_03_000001_drop_legacy_tables_and_columns.php` (läuft nur zwischen den Tasks und geht mit dem Squash in Task 4 auf; sie validiert, dass die Drops auf SQLite funktionieren):
+
+```php
+public function up(): void
+{
+    // Views freezing SELECT * must go before their base columns/tables.
+    DB::statement('DROP VIEW IF EXISTS v_trade_resources');
+    DB::statement('DROP VIEW IF EXISTS v_glx_colonies');
+
+    foreach (['trade_resources', 'personell_costs', 'colony_personell', 'research_costs', 'ship_costs'] as $table) {
+        Schema::dropIfExists($table);
+    }
+
+    Schema::table('user', fn (Blueprint $t) => $t->dropColumn([
+        'faction_id', 'description', 'note', 'state', 'theme', 'tooltips_enabled',
+        'first_time_login', 'last_activity', 'registration', 'disabled',
+    ]));
+    Schema::table('glx_colonies', fn (Blueprint $t) => $t->dropColumn('since_tick'));
+    Schema::table('resources', fn (Blueprint $t) => $t->dropColumn(['start_amount', 'is_tradeable', 'trigger', 'icon']));
+    Schema::table('buildings', fn (Blueprint $t) => $t->dropColumn('prime_colony_only'));
+    Schema::table('ships', fn (Blueprint $t) => $t->dropColumn(['prime_colony_only', 'required_research_id', 'required_research_level', 'moving_speed']));
+    // + ships.decay_rate / ships.supply_cost, only if step 4 found no reader
+
+    // Recreate the surviving view with the original definition (copy the CREATE VIEW text
+    // from 0001_01_01_999999_create_views.php / its latest recreation).
+    DB::statement(/* CREATE VIEW v_glx_colonies … JOIN glx_system_objects … */);
+}
+
+public function down(): void
+{
+    // Not reversible: legacy removal (use migrate:fresh).
+}
+```
+
+Vor dem Schreiben prüfen: Fremdschlüssel/Indizes auf den zu droppenden Spalten (`PRAGMA foreign_key_list(<table>)`, `PRAGMA index_list(<table>)`); SQLite verweigert `dropColumn` auf indizierten/FK-Spalten — dann zuerst `$t->dropForeign(...)`/`dropIndex(...)` (bei SQLite via Tabellen-Neuaufbau durch Laravel). `required_research_id`, `faction_id` und `since_tick` sind die wahrscheinlichen Kandidaten. Die `CREATE VIEW`-Definition für `v_glx_colonies` aus der **jüngsten** Migration kopieren (`grep -ln "v_glx_colonies" database/migrations/*.php`), nicht aus der ersten.
+
+- [ ] **Step 6: Schema und Suite prüfen**
+
+Run: `DB_CONNECTION=sqlite DB_DATABASE=$S/n3a.db php artisan migrate --force` (frische Datei) → 132 Migrationen ohne Fehler. `sqlite3 $S/n3a.db ".tables"` zeigt keine der entfernten Tabellen; `PRAGMA table_info(user)` usw. zeigen keine entfernten Spalten.
+Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → grün (Fixtures aus Step 2–4 passen zum neuen Schema).
+Run: `bin/phpunit --testsuite=playtest` → grün.
+
+- [ ] **Step 7: Commit und ROADMAP**
+
+```bash
+git add database/migrations/2026_10_03_000001_drop_legacy_tables_and_columns.php
+git commit -m "refactor: Migration entfernt Legacy-Tabellen und -Spalten (R5b/3a)"
+```
+
+In `ROADMAP.md` einen T-Punkt für Rest-Altlasten anlegen („unklare Spalten: `resources.abbreviation`, `personell.purpose/max_status_points`, `buildings.purpose`, `sol_report_skip`, `granted_tick`, `ships.ap_for_levelup` prüfen; Hinweis: Anwerbungskosten kommen aus `config/advisors.php`, nicht aus DB").
+
+---
+
 ### Task 3: Referenzdaten-Seeder (Upsert) statt SQL-Dump, Fixtures getrennt
 
-Befund des Audits (2026-10-03, `ac5fdd75…`): Die Configs enthalten nur `id` plus Mechanikwerte (Zerfall, Supply, max. Stufe, Regolith-/Werkstoff-Kosten). `game:sync-config` aktualisiert nur bestehende Zeilen. Name, purpose, Voraussetzungen, Techtree-Position (`phase/row/column`), `ap_for_levelup`, Credits-/Supply-Kosten und alle Ressourcen stehen in **keiner** Config, sondern im SQL-Dump und in Migrationen. Referenzdaten = 7 Tabellen: `resources, buildings, building_costs, personell, researches, ships, ship_costs` (ca. 40 Einträge). Nicht seeden: `trade_resources` (Laufzeitdaten, in `app/` nie gelesen), `personell_costs`/`research_costs` (in `app/` nie gelesen; Anwerbungskosten kommen aus `config/advisors.php`), `resources.start_amount` bleibt als Spalte unverändert.
+Befund des Audits (2026-10-03, `ac5fdd75…`): Die Configs enthalten nur `id` plus Mechanikwerte (Zerfall, Supply, max. Stufe, Regolith-/Werkstoff-Kosten). `game:sync-config` aktualisiert nur bestehende Zeilen. Name, purpose, Voraussetzungen, Techtree-Position (`phase/row/column`), `ap_for_levelup`, Credits-/Supply-Kosten und alle Ressourcen stehen in **keiner** Config, sondern im SQL-Dump und in Migrationen. Referenzdaten = 6 Tabellen: `resources, buildings, building_costs, personell, researches, ships` (ca. 35 Einträge). Die Tabellen `trade_resources`, `personell_costs`, `research_costs`, `ship_costs`, `colony_personell` und die Spalte `resources.start_amount` sind nach Task 3a bereits entfernt.
 
 **Files:**
-- Create: `database/seeders/ReferenceDataSeeder.php`, `database/seeders/data/{resources,buildings,building_costs,personell,researches,ships,ship_costs}.php`
+- Create: `database/seeders/ReferenceDataSeeder.php`, `database/seeders/data/{resources,buildings,building_costs,personell,researches,ships}.php`
 - Modify: `database/seeders/TestSeeder.php`, `database/seeders/MasterDataSeeder.php` (Inhalt in den neuen Seeder überführt, Datei danach löschen), `data/sql/testdata.sqlite.sql` → `data/sql/testdata.sql` (nur Fixtures)
 - Modify (Referenzen auf den alten Dateinamen): `CLAUDE.md`, `.claude/agents/db-migration-agent.md`, `tests/Concerns/CreatesForeignColony.php`, Kommentare in `tests/Feature/*` (`grep -rn "testdata.sqlite" --include=*.php --include=*.md . | grep -v vendor`); `ROADMAP.md`/`CHANGELOG.md`/historische `docs/*` nicht anfassen.
 - Test: `tests/Feature/Seeders/ReferenceDataSeederTest.php` (neu)
 - Throwaway (Scratchpad, nicht committen): `golden_dump.php`, `extract_reference.php`
 
 **Interfaces:**
-- Produces: `ReferenceDataSeeder::run()` — schreibt per `DB::table($t)->upsert($rows, $uniqueBy, $updateCols)` die 7 Tabellen aus den Dateien in `database/seeders/data/` (jede Datei: `return [ ['id' => 25, …], … ];`), in Fremdschlüssel-Reihenfolge `resources → buildings → personell → researches → ships → building_costs → ship_costs`, in einer Transaktion. Danach `Artisan::call('game:sync-config')`, sodass Mechanikwerte weiter aus der Config kommen. Idempotent: zweiter Lauf ändert nichts und berührt keine Spielerdaten. `TestSeeder::run()` = `ReferenceDataSeeder` + Fixtures aus `data/sql/testdata.sql` (nur Fixture-Tabellen, plain `INSERT INTO`, kein `REPLACE`). Fixtures und `ReferenceDataSeeder` überschneiden sich in keiner Tabelle (Ausnahme: Forschung 9901 `test_decay_placeholder` bleibt Fixture in `testdata.sql`).
+- Produces: `ReferenceDataSeeder::run()` — schreibt per `DB::table($t)->upsert($rows, $uniqueBy, $updateCols)` die 6 Tabellen aus den Dateien in `database/seeders/data/` (jede Datei: `return [ ['id' => 25, …], … ];`), in Fremdschlüssel-Reihenfolge `resources → buildings → personell → researches → ships → building_costs`, in einer Transaktion. Danach `Artisan::call('game:sync-config')`, sodass Mechanikwerte weiter aus der Config kommen. Idempotent: zweiter Lauf ändert nichts und berührt keine Spielerdaten. `TestSeeder::run()` = `ReferenceDataSeeder` + Fixtures aus `data/sql/testdata.sql` (nur Fixture-Tabellen, plain `INSERT INTO`, kein `REPLACE`). Fixtures und `ReferenceDataSeeder` überschneiden sich in keiner Tabelle (Ausnahme: Forschung 9901 `test_decay_placeholder` bleibt Fixture in `testdata.sql`).
 - Consumes: nichts aus anderen Tasks (arbeitet noch auf SQLite).
 
 - [ ] **Step 1: Golden-Dump des Ist-Zustands (vor jeder Änderung)**
 
-`$S/golden_dump.php` (Scratchpad `$S` wie in Task 4) schreibt aus einer DB, die mit dem **heutigen** `TestSeeder` befüllt ist, die 7 Tabellen als sortierte JSON-Datei:
+`$S/golden_dump.php` (Scratchpad `$S` wie in Task 4) schreibt aus einer DB, die mit dem **heutigen** `TestSeeder` befüllt ist, die 6 Tabellen als sortierte JSON-Datei:
 
 ```php
 <?php
 $tables = ['resources' => 'id', 'buildings' => 'id', 'building_costs' => 'building_id,resource_id', 'personell' => 'id',
-    'researches' => 'id', 'ships' => 'id', 'ship_costs' => 'ship_id,resource_id'];
+    'researches' => 'id', 'ships' => 'id'];
 $d = [];
 foreach ($tables as $t => $order) {
     $q = DB::table($t);
@@ -203,7 +302,7 @@ Aufruf: frische SQLite-Datei migrieren (`DB_DATABASE=$S/g.db php artisan migrate
 
 return [
     ['id' => 25, 'name' => '…', …],
-];` (Spalten in Schemareihenfolge, `var_export` pro Wert, eine Zeile je Datensatz). Danach `bin/pint database/seeders/data` und stichprobenhaft prüfen, dass die Zahl der Einträge je Datei der Tabellengröße entspricht (resources 6, buildings 13, personell 5, researches 7 ohne 9901, ships 7, building_costs 37, ship_costs 3).
+];` (Spalten in Schemareihenfolge, `var_export` pro Wert, eine Zeile je Datensatz). Danach `bin/pint database/seeders/data` und stichprobenhaft prüfen, dass die Zahl der Einträge je Datei der Tabellengröße entspricht (resources 6, buildings 13, personell 5, researches 7 ohne 9901, ships 7, building_costs 37).
 
 - [ ] **Step 3: Failing Test (Golden-Vergleich + Idempotenz + Spielerdaten)**
 
@@ -282,7 +381,6 @@ class ReferenceDataSeeder extends Seeder
         'researches' => ['id'],
         'ships' => ['id'],
         'building_costs' => ['building_id', 'resource_id'],
-        'ship_costs' => ['ship_id', 'resource_id'],
     ];
 
     public function run(): void
@@ -304,7 +402,7 @@ Die verbliebenen Updates aus `MasterDataSeeder` (Schiffe 29/49/83/84, Forschunge
 
 - [ ] **Step 6: TestSeeder und Fixtures**
 
-`git mv data/sql/testdata.sqlite.sql data/sql/testdata.sql`; aus der Datei alle Zeilen der 7 Referenztabellen entfernen (Muster: `^(INSERT INTO|UPDATE) "?(resources|buildings|building_costs|personell|personell_costs|researches|ships|ship_costs|trade_resources)\b`, aber `INSERT INTO "researches"`-Zeile mit Id 9901 bleibt; `personell_costs` und `trade_resources`-Fixturezeilen werden mit entfernt bzw. bleiben nur, wenn ein Test sie braucht — danach Suite prüfen). Bezeichner entquoten (`sed -E 's/"([a-z_]+)"/\1/g'`, Vorher/Nachher-Diff prüfen, String-Literale nicht ändern). `TestSeeder::run()`:
+`git mv data/sql/testdata.sqlite.sql data/sql/testdata.sql`; aus der Datei alle Zeilen der 6 Referenztabellen entfernen (Muster: `^(INSERT INTO|UPDATE) "?(resources|buildings|building_costs|personell|researches|ships)\b`, aber `INSERT INTO "researches"`-Zeile mit Id 9901 bleibt; . Bezeichner entquoten (`sed -E 's/"([a-z_]+)"/\1/g'`, Vorher/Nachher-Diff prüfen, String-Literale nicht ändern). `TestSeeder::run()`:
 
 ```php
 public function run(): void
@@ -341,7 +439,7 @@ git commit -m "refactor: Referenzdaten per idempotentem Upsert-Seeder, Fixtures 
 
 **Files:**
 - Create: `database/migrations/0001_01_01_000000_baseline.php`
-- Delete: alle 131 bisherigen Dateien in `database/migrations/` (bleiben in der Git-Historie)
+- Delete: alle 132 bisherigen Dateien in `database/migrations/` (bleiben in der Git-Historie)
 - Throwaway (nicht committen, Scratchpad): `gen_baseline.php`, `compare_schema.php`
 
 **Interfaces:**
@@ -356,7 +454,7 @@ rm -f $S/old.db && touch $S/old.db
 DB_CONNECTION=sqlite DB_DATABASE=$S/old.db php artisan migrate --force
 ```
 
-Expected: 131 Migrationen, 44 Tabellen, Views `v_glx_colonies`, `v_trade_resources`.
+Expected: 132 Migrationen (inkl. Drop-Migration aus 3a), 39 Tabellen, 1 View `v_glx_colonies`.
 
 - [ ] **Step 2: Generator schreiben und laufen lassen**
 
@@ -452,18 +550,18 @@ Dann `diff $S/old.json $S/new.json`. Expected: leer. Abweichungen im Generator b
 
 - [ ] **Step 5: Suite auf der neuen Baseline (noch SQLite)**
 
-Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → alles grün. Falls Tests von Zeilen abhängen, die früher eine Migration eingefügt hat und die `database/seeders/data/*.php` nicht enthalten: Zeile in die Datendatei nachziehen (Referenz `$S/m.db`: `buildings` 3, `researches` 7, `building_costs` 21, `personell` 1, `personell_costs` 2, `ship_costs` 3, `ships` 1 Zeilen kamen vorab aus Migrationen; der Golden-Vergleich in Task 3 deckt die 7 Referenztabellen bereits ab).
+Run: `bin/phpunit --testsuite=laravel-feature,laravel-unit` → alles grün. Falls Tests von Zeilen abhängen, die früher eine Migration eingefügt hat und die `database/seeders/data/*.php` nicht enthalten: Zeile in die Datendatei nachziehen (Referenz `$S/m.db`: `buildings` 3, `researches` 7, `building_costs` 21, `personell` 1, `personell_costs` 2, `ship_costs` 3, `ships` 1 Zeilen kamen vorab aus Migrationen; der Golden-Vergleich in Task 3 deckt die 6 Referenztabellen bereits ab).
 
 - [ ] **Step 6: Auf MySQL ausführen**
 
 Run: `DB_DATABASE=nouron_test php artisan migrate:fresh --force` (nur `nouron_test`!)
-Expected: Baseline läuft durch (44 Tabellen, 2 Views). Fehler (Typ, Indexlänge, View-SQL) im Generator bzw. in der Baseline-Datei beheben und Step 4–6 wiederholen.
+Expected: Baseline läuft durch (39 Tabellen, 1 View). Fehler (Typ, Indexlänge, View-SQL) im Generator bzw. in der Baseline-Datei beheben und Step 4–6 wiederholen.
 
 - [ ] **Step 7: Commit**
 
 ```bash
 git add database/migrations
-git commit -m "refactor: Migrations-Squash auf Baseline (SQLite- und MySQL-fähig), 131 Altmigrationen entfernt (R5b)"
+git commit -m "refactor: Migrations-Squash auf Baseline (SQLite- und MySQL-fähig), 132 Altmigrationen entfernt (R5b)"
 ```
 
 ---
