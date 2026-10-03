@@ -1,4 +1,4 @@
-INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(0,'Homer','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','homer@nouron.de',0,'adsfsdfsf','2000-01-01 00:00:00',NULL);
+INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(6,'Homer','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','homer@nouron.de',0,'adsfsdfsf','2000-01-01 00:00:00',NULL);
 INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(1,'Marge','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','marge@nouron.de',0,'gaqx2hwrf4env5i3','2009-12-23 14:00:00',NULL);
 INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(2,'Lisa','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','lisa@nouron.de',0,'abcdefg','2000-01-01 00:00:00',NULL);
 INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(3,'Bart','','admin','$2y$10$9MytO4OOq3Z4MWvNcT1UreUqsTSw6IYuWCQ3bTdkmqAwa5vUJr8wG','bart@nouron.de',1,'','2000-01-01 00:00:00',NULL);
@@ -7,7 +7,7 @@ INSERT INTO user (user_id,username,display_name,role,password,email,activated,ac
 INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(18,'Lenny','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','lenny@nouron.de',0,'','2000-01-01 00:00:00',NULL);
 INSERT INTO user (user_id,username,display_name,role,password,email,activated,activation_key,registration,remember_token) VALUES(19,'Carl','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','carl@nouron.de',0,'','2000-01-01 00:00:00',NULL);
 -- glx_colonies: id, name, user_id, is_primary, hunger_streak
--- Only player colonies exist (colony 2 "Shelbyville", user_id=0, removed 2026-09-23).
+-- Only player colonies exist (colony 2 "Shelbyville", removed 2026-09-23).
 INSERT INTO glx_colonies (id,name,user_id,is_primary,hunger_streak) VALUES(1,'Springfield',3,1,0);
 -- Credits (1) + Supply (2): legacy base costs (not consumed by the hex build flow).
 -- Regolith (3) + Werkstoffe (4): construction cost (canonical: config/buildings.php build_cost).
@@ -33,10 +33,10 @@ INSERT INTO colony_buildings (colony_id,building_id,level,status_points,ap_spend
 -- by BuildingServiceTest/ColonyZoneDecoupleTest/BuildResourceSinkTest (ex-depot, removed 2026-06-22).
 INSERT INTO colony_buildings (colony_id,building_id,level,status_points,ap_spend) VALUES(1,46,3,10,10);
 INSERT INTO colony_buildings (colony_id,building_id,level,status_points,ap_spend) VALUES(1,52,0,0,0);
-INSERT INTO colony_resources VALUES(3,1,250);
-INSERT INTO colony_resources VALUES(4,1,50);
-INSERT INTO colony_resources VALUES(5,1,50);
-INSERT INTO colony_resources VALUES(12,1,0);
+INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(3,1,250);
+INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(4,1,50);
+INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(5,1,50);
+INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(12,1,0);
 -- colony_buildings: two hangar bays (building_id=44) for colony 1 (Springfield).
 -- Hangar 1 sits on Lv3 so every ship docked there is active: corvette needs Lv3,
 -- freighter Lv2, drone Lv1 (HangarService::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL, T14/T20).
@@ -64,34 +64,34 @@ UPDATE colony_ships SET hangar_instance_id=1, ship_state='docked'     WHERE colo
 -- Mission 2: freighter recalled from hangar 2, completed (history row; the freighter now docks in hangar 1)
 INSERT INTO colony_hangar_missions (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
 INSERT INTO colony_hangar_missions (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
-INSERT INTO colony_researches VALUES(1,9901,1,20,0);
-INSERT INTO colony_researches VALUES(1,96,0,10,0);
-INSERT INTO advisors (user_id,colony_id,personell_id,rank,active_ticks) VALUES(3,1,35,1,0);
-INSERT INTO colony_log VALUES(16,3,15405,'techtree.level_up_finished','techtree','{"entity_type":"knowledge","entity_name":"knowledge_construction","new_level":1,"tech_id":90}',NULL,1);
-INSERT INTO colony_log VALUES(26,3,1,'colony.building_placed','colony','{"building_id":25,"building_name":"building_commandCenter","colony_id":1}',NULL,1);
-INSERT INTO colony_log VALUES(27,3,1,'colony.building_placed','colony','{"building_id":27,"building_name":"building_harvester","colony_id":1}',NULL,1);
-INSERT INTO colony_log VALUES(28,3,2,'colony.building_invested','colony','{"building_id":25,"building_name":"building_commandCenter","ap_spend":1,"ap_for_levelup":5,"level_up":false,"new_level":1}',NULL,1);
-INSERT INTO colony_log VALUES(29,3,2,'colony.building_invested','colony','{"building_id":25,"building_name":"building_commandCenter","ap_spend":1,"ap_for_levelup":5,"level_up":false,"new_level":1}',NULL,1);
-INSERT INTO colony_log VALUES(30,3,2,'colony.building_invested','colony','{"building_id":28,"building_name":"building_housingComplex","ap_spend":1,"ap_for_levelup":3,"level_up":false,"new_level":1}',NULL,1);
-INSERT INTO colony_log VALUES(31,3,2,'colony.tile_explored','colony','{"colony_id":1,"q":1,"r":-1}',NULL,1);
-INSERT INTO colony_log VALUES(32,3,3,'colony.building_invested','colony','{"building_id":28,"building_name":"building_housingComplex","ap_spend":1,"ap_for_levelup":3,"level_up":true,"new_level":2}',NULL,1);
-INSERT INTO colony_log VALUES(33,3,3,'techtree.advisor_hired','techtree','{"advisor_type":"scientist","colony_id":1,"credits_cost":400}',NULL,1);
-INSERT INTO colony_log VALUES(34,3,3,'merchant.visit','merchant','{"colony_id":1}',NULL,1);
-INSERT INTO colony_log VALUES(35,3,4,'techtree.level_down','techtree','{"entity_type":"building","entity_name":"building_harvester","new_level":0,"tech_id":27}',NULL,1);
-INSERT INTO colony_log VALUES(36,3,4,'techtree.level_down','techtree','{"entity_type":"knowledge","entity_name":"knowledge_cartography","new_level":1,"tech_id":91}',NULL,1);
-INSERT INTO colony_log VALUES(37,3,4,'trade.bar_accepted','trade','{"colony_id":1,"give_resource_id":3,"give_amount":80,"get_resource_id":1,"get_amount":200}',NULL,1);
-INSERT INTO colony_log VALUES(38,3,5,'trade.merchant_purchase','trade','{"colony_id":1,"item_type":"ap_package","cost_credits":100}',NULL,1);
-INSERT INTO colony_log VALUES(39,3,5,'colony.tile_deep_scanned','colony','{"colony_id":1,"q":2,"r":0}',NULL,1);
+INSERT INTO colony_researches (colony_id,research_id,level,status_points,ap_spend) VALUES(1,9901,1,20,0);
+INSERT INTO colony_researches (colony_id,research_id,level,status_points,ap_spend) VALUES(1,96,0,10,0);
+INSERT INTO advisors (user_id,colony_id,personell_id,`rank`,active_ticks) VALUES(3,1,35,1,0);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(16,3,15405,'techtree.level_up_finished','techtree','{"entity_type":"knowledge","entity_name":"knowledge_construction","new_level":1,"tech_id":90}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(26,3,1,'colony.building_placed','colony','{"building_id":25,"building_name":"building_commandCenter","colony_id":1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(27,3,1,'colony.building_placed','colony','{"building_id":27,"building_name":"building_harvester","colony_id":1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(28,3,2,'colony.building_invested','colony','{"building_id":25,"building_name":"building_commandCenter","ap_spend":1,"ap_for_levelup":5,"level_up":false,"new_level":1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(29,3,2,'colony.building_invested','colony','{"building_id":25,"building_name":"building_commandCenter","ap_spend":1,"ap_for_levelup":5,"level_up":false,"new_level":1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(30,3,2,'colony.building_invested','colony','{"building_id":28,"building_name":"building_housingComplex","ap_spend":1,"ap_for_levelup":3,"level_up":false,"new_level":1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(31,3,2,'colony.tile_explored','colony','{"colony_id":1,"q":1,"r":-1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(32,3,3,'colony.building_invested','colony','{"building_id":28,"building_name":"building_housingComplex","ap_spend":1,"ap_for_levelup":3,"level_up":true,"new_level":2}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(33,3,3,'techtree.advisor_hired','techtree','{"advisor_type":"scientist","colony_id":1,"credits_cost":400}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(34,3,3,'merchant.visit','merchant','{"colony_id":1}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(35,3,4,'techtree.level_down','techtree','{"entity_type":"building","entity_name":"building_harvester","new_level":0,"tech_id":27}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(36,3,4,'techtree.level_down','techtree','{"entity_type":"knowledge","entity_name":"knowledge_cartography","new_level":1,"tech_id":91}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(37,3,4,'trade.bar_accepted','trade','{"colony_id":1,"give_resource_id":3,"give_amount":80,"get_resource_id":1,"get_amount":200}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(38,3,5,'trade.merchant_purchase','trade','{"colony_id":1,"item_type":"ap_package","cost_credits":100}',NULL,1);
+INSERT INTO colony_log (id,user,tick,event,area,parameters,created_at,is_read) VALUES(39,3,5,'colony.tile_deep_scanned','colony','{"colony_id":1,"q":2,"r":0}',NULL,1);
 
 -- supply=66 (ROADMAP T8, 2026-09-22): matches the GameTick-computed cap for colony 1's
 -- CC lvl3 (flat 10) + housing sum=7 (56) = 66 — was 18, which was far below the colony's
 -- own building usage (62 since T20) and unreachable in normal play (build/levelup is supply-gated).
 -- Used supply for colony 1 = 62 (harvester 2 + sciencelab 6 + infirmary 30 + hangar Lv3 18
 -- + hangar Lv1 6; supply_cost × level, values from config/buildings.php), leaving a 4-point buffer. See data/sql notes above the colony_buildings housing rows.
-INSERT INTO user_resources VALUES(3,2700,66);
+INSERT INTO user_resources (user_id,credits,supply) VALUES(3,2700,66);
 
-INSERT INTO user_preferences VALUES(1,0,1,NULL,NULL,NULL,NULL,0);
-INSERT INTO user_preferences VALUES(2,1,1,NULL,NULL,NULL,NULL,0);
+INSERT INTO user_preferences (id,user_id,onboarding_hints,created_at,updated_at,dismissed_hints,fired_triggers,sol_report_skip) VALUES(1,6,1,NULL,NULL,NULL,NULL,0);
+INSERT INTO user_preferences (id,user_id,onboarding_hints,created_at,updated_at,dismissed_hints,fired_triggers,sol_report_skip) VALUES(2,1,1,NULL,NULL,NULL,NULL,0);
 
 -- Phase-based techtree grid positions (migration 2026_05_10_000001 — layout v2)
 -- Phase 1 (CC Lv1): housingComplex, harvester, bioFacility, engineer
@@ -105,7 +105,7 @@ INSERT INTO user_preferences VALUES(2,1,1,NULL,NULL,NULL,NULL,0);
 --                   freighter, knowledge_cartography, corvette, knowledge_defense
 -- Phase 4 (CC Lv4)
 -- Phase 5 (CC Lv5)
-INSERT INTO user_preferences VALUES(3,3,1,NULL,NULL,NULL,NULL,0);
+INSERT INTO user_preferences (id,user_id,onboarding_hints,created_at,updated_at,dismissed_hints,fired_triggers,sol_report_skip) VALUES(3,3,1,NULL,NULL,NULL,NULL,0);
 
 -- Bar offers (migration 2026_05_14_000003)
 -- colony_id=1 (Springfield), expires_tick=9999999 (far future, always valid in tests)
