@@ -120,6 +120,35 @@ class KnowledgeServiceTest extends TestCase
         $this->assertEquals(1, $level);
     }
 
+    /**
+     * Characterization (R5b/3): repairing a Kenntnis charges AP only. Researches have
+     * no resource cost rows, so repair must succeed without touching colony resources.
+     */
+    public function test_repair_restores_status_points_without_resource_cost(): void
+    {
+        DB::table('colony_researches')->insert([
+            'colony_id' => $this->colonyId, 'research_id' => $this->knowledgeId,
+            'level' => 1, 'status_points' => 10, 'ap_spend' => 0,
+        ]);
+        $resourcesBefore = DB::table('colony_resources')->where('colony_id', $this->colonyId)->orderBy('resource_id')->get()->toArray();
+
+        $this->assertTrue($this->service->invest($this->colonyId, $this->knowledgeId, 'repair', 3));
+
+        $this->assertSame(13, (int) DB::table('colony_researches')
+            ->where('colony_id', $this->colonyId)->where('research_id', $this->knowledgeId)->value('status_points'));
+        $this->assertEquals($resourcesBefore, DB::table('colony_resources')->where('colony_id', $this->colonyId)->orderBy('resource_id')->get()->toArray());
+    }
+
+    public function test_levelup_pays_no_resources(): void
+    {
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 20);
+        $resourcesBefore = DB::table('colony_resources')->where('colony_id', $this->colonyId)->orderBy('resource_id')->get()->toArray();
+
+        $this->assertTrue($this->service->levelup($this->colonyId, $this->knowledgeId));
+
+        $this->assertEquals($resourcesBefore, DB::table('colony_resources')->where('colony_id', $this->colonyId)->orderBy('resource_id')->get()->toArray());
+    }
+
     public function test_levelup_costs_increase_per_level(): void
     {
         // Lv0→1 = 20 AP. Tick 9201 to invest, tick 9202 to clear AP locks for next round.

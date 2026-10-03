@@ -34,7 +34,10 @@ abstract class AbstractTechnologyService
 
     abstract protected function colonyTable(): string;
 
-    abstract protected function costsTable(): string;
+    /**
+     * Cost table for this entity type, or null when it has none (researches pay AP only).
+     */
+    abstract protected function costsTable(): ?string;
 
     abstract protected function entityIdKey(): string;
 
@@ -109,7 +112,12 @@ abstract class AbstractTechnologyService
      */
     public function getEntityCosts(?int $entityId = null): Collection
     {
-        $query = DB::table($this->costsTable());
+        $table = $this->costsTable();
+        if ($table === null) {
+            return collect();
+        }
+
+        $query = DB::table($table);
         if ($entityId !== null) {
             $query->where($this->entityIdKey(), $entityId);
         }
@@ -365,9 +373,7 @@ abstract class AbstractTechnologyService
                 if ($statusGained > 0) {
                     $maxStatusPoints = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
                     if ($maxStatusPoints > 0) {
-                        $costs = DB::table($this->costsTable())
-                            ->where($this->entityIdKey(), $entityId)
-                            ->get();
+                        $costs = $this->getEntityCosts($entityId);
                         foreach ($costs as $cost) {
                             $repairCost = (int) floor($cost->amount / $maxStatusPoints) * $statusGained;
                             if ($repairCost > 0) {
