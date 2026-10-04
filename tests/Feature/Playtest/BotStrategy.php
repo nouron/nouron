@@ -948,6 +948,10 @@ class BotStrategy
             ->where('is_explored', 0)
             ->orderByDesc('is_colony_zone')
             ->orderBy('ring')
+            // Coordinates break ties: without them MySQL returns an arbitrary tile
+            // among equals, depending on the shared table's layout (R5b).
+            ->orderBy('q')
+            ->orderBy('r')
             ->first();
 
         if ($tile === null) {
@@ -1937,6 +1941,8 @@ class BotStrategy
                     ->whereColumn('cb.tile_y', 'ct.r');
             })
             ->orderByDesc('ct.resource_amount')
+            ->orderBy('ct.q')
+            ->orderBy('ct.r')
             ->first();
     }
 
@@ -1965,6 +1971,8 @@ class BotStrategy
             ->whereNotNull('event_type')
             ->where('is_deep_scanned', 0)
             ->orderBy('ring')
+            ->orderBy('q')
+            ->orderBy('r')
             ->first();
     }
 
@@ -2047,6 +2055,8 @@ class BotStrategy
             ->where('is_deep_scanned', 1)
             ->where('event_type', 'event_ruin')
             ->orderBy('ring')
+            ->orderBy('q')
+            ->orderBy('r')
             ->get(['q', 'r'])
             ->first(fn ($t) => ! $claimedTargets->contains(json_encode(['q' => (int) $t->q, 'r' => (int) $t->r])));
 
@@ -2100,6 +2110,8 @@ class BotStrategy
                     ->whereColumn('cb.tile_y', 'ct.r');
             })
             ->orderByDesc('ct.resource_amount')
+            ->orderBy('ct.q')
+            ->orderBy('ct.r')
             ->first();
 
         if (! $targetTile) {
