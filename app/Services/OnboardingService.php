@@ -66,21 +66,28 @@ class OnboardingService
     public function resetColonyToSol1(int $userId, int $colonyId, ?int $rngSeed = null): void
     {
         DB::transaction(function () use ($userId, $colonyId, $rngSeed) {
-            // Delete only where the colony actually has rows: an empty-range DELETE on a
-            // non-unique index takes an InnoDB gap lock at the end of that index, which
-            // is exactly where every concurrent onboarding inserts (R5b deadlocks).
+            // Delete by full primary/unique key only (R5b deadlocks): a range DELETE
+            // takes InnoDB next-key/gap locks — on colony_log (no index on `user`) and
+            // locked_actionpoints (PK starts with tick) even on every scanned row — and
+            // the gap at the end of an index is exactly where every concurrent
+            // onboarding inserts. The plain SELECT below takes no locks at all.
             $colonyScoped = [
-                'colony_resources', 'colony_buildings', 'colony_tiles', 'colony_ships',
-                'colony_researches', 'trust_events', 'merchant_visits', 'colony_hangar_missions',
+                'colony_resources' => ['resource_id', 'colony_id'],
+                'colony_buildings' => ['colony_id', 'building_id', 'instance_id'],
+                'colony_tiles' => ['id'],
+                'colony_ships' => ['id'],
+                'colony_researches' => ['colony_id', 'research_id'],
+                'trust_events' => ['id'],
+                'merchant_visits' => ['id'],
+                'colony_hangar_missions' => ['id'],
             ];
-            foreach ($colonyScoped as $table) {
-                self::deleteIfAny(DB::table($table)->where('colony_id', $colonyId));
+            foreach ($colonyScoped as $table => $key) {
+                self::deleteByKey($table, $key, DB::table($table)->where('colony_id', $colonyId));
             }
-            self::deleteIfAny(DB::table('locked_actionpoints')
-                ->where('scope_type', 'colony')
-                ->where('scope_id', $colonyId));
-            self::deleteIfAny(DB::table('colony_log')->where('user', $userId));
-            self::deleteIfAny(DB::table('user_preferences')->where('user_id', $userId));
+            self::deleteByKey('locked_actionpoints', ['tick', 'scope_type', 'scope_id', 'personell_id'],
+                DB::table('locked_actionpoints')->where('scope_type', 'colony')->where('scope_id', $colonyId));
+            self::deleteByKey('colony_log', ['id'], DB::table('colony_log')->where('user', $userId));
+            self::deleteByKey('user_preferences', ['id'], DB::table('user_preferences')->where('user_id', $userId));
 
             // Advisors stay with the player across runs — detach, don't delete.
             $advisorIds = DB::table('advisors')->where('colony_id', $colonyId)->pluck('id');
@@ -114,11 +121,30 @@ class OnboardingService
         }, self::DEADLOCK_ATTEMPTS);
     }
 
-    /** Plain (non-locking) existence read first, so a no-op delete takes no gap lock. */
-    private static function deleteIfAny(Builder $query): void
+    /**
+     * Deletes the rows matched by $query one key at a time: a non-locking read of
+     * their keys, then equality deletes on the full unique key (record locks only).
+     *
+     * @param  list<string>  $key  primary/unique key columns of $table
+     */
+    private static function deleteByKey(string $table, array $key, Builder $query): void
     {
-        if ($query->exists()) {
-            $query->delete();
+        $rows = $query->get($key);
+
+        if ($key === ['id']) {
+            if ($rows->isNotEmpty()) {
+                DB::table($table)->whereIn('id', $rows->pluck('id'))->delete();
+            }
+
+            return;
+        }
+
+        foreach ($rows as $row) {
+            $delete = DB::table($table);
+            foreach ($key as $column) {
+                $delete->where($column, $row->{$column});
+            }
+            $delete->delete();
         }
     }
 
