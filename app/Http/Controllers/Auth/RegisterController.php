@@ -63,7 +63,7 @@ class RegisterController extends Controller
                 );
 
                 return [$user, $colony];
-            });
+            }, OnboardingService::DEADLOCK_ATTEMPTS);
         } catch (\RuntimeException $e) {
             if (str_contains($e->getMessage(), 'No free planets')) {
                 return back()->withErrors([
