@@ -338,6 +338,9 @@ return new class extends Migration
             $table->text('parameters');
             $table->dateTime('created_at')->nullable();
             $table->boolean('is_read')->default(true);
+            // R5b: read/deleted per user (reset, snapshot, Sol report) — without it every
+            // such statement scans and, under InnoDB, locks the whole table.
+            $table->index('user', 'colony_log_user_index');
         });
 
         Schema::create('advisors', function (Blueprint $table) {

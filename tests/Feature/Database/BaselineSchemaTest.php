@@ -70,6 +70,18 @@ class BaselineSchemaTest extends TestCase
         $this->assertGreaterThan($first, $second);
     }
 
+    /**
+     * R5b: colony_log is read and deleted per user (reset, snapshots, Sol report);
+     * without an index every such statement scans — and under InnoDB locks — the
+     * whole table, which deadlocked parallel onboardings.
+     */
+    public function test_colony_log_is_indexed_by_user(): void
+    {
+        $indexed = collect(Schema::getIndexes('colony_log'))->pluck('columns');
+
+        $this->assertTrue($indexed->contains(fn ($columns) => ($columns[0] ?? null) === 'user'), 'colony_log needs an index starting with user');
+    }
+
     public function test_baseline_cannot_be_rolled_back(): void
     {
         $migration = require database_path('migrations/0001_01_01_000000_baseline.php');
