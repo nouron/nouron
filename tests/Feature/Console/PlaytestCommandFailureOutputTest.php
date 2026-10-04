@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use App\Console\Support\PlaytestDatabase;
 use Illuminate\Support\Facades\Process;
 use Tests\TestCase;
 
@@ -12,6 +13,14 @@ use Tests\TestCase;
  */
 class PlaytestCommandFailureOutputTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Children are faked — the shared playtest DB must not be reset (and this
+        // process' connection not switched to it) for an output-formatting test.
+        $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldReceive('reset')->andReturn('nouron_playtest'));
+    }
+
     public function test_failed_run_shows_the_phpunit_stdout(): void
     {
         Process::fake([

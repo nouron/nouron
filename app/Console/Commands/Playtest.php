@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Console\Concerns\RefusesInProduction;
+use App\Console\Support\PlaytestDatabase;
 use Illuminate\Console\Command;
 use Illuminate\Process\Pool;
 use Illuminate\Support\Facades\Process;
+use RuntimeException;
 
 /**
  * Playtest — orchestrates the PlaytestBot (tests/Feature/Playtest/) across
@@ -21,9 +23,20 @@ use Illuminate\Support\Facades\Process;
  * still drives real HTTP requests through PlaytestBotTest/BotSession exactly
  * as it does today; this command only automates what was previously a
  * manual sed-loop plus manual JSON inspection. Combos run in parallel
- * batches of --concurrency each (default 10): every PlaytestBotTest run gets
- * its own PHP process with its own `:memory:` SQLite DB (phpunit.xml), so
- * concurrent runs never share state — the only real limit is host CPU/RAM.
+ * batches of --concurrency each (default 10).
+ *
+ * Shared database (R5b, ADR 0005): all runs of one invocation play in ONE
+ * MySQL database (config game.playtest.database, default nouron_playtest),
+ * each run with its own user + colony — the same multi-player model as
+ * production. The parent resets it once (migrate:fresh + ReferenceDataSeeder)
+ * via PlaytestDatabase, which refuses any name that is empty, nouron,
+ * nouron_test, or the database the default/mysql connection points at. The
+ * children get PLAYTEST_SHARED_DB=1 + PLAYTEST_DATABASE: because phpunit.xml
+ * forces DB_DATABASE=nouron_test, PlaytestBotTest switches its connection at
+ * runtime (PlaytestDatabase::connect(), same guard) instead of relying on the
+ * env, and skips the RefreshDatabase rollback so data is committed.
+ * The parent itself needs MySQL credentials (DB_HOST/PORT/USERNAME/PASSWORD
+ * from .env or the environment); they are passed on to the children.
  * See docs/superpowers/specs/2026-08-14-bot-playstyle-profiles-design.md.
  */
 class Playtest extends Command
@@ -45,6 +58,18 @@ class Playtest extends Command
             return self::FAILURE;
         }
 
+        // Fresh shared DB for the whole invocation; every bot run creates its own
+        // user + colony in it. Host/credentials are captured before the reset so the
+        // children connect exactly where the parent seeded.
+        $mysql = config('database.connections.mysql');
+        try {
+            $playtestDb = app(PlaytestDatabase::class)->reset();
+        } catch (RuntimeException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
         $profiles = array_filter(array_map('trim', explode(',', (string) $this->option('profiles'))));
         $seeds = array_filter(array_map('trim', explode(',', (string) $this->option('seeds'))));
         $concurrency = max(1, (int) $this->option('concurrency'));
@@ -62,22 +87,28 @@ class Playtest extends Command
             $labels = collect($batch)->map(fn ($c) => "{$c[0]}={$c[1]}")->implode(', ');
             $this->line('Running batch: '.$labels);
 
-            $results = Process::pool(function (Pool $pool) use ($batch) {
+            $results = Process::pool(function (Pool $pool) use ($batch, $playtestDb, $mysql) {
                 foreach ($batch as [$profile, $seed]) {
                     $pool->as("{$profile}-{$seed}")
-                        // Spawned from an already-booted artisan process, phpunit.xml's
-                        // force="true" DB_DATABASE=:memory: override is NOT reliable —
-                        // the child can inherit the parent's already-resolved real .env
-                        // DB_DATABASE (data/db/nouron.db) instead (found 2026-08-16 after
-                        // a parallel run corrupted the dev DB). Force it explicitly here
-                        // so a child never touches the real database regardless of that
-                        // inheritance quirk.
+                        // Every child plays in the shared playtest DB the parent just reset.
+                        // phpunit.xml forces DB_DATABASE=nouron_test, so DB_DATABASE would
+                        // not reach the child (and is deliberately not passed: the guard
+                        // requires the playtest DB to differ from the configured one).
+                        // PLAYTEST_SHARED_DB makes PlaytestBotTest switch its connection
+                        // to PLAYTEST_DATABASE at runtime (PlaytestDatabase::connect(),
+                        // same guard as here) and skip the rollback, so the run's data
+                        // is committed like a real player's.
                         ->env([
                             'PLAYTEST_PROFILE' => $profile,
                             'PLAYTEST_SEED' => $seed,
                             'APP_ENV' => 'testing',
-                            'DB_CONNECTION' => 'sqlite',
-                            'DB_DATABASE' => ':memory:',
+                            'PLAYTEST_SHARED_DB' => '1',
+                            'PLAYTEST_DATABASE' => $playtestDb,
+                            'DB_CONNECTION' => 'mysql',
+                            'DB_HOST' => (string) $mysql['host'],
+                            'DB_PORT' => (string) $mysql['port'],
+                            'DB_USERNAME' => (string) $mysql['username'],
+                            'DB_PASSWORD' => (string) $mysql['password'],
                         ])
                         // 120 → 240 (2026-08-17): the 4th advisor slot fix
                         // (BotStrategy::nextHireCandidate()) and tougher Phase-2

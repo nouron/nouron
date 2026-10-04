@@ -28,12 +28,10 @@ class RunReportProjectMetricsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_ID = 1;
-
-    private function setBuilding(int $buildingId, int $instanceId, int $level, int $apSpend): void
+    private function setBuilding(BotSession $bot, int $buildingId, int $instanceId, int $level, int $apSpend): void
     {
         DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'building_id' => $buildingId, 'instance_id' => $instanceId],
+            ['colony_id' => $bot->colonyId, 'building_id' => $buildingId, 'instance_id' => $instanceId],
             ['level' => $level, 'ap_spend' => $apSpend, 'status_points' => 20, 'tile_x' => 5, 'tile_y' => 5]
         );
     }
@@ -45,22 +43,22 @@ class RunReportProjectMetricsTest extends TestCase
 
         // Sol 1: nothing invested yet.
         $bot->sol = 1;
-        $this->setBuilding(46, 1, level: 0, apSpend: 0);
+        $this->setBuilding($bot, 46, 1, level: 0, apSpend: 0);
         $report->snapshot($bot);
 
         // Sol 2: investment begins (ap_spend>0), level still 0.
         $bot->sol = 2;
-        $this->setBuilding(46, 1, level: 0, apSpend: 10);
+        $this->setBuilding($bot, 46, 1, level: 0, apSpend: 10);
         $report->snapshot($bot);
 
         // Sol 3: still investing.
         $bot->sol = 3;
-        $this->setBuilding(46, 1, level: 0, apSpend: 20);
+        $this->setBuilding($bot, 46, 1, level: 0, apSpend: 20);
         $report->snapshot($bot);
 
         // Sol 4: project completes — level increases, ap_spend resets.
         $bot->sol = 4;
-        $this->setBuilding(46, 1, level: 1, apSpend: 0);
+        $this->setBuilding($bot, 46, 1, level: 1, apSpend: 0);
         $report->snapshot($bot);
 
         $data = $report->build($bot);
@@ -76,18 +74,18 @@ class RunReportProjectMetricsTest extends TestCase
         $report = new RunReport(2);
 
         $bot->sol = 1;
-        $this->setBuilding(46, 1, level: 0, apSpend: 5);
-        $this->setBuilding(31, 1, level: 2, apSpend: 0);
+        $this->setBuilding($bot, 46, 1, level: 0, apSpend: 5);
+        $this->setBuilding($bot, 31, 1, level: 2, apSpend: 0);
         $report->snapshot($bot);
 
         $bot->sol = 2;
-        $this->setBuilding(46, 1, level: 1, apSpend: 0); // completes after 1 Sol
-        $this->setBuilding(31, 1, level: 2, apSpend: 8); // starts investing
+        $this->setBuilding($bot, 46, 1, level: 1, apSpend: 0); // completes after 1 Sol
+        $this->setBuilding($bot, 31, 1, level: 2, apSpend: 8); // starts investing
         $report->snapshot($bot);
 
         $bot->sol = 5;
-        $this->setBuilding(46, 1, level: 1, apSpend: 0);
-        $this->setBuilding(31, 1, level: 3, apSpend: 0); // completes after 3 Sole (sol2->sol5)
+        $this->setBuilding($bot, 46, 1, level: 1, apSpend: 0);
+        $this->setBuilding($bot, 31, 1, level: 3, apSpend: 0); // completes after 3 Sole (sol2->sol5)
         $report->snapshot($bot);
 
         $data = $report->build($bot);
@@ -103,18 +101,18 @@ class RunReportProjectMetricsTest extends TestCase
         $report = new RunReport(3);
 
         $bot->sol = 1;
-        $this->setBuilding(46, 1, level: 0, apSpend: 5);  // 1 active
-        $this->setBuilding(31, 1, level: 0, apSpend: 0);
+        $this->setBuilding($bot, 46, 1, level: 0, apSpend: 5);  // 1 active
+        $this->setBuilding($bot, 31, 1, level: 0, apSpend: 0);
         $report->snapshot($bot);
 
         $bot->sol = 2;
-        $this->setBuilding(46, 1, level: 0, apSpend: 10); // 2 active
-        $this->setBuilding(31, 1, level: 0, apSpend: 3);
+        $this->setBuilding($bot, 46, 1, level: 0, apSpend: 10); // 2 active
+        $this->setBuilding($bot, 31, 1, level: 0, apSpend: 3);
         $report->snapshot($bot);
 
         $bot->sol = 3;
-        $this->setBuilding(46, 1, level: 1, apSpend: 0);  // 0 active
-        $this->setBuilding(31, 1, level: 0, apSpend: 0);
+        $this->setBuilding($bot, 46, 1, level: 1, apSpend: 0);  // 0 active
+        $this->setBuilding($bot, 31, 1, level: 0, apSpend: 0);
         $report->snapshot($bot);
 
         $data = $report->build($bot);

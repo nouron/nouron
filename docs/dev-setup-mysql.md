@@ -93,6 +93,10 @@ skip-log-bin
 
 Danach `sudo service mysql restart`. Ein Absturz kann dann die letzte Sekunde Schreibvorgaenge verlieren, fuer Dev/Test unkritisch.
 
+## Playtest-Bot (`game:playtest`)
+
+Alle Laeufe eines `game:playtest`-Aufrufs spielen parallel in **einer** Datenbank `nouron_playtest` (Config `game.playtest.database`, Env `PLAYTEST_DATABASE`), jeder Lauf mit eigenem User und eigener Kolonie. Der Elternprozess setzt sie einmal pro Aufruf zurueck (`migrate:fresh` + `ReferenceDataSeeder`) und uebergibt den PHPUnit-Kindprozessen `PLAYTEST_SHARED_DB=1`, `PLAYTEST_DATABASE` und die MySQL-Zugangsdaten. Weil `phpunit.xml` `DB_DATABASE=nouron_test` erzwingt, schaltet `PlaytestBotTest` die Verbindung zur Laufzeit um (`App\Console\Support\PlaytestDatabase::connect()`) und laesst den Transaktions-Rollback weg, die Daten bleiben committet. Eltern und Kinder verweigern jeden Datenbanknamen, der leer ist, `nouron` oder `nouron_test` heisst oder der Datenbank der Standard-/`mysql`-Verbindung entspricht; geprueft wird die tatsaechlich verbundene Datenbank (`select database()`). Der Elternprozess braucht MySQL-Zugangsdaten aus `.env` (oder der Umgebung), z. B. solange `.env` noch auf SQLite steht: `DB_CONNECTION=mysql DB_DATABASE=nouron DB_USERNAME=nouron DB_PASSWORD=nouron php artisan game:playtest …`.
+
 ## Regel: Tests und Bot nie gegen `nouron`
 
 Tests laufen nur gegen `nouron_test`, der Playtest-Bot nur gegen `nouron_playtest`, nie gegen `nouron`. Sonst wird der Dev-Spielstand ueberschrieben (siehe Vorfall 2026-09-17). Agenten duerfen `migrate:fresh`/`db:seed` nie gegen `nouron` ausfuehren.

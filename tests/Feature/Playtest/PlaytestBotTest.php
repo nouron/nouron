@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Console\Support\PlaytestDatabase;
 use App\Models\Run;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,26 @@ use Tests\TestCase;
 class PlaytestBotTest extends TestCase
 {
     use PlaysSolLoop;
-    use RefreshDatabase;
+    use RefreshDatabase {
+        refreshDatabase as private refreshDatabaseWithRollback;
+    }
+
+    /**
+     * game:playtest (PLAYTEST_SHARED_DB=1): play in the shared playtest database
+     * with committed data, like a real player — the parent command resets that
+     * database once per invocation. phpunit.xml forces DB_DATABASE=nouron_test,
+     * so the switch happens here at runtime, guarded by PlaytestDatabase.
+     */
+    public function refreshDatabase(): void
+    {
+        if (getenv('PLAYTEST_SHARED_DB')) {
+            app(PlaytestDatabase::class)->connect();
+
+            return;
+        }
+
+        $this->refreshDatabaseWithRollback();
+    }
 
     public function test_bot_plays_a_full_run_and_produces_a_report(): void
     {
@@ -107,8 +127,8 @@ class PlaytestBotTest extends TestCase
         $this->playSolsUntil($bot1, $rules, fn (BotSession $b) => $this->phaseOf($b) >= 2);
         $taskKeys1 = Run::findOrFail($bot1->runId)->objectives->pluck('task_key')->sort()->values()->all();
 
-        // End run 1 so LobbyController::start()'s "active + pending" query can't
-        // pick it up again — boot() re-seeds the same colony/user for run 2.
+        // End run 1 explicitly — boot() creates a new user/colony for run 2 (R5b),
+        // so this only keeps the database state tidy, not the runs apart.
         DB::table('runs')->where('id', $bot1->runId)->update(['status' => 'completed']);
 
         $bot2 = BotSession::boot($this, seed: 777);

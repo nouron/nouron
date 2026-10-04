@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Console\Support\PlaytestDatabase;
 use App\Models\Run;
 use App\Models\User;
 use App\Services\AdvisorService;
 use App\Services\OnboardingService;
 use App\Services\TickService;
-use Database\Seeders\TestSeeder;
-use Illuminate\Support\Facades\DB;
+use Database\Seeders\ReferenceDataSeeder;
 use Tests\TestCase;
 
 /**
@@ -39,14 +39,12 @@ class BotSession
 
     public static function boot(TestCase $test, int $seed): self
     {
-        $userId = 3;
-        $colonyId = 1;
-
-        // Fixtures are plain INSERTs (no REPLACE) — a second boot in the same database
-        // (e.g. two bots with the same seed) must not seed them again;
-        // resetColonyToSol1() below resets the colony anyway.
-        if (! DB::table('user')->where('user_id', $userId)->exists()) {
-            app(TestSeeder::class)->run();
+        if (getenv('PLAYTEST_SHARED_DB')) {
+            // Shared DB (game:playtest): reference data was seeded once by the parent;
+            // never write committed bot data anywhere but the playtest database.
+            app(PlaytestDatabase::class)->assertConnected();
+        } else {
+            app(ReferenceDataSeeder::class)->run();
         }
 
         // Bypass flags must be off BEFORE the run is created — OnboardingService
@@ -56,6 +54,22 @@ class BotSession
             'game.bypass.resource_costs' => false,
             'game.bypass.supply_checks' => false,
         ]);
+
+        // R5b: every bot is its own player (own user + colony), like real players
+        // sharing one production DB — parallel bots in the shared playtest DB must
+        // never reset each other's colony (the old fixed user 3 / colony 1 did).
+        $suffix = bin2hex(random_bytes(6));
+        $user = User::create([
+            'username' => "bot_{$seed}_{$suffix}",
+            'display_name' => "Bot {$seed}",
+            'role' => 'player',
+            'password' => 'bot',
+            'email' => "bot_{$seed}_{$suffix}@example.invalid",
+            'activated' => 1,
+            'activation_key' => '',
+        ]);
+        $userId = (int) $user->user_id;
+        $colonyId = (int) app(OnboardingService::class)->setupNewPlayer($userId)->id;
 
         // A38: pass the seed directly into map generation (ColonyTileService)
         // instead of overwriting runs.rng_seed after the fact — the starting

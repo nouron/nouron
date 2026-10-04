@@ -1076,4 +1076,12 @@ return [
             'hard_fail_extra_wear' => 1.0,
         ],
     ],
+
+    // game:playtest (R5b): all bot runs of one invocation share this MySQL database,
+    // each run with its own user + colony. The command resets it with migrate:fresh,
+    // so it must never be the dev (nouron) or test (nouron_test) database —
+    // App\Console\Support\PlaytestDatabase refuses those.
+    'playtest' => [
+        'database' => env('PLAYTEST_DATABASE', 'nouron_playtest'),
+    ],
 ];
