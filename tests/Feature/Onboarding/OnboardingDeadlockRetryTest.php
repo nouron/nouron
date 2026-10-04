@@ -9,6 +9,7 @@ use Database\Seeders\ReferenceDataSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PDOException;
 use Tests\TestCase;
@@ -74,9 +75,12 @@ class OnboardingDeadlockRetryTest extends TestCase
         $userId = $this->newUser('retry_setup');
         $this->deadlockOnce();
 
+        Log::spy();
+
         app(OnboardingService::class)->setupNewPlayer($userId);
 
         $this->assertSame(2, $this->calls, 'The deadlocked attempt must be retried once');
+        Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message) => $message === 'db deadlock retry');
         $this->assertSame(1, DB::table('glx_colonies')->where('user_id', $userId)->count(), 'The rolled-back attempt must not leave a second colony');
         $this->assertSame(1, DB::table('runs')->where('user_id', $userId)->count());
     }

@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\OnboardingService;
+use App\Support\DeadlockRetry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -46,7 +46,7 @@ class RegisterController extends Controller
         ]);
 
         try {
-            [$user, $colony] = DB::transaction(function () use ($validated) {
+            [$user, $colony] = DeadlockRetry::transaction(function () use ($validated) {
                 $user = User::create([
                     'username' => $validated['username'],
                     'display_name' => $validated['username'],

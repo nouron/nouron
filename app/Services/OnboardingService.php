@@ -6,6 +6,7 @@ use App\Enums\BuildingId;
 use App\Events\RunStarted;
 use App\Models\Colony;
 use App\Models\Run;
+use App\Support\DeadlockRetry;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -40,7 +41,7 @@ class OnboardingService
      */
     public function setupNewPlayer(int $userId, string $colonyName = ''): Colony
     {
-        return DB::transaction(function () use ($userId, $colonyName) {
+        return DeadlockRetry::transaction(function () use ($userId, $colonyName) {
             $name = $colonyName ?: 'Kolonie';
 
             $colony = $this->colonyService->createColony($userId, $name);
@@ -65,7 +66,7 @@ class OnboardingService
      */
     public function resetColonyToSol1(int $userId, int $colonyId, ?int $rngSeed = null): void
     {
-        DB::transaction(function () use ($userId, $colonyId, $rngSeed) {
+        DeadlockRetry::transaction(function () use ($userId, $colonyId, $rngSeed) {
             // Delete by full primary/unique key only (R5b deadlocks): a range DELETE
             // takes InnoDB next-key/gap locks — on colony_log (no index on `user`) and
             // locked_actionpoints (PK starts with tick) even on every scanned row — and
