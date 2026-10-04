@@ -8,6 +8,7 @@ use App\Models\BarEncounter;
 use App\Models\BarInformationEncounter;
 use App\Models\BarOffer;
 use App\Services\Techtree\ResearchService;
+use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +68,7 @@ class BarService
         $traderRank = $this->traderRank($colonyId);
 
         [$minGuests, $maxGuests] = config("game.bar.guest_count.{$traderRank}", [0, 1]);
-        $guestCount = $this->pseudoRand($colonyId * 997 + $tick * 31, $minGuests, $maxGuests);
+        $guestCount = $this->pseudoRand(RunSeed::forColony($colonyId) + 997 + $tick * 31, $minGuests, $maxGuests);
 
         if ($guestCount < 1) {
             return;
@@ -99,7 +100,7 @@ class BarService
         $regolithSellChancePct = (int) config('game.bar.regolith_sell_offer_chance_pct', 12);
 
         for ($i = 0; $i < $guestCount; $i++) {
-            $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
+            $seed = RunSeed::forColony($colonyId) + 1009 + $tick * 127 + $i * 37;
             // Base terms only — the Handelsvorteil (Konsul, Handelsposten, trade
             // knowledge) is applied at display/accept time by TradeAdvantageService.
             // T10 (2026-09-28, Owner-Entscheidung): a rare exception to the
@@ -333,7 +334,7 @@ class BarService
         }
 
         $chancePercent = $this->negotiateChance($colonyId)['total_percent'];
-        $roll = $this->pseudoRand($offer->id * 7919 + $currentTick * 131, 0, 99);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + RunSeed::rowOrdinal('bar_offers', $colonyId, (int) $offer->id) * 7919 + $currentTick * 131, 0, 99);
         $success = $roll < $chancePercent;
 
         return DB::transaction(function () use ($offer, $colonyId, $apCost, $success, $chancePercent): array {
@@ -558,13 +559,13 @@ class BarService
         }
 
         $chance = (float) config("game.bar.encounter.spawn_chance_per_level.{$barLevel}", 0.0);
-        $roll = $this->pseudoRand($colonyId * 613 + $tick * 47, 0, 999);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + 613 + $tick * 47, 0, 999);
         if ($roll >= (int) round($chance * 1000)) {
             return false;
         }
 
         $types = ['wager', 'auction', 'contract'];
-        $type = $types[$this->pseudoRand($colonyId * 883 + $tick * 71, 0, count($types) - 1)];
+        $type = $types[$this->pseudoRand(RunSeed::forColony($colonyId) + 883 + $tick * 71, 0, count($types) - 1)];
         $duration = (int) config('game.bar.encounter.offer_duration', 2);
         $expiresTick = $tick + $duration;
 
@@ -676,7 +677,7 @@ class BarService
      */
     private function resolveWager(BarEncounter $encounter, int $colonyId, int $userId, int $currentTick): array
     {
-        $roll = $this->pseudoRand($encounter->id * 7351 + $currentTick * 211, 0, 999);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + RunSeed::rowOrdinal('bar_encounters', $colonyId, (int) $encounter->id) * 7351 + $currentTick * 211, 0, 999);
         $won = $roll < (int) round($encounter->win_chance * 1000);
 
         if ($won) {
@@ -788,7 +789,7 @@ class BarService
         }
 
         $chance = (float) config("game.bar.concern.spawn_chance_per_level.{$barLevel}", 0.0);
-        $roll = $this->pseudoRand($colonyId * 4021 + $tick * 59, 0, 999);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + 4021 + $tick * 59, 0, 999);
         if ($roll >= (int) round($chance * 1000)) {
             return;
         }
@@ -821,7 +822,7 @@ class BarService
             return;
         }
 
-        $slug = $eligible[$this->pseudoRand($colonyId * 4523 + $tick * 83, 0, count($eligible) - 1)];
+        $slug = $eligible[$this->pseudoRand(RunSeed::forColony($colonyId) + 4523 + $tick * 83, 0, count($eligible) - 1)];
         $duration = (int) config('game.bar.concern.offer_duration', 2);
 
         BarConcern::create([
@@ -878,13 +879,17 @@ class BarService
             }
         }
 
+        // Per-run seed for this concern (R5b): rng_seed + the concern's position in
+        // the colony instead of its global id — see App\Support\RunSeed.
+        $concernSeed = RunSeed::forColony($colonyId) + RunSeed::rowOrdinal('bar_concerns', $colonyId, (int) $concern->id);
+
         // Stranger stakes Werkstoffe upfront — rolled once here (not re-rolled
         // in resolveConcernOutcome()) so the balance check and the actual
         // deduction always agree on the same amount.
         $strangerStake = null;
         if ($slug === 'stranger') {
             $cfg = config('game.bar.concern.stranger', []);
-            $strangerStake = $this->pseudoRand($concern->id * 11 + $currentTick * 13, (int) ($cfg['stake_min'] ?? 0), (int) ($cfg['stake_max'] ?? 0));
+            $strangerStake = $this->pseudoRand($concernSeed * 11 + $currentTick * 13, (int) ($cfg['stake_min'] ?? 0), (int) ($cfg['stake_max'] ?? 0));
             $balance = $this->getResourceBalance($colonyId, $userId, self::RES_COMPOUNDS);
             if ($balance < $strangerStake) {
                 return $this->fail('bar_concern_insufficient_resources');
@@ -892,15 +897,15 @@ class BarService
         }
 
         $successChance = (float) config("game.bar.concern.success_chance.{$slug}", 0.0);
-        $roll = $this->pseudoRand($concern->id * 6113 + $currentTick * 191, 0, 999);
+        $roll = $this->pseudoRand($concernSeed * 6113 + $currentTick * 191, 0, 999);
         $success = $roll < (int) round($successChance * 1000);
 
-        return DB::transaction(function () use ($concern, $colonyId, $userId, $apCost, $slug, $success, $currentTick, $knowledgeId, $strangerStake): array {
+        return DB::transaction(function () use ($concern, $colonyId, $userId, $apCost, $slug, $success, $currentTick, $knowledgeId, $strangerStake, $concernSeed): array {
             if ($apCost > 0) {
                 $this->advisorService->lockActionPoints($colonyId, $apCost);
             }
 
-            $outcome = $this->resolveConcernOutcome($colonyId, $slug, $success, $concern->id, $currentTick, $knowledgeId, $strangerStake);
+            $outcome = $this->resolveConcernOutcome($colonyId, $slug, $success, $concernSeed, $currentTick, $knowledgeId, $strangerStake);
 
             $concern->is_resolved = true;
             $concern->success = $success;
@@ -1076,12 +1081,12 @@ class BarService
             return null;
         }
 
-        $roll = $this->pseudoRand($colonyId * 5099 + $tick * 233, 0, 999);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + 5099 + $tick * 233, 0, 999);
         if ($roll >= (int) round($chance * 1000)) {
             return null;
         }
 
-        return $slugs[$this->pseudoRand($colonyId * 3169 + $tick * 149, 0, count($slugs) - 1)];
+        return $slugs[$this->pseudoRand(RunSeed::forColony($colonyId) + 3169 + $tick * 149, 0, count($slugs) - 1)];
     }
 
     /**
@@ -1120,17 +1125,17 @@ class BarService
         }
 
         $chance = (float) config('game.bar.information_pool.spawn_chance_per_tick', 0.0);
-        $roll = $this->pseudoRand($colonyId * 9137 + $tick * 251, 0, 999);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + 9137 + $tick * 251, 0, 999);
         if ($roll >= (int) round($chance * 1000)) {
             return;
         }
 
         $split = (float) config('game.bar.information_pool.character_split', 0.5);
-        $splitRoll = $this->pseudoRand($colonyId * 6199 + $tick * 271, 0, 999);
+        $splitRoll = $this->pseudoRand(RunSeed::forColony($colonyId) + 6199 + $tick * 271, 0, 999);
         $slug = $splitRoll < (int) round($split * 1000) ? 'veteran' : 'ai_researcher';
 
         $available = $this->availableInformationOutcomes($colonyId, $slug);
-        $outcomeKey = $available[$this->pseudoRand($colonyId * 8293 + $tick * 293, 0, count($available) - 1)];
+        $outcomeKey = $available[$this->pseudoRand(RunSeed::forColony($colonyId) + 8293 + $tick * 293, 0, count($available) - 1)];
 
         $duration = (int) config('game.bar.information_pool.offer_duration', 2);
 
@@ -1484,6 +1489,8 @@ class BarService
         return [$giveResId, $giveAmount, $getResId, $getAmount];
     }
 
+    // Seeds of all rolls here = RunSeed::forColony() (the run's rng_seed) + domain
+    // salt + tick; never a colony/run/row id (R5b) — see App\Support\RunSeed.
     private function pseudoRand(int $seed, int $min, int $max): int
     {
         return SeededRandom::int($seed, $min, $max);

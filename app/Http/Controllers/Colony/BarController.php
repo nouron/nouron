@@ -15,6 +15,7 @@ use App\Services\ResourcesService;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
 use App\Services\TradeAdvantageService;
+use App\Support\RunSeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,7 +117,9 @@ class BarController extends BaseController
             : [];
 
         $run = Run::where('colony_id', $colony->id)->active()->first();
-        $seed = $run ? $run->id : $colony->id;
+        // The run's rng_seed, not the run/colony id (R5b): ids depend on start order in
+        // a shared database — see App\Support\RunSeed.
+        $seed = RunSeed::forColony($colony->id);
         $characters = config('characters');
 
         $characterAssignment = [];

@@ -6,6 +6,7 @@ use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
+use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -311,10 +312,13 @@ class ColonyTileService
 
     private function pickTileType(int $q, int $r, int $colonyId, int $ring = 3): string
     {
-        $hash = abs($q * 7 + $r * 13 + $colonyId * 3) % 100;
+        // The run's rng_seed, not the colony id (R5b): ids depend on start order in a
+        // shared database — see App\Support\RunSeed.
+        $runSeed = RunSeed::forColony($colonyId);
+        $hash = abs($q * 7 + $r * 13 + $runSeed * 3) % 100;
         // Independent second hash (different multipliers) so the combo roll
         // does not correlate with the primary roll (A44/H1).
-        $comboHash = abs($q * 11 + $r * 17 + $colonyId * 5) % 100;
+        $comboHash = abs($q * 11 + $r * 17 + $runSeed * 5) % 100;
 
         return $this->resolveTileType($ring, $hash, $comboHash);
     }

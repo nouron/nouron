@@ -25,6 +25,7 @@ use App\Services\ResourcesService;
 use App\Services\RunProgressService;
 use App\Services\TickService;
 use App\Services\TrustService;
+use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
@@ -80,8 +81,6 @@ class GameTick extends Command
      */
     private int $colonyId;
 
-    private int $userId;
-
     public function __construct(
         private readonly TickService $tickService,
         private readonly EventService $eventService,
@@ -133,7 +132,6 @@ class GameTick extends Command
         }
 
         $this->colonyId = (int) $run->colony_id;
-        $this->userId = (int) $run->user_id;
 
         // Ensure started_at is set on the very first tick of a run.
         if ($run->started_at === null) {
@@ -439,7 +437,10 @@ class GameTick extends Command
 
             if ($catalogEntry !== null) {
                 $successChance = $this->hangarService->successChanceFor((int) $mission->colony_id, $catalogEntry, $difficulty);
-                $roll = $this->seededRoll($rngSeed + (int) $mission->mission_id + 1, 0, 9999) / 10000;
+                // The mission's position within its colony, not its global id (R5b) —
+                // see App\Support\RunSeed. Also seeds the reward rolls below.
+                $missionSeed = $rngSeed + RunSeed::rowOrdinal('colony_hangar_missions', (int) $mission->colony_id, (int) $mission->mission_id);
+                $roll = $this->seededRoll($missionSeed + 1, 0, 9999) / 10000;
                 $success = $roll <= $successChance;
 
                 if ($success) {
@@ -449,7 +450,7 @@ class GameTick extends Command
                         $userId,
                         $catalogEntry['reward'],
                         $mission->target !== null ? json_decode($mission->target, true) : null,
-                        $rngSeed + (int) $mission->mission_id,
+                        $missionSeed,
                         $tick,
                         $rewardMultiplier
                     );
@@ -496,7 +497,8 @@ class GameTick extends Command
      * Pays out a catalog mission reward and returns the concrete amounts for logging.
      *
      * Range values [min,max] and loot_table picks roll deterministically from the
-     * run rng_seed + mission id (ADR 0003) — same run, same mission, same outcome.
+     * run rng_seed + the mission's position within its colony (ADR 0003; not the
+     * global id, R5b) — same run, same mission, same outcome.
      */
     private function payMissionRewards(
         int $colonyId,
@@ -1335,7 +1337,9 @@ class GameTick extends Command
 
         $chance = min($cap, $baseChance + $buildingCount * $perBuilding) * (1 - $reductionPct) * $rampMultiplier;
 
-        $seed = $rngSeed + $colony->id * 7919 + $tick * 104729;
+        // rng_seed + tick + domain salt only — no colony id (R5b): ids depend on start
+        // order in a shared database, see App\Support\RunSeed.
+        $seed = $rngSeed + 7919 + $tick * 104729;
         $roll = $this->seededRoll($seed, 0, 9999) / 10000;
         if ($roll >= $chance) {
             return 0;
@@ -1493,7 +1497,9 @@ class GameTick extends Command
 
         $chance = min($cap, $solsSinceRelocation * $chancePerSol) * (1 - $reductionPct) * $rampMultiplier;
 
-        $seed = $rngSeed + $colony->id * 15485863 + $tick * 32452843;
+        // rng_seed + tick + domain salt only — no colony id (R5b): ids depend on start
+        // order in a shared database, see App\Support\RunSeed.
+        $seed = $rngSeed + 15485863 + $tick * 32452843;
         $roll = $this->seededRoll($seed, 0, 9999) / 10000;
         if ($roll >= $chance) {
             return 0;
@@ -1567,7 +1573,9 @@ class GameTick extends Command
 
         $chance *= (1 - $reductionPct) * $rampMultiplier;
 
-        $seed = $rngSeed + $colony->id * 179424673 + $tick * 32416187;
+        // rng_seed + tick + domain salt only — no colony id (R5b): ids depend on start
+        // order in a shared database, see App\Support\RunSeed.
+        $seed = $rngSeed + 179424673 + $tick * 32416187;
         $roll = $this->seededRoll($seed, 0, 9999) / 10000;
         if ($roll >= $chance) {
             return 0;
