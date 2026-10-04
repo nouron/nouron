@@ -1103,6 +1103,10 @@ return [
         // ProcessTimedOutException. Not a resource bottleneck
         // (measured CPU load ~32% during a 4-parallel batch) —
         // just insufficient safety margin on the old value.
-        'process_timeout' => (int) env('PLAYTEST_PROCESS_TIMEOUT', 600),
+        // 600 → 1800 (2026-10-04, R5b MySQL, tuned server): a run is ~4x slower
+        // than on SQLite — measured 8 parallel runs (concurrency=8) finishing
+        // 974–1073s after the command start (incl. migrate:fresh), a solo run
+        // ~900s. 1800s keeps ~1.7x margin over the slowest measured run.
+        'process_timeout' => (int) env('PLAYTEST_PROCESS_TIMEOUT', 1800),
     ],
 ];
