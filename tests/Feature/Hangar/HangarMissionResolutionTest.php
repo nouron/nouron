@@ -56,6 +56,9 @@ class HangarMissionResolutionTest extends TestCase
         Config::set('game.missions.difficulty.base_chance', [
             'easy' => 1.0, 'normal' => 1.0, 'hard' => 1.0,
         ]);
+        // The cap (0.95) would leave a 5 % failure roll seeded by the mission id — and on
+        // MySQL that id depends on test order (AUTO_INCREMENT is not rolled back).
+        Config::set('game.missions.difficulty.chance_cap', 1.0);
 
         // Free the bay from TestSeeder's pre-populated fixture ships (a real bay
         // only ever holds one) so each test controls exactly one dispatched ship.
