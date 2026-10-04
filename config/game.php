@@ -1083,5 +1083,26 @@ return [
     // App\Console\Support\PlaytestDatabase refuses those.
     'playtest' => [
         'database' => env('PLAYTEST_DATABASE', 'nouron_playtest'),
+        // Seconds per bot child process (game:playtest); a child exceeding it is
+        // reported as "timed out" for its profile/seed, the others carry on.
+        // 120 → 240 (2026-08-17): the 4th advisor slot fix
+        // (BotStrategy::nextHireCandidate()) and tougher Phase-2
+        // objectives both mean more AP spent and more actions
+        // attempted per Sol — a single seed solo (concurrency=1,
+        // no contention) exceeded 120s after those changes.
+        // 240 → 400 (2026-09-13, A37): researchCandidate() no
+        // longer stalls on a CC-gated knowledge (previously
+        // dead-ending the rule for the rest of the run), so it
+        // now succeeds far more often — a solo run again
+        // exceeded the old timeout with no contention involved.
+        // 400 → 600 (2026-09-28): solo/4-parallel runs measured
+        // 244-380s on this dev machine (WSL2, host CPU capped to
+        // 85% power limit) — plenty of margin most of the time,
+        // but close enough to 400s that ordinary run-to-run
+        // variance occasionally tipped a whole batch into a
+        // ProcessTimedOutException. Not a resource bottleneck
+        // (measured CPU load ~32% during a 4-parallel batch) —
+        // just insufficient safety margin on the old value.
+        'process_timeout' => (int) env('PLAYTEST_PROCESS_TIMEOUT', 600),
     ],
 ];

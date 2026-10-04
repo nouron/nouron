@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Console\Concerns\RefusesInProduction;
 use App\Console\Support\PlaytestDatabase;
 use Illuminate\Console\Command;
-use Illuminate\Process\Pool;
+use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 
@@ -87,69 +87,53 @@ class Playtest extends Command
             $labels = collect($batch)->map(fn ($c) => "{$c[0]}={$c[1]}")->implode(', ');
             $this->line('Running batch: '.$labels);
 
-            $results = Process::pool(function (Pool $pool) use ($batch, $playtestDb, $mysql) {
-                foreach ($batch as [$profile, $seed]) {
-                    $pool->as("{$profile}-{$seed}")
-                        // Every child plays in the shared playtest DB the parent just reset.
-                        // phpunit.xml forces DB_DATABASE=nouron_test, so DB_DATABASE would
-                        // not reach the child (and is deliberately not passed: the guard
-                        // requires the playtest DB to differ from the configured one).
-                        // PLAYTEST_SHARED_DB makes PlaytestBotTest switch its connection
-                        // to PLAYTEST_DATABASE at runtime (PlaytestDatabase::connect(),
-                        // same guard as here) and skip the rollback, so the run's data
-                        // is committed like a real player's.
-                        ->env([
-                            'PLAYTEST_PROFILE' => $profile,
-                            'PLAYTEST_SEED' => $seed,
-                            'APP_ENV' => 'testing',
-                            'PLAYTEST_SHARED_DB' => '1',
-                            'PLAYTEST_DATABASE' => $playtestDb,
-                            'DB_CONNECTION' => 'mysql',
-                            'DB_HOST' => (string) $mysql['host'],
-                            'DB_PORT' => (string) $mysql['port'],
-                            'DB_USERNAME' => (string) $mysql['username'],
-                            'DB_PASSWORD' => (string) $mysql['password'],
-                        ])
-                        // 120 → 240 (2026-08-17): the 4th advisor slot fix
-                        // (BotStrategy::nextHireCandidate()) and tougher Phase-2
-                        // objectives both mean more AP spent and more actions
-                        // attempted per Sol — a single seed solo (concurrency=1,
-                        // no contention) exceeded 120s after those changes.
-                        // 240 → 400 (2026-09-13, A37): researchCandidate() no
-                        // longer stalls on a CC-gated knowledge (previously
-                        // dead-ending the rule for the rest of the run), so it
-                        // now succeeds far more often — a solo run again
-                        // exceeded the old timeout with no contention involved.
-                        // 400 → 600 (2026-09-28): solo/4-parallel runs measured
-                        // 244-380s on this dev machine (WSL2, host CPU capped to
-                        // 85% power limit) — plenty of margin most of the time,
-                        // but close enough to 400s that ordinary run-to-run
-                        // variance occasionally tipped a whole batch into a
-                        // ProcessTimedOutException. Not a resource bottleneck
-                        // (measured CPU load ~32% during a 4-parallel batch) —
-                        // just insufficient safety margin on the old value.
-                        ->timeout(600)
-                        ->command([
-                            // opcache.enable_cli defaults to Off system-wide, so every
-                            // spawned child cold-compiles the whole vendor tree from
-                            // scratch — measured ~47s for a single run just from that.
-                            // Forcing it on here (scoped to this process only, no global
-                            // php.ini change) lets concurrency scale past ~2 without
-                            // hitting the timeout below (found 2026-08-17).
-                            'php', '-d', 'opcache.enable_cli=1',
-                            'bin/phpunit',
-                            '--filter', 'test_bot_plays_a_full_run_and_produces_a_report',
-                            'tests/Feature/Playtest/PlaytestBotTest.php',
-                        ]);
-                }
-            })->wait();
-            $resultsByKey = $results->collect();
+            // Started one by one (not via Process::pool) so a child that exceeds the
+            // timeout can be caught per run below — a pool's wait() aborts on the first
+            // ProcessTimedOutException and loses every other result (R5b, 2026-10-04).
+            $running = [];
+            foreach ($batch as [$profile, $seed]) {
+                // Every child plays in the shared playtest DB the parent just reset.
+                // phpunit.xml forces DB_DATABASE=nouron_test, so DB_DATABASE would
+                // not reach the child (and is deliberately not passed: the guard
+                // requires the playtest DB to differ from the configured one).
+                // PLAYTEST_SHARED_DB makes PlaytestBotTest switch its connection
+                // to PLAYTEST_DATABASE at runtime (PlaytestDatabase::connect(),
+                // same guard as here) and skip the rollback, so the run's data
+                // is committed like a real player's.
+                $running["{$profile}-{$seed}"] = Process::env([
+                    'PLAYTEST_PROFILE' => $profile,
+                    'PLAYTEST_SEED' => $seed,
+                    'APP_ENV' => 'testing',
+                    'PLAYTEST_SHARED_DB' => '1',
+                    'PLAYTEST_DATABASE' => $playtestDb,
+                    'DB_CONNECTION' => 'mysql',
+                    'DB_HOST' => (string) $mysql['host'],
+                    'DB_PORT' => (string) $mysql['port'],
+                    'DB_USERNAME' => (string) $mysql['username'],
+                    'DB_PASSWORD' => (string) $mysql['password'],
+                ])
+                    // History and reasoning of the value: config/game.php playtest.process_timeout.
+                    ->timeout((int) config('game.playtest.process_timeout'))
+                    ->start([
+                        // opcache.enable_cli defaults to Off system-wide, so every
+                        // spawned child cold-compiles the whole vendor tree from
+                        // scratch — measured ~47s for a single run just from that.
+                        // Forcing it on here (scoped to this process only, no global
+                        // php.ini change) lets concurrency scale past ~2 without
+                        // hitting the timeout below (found 2026-08-17).
+                        'php', '-d', 'opcache.enable_cli=1',
+                        'bin/phpunit',
+                        '--filter', 'test_bot_plays_a_full_run_and_produces_a_report',
+                        'tests/Feature/Playtest/PlaytestBotTest.php',
+                    ]);
+            }
 
             foreach ($batch as [$profile, $seed]) {
-                $result = $resultsByKey->get("{$profile}-{$seed}");
-
-                if ($result === null) {
-                    $this->error("profile={$profile} seed={$seed}: no process result found (pool key mismatch)");
+                try {
+                    $result = $running["{$profile}-{$seed}"]->wait();
+                } catch (ProcessTimedOutException) {
+                    $this->error("profile={$profile} seed={$seed} timed out after ".config('game.playtest.process_timeout').'s');
+                    $rows[] = [$profile, $seed, 'timed out', '-', '-', '-', '-'];
 
                     continue;
                 }
