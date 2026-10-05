@@ -79,6 +79,7 @@
                 missionStart: @json(__("missions.start_button")),
                 missionDifficultyChance: @json(__("missions.difficulty_chance_label")),
                 missionDifficultyReward: @json(__("missions.difficulty_reward_label")),
+                missionYield: @json(__("missions.reward_label")),
             },
         };
     </script>
@@ -502,10 +503,15 @@
 
                             <div class="hangar-mission-card-head">
                                 <span class="hangar-mission-name" x-text="mission.name"></span>
-                                <span class="hangar-mission-reward" x-text="mission.reward_label"></span>
                             </div>
 
                             <p class="hangar-mission-desc" x-text="mission.desc"></p>
+
+                            {{-- Yield (derived from config/missions.php) — kept apart from the cost chips below --}}
+                            <div class="hangar-mission-yield">
+                                <span class="hangar-mission-yield-label" x-text="i18n.missionYield"></span>
+                                <strong class="hangar-mission-reward" x-text="mission.reward_label"></strong>
+                            </div>
 
                             <div class="hangar-mission-chips">
                                 <span class="ap-chip ap-cost-chip ap-chip--nav" x-text="mission.nav_ap + ' AP'"></span>
