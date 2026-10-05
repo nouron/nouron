@@ -17,14 +17,13 @@ use Illuminate\Support\Facades\DB;
  * payment. Each concrete subclass supplies its table names and entity-id key.
  *
  * Rules:
- * - A levelup requires: required building, required research (ships only),
- *   sufficient resources, enough AP invested (ap_spend >= ap_for_levelup),
+ * - A levelup requires: required building, sufficient resources, enough AP invested (ap_spend >= ap_for_levelup),
  *   and the entity is below its max_level (buildings only).
  * - Investing AP ('add' mode) only increments ap_spend up to ap_for_levelup;
  *   it does NOT lock AP from the available pool — that happens via lockActionPoints
  *   when status_points actually changes (repair/remove modes).
- * - Resources checks are deliberately always true to avoid SQLite locking issues
- *   during development; the payCosts() call in levelup/leveldown is still made.
+ * - The resource check is bypassed in dev mode (GAME_DEV_MODE, see
+ *   checkRequiredResourcesByEntityId()); the payCosts() call in levelup/leveldown is still made.
  */
 abstract class AbstractTechnologyService
 {
@@ -152,7 +151,8 @@ abstract class AbstractTechnologyService
 
     /**
      * Check whether the colony has the required research at the required level.
-     * Always returns true (the ship override was removed with the legacy ShipService).
+     * Always returns true: no entity type has a research prerequisite any more, so the
+     * 'requires_research' arms in the blocker matches below can never fire.
      */
     public function checkRequiredResearchesByEntityId(int $colonyId, int $entityId): bool
     {
@@ -504,8 +504,7 @@ abstract class AbstractTechnologyService
     /**
      * Name the reason a leveldown() call would be refused, or null when it may proceed.
      *
-     * The default keeps the historic research/ship behaviour (levelup prerequisites
-     * re-checked). BuildingService overrides it: demolishing a building level only
+     * The default re-checks the levelup prerequisites. BuildingService overrides it: demolishing a building level only
      * needs a level to remove.
      *
      * @return string|null one of: requires_building, requires_research,

@@ -550,7 +550,7 @@ Score = (Tasks_Done × 1000)
 
 ---
 
-## 19. Datenbank-Schema Übersicht (SQLite)
+## 19. Datenbank-Schema Übersicht (MySQL)
 
 ### Zentrale Tabellen
 ```

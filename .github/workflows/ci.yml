@@ -16,6 +16,7 @@ jobs:
   lint:
     name: Pint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -29,6 +30,9 @@ jobs:
   tests:
     name: PHPUnit (${{ matrix.suite }})
     runs-on: ubuntu-latest
+    # A hanging run must not burn runner minutes: playtest suite ~20 min on tuned local
+    # MySQL, the CI service is untuned, so generous margin.
+    timeout-minutes: ${{ matrix.suite == 'playtest' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:

@@ -61,10 +61,6 @@ class ColonySeedDemoTest extends TestCase
     {
         $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID])->assertExitCode(0);
 
-        $events = DB::table('colony_tiles')
-            ->where('colony_id', self::COLONY_ID)->where('ring', 3)->whereNotNull('event_type')
-            ->pluck('event_type', DB::raw("q || ',' || r"));
-
         $this->assertSame('event_ruin', DB::table('colony_tiles')
             ->where('colony_id', self::COLONY_ID)->where('q', 0)->where('r', 3)->value('event_type'));
         $this->assertSame('event_crystal', DB::table('colony_tiles')
