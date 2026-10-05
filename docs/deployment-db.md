@@ -29,7 +29,9 @@ Der Owner-Account mit `role = admin` wird einmalig per Kommando angelegt (Comman
 
 Sobald R4 live ist, gilt: **Die Baseline wird nie mehr editiert.** Jede Schema-Änderung kommt als neue Migration mit eigenem Zeitstempel, damit `migrate --force` sie auf der bestehenden DB nachzieht. Vor dem Produktivgang wurde die Baseline noch direkt angepasst; das erzwingt lokal einen frischen Aufbau (`php artisan db:reset --force`), in Produktion wäre es ein Datenverlust.
 
-Referenzdaten sind keine Migrationen: Neue oder geänderte Stammdaten gehören in `database/seeders/data/<tabelle>.php`. Der Seeder löscht keine Zeilen, die aus den Datendateien entfernt werden; Entfernen braucht eine eigene Migration.
+**View `v_glx_colonies`:** MySQL friert `SELECT *` beim Anlegen zu einer festen Spaltenliste ein. Nach jeder Änderung an `glx_colonies` muss die View per neuer Migration neu angelegt werden (`DROP VIEW` + `CREATE SQL SECURITY INVOKER VIEW … AS SELECT * FROM glx_colonies`), sonst sieht sie neue Spalten nie; `INVOKER` verhindert Fehler 1449 nach einem Restore unter anderem DB-User.
+
+Referenzdaten sind keine Migrationen: Neue oder geänderte Stammdaten gehören in `database/seeders/data/<tabelle>.php`. Der Seeder löscht keine Zeilen, die aus den Datendateien entfernt werden; Entfernen braucht eine eigene Migration. Grenze des Upserts: Auf MySQL wird er zu `ON DUPLICATE KEY UPDATE` und greift bei jedem Unique-Key (Namens-Indizes, Techtree-Positionen), nicht nur bei der angegebenen ID; Umbenennungen und Positionstausch brauchen deshalb eine eigene Migration.
 
 ## Backup und Restore
 

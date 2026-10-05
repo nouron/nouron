@@ -82,6 +82,58 @@ class BaselineSchemaTest extends TestCase
         $this->assertTrue($indexed->contains(fn ($columns) => ($columns[0] ?? null) === 'user'), 'colony_log needs an index starting with user');
     }
 
+    /** R5b: MySQL freezes SELECT * and binds a DEFINER view to its creator (error 1449 after a restore). */
+    public function test_glx_colonies_view_runs_with_invoker_rights(): void
+    {
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('SQL SECURITY exists on MySQL only.');
+        }
+
+        $type = DB::selectOne(
+            'SELECT SECURITY_TYPE AS t FROM information_schema.views WHERE table_schema = DATABASE() AND table_name = ?',
+            ['v_glx_colonies']
+        )->t;
+
+        $this->assertSame('INVOKER', $type);
+    }
+
+    /** R5b: tick transactions delete/update by these column prefixes; without them the statements lock whole tables. */
+    public function test_tick_hot_paths_have_leading_indexes(): void
+    {
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('Index layout asserted on MySQL only.');
+        }
+
+        $expected = [
+            'bar_offers' => ['colony_id', 'expires_tick'],
+            'bar_encounters' => ['colony_id', 'expires_tick'],
+            'locked_actionpoints' => ['scope_type', 'scope_id'],
+        ];
+        foreach ($expected as $table => $columns) {
+            $found = collect(Schema::getIndexes($table))->contains(
+                fn ($index) => array_slice($index['columns'], 0, count($columns)) === $columns
+            );
+            $this->assertTrue($found, "$table needs an index starting with ".implode(', ', $columns));
+        }
+    }
+
+    /** R5b: MySQL setups with sql_require_primary_key reject keyless tables. */
+    public function test_every_base_table_has_a_primary_key(): void
+    {
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('information_schema check is MySQL-specific.');
+        }
+
+        $keyless = DB::select(
+            "SELECT t.table_name AS name FROM information_schema.tables t
+             LEFT JOIN information_schema.table_constraints c
+               ON c.table_schema = t.table_schema AND c.table_name = t.table_name AND c.constraint_type = 'PRIMARY KEY'
+             WHERE t.table_schema = DATABASE() AND t.table_type = 'BASE TABLE' AND c.constraint_name IS NULL"
+        );
+
+        $this->assertSame([], array_map(fn ($r) => $r->name, $keyless));
+    }
+
     public function test_baseline_cannot_be_rolled_back(): void
     {
         $migration = require database_path('migrations/0001_01_01_000000_baseline.php');

@@ -62,6 +62,7 @@ Migrations mit Logik (Backfill, Datenumformung, Constraint mit Verhalten wie Uni
 - Fixture-IDs: keine ID 0 (kein `NO_AUTO_VALUE_ON_ZERO`); PK-Spalten, in die Code ohne `id` einfügt, brauchen Auto-Increment.
 - Strict Mode: keine Datumswerte wie `0000-00-00`.
 - Partieller Unique-Index ist in MySQL ein funktionaler Index (siehe Baseline für `buildings`/`researches`/`personell`).
+- View `v_glx_colonies` (`SELECT * FROM glx_colonies`) friert die Spaltenliste beim Anlegen ein: nach jeder Änderung an `glx_colonies` per neuer Migration `DROP VIEW` + `CREATE SQL SECURITY INVOKER VIEW … AS SELECT * FROM glx_colonies`.
 - DDL ist nicht transaktional; DDL-Schritte in Migrations getrennt halten.
 
 ## Migrations ausführen

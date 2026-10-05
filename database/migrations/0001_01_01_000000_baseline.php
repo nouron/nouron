@@ -121,7 +121,8 @@ return new class extends Migration
             $table->integer('building_id');
             $table->integer('resource_id');
             $table->integer('amount');
-            $table->unique(['building_id', 'resource_id'], 'building_resource');
+            // PRIMARY KEY (all columns NOT NULL): MySQL setups with sql_require_primary_key reject keyless tables.
+            $table->primary(['building_id', 'resource_id'], 'building_resource');
             $table->foreign('resource_id')->references('id')->on('resources');
             $table->foreign('building_id')->references('id')->on('buildings');
         });
@@ -133,6 +134,7 @@ return new class extends Migration
             $table->integer('personell_id');
             $table->integer('spend_ap')->default(0);
             $table->primary(['tick', 'scope_type', 'scope_id', 'personell_id']);
+            $table->index(['scope_type', 'scope_id'], 'locked_actionpoints_scope_type_scope_id_index');
         });
 
         Schema::create('trust_events', function (Blueprint $table) {
@@ -175,7 +177,8 @@ return new class extends Migration
             $table->integer('pending_until_tick')->nullable();
             $table->integer('placed_at_tick')->nullable();
             $table->integer('instability_outage_until_tick')->nullable();
-            $table->unique(['colony_id', 'building_id', 'instance_id'], 'colony_building');
+            // PRIMARY KEY (all columns NOT NULL): MySQL setups with sql_require_primary_key reject keyless tables.
+            $table->primary(['colony_id', 'building_id', 'instance_id'], 'colony_building');
             $table->foreign('building_id')->references('id')->on('buildings');
             $table->foreign('colony_id')->references('id')->on('glx_colonies');
         });
@@ -372,6 +375,9 @@ return new class extends Migration
             // Id-free, stable roll key (creation Sol * 100 + slot), set when the offer is
             // created — seeds the negotiation roll (R5b; see BarService::offerRollKey()).
             $table->integer('roll_key')->nullable();
+            // The per-colony expiry DELETE runs inside the tick transaction: without this index it
+            // scans (and next-key-locks) every player's rows.
+            $table->index(['colony_id', 'expires_tick'], 'bar_offers_colony_id_expires_tick_index');
             $table->foreign('visit_id')->references('id')->on('merchant_visits')->cascadeOnDelete();
         });
 
@@ -401,6 +407,8 @@ return new class extends Migration
             $table->integer('ends_tick')->nullable();
             $table->dateTime('created_at')->nullable();
             $table->dateTime('updated_at')->nullable();
+            // See bar_offers: keeps the per-colony expiry DELETE from locking other players' rows.
+            $table->index(['colony_id', 'expires_tick'], 'bar_encounters_colony_id_expires_tick_index');
         });
 
         Schema::create('colony_bartender_state', function (Blueprint $table) {
@@ -530,7 +538,12 @@ return new class extends Migration
         // migrate:fresh drops tables but not views on MySQL (without --drop-views),
         // so a view left over from a previous run must be replaced.
         DB::statement('DROP VIEW IF EXISTS v_glx_colonies');
-        DB::statement('CREATE VIEW v_glx_colonies AS SELECT * FROM glx_colonies');
+        // MySQL freezes `SELECT *` into an explicit column list at creation time and by default
+        // binds the view to its creator (DEFINER), which breaks after a restore under another DB
+        // user — so INVOKER. After altering glx_colonies the view must be recreated.
+        // SQLite has no SQL SECURITY clause.
+        $security = DB::connection()->getDriverName() === 'sqlite' ? '' : 'SQL SECURITY INVOKER ';
+        DB::statement("CREATE {$security}VIEW v_glx_colonies AS SELECT * FROM glx_colonies");
     }
 
     public function down(): void

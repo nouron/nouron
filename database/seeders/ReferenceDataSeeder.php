@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\Schema;
  * empty database cannot collide, but if a later balance pass swaps the techtree positions of two
  * rows, the upsert would hit the index mid-statement. In that case set `phase` to 0 for the
  * affected rows inside the same transaction before upserting.
+ *
+ * On MySQL `upsert` becomes INSERT ... ON DUPLICATE KEY UPDATE, which ignores the given uniqueBy
+ * columns and fires on ANY unique key of the table (the name unique indexes, ships_phase_row_col,
+ * the functional (phase, row, column) indexes). A rename or position swap can therefore fail
+ * mid-statement or overwrite the wrong row; such changes need a dedicated migration instead.
  */
 class ReferenceDataSeeder extends Seeder
 {
