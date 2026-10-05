@@ -48,13 +48,21 @@ class OnboardingDeadlockRetryTest extends TestCase
         $mock = Mockery::mock(EventService::class);
         $mock->shouldReceive('createNexusBriefing')->andReturnUsing(function (...$args) use ($real) {
             if ($this->calls++ === 0) {
-                throw new QueryException('mysql', 'insert into `colony_log` ...', [], new PDOException(
-                    'SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction'
-                ));
+                throw new QueryException('mysql', 'insert into `colony_log` ...', [], self::deadlockPdoException());
             }
             $real->createNexusBriefing(...$args);
         });
         $this->app->instance(EventService::class, $mock);
+    }
+
+    /** Shaped like pdo_mysql's: SQLSTATE as code, driver error code in errorInfo. */
+    private static function deadlockPdoException(): PDOException
+    {
+        $e = new PDOException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction');
+        $e->errorInfo = ['40001', 1213, 'Deadlock found when trying to get lock; try restarting transaction'];
+        (new \ReflectionProperty(\Exception::class, 'code'))->setValue($e, '40001');
+
+        return $e;
     }
 
     private function newUser(string $name): int
@@ -80,7 +88,10 @@ class OnboardingDeadlockRetryTest extends TestCase
         app(OnboardingService::class)->setupNewPlayer($userId);
 
         $this->assertSame(2, $this->calls, 'The deadlocked attempt must be retried once');
-        Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message) => $message === 'db deadlock retry');
+        // Only the error code and attempt are logged — a QueryException message carries
+        // the SQL with its bindings (e-mail, password hash).
+        Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message, $context) => $message === 'db deadlock retry'
+            && $context === ['attempt' => 1, 'sqlstate' => '40001', 'driver_code' => 1213]);
         $this->assertSame(1, DB::table('glx_colonies')->where('user_id', $userId)->count(), 'The rolled-back attempt must not leave a second colony');
         $this->assertSame(1, DB::table('runs')->where('user_id', $userId)->count());
     }

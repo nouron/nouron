@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -11,7 +12,8 @@ use Throwable;
 /**
  * DB::transaction() with a retry on MySQL deadlocks (SQLSTATE 40001/1213) that
  * logs each retry — Laravel's own `attempts` parameter retries silently (R5b:
- * concurrent registrations / new runs deadlocked with 8 parallel bots).
+ * concurrent registrations / new runs deadlocked with 8 parallel bots). Only
+ * SQLSTATE and driver error code are logged, never the message (SQL + bindings).
  *
  * Like Laravel, it only retries a top-level transaction: inside an outer
  * transaction the server has already rolled the whole thing back, so the
@@ -37,7 +39,14 @@ final class DeadlockRetry
                     throw $e;
                 }
 
-                Log::warning('db deadlock retry', ['attempt' => $attempt, 'error' => $e->getMessage()]);
+                // Error codes only: a QueryException message carries the SQL with its
+                // bindings (e-mail addresses, password hashes).
+                $info = $e instanceof QueryException ? $e->errorInfo : null;
+                Log::warning('db deadlock retry', [
+                    'attempt' => $attempt,
+                    'sqlstate' => (string) ($info[0] ?? $e->getCode()),
+                    'driver_code' => isset($info[1]) ? (int) $info[1] : null,
+                ]);
             }
         }
     }
