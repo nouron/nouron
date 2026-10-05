@@ -348,6 +348,37 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('hint_explore', $hint['key']);
     }
 
+    // ── Hint explore: AP cost shown must be the real ring cost ───────────────
+
+    /**
+     * Playtest 2026-10-05: the hint said "1 AP per tile", but the tiles left to reveal are ring 2 and
+     * ring 3 (ring 1 is auto-explored), which cost 2 and 3 AP (game.colony.explore_cost_per_ring).
+     * The numbers now come from the config and are passed to the translation.
+     */
+    public function test_explore_hint_passes_the_real_ring_costs_to_its_text(): void
+    {
+        config(['game.colony.explore_cost_per_ring' => [1 => 1, 2 => 2, 3 => 3]]);
+        $this->placeEngineer();
+        $this->moveHarvesterOutside(); // silence hint 2
+        $this->suppressLateHints();    // silence the build hints — explore is the Sol-1 floor
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_explore', $hint['key']);
+        $this->assertSame(['ring2' => 2, 'ring3' => 3], $hint['text_params']);
+    }
+
+    public function test_explore_hint_text_names_the_ring_costs(): void
+    {
+        app()->setLocale('de');
+
+        $text = __('colony.onboarding_hint_explore', ['ring2' => 2, 'ring3' => 3]);
+
+        $this->assertStringContainsString('2 AP', $text);
+        $this->assertStringContainsString('3 AP', $text);
+        $this->assertStringNotContainsString(':ring', $text);
+    }
+
     // ── Hint 3: CC level < 2 (fires from Sol 2) ──────────────────────────────
 
     public function test_hint_3_fires_when_ramp_done_and_cc_level_1(): void
@@ -379,21 +410,71 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_3', $hint['key'] ?? null);
     }
 
-    public function test_hint_3_silent_without_finished_path_building(): void
+    /**
+     * Playtest 2026-10-05 / T30 spec: Labor, Hangar and Cantina need CC Lv2 (buildings.required_building_level),
+     * so a path building cannot exist while the CC is still level 1. hint_3 ("upgrade the CC") used to
+     * require one — it could never fire. It now needs only the Agrardom (hard CC-Lv2 prerequisite).
+     */
+    public function test_hint_3_fires_with_agrardom_but_without_a_path_building(): void
     {
-        // Agrardom finished but NO path building yet → CC Lv2 wouldn't pay off
-        // (advisor slot 2 couldn't be filled) — hint_3 must wait.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->whereIn('building_id', [31, 44, 52])
-            ->update(['level' => 0]);
+            ->delete();
         $this->setRunTick(3);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertNotSame('hint_3', $hint['key'] ?? null);
+
+        $this->assertSame('hint_3', $hint['key'] ?? null);
+    }
+
+    #[DataProvider('pathBuildingHintKeys')]
+    public function test_path_building_hints_stay_silent_while_the_cc_is_below_level_2(string $hintKey): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->whereIn('building_id', [31, 44, 52])
+            ->delete();
+        $this->setRunTick(3);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame($hintKey, $hint['key'] ?? null);
+    }
+
+    /** @return array<string, array{0: string}> */
+    public static function pathBuildingHintKeys(): array
+    {
+        return [
+            'analytik' => ['hint_analytik'],
+            'hangar' => ['hint_hangar_path'],
+            'cantina' => ['hint_6'],
+            'build priority' => ['hint_build_priority'],
+        ];
+    }
+
+    public function test_path_building_hints_fire_once_the_cc_is_level_2(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->whereIn('building_id', [31, 44, 52])
+            ->delete();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        $this->setRunTick(3);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertContains($hint['key'] ?? null, ['hint_build_priority', 'hint_analytik', 'hint_hangar_path', 'hint_6']);
     }
 
     public function test_hint_3_silent_when_cc_level_2(): void
@@ -1233,13 +1314,14 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_build_priority_hint_fires_when_two_buildings_eligible(): void
     {
-        // Agrardom placed (path-building prereq) but no path building yet — all
-        // three (Cantina/Analytik/Hangar) become eligible at tick >= 1, so the
-        // "pick one" hint (rank 7) fires. suppressLateHints() is deliberately NOT
-        // called (it would place all three, leaving 0 eligible).
+        // Agrardom placed and CC at Lv2 (the path buildings' prerequisite) but no path
+        // building yet — all three (Cantina/Analytik/Hangar) become eligible at
+        // tick >= 1, so the "pick one" hint (rank 8) fires. suppressLateHints() is
+        // deliberately NOT called (it would place all three, leaving 0 eligible).
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->placeAgrardome();
+        $this->upgradeCc();
         DB::table('colony_researches')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
             'status_points' => 20, 'ap_spend' => 0,
@@ -1275,6 +1357,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->placeAgrardome();
+        $this->upgradeCc();
         DB::table('colony_researches')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
             'status_points' => 20, 'ap_spend' => 0,

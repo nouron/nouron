@@ -191,7 +191,7 @@ class AppServiceProvider extends ServiceProvider
 
                     $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());
                     if ($hint) {
-                        $hint['text'] = __($hint['text_key']);
+                        $hint['text'] = __($hint['text_key'], $hint['text_params']);
                     }
                     $view->with('activeHint', $hint);
 

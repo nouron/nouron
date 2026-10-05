@@ -29,7 +29,7 @@ class OnboardingHintService
      * colony/user, or null if onboarding hints are disabled, no hint is active,
      * or all active hints have been dismissed.
      *
-     * @return array{rank: int, key: string, text_key: string, target_url: string}|null
+     * @return array{rank: int, key: string, text_key: string, text_params: array<string, int|string>, target_url: string}|null
      */
     public function getActiveHint(int $colonyId, int $userId): ?array
     {
@@ -67,6 +67,7 @@ class OnboardingHintService
                 'rank' => $hint['rank'],
                 'key' => $hint['key'],
                 'text_key' => $hint['text_key'],
+                'text_params' => $hint['text_params'] ?? [],
                 'target_url' => $hint['target_url'],
             ];
         }
@@ -128,7 +129,7 @@ class OnboardingHintService
      * Evaluates all hint conditions and returns an ordered list with an
      * 'active' flag for each.
      *
-     * @return list<array{rank: int, key: string, active: bool, text_key: string, target_url: string}>
+     * @return list<array{rank: int, key: string, active: bool, text_key: string, text_params?: array<string, int|string>, target_url: string}>
      */
     private function buildHintList(int $colonyId, int $currentTick, int $userId): array
     {
@@ -222,6 +223,7 @@ class OnboardingHintService
                 'key' => 'hint_explore',
                 'active' => $this->checkHintExplore($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_explore',
+                'text_params' => $this->exploreTextParams(),
                 'target_url' => '/colony/view',
             ],
             [
@@ -500,12 +502,12 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 3: upgrade the CC to level 2. State-based (playtest review 2026-07-14):
-     * fires only once the Agrardom (hard CC-Lv2 prerequisite) AND at least one
-     * path building are finished — only then does CC Lv2 immediately pay off,
-     * because the freed advisor slot 2 can actually be filled (slots 2-4 require
-     * a built path building). The tick threshold is just a floor (Sol 3+); the
-     * build-ramp hints (Agrardom rank 4, path buildings ranks 8-10) lead up to it.
+     * Hint 3: upgrade the CC to level 2. State-based: fires once the Agrardom (hard
+     * CC-Lv2 prerequisite) is finished. CC Lv2 is what unlocks Labor/Hangar/Cantina
+     * (and advisor slot 2), so this hint leads the player into the path choice — it
+     * must NOT wait for a path building (those need CC Lv2 themselves; the old
+     * condition made this hint unreachable, T30 spec 2026-10-05). The tick threshold
+     * is just a floor (Sol 3+).
      */
     private function checkHint3(int $colonyId, int $currentTick): bool
     {
@@ -533,15 +535,8 @@ class OnboardingHintService
             ->where('colony_id', $colonyId)
             ->where('building_id', 41)
             ->value('level');
-        if ($agrardomLevel < 1) {
-            return false;
-        }
 
-        return DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->whereIn('building_id', [31, 44, 52]) // path buildings
-            ->where('level', '>=', 1)
-            ->exists();
+        return $agrardomLevel >= 1;
     }
 
     /**
@@ -693,6 +688,23 @@ class OnboardingHintService
     }
 
     /**
+     * AP cost per tile for the rings the hint is about. Ring 0/1 are auto-explored at
+     * seed time, so what is left to reveal is ring 2 and 3 — the hint names their real
+     * cost (game.colony.explore_cost_per_ring) instead of a fixed number in the text.
+     *
+     * @return array{ring2: int, ring3: int}
+     */
+    private function exploreTextParams(): array
+    {
+        $default = (int) config('game.colony.explore_cost_default', 1);
+
+        return [
+            'ring2' => (int) config('game.colony.explore_cost_per_ring.2', $default),
+            'ring3' => (int) config('game.colony.explore_cost_per_ring.3', $default),
+        ];
+    }
+
+    /**
      * Explore hint (rank 8, Sol 1 only): the base colony AP pool (12/Sol) sits idle
      * early because nothing guides the player to scout. While unexplored tiles
      * remain and Navigation AP is available, nudge exploration — it lifts fog,
@@ -823,11 +835,12 @@ class OnboardingHintService
     /**
      * Shared prereq for all three path-building hints (Cantina/Analytik/Hangar):
      * the Agrardom must be placed (server-side placement gate,
-     * error_agrardom_required), and — while the CC is still below level 2 —
-     * no other path building may be placed yet. The Sol-1-4 ramp wants exactly
-     * ONE path building before CC Lv2; nagging for the second one while the
-     * first is being built or the CC upgrade is pending was a playtest finding
-     * (2026-07-14). From CC Lv2 onward the remaining path hints may resume.
+     * error_agrardom_required) and the CC must have reached the level the path
+     * buildings require (buildings.required_building_level — CC Lv2). Below that the
+     * buildings are not offered in the build menu at all, so a "build one now" hint
+     * would point at something that cannot be built yet — and, worse, it outranked
+     * the "upgrade the CC" hint (hint_3), which therefore never showed
+     * (found in the 2026-10-05 playtest / T30 spec).
      */
     private function pathChoiceOpen(int $colonyId): bool
     {
@@ -835,21 +848,15 @@ class OnboardingHintService
             return false;
         }
 
-        $anyPathPlaced = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->whereIn('building_id', [31, 44, 52])
-            ->whereNotNull('tile_x')
-            ->exists();
-        if (! $anyPathPlaced) {
-            return true;
-        }
-
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level');
+        $requiredCcLevel = (int) DB::table('buildings')
+            ->whereIn('id', [31, 44, 52])
+            ->min('required_building_level');
 
-        return $ccLevel >= 2;
+        return $ccLevel >= max(1, $requiredCcLevel);
     }
 
     /**
