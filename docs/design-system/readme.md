@@ -1,6 +1,6 @@
 # Nouron Design System
 
-Source of truth for **Nouron**, a tick-based sci-fi browser strategy game (PHP 8.2/Laravel 12, Alpine.js + PicoCSS, SQLite). You manage a small colony in "Zone Ypsilon-7" — the ruins of a supernova-erased civilisation — under a distant, ambivalent overseer called Nexus. Progress advances one "Sol" (game day/tick) at a time.
+Source of truth for **Nouron**, a tick-based sci-fi browser strategy game (PHP 8.2/Laravel 12, Alpine.js + PicoCSS, MySQL). You manage a small colony in "Zone Ypsilon-7" — the ruins of a supernova-erased civilisation — under a distant, ambivalent overseer called Nexus. Progress advances one "Sol" (game day/tick) at a time.
 
 **Sources used to build this system** (repo not guaranteed accessible to every reader — explore it yourself for more depth):
 - GitHub: [`nouron/nouron`](https://github.com/nouron/nouron) (branch `master`) — Laravel app, Blade views, CSS, game docs.

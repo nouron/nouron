@@ -17,7 +17,7 @@ Projektmanager + Tech-Lead. Gesamtbild behalten, Arbeit priorisieren, Roadmap tr
 - **Phase 3c abgeschlossen**: Colony-Aktionen — Erkunden, Sondieren, Bauen (Gebäude platzieren)
 - **Phase 3d abgeschlossen**: Colony-Zonen-Erweiterung — Tile-Count-Unlock (4/2/3/3/3), 3-Ring-Karte, instanced Buildings
 - **Phase 3e nächste**: Onboarding / neue-Spieler-Erfahrung
-- Test-Suite: ~393 Tests, 0 Fehler (PHPUnit 11, SQLite in-memory, `bin/phpunit --testsuite=laravel-feature`)
+- Test-Suite: ~393 Tests, 0 Fehler (PHPUnit 11, MySQL `nouron_test`, `bin/phpunit --testsuite=laravel-feature`)
 - Codebase: Laravel 12, PHP 8.2, SQLite, Alpine.js 3 + PicoCSS (neue Screens), Bootstrap 5 + jQuery 3 (Legacy)
 - **Spielrichtung**: Singleplayer Roguelike Mini-4X (FTL/Catan-Stil) — kein MMO, keine Rassen, vereinfachtes Ressourcenmodell in Arbeit
 

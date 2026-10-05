@@ -30,7 +30,7 @@ Falls doch nachträglich für bestehenden, ungetesteten Code eingesetzt (Altbest
 
 ## Tech Stack
 - PHPUnit 11.5
-- Laravel 12 mit `RefreshDatabase`-Trait — jede Test-Klasse bekommt frische In-Memory-SQLite-DB
+- Laravel 12 mit `RefreshDatabase`-Trait — jede Test-Klasse bekommt frisch migrierte MySQL-Testdatenbank `nouron_test`
 - PHPUnit-Runner: `bin/phpunit --testsuite=laravel-feature`
 
 ## Test-Struktur

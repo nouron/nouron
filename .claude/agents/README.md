@@ -20,7 +20,7 @@ Subagenten-Definitionen für Nouron-Projekt.
 | `game-developer` | Game Logic, Services, Tick-System | GDD schreiben, Frontend bauen |
 | `backend-coder` | PHP/Laravel, Controller, API-Endpoints | GDD/ROADMAP bearbeiten, Frontend bauen |
 | `ui-specialist` | Alpine.js/PicoCSS (neu), Bootstrap/jQuery (Legacy), Blade | PHP-Logik schreiben, lang-Werte setzen |
-| `db-migration-agent` | Schema, Migrations, SQLite, Seeders | Game Logic, lang-Dateien ändern |
+| `db-migration-agent` | Schema, Migrations, MySQL, Seeders | Game Logic, lang-Dateien ändern |
 | `qa-tester` | Tests, Security, Regression, Cheat-Detection | Produktionscode ändern |
 | `project-manager` | Roadmap, ADRs, Feature-Breakdown, CHANGELOG | Code schreiben, lang-Dateien ändern |
 | `content-writer` | lang/de/*.php Texte, Lore, Tooltips, INNN | Code schreiben, Blade/JS ändern |

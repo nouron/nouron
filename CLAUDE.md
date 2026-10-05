@@ -4,16 +4,17 @@
 
 **Nouron** Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv.
 - GitHub: https://github.com/nouron/nouron
-- Techstack: PHP/Laravel, SQLite, Blade-Templates, Alpine.js + PicoCSS, SVG für Spielfelder
+- Techstack: PHP/Laravel, MySQL 8, Blade-Templates, Alpine.js + PicoCSS, SVG für Spielfelder
 - **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 - **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Kommandanten, INNN-Messaging — nicht wieder einführen, siehe `docs/gdd/archiv-flotten-systemkarte.md`.
 - **Projektstand, offene Tasks, Prioritäten:** ausschließlich `ROADMAP.md` (Historie: `CHANGELOG.md`).
 
 ## Wichtige Korrekturen
 
-- **Datenbank ist SQLite** (NICHT MySQL)
-  - `data/db/nouron.db` — Entwicklungsdatenbank
-  - `data/db/test.db` — Testdatenbank (befüllt via `data/sql/testdata.sql`)
+- **Datenbank ist MySQL 8** (NICHT SQLite — SQLite gibt es als Dialekt nicht mehr, ADR 0005)
+  - Lokal nativ in WSL (kein Docker), User `nouron`: `nouron` (Entwicklungsdatenbank), `nouron_test` (PHPUnit, plus paratest-Worker `nouron_test_test_N`), `nouron_playtest` (PlaytestBot). Einrichtung: `docs/dev-setup-mysql.md`
+  - Produktion: Laravel Cloud + Laravel MySQL (`docs/adr/0005-produktions-datenbank-und-hosting.md`, Deploy-Ablauf `docs/deployment-db.md`)
+  - Schema: eine Baseline-Migration `database/migrations/0001_01_01_000000_baseline.php`; Test-Fixtures (nur Spielerseite): `data/sql/testdata.sql`
 - `Routen.txt` und `code/nouron_(pre_zend)/` veraltet — nur GitHub-Repo relevant
 - Vollständige Referenztabellen (Ressourcen, Gebäude, Schiffe, DB-Schema) → `docs/game-reference.md`
 - Design System (Farben, Typo, Spacing, Komponenten — verbindlich) → `docs/design-system/` (`readme.md` als Einstieg)
@@ -39,7 +40,7 @@ resources/views/      -- Blade-Templates
 public/js|css/        -- techtree-view.js, advisors.js, techtree-view.css, resources.css, ...
 ```
 
-Schichtung: `Controller → Service → Eloquent Model → SQLite`
+Schichtung: `Controller → Service → Eloquent Model → MySQL`
 
 ## Technische Hinweise
 
@@ -84,7 +85,7 @@ Spiel-Grafiken: **WebP**, transparent, **2× Zielgröße**; kein SVG für Illust
 - `game-developer` — Game Logic, Services, Tick-Verarbeitung
 - `backend-coder` — Controller, Routes, API-Endpoints, Middleware
 - `ui-specialist` — Blade, Alpine.js + PicoCSS (kein jQuery/Bootstrap mehr)
-- `db-migration-agent` — Schema, Migrations, SQLite, testdata.sql
+- `db-migration-agent` — Schema, Migrations, MySQL, Seeder/Fixtures (`database/seeders/data/`, `data/sql/testdata.sql`)
 - `qa-tester` — Tests schreiben: VOR der Implementierung (TDD-Pflicht, siehe unten) + danach für Security-/Adversarial-/Regressionstests
 - `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
 - `project-manager` — ROADMAP, CHANGELOG, ADRs, Feature-Breakdown

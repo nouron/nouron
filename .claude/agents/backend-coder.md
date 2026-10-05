@@ -10,7 +10,7 @@ Backend-Entwickler. Sauberen, wartbaren PHP-Code, API-Endpoints, Infrastruktur-G
 
 ## Tech Stack
 - PHP 8.2, Laravel 12
-- SQLite: `data/db/nouron.db` (dev), in-memory (Tests via RefreshDatabase)
+- MySQL 8: `nouron` (dev), `nouron_test` (Tests via RefreshDatabase), siehe `docs/dev-setup-mysql.md`
 - Eloquent ORM, Laravel Migrations, Seeders
 - Composer, PSR-12 Code-Style
 
