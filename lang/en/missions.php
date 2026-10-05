@@ -5,57 +5,44 @@ return [
 
     'mission_courier_run_name' => 'Courier Run',
     'mission_courier_run_desc' => 'The drone carries data packets and mail to the nearest relay — small cargo, but out here someone pays well to stay connected.',
-    'mission_courier_run_reward' => '90 Credits',
 
     'mission_recon_flight_name' => 'Recon Flight',
     'mission_recon_flight_desc' => 'The drone sweeps across uncharted terrain, radioing back what lies beyond the horizon.',
-    'mission_recon_flight_reward' => '2 sectors charted',
 
     'mission_deep_survey_name' => 'Signal Survey',
     'mission_deep_survey_desc' => 'Something out there is transmitting — the drone circles the source until it knows what it really is.',
-    'mission_deep_survey_reward' => 'Deep scan of the signal',
 
     'mission_prospecting_flight_name' => 'Prospecting Flight',
     'mission_prospecting_flight_desc' => 'The drone probes the rubble fields for workable regolith and comes home with its sample containers full.',
-    'mission_prospecting_flight_reward' => '20–30 Regolith',
 
     'mission_data_sweep_name' => 'Data Sweep',
     'mission_data_sweep_desc' => 'On one long, wide loop the drone gathers field readings that save the analysts back home weeks of legwork.',
-    'mission_data_sweep_reward' => '+8 Research AP',
 
     'mission_long_range_expedition_name' => 'Long-Range Expedition',
     'mission_long_range_expedition_desc' => 'Five sols out, five back — nobody knows what the drone will find at the edge of its range, but it rarely comes home empty.',
-    'mission_long_range_expedition_reward' => 'Random find',
 
     'mission_supply_run_name' => 'Supply Run',
     'mission_supply_run_desc' => 'The freighter makes the rounds of scattered depots and outposts, hauling back whatever the colony needs most.',
-    'mission_supply_run_reward' => '25 Regolith + 10 Organics',
 
     'mission_trade_convoy_name' => 'Trade Convoy',
     'mission_trade_convoy_desc' => 'Loaded with everything the colony can spare, the freighter runs the trade route — and everyone likes to see it come back heavy.',
-    'mission_trade_convoy_reward' => '260 Credits + Trust',
 
     'mission_aid_transport_name' => 'Aid Transport',
     'mission_aid_transport_desc' => 'Somewhere a station is worse off than we are — the freighter carries organics out, and the colony remembers what it works for.',
-    'mission_aid_transport_reward' => '90 Credits + Trust',
 
     'mission_salvage_sweep_name' => 'Salvage Sweep',
     'mission_salvage_sweep_desc' => 'The wreck fields hold what the colony cannot make itself — the salvage crew cuts loose whatever is still good.',
-    'mission_salvage_sweep_reward' => '6–10 Compounds',
 
     'mission_ruin_expedition_name' => 'Ruin Expedition',
     'mission_ruin_expedition_desc' => 'Whoever left the ruin is long gone — but what lies between its walls is worth an expedition.',
-    'mission_ruin_expedition_reward' => '220 Credits',
 
     'mission_escort_convoy_name' => 'Convoy Escort',
     'mission_escort_convoy_desc' => 'The corvette shadows a convoy through rough country — most days nothing happens, and that is exactly the point.',
-    'mission_escort_convoy_reward' => '280 Credits',
 
     // TODO(content-writer): placeholder text, ROADMAP A18 — Perimeter Patrol
     // (GDD §8b), requires Defense Lv1. May need polishing.
     'mission_perimeter_patrol_name' => 'Perimeter Patrol',
     'mission_perimeter_patrol_desc' => 'The corvette runs quiet loops around the colony — nothing in sight, but preparedness pays off when the next incident hits.',
-    'mission_perimeter_patrol_reward' => '220 Credits + Trust',
 
     // ── Dispatch dialog ──────────────────────────────────────────────────────
 
@@ -91,4 +78,17 @@ return [
     'difficulty_hard' => 'Hard',
     'difficulty_chance_label' => 'Success chance: :chance%',
     'difficulty_reward_label' => 'Reward ×:multiplier',
+
+    // ── Mission rewards (derived from config/missions.php by App\Support\MissionReward) ──
+    'reward_credits' => ':amount Credits',
+    'reward_regolith' => ':amount Regolith',
+    'reward_compounds' => ':amount Compounds',
+    'reward_organics' => ':amount Organics',
+    'reward_research_ap' => '+:amount Research AP',
+    'reward_reveal_tiles' => ':amount sectors charted',
+    'reward_deep_scan' => 'Deep scan of the signal',
+    'reward_harvester_instance' => 'Salvaged Harvester (damaged)',
+    'reward_trust' => 'Trust',
+    'reward_loot_table' => 'Random find: :options',
+    'reward_label' => 'Yield',
 ];

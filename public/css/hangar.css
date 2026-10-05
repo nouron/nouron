@@ -935,11 +935,26 @@ details[open] .hangar-pending-summary::before {
     color: #1a1a2e;
 }
 
+.hangar-mission-yield {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    background: #eef7ee;
+    border-left: 3px solid #2e7d32;
+}
+
+.hangar-mission-yield-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #4a6b4c;
+}
+
 .hangar-mission-reward {
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.92rem;
+    font-weight: 700;
     color: #2e7d32;
-    white-space: nowrap;
 }
 
 .hangar-mission-desc {

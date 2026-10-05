@@ -9,6 +9,7 @@
 - Fix: Gleichzeitiges Onboarding mehrerer Spieler lief unter MySQL in Deadlocks; Retry (mit Log) und Löschen über vollständige Schlüssel behoben, dazu Index auf `colony_log`.
 - Chore: Baseline gehärtet — View `v_glx_colonies` mit `SQL SECURITY INVOKER`, Indizes auf `bar_offers`/`bar_encounters`/`locked_actionpoints`, Primärschlüssel für `building_costs`/`colony_buildings`; Run-Seed in `GameTick` per `RunSeed::reduce` (kein Overflow), Registrierungs-Log ohne SQL.
 - Chore: Dev-Panel (`tools/dev-panel.php`) nutzt die Laravel-DB (MySQL); SQLite-Altlasten entfernt (`composer.phar`, leere `nouron.db.sqlite`, `data/db/`). Parallele Tests: `migrate:fresh`-Tests laufen in der Worker-DB, zwei Tests ohne Schema-Refresh repariert (erste CI auf MySQL); `--processes=8` ca. 2,2 min statt 9,5 min seriell.
+- Fix: Hangar-First — der Hint „Raumfahrer anheuern“ erscheint erst, wenn ein Schiff angekommen ist (vorher direkt nach dem Hangar-Bau). Missionskarten zeigen den Ertrag jetzt als eigene Zeile, abgeleitet aus `config/missions.php` (die alten Lang-Texte waren nach der Credits-Anhebung veraltet).
 
 ## 2026-10-02
 

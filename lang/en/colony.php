@@ -96,7 +96,7 @@ return [
     'onboarding_hint_3' => 'Agrarian Dome and the second building are up — now upgrade the Command Center to Level 2. That expands the colony zone and unlocks the second advisor slot.',
     'onboarding_hint_advisor_slot2' => 'Advisor slot 2 is open and the building it requires is up — hire the matching advisor in the Advisor screen.',
     'onboarding_hint_advisor_slot2_analytik' => 'The Analytics Lab is finished — now you can hire an Analyst!',
-    'onboarding_hint_advisor_slot2_hangar' => 'The Hangar is finished — now you can hire a Pilot!',
+    'onboarding_hint_advisor_slot2_hangar' => 'Your ship is ready — now you can hire a Pilot!',
     'onboarding_hint_advisor_slot2_cantina' => 'The Cantina is finished — now you can hire a Trader!',
     'onboarding_hint_4' => 'No knowledge at Level 1 yet — assign Research AP to a field in the tech tree. Results build up Sol by Sol.',
     'onboarding_hint_5' => 'Colony mood is turning — stabilise Trust: build or repair a civil structure before it drops further.',

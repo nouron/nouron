@@ -106,7 +106,7 @@ return [
     'onboarding_hint_3' => 'Agrardom und zweites Gebäude stehen — jetzt die Kommandozentrale auf Level 2 ausbauen. Das erweitert die Koloniezone und schaltet den zweiten Beraterslot frei.',
     'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 ist offen und das dafür nötige Gebäude steht — im Berater-Screen den passenden Berater einstellen.',
     'onboarding_hint_advisor_slot2_analytik' => 'Das Analytik-Labor wurde fertiggestellt — jetzt kannst du einen Analytiker anheuern!',
-    'onboarding_hint_advisor_slot2_hangar' => 'Der Hangar wurde fertiggestellt — jetzt kannst du einen Raumfahrer anheuern!',
+    'onboarding_hint_advisor_slot2_hangar' => 'Dein Schiff ist einsatzbereit — jetzt kannst du einen Raumfahrer anheuern!',
     'onboarding_hint_advisor_slot2_cantina' => 'Die Cantina wurde fertiggestellt — jetzt kannst du einen Konsul anheuern!',
     'onboarding_hint_4' => 'Noch keine Kenntnis auf Level 1 — im Techtree AP einer Kenntnis zuweisen. Ergebnisse kommen Sol für Sol.',
     'onboarding_hint_5' => 'Die Stimmung in der Kolonie kippt — Vertrauen stabilisieren: Zivilgebäude bauen oder reparieren, bevor es weiter fällt.',

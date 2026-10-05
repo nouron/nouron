@@ -6,6 +6,7 @@ use App\Enums\BuildingId;
 use App\Exceptions\GameRuleException;
 use App\Models\Advisor;
 use App\Models\Colony;
+use App\Support\MissionReward;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -936,7 +937,7 @@ class HangarService
                 'key' => $key,
                 'name' => __("missions.{$key}_name"),
                 'desc' => __("missions.{$key}_desc"),
-                'reward_label' => __("missions.{$key}_reward"),
+                'reward_label' => MissionReward::label($mission['reward']),
                 'ships' => $mission['ships'],
                 'sol_distance' => $dist,
                 'duration' => 2 * $dist,
