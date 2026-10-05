@@ -8,6 +8,7 @@
 - Feat: PlaytestBot spielt in einer gemeinsamen DB `nouron_playtest` (ein User pro Lauf, Guard gegen Dev- und Test-DB). Der Spiel-RNG hängt nur noch an `runs.rng_seed`, Seeds sind reproduzierbar — **alle früheren Bot-Vergleiche mit gleichen Seeds sind ungültig**. Bot-Lauf 8–14 min, 8 parallele ca. 17–18 min.
 - Fix: Gleichzeitiges Onboarding mehrerer Spieler lief unter MySQL in Deadlocks; Retry (mit Log) und Löschen über vollständige Schlüssel behoben, dazu Index auf `colony_log`.
 - Chore: Baseline gehärtet — View `v_glx_colonies` mit `SQL SECURITY INVOKER`, Indizes auf `bar_offers`/`bar_encounters`/`locked_actionpoints`, Primärschlüssel für `building_costs`/`colony_buildings`; Run-Seed in `GameTick` per `RunSeed::reduce` (kein Overflow), Registrierungs-Log ohne SQL.
+- Chore: Dev-Panel (`tools/dev-panel.php`) nutzt die Laravel-DB (MySQL); SQLite-Altlasten entfernt (`composer.phar`, leere `nouron.db.sqlite`, `data/db/`). Parallele Tests: `migrate:fresh`-Tests laufen in der Worker-DB, zwei Tests ohne Schema-Refresh repariert (erste CI auf MySQL); `--processes=8` ca. 2,2 min statt 9,5 min seriell.
 
 ## 2026-10-02
 
