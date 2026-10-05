@@ -77,7 +77,7 @@ Nach Branch-Wechseln zwischen Schema-Ständen, oder wenn die Baseline geändert 
 ```bash
 bin/phpunit                                   # seriell, volle Suite
 bin/phpunit --testsuite=laravel-feature,laravel-unit   # schnelle Suite (während der Entwicklung)
-php artisan test --parallel --processes=4     # paratest
+php artisan test --parallel --processes=8 --testsuite=laravel-feature,laravel-unit   # paratest, schnellste Variante (ca. 2,2 min)
 ```
 
 Jeder paratest-Worker migriert seine eigene Datenbank `nouron_test_test_N` (Grant `` `nouron\_test%` `` siehe oben). Ohne `--processes` startet paratest einen Worker pro Kern; auf dem Entwicklungsrechner (24 Kerne) war das durch die gleichzeitigen Migrationen langsamer als 4 Prozesse.
@@ -89,9 +89,10 @@ Gemessene Laufzeiten (WSL2, 24 Kerne), zur Einordnung (SQLite brauchte für die 
 | schnelle Suite seriell, vor dem Performance-Tuning | ca. 9,5 min |
 | schnelle Suite seriell, mit Tuning (unter Last) | 10:58–11:36 min |
 | `--parallel` mit 24 Prozessen / `--processes=4` (vor dem Tuning) | 6:19 / 3:37 min |
+| `--parallel --processes=8 / 12 / 16` (mit Tuning, 2026-10-05) | 133 / 144 / 149 s |
 | Playtest-Suite | ca. 20 min |
 
-Langsam ist vor allem DDL: `migrate:fresh` der Baseline dauert ca. 25 s, weil MySQL jede DDL-Anweisung auf die Platte synchronisiert.
+Messung 2026-10-05 (mit Tuning, `--processes=8`): CPU-gebunden, nicht plattengebunden (iowait ca. 1 %, 64 % der Kerne idle). Mehr als 8 Worker bringen nichts; ein tmpfs-Datenverzeichnis ist deshalb nicht nötig. Die Beschleunigung kommt von der Parallelität (`--parallel`), nicht vom Speicher.
 
 ## Performance-Tuning (nur lokal)
 
