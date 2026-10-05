@@ -294,7 +294,7 @@ return [
     // Formula: CC flat (buildings.commandCenter.supply_cap, once CC level ≥ 1)
     //   + Σ(housing instance levels) × buildings.housingComplex.supply_cap
     //   + Σ(knowledge_cap_per_level), clamped to cap_max.
-    // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
+    // Per-entity supply_cost values live in config/buildings.php (ships have none).
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
         'cap_max' => 200,   // absolute hard cap across the whole colony
