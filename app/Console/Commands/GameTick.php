@@ -157,7 +157,7 @@ class GameTick extends Command
             $n = $this->processNexusImportDeliveries($tick);
             $this->line("  Nexus imports delivered:  {$n}");
 
-            [$completed, $aborted] = $this->processHangarMissions($tick, (int) ($run->rng_seed ?? 0));
+            [$completed, $aborted] = $this->processHangarMissions($tick, RunSeed::reduce((int) ($run->rng_seed ?? 0)));
             $this->line("  Hangar missions resolved: {$completed} completed, {$aborted} aborted");
 
             $n = $this->processBuildingDecay($tick);
@@ -172,7 +172,7 @@ class GameTick extends Command
             $n = $this->processFoodConsumption($tick);
             $this->line("  Colonies fed:             {$n}");
 
-            $n = $this->processEncounters($tick, (int) ($run->rng_seed ?? 0), (int) $run->phase);
+            $n = $this->processEncounters($tick, RunSeed::reduce((int) ($run->rng_seed ?? 0)), (int) $run->phase);
             $this->line("  Encounters processed:     {$n}");
 
             // Supply cap runs after the last step that can level a building down
