@@ -66,7 +66,7 @@ Die Dev-DB `nouron` ist nach der Installation leer und wird einmalig aufgebaut:
 php artisan db:reset --force
 ```
 
-**Achtung:** `db:reset` löscht alle Tabellen der Datenbank in `.env` und baut sie neu auf (Baseline-Migration, `ReferenceDataSeeder`, Testspieler-Fixtures). Das ist nur für eine frische oder bewusst zu verwerfende Dev-DB gedacht. Der Spielstand einer alten SQLite-Datei (`data/db/nouron.db`) wird nicht übernommen; die Datei bleibt unberührt liegen, bis du sie selbst löschst.
+**Achtung:** `db:reset` löscht alle Tabellen der Datenbank in `.env` und baut sie neu auf (Baseline-Migration, `ReferenceDataSeeder`, Testspieler-Fixtures). Das ist nur für eine frische oder bewusst zu verwerfende Dev-DB gedacht. Der alte SQLite-Spielstand wurde nicht übernommen (die SQLite-Dateien sind entfernt).
 
 Nach Branch-Wechseln zwischen Schema-Ständen, oder wenn die Baseline geändert wurde (vor dem Produktivgang wird sie noch direkt editiert), ist ebenfalls ein frischer Aufbau nötig: `php artisan db:reset --force`.
 

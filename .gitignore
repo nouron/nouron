@@ -33,9 +33,6 @@ local.properties
 .buildpath
 .env
 
-# SQLite databases — schema managed via migrations, data via seeders
-data/db/*.db
-
 # Image-gen staging output — curated manually into public/img/<type>/
 public/img/_*/
 
