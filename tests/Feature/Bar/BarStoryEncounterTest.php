@@ -16,10 +16,14 @@ namespace Tests\Feature\Bar;
  */
 
 use App\Services\BarService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class BarStoryEncounterTest extends TestCase
 {
+    // RunSeed::forColony() reads runs.rng_seed, so the schema must exist (CI starts with an empty DB).
+    use RefreshDatabase;
+
     private BarService $barService;
 
     protected function setUp(): void
