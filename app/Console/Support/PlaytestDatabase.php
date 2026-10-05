@@ -32,10 +32,10 @@ class PlaytestDatabase
         $default = (string) config('database.connections.'.config('database.default').'.database');
         $mysql = (string) config('database.connections.mysql.database');
 
-        if ($name === '' || in_array($name, self::FORBIDDEN, true) || $name === $default || $name === $mysql) {
+        if ($name === '' || self::isForbidden($name) || $name === $default || $name === $mysql) {
             throw new RuntimeException(
                 "Playtest database '{$name}' must be a dedicated database, different from the default "
-                ."('{$default}'), the mysql connection ('{$mysql}') and from ".implode('/', self::FORBIDDEN)
+                ."('{$default}'), the mysql connection ('{$mysql}') and from ".implode('/', self::FORBIDDEN).'/nouron_test*'
                 .' — refuse to use it.'
             );
         }
@@ -62,13 +62,19 @@ class PlaytestDatabase
         return $name;
     }
 
+    /** nouron, nouron_test and every paratest worker database (nouron_test_test_N). */
+    private static function isForbidden(string $name): bool
+    {
+        return in_array($name, self::FORBIDDEN, true) || str_starts_with($name, 'nouron_test');
+    }
+
     /** Fails unless this process' default connection already is the playtest database (after connect()). */
     public function assertConnected(): void
     {
         $name = (string) config('game.playtest.database');
         $actual = self::serverDatabase(null);
 
-        if ($name === '' || in_array($actual, self::FORBIDDEN, true) || $actual !== $name) {
+        if ($name === '' || self::isForbidden($actual) || $actual !== $name) {
             throw new RuntimeException("Shared playtest mode is connected to '{$actual}', not the playtest database '{$name}' — refuse to use it.");
         }
     }
