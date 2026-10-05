@@ -568,10 +568,20 @@ class OnboardingHintService
         // see AdvisorController::PATH_BUILDINGS). Without one built, hiring fails
         // with path_building_missing, so sending the player to /advisors is a dead
         // end — stay silent and let the path-build hints (ranks 13-15) fire instead.
-        return DB::table('colony_buildings')
+        // A Hangar only counts once a ship has arrived (see resolveAdvisorSlot2PathBuilding()).
+        return $this->resolveAdvisorSlot2PathBuilding($colonyId) !== null;
+    }
+
+    /**
+     * True once at least one ship of the colony is usable: docked in a hangar or out on
+     * a mission. Ships that are still being built or waiting for a free hangar slot
+     * ('building' / 'pending') are not there yet.
+     */
+    private function hasArrivedShip(int $colonyId): bool
+    {
+        return DB::table('colony_ships')
             ->where('colony_id', $colonyId)
-            ->whereIn('building_id', [31, 44, 52])
-            ->where('level', '>=', 1)
+            ->whereIn('ship_state', ['docked', 'dispatched'])
             ->exists();
     }
 
@@ -608,6 +618,13 @@ class OnboardingHintService
             ->whereIn('building_id', array_keys(self::ADVISOR_SLOT2_PATH_BUILDING_SUFFIXES))
             ->where('level', '>=', 1)
             ->get(['building_id', 'placed_at_tick']);
+
+        // Playtest 2026-10-05 (Hangar-first): the Hangar's advisor is the Raumfahrer, who is
+        // useless until a ship has arrived (the Drohne is still being delivered) — so a Hangar
+        // without a ship does not count as the building that unlocked the slot yet.
+        if (! $this->hasArrivedShip($colonyId)) {
+            $rows = $rows->reject(fn ($row) => (int) $row->building_id === 44);
+        }
 
         if ($rows->isEmpty()) {
             return null;

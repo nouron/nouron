@@ -8,6 +8,7 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -433,22 +434,103 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('/advisors', $hint['target_url']);
     }
 
-    public function test_advisor_slot2_hint_names_hangar_when_only_hangar_built(): void
+    public function test_advisor_slot2_hint_names_hangar_when_only_hangar_built_and_a_ship_is_docked(): void
     {
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->upgradeCc();
         $this->placeAgrardome();
-        DB::table('colony_buildings')->insertOrIgnore([
-            'colony_id' => $this->colonyId, 'building_id' => 44,
-            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 8, 'tile_y' => 5, 'placed_at_tick' => 1,
-        ]);
+        $this->placeHangarOnly();
+        $this->addShip('docked');
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertSame('hint_advisor_slot2', $hint['key']);
         $this->assertSame('colony.onboarding_hint_advisor_slot2_hangar', $hint['text_key']);
+    }
+
+    public function test_advisor_slot2_hint_names_hangar_when_the_only_ship_is_out_on_a_mission(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeAgrardome();
+        $this->placeHangarOnly();
+        $this->addShip('dispatched');
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_advisor_slot2', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_hangar', $hint['text_key']);
+    }
+
+    /**
+     * Playtest 2026-10-05 (Hangar-first): the hint "hire a Raumfahrer" fired right after the
+     * Hangar was built, but a pilot is useless until a ship has arrived — so it stays silent
+     * while there is no ship yet, or the ship is still being built / waiting for delivery.
+     */
+    #[DataProvider('shipStatesWithoutAnArrivedShip')]
+    public function test_advisor_slot2_hint_stays_silent_for_hangar_until_a_ship_has_arrived(?string $shipState): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeAgrardome();
+        $this->placeHangarOnly();
+        if ($shipState !== null) {
+            $this->addShip($shipState);
+        }
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_advisor_slot2', $hint['key'] ?? null);
+    }
+
+    /** @return array<string, array{0: ?string}> */
+    public static function shipStatesWithoutAnArrivedShip(): array
+    {
+        return [
+            'no ship ordered yet' => [null],
+            'ship still being delivered' => ['building'],
+            'ship waiting for a free hangar slot' => ['pending'],
+        ];
+    }
+
+    public function test_advisor_slot2_hint_credits_another_path_building_while_the_hangar_has_no_ship(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeAgrardome();
+        // Hangar is the earliest path building (tick 1) but has no ship; Cantina came later.
+        $this->placeHangarOnly();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 52,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 9, 'tile_y' => 5, 'placed_at_tick' => 2,
+        ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_advisor_slot2', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_cantina', $hint['text_key']);
+    }
+
+    private function placeHangarOnly(): void
+    {
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 44,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 8, 'tile_y' => 5, 'placed_at_tick' => 1,
+        ]);
+    }
+
+    private function addShip(string $shipState): void
+    {
+        DB::table('colony_ships')->insert([
+            'colony_id' => $this->colonyId, 'ship_id' => 85, 'level' => 1,
+            'status_points' => 10, 'ap_spend' => 0, 'ship_state' => $shipState,
+        ]);
     }
 
     public function test_advisor_slot2_hint_names_analytik_when_only_sciencelab_built(): void
