@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->prepare(
                 'INSERT INTO colony_resources (colony_id, resource_id, amount)
                  VALUES (?, ?, ?)
-                 ON CONFLICT(colony_id, resource_id) DO UPDATE SET amount = excluded.amount'
+                 ON DUPLICATE KEY UPDATE amount = VALUES(amount)'
             )->execute([$colonId, $resourceId, $value]);
             $message = "Updated colony #{$colonId} {$editableColonyResources[$resourceId]} → {$value}";
         } elseif ($type === 'building_level' && in_array((int) $field, [25, 28], true)) {
