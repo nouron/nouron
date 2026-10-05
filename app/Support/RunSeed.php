@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
  * (R5b, 2026-10-04): in a shared database (production, parallel playtest bots)
  * those ids depend on which player started first, so the same rng_seed would
  * play out differently. Where a roll needs to tell several rows of one colony
- * apart, use rowOrdinal() — the row's position within its own colony — instead
- * of the global id.
+ * apart, use an id-free, stable column of the row (creation Sol, slot) — or
+ * rowOrdinal() for tables whose rows are never deleted during a run.
  */
 final class RunSeed
 {
@@ -40,7 +40,13 @@ final class RunSeed
         return $rngSeed % self::MODULUS;
     }
 
-    /** 1-based position of $rowId among the colony's rows of $table (by id) — a per-colony stand-in for the global id. */
+    /**
+     * 1-based position of $rowId among the colony's rows of $table (by id) — a
+     * per-colony stand-in for the global id. Only stable for tables whose rows are
+     * never deleted during a run (colony_hangar_missions); where rows expire or get
+     * deleted, seed from an id-free column of the row instead (e.g. bar_offers.roll_key,
+     * bar_concerns.created_tick).
+     */
     public static function rowOrdinal(string $table, int $colonyId, int $rowId): int
     {
         return DB::table($table)->where('colony_id', $colonyId)->where('id', '<=', $rowId)->count();

@@ -369,6 +369,9 @@ return new class extends Migration
             $table->dateTime('updated_at')->nullable();
             $table->boolean('is_negotiated')->default(false);
             $table->integer('visit_id')->nullable();
+            // Id-free, stable roll key (creation Sol * 100 + slot), set when the offer is
+            // created — seeds the negotiation roll (R5b; see BarService::offerRollKey()).
+            $table->integer('roll_key')->nullable();
             $table->foreign('visit_id')->references('id')->on('merchant_visits')->cascadeOnDelete();
         });
 

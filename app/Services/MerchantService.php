@@ -168,6 +168,7 @@ class MerchantService
                 'get_amount' => $size * $pricePerUnit,
                 'expires_tick' => $expiresTick,
                 'is_accepted' => false,
+                'roll_key' => BarService::offerRollKey($currentTick, BarService::ROLL_SLOT_MERCHANT_LOT + $i),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -191,6 +192,7 @@ class MerchantService
                 'get_amount' => $getAmount,
                 'expires_tick' => $expiresTick,
                 'is_accepted' => false,
+                'roll_key' => BarService::offerRollKey($currentTick, BarService::ROLL_SLOT_MERCHANT_BUY),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

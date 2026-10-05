@@ -124,8 +124,25 @@ class BarService
                 'get_amount' => $getAmount,
                 'expires_tick' => $expiresTick,
                 'is_accepted' => false,
+                'roll_key' => self::offerRollKey($tick, $i),
             ]);
         }
+    }
+
+    /** Slots 0-49: Cantina guests; 50-98: Corvan's commodity lots; 99: Corvan's buy offer. */
+    public const ROLL_SLOT_MERCHANT_LOT = 50;
+
+    public const ROLL_SLOT_MERCHANT_BUY = 99;
+
+    /**
+     * Id-free, stable key of a bar offer: creation Sol * 100 + generation slot. Seeds
+     * the negotiation roll instead of the offer id (start order in a shared DB) or its
+     * position among the colony's offers (shifts when a failed negotiation deletes an
+     * earlier offer — the next one then rolled the identical, failed roll; R5b).
+     */
+    public static function offerRollKey(int $tick, int $slot): int
+    {
+        return $tick * 100 + $slot;
     }
 
     /**
@@ -334,7 +351,7 @@ class BarService
         }
 
         $chancePercent = $this->negotiateChance($colonyId)['total_percent'];
-        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + RunSeed::rowOrdinal('bar_offers', $colonyId, (int) $offer->id) * 7919 + $currentTick * 131, 0, 99);
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + (int) $offer->roll_key * 7919 + $currentTick * 131, 0, 99);
         $success = $roll < $chancePercent;
 
         return DB::transaction(function () use ($offer, $colonyId, $apCost, $success, $chancePercent): array {
@@ -677,7 +694,10 @@ class BarService
      */
     private function resolveWager(BarEncounter $encounter, int $colonyId, int $userId, int $currentTick): array
     {
-        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + RunSeed::rowOrdinal('bar_encounters', $colonyId, (int) $encounter->id) * 7351 + $currentTick * 211, 0, 999);
+        // Seeded by the encounter's expires_tick — id-free and stable (at most one
+        // encounter per colony per Sol), unlike its id or its position among the
+        // colony's encounters, which shifts when expired ones are deleted (R5b).
+        $roll = $this->pseudoRand(RunSeed::forColony($colonyId) + (int) $encounter->expires_tick * 7351 + $currentTick * 211, 0, 999);
         $won = $roll < (int) round($encounter->win_chance * 1000);
 
         if ($won) {
@@ -879,9 +899,10 @@ class BarService
             }
         }
 
-        // Per-run seed for this concern (R5b): rng_seed + the concern's position in
-        // the colony instead of its global id — see App\Support\RunSeed.
-        $concernSeed = RunSeed::forColony($colonyId) + RunSeed::rowOrdinal('bar_concerns', $colonyId, (int) $concern->id);
+        // Per-run seed for this concern (R5b): rng_seed + its creation Sol — id-free and
+        // stable (one concern per colony per Sol; expired concerns get deleted, so a
+        // position among the colony's rows would shift). See App\Support\RunSeed.
+        $concernSeed = RunSeed::forColony($colonyId) + (int) $concern->created_tick;
 
         // Stranger stakes Werkstoffe upfront — rolled once here (not re-rolled
         // in resolveConcernOutcome()) so the balance check and the actual
