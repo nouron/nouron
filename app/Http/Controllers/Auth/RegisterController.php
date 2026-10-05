@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\OnboardingService;
 use App\Support\DeadlockRetry;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -70,7 +71,14 @@ class RegisterController extends Controller
                     'username' => 'Derzeit sind leider keine freien Planeten verfügbar. Bitte versuche es später erneut.',
                 ])->onlyInput('username', 'email');
             }
-            Log::error('Registration failed: '.$e->getMessage());
+            // Never the message: a QueryException carries the SQL with its bindings
+            // (e-mail, password hash). Class and error codes only, like DeadlockRetry.
+            $info = $e instanceof QueryException ? $e->errorInfo : null;
+            Log::error('Registration failed', [
+                'exception' => $e::class,
+                'sqlstate' => $info !== null ? (string) ($info[0] ?? $e->getCode()) : null,
+                'driver_code' => isset($info[1]) ? (int) $info[1] : null,
+            ]);
 
             return back()->withErrors([
                 'username' => 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
