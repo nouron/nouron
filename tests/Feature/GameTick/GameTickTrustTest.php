@@ -67,7 +67,6 @@ class GameTickTrustTest extends TestCase
         // Zero all supply costs so no over-cap multiplier fires during decay
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
 
         // Zero colony_ships for colony 1 so ship trust contribution = 0.
         // Colony 1 has corvettes (trust_per_unit=-1) and other ships that would

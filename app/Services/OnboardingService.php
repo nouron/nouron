@@ -6,6 +6,8 @@ use App\Enums\BuildingId;
 use App\Events\RunStarted;
 use App\Models\Colony;
 use App\Models\Run;
+use App\Support\DeadlockRetry;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -16,9 +18,15 @@ use Illuminate\Support\Facades\DB;
  */
 class OnboardingService
 {
+    /**
+     * Concurrent registrations/new runs can deadlock on MySQL (SQLSTATE 40001/1213,
+     * found with 8 parallel playtest bots, R5b); Laravel re-runs a top-level
+     * transaction on a deadlock up to this many times in total.
+     */
+    public const DEADLOCK_ATTEMPTS = 3;
+
     public function __construct(
         private readonly ColonyService $colonyService,
-        private readonly TickService $tickService,
         private readonly EventService $eventService,
         private readonly ColonyTileService $tileService,
     ) {}
@@ -33,16 +41,15 @@ class OnboardingService
      */
     public function setupNewPlayer(int $userId, string $colonyName = ''): Colony
     {
-        return DB::transaction(function () use ($userId, $colonyName) {
+        return DeadlockRetry::transaction(function () use ($userId, $colonyName) {
             $name = $colonyName ?: 'Kolonie';
 
-            $globalTick = $this->tickService->getTickCount();
-            $colony = $this->colonyService->createColony($userId, $name, $globalTick);
+            $colony = $this->colonyService->createColony($userId, $name);
 
             $this->seedSol1State($userId, $colony->id);
 
             return $colony;
-        });
+        }, self::DEADLOCK_ATTEMPTS);
     }
 
     /**
@@ -59,26 +66,35 @@ class OnboardingService
      */
     public function resetColonyToSol1(int $userId, int $colonyId, ?int $rngSeed = null): void
     {
-        DB::transaction(function () use ($userId, $colonyId, $rngSeed) {
-            DB::table('colony_resources')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_buildings')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_ships')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_researches')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_personell')->where('colony_id', $colonyId)->delete();
-            DB::table('trade_resources')->where('colony_id', $colonyId)->delete();
-            DB::table('trust_events')->where('colony_id', $colonyId)->delete();
-            DB::table('merchant_visits')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_hangar_missions')->where('colony_id', $colonyId)->delete();
-            DB::table('locked_actionpoints')
-                ->where('scope_type', 'colony')
-                ->where('scope_id', $colonyId)
-                ->delete();
-            DB::table('colony_log')->where('user', $userId)->delete();
-            DB::table('user_preferences')->where('user_id', $userId)->delete();
+        DeadlockRetry::transaction(function () use ($userId, $colonyId, $rngSeed) {
+            // Delete by full primary/unique key only (R5b deadlocks): a range DELETE
+            // takes InnoDB next-key/gap locks — on colony_log (no index on `user`) and
+            // locked_actionpoints (PK starts with tick) even on every scanned row — and
+            // the gap at the end of an index is exactly where every concurrent
+            // onboarding inserts. The plain SELECT below takes no locks at all.
+            $colonyScoped = [
+                'colony_resources' => ['resource_id', 'colony_id'],
+                'colony_buildings' => ['colony_id', 'building_id', 'instance_id'],
+                'colony_tiles' => ['id'],
+                'colony_ships' => ['id'],
+                'colony_researches' => ['colony_id', 'research_id'],
+                'trust_events' => ['id'],
+                'merchant_visits' => ['id'],
+                'colony_hangar_missions' => ['id'],
+            ];
+            foreach ($colonyScoped as $table => $key) {
+                self::deleteByKey($table, $key, DB::table($table)->where('colony_id', $colonyId));
+            }
+            self::deleteByKey('locked_actionpoints', ['tick', 'scope_type', 'scope_id', 'personell_id'],
+                DB::table('locked_actionpoints')->where('scope_type', 'colony')->where('scope_id', $colonyId));
+            self::deleteByKey('colony_log', ['id'], DB::table('colony_log')->where('user', $userId));
+            self::deleteByKey('user_preferences', ['id'], DB::table('user_preferences')->where('user_id', $userId));
 
             // Advisors stay with the player across runs — detach, don't delete.
-            DB::table('advisors')->where('colony_id', $colonyId)->update(['colony_id' => null]);
+            $advisorIds = DB::table('advisors')->where('colony_id', $colonyId)->pluck('id');
+            if ($advisorIds->isNotEmpty()) {
+                DB::table('advisors')->whereIn('id', $advisorIds)->update(['colony_id' => null]);
+            }
 
             // Close any pre-existing active run before seeding a new one — the
             // singleplayer invariant is exactly one active run per user. The
@@ -94,13 +110,43 @@ class OnboardingService
             // LobbyController's highscore/history queries
             // (whereIn('status', ['completed', 'failed'])) with a NULL score and
             // no RunEnded event/INNN trail, since none of those are computed here.
-            DB::table('runs')
-                ->where('user_id', $userId)
-                ->where('status', 'active')
-                ->update(['status' => 'superseded', 'ended_at' => now()]);
+            // By primary key: a range UPDATE on runs.user_id would gap-lock the end of
+            // that index, where concurrent onboardings insert their runs.
+            $activeRunIds = DB::table('runs')->where('user_id', $userId)->where('status', 'active')->pluck('id');
+            if ($activeRunIds->isNotEmpty()) {
+                DB::table('runs')->whereIn('id', $activeRunIds)
+                    ->update(['status' => 'superseded', 'ended_at' => now()]);
+            }
 
             $this->seedSol1State($userId, $colonyId, $rngSeed);
-        });
+        }, self::DEADLOCK_ATTEMPTS);
+    }
+
+    /**
+     * Deletes the rows matched by $query one key at a time: a non-locking read of
+     * their keys, then equality deletes on the full unique key (record locks only).
+     *
+     * @param  list<string>  $key  primary/unique key columns of $table
+     */
+    private static function deleteByKey(string $table, array $key, Builder $query): void
+    {
+        $rows = $query->get($key);
+
+        if ($key === ['id']) {
+            if ($rows->isNotEmpty()) {
+                DB::table($table)->whereIn('id', $rows->pluck('id'))->delete();
+            }
+
+            return;
+        }
+
+        foreach ($rows as $row) {
+            $delete = DB::table($table);
+            foreach ($key as $column) {
+                $delete->where($column, $row->{$column});
+            }
+            $delete->delete();
+        }
     }
 
     /**

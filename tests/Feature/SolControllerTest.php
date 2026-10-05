@@ -31,7 +31,7 @@ namespace Tests\Feature;
  *   Tests that DO want the real tick pipeline (none, currently) can skip this.
  *
  * Note on TestSeeder:
- *   testdata.sqlite.sql inserts one active run for Bart (user_id=3, colony_id=1,
+ *   testdata.sql inserts one active run for Bart (user_id=3, colony_id=1,
  *   current_tick=1938, status='active').  Tests that control the run state
  *   delete this row in their setUp via deleteExistingRuns() before creating
  *   their own fixture.  Tests that only need "no active run" use a freshly

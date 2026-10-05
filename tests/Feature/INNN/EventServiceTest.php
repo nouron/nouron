@@ -16,9 +16,9 @@ use Tests\TestCase;
  * Test data (Simpsons fixture via TestSeeder):
  *   - event 16: user=3(Bart), tick=15405, event=techtree.level_up_finished
  *   - event 19: user=3(Bart), tick=15405, event=galaxy.trade
- *   - events 26-42: Bart test data covering all event types (inserted by testdata.sqlite.sql)
+ *   - events 26-42: Bart test data covering all event types (inserted by testdata.sql)
  *
- * Bart (user=3) has 19 events; Homer (user=0) has 0 events.
+ * Bart (user=3) has 19 events; Homer (user=6) has 0 events.
  */
 class EventServiceTest extends TestCase
 {
@@ -26,7 +26,7 @@ class EventServiceTest extends TestCase
 
     private EventService $service;
 
-    private int $userA = 0;   // Homer — has no events
+    private int $userA = 6;   // Homer — has no events
 
     private int $userB = 3;   // Bart  — has 2 events
 

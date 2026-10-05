@@ -1,6 +1,6 @@
 <?php
 // Techtree tab — POST handler (JSON), DB queries, and HTML content.
-// Requires: $db, $techtreeAllowed, $tab, $dbPath
+// Requires: $db, $techtreeAllowed, $tab
 
 // ── POST handler (JSON swap) ──────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -22,12 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->beginTransaction();
 
             $tableA = $techtreeAllowed[$input['type_a']];
-            $db->prepare("UPDATE {$tableA} SET phase=?, row=?, column=? WHERE id=?")
+            $db->prepare("UPDATE {$tableA} SET phase=?, `row`=?, `column`=? WHERE id=?")
                 ->execute([$input['new_phase'], $input['new_row'], $input['new_col'], $input['id_a']]);
 
             if (! empty($input['id_b'])) {
                 $tableB = $techtreeAllowed[$input['type_b']];
-                $db->prepare("UPDATE {$tableB} SET phase=?, row=?, column=? WHERE id=?")
+                $db->prepare("UPDATE {$tableB} SET phase=?, `row`=?, `column`=? WHERE id=?")
                     ->execute([$input['old_phase'], $input['old_row'], $input['old_col'], $input['id_b']]);
             }
 
@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $techtreeEntities = [];
 foreach ($techtreeAllowed as $typeKey => $tableName) {
     $rows = $db->query(
-        "SELECT id, name, phase, row, column FROM {$tableName}
-         WHERE is_active=1 AND phase>0 ORDER BY phase,row,column"
+        "SELECT id, name, phase, `row`, `column` FROM {$tableName}
+         WHERE is_active=1 AND phase>0 ORDER BY phase,`row`,`column`"
     )->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $r) {
         $r['entity_type'] = $typeKey;

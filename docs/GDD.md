@@ -56,7 +56,7 @@ Das Spiel ist in **Runs** strukturiert: Jeder Run hat ein konkretes Ziel, einen 
 
 Das Spiel läuft auf Basis eines Sol-Zyklus: alle Spielzustandsänderungen werden einmal pro Sol berechnet. Im Solo-Modus löst der Spieler Sole manuell aus; im Multiplayer-Modus feuert der Sol wenn alle Spieler bereit sind — oder nach Ablauf des Timeouts. (Intern: "Tick" — die technische Bezeichnung für den Berechnungszyklus.)
 
-**Technischer Stack:** PHP/Laravel Backend, SQLite, Blade-Templates. Frontend: Alpine.js + PicoCSS, SVG für Spielfelder (Hex-Grid), Vanilla fetch() für Server-Calls. jQuery/Bootstrap-Migration vollständig abgeschlossen.
+**Technischer Stack:** PHP/Laravel Backend, MySQL, Blade-Templates. Frontend: Alpine.js + PicoCSS, SVG für Spielfelder (Hex-Grid), Vanilla fetch() für Server-Calls. jQuery/Bootstrap-Migration vollständig abgeschlossen.
 
 ---
 

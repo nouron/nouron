@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Support\RunSeed;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -165,13 +166,15 @@ class CorporateContactService
     }
 
     /**
-     * Deterministic 0.0-1.0 fraction from (colonyId, tick), seeded by the given
+     * Deterministic 0.0-1.0 fraction from (run rng_seed, tick), seeded by the given
      * multiplier pair so appearance/offer/price rolls don't correlate with each other
      * or with MerchantService::shouldSpawn's own seed.
      */
     private function frac(int $colonyId, int $tick, int $mult1, int $mult2): float
     {
-        $seed = abs($colonyId * $mult1 + $tick * $mult2) % 0x7FFFFFFF;
+        // The run's rng_seed, not the colony id (R5b): ids depend on start order in a
+        // shared database — see App\Support\RunSeed. $mult1 stays as the domain salt.
+        $seed = abs(RunSeed::forColony($colonyId) + $mult1 + $tick * $mult2) % 0x7FFFFFFF;
 
         return $seed / 0x7FFFFFFF;
     }

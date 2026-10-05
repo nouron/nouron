@@ -15,7 +15,6 @@ use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
-use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use App\Services\TradeAdvantageService;
@@ -78,11 +77,6 @@ class AppServiceProvider extends ServiceProvider
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
             $app->make(ProjectBonusService::class),
-            $app->make(AdvisorService::class),
-        ));
-        $this->app->bind(ShipService::class, fn ($app) => new ShipService(
-            $app->make(TickService::class),
-            $app->make(ResourcesService::class),
             $app->make(AdvisorService::class),
         ));
         $this->app->bind(TechtreeColonyService::class, TechtreeColonyService::class);

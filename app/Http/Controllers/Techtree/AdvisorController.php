@@ -99,14 +99,17 @@ class AdvisorController extends BaseController
         $advisorsByPersonellId = $advisors->keyBy('personell_id');
 
         // Resolve path advisor keys for positions 2–4, in placement order.
-        // DISTINCT ensures instanced buildings (e.g., multiple hangar instances) contribute only once.
+        // Grouping ensures instanced buildings (e.g., multiple hangar instances) contribute only
+        // once, ordered by their first placement (DISTINCT + ORDER BY a non-selected column is
+        // rejected by MySQL).
         $pathBuildingIds = DB::table('colony_buildings')
-            ->distinct()
+            ->select('building_id')
             ->whereIn('building_id', array_keys(self::PATH_BUILDINGS))
             ->where('colony_id', $colonyId)
             ->whereNotNull('placed_at_tick')
             ->where('level', '>', 0)
-            ->orderBy('placed_at_tick')
+            ->groupBy('building_id')
+            ->orderByRaw('MIN(placed_at_tick)')
             ->orderBy('building_id')
             ->pluck('building_id')
             ->toArray();

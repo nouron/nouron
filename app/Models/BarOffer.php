@@ -23,6 +23,7 @@ class BarOffer extends Model
         'get_amount',
         'expires_tick',
         'is_accepted',
+        'roll_key',
     ];
 
     protected $casts = [

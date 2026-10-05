@@ -125,7 +125,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **Frachter** | 0 | ? | ? | Ja (Hangar Lv1) | 0 |
 | **Korvette** | 0 | ? | ? | Ja (Hangar Lv3) | 3 |
 
-> **Supply-Kosten**: alle Schiffe 0 — Schiffe verbrauchen kein Supply (Design-Entscheidung 2026-06-08, `config/ships.php` → `supply_cost`)
+> **Supply-Kosten**: alle Schiffe 0 — Schiffe verbrauchen kein Supply (Design-Entscheidung 2026-06-08, der Schlüssel `supply_cost` existiert für Schiffe nicht mehr)
 
 > **Hangar-Level = Schiffsklasse**: Lv1 = Drohne, Lv2 = Frachter, Lv3 = Korvette
 > Instanzen sind separate Achse (supply-limitiert, unbegrenzt Slots theoretisch)
@@ -550,12 +550,12 @@ Score = (Tasks_Done × 1000)
 
 ---
 
-## 19. Datenbank-Schema Übersicht (SQLite)
+## 19. Datenbank-Schema Übersicht (MySQL)
 
 ### Zentrale Tabellen
 ```
 Spieler:       user, user_resources
-Kolonie:       colonies, colony_buildings, colony_resources, colony_researches, colony_ships, colony_personell
+Kolonie:       colonies, colony_buildings, colony_resources, colony_researches, colony_ships, advisors
 Flotten:       fleets, fleet_ships, fleet_personell, fleet_orders
 Stammdaten:    buildings, researches, ships, personell, resources
 Nachrichten:   innn_messages, innn_events, innn_news
@@ -591,7 +591,7 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 - **Design System** (`docs/design-system/readme.md`) — Farben, Typo, Komponenten
 - **Frontend Conventions** (`docs/frontend-conventions.md`) — AJAX, Screens, Breakpoints
 - **Character Sheets** (`docs/characters/`) — NPC-Biographien (EN)
-- **Testdata** (`data/sql/testdata.sqlite.sql`) — DB-Fixtures für Tests
+- **Testdata** (`data/sql/testdata.sql`) — DB-Fixtures für Tests
 
 ---
 

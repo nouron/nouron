@@ -30,7 +30,7 @@ class BuildingService extends AbstractTechnologyService
         return 'colony_buildings';
     }
 
-    protected function costsTable(): string
+    protected function costsTable(): ?string
     {
         return 'building_costs';
     }

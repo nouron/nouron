@@ -16,7 +16,7 @@ use Tests\TestCase;
  * Each test sets up a specific DB state, runs the tick for a unique high tick number,
  * and asserts the result.
  *
- * Test data (from TestSeeder / testdata.sqlite.sql):
+ * Test data (from TestSeeder / testdata.sql):
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *     CC (building 25):      level=10, status_points=16
  *     oremine (building 27): level=5,  status_points=11
@@ -114,7 +114,6 @@ class GameTickTest extends TestCase
         // Zero all supply costs so free-supply is always >= 0 (no over-capacity side effects).
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
 
         DB::table('colony_buildings')
             ->where('colony_id', 1)->where('building_id', 27)
@@ -196,7 +195,6 @@ class GameTickTest extends TestCase
         // Zero all supply costs so free-supply is always >= 0 (no over-capacity side effects).
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
 
         DB::table('colony_researches')
             ->where('colony_id', 1)->where('research_id', 9901)

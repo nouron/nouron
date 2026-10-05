@@ -16,7 +16,7 @@ trait ValidatesId
      * @throws InvalidArgumentException
      */
     /**
-     * Throw if $id is not a non-negative integer (allows 0 for legacy user IDs like Homer).
+     * Throw if $id is not a non-negative integer (0 is accepted for backwards compatibility).
      *
      * @throws InvalidArgumentException
      */

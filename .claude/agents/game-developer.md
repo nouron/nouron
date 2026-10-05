@@ -23,7 +23,7 @@ Serverseitige Spielmechaniken für Nouron implementieren: tick-basiertes, single
 
 ## Tech Stack
 - PHP 8.2, Laravel 12
-- SQLite (dev + Tests), Eloquent ORM
+- MySQL 8 (dev + Tests), Eloquent ORM
 - **Neue Screens** (Phase 3b+): Alpine.js 3 + PicoCSS + SVG
 - **Legacy-Screens**: jQuery 3 + Bootstrap 5 (wird abgeschafft — kein neuer Code)
 

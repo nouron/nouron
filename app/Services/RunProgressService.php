@@ -7,6 +7,8 @@ use App\Events\RunEnded;
 use App\Models\Advisor;
 use App\Models\Run;
 use App\Models\RunObjective;
+use App\Support\RunSeed;
+use App\Support\SeededRandom;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -484,13 +486,18 @@ class RunProgressService
      */
     private function lockRandomAdvisor(Run $run, int $sols): void
     {
-        $advisor = Advisor::where('colony_id', $run->colony_id)
+        $advisors = Advisor::where('colony_id', $run->colony_id)
             ->where(function ($q) use ($run): void {
                 $q->whereNull('unavailable_until_tick')
                     ->orWhere('unavailable_until_tick', '<', $run->current_tick);
             })
-            ->inRandomOrder()
-            ->first();
+            ->orderBy('id')
+            ->get();
+
+        // Seeded pick (run rng_seed + Sol), not inRandomOrder(): reproducible per
+        // seed and independent of other players' rows (R5b, App\Support\RunSeed).
+        $advisor = $advisors->isEmpty() ? null
+            : $advisors[SeededRandom::int(RunSeed::reduce((int) $run->rng_seed) + 7907 + (int) $run->current_tick * 337, 0, $advisors->count() - 1)];
 
         if ($advisor !== null) {
             $advisor->unavailable_until_tick = $run->current_tick + $sols;

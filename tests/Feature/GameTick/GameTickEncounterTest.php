@@ -824,7 +824,7 @@ class GameTickEncounterTest extends TestCase
         // `$this->artisan('game:tick', ['--tick' => N])` assertable form — the command accepts the
         // target tick directly as a CLI option, no `runs.current_tick` DB manipulation needed or used
         // anywhere else in this test file. `rngSeed` in rollPlague()'s seed formula comes from
-        // `(int) ($run->rng_seed ?? 0)` (GameTick.php line ~151) — testdata.sqlite.sql sets no explicit
+        // `(int) ($run->rng_seed ?? 0)` (GameTick.php line ~151) — testdata.sql sets no explicit
         // `rng_seed` for run 1, so it defaults to 0, matching this test's `rollForPlague()` helper.
         $this->artisan('game:tick', ['--tick' => $tick])->assertExitCode(0);
         $colonyAfterControl = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();

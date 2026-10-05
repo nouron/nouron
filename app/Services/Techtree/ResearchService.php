@@ -36,9 +36,9 @@ class ResearchService extends AbstractTechnologyService
         return 'colony_researches';
     }
 
-    protected function costsTable(): string
+    protected function costsTable(): ?string
     {
-        return 'research_costs';
+        return null;
     }
 
     protected function entityIdKey(): string

@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * navigable galaxy/system map (removed 2026-06). The view exposes the columns of
  * glx_colonies directly.
  *
- * READ-ONLY: v_glx_colonies is a SQLite view. All writes must target the
+ * READ-ONLY: v_glx_colonies is a database view. All writes must target the
  * underlying glx_colonies table via DB::table('glx_colonies') or ColonyRecord.
  *
  * The view/table is created via raw `DB::statement()` migrations, which
@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string|null $name
  * @property int|null $user_id
- * @property int $since_tick
  * @property bool $is_primary
  * @property int $hunger_streak
  * @property-read User $user
@@ -34,7 +33,7 @@ class Colony extends Model
 {
     protected $table = 'v_glx_colonies';
 
-    // Prevent accidental writes through this model (v_glx_colonies is a SQLite view).
+    // Prevent accidental writes through this model (v_glx_colonies is a database view).
     protected $guarded = ['*'];
 
     protected $primaryKey = 'id';
@@ -45,7 +44,6 @@ class Colony extends Model
     {
         return [
             'is_primary' => 'boolean',
-            'since_tick' => 'integer',
         ];
     }
 

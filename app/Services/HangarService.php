@@ -748,7 +748,7 @@ class HangarService
             if (! config('game.bypass.resource_costs') && $organikaCost > 0) {
                 DB::table('colony_resources')
                     ->where('colony_id', $colonyId)->where('resource_id', 5)
-                    ->update(['amount' => DB::raw("MAX(0, amount - {$organikaCost})")]);
+                    ->update(['amount' => DB::raw("CASE WHEN amount > {$organikaCost} THEN amount - {$organikaCost} ELSE 0 END")]);
             }
 
             DB::table('colony_hangar_missions')->insert([

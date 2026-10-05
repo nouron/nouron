@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -144,10 +145,10 @@ class MerchantService
         $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
         $available = max(0, $stock - $reserve);
 
-        $lotCount = $this->pseudoRand($colonyId * 331 + $currentTick * 71, $lotCountMin, $lotCountMax);
+        $lotCount = $this->pseudoRand(RunSeed::forColony($colonyId) + 331 + $currentTick * 71, $lotCountMin, $lotCountMax);
 
         for ($i = 0; $i < $lotCount; $i++) {
-            $size = $this->pseudoRand($colonyId * 4441 + $currentTick * 211 + $i * 17, $lotSizeMin, $lotSizeMax);
+            $size = $this->pseudoRand(RunSeed::forColony($colonyId) + 4441 + $currentTick * 211 + $i * 17, $lotSizeMin, $lotSizeMax);
 
             if ($size > $available) {
                 // Reserve floor reached — stop generating further lots this visit
@@ -167,6 +168,7 @@ class MerchantService
                 'get_amount' => $size * $pricePerUnit,
                 'expires_tick' => $expiresTick,
                 'is_accepted' => false,
+                'roll_key' => BarService::offerRollKey($currentTick, BarService::ROLL_SLOT_MERCHANT_LOT + $i),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -175,7 +177,7 @@ class MerchantService
         $traderRank = $this->barService->traderRank($colonyId);
         $userId = DB::table('v_glx_colonies')->where('id', $colonyId)->value('user_id');
         $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
-        $buySeed = $colonyId * 8887 + $currentTick * 349;
+        $buySeed = RunSeed::forColony($colonyId) + 8887 + $currentTick * 349;
         $buyOffer = $this->barService->buildCorvanBuyOffer($buySeed, $traderRank, $credits);
 
         if ($buyOffer !== null) {
@@ -190,12 +192,15 @@ class MerchantService
                 'get_amount' => $getAmount,
                 'expires_tick' => $expiresTick,
                 'is_accepted' => false,
+                'roll_key' => BarService::offerRollKey($currentTick, BarService::ROLL_SLOT_MERCHANT_BUY),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
     }
 
+    // Seeds of all rolls here = RunSeed::forColony() (the run's rng_seed) + domain
+    // salt + tick; never a colony/run/row id (R5b) — see App\Support\RunSeed.
     private function pseudoRand(int $seed, int $min, int $max): int
     {
         return SeededRandom::int($seed, $min, $max);
@@ -343,7 +348,7 @@ class MerchantService
      */
     private function deterministicTarget(int $colonyId, int $anchor, int $min, int $max): int
     {
-        return SeededRandom::int($colonyId * 1009 + ($anchor + 1) * 7919, $min, $max);
+        return SeededRandom::int(RunSeed::forColony($colonyId) + 1009 + ($anchor + 1) * 7919, $min, $max);
     }
 
     public function buyItem(int $itemId, int $colonyId, int $userId): array
@@ -481,7 +486,7 @@ class MerchantService
         $picked = [];
 
         for ($i = 0; $i < $count; $i++) {
-            $idx = SeededRandom::int($colonyId * 997 + $tick * 31 + $i * 127, 0, count($available) - 1);
+            $idx = SeededRandom::int(RunSeed::forColony($colonyId) + 997 + $tick * 31 + $i * 127, 0, count($available) - 1);
             $picked[] = array_splice($available, $idx, 1)[0];
         }
 

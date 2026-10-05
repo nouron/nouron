@@ -64,7 +64,6 @@ class OvercapDepartureTest extends TestCase
 
         DB::table('buildings')->update(['supply_cost' => 0, 'decay_rate' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
 
         $this->tick(12800); // settle: stores the fixture cap
         $this->cap = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply');

@@ -12,19 +12,18 @@ use Illuminate\Support\Facades\DB;
 /**
  * AbstractTechnologyService — base class for all techtree services.
  *
- * Implements the shared game mechanics for buildings, researches, ships and
- * personell: prerequisite checks, AP investment, levelup/leveldown and cost
+ * Implements the shared game mechanics for buildings and researches:
+ * prerequisite checks, AP investment, levelup/leveldown and cost
  * payment. Each concrete subclass supplies its table names and entity-id key.
  *
  * Rules:
- * - A levelup requires: required building, required research (ships only),
- *   sufficient resources, enough AP invested (ap_spend >= ap_for_levelup),
+ * - A levelup requires: required building, sufficient resources, enough AP invested (ap_spend >= ap_for_levelup),
  *   and the entity is below its max_level (buildings only).
  * - Investing AP ('add' mode) only increments ap_spend up to ap_for_levelup;
  *   it does NOT lock AP from the available pool — that happens via lockActionPoints
  *   when status_points actually changes (repair/remove modes).
- * - Resources checks are deliberately always true to avoid SQLite locking issues
- *   during development; the payCosts() call in levelup/leveldown is still made.
+ * - The resource check is bypassed in dev mode (GAME_DEV_MODE, see
+ *   checkRequiredResourcesByEntityId()); the payCosts() call in levelup/leveldown is still made.
  */
 abstract class AbstractTechnologyService
 {
@@ -34,7 +33,10 @@ abstract class AbstractTechnologyService
 
     abstract protected function colonyTable(): string;
 
-    abstract protected function costsTable(): string;
+    /**
+     * Cost table for this entity type, or null when it has none (researches pay AP only).
+     */
+    abstract protected function costsTable(): ?string;
 
     abstract protected function entityIdKey(): string;
 
@@ -109,7 +111,12 @@ abstract class AbstractTechnologyService
      */
     public function getEntityCosts(?int $entityId = null): Collection
     {
-        $query = DB::table($this->costsTable());
+        $table = $this->costsTable();
+        if ($table === null) {
+            return collect();
+        }
+
+        $query = DB::table($table);
         if ($entityId !== null) {
             $query->where($this->entityIdKey(), $entityId);
         }
@@ -144,7 +151,8 @@ abstract class AbstractTechnologyService
 
     /**
      * Check whether the colony has the required research at the required level.
-     * Default implementation always returns true; only ShipService overrides this.
+     * Always returns true: no entity type has a research prerequisite any more, so the
+     * 'requires_research' arms in the blocker matches below can never fire.
      */
     public function checkRequiredResearchesByEntityId(int $colonyId, int $entityId): bool
     {
@@ -172,15 +180,10 @@ abstract class AbstractTechnologyService
     /**
      * Check whether enough AP has been invested for a levelup.
      *
-     * Personell entities never require AP investment before hiring.
-     * For all other entities the colony row's ap_spend must reach ap_for_levelup.
+     * The colony row's ap_spend must reach ap_for_levelup.
      */
     public function checkRequiredActionPoints(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
-        if ($this->entityIdKey() === 'personell_id') {
-            return true;
-        }
-
         $entity = DB::table($this->masterTable())->find($entityId);
         if (! $entity) {
             return false;
@@ -370,9 +373,7 @@ abstract class AbstractTechnologyService
                 if ($statusGained > 0) {
                     $maxStatusPoints = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
                     if ($maxStatusPoints > 0) {
-                        $costs = DB::table($this->costsTable())
-                            ->where($this->entityIdKey(), $entityId)
-                            ->get();
+                        $costs = $this->getEntityCosts($entityId);
                         foreach ($costs as $cost) {
                             $repairCost = (int) floor($cost->amount / $maxStatusPoints) * $statusGained;
                             if ($repairCost > 0) {
@@ -459,7 +460,7 @@ abstract class AbstractTechnologyService
     /**
      * Level up an entity: verify all prerequisites, pay costs, increment level.
      *
-     * Resets ap_spend to 0 after levelup (except for personell).
+     * Resets ap_spend to 0 after levelup.
      */
     public function levelup(int $colonyId, int $entityId, ?int $instanceId = null): bool
     {
@@ -483,10 +484,7 @@ abstract class AbstractTechnologyService
                 'status_points' => $maxStatus,
             ];
 
-            // Reset ap_spend after levelup — not applicable for personell
-            if ($this->entityIdKey() !== 'personell_id') {
-                $updateData['ap_spend'] = 0;
-            }
+            $updateData['ap_spend'] = 0;
 
             DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
@@ -506,8 +504,7 @@ abstract class AbstractTechnologyService
     /**
      * Name the reason a leveldown() call would be refused, or null when it may proceed.
      *
-     * The default keeps the historic research/ship behaviour (levelup prerequisites
-     * re-checked). BuildingService overrides it: demolishing a building level only
+     * The default re-checks the levelup prerequisites. BuildingService overrides it: demolishing a building level only
      * needs a level to remove.
      *
      * @return string|null one of: requires_building, requires_research,
@@ -562,9 +559,7 @@ abstract class AbstractTechnologyService
                 'status_points' => $maxStatus,
             ];
 
-            if ($this->entityIdKey() !== 'personell_id') {
-                $updateData['ap_spend'] = 0;
-            }
+            $updateData['ap_spend'] = 0;
 
             $updateData += $this->leveldownExtraUpdate($newLevel);
 

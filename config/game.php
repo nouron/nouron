@@ -294,7 +294,7 @@ return [
     // Formula: CC flat (buildings.commandCenter.supply_cap, once CC level ≥ 1)
     //   + Σ(housing instance levels) × buildings.housingComplex.supply_cap
     //   + Σ(knowledge_cap_per_level), clamped to cap_max.
-    // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
+    // Per-entity supply_cost values live in config/buildings.php (ships have none).
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
         'cap_max' => 200,   // absolute hard cap across the whole colony
@@ -1075,5 +1075,40 @@ return [
             // Extra Ship Status Point wear (SP cost) on hard-fail outcome for 'hard' difficulty.
             'hard_fail_extra_wear' => 1.0,
         ],
+    ],
+
+    // game:playtest (R5b): all bot runs of one invocation share this MySQL database,
+    // each run with its own user + colony. The command resets it with migrate:fresh,
+    // so it must never be the dev (nouron) or test (nouron_test) database —
+    // App\Console\Support\PlaytestDatabase refuses those.
+    'playtest' => [
+        'database' => env('PLAYTEST_DATABASE', 'nouron_playtest'),
+        // Seconds per bot child process (game:playtest); a child exceeding it is
+        // reported as "timed out" for its profile/seed, the others carry on.
+        // 120 → 240 (2026-08-17): the 4th advisor slot fix
+        // (BotStrategy::nextHireCandidate()) and tougher Phase-2
+        // objectives both mean more AP spent and more actions
+        // attempted per Sol — a single seed solo (concurrency=1,
+        // no contention) exceeded 120s after those changes.
+        // 240 → 400 (2026-09-13, A37): researchCandidate() no
+        // longer stalls on a CC-gated knowledge (previously
+        // dead-ending the rule for the rest of the run), so it
+        // now succeeds far more often — a solo run again
+        // exceeded the old timeout with no contention involved.
+        // 400 → 600 (2026-09-28): solo/4-parallel runs measured
+        // 244-380s on this dev machine (WSL2, host CPU capped to
+        // 85% power limit) — plenty of margin most of the time,
+        // but close enough to 400s that ordinary run-to-run
+        // variance occasionally tipped a whole batch into a
+        // ProcessTimedOutException. Not a resource bottleneck
+        // (measured CPU load ~32% during a 4-parallel batch) —
+        // just insufficient safety margin on the old value.
+        // 600 → 1620 (2026-10-04, R5b MySQL, tuned server): a run is ~4x slower
+        // than on SQLite. Measured: 8 parallel runs (concurrency=8) finished
+        // 974–1073s after the command start (incl. migrate:fresh); a solo run took
+        // ~900s (running next to one other bot). 1620s = 27 min ≈ 1.5x the slowest
+        // parallel run — long enough for variance, short enough to flag a stuck run.
+        // Slower machines raise it via PLAYTEST_PROCESS_TIMEOUT, no commit needed.
+        'process_timeout' => (int) env('PLAYTEST_PROCESS_TIMEOUT', 1620),
     ],
 ];

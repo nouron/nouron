@@ -55,7 +55,6 @@ class OnboardingE2ETest extends TestCase
             'password' => bcrypt('pw'),
             'email' => 'e2e@test.local',
             'activation_key' => 'e2ekey001',
-            'faction_id' => 7,
         ]);
     }
 

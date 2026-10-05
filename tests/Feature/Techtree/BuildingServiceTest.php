@@ -168,7 +168,7 @@ class BuildingServiceTest extends TestCase
 
         $this->assertSame(
             0,
-            DB::table('locked_actionpoints')->where('colony_id', $this->colonyId)->count(),
+            DB::table('locked_actionpoints')->where('scope_type', 'colony')->where('scope_id', $this->colonyId)->count(),
             'A bypassed invest must not lock AP either — otherwise dev mode still runs the pool dry.'
         );
     }
@@ -203,7 +203,6 @@ class BuildingServiceTest extends TestCase
 
         // Clear all supply costs, then set infirmary=3
         DB::table('buildings')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
         DB::table('buildings')->where('id', $this->entityId)->update(['supply_cost' => 3]);
 

@@ -1,6 +1,6 @@
 # Nouron — A Free Space Opera Browsergame
 
-Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite, Alpine.js and PicoCSS. The application is in active development with a completed core architecture (Phase 3, 2026).
+Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, MySQL 8, Alpine.js and PicoCSS. The application is in active development with a completed core architecture (Phase 3, 2026).
 
 ## Quickstart
 
@@ -22,7 +22,7 @@ php artisan migrate:fresh --seed
 # Start local dev server
 php artisan serve
 
-# Run tests (Feature suite — uses in-memory SQLite, no setup needed)
+# Run tests (Feature suite — needs the local MySQL test database, see docs/dev-setup-mysql.md)
 php artisan test --testsuite=Feature
 ```
 
@@ -45,7 +45,7 @@ php artisan migrate:fresh --seed
 
 ### Database
 
-The database file (`data/db/nouron.db`) is not committed to the repository. The schema is managed entirely via Laravel migrations and the initial data via seeders. The test suite uses an in-memory SQLite database and requires no separate setup.
+Nouron runs on MySQL 8 everywhere (local, CI, production). Local setup without Docker: see `docs/dev-setup-mysql.md`. The schema is a single baseline migration, the reference data comes from the idempotent `ReferenceDataSeeder`. The test suite uses the separate database `nouron_test`.
 
 ### Useful Artisan commands
 

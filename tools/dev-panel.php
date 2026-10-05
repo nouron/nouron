@@ -1,6 +1,6 @@
 <?php
 // Nouron Dev Panel — entry point.
-// Usage: php -S localhost:8081 tools/dev-panel.php
+// Usage: php -S localhost:8081 tools/dev-panel.php  (uses the DB from .env; override with DB_DATABASE=… for another MySQL DB)
 // Then open: http://localhost:8081
 
 if (php_sapi_name() === 'cli-server') {
@@ -10,8 +10,6 @@ if (php_sapi_name() === 'cli-server') {
         return false;
     }
 }
-
-$dbPath = __DIR__.'/../data/db/nouron.db';
 
 $hotspotsPath = __DIR__.'/../data/cantina_hotspots.json';
 $defaultHotspots = [
@@ -58,7 +56,7 @@ $tab = $_GET['tab'] ?? 'resources';
 $message = '';
 
 // ── DB connection ─────────────────────────────────────────────────────────────
-$db = new PDO('sqlite:'.$dbPath);
+$db = require __DIR__.'/_db.php';
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 // ── POST routing ──────────────────────────────────────────────────────────────

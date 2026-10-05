@@ -17,7 +17,7 @@ use Tests\TestCase;
  * event type the comm log renders.
  *
  * Fixture: user_id=3 (Bart), colony 1 (Springfield), run 1 already active
- * (data/sql/testdata.sqlite.sql) — no extra Run setup needed.
+ * (data/sql/testdata.sql) — no extra Run setup needed.
  */
 class CommLogControllerTest extends TestCase
 {

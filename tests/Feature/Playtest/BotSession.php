@@ -2,12 +2,13 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Console\Support\PlaytestDatabase;
 use App\Models\Run;
 use App\Models\User;
 use App\Services\AdvisorService;
 use App\Services\OnboardingService;
 use App\Services\TickService;
-use Database\Seeders\TestSeeder;
+use Database\Seeders\ReferenceDataSeeder;
 use Tests\TestCase;
 
 /**
@@ -38,10 +39,13 @@ class BotSession
 
     public static function boot(TestCase $test, int $seed): self
     {
-        $userId = 3;
-        $colonyId = 1;
-
-        app(TestSeeder::class)->run();
+        if (getenv('PLAYTEST_SHARED_DB')) {
+            // Shared DB (game:playtest): reference data was seeded once by the parent;
+            // never write committed bot data anywhere but the playtest database.
+            app(PlaytestDatabase::class)->assertConnected();
+        } else {
+            app(ReferenceDataSeeder::class)->run();
+        }
 
         // Bypass flags must be off BEFORE the run is created — OnboardingService
         // snapshots config('game.bypass') into run.settings at creation time.
@@ -50,6 +54,22 @@ class BotSession
             'game.bypass.resource_costs' => false,
             'game.bypass.supply_checks' => false,
         ]);
+
+        // R5b: every bot is its own player (own user + colony), like real players
+        // sharing one production DB — parallel bots in the shared playtest DB must
+        // never reset each other's colony (the old fixed user 3 / colony 1 did).
+        $suffix = bin2hex(random_bytes(6));
+        $user = User::create([
+            'username' => "bot_{$seed}_{$suffix}",
+            'display_name' => "Bot {$seed}",
+            'role' => 'player',
+            'password' => 'bot',
+            'email' => "bot_{$seed}_{$suffix}@example.invalid",
+            'activated' => 1,
+            'activation_key' => '',
+        ]);
+        $userId = (int) $user->user_id;
+        $colonyId = (int) app(OnboardingService::class)->setupNewPlayer($userId)->id;
 
         // A38: pass the seed directly into map generation (ColonyTileService)
         // instead of overwriting runs.rng_seed after the fact — the starting

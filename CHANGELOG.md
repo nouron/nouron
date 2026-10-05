@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-05
+
+- Chore: R5b — MySQL-Portierung (ADR 0005): ein Dialekt in Entwicklung, CI und Produktion; Suite und CI laufen gegen MySQL, lokale Einrichtung nativ ohne Docker (`docs/dev-setup-mysql.md`). Fast-Suite seriell ca. 10 min (SQLite ca. 1,5), mit `--parallel --processes=4` ca. 3,5 min.
+- Chore: Eine Baseline-Migration ersetzt 132 Altmigrationen (Äquivalenz per Schemavergleich geprüft); Referenzdaten kommen aus dem idempotenten `ReferenceDataSeeder`, `testdata.sql` enthält nur noch Spielerfixtures. Deploy-Ablauf in `docs/deployment-db.md`.
+- Chore: Legacy-Tabellen und -Spalten entfernt (`trade_resources`, `personell_costs`, `colony_personell`, `research_costs`, `ship_costs`, ungenutzte `user`-/`resources`-/`ships`-Spalten); Rest als T27 in der ROADMAP.
+- Feat: PlaytestBot spielt in einer gemeinsamen DB `nouron_playtest` (ein User pro Lauf, Guard gegen Dev- und Test-DB). Der Spiel-RNG hängt nur noch an `runs.rng_seed`, Seeds sind reproduzierbar — **alle früheren Bot-Vergleiche mit gleichen Seeds sind ungültig**. Bot-Lauf 8–14 min, 8 parallele ca. 17–18 min.
+- Fix: Gleichzeitiges Onboarding mehrerer Spieler lief unter MySQL in Deadlocks; Retry (mit Log) und Löschen über vollständige Schlüssel behoben, dazu Index auf `colony_log`.
+- Chore: Baseline gehärtet — View `v_glx_colonies` mit `SQL SECURITY INVOKER`, Indizes auf `bar_offers`/`bar_encounters`/`locked_actionpoints`, Primärschlüssel für `building_costs`/`colony_buildings`; Run-Seed in `GameTick` per `RunSeed::reduce` (kein Overflow), Registrierungs-Log ohne SQL.
+- Chore: Dev-Panel (`tools/dev-panel.php`) nutzt die Laravel-DB (MySQL); SQLite-Altlasten entfernt (`composer.phar`, leere `nouron.db.sqlite`, `data/db/`). Parallele Tests: `migrate:fresh`-Tests laufen in der Worker-DB, zwei Tests ohne Schema-Refresh repariert (erste CI auf MySQL); `--processes=8` ca. 2,2 min statt 9,5 min seriell.
+
 ## 2026-10-02
 
 - Docs: ADR 0005 — Produktions-DB und Hosting (Laravel Cloud, Laravel MySQL, EU-Frankfurt, `app.nouron.de`); ROADMAP R4–R7 angepasst, neuer Punkt R5b (MySQL-Portierung).

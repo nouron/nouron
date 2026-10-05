@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  * Preview only:   php artisan game:sync-config --dry-run
  *
  * Synced fields:
- *   ships     → moving_speed, decay_rate, supply_cost, max_status_points
+ *   ships     → max_status_points
  *   buildings → decay_rate, supply_cost, max_status_points, max_level, max_instances
  *   knowledge → decay_rate, max_status_points
  *
@@ -73,9 +73,6 @@ class SyncConfig extends Command
             $updates = [];
 
             foreach ([
-                'moving_speed' => (int) ($cfg['moving_speed'] ?? $row->moving_speed),
-                'decay_rate' => (float) ($cfg['decay_rate'] ?? $row->decay_rate),
-                'supply_cost' => (int) ($cfg['supply_cost'] ?? $row->supply_cost),
                 'max_status_points' => (int) ($cfg['max_status_points'] ?? $row->max_status_points),
             ] as $col => $newVal) {
                 if ((string) $row->$col !== (string) $newVal) {

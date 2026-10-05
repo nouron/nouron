@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 /**
  * Tests for login, logout and registration.
- * Uses the test.db (configured via .env.testing).
+ * Uses the MySQL test database nouron_test (forced by phpunit.xml).
  *
  * Covers:
  * - Login with username

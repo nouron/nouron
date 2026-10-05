@@ -16,6 +16,7 @@ jobs:
   lint:
     name: Pint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -29,6 +30,9 @@ jobs:
   tests:
     name: PHPUnit (${{ matrix.suite }})
     runs-on: ubuntu-latest
+    # A hanging run must not burn runner minutes: playtest suite ~20 min on tuned local
+    # MySQL, the CI service is untuned, so generous margin.
+    timeout-minutes: ${{ matrix.suite == 'playtest' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:
@@ -36,12 +40,31 @@ jobs:
         # phpunit.xml keeps out of the default run because its full-run tests
         # are slow.
         suite: ['laravel-feature,laravel-unit', 'playtest']
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: nouron
+          MYSQL_DATABASE: nouron_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pnouron"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    # phpunit.xml forces DB_CONNECTION=mysql and DB_DATABASE=nouron_test and only
+    # defaults host/port/credentials, so these job-level variables win over both
+    # phpunit.xml and .env. root is needed so parallel workers can create their
+    # own databases (nouron_test_test_N).
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: nouron
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: pdo_sqlite, sqlite3
+          extensions: pdo_mysql
           coverage: none
       - name: Composer install
         uses: ramsey/composer-install@v3
@@ -50,4 +73,12 @@ jobs:
           cp .env.example .env
           php artisan key:generate
       - name: Run tests
-        run: bin/phpunit --testsuite '${{ matrix.suite }}'
+        run: |
+          # Public-repo runners have 4 vCPUs: the default suites run in parallel
+          # (paratest, one database per worker). The playtest suite spawns its own
+          # bot processes and stays serial.
+          if [ '${{ matrix.suite }}' = 'playtest' ]; then
+            bin/phpunit --testsuite '${{ matrix.suite }}'
+          else
+            php artisan test --parallel --testsuite '${{ matrix.suite }}'
+          fi

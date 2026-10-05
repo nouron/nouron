@@ -53,7 +53,6 @@ class GameTickSupplyCapTest extends TestCase
         // Remove all supply-consuming buildings to get a clean baseline
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('ships')->update(['supply_cost' => 0]);
     }
 
     // ── Happy path ─────────────────────────────────────────────────────────────

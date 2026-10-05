@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\MerchantService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -12,6 +13,9 @@ use Tests\TestCase;
  */
 class MerchantRngDistributionTest extends TestCase
 {
+    // RunSeed::forColony() reads runs.rng_seed, so the schema must exist (CI starts with an empty DB).
+    use RefreshDatabase;
+
     private ?MerchantService $merchant = null;
 
     /** @var array<string, \ReflectionMethod> */

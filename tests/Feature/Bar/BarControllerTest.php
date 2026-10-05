@@ -98,6 +98,9 @@ class BarControllerTest extends TestCase
             'get_amount' => 5,
             'expires_tick' => $expiresTick,
             'is_accepted' => false,
+            // Real offers carry an id-free roll key (BarService::offerRollKey()); vary it
+            // with the expiry so repeated negotiations in a loop roll independently.
+            'roll_key' => $expiresTick,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
