@@ -3,6 +3,7 @@
 namespace Tests\Feature\Console;
 
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Tests\Concerns\UsesParallelTestDatabase;
 use Tests\TestCase;
 
 /**
@@ -20,6 +21,14 @@ use Tests\TestCase;
  */
 class DbResetTest extends TestCase
 {
+    use UsesParallelTestDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->useParallelTestDatabase();
+    }
+
     protected function tearDown(): void
     {
         RefreshDatabaseState::$migrated = false;

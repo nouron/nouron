@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use PDOException;
+use Tests\Concerns\UsesParallelTestDatabase;
 use Tests\TestCase;
 
 /**
@@ -26,11 +27,14 @@ use Tests\TestCase;
  */
 class OnboardingDeadlockRetryTest extends TestCase
 {
+    use UsesParallelTestDatabase;
+
     private int $calls = 0;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->useParallelTestDatabase();
         $this->artisan('migrate:fresh');
         app(ReferenceDataSeeder::class)->run();
     }
