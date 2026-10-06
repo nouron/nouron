@@ -1,0 +1,112 @@
+<?php
+
+namespace Tests\Feature\Console;
+
+use Illuminate\Support\Facades\File;
+use Tests\TestCase;
+
+/**
+ * T30 step 0: game:playtest-compare reads report JSONs (newest per profile,
+ * opening, seed), runs OpeningComparison and prints KPIs + threshold checks.
+ * Reports live in a temp directory (--dir), never in storage/logs/playtest.
+ */
+class PlaytestCompareTest extends TestCase
+{
+    private string $dir;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->dir = sys_get_temp_dir().'/playtest-compare-'.uniqid();
+        mkdir($this->dir);
+    }
+
+    protected function tearDown(): void
+    {
+        File::deleteDirectory($this->dir);
+        parent::tearDown();
+    }
+
+    private function writeReport(string $profile, string $opening, int $seed, string $stamp, int $p2, string $status = 'failed'): void
+    {
+        $sols = [];
+        for ($s = 1; $s <= 15; $s++) {
+            $sols[] = [
+                'sol' => $s, 'regolith' => 50, 'ap' => ['total' => 2, 'inflow' => 16, 'unspent' => 2], 'ap_unspent' => 2,
+                'regolith_sources' => ['harvester' => 16, 'mission' => 0, 'trade' => 0, 'event' => 0],
+                'buildings' => [], 'researches' => [],
+            ];
+        }
+        $report = [
+            'seed' => $seed, 'profile' => $profile, 'opening' => $opening,
+            'outcome' => ['status' => $status, 'fail_reason' => null, 'sols' => 100, 'score' => 0],
+            'phase2_start_sol' => $p2, 'objectives' => [], 'log' => [], 'sols' => $sols,
+        ];
+        file_put_contents("{$this->dir}/{$profile}-{$opening}-{$seed}-{$stamp}.json", json_encode($report));
+    }
+
+    private function writeBatch(): void
+    {
+        foreach (['labor' => 16, 'hangar' => 17, 'cantina' => 18] as $opening => $p2) {
+            foreach ([1, 2] as $seed) {
+                $this->writeReport('default', $opening, $seed, '20261006_120000', $p2);
+            }
+        }
+    }
+
+    public function test_prints_kpis_and_threshold_check_from_newest_reports(): void
+    {
+        $this->writeBatch();
+        // Older labor report for seed 1 (would make K3 spread fail) must be ignored.
+        $this->writeReport('default', 'labor', 1, '20261001_090000', 40);
+        // Other profile must be ignored.
+        $this->writeReport('thrifty', 'hangar', 1, '20261006_130000', 40);
+        // Seed 3 only in labor -> skipped.
+        $this->writeReport('default', 'labor', 3, '20261006_120000', 16);
+
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir])
+            ->expectsOutputToContain('Paired seeds: 1, 2')
+            ->expectsOutputToContain('Skipped seeds: 3 (hangar: missing, cantina: missing)')
+            ->expectsOutputToContain('labor median 16; hangar median 17; cantina median 18')
+            ->assertExitCode(0);
+    }
+
+    public function test_threshold_violation_is_reported_as_verfehlt(): void
+    {
+        $this->writeReport('default', 'labor', 1, '20261006_120000', 16);
+        $this->writeReport('default', 'hangar', 1, '20261006_120000', 25);
+
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar'])
+            ->expectsOutputToContain('verfehlt')
+            ->assertExitCode(0);
+    }
+
+    public function test_seeds_and_since_filter_reports(): void
+    {
+        $this->writeBatch();
+        $this->writeReport('default', 'labor', 5, '20260901_120000', 16);
+        $this->writeReport('default', 'hangar', 5, '20260901_120000', 16);
+        $this->writeReport('default', 'cantina', 5, '20260901_120000', 16);
+
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--seeds' => '2,5'])
+            ->expectsOutputToContain('Paired seeds: 2, 5')
+            ->assertExitCode(0);
+
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--since' => '2026-10-01'])
+            ->expectsOutputToContain('Paired seeds: 1, 2')
+            ->assertExitCode(0);
+    }
+
+    public function test_invalid_openings_abort(): void
+    {
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,forge'])
+            ->expectsOutputToContain('Unknown opening(s): forge')
+            ->assertExitCode(1);
+    }
+
+    public function test_invalid_since_aborts(): void
+    {
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--since' => 'not-a-date'])
+            ->assertExitCode(1);
+    }
+}
