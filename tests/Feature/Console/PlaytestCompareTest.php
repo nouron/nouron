@@ -145,4 +145,26 @@ class PlaytestCompareTest extends TestCase
         $this->assertStringContainsString('Skipped seeds: 2 (labor: unfinished, hangar: unfinished)', $out);
         $this->assertMatchesRegularExpression('/K7\s*\|\s*nicht gemessen/', $out);
     }
+
+    public function test_warns_when_compared_runs_were_truncated_before_sol_20(): void
+    {
+        foreach (['labor', 'hangar'] as $opening) {
+            $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 12);
+        }
+
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar'])
+            ->expectsOutputToContain('truncated before Sol 20')
+            ->assertExitCode(0);
+    }
+
+    public function test_no_truncation_warning_at_sol_20_or_later(): void
+    {
+        foreach (['labor', 'hangar'] as $opening) {
+            $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 20);
+        }
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar']);
+
+        $this->assertStringNotContainsString('truncated before', Artisan::output());
+    }
 }

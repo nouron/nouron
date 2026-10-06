@@ -50,7 +50,7 @@ class Playtest extends Command
     protected $signature = 'game:playtest
         {--profiles=default : Comma-separated BotProfile names}
         {--openings=auto : Comma-separated openings (auto, labor, hangar, cantina)}
-        {--until-sol= : Stop each run at the start of Sol N (5-100) for short Phase-1 measurement runs; default: play the whole run}
+        {--until-sol= : Stop each run at the start of Sol N (5-100, use >= 20 so K3/K5/K6 are meaningful) for short Phase-1 measurement runs; default: play the whole run}
         {--seeds=4242 : Comma-separated integer seeds}
         {--concurrency=10 : How many profile×opening×seed combos to run at once}';
 

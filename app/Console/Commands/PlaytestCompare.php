@@ -80,6 +80,10 @@ class PlaytestCompare extends Command
         $result = OpeningComparison::fromReports($reports, $openings)->compare();
 
         $this->info("Profile: {$profile} — openings: ".implode(', ', $openings).' — reference: '.$result['reference']);
+        $tooShort = count(array_filter($reports, fn ($r) => isset($r['truncated_at_sol']) && $r['truncated_at_sol'] < OpeningComparison::MIN_MEANINGFUL_TRUNCATION));
+        if ($tooShort > 0) {
+            $this->warn("Warning: {$tooShort} run(s) truncated before Sol ".OpeningComparison::MIN_MEANINGFUL_TRUNCATION.' — K3/K5/K6 are not meaningful for them.');
+        }
         $this->line('Paired seeds: '.($result['paired_seeds'] ? implode(', ', $result['paired_seeds']) : '(none)'));
         if ($result['skipped_seeds'] !== []) {
             $this->line('Skipped seeds: '.implode('; ', array_map(
@@ -105,7 +109,7 @@ class PlaytestCompare extends Command
         }
         foreach ($result['k7'] as $opening => $s) {
             if ($s['runs'] === 0 && $s['truncated'] > 0) {
-                $rows[] = ['K7', $opening, 'nicht gemessen', "0/{$s['truncated']} truncated", '-', '-', '-'];
+                $rows[] = ['K7', $opening, 'nicht gemessen', "nicht gemessen ({$s['truncated']} truncated)", '-', '-', '-'];
 
                 continue;
             }

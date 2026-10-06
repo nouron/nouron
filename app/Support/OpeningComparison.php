@@ -66,12 +66,20 @@ namespace App\Support;
  * and reported as 'nicht gemessen', never as 0 or 'verfehlt'); a seed is
  * paired only if every compared opening has a finished run for it, otherwise
  * it is listed in skipped_seeds and ignored entirely (never counted as 0).
+ * K7 is evaluated only over the full runs of an opening, so an opening with
+ * mixed truncated and full runs has an asymmetric (smaller) K7 sample than the
+ * other KPIs. If the reference or any compared opening has no full run at all,
+ * K7 is 'nicht gemessen'. Truncation below Sol 20 (MIN_MEANINGFUL_TRUNCATION)
+ * makes K3/K5/K6 unreliable (a run cut before its Phase-2 start has K3 = null).
  * Per KPI and opening: median/min/max over non-null values (n, missing) and,
  * vs. the reference `labor`, the per-seed deltas (both values non-null).
  */
 class OpeningComparison
 {
     public const REFERENCE = 'labor';
+
+    /** Below this --until-sol the Phase-1 KPIs (K3 Phase-2 start, K5 window to Sol 15, K6 Sol 10) are not meaningful. */
+    public const MIN_MEANINGFUL_TRUNCATION = 20;
 
     public const FINISHED_STATUSES = ['completed', 'failed'];
 
@@ -327,7 +335,7 @@ class OpeningComparison
     }
 
     /**
-     * One status per criterion: 'ok', 'verfehlt', or 'n/a' (not evaluable, 'nicht gemessen' (K7 only: all runs truncated),
+     * One status per criterion: 'ok', 'verfehlt', 'nicht gemessen' (K7 without full runs) or 'n/a' (not evaluable,
      * e.g. no paired seeds or no reference opening). Rules (spec 2.1):
      *  - K1 / K2 / K5: per opening, median <= 1 / <= 3 / <= 2 Sols; for K1/K2
      *    a run that never reached the event (missing > 0) fails — "never" is
@@ -396,8 +404,9 @@ class OpeningComparison
         }
 
         $k7check = $na('no reference opening');
-        if (array_sum(array_column($k7, 'runs')) === 0) {
-            $k7check = ['status' => 'nicht gemessen', 'detail' => 'all runs truncated (--until-sol); K7 needs full runs'];
+        $withoutFullRuns = array_keys(array_filter($k7, fn ($s) => $s['runs'] === 0));
+        if ($withoutFullRuns !== []) {
+            $k7check = ['status' => 'nicht gemessen', 'detail' => 'no full run (only truncated by --until-sol) for: '.implode(', ', $withoutFullRuns).'; K7 needs full runs'];
         } elseif ($hasReference) {
             $ref = $k7[self::REFERENCE];
             $ok = true;

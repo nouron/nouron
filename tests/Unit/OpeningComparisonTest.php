@@ -461,4 +461,66 @@ class OpeningComparisonTest extends TestCase
 
         $this->assertNull(OpeningComparison::metrics($r)['k6']);
     }
+
+    // --- Fix round 1: mixed truncated + full runs ---
+
+    private function k7Check(array $byOpening): array
+    {
+        $reports = [];
+        foreach ($byOpening as $opening => $truncated) {
+            $o = $truncated ? ['status' => 'active', 'sols' => 20] : ['status' => 'completed', 'sols' => 40];
+            $r = $this->report($opening, 1, $o + ['p2' => 16]);
+            if ($truncated) {
+                $r['truncated_at_sol'] = 20;
+            }
+            $reports[] = $r;
+        }
+
+        return OpeningComparison::fromReports($reports, array_keys($byOpening))->compare()['checks']['K7'];
+    }
+
+    public function test_k7_is_not_measured_when_all_runs_are_truncated(): void
+    {
+        $check = $this->k7Check(['labor' => true, 'hangar' => true]);
+
+        $this->assertSame('nicht gemessen', $check['status']);
+    }
+
+    public function test_k7_is_not_measured_when_one_opening_has_only_truncated_runs(): void
+    {
+        $check = $this->k7Check(['labor' => false, 'hangar' => true]);
+
+        $this->assertSame('nicht gemessen', $check['status']);
+        $this->assertStringContainsString('hangar', $check['detail']);
+        $this->assertStringNotContainsString('labor', $check['detail']);
+    }
+
+    public function test_k7_is_not_measured_when_the_reference_has_only_truncated_runs(): void
+    {
+        $check = $this->k7Check(['labor' => true, 'hangar' => false]);
+
+        $this->assertSame('nicht gemessen', $check['status']);
+        $this->assertStringContainsString('labor', $check['detail']);
+    }
+
+    public function test_k7_uses_only_the_full_runs_when_one_opening_mixes_truncated_and_full(): void
+    {
+        $reports = [];
+        foreach (['labor', 'hangar'] as $opening) {
+            $reports[] = $this->report($opening, 1, ['status' => 'completed', 'sols' => 40, 'p2' => 16]);
+            $t = $this->report($opening, 2, ['status' => 'active', 'sols' => 20, 'p2' => 16]);
+            if ($opening === 'hangar') {
+                $t['truncated_at_sol'] = 20;
+            } else {
+                $t = $this->report($opening, 2, ['status' => 'completed', 'sols' => 40, 'p2' => 16]);
+            }
+            $reports[] = $t;
+        }
+
+        $result = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare();
+
+        $this->assertNotSame('nicht gemessen', $result['checks']['K7']['status']);
+        $this->assertSame(1, $result['k7']['hangar']['runs']);
+        $this->assertSame(1, $result['k7']['hangar']['truncated']);
+    }
 }
