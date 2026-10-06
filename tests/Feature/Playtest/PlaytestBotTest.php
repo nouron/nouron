@@ -47,7 +47,7 @@ class PlaytestBotTest extends TestCase
         $profile = self::resolveProfile();
         $bot = BotSession::boot($this, $seed);
         $rules = BotStrategy::default($profile);
-        $report = new RunReport($seed, $profile->name);
+        $report = new RunReport($seed, $profile->name, $profile->opening);
 
         $this->playSolsUntil($bot, $rules, afterAction: fn (BotSession $b) => $report->snapshot($b));
 

@@ -8,10 +8,12 @@ use Illuminate\Console\Command;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
+use Tests\Feature\Playtest\BotProfile;
 
 /**
  * Playtest — orchestrates the PlaytestBot (tests/Feature/Playtest/) across
- * multiple seeds and/or playstyle profiles, and prints a comparison table.
+ * multiple seeds, playstyle profiles and openings (labor/hangar/cantina/auto),
+ * and prints a comparison table.
  *
  * Run:   php artisan game:playtest --profiles=default,thrifty --seeds=4242,1337,9001
  * Single combo (equivalent to running the PHPUnit test directly):
@@ -45,8 +47,9 @@ class Playtest extends Command
 
     protected $signature = 'game:playtest
         {--profiles=default : Comma-separated BotProfile names}
+        {--openings=auto : Comma-separated openings (auto, labor, hangar, cantina)}
         {--seeds=4242 : Comma-separated integer seeds}
-        {--concurrency=10 : How many profile×seed combos to run at once}';
+        {--concurrency=10 : How many profile×opening×seed combos to run at once}';
 
     private const OUTPUT_TAIL_CHARS = 4000;
 
@@ -55,6 +58,14 @@ class Playtest extends Command
     public function handle(): int
     {
         if ($this->refusesInProduction()) {
+            return self::FAILURE;
+        }
+
+        $openings = array_filter(array_map('trim', explode(',', (string) $this->option('openings'))));
+        $unknown = array_diff($openings, BotProfile::OPENINGS);
+        if ($openings === [] || $unknown !== []) {
+            $this->error('Unknown opening(s): '.implode(', ', $unknown ?: ['(none)']).'. Allowed: '.implode(', ', BotProfile::OPENINGS));
+
             return self::FAILURE;
         }
 
@@ -76,22 +87,24 @@ class Playtest extends Command
 
         $combos = [];
         foreach ($profiles as $profile) {
-            foreach ($seeds as $seed) {
-                $combos[] = [$profile, $seed];
+            foreach ($openings as $opening) {
+                foreach ($seeds as $seed) {
+                    $combos[] = [$profile, $opening, $seed];
+                }
             }
         }
 
         $rows = [];
 
         foreach (array_chunk($combos, $concurrency) as $batch) {
-            $labels = collect($batch)->map(fn ($c) => "{$c[0]}={$c[1]}")->implode(', ');
+            $labels = collect($batch)->map(fn ($c) => "{$c[0]}/{$c[1]}={$c[2]}")->implode(', ');
             $this->line('Running batch: '.$labels);
 
             // Started one by one (not via Process::pool) so a child that exceeds the
             // timeout can be caught per run below — a pool's wait() aborts on the first
             // ProcessTimedOutException and loses every other result (R5b, 2026-10-04).
             $running = [];
-            foreach ($batch as [$profile, $seed]) {
+            foreach ($batch as [$profile, $opening, $seed]) {
                 // Every child plays in the shared playtest DB the parent just reset.
                 // phpunit.xml forces DB_DATABASE=nouron_test, so DB_DATABASE would
                 // not reach the child (and is deliberately not passed: the guard
@@ -100,8 +113,9 @@ class Playtest extends Command
                 // to PLAYTEST_DATABASE at runtime (PlaytestDatabase::connect(),
                 // same guard as here) and skip the rollback, so the run's data
                 // is committed like a real player's.
-                $running["{$profile}-{$seed}"] = Process::env([
+                $running["{$profile}-{$opening}-{$seed}"] = Process::env([
                     'PLAYTEST_PROFILE' => $profile,
+                    'PLAYTEST_OPENING' => $opening,
                     'PLAYTEST_SEED' => $seed,
                     'APP_ENV' => 'testing',
                     'PLAYTEST_SHARED_DB' => '1',
@@ -128,18 +142,18 @@ class Playtest extends Command
                     ]);
             }
 
-            foreach ($batch as [$profile, $seed]) {
+            foreach ($batch as [$profile, $opening, $seed]) {
                 try {
-                    $result = $running["{$profile}-{$seed}"]->wait();
+                    $result = $running["{$profile}-{$opening}-{$seed}"]->wait();
                 } catch (ProcessTimedOutException) {
-                    $this->error("profile={$profile} seed={$seed} timed out after ".config('game.playtest.process_timeout').'s');
-                    $rows[] = [$profile, $seed, 'timed out', '-', '-', '-', '-'];
+                    $this->error("profile={$profile} opening={$opening} seed={$seed} timed out after ".config('game.playtest.process_timeout').'s');
+                    $rows[] = [$profile, $opening, $seed, 'timed out', '-', '-', '-', '-'];
 
                     continue;
                 }
 
                 if (! $result->successful()) {
-                    $this->error("profile={$profile} seed={$seed} failed to run:");
+                    $this->error("profile={$profile} opening={$opening} seed={$seed} failed to run:");
                     // PHPUnit reports test failures on stdout, not stderr — printing
                     // only errorOutput() left this message empty (baseline 2026-09-26).
                     $this->line(self::tail($result->output()));
@@ -148,19 +162,19 @@ class Playtest extends Command
                     continue;
                 }
 
-                $report = $this->latestReportFor($profile, $seed);
+                $report = $this->latestReportFor($profile, $opening, $seed);
                 if ($report === null) {
-                    $this->error("profile={$profile} seed={$seed}: no report file found after run");
+                    $this->error("profile={$profile} opening={$opening} seed={$seed}: no report file found after run");
 
                     continue;
                 }
 
-                $rows[] = $this->summarize($profile, $seed, $report);
+                $rows[] = $this->summarize($profile, $opening, $seed, $report);
             }
         }
 
         $this->table(
-            ['Profile', 'Seed', 'Status', 'Fail Reason', 'Phase2 Sol', 'Objectives Done', 'Score'],
+            ['Profile', 'Opening', 'Seed', 'Status', 'Fail Reason', 'Phase2 Sol', 'Objectives Done', 'Score'],
             $rows
         );
 
@@ -177,9 +191,9 @@ class Playtest extends Command
             : $output;
     }
 
-    private function latestReportFor(string $profile, string $seed): ?array
+    private function latestReportFor(string $profile, string $opening, string $seed): ?array
     {
-        $pattern = storage_path("logs/playtest/{$profile}-{$seed}-*.json");
+        $pattern = storage_path("logs/playtest/{$profile}-{$opening}-{$seed}-*.json");
         $matches = glob($pattern) ?: [];
         if ($matches === []) {
             return null;
@@ -191,7 +205,7 @@ class Playtest extends Command
         return json_decode(file_get_contents($latest), true);
     }
 
-    private function summarize(string $profile, string $seed, array $report): array
+    private function summarize(string $profile, string $opening, string $seed, array $report): array
     {
         $completed = collect($report['objectives'] ?? [])
             ->filter(fn ($o) => $o['completed_at'] !== null)
@@ -200,6 +214,7 @@ class Playtest extends Command
 
         return [
             $profile,
+            $opening,
             $seed,
             $report['outcome']['status'] ?? '?',
             $report['outcome']['fail_reason'] ?? '-',

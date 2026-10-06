@@ -45,7 +45,7 @@ class RunReport
         'request_ship' => 'action',
     ];
 
-    public function __construct(private readonly int $seed, private readonly string $profile = 'default') {}
+    public function __construct(private readonly int $seed, private readonly string $profile = 'default', private readonly string $opening = 'auto') {}
 
     /**
      * Sums ap_before-ap_after for this Sol's log entries, grouped by
@@ -457,6 +457,7 @@ class RunReport
         return [
             'seed' => $this->seed,
             'profile' => $this->profile,
+            'opening' => $this->opening,
             'outcome' => [
                 'status' => $run->status,
                 'fail_reason' => $run->fail_reason,
@@ -500,7 +501,7 @@ class RunReport
             mkdir($dir, 0755, true);
         }
 
-        $path = "{$dir}/{$this->profile}-{$this->seed}-".now()->format('Ymd_His').'.json';
+        $path = "{$dir}/{$this->profile}-{$this->opening}-{$this->seed}-".now()->format('Ymd_His').'.json';
         file_put_contents($path, json_encode($report, JSON_PRETTY_PRINT));
 
         return $path;
@@ -509,9 +510,10 @@ class RunReport
     public function printTable(array $report): void
     {
         fwrite(STDERR, sprintf(
-            "\n[playtest] seed=%d profile=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
+            "\n[playtest] seed=%d profile=%s opening=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
             $report['seed'],
             $report['profile'],
+            $report['opening'] ?? 'auto',
             $report['outcome']['status'],
             $report['outcome']['fail_reason'] ?? '-',
             $report['outcome']['sols'],

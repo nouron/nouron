@@ -25,8 +25,8 @@ class PlaytestCommandTimeoutTest extends TestCase
         $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldReceive('reset')->andReturn('nouron_playtest'));
 
         $this->artisan('game:playtest', ['--seeds' => '1,2', '--concurrency' => 2])
-            ->expectsOutputToContain('profile=default seed=1 timed out')
-            ->expectsOutputToContain('profile=default seed=2 timed out')
+            ->expectsOutputToContain('profile=default opening=auto seed=1 timed out')
+            ->expectsOutputToContain('profile=default opening=auto seed=2 timed out')
             ->assertSuccessful();
     }
 }
