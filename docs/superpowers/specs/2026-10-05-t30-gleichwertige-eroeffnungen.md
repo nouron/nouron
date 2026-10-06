@@ -290,3 +290,132 @@ Optionale vierte Eröffnung `hangar_freighter`: keine Drohne, Hangar Lv2, Fracht
 - `onboarding_hint_spend_ap_navigation` nennt „1 AP“ pro Feld, Ring 2 und 3 kosten aber 2 bzw. 3 AP. Das verstößt gegen „angezeigte Zahl = wirkende Zahl“.
 - Die Missionskarte zeigt den Basis-Ertrag. Prüfen, ob der Multiplikator der Schwierigkeitsstufe (×0,7/×1,4) beim Ertrag sichtbar ist (gleiche Transparenzregel, Nachgang zu T29).
 - `docs/game-reference.md`: §1 nennt 200 Rg Start (richtig: 300), §7 nennt für den Frachter Hangar Lv1 (richtig: Lv2).
+
+---
+
+## 9. Baseline-Ergebnis und AP-Konsumenten (2026-10-06)
+
+**Autor:** game-designer (Analyse + Vorschlag, keine Code-/Config-Änderung). Alle Zahlen in diesem Abschnitt sind entweder **Messwerte** (Baseline 2026-10-06, 24 Läufe, Profil `default`, bis Sol 25) oder **Vorschlagswerte** (ausdrücklich so gekennzeichnet, nicht verbindlich). Deutungen sind als **Annahme** markiert. Der GDD-Hauptteil bleibt zahlenfrei; Mechanik-Prosa dieses Abschnitts wandert nach Owner-Entscheidung ins GDD §8/§9 (Erkundung, Tiefenscan), Zahlen nach `config/game.php` und `docs/game-reference.md`.
+
+**Owner-Präzisierung (verbindlich):** Gemeint ist nicht „Aufdecken teurer machen“, sondern **neue Erkundungs-Mechaniken mit eigener Entscheidung und Belohnung** (mehrstufig, z. B. Tiefenscan, Fund, ausgraben), die über das Tile-Aufdecken hinausgehen und die frühere Idee der einsammelbaren Regolith-Quellen aufnehmen.
+
+### 9.1 Baseline-Messwerte (Median je Eröffnung Labor / Hangar / Cantina)
+
+| Kennzahl | Messwert | Ziel | Urteil |
+|---|---|---|---|
+| K1 erster Pfadnutzen | 7 / 0 / 1 | ≤ 1 | Labor verfehlt (siehe 9.2, Bot-Artefakt) |
+| K2 erster Ertrag | 8 / nie bis Sol 25 / 1 | ≤ 3 | Labor und Hangar verfehlt |
+| K3 Phase-2-Start | 18 / 18 / 18,5 | 15–20, Abstand ≤ 2 | ok |
+| K4 Σ ungenutzte AP Sol 4–12 | 95 / 89 / 88 | Abstand ≤ 20 | Abstand ok, absolut sehr hoch |
+| K5 Leerlauf-Sols Sol 4–15 | 7 / 4 / 3,5 | ≤ 2 | verfehlt |
+| K6 Regolith Sol 10 | 63 / 63 / 63 | Spanne ≤ 25 | ok |
+
+Lesart: Das Tempo ist gleich (K3, K6), aber **in allen drei Eröffnungen ist die AP-Nutzung in Sol 5–13 schlecht**. Die Eröffnungen unterscheiden sich kaum, weil das Problem nicht pfadspezifisch ist.
+
+### 9.2 Diagnose: Wofür geht der AP-Zufluss in Sol 4–15 drauf?
+
+Gelesen aus den Berichten (Stichprobe je Eröffnung Seed 1; die Mediane aus 9.1 bestätigen das Muster über alle 8 Seeds).
+
+**Beispiel Labor, Seed 1 (Messwert):** Zufluss Sol 4–15 = 191 AP. Davon Bau/Projekte 43 (Sol 7: 10, Sol 14: 14, Sol 15: 19), Erkunden 23 (nur Sol 4–5), Reparatur ca. 11, **ungenutzt 114 (rund 60 %)**. Ab Sol 5 liegt der Tagesrest bei 13–16 AP von 14–16 Zufluss, also nahezu 100 % ungenutzt, bis Sol 13. Sol 14 bis 25 sind dagegen voll ausgelastet (Rest 0).
+**Hangar, Seed 1:** gleiches Bild, Restmenge 13–15 AP/Sol in Sol 6–13. Die einzigen pfadspezifischen Ausgaben sind drei Flüge zu je 2 AP (Sol 8, 10, 12).
+**Cantina, Seed 1:** Sol 6–14 **keine einzige Aktion**, Rest 14–17 AP/Sol. Es kam in diesem Lauf kein Cantina-Ereignis zur Ausführung (Stichprobe, nicht belegt für alle Seeds).
+
+**Wohin der Zufluss wirklich fließt (Messwerte aus dem Log, Labor Seed 1):**
+- Sol 0–1: fast alles in CC-Ausbau und Platzieren (Rg-Kette), Sol 2: Verlegung des Harvesters.
+- **Sol 2–5: Erkunden.** Danach wird kein `explore_tile` mehr ausgeführt (geprüft bis Sol 17). Das Aufdecken der Karte ist also **nach etwa 45 AP und Sol 5 vollständig abgeschlossen** und trägt in Sol 6–13 nichts mehr bei. Erkundung ist ein endlicher Sink, der sehr früh leerläuft.
+- Sol 6–13: außer ca. 1 AP Reparatur pro Sol passiert nichts (Labor), bzw. 2 AP Flug alle 2 Sole (Hangar).
+
+**Wo staut es sich — drei Ursachen:**
+
+1. **Regolith ist der Engpass, AP nicht.** Die Phase-1-Kette (CC-Ausbau, Lv2-Ausbauten, zweites Pfadgebäude) kostet Regolith, nicht AP (ca. 41 AP Bauaufwand gegen ca. 190 AP Zufluss). Bauen und Investieren sind **regolith-limitiert**: Ein Ausbau-Zyklus verbraucht beim Start Regolith, und der Bot (und ein sparsamer Spieler) wartet auf den Harvester. AP-Kosten für Bauen sind in den Warteblöcken daher kein Konsument.
+2. **Es gibt in Phase 1 kaum regolith-freie, unbegrenzte AP-Abnehmer.** Das ist nur die Forschung (nur Labor, setzt Analytiker + Labor voraus), danach Missionen (1–2 AP je Flug, schiffsgebunden, 2–4 Sole Laufzeit), Reparatur (ca. 1 AP/Sol) und zufällige Cantina-Aktionen (ca. 2 AP, selten). Alle anderen Konsumenten sind endlich, selten oder gedeckelt.
+3. **Bot-Regel erzeugt einen Teil des Labor-Leerlaufs (Befund, Annahme zur Gewichtung).** `BotStrategy::researchCandidate()` hält Forschung zurück, solange weniger als 3 Berater angeworben sind und das Regolith unter den Kosten des nächsten Pfadgebäudes liegt (ca. 120). Forschung kostet aber **kein Regolith** (anders als Regolith-Lv-Ups, wo der Puffer sinnvoll ist; für diese ist er seit T9 schon auf Regolith-pflichtige Schritte begrenzt). Genau das erklärt den Messwert: Labor Lv1 steht ab Sol 7 mit Analytiker, die erste Forschung beginnt aber erst in Sol 14, als der dritte Berater da ist. Der Labor-Wert K1 = 7 und ein Großteil des Labor-K5 sind damit sehr wahrscheinlich **Bot-Artefakte**, kein Designbefund. Ein menschlicher Spieler würde in Sol 8–13 forschen. **Empfehlung: Diese Regel vor der zweiten Messung korrigieren (Forschung nicht puffern) und die Labor-Baseline mit 8 Läufen wiederholen**, sonst wird die Referenz „Labor“ zu schlecht gemessen und die Lücke zu Hangar/Cantina unterschätzt.
+
+**Ist Erkundung der richtige Hebel?** Nur teilweise. Das **Aufdecken** selbst ist zu klein (ca. 45 AP, endet in Sol 5). Der richtige Hebel ist ein **neuer, regolith-freier AP-Sink mit Regolith-Ertrag**, der an die Erkundung anknüpft, weil Erkundung die einzige Mechanik ist, die für alle drei Pfade ohne Gebäude- und Schiffsvoraussetzung sofort verfügbar ist. Er löst Ursache 1 und 2 zugleich: Er wandelt überschüssige AP in das knappe Regolith um und gibt der Warte-Phase etwas zu tun. Er löst **nicht** K1/K2 der Pfade (siehe 9.4).
+
+### 9.3 Bewertung der Owner-Idee
+
+**Vorteile**
+- Wirkt auf den echten Engpass (Regolith) statt auf Beschäftigung allein; entschärft die Wartesole in Sol 6–13.
+- Pfadneutral: Der Sink braucht weder Labor noch Hangar noch Cantina. Alle drei Eröffnungen erreichen ihn gleich früh und gleich billig, das stärkt K3/K6-Gleichheit.
+- Passt zur Kern-Fantasie (kleine, lokale Funde um die Kolonie, kein Imperium) und zu „Knappheit statt Überfluss“: AP reichen dann nicht für alles (Forschung gegen Bergung gegen Reparatur).
+- Nutzt bereits vorhandene Infrastruktur: `is_deep_scanned`, `event_type`, `has_signal`, Tiefenscan-Aktion, Missionsbelohnung `deep_scan`, GDD §5 (Event-Tiles).
+
+**Risiken und Gegenmaßnahmen**
+- **Pflicht-Standardlinie:** Der Sink wird von jedem Spieler und vom Bot genommen, weil AP sonst leer bleiben. Das ist unkritisch, solange er (a) im Gesamtbudget klein bleibt, (b) echte Konkurrenz zu Forschung/Reparatur hat und (c) pro Fund eine kleine Entscheidung enthält. Für Labor-Spieler ist es eine echte Abwägung (Kenntnis oder Bergung), für Hangar/Cantina fast ohne Opportunitätskosten. Das ist **gewollt** (sie haben den Leerlauf), verengt aber den Unterschied.
+- **Regolith-Inflation:** Das Gesamtbudget muss am Karten-Regolith-Budget der Generator-Invarianten hängen und klein sein. **Vorschlagswert:** Fundbudget je Karte ca. 40 Rg, also etwa 2 Harvester-Sole und rund 15 % der Phase-1-Kette (260 Rg). Phase 2 rutscht damit um etwa 1–2 Sole nach vorn (18 → 16–17, bleibt im Korridor 15–20 laut K3). Mehr als das würde die Rg-Knappheit, die Kern-Fantasie, aufweichen.
+- **Rendite zu hoch:** Der Sink darf nie effizienter sein als die Missionen (Prospektionsflug ca. 4 Rg/AP, aber schiffsgebunden) und nie als der Harvester. **Vorschlagswert:** ca. 0,5–0,7 Rg pro AP einschließlich Scan.
+- **Kartenende:** Wenn alles aufgedeckt und geborgen ist, ist AP wieder frei (heute schon ab Sol 5 beim Aufdecken). Gegenmaßnahme: Bergung als **Projekt mit AP-Deckel pro Sol** (wie der Gebäudeausbau), damit sich die Ausgaben über Sol 5–13 verteilen statt in zwei Sols zu verpuffen. Ab ca. Sol 14 ist AP ohnehin knapp (Rest 0 in Sol 14–25, Messwert), das Ende des Sinks ist dort also kein Problem.
+- **Eröffnungs-Gleichwertigkeit:** Der neutrale Sink behebt K4/K5 für alle, **nicht K1/K2** (pfadspezifischer Erstnutzen). Wer Hangar-First und Cantina-First gleichwertig machen will, braucht die Spec-Maßnahmen aus Abschnitt 3/4 zusätzlich (Prospektionsflug ohne Gate, Geschenk-Drohne, Cantina-Erstkontakt).
+- **Verständlichkeit:** Jede Zahl (Fundmenge, Bergungsaufwand, Deckel pro Sol) steht vor der Entscheidung in der Fundkarte und gilt genau so. Zufall nur bei der Frage, **was** ein Signal ist (wird durch den Scan sicher), nie bei der Menge.
+
+### 9.4 Mechanik-Varianten
+
+Gemeinsame Randbedingungen aller Varianten: **keine Gebäude-, Kenntnis- oder CC-Voraussetzung** (sonst bricht die Eröffnungs-Gleichwertigkeit), Platzierung deterministisch über `RunSeed::forColony()` bei der Kartengenerierung (`ColonyTileService`, gleiche Stelle wie die Zonen- und Rohstoff-Tiles; Funde zählen **nicht** auf das Budget der Harvester-Tiles, die Invariante „genau zwei aufgedeckte Rg-Tiles“ bleibt unberührt), Daten in den vorhandenen Spalten `event_type`/`is_deep_scanned`. **Annahme (zu prüfen):** Der Generator setzt heute `event_type` nie (alle Tiles `null`, nur `ColonySeedDemo` und Missionsbelohnungen belegen es); der Tiefenscan ist in echten Läufen also ein Pfad ohne Inhalt.
+
+#### Variante A (empfohlen): „Signal, Tiefenscan, Bergungsprojekt“
+
+Ablauf:
+1. **Aufdecken (bestehend).** Auf aufgedeckten Feldern der Ringe 2 und 3 erscheint bei einem Teil der Tiles ein **Signal** (`has_signal` existiert bereits). Ringe 1 und Zone-Tiles tragen keine Signale. Das gibt dem Aufdecken von Ring 2/3 einen Zweck, ohne die Kosten zu ändern.
+2. **Tiefenscan (bestehend, Basiskosten wie heute).** Der Scan zeigt die Art des Fundes und alle Zahlen: Regolith-Fund klein/mittel/groß oder **Fehlalarm** (kein Ertrag). Kosten werden vor dem Scan angezeigt. Bestehende Rabatte (CC Lv3, Uplink) bleiben gültig und werden in der Anzeige eingerechnet.
+3. **Bergungsprojekt.** Nach dem Scan kann der Spieler AP in den Fund einzahlen wie in einen Gebäudeausbau. Es gibt einen **AP-Deckel pro Sol** je Projekt und höchstens **zwei parallele Projekte**. Bei vollem Fortschritt wird der angezeigte Regolith-Betrag gutgeschrieben, das Tile wird `terrain_empty` (damit gleich bebaubar bzw. für Harvester-Verlegung ungeeignet, kein Rohstoff-Tile).
+4. **Ende.** Fund erschöpft, Signale verbraucht; es gibt keinen Nachschub. Fehlalarme sind das Risiko der Entscheidung („Scan lohnt nur, wenn ich ein Fund erwarte“).
+
+Entscheidungen für den Spieler: Welche Signale scanne ich zuerst (näher = billiger zu entdecken, weiter = womöglich größer, Ring 3 kostet beim Aufdecken mehr)? Bergen oder forschen (Labor)? Teilbergen und AP für Reparatur frei halten?
+
+**Vorschlagswerte (Annahme, nach Messung nachziehen):**
+
+| Größe | Vorschlag |
+|---|---|
+| Signale je Karte (Ring 2–3) | 6, davon 4 Rg-Funde und 2 Fehlalarme |
+| Tiefenscan | 2 AP (wie heute), Rabatt bleibt |
+| Fund klein / mittel / groß | 6 Rg für 10 AP / 12 Rg für 16 AP / 18 Rg für 22 AP |
+| Verteilung | 2 × klein, 1 × mittel, 1 × groß, ca. 42 Rg gesamt |
+| Deckel je Projekt | 4 AP pro Sol, höchstens 2 Projekte parallel (also bis 8 AP/Sol) |
+| Gesamtaufwand | ca. 58 AP Bergung + 12 AP Scans = ca. 70 AP, Rendite ca. 0,6 Rg/AP |
+
+**Erwartete Wirkung** (Annahme): K4 sinkt von 88–95 auf etwa 35–45 (ca. 55–60 % der Messlücke werden absorbiert). K5: In Sol 5–12 sinkt der Rest von ca. 15 auf ca. 7 AP/Sol, also unter der 50-%-Schwelle; vermutlich ≤ 2 Leerlauf-Sols, die Marge ist knapp (Sol 13–15 prüfen). K6: Regolith zu Beginn von Sol 10 steigt um ca. 15–25 Rg (63 → ca. 80–90, innerhalb der Spanne 33–137, Abstand zwischen den Eröffnungen bleibt klein, da pfadneutral). K1/K2: unverändert (pfadspezifisch). K3: Phase-2-Start 1–2 Sole früher, bleibt im Korridor.
+
+**Eröffnungs-Gleichwertigkeit:** Nutzbar für alle ab Sol 3 (ab Sol 2 aufgedeckte Ringe), keine Voraussetzung. Optionale **spätere** Pfad-Hebel, bewusst nicht in v1: Geologie erhöht den Fund-Ertrag (Labor, analog zur Prospektions-Entscheidung), Missionsbelohnung `deep_scan` deckt ein Signal ohne AP auf (Hangar, vorhandene Belohnung), ein Informationsgast der Cantina verrät den Fund-Typ vor dem Scan. Das würde jedem Pfad einen eigenen, kleinen Vorteil am selben Sink geben, ist aber bis zur Messung zurückzustellen (Regel „vereinfachen statt stapeln“).
+
+#### Variante B: „Fundstelle beim Aufdecken“ (einstufig)
+
+Beim Aufdecken bestimmter Ring-2/3-Felder wird sofort eine sichtbare Regolith-Quelle angezeigt, die für einen festen AP-Betrag einmalig eingesammelt wird. Entspricht der früheren Owner-Idee in der einfachsten Form. **Vorschlagswerte:** 4 Quellen, je 4 AP für 4–8 Rg (ca. 16 AP, ca. 24 Rg). Vorteile: kein neuer UI-Zustand außer Marker und Button, sofort verständlich, kaum Risiko. Nachteile: keine Entscheidung (alles wird immer genommen), absorbiert nur ca. 16 AP (K4 −15 bis −20), also zu klein, um K4/K5 zu lösen. **Eignet sich als Teilumfang von A** (A mit ausgelassenem Scan-Schritt), falls der Aufwand von A zu hoch ist.
+
+#### Variante C: „Fundstelle am Harvester-Feld erschließen“ (Ertragssteigerung)
+
+AP-Projekt auf dem Harvester-Tile, das die Ertragsstufe um eine Stufe anhebt. Wirkung dauerhaft, also überproportional (eine Stufe y1 → y2 sind +7 Rg/Sol; schon bei 40 AP über 10 Sole ca. +70 Rg). **Nicht empfohlen:** verschiebt die Kern-Ökonomie dauerhaft, wirkt in Phase 2 weiter, wird zur Pflicht-Standardlinie, schwer zu balancieren und kollidiert mit der Verlegungs-Entscheidung (Sol 1–2).
+
+#### Vergleichsoption V: „nur Erkundungskosten erhöhen“
+
+Ring-Kosten verdoppeln. Absorbiert höchstens ca. 45 weitere AP, und zwar nur bis die Karte aufgedeckt ist (heute Sol 5, dann etwa Sol 7), ohne jede Belohnung. Spieler werden bestraft, die Kosten stehen in Sol 2–3 in Konkurrenz zur Harvester-Verlegung (also zum ersten Regolith). Löst K5 ab Sol 8 nicht. **Nicht empfohlen.**
+
+### 9.5 Empfehlung
+
+**Variante A, v1 pfadneutral (ohne Pfad-Hebel), mit AP-Deckel pro Sol und kleinem Fundbudget (ca. 40 Rg).** Vorher als eigenen kleinen Schritt die **Bot-Forschungsregel** korrigieren und die Labor-Baseline neu messen. Begründung: Variante A ist die einzige, die den Engpass (Regolith) trifft, Entscheidungen enthält (Scan-Risiko, Bergen gegen Forschen) und die Sol-Verteilung glättet; B ist zu klein, C verändert die Kern-Ökonomie, V belohnt nichts. A nutzt vorhandene Struktur (`event_type`, `is_deep_scanned`, Tiefenscan-Aktion), braucht aber neue Fundtypen, Bergungsprojekt-Zustand je Tile und UI. Aufwand **Mittel bis Groß** (Annahme).
+
+**Reihenfolge (Vorschlag):**
+1. Bot-Regel Forschung ohne Rg-Puffer (TDD: `BotStrategyResearch…` rot zuerst: <3 Berater, Rg < Pfadkosten → Forschung wird trotzdem angeboten) + 8 Labor-Läufe neu messen. Erwartung: Labor K1 7 → ≤ 1, K5 Labor 7 → ≤ 3, K4 Labor sinkt deutlich. Damit ist die Baseline fair.
+2. Spec A (Fundtypen, Zufall aus `RunSeed`, UI) mit dem Owner finalisieren; `game-developer`-Auftrag nach TDD.
+3. Zweite Messung: 24 Läufe (3 × 8 Seeds, gleiche Seeds wie die Baseline, ca. 51 min). Zusätzlich pro Lauf neu erfassen: AP je Kategorie „Scan“, „Bergung“, Rg aus Funden (neue Zeile `regolith_sources.find`).
+
+**Messplan (Zielwerte als Vorschlag):**
+
+| Kennzahl | Soll nach Variante A (Median) | Warnschwelle |
+|---|---|---|
+| K4 Σ ungenutzte AP Sol 4–12 | ≤ 45 je Eröffnung, Abstand ≤ 20 | > 60 oder Abstand > 20 |
+| K5 Leerlauf-Sols Sol 4–15 | ≤ 2 je Eröffnung | ≥ 4 |
+| K6 Regolith Sol 10 | Spanne 33–137, Abstand ≤ 25 | > 137 |
+| K3 Phase-2-Start | 16–18, Abstand ≤ 2 | < 15 (zu schnell) |
+| Fund-Rg Sol 4–15 | 30–42 (≈ Budget) | > 45 |
+| Anteil Fund-AP am AP-Zufluss | ≤ 15 % Gesamtlauf | > 25 % (wird Standardlinie) |
+| Siegquote Bot | bleibt um ~50 %, Abstand zur Baseline ≤ 10 Punkte | Bot-Siegquote > 65 % (Rg-Knappheit verloren) |
+
+**Bot-Aufwand (Annahme):** drei Regeln (`scan_signal`, `invest_find`, Priorität gegenüber Forschung: Bergung nachrangig zu Forschung, damit der Bot die Entscheidung nicht verzerrt). TDD-Pflicht gilt, Tests zuerst.
+
+### 9.6 Offene Owner-Fragen (mit Empfehlung)
+
+1. **Variante:** A (Signal, Tiefenscan, Bergungsprojekt) umsetzen? **Empfehlung: ja**; B nur als Notlösung, C und V verwerfen.
+2. **Fundbudget:** ca. 40 Rg je Karte (rund 2 Harvester-Sole, ca. 15 % der Phase-1-Kette, Rendite ca. 0,6 Rg/AP)? **Empfehlung: klein starten**, nach der zweiten Messung gegen K3/K6 und die Siegquote nachziehen. Alternativ größer (ca. 60 Rg), dann zieht Phase 2 bis Sol ≈ 15–16 vor.
+3. **Pfad-Hebel am Sink** (Geologie erhöht Ertrag, Drohnen-Mission deckt Signal ohne AP auf, Cantina-Hinweis nennt Fund-Typ) in v1 oder erst nach Messung? **Empfehlung: erst nach Messung**, v1 pfadneutral. Grund: Gleichwertigkeit und Regelanzahl (vereinfachen statt stapeln); die Hebel können später jedem Pfad einen eigenen Vorteil geben.
+4. **Bot-Forschungsregel zuerst korrigieren** (Forschung ohne Rg-Puffer) und Labor-Baseline neu messen, bevor Variante A entwickelt wird? **Empfehlung: ja**, billig (klein), verhindert, dass der Sink für ein Problem gebaut wird, das zum Teil ein Bot-Artefakt ist. Zusatzfrage dabei: Soll der Cantina-Lauf (Sol 6–14 ohne Cantina-Aktion in Seed 1) separat auf Bot- oder Spawn-Ursachen geprüft werden? Empfehlung: ja, aus den Berichten der Seeds 2–8 Stichproben prüfen.
