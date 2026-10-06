@@ -61,7 +61,9 @@ namespace App\Support;
  *    (run ended earlier).
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
- * Comparison: only finished runs (status completed|failed) count; a seed is
+ * Comparison: only finished runs count (status completed|failed, or a run
+ * stopped by --until-sol, marked `truncated_at_sol`: K1-K6 as usual, K7 = null
+ * and reported as 'nicht gemessen', never as 0 or 'verfehlt'); a seed is
  * paired only if every compared opening has a finished run for it, otherwise
  * it is listed in skipped_seeds and ignored entirely (never counted as 0).
  * Per KPI and opening: median/min/max over non-null values (n, missing) and,
@@ -145,7 +147,7 @@ class OpeningComparison
     }
 
     /**
-     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k7: array{won: bool, sols: int}}
+     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k7: ?array{won: bool, sols: int}}
      */
     public static function metrics(array $report): array
     {
@@ -224,11 +226,18 @@ class OpeningComparison
             'k4' => $k4,
             'k5' => $k5,
             'k6' => $k6,
-            'k7' => [
+            'k7' => isset($report['truncated_at_sol']) && ($report['outcome']['status'] ?? null) === 'active' ? null : [
                 'won' => ($report['outcome']['status'] ?? null) === 'completed',
                 'sols' => (int) ($report['outcome']['sols'] ?? 0),
             ],
         ];
+    }
+
+    /** Finished = ended regularly (completed|failed) or deliberately stopped at --until-sol. */
+    private static function isFinished(array $report): bool
+    {
+        return in_array($report['outcome']['status'] ?? null, self::FINISHED_STATUSES, true)
+            || isset($report['truncated_at_sol']);
     }
 
     public function compare(): array
@@ -248,7 +257,7 @@ class OpeningComparison
                 $report = $this->reports[$opening][$seed] ?? null;
                 if ($report === null) {
                     $problems[] = "{$opening}: missing";
-                } elseif (! in_array($report['outcome']['status'] ?? null, self::FINISHED_STATUSES, true)) {
+                } elseif (! self::isFinished($report)) {
                     $problems[] = "{$opening}: unfinished";
                 }
             }
@@ -292,10 +301,13 @@ class OpeningComparison
 
         $k7 = [];
         foreach ($this->openings as $opening) {
-            $runs = $metrics[$opening] ?? [];
+            $all = $metrics[$opening] ?? [];
+            // Truncated runs (--until-sol) carry k7 = null: not measured, neither won nor lost.
+            $runs = array_filter($all, fn ($m) => $m['k7'] !== null);
             $winSols = array_values(array_map(fn ($m) => $m['k7']['sols'], array_filter($runs, fn ($m) => $m['k7']['won'])));
             $k7[$opening] = [
                 'runs' => count($runs),
+                'truncated' => count($all) - count($runs),
                 'wins' => count($winSols),
                 'win_rate' => $runs === [] ? null : count($winSols) / count($runs) * 100,
                 'median_win_sol' => self::median($winSols),
@@ -315,7 +327,7 @@ class OpeningComparison
     }
 
     /**
-     * One status per criterion: 'ok', 'verfehlt', or 'n/a' (not evaluable,
+     * One status per criterion: 'ok', 'verfehlt', or 'n/a' (not evaluable, 'nicht gemessen' (K7 only: all runs truncated),
      * e.g. no paired seeds or no reference opening). Rules (spec 2.1):
      *  - K1 / K2 / K5: per opening, median <= 1 / <= 3 / <= 2 Sols; for K1/K2
      *    a run that never reached the event (missing > 0) fails — "never" is
@@ -384,7 +396,9 @@ class OpeningComparison
         }
 
         $k7check = $na('no reference opening');
-        if ($hasReference) {
+        if (array_sum(array_column($k7, 'runs')) === 0) {
+            $k7check = ['status' => 'nicht gemessen', 'detail' => 'all runs truncated (--until-sol); K7 needs full runs'];
+        } elseif ($hasReference) {
             $ref = $k7[self::REFERENCE];
             $ok = true;
             $parts = [];
@@ -392,7 +406,7 @@ class OpeningComparison
                 if ($opening === self::REFERENCE) {
                     continue;
                 }
-                $ok = $ok && abs($s['win_rate'] - $ref['win_rate']) <= self::K7_MAX_WIN_RATE_PP;
+                $ok = $ok && $s['win_rate'] !== null && $ref['win_rate'] !== null && abs($s['win_rate'] - $ref['win_rate']) <= self::K7_MAX_WIN_RATE_PP;
                 if ($s['median_win_sol'] !== null && $ref['median_win_sol'] !== null) {
                     $ok = $ok && abs($s['median_win_sol'] - $ref['median_win_sol']) <= self::K7_MAX_WIN_SOL_DELTA;
                 }

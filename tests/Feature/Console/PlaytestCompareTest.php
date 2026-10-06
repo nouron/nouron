@@ -28,7 +28,7 @@ class PlaytestCompareTest extends TestCase
         parent::tearDown();
     }
 
-    private function writeReport(string $profile, string $opening, int $seed, string $stamp, int $p2, string $status = 'failed'): void
+    private function writeReport(string $profile, string $opening, int $seed, string $stamp, int $p2, string $status = 'failed', ?int $truncatedAt = null): void
     {
         $sols = [];
         for ($s = 1; $s <= 15; $s++) {
@@ -43,6 +43,9 @@ class PlaytestCompareTest extends TestCase
             'outcome' => ['status' => $status, 'fail_reason' => null, 'sols' => 100, 'score' => 0],
             'phase2_start_sol' => $p2, 'objectives' => [], 'log' => [], 'sols' => $sols,
         ];
+        if ($truncatedAt !== null) {
+            $report['truncated_at_sol'] = $truncatedAt;
+        }
         file_put_contents("{$this->dir}/{$profile}-{$opening}-{$seed}-{$stamp}.json", json_encode($report));
     }
 
@@ -123,5 +126,23 @@ class PlaytestCompareTest extends TestCase
     {
         $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--since' => 'not-a-date'])
             ->assertExitCode(1);
+    }
+
+    public function test_truncated_reports_are_paired_and_k7_is_reported_as_not_measured(): void
+    {
+        foreach (['labor', 'hangar'] as $opening) {
+            $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 20);
+        }
+        // Active and not truncated -> skipped.
+        $this->writeReport('default', 'labor', 2, '20261006_120000', 16, 'active');
+        $this->writeReport('default', 'hangar', 2, '20261006_120000', 16, 'active');
+
+        $exit = Artisan::call('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar']);
+
+        $this->assertSame(0, $exit);
+        $out = Artisan::output();
+        $this->assertStringContainsString('Paired seeds: 1', $out);
+        $this->assertStringContainsString('Skipped seeds: 2 (labor: unfinished, hangar: unfinished)', $out);
+        $this->assertMatchesRegularExpression('/K7\s*\|\s*nicht gemessen/', $out);
     }
 }

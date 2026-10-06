@@ -18,6 +18,8 @@ use Tests\Feature\Playtest\BotProfile;
  * Run:   php artisan game:playtest --profiles=default,thrifty --seeds=4242,1337,9001
  * Single combo (equivalent to running the PHPUnit test directly):
  *        php artisan game:playtest --seeds=4242
+ * Short Phase-1 measurement runs (K1-K6 only, stop at the start of Sol 20):
+ *        php artisan game:playtest --openings=labor,hangar,cantina --seeds=1,2,3 --until-sol=20
  * Parallel (10 at a time, e.g. for a 100+-seed sweep):
  *        php artisan game:playtest --seeds=1,2,...,100 --concurrency=10
  *
@@ -48,6 +50,7 @@ class Playtest extends Command
     protected $signature = 'game:playtest
         {--profiles=default : Comma-separated BotProfile names}
         {--openings=auto : Comma-separated openings (auto, labor, hangar, cantina)}
+        {--until-sol= : Stop each run at the start of Sol N (5-100) for short Phase-1 measurement runs; default: play the whole run}
         {--seeds=4242 : Comma-separated integer seeds}
         {--concurrency=10 : How many profile×opening×seed combos to run at once}';
 
@@ -65,6 +68,13 @@ class Playtest extends Command
         $unknown = array_diff($openings, BotProfile::OPENINGS);
         if ($openings === [] || $unknown !== []) {
             $this->error('Unknown opening(s): '.implode(', ', $unknown ?: ['(none)']).'. Allowed: '.implode(', ', BotProfile::OPENINGS));
+
+            return self::FAILURE;
+        }
+
+        $untilSol = $this->option('until-sol');
+        if ($untilSol !== null && (! ctype_digit((string) $untilSol) || (int) $untilSol < 5 || (int) $untilSol > 100)) {
+            $this->error('Invalid --until-sol: '.$untilSol.'. Expected an integer between 5 and 100.');
 
             return self::FAILURE;
         }
@@ -113,10 +123,11 @@ class Playtest extends Command
                 // to PLAYTEST_DATABASE at runtime (PlaytestDatabase::connect(),
                 // same guard as here) and skip the rollback, so the run's data
                 // is committed like a real player's.
-                $running["{$profile}-{$opening}-{$seed}"] = Process::env([
+                $running["{$profile}-{$opening}-{$seed}"] = Process::env(array_filter([
                     'PLAYTEST_PROFILE' => $profile,
                     'PLAYTEST_OPENING' => $opening,
                     'PLAYTEST_SEED' => $seed,
+                    'PLAYTEST_UNTIL_SOL' => $untilSol === null ? null : (string) (int) $untilSol,
                     'APP_ENV' => 'testing',
                     'PLAYTEST_SHARED_DB' => '1',
                     'PLAYTEST_DATABASE' => $playtestDb,
@@ -125,7 +136,7 @@ class Playtest extends Command
                     'DB_PORT' => (string) $mysql['port'],
                     'DB_USERNAME' => (string) $mysql['username'],
                     'DB_PASSWORD' => (string) $mysql['password'],
-                ])
+                ], fn ($v) => $v !== null))
                     // History and reasoning of the value: config/game.php playtest.process_timeout.
                     ->timeout((int) config('game.playtest.process_timeout'))
                     ->start([

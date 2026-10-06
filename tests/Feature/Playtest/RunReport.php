@@ -397,7 +397,7 @@ class RunReport
      *               actions:array, rejections:array, burnout:array, sols:array, log:array,
      *               project_metrics:array, regolith_path_attribution:array, zero_ap_sols:array}
      */
-    public function build(BotSession $bot): array
+    public function build(BotSession $bot, ?int $truncatedAtSol = null): array
     {
         $run = Run::findOrFail($bot->runId);
 
@@ -458,6 +458,8 @@ class RunReport
             'seed' => $this->seed,
             'profile' => $this->profile,
             'opening' => $this->opening,
+            // Only set when the bot stopped at --until-sol N with the run still active.
+            ...($truncatedAtSol !== null ? ['truncated_at_sol' => $truncatedAtSol] : []),
             'outcome' => [
                 'status' => $run->status,
                 'fail_reason' => $run->fail_reason,

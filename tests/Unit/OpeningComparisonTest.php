@@ -397,4 +397,68 @@ class OpeningComparisonTest extends TestCase
         ]))->compare()['checks'];
         $this->assertSame('ok', $checks['K2']['status']);
     }
+
+    // --- Truncated runs (--until-sol, Task 5) ---
+
+    public function test_truncated_runs_are_paired_and_k7_is_not_measured(): void
+    {
+        $reports = [];
+        foreach (['labor', 'hangar'] as $opening) {
+            $r = $this->report($opening, 1, ['status' => 'active', 'sols' => 20, 'last' => 19, 'p2' => 16, 'sol_next' => [10 => 80]]);
+            $r['truncated_at_sol'] = 20;
+            $reports[] = $r;
+        }
+        $reports[] = $this->report('labor', 2, ['status' => 'active']);
+        $reports[] = $this->report('hangar', 2, ['status' => 'active']);
+
+        $result = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare();
+
+        $this->assertSame([1], $result['paired_seeds']);
+        $this->assertSame([2], array_keys($result['skipped_seeds']));
+        $this->assertSame(16, $result['kpis']['k3']['labor']['median']);
+        $this->assertSame(80, $result['kpis']['k6']['hangar']['median']);
+        $this->assertNull($result['metrics']['labor'][1]['k7']);
+        $this->assertNull($result['k7']['labor']['win_rate']);
+        $this->assertSame(0, $result['k7']['labor']['runs']);
+        $this->assertSame(1, $result['k7']['labor']['truncated']);
+        $this->assertSame('nicht gemessen', $result['checks']['K7']['status']);
+    }
+
+    public function test_truncated_run_before_sol_10_has_null_k6_not_zero(): void
+    {
+        $r = $this->report('labor', 1, ['status' => 'active', 'last' => 8]);
+        $r['truncated_at_sol'] = 9;
+
+        $this->assertNull(OpeningComparison::metrics($r)['k6']);
+        $this->assertNull(OpeningComparison::metrics($r)['k7']);
+    }
+
+    public function test_k7_check_still_runs_on_regular_runs_mixed_with_no_truncation(): void
+    {
+        $result = OpeningComparison::fromReports($this->batch())->compare();
+
+        $this->assertNotSame('nicht gemessen', $result['checks']['K7']['status']);
+    }
+
+    // --- Carry-over from the Task 4 re-review ---
+
+    public function test_k2_cantina_ignores_a_failed_cantina_action_in_a_sol_with_an_unrelated_trust_rise(): void
+    {
+        // Bar Lv1 Sol 4; Sol 6: trust 2 -> 5 but the only bar action of that Sol was rejected.
+        $r = $this->report('cantina', 1, [
+            'lv1' => 4,
+            'trust' => [6 => 5, 7 => 5, 8 => 5, 9 => 5, 10 => 5, 11 => 5, 12 => 5, 13 => 5, 14 => 5, 15 => 5],
+            'log' => [[6, 'accept_bar_offer', false]],
+        ]);
+
+        $this->assertNull(OpeningComparison::metrics($r)['k2']);
+    }
+
+    public function test_k6_ignores_a_failed_sol_next_entry(): void
+    {
+        $r = $this->report('labor', 1);
+        $r['log'][] = ['sol' => 10, 'rule' => 'sol_next', 'ok' => false, 'error' => 'rejected', 'regolith_after' => 999];
+
+        $this->assertNull(OpeningComparison::metrics($r)['k6']);
+    }
 }

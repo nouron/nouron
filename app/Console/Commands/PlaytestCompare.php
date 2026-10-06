@@ -104,6 +104,11 @@ class PlaytestCompare extends Command
             }
         }
         foreach ($result['k7'] as $opening => $s) {
+            if ($s['runs'] === 0 && $s['truncated'] > 0) {
+                $rows[] = ['K7', $opening, 'nicht gemessen', "0/{$s['truncated']} truncated", '-', '-', '-'];
+
+                continue;
+            }
             $rows[] = ['K7', $opening, OpeningComparison::fmt($s['win_rate']).' % won', "{$s['wins']}/{$s['runs']}", '-', 'win Sol '.OpeningComparison::fmt($s['median_win_sol']), '-'];
         }
         $this->table(['KPI', 'Opening', 'Median', 'Range', 'Null', 'Δ labor median', 'Δ labor range'], $rows);

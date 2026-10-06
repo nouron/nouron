@@ -7,6 +7,7 @@ use App\Console\Support\PlaytestDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Process;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Feature\Playtest\BotSession;
 use Tests\Feature\Playtest\RunReport;
 use Tests\TestCase;
@@ -103,5 +104,54 @@ class PlaytestCommandOpeningsTest extends TestCase
         $this->assertSame(['opening' => 'labor'], $method->invoke($command, 'default', 'labor', '1'));
         $this->assertSame(['opening' => 'hangar'], $method->invoke($command, 'default', 'hangar', '1'));
         $this->assertNull($method->invoke($command, 'default', 'cantina', '1'));
+    }
+
+    // --- --until-sol (Task 5) ---
+
+    public function test_until_sol_is_passed_to_every_child(): void
+    {
+        Process::fake();
+        $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldReceive('reset')->once()->andReturn('nouron_playtest'));
+
+        $this->artisan('game:playtest', ['--openings' => 'labor,hangar', '--seeds' => '1', '--until-sol' => '20']);
+
+        Process::assertRanTimes(fn (PendingProcess $p) => ($p->environment['PLAYTEST_UNTIL_SOL'] ?? null) === '20', 2);
+    }
+
+    public function test_without_until_sol_the_env_variable_is_not_set(): void
+    {
+        Process::fake();
+        $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldReceive('reset')->once()->andReturn('nouron_playtest'));
+
+        $this->artisan('game:playtest', ['--seeds' => '1']);
+
+        Process::assertRanTimes(fn (PendingProcess $p) => ! array_key_exists('PLAYTEST_UNTIL_SOL', $p->environment), 1);
+    }
+
+    #[DataProvider('invalidUntilSol')]
+    public function test_invalid_until_sol_is_refused_before_the_database_is_touched(string $value): void
+    {
+        Process::fake();
+        $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldNotReceive('reset'));
+
+        $this->artisan('game:playtest', ['--until-sol' => $value, '--seeds' => '1'])
+            ->expectsOutputToContain('Invalid --until-sol')
+            ->assertFailed();
+
+        Process::assertNothingRan();
+    }
+
+    public static function invalidUntilSol(): array
+    {
+        return [['0'], ['abc'], ['500'], ['4'], ['101'], ['12.5'], ['-3']];
+    }
+
+    public function test_run_report_marks_truncated_runs_only(): void
+    {
+        $bot = BotSession::boot($this, seed: 7);
+        $report = new RunReport(7);
+
+        $this->assertSame(20, $report->build($bot, 20)['truncated_at_sol']);
+        $this->assertArrayNotHasKey('truncated_at_sol', $report->build($bot));
     }
 }
