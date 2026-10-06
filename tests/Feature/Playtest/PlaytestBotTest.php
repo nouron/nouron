@@ -85,6 +85,7 @@ class PlaytestBotTest extends TestCase
     {
         putenv('PLAYTEST_SEED=1337');
         putenv('PLAYTEST_PROFILE=thrifty');
+        putenv('PLAYTEST_OPENING=cantina');
 
         try {
             $seed = self::resolveSeed();
@@ -93,9 +94,11 @@ class PlaytestBotTest extends TestCase
             $this->assertSame(1337, $seed);
             $this->assertSame('thrifty', $profile->name);
             $this->assertSame(1.0, $profile->savingsAggressiveness);
+            $this->assertSame('cantina', $profile->opening);
         } finally {
             putenv('PLAYTEST_SEED');
             putenv('PLAYTEST_PROFILE');
+            putenv('PLAYTEST_OPENING');
         }
     }
 
@@ -164,6 +167,7 @@ class PlaytestBotTest extends TestCase
 
     private static function resolveProfile(): BotProfile
     {
-        return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default');
+        return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default')
+            ->withOpening(getenv('PLAYTEST_OPENING') ?: 'auto');
     }
 }

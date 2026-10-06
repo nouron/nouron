@@ -9,9 +9,14 @@ namespace Tests\Feature\Playtest;
  * over the same typed shape. Add a new property + a case in named() when a
  * new dimension is needed; existing profiles keep their old default (0.0)
  * for it automatically, so nothing else needs to change.
+ *
+ * Besides the float dials there is one discrete, orthogonal dimension: $opening
+ * (which path building the bot builds first, see OPENINGS). 'auto' = today's behaviour.
  */
 final class BotProfile
 {
+    public const OPENINGS = ['auto', 'labor', 'hangar', 'cantina'];
+
     public function __construct(
         public readonly string $name = 'default',
         // 0.0 = today's behaviour (spend whenever affordable, no reserve
@@ -22,7 +27,20 @@ final class BotProfile
         // still-open Phase-2 objectives (A45 focus rules in BotStrategy) — the
         // "targeted play" half of the GDD §15 calibration rule.
         public readonly float $objectiveFocus = 0.0,
-    ) {}
+        // Discrete dimension, orthogonal to the float dials above: which path building the
+        // bot builds FIRST (labor = sciencelab 31, hangar 44, cantina 52). 'auto' keeps
+        // today's behaviour (sciencelab-first by menu order). Only affects Sol 1-~15.
+        public readonly string $opening = 'auto',
+    ) {
+        if (! in_array($opening, self::OPENINGS, true)) {
+            throw new \InvalidArgumentException("Unknown bot opening: {$opening}");
+        }
+    }
+
+    public function withOpening(string $opening): self
+    {
+        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $opening);
+    }
 
     public static function named(string $name): self
     {
