@@ -246,7 +246,28 @@ git commit -m "feat(playtest): Kennzahlen K1-K7 und gepaarter Eröffnungsverglei
 
 ---
 
-### Task 5: Doku, ROADMAP, CHANGELOG, Gesamtprüfung
+### Task 5: Frühabbruch für Phase-1-Messläufe (`--until-sol`)
+
+Hintergrund (Owner 2026-10-06: Baseline soll < 30 min dauern): K1–K6 liegen in Sol 1–~15, ein voller Lauf spielt aber bis Sol 100 (8–14 min, 8 parallel ≈ 17 min). Mit Abbruch bei Sol 20 dauert ein Lauf grob ein Fünftel; die Baseline (24 Läufe) sinkt von ≈ 51 min auf ≈ 10–15 min. K7 (Siegquote/Sieg-Sol) wird dabei bewusst nicht gemessen — das übernimmt die zweite Messrunde als Volllauf.
+
+**Files:**
+- Modify: `app/Console/Commands/Playtest.php` (Option `--until-sol=` + Env-Weitergabe + Validierung)
+- Modify: `tests/Feature/Playtest/PlaytestBotTest.php` (Stop-Bedingung), `tests/Feature/Playtest/PlaysSolLoop.php` (nur falls die Schleife die Bedingung nicht schon erlaubt — lesen), `tests/Feature/Playtest/RunReport.php` (Feld `truncated_at_sol`)
+- Modify: `app/Support/OpeningComparison.php`, `app/Console/Commands/PlaytestCompare.php` (Task 4: abgeschnittene Läufe behandeln)
+- Test: `tests/Feature/Console/PlaytestCommandOpeningsTest.php` bzw. neue `PlaytestCommandUntilSolTest.php`, `tests/Unit/OpeningComparisonTest.php` (ergänzen), RunReport-Test
+
+**Interfaces:**
+- Produces: Option `--until-sol=N` (ganze Zahl 5–100, sonst Fehlermeldung + `FAILURE` vor jedem DB-Zugriff), Env `PLAYTEST_UNTIL_SOL` an die Kinder; der Bot spielt Sole, bis `$bot->sol >= N` oder der Lauf regulär endet (was zuerst eintritt) und schreibt dann den Report mit `outcome.status` wie im Run-Zustand (`active`) **und** neuem Feld `truncated_at_sol` (= N) — nur gesetzt, wenn wegen der Grenze gestoppt wurde. Der Report-Dateiname bleibt unverändert. `OpeningComparison`: ein Lauf zählt als **fertig** (paarbar), wenn er regulär endete **oder** `truncated_at_sol` gesetzt ist; für abgeschnittene Läufe sind K1–K6 wie gewohnt auswertbar (K6 `null`, falls Sol 10 nicht erreicht), **K7 ist `null`** und wird in Median/Delta/Schwellenprüfung als „nicht gemessen“ ausgewiesen (nicht als 0, nicht als verfehlt). Läufe, die weder regulär endeten noch abgeschnitten sind, bleiben `skipped`.
+
+- [ ] **Step 1: Failing Tests schreiben**: (a) Command: `--until-sol=20` → Kinder bekommen `PLAYTEST_UNTIL_SOL=20`; ungültige Werte (`0`, `abc`, `500`) → Fehler vor DB-Reset, nichts gestartet (Muster wie der Test für ungültige `--openings`); ohne die Option wird die Env-Variable **nicht** gesetzt. (b) RunReport: Report eines abgeschnittenen Laufs enthält `truncated_at_sol`; ein regulär beendeter nicht. (c) Bot: eine Bot-Schleife mit Grenze bricht nach genau N Solen ab (Test auf der Schleifen-/Stop-Ebene mit der vorhandenen Harness, kein voller Lauf). (d) OpeningComparison: abgeschnittene Läufe sind paarbar; K1–K6 werden berechnet; K7 `null` und in der Schwellenprüfung als „nicht gemessen“; ein weder beendeter noch abgeschnittener Lauf landet in `skipped_seeds`.
+- [ ] **Step 2: Rot bestätigen** (fokussiert, FAIL).
+- [ ] **Step 3: Implementieren** gemäß Interfaces; `PlaytestBotTest` liest `PLAYTEST_UNTIL_SOL` (`getenv`, wie die anderen Variablen) und übergibt die Stop-Bedingung an `playSolsUntil`.
+- [ ] **Step 4: Grün** — `bin/phpunit tests/Feature/Console --filter Playtest`, `bin/phpunit tests/Feature/Playtest --filter 'RunReport|PlaysSolLoop'`, `bin/phpunit tests/Unit/OpeningComparisonTest.php`, Pint, phpstan.
+- [ ] **Step 5: Commit** (`feat(playtest): --until-sol für Phase-1-Messläufe, abgeschnittene Läufe im Vergleich`).
+
+---
+
+### Task 6: Doku, ROADMAP, CHANGELOG, Gesamtprüfung
 
 **Files:**
 - Modify: `docs/dev-setup-mysql.md` (Abschnitt PlaytestBot: `--openings`, Report-Namen, `game:playtest-compare`)
@@ -271,12 +292,12 @@ PR erst auf Owner-Okay.
 
 ---
 
-### Task 6: Baseline-Messung (Controller, kein Entwickler-Task)
+### Task 7: Baseline-Messung (Controller, kein Entwickler-Task)
 
-Nach Merge/Abnahme der Tasks 1–5 (oder auf dem Branch): Owner wählt vorab 8/16/24 Läufe (Vorschlag: 24 = 3 Eröffnungen × 8 Seeds, ca. 51 min, nie mehr als 8 parallel). Aufruf:
+Nach Merge/Abnahme der Tasks 1–5 (oder auf dem Branch): Owner wählt vorab 8/16/24 Läufe (Vorschlag: 24 = 3 Eröffnungen × 8 Seeds mit Frühabbruch bei Sol 20 ≈ 10–15 min statt ≈ 51 min; 12 parallel; K7 wird erst in der zweiten Messrunde als Volllauf gemessen). Aufruf:
 
 ```bash
-nohup php artisan game:playtest --profiles=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --concurrency=8 > <scratchpad>/t30_baseline.txt 2>&1 &
+nohup php artisan game:playtest --profiles=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --until-sol=20 --concurrency=12 > <scratchpad>/t30_baseline.txt 2>&1 &
 ```
 
 Danach `php artisan game:playtest-compare --profile=default --openings=labor,hangar,cantina` und die Ergebnistabelle samt K-Prüfung als Abschnitt „Baseline 2026-10-xx“ in die T30-Spec übernehmen (Messwerte, Seeds, Laufzeit; Annahmen der Spec aus Abschnitt 1/2 gegen die Messung bestätigen oder korrigieren — insbesondere die Annahme „Cantina-First hat ähnlichen Leerlauf wie Hangar-First“). Auf dem Rechner kein ressourcenhungriges Spiel nebenbei laufen lassen (verfälscht Laufzeiten).
