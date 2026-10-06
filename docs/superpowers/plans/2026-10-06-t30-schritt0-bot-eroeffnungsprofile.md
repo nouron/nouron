@@ -294,10 +294,10 @@ PR erst auf Owner-Okay.
 
 ### Task 7: Baseline-Messung (Controller, kein Entwickler-Task)
 
-Nach Merge/Abnahme der Tasks 1–5 (oder auf dem Branch): Owner wählt vorab 8/16/24 Läufe (Vorschlag: 24 = 3 Eröffnungen × 8 Seeds mit Frühabbruch bei Sol 20 ≈ 10–15 min statt ≈ 51 min; 12 parallel; K7 wird erst in der zweiten Messrunde als Volllauf gemessen). Aufruf:
+Nach Merge/Abnahme der Tasks 1–5 (oder auf dem Branch): Owner wählt vorab 8/16/24 Läufe (Vorschlag: 24 = 3 Eröffnungen × 8 Seeds mit Frühabbruch bei Sol 25 ≈ 10–15 min statt ≈ 51 min; 12 parallel; K7 wird erst in der zweiten Messrunde als Volllauf gemessen). Aufruf:
 
 ```bash
-nohup php artisan game:playtest --profiles=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --until-sol=20 --concurrency=12 > <scratchpad>/t30_baseline.txt 2>&1 &
+nohup php artisan game:playtest --profiles=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --until-sol=25 --concurrency=12 > <scratchpad>/t30_baseline.txt 2>&1 &
 ```
 
-Danach `php artisan game:playtest-compare --profile=default --openings=labor,hangar,cantina` und die Ergebnistabelle samt K-Prüfung als Abschnitt „Baseline 2026-10-xx“ in die T30-Spec übernehmen (Messwerte, Seeds, Laufzeit; Annahmen der Spec aus Abschnitt 1/2 gegen die Messung bestätigen oder korrigieren — insbesondere die Annahme „Cantina-First hat ähnlichen Leerlauf wie Hangar-First“). Auf dem Rechner kein ressourcenhungriges Spiel nebenbei laufen lassen (verfälscht Laufzeiten).
+Danach `php artisan game:playtest-compare --profile=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --since=<Startzeit des Batches>` (K-Definitionen und Abweichungen: Klassen-Docblock von `App\Support\OpeningComparison`) und die Ergebnistabelle samt K-Prüfung als Abschnitt „Baseline 2026-10-xx“ in die T30-Spec übernehmen (Messwerte, Seeds, Laufzeit; Annahmen der Spec aus Abschnitt 1/2 gegen die Messung bestätigen oder korrigieren — insbesondere die Annahme „Cantina-First hat ähnlichen Leerlauf wie Hangar-First“). Auf dem Rechner kein ressourcenhungriges Spiel nebenbei laufen lassen (verfälscht Laufzeiten).
