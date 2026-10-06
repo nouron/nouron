@@ -3,6 +3,8 @@
 Status: entworfen, Owner-Freigabe ausstehend
 Datum: 2026-08-14
 
+> Hinweis (2026-10-06): `BotProfile` hat zusätzlich die diskrete Dimension `opening` (auto/labor/hangar/cantina), siehe `docs/superpowers/specs/2026-10-05-t30-gleichwertige-eroeffnungen.md`.
+
 ## Kontext
 
 Heutige Phase-2-Pacing-Untersuchung fand: `task_credit_reserve` (Credits ≥ 3.000 für 10 aufeinanderfolgende Sole) wird vom Bot nie erreicht — nicht weil die Ökonomie kollabiert (das ist heute separat behoben, PR #248), sondern weil der Bot jeden Credits-Überschuss sofort für andere Regeln ausgibt (`accept_bar_offer`, `request_ship`), statt gezielt zu sparen, wenn genau dieses Objective gezogen wurde.

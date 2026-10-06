@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-06
+
+- Feat: T30 Schritt 0 — PlaytestBot-Eröffnungsprofile (`--openings`: Labor-/Hangar-/Cantina-First), Kurzläufe (`--until-sol`) und `game:playtest-compare` (Kennzahlen K1–K7, gepaart nach Seed). Report-Namen enthalten jetzt die Eröffnung; Baseline-Messung folgt (`docs/dev-setup-mysql.md`).
+
 ## 2026-10-05
 
 - Chore: R5b — MySQL-Portierung (ADR 0005): ein Dialekt in Entwicklung, CI und Produktion; Suite und CI laufen gegen MySQL, lokale Einrichtung nativ ohne Docker (`docs/dev-setup-mysql.md`). Fast-Suite seriell ca. 10 min (SQLite ca. 1,5), mit `--parallel --processes=4` ca. 3,5 min.
