@@ -934,7 +934,7 @@ class BotStrategy
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
         // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
         // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
-        // storage/logs/playtest/default-auto-4242-20260811_175942.json).
+        // storage/logs/playtest/{profile}-{opening}-{seed}-{Ymd_His}.json).
         //
         // is_colony_zone DESC first: a ring only has a handful of actual colony-zone
         // tiles (ColonyTileService::computeColonyZoneCoords(), e.g. 3 of 12 ring-2

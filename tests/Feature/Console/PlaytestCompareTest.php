@@ -146,25 +146,36 @@ class PlaytestCompareTest extends TestCase
         $this->assertMatchesRegularExpression('/K7\s*\|\s*nicht gemessen/', $out);
     }
 
-    public function test_warns_when_compared_runs_were_truncated_before_sol_20(): void
+    public function test_warns_when_compared_runs_were_truncated_before_sol_21(): void
     {
         foreach (['labor', 'hangar'] as $opening) {
             $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 12);
         }
 
         $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar'])
-            ->expectsOutputToContain('truncated before Sol 20')
+            ->expectsOutputToContain('truncated before Sol 21')
             ->assertExitCode(0);
     }
 
-    public function test_no_truncation_warning_at_sol_20_or_later(): void
+    public function test_no_truncation_warning_at_sol_21_or_later(): void
     {
         foreach (['labor', 'hangar'] as $opening) {
-            $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 20);
+            $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 21);
         }
 
         Artisan::call('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar']);
 
         $this->assertStringNotContainsString('truncated before', Artisan::output());
+    }
+
+    public function test_warns_at_exactly_sol_20_because_a_phase2_start_at_sol_20_is_invisible(): void
+    {
+        foreach (['labor', 'hangar'] as $opening) {
+            $this->writeReport('default', $opening, 1, '20261006_120000', 16, 'active', truncatedAt: 20);
+        }
+
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar'])
+            ->expectsOutputToContain('truncated before Sol 21')
+            ->assertExitCode(0);
     }
 }

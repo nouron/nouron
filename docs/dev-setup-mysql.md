@@ -123,16 +123,18 @@ Der Elternprozess braucht MySQL-Zugangsdaten aus `.env` oder der Umgebung. Solan
 ### Eröffnungen, Kurzläufe und Vergleich (T30)
 
 - `--openings=auto,labor,hangar,cantina` (Standard `auto`): jede Kombination aus Profil, Eröffnung und Seed ist ein eigener Lauf (Env `PLAYTEST_OPENING` im Kindprozess). Doppelte Werte in `--profiles`, `--openings` und `--seeds` werden verworfen. `labor`/`hangar`/`cantina` setzen das jeweilige Pfadgebäude zuerst; `auto` ist das bisherige Verhalten.
-- `--until-sol=N` (Env `PLAYTEST_UNTIL_SOL`): bricht den Lauf nach Sol N-1 ab, für Phase-1-Messläufe sinnvoll ab N ≥ 20. Abgebrochene Reports tragen `truncated_at_sol`.
+- `--until-sol=N` (Env `PLAYTEST_UNTIL_SOL`): bricht den Lauf nach Sol N-1 ab, für Phase-1-Messläufe sinnvoll ab N ≥ 21 (ein Phase-2-Start bei Sol N wäre unsichtbar). Abgebrochene Reports tragen `truncated_at_sol`.
 - Report-Dateien heißen `{profil}-{eröffnung}-{seed}-{Ymd_His}.json` (JSON-Feld `opening`). Alte Reports ohne Eröffnung im Namen werden vom Vergleich nicht mehr gefunden.
 - `game:playtest-compare --profile= --openings= --seeds= --since= --dir=` liest vorhandene Reports und vergleicht die Eröffnungen gepaart nach Seed anhand der Kennzahlen K1–K7 samt Schwellenprüfung. K7 braucht vollständige (nicht abgebrochene) Läufe und steht sonst auf „nicht gemessen“.
 
 Baseline-Messung (Phase 1, 8 Seeds, 12 parallel):
 
 ```
-php artisan game:playtest --profiles=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --until-sol=20 --concurrency=12
-php artisan game:playtest-compare --profile=default --openings=labor,hangar,cantina
+php artisan game:playtest --profiles=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --until-sol=25 --concurrency=12
+php artisan game:playtest-compare --profile=default --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --since=<Startzeit des Batches>
 ```
+
+`--until-sol=25` (≥ 21, Reserve für späte Phase-2-Starts). Definitionen und Abweichungen der Kennzahlen K1–K7: Klassen-Docblock von `App\Support\OpeningComparison`.
 
 ## Regel: Tests und Bot nie gegen `nouron`
 

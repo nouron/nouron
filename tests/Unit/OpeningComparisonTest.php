@@ -523,4 +523,19 @@ class OpeningComparisonTest extends TestCase
         $this->assertSame(1, $result['k7']['hangar']['runs']);
         $this->assertSame(1, $result['k7']['hangar']['truncated']);
     }
+
+    public function test_k3_null_of_truncated_runs_is_labelled_as_not_reached_by_cutoff(): void
+    {
+        $reports = [];
+        foreach (['labor', 'hangar'] as $opening) {
+            $r = $this->report($opening, 1, ['status' => 'active', 'sols' => 20, 'p2' => null]);
+            $r['truncated_at_sol'] = 20;
+            $reports[] = $r;
+        }
+
+        $detail = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare()['checks']['K3']['detail'];
+
+        $this->assertStringContainsString('nicht erreicht bis Cutoff', $detail);
+        $this->assertStringNotContainsString('never', $detail);
+    }
 }

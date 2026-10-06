@@ -69,8 +69,10 @@ namespace App\Support;
  * K7 is evaluated only over the full runs of an opening, so an opening with
  * mixed truncated and full runs has an asymmetric (smaller) K7 sample than the
  * other KPIs. If the reference or any compared opening has no full run at all,
- * K7 is 'nicht gemessen'. Truncation below Sol 20 (MIN_MEANINGFUL_TRUNCATION)
- * makes K3/K5/K6 unreliable (a run cut before its Phase-2 start has K3 = null).
+ * K7 is 'nicht gemessen'. Truncation below Sol 21 (MIN_MEANINGFUL_TRUNCATION)
+ * makes K3/K5/K6 unreliable: the Phase-2 start is only recorded by the snapshot after a
+ * Sol's actions and --until-sol=N plays Sols 0..N-1, so a start at Sol N is invisible
+ * (K3 = null; the corridor's upper edge is 20).
  * Per KPI and opening: median/min/max over non-null values (n, missing) and,
  * vs. the reference `labor`, the per-seed deltas (both values non-null).
  */
@@ -79,7 +81,7 @@ class OpeningComparison
     public const REFERENCE = 'labor';
 
     /** Below this --until-sol the Phase-1 KPIs (K3 Phase-2 start, K5 window to Sol 15, K6 Sol 10) are not meaningful. */
-    public const MIN_MEANINGFUL_TRUNCATION = 20;
+    public const MIN_MEANINGFUL_TRUNCATION = 21;
 
     public const FINISHED_STATUSES = ['completed', 'failed'];
 
@@ -241,6 +243,12 @@ class OpeningComparison
         ];
     }
 
+    /** "never" is only honest for full runs; a truncated run just did not get there before the cutoff. */
+    private static function neverLabel(array $k7Stats): string
+    {
+        return $k7Stats['truncated'] > 0 ? 'nicht erreicht bis Cutoff' : 'never';
+    }
+
     /** Finished = ended regularly (completed|failed) or deliberately stopped at --until-sol. */
     private static function isFinished(array $report): bool
     {
@@ -354,13 +362,13 @@ class OpeningComparison
             return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7'], $na('no paired seeds'));
         }
 
-        $perOpeningMax = function (string $k, int $max) use ($kpis): array {
+        $perOpeningMax = function (string $k, int $max) use ($kpis, $k7): array {
             $ok = true;
             $parts = [];
             foreach ($kpis[$k] as $opening => $s) {
                 $pass = $s['missing'] === 0 && $s['median'] !== null && $s['median'] <= $max;
                 $ok = $ok && $pass;
-                $parts[] = "{$opening} median ".self::fmt($s['median']).($s['missing'] ? " ({$s['missing']}x never)" : '');
+                $parts[] = "{$opening} median ".self::fmt($s['median']).($s['missing'] ? " ({$s['missing']}x ".self::neverLabel($k7[$opening]).')' : '');
             }
 
             $detail = implode('; ', $parts)." (target <= {$max})";
@@ -400,7 +408,7 @@ class OpeningComparison
             && min($medians) >= self::K3_CORRIDOR[0] && max($medians) <= self::K3_CORRIDOR[1];
         $k3parts = [];
         foreach ($kpis['k3'] as $opening => $s) {
-            $k3parts[] = "{$opening} median ".self::fmt($s['median']).($s['missing'] ? " ({$s['missing']}x never)" : '');
+            $k3parts[] = "{$opening} median ".self::fmt($s['median']).($s['missing'] ? " ({$s['missing']}x ".self::neverLabel($k7[$opening]).')' : '');
         }
 
         $k7check = $na('no reference opening');
