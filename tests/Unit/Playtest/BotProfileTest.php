@@ -46,4 +46,27 @@ class BotProfileTest extends TestCase
 
         BotProfile::named('nonexistent');
     }
+
+    public function test_opening_defaults_to_auto(): void
+    {
+        $this->assertSame('auto', BotProfile::named('default')->opening);
+    }
+
+    public function test_with_opening_keeps_all_other_dials(): void
+    {
+        $focus = BotProfile::named('focus');
+        $hangar = $focus->withOpening('hangar');
+
+        $this->assertSame('hangar', $hangar->opening);
+        $this->assertSame('focus', $hangar->name);
+        $this->assertSame($focus->savingsAggressiveness, $hangar->savingsAggressiveness);
+        $this->assertSame($focus->objectiveFocus, $hangar->objectiveFocus);
+        $this->assertSame('auto', $focus->opening, 'original must stay unchanged (readonly copy)');
+    }
+
+    public function test_unknown_opening_throws(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        BotProfile::named('default')->withOpening('forge');
+    }
 }

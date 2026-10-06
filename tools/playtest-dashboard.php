@@ -32,6 +32,7 @@ if (is_dir($reportDir)) {
             'file' => basename($path),
             'mtime' => filemtime($path),
             'profile' => $data['profile'] ?? 'default',
+            'opening' => $data['opening'] ?? 'auto', // absent in reports from before T30
             'seed' => $data['seed'],
             'outcome' => $data['outcome'] ?? ['status' => 'unknown'],
             'phase2_start_sol' => $data['phase2_start_sol'] ?? null,
@@ -143,7 +144,7 @@ function colorFor(run) {
 }
 
 function runLabel(run) {
-    return `${run.profile} · seed ${run.seed}`;
+    return `${run.profile}/${run.opening} · seed ${run.seed}`;
 }
 
 // ── Sidebar ──────────────────────────────────────────────────────────────
@@ -167,7 +168,7 @@ if (listEl) {
         const text = document.createElement('span');
         text.className = 'pd-run-label';
         const outcomeClass = run.outcome.status === 'completed' ? 'pd-run-outcome-completed' : 'pd-run-outcome-failed';
-        text.innerHTML = `<span class="pd-run-profile">${run.profile}</span> #${run.seed} <span class="${outcomeClass}">${run.outcome.status}</span>`;
+        text.innerHTML = `<span class="pd-run-profile">${run.profile}/${run.opening}</span> #${run.seed} <span class="${outcomeClass}">${run.outcome.status}</span>`;
         item.append(checkbox, swatch, text);
         listEl.appendChild(item);
 
@@ -308,7 +309,7 @@ function render() {
         const outcomeClass = run.outcome.status === 'completed' ? 'pd-outcome-completed' : 'pd-outcome-failed';
         const outcomeText = run.outcome.status === 'completed' ? 'completed' : `failed (${run.outcome.fail_reason || '?'})`;
         return `<tr>
-            <td>${run.profile}</td>
+            <td>${run.profile}/${run.opening}</td>
             <td>${run.seed}</td>
             <td class="${outcomeClass}">${outcomeText}</td>
             <td>${run.phase2_start_sol ?? '—'}</td>

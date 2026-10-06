@@ -50,6 +50,12 @@ trait PlaysSolLoop
         }
     }
 
+    /** Stop condition for playSolsUntil(): true once the run has reached the start of Sol $sol. */
+    private static function stopAtSol(int $sol): callable
+    {
+        return fn (BotSession $bot): bool => $bot->sol >= $sol;
+    }
+
     /**
      * @param  array<int, array{name:string, when:callable, do:callable}>  $rules
      */

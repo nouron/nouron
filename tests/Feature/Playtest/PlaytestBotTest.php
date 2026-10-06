@@ -47,17 +47,28 @@ class PlaytestBotTest extends TestCase
         $profile = self::resolveProfile();
         $bot = BotSession::boot($this, $seed);
         $rules = BotStrategy::default($profile);
-        $report = new RunReport($seed, $profile->name);
+        $report = new RunReport($seed, $profile->name, $profile->opening);
 
-        $this->playSolsUntil($bot, $rules, afterAction: fn (BotSession $b) => $report->snapshot($b));
-
-        $this->assertNotEquals(
-            'active',
-            $bot->status(),
-            'Run must end within tick_limit + 5 sols. Log tail: '.json_encode(array_slice($bot->log, -20))
+        // --until-sol N (env PLAYTEST_UNTIL_SOL): stop at the start of Sol N for short
+        // Phase-1 measurement runs; none = play the whole run as before.
+        $untilSol = self::resolveUntilSol();
+        $this->playSolsUntil(
+            $bot,
+            $rules,
+            $untilSol !== null ? self::stopAtSol($untilSol) : null,
+            afterAction: fn (BotSession $b) => $report->snapshot($b)
         );
 
-        $data = $report->build($bot);
+        $truncatedAt = $untilSol !== null && $bot->isActive() && $bot->sol >= $untilSol ? $untilSol : null;
+        if ($truncatedAt === null) {
+            $this->assertNotEquals(
+                'active',
+                $bot->status(),
+                'Run must end within tick_limit + 5 sols. Log tail: '.json_encode(array_slice($bot->log, -20))
+            );
+        }
+
+        $data = $report->build($bot, $truncatedAt);
         $path = $report->write($data);
         $report->printTable($data);
 
@@ -85,6 +96,8 @@ class PlaytestBotTest extends TestCase
     {
         putenv('PLAYTEST_SEED=1337');
         putenv('PLAYTEST_PROFILE=thrifty');
+        putenv('PLAYTEST_OPENING=cantina');
+        putenv('PLAYTEST_UNTIL_SOL=20');
 
         try {
             $seed = self::resolveSeed();
@@ -93,10 +106,15 @@ class PlaytestBotTest extends TestCase
             $this->assertSame(1337, $seed);
             $this->assertSame('thrifty', $profile->name);
             $this->assertSame(1.0, $profile->savingsAggressiveness);
+            $this->assertSame('cantina', $profile->opening);
+            $this->assertSame(20, self::resolveUntilSol());
         } finally {
             putenv('PLAYTEST_SEED');
             putenv('PLAYTEST_PROFILE');
+            putenv('PLAYTEST_OPENING');
+            putenv('PLAYTEST_UNTIL_SOL');
         }
+        $this->assertNull(self::resolveUntilSol());
     }
 
     /**
@@ -162,8 +180,16 @@ class PlaytestBotTest extends TestCase
         return (int) (getenv('PLAYTEST_SEED') ?: 4242);
     }
 
+    private static function resolveUntilSol(): ?int
+    {
+        $value = getenv('PLAYTEST_UNTIL_SOL');
+
+        return $value === false || $value === '' ? null : (int) $value;
+    }
+
     private static function resolveProfile(): BotProfile
     {
-        return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default');
+        return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default')
+            ->withOpening(getenv('PLAYTEST_OPENING') ?: 'auto');
     }
 }

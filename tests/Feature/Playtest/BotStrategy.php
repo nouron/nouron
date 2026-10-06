@@ -309,7 +309,7 @@ class BotStrategy
             ],
             [
                 'name' => 'place_building',
-                'when' => fn (BotSession $b) => self::placeCandidate($b),
+                'when' => fn (BotSession $b) => self::placeCandidate($b, $profile->opening),
                 'do' => function (BotSession $b, array $candidate) {
                     [$building, $tile] = $candidate;
 
@@ -934,7 +934,7 @@ class BotStrategy
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
         // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
         // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
-        // storage/logs/playtest/default-4242-20260811_175942.json).
+        // storage/logs/playtest/{profile}-{opening}-{seed}-{Ymd_His}.json).
         //
         // is_colony_zone DESC first: a ring only has a handful of actual colony-zone
         // tiles (ColonyTileService::computeColonyZoneCoords(), e.g. 3 of 12 ring-2
@@ -967,14 +967,143 @@ class BotStrategy
     }
 
     /**
+     * Path-building placement order of an opening (T30 step 0): the opening's own
+     * building first, the others in a fixed follow-up order. `auto` keeps the
+     * historic order.
+     *
+     * @return list<int> building ids (sciencelab 31, hangar 44, bar 52)
+     */
+    public static function pathBuildingOrder(string $opening): array
+    {
+        return match ($opening) {
+            'hangar' => [44, 31, 52],
+            'cantina' => [52, 31, 44],
+            default => [31, 44, 52], // auto, labor
+        };
+    }
+
+    /**
+     * Instance caps, the opening's path-building exclusion and the sort priority
+     * of the place_building candidates (pure — no DB access).
+     *
+     * @param  list<array>  $buildings  rows from /colony/buildings/available
+     * @param  array<int, int|string>  $placedCounts  building_id => placed instances
+     * @return list<array>
+     */
+    public static function orderPlacementCandidates(array $buildings, array $placedCounts, string $opening): array
+    {
+        // A37-Rest (2026-09-15): a lower sort priority alone doesn't reserve
+        // zone-tile headroom — Hangar/Housing are the only AFFORDABLE
+        // candidates early game (trust buildings below need compounds,
+        // which doesn't arrive until Sol 70-90), so they fill every one of
+        // the ~16 colony-zone tiles long before trust buildings ever
+        // compete, regardless of sort order. Owner confirmed the design
+        // intent is ~2-3 Hangar instances, not unlimited ("1 Hangar = 1
+        // Schiffslot" — uncapped in config, but not meant to be built
+        // without restraint) — so these are hard-EXCLUDED from the
+        // candidate list entirely once capped, reserving tiles for other
+        // building types rather than "lowest priority but still the only
+        // option".
+        $instanceCap = [44 => 2, 28 => 2]; // hangar, housingComplex
+        $buildings = array_values(array_filter($buildings, function (array $building) use ($instanceCap, $placedCounts) {
+            $id = (int) $building['building_id'];
+            $cap = $instanceCap[$id] ?? null;
+
+            return $cap === null || ($placedCounts[$id] ?? 0) < $cap;
+        }));
+
+        // T30: a non-auto opening commits to its own path building — until one
+        // stands, the other path buildings are not candidates at all (the bot
+        // waits instead of opening with a different path).
+        $pathIds = self::pathBuildingOrder($opening);       // sciencelab, hangar, bar
+        $pathPlaced = array_filter($pathIds, fn (int $id): bool => ($placedCounts[$id] ?? 0) > 0) !== [];
+        if ($opening !== 'auto' && ! $pathPlaced) {
+            $buildings = array_values(array_filter(
+                $buildings,
+                fn (array $building): bool => ! in_array((int) $building['building_id'], $pathIds, true)
+                    || (int) $building['building_id'] === $pathIds[0],
+            ));
+        }
+
+        // Sort priority (ascending key = higher priority):
+        //   key[0] = 0 for bioFacility (must be first — ramp gate),
+        //             1 for the next unplaced path building of the opening's order,
+        //             2 for the remaining unplaced path buildings (unlock advisor slots),
+        //             3 for trust buildings (infirmary/monument/temple/securityHub),
+        //             4 for everything else
+        //   key[1] = existing instance count (prefer new building types)
+        $nextPathId = null;
+        foreach ($pathIds as $pathId) {
+            if (($placedCounts[$pathId] ?? 0) === 0) {
+                $nextPathId = $pathId;
+                break;
+            }
+        }
+        $bioFacilityId = 41;
+        // A37-Folge (2026-09-14, task_colony_prosperity): the bot never placed
+        // ANY of these across every playtest report to date — "everything
+        // else, sorted by placed count" never singled them out among the
+        // whole non-path building catalog, so Trust plateaued at 17-20 (max
+        // theoretical with these built: ~45-55, see ROADMAP A37 write-up).
+        // Prioritized above generic buildings, below path/bioFacility —
+        // Trust is a real Phase-2 objective, not a nice-to-have.
+        $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
+
+        usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $nextPathId, $bioFacilityId, $trustBuildingIds) {
+            $priority = function (array $building) use ($pathIds, $nextPathId, $bioFacilityId, $trustBuildingIds, $placedCounts): int {
+                $id = (int) $building['building_id'];
+                // bioFacility is priority 0 only for its first (mandatory Ramp-Gate)
+                // instance — uncapped max_instances means it would otherwise always
+                // outrank the 95-Rg path buildings (70 < 95) and get re-built
+                // indefinitely, starving path-building progress forever regardless of
+                // starting Regolith (found empirically: got WORSE after the Sol-15-20
+                // pacing fix raised the starting stock 200→300, giving the bot even
+                // more headroom to keep affording bioFacility repeats).
+                if ($id === $bioFacilityId && ($placedCounts[$bioFacilityId] ?? 0) === 0) {
+                    return 0;
+                }
+                // A37-Rest continuation (2026-09-15): path priority used to
+                // apply unconditionally, not just to a path building's FIRST
+                // instance — but Hangar has uncapped max_instances (GDD
+                // "Hangar-Doppelachse"), so it kept winning every free
+                // colony-zone tile forever (found: 6 hangar instances built,
+                // zero trust buildings ever placed despite priority 2 and
+                // plenty of compounds — the zone tiles were gone before trust
+                // buildings got a turn). Same fix shape as bioFacility above:
+                // only the first instance of a path building (which is what
+                // actually unlocks its advisor slot) gets priority 1; repeats
+                // fall through to the normal tiers.
+                if (in_array($id, $pathIds, true) && ($placedCounts[$id] ?? 0) === 0) {
+                    return $id === $nextPathId ? 1 : 2;
+                }
+                if (in_array($id, $trustBuildingIds, true)) {
+                    return 3;
+                }
+
+                return 4;
+            };
+
+            $pa = $priority($a);
+            $pc = $priority($c);
+            if ($pa !== $pc) {
+                return $pa <=> $pc;
+            }
+
+            return ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0);
+        });
+
+        return array_values($buildings);
+    }
+
+    /**
      * @return array{0: array, 1: object}|null [building row from availableBuildings(), tile row]
      */
-    private static function placeCandidate(BotSession $b): ?array
+    private static function placeCandidate(BotSession $b, string $opening = 'auto'): ?array
     {
         // Heaviest rule in the set (one HTTP round-trip + one ResourcesService::check()
         // per candidate building) — memoized per BotSession until the next real action,
         // since nothing here can change while earlier rules keep failing their `when`.
-        return $b->remember('place_candidate', function () use ($b) {
+        return $b->remember('place_candidate', function () use ($b, $opening) {
             $available = $b->peek('/colony/buildings/available');
             $buildings = $available['body']['buildings'] ?? [];
 
@@ -985,85 +1114,8 @@ class BotStrategy
                 ->groupBy('building_id')
                 ->pluck('cnt', 'building_id');
 
-            // A37-Rest (2026-09-15): a lower sort priority alone doesn't reserve
-            // zone-tile headroom — Hangar/Housing are the only AFFORDABLE
-            // candidates early game (trust buildings below need compounds,
-            // which doesn't arrive until Sol 70-90), so they fill every one of
-            // the ~16 colony-zone tiles long before trust buildings ever
-            // compete, regardless of sort order. Owner confirmed the design
-            // intent is ~2-3 Hangar instances, not unlimited ("1 Hangar = 1
-            // Schiffslot" — uncapped in config, but not meant to be built
-            // without restraint) — so these are hard-EXCLUDED from the
-            // candidate list entirely once capped, reserving tiles for other
-            // building types rather than "lowest priority but still the only
-            // option".
-            $instanceCap = [44 => 2, 28 => 2]; // hangar, housingComplex
-            $buildings = array_values(array_filter($buildings, function (array $building) use ($instanceCap, $placedCounts) {
-                $id = (int) $building['building_id'];
-                $cap = $instanceCap[$id] ?? null;
-
-                return $cap === null || ($placedCounts[$id] ?? 0) < $cap;
-            }));
-
-            // Sort priority (ascending key = higher priority):
-            //   key[0] = 0 for bioFacility (must be first — ramp gate),
-            //             1 for path buildings (sciencelab/hangar/bar — unlock advisor slots),
-            //             2 for trust buildings (infirmary/monument/temple/securityHub),
-            //             3 for everything else
-            //   key[1] = existing instance count (prefer new building types)
-            $pathIds = [31, 44, 52];       // sciencelab, hangar, bar
-            $bioFacilityId = 41;
-            // A37-Folge (2026-09-14, task_colony_prosperity): the bot never placed
-            // ANY of these across every playtest report to date — "everything
-            // else, sorted by placed count" never singled them out among the
-            // whole non-path building catalog, so Trust plateaued at 17-20 (max
-            // theoretical with these built: ~45-55, see ROADMAP A37 write-up).
-            // Prioritized above generic buildings, below path/bioFacility —
-            // Trust is a real Phase-2 objective, not a nice-to-have.
-            $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
-
-            usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $bioFacilityId, $trustBuildingIds) {
-                $priority = function (array $building) use ($pathIds, $bioFacilityId, $trustBuildingIds, $placedCounts): int {
-                    $id = (int) $building['building_id'];
-                    // bioFacility is priority 0 only for its first (mandatory Ramp-Gate)
-                    // instance — uncapped max_instances means it would otherwise always
-                    // outrank the 95-Rg path buildings (70 < 95) and get re-built
-                    // indefinitely, starving path-building progress forever regardless of
-                    // starting Regolith (found empirically: got WORSE after the Sol-15-20
-                    // pacing fix raised the starting stock 200→300, giving the bot even
-                    // more headroom to keep affording bioFacility repeats).
-                    if ($id === $bioFacilityId && ($placedCounts[$bioFacilityId] ?? 0) === 0) {
-                        return 0;
-                    }
-                    // A37-Rest continuation (2026-09-15): path priority used to
-                    // apply unconditionally, not just to a path building's FIRST
-                    // instance — but Hangar has uncapped max_instances (GDD
-                    // "Hangar-Doppelachse"), so it kept winning every free
-                    // colony-zone tile forever (found: 6 hangar instances built,
-                    // zero trust buildings ever placed despite priority 2 and
-                    // plenty of compounds — the zone tiles were gone before trust
-                    // buildings got a turn). Same fix shape as bioFacility above:
-                    // only the first instance of a path building (which is what
-                    // actually unlocks its advisor slot) gets priority 1; repeats
-                    // fall through to the normal tiers.
-                    if (in_array($id, $pathIds, true) && ($placedCounts[$id] ?? 0) === 0) {
-                        return 1;
-                    }
-                    if (in_array($id, $trustBuildingIds, true)) {
-                        return 2;
-                    }
-
-                    return 3;
-                };
-
-                $pa = $priority($a);
-                $pc = $priority($c);
-                if ($pa !== $pc) {
-                    return $pa <=> $pc;
-                }
-
-                return ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0);
-            });
+            $pathIds = self::pathBuildingOrder($opening);
+            $buildings = self::orderPlacementCandidates($buildings, $placedCounts->all(), $opening);
 
             // Real cap/possession logic lives in ResourcesService — supply is CC level +
             // Housing count + knowledge bonus, not the flat user_resources.supply seed

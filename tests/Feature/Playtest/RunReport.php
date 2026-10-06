@@ -45,7 +45,7 @@ class RunReport
         'request_ship' => 'action',
     ];
 
-    public function __construct(private readonly int $seed, private readonly string $profile = 'default') {}
+    public function __construct(private readonly int $seed, private readonly string $profile = 'default', private readonly string $opening = 'auto') {}
 
     /**
      * Sums ap_before-ap_after for this Sol's log entries, grouped by
@@ -397,7 +397,7 @@ class RunReport
      *               actions:array, rejections:array, burnout:array, sols:array, log:array,
      *               project_metrics:array, regolith_path_attribution:array, zero_ap_sols:array}
      */
-    public function build(BotSession $bot): array
+    public function build(BotSession $bot, ?int $truncatedAtSol = null): array
     {
         $run = Run::findOrFail($bot->runId);
 
@@ -457,6 +457,9 @@ class RunReport
         return [
             'seed' => $this->seed,
             'profile' => $this->profile,
+            'opening' => $this->opening,
+            // Only set when the bot stopped at --until-sol N with the run still active.
+            ...($truncatedAtSol !== null ? ['truncated_at_sol' => $truncatedAtSol] : []),
             'outcome' => [
                 'status' => $run->status,
                 'fail_reason' => $run->fail_reason,
@@ -500,7 +503,7 @@ class RunReport
             mkdir($dir, 0755, true);
         }
 
-        $path = "{$dir}/{$this->profile}-{$this->seed}-".now()->format('Ymd_His').'.json';
+        $path = "{$dir}/{$this->profile}-{$this->opening}-{$this->seed}-".now()->format('Ymd_His').'.json';
         file_put_contents($path, json_encode($report, JSON_PRETTY_PRINT));
 
         return $path;
@@ -509,9 +512,10 @@ class RunReport
     public function printTable(array $report): void
     {
         fwrite(STDERR, sprintf(
-            "\n[playtest] seed=%d profile=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
+            "\n[playtest] seed=%d profile=%s opening=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
             $report['seed'],
             $report['profile'],
+            $report['opening'] ?? 'auto',
             $report['outcome']['status'],
             $report['outcome']['fail_reason'] ?? '-',
             $report['outcome']['sols'],
