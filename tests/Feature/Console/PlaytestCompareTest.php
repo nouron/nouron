@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
@@ -76,9 +77,23 @@ class PlaytestCompareTest extends TestCase
         $this->writeReport('default', 'labor', 1, '20261006_120000', 16);
         $this->writeReport('default', 'hangar', 1, '20261006_120000', 25);
 
-        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar'])
-            ->expectsOutputToContain('verfehlt')
-            ->assertExitCode(0);
+        $exit = Artisan::call('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar']);
+
+        $this->assertSame(0, $exit);
+        // K3 row: medians 16 vs 25 -> spread 9 > 2 and 25 outside 15-20.
+        $this->assertMatchesRegularExpression('/K3\s*\|\s*verfehlt\s*\|\s*labor median 16; hangar median 25/', Artisan::output());
+    }
+
+    public function test_seed_filter_matches_exactly(): void
+    {
+        foreach (['labor', 'hangar', 'cantina'] as $opening) {
+            $this->writeReport('default', $opening, 1, '20261006_120000', 16);
+            $this->writeReport('default', $opening, 11, '20261006_120000', 16);
+        }
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir, '--seeds' => '1']);
+
+        $this->assertStringContainsString("Paired seeds: 1\n", Artisan::output());
     }
 
     public function test_seeds_and_since_filter_reports(): void

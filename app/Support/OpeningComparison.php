@@ -10,13 +10,17 @@ namespace App\Support;
  * Pure functions on decoded RunReport::build() arrays — no DB, no files.
  *
  * Report fields used: `opening`, `seed`, `outcome.{status,sols}`,
- * `phase2_start_sol`, `log[]` ({sol, rule, ok}) and per-Sol snapshots in
- * `sols[]` ({sol, regolith, ap.inflow, ap_unspent, regolith_sources,
+ * `phase2_start_sol`, `log[]` ({sol, rule, ok, regolith_after}) and per-Sol
+ * snapshots in `sols[]` ({sol, trust, ap.inflow, ap_unspent, regolith_sources,
  * buildings["<building_id>:<instance>"].level, researches[id].level}).
  * A snapshot for Sol N is taken after the bot acted in Sol N, before the tick.
+ * BotSession::nextSol() increments the Sol first and then logs `sol_next`, so
+ * the ok `sol_next` entry with sol N carries the start-of-Sol-N balances.
  *
  * Path building per opening: labor = Sciencelab (31), hangar = Hangar (44),
- * cantina = Bar (52); `auto` uses whichever of the three reached level 1 first.
+ * cantina = Bar (52); `auto` uses whichever of the three reached level 1 first
+ * (if two reach Lv1 in the same Sol, the constant order labor > hangar >
+ * cantina decides).
  * "Lv1 Sol" = first snapshot Sol in which that building has level >= 1.
  *
  * Path actions (successful log entries, rule names from BotStrategy):
@@ -35,9 +39,11 @@ namespace App\Support;
  *    from the opening's own path, minus the Lv1 Sol. Yield = labor: any
  *    knowledge at level >= 1 (each knowledge level grants Supply/Trust/
  *    production, e.g. geology +Rg); hangar: regolith_sources.mission > 0;
- *    cantina: regolith_sources.trade > 0. Credits are not Phase-1-relevant
- *    (spec 1.7) and Trust/AP gains are not attributable per source in the
- *    report, so they are not counted. null if never.
+ *    cantina: regolith_sources.trade > 0, OR a Sol with a successful cantina
+ *    path action in which the snapshot's trust rose versus the previous
+ *    snapshot. Credits and AP are not counted (credits are not
+ *    Phase-1-relevant per spec 1.7; AP gains are not attributable per source).
+ *    null if never.
  *  - K3 (?int): phase2_start_sol; null if Phase 2 was never reached.
  *  - K4 (float): sum of ap_unspent over the snapshots of Sols 4-12 that exist.
  *    The spec's second part ("pure exploration AP after the map is fully
@@ -49,7 +55,10 @@ namespace App\Support;
  *    focus_trust_building; path = any opening's path actions). ap.inflow is the
  *    denominator because the report's ap.total equals ap_unspent (kept for
  *    backward compatibility, see RunReport::snapshot()).
- *  - K6 (?int): regolith in the Sol-10 snapshot; null if the run has none.
+ *  - K6 (?int): regolith at the START of Sol 10 = regolith_after of the ok
+ *    `sol_next` log entry with sol 10 (before any Sol-10 action; the Sol-10
+ *    snapshot would already include Sol-10 builds). null if there is none
+ *    (run ended earlier).
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs (status completed|failed) count; a seed is
@@ -75,6 +84,13 @@ class OpeningComparison
         'cantina' => ['accept_bar_offer', 'accept_bar_encounter', 'resolve_bar_concern', 'resolve_information_encounter'],
     ];
 
+    /** Human-readable K2 yield definition per path (shown in the K2 check detail). */
+    private const YIELD_LABELS = [
+        'labor' => 'first knowledge level>=1',
+        'hangar' => 'first mission Rg',
+        'cantina' => 'trade Rg or trust rise',
+    ];
+
     private const BUILD_RULES = [
         'place_building', 'place_agrardom', 'place_harvester_instance2', 'invest_production', 'invest_cc',
         'relocate_harvester', 'focus_engineering_levelup', 'focus_trust_building',
@@ -89,7 +105,7 @@ class OpeningComparison
 
     public const K3_MAX_SPREAD = 2;
 
-    /** 15 % of the Sol 4-12 AP inflow (spec: ~20 AP). */
+    /** Spec: 15 % of the Sol 4-12 AP inflow, ~20 AP; could be derived from the measured inflow instead. */
     public const K4_MAX_DELTA = 20;
 
     public const K5_MAX = 2;
@@ -148,8 +164,22 @@ class OpeningComparison
                     break;
                 }
             }
+            $pathActionSols = [];
+            foreach ($log as $entry) {
+                if (in_array($entry['rule'], self::PATH_RULES[$path], true)) {
+                    $pathActionSols[$entry['sol']] = true;
+                }
+            }
+            $previousTrust = null;
             foreach ($sols as $snapshot) {
-                if ($snapshot['sol'] >= $lv1Sol && self::hasPathYield($path, $snapshot)) {
+                $trust = $snapshot['trust'] ?? null;
+                $trustRose = $trust !== null && $previousTrust !== null && $trust > $previousTrust;
+                $previousTrust = $trust;
+                if ($snapshot['sol'] < $lv1Sol) {
+                    continue;
+                }
+                if (self::hasPathYield($path, $snapshot)
+                    || ($path === 'cantina' && $trustRose && isset($pathActionSols[$snapshot['sol']]))) {
                     $k2 = $snapshot['sol'] - $lv1Sol;
                     break;
                 }
@@ -177,8 +207,11 @@ class OpeningComparison
             if ($sol >= 4 && $sol <= 15 && $inflow > 0 && $unspent * 2 >= $inflow && ! isset($activeSols[$sol])) {
                 $k5++;
             }
-            if ($sol === 10) {
-                $k6 = (int) $snapshot['regolith'];
+        }
+        foreach ($log as $entry) {
+            if ($entry['rule'] === 'sol_next' && $entry['sol'] === 10 && isset($entry['regolith_after'])) {
+                $k6 = (int) $entry['regolith_after'];
+                break;
             }
         }
 
@@ -283,8 +316,16 @@ class OpeningComparison
 
     /**
      * One status per criterion: 'ok', 'verfehlt', or 'n/a' (not evaluable,
-     * e.g. no paired seeds or no reference opening). A KPI that some run
-     * never reached (missing > 0) fails K1-K3 — "never" is the worst value.
+     * e.g. no paired seeds or no reference opening). Rules (spec 2.1):
+     *  - K1 / K2 / K5: per opening, median <= 1 / <= 3 / <= 2 Sols; for K1/K2
+     *    a run that never reached the event (missing > 0) fails — "never" is
+     *    the worst value, not a gap to ignore.
+     *  - K3: all medians present (no missing), spread of the per-opening
+     *    medians <= 2 Sols and every median within the corridor 15-20.
+     *  - K4 / K6: compared against the reference `labor` only: |median of the
+     *    per-seed deltas| <= 20 AP / <= 25 Rg.
+     *  - K7: against `labor` only: |win-rate difference| <= 10 pp and, if both
+     *    sides have wins, |median win-Sol difference| <= 3.
      */
     private function checks(array $paired, array $kpis, array $k7, bool $hasReference): array
     {
@@ -302,7 +343,15 @@ class OpeningComparison
                 $parts[] = "{$opening} median ".self::fmt($s['median']).($s['missing'] ? " ({$s['missing']}x never)" : '');
             }
 
-            return ['status' => $ok ? 'ok' : 'verfehlt', 'detail' => implode('; ', $parts)." (target <= {$max})"];
+            $detail = implode('; ', $parts)." (target <= {$max})";
+            if ($k === 'k2') {
+                $detail .= ' — counted yields: '.implode('; ', array_map(
+                    fn ($path) => "{$path}: ".self::YIELD_LABELS[$path],
+                    array_keys(self::YIELD_LABELS),
+                ));
+            }
+
+            return ['status' => $ok ? 'ok' : 'verfehlt', 'detail' => $detail];
         };
 
         $deltaMax = function (string $k, int $max) use ($kpis, $hasReference, $na): array {

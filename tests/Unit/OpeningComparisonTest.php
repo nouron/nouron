@@ -24,6 +24,9 @@ class OpeningComparisonTest extends TestCase
      *  - research_lv1: Sol from which a knowledge has level 1
      *  - mission: [sol => regolith from missions], trade: [sol => regolith from trade]
      *  - regolith: [sol => regolith] (default 50)
+     *  - sol_next: [sol => regolith_after] of the ok 'sol_next' log entry (start-of-Sol balance)
+     *  - trust: [sol => trust] (default 2)
+     *  - building: path building id override, also: [building_id => lv1 Sol] extra buildings
      *  - p2, status, sols, last
      */
     private function report(string $opening, int $seed, array $o = []): array
@@ -35,8 +38,10 @@ class OpeningComparisonTest extends TestCase
         $sols = [];
         for ($s = 1; $s <= $last; $s++) {
             $buildings = ['25:1' => ['level' => 2, 'ap_spend' => 0]];
-            if ($lv1 !== null && $s >= $lv1 - 1) {
-                $buildings["{$building}:1"] = ['level' => $s >= $lv1 ? 1 : 0, 'ap_spend' => 0];
+            foreach (($lv1 !== null ? [($o['building'] ?? $building) => $lv1] : []) + ($o['also'] ?? []) as $id => $at) {
+                if ($s >= $at - 1) {
+                    $buildings["{$id}:1"] = ['level' => $s >= $at ? 1 : 0, 'ap_spend' => 0];
+                }
             }
             $researches = [];
             if (isset($o['research_lv1'])) {
@@ -46,6 +51,7 @@ class OpeningComparisonTest extends TestCase
             $sols[] = [
                 'sol' => $s,
                 'regolith' => $o['regolith'][$s] ?? 50,
+                'trust' => $o['trust'][$s] ?? 2,
                 'credits' => 2000,
                 'ap' => ['total' => $unspent, 'inflow' => 16, 'repair_spent' => 0, 'project_spent' => 0, 'action_spent' => 16 - $unspent, 'unspent' => $unspent],
                 'ap_unspent' => $unspent,
@@ -67,6 +73,9 @@ class OpeningComparisonTest extends TestCase
         $log = [];
         foreach ($o['log'] ?? [] as [$sol, $rule, $ok]) {
             $log[] = ['sol' => $sol, 'rule' => $rule, 'ok' => $ok, 'error' => $ok ? null : 'rejected'];
+        }
+        foreach ($o['sol_next'] ?? [] as $sol => $regolithAfter) {
+            $log[] = ['sol' => $sol, 'rule' => 'sol_next', 'ok' => true, 'error' => null, 'regolith_before' => $regolithAfter - 16, 'regolith_after' => $regolithAfter];
         }
 
         return [
@@ -121,6 +130,22 @@ class OpeningComparisonTest extends TestCase
         $this->assertNull(OpeningComparison::metrics($noAction)['k1']);
     }
 
+    public function test_auto_uses_the_path_building_that_reaches_level1_first(): void
+    {
+        // auto, Hangar Lv1 at Sol 3, Sciencelab only at Sol 6: hangar path -> request_ship Sol 4 -> 1.
+        $r = $this->report('auto', 1, ['lv1' => 3, 'building' => 44, 'also' => [31 => 6], 'log' => [[4, 'request_ship', true], [6, 'research_knowledge', true]]]);
+
+        $this->assertSame(1, OpeningComparison::metrics($r)['k1']);
+    }
+
+    public function test_auto_tie_in_same_sol_resolves_to_labor(): void
+    {
+        // Hangar and Sciencelab both Lv1 at Sol 3: labor wins by constant order -> research Sol 5 -> 2.
+        $r = $this->report('auto', 1, ['lv1' => 3, 'building' => 44, 'also' => [31 => 3], 'log' => [[3, 'request_ship', true], [5, 'research_knowledge', true]]]);
+
+        $this->assertSame(2, OpeningComparison::metrics($r)['k1']);
+    }
+
     // --- K2 -------------------------------------------------------------
 
     public function test_k2_labor_is_first_knowledge_level_minus_level1_sol(): void
@@ -140,6 +165,27 @@ class OpeningComparisonTest extends TestCase
 
         $this->assertSame(6, OpeningComparison::metrics($hangar)['k2']);
         $this->assertSame(2, OpeningComparison::metrics($cantina)['k2']);
+    }
+
+    public function test_k2_cantina_counts_trust_rise_in_a_sol_with_bar_action(): void
+    {
+        // Bar Lv1 Sol 4. Sol 5: trust rises (2 -> 3) without a bar action -> no.
+        // Sol 6: bar action without trust rise (3 -> 3) -> no.
+        // Sol 7: accept_bar_encounter and trust 3 -> 5 -> yield, 7 - 4 = 3.
+        $r = $this->report('cantina', 1, [
+            'lv1' => 4,
+            'trust' => [5 => 3, 6 => 3, 7 => 5, 8 => 5, 9 => 5, 10 => 5, 11 => 5, 12 => 5, 13 => 5, 14 => 5, 15 => 5],
+            'log' => [[6, 'accept_bar_offer', true], [7, 'accept_bar_encounter', true]],
+        ]);
+
+        $this->assertSame(3, OpeningComparison::metrics($r)['k2']);
+    }
+
+    public function test_k2_trust_rise_does_not_count_for_hangar(): void
+    {
+        $r = $this->report('hangar', 1, ['lv1' => 3, 'trust' => [5 => 6], 'log' => [[5, 'request_ship', true]]]);
+
+        $this->assertNull(OpeningComparison::metrics($r)['k2']);
     }
 
     public function test_k2_is_null_when_no_path_yield_ever(): void
@@ -194,18 +240,31 @@ class OpeningComparisonTest extends TestCase
         $this->assertSame(3, OpeningComparison::metrics($r)['k5']);
     }
 
+    public function test_k5_window_includes_sol_15_but_not_sol_16(): void
+    {
+        $r = $this->report('labor', 1, ['last' => 17, 'unspent' => [15 => 10, 16 => 10]]);
+
+        $this->assertSame(1, OpeningComparison::metrics($r)['k5']);
+    }
+
     // --- K6 -------------------------------------------------------------
 
-    public function test_k6_is_regolith_in_sol_10_snapshot(): void
+    public function test_k6_is_regolith_at_start_of_sol_10_from_sol_next_entry(): void
     {
-        $r = $this->report('labor', 1, ['regolith' => [9 => 60, 10 => 77, 11 => 90]]);
+        // sol_next into Sol 10 leaves 63 Rg; a build placed during Sol 10 drops the
+        // Sol-10 snapshot to 20 — K6 must report the start-of-Sol value 63.
+        $r = $this->report('labor', 1, [
+            'sol_next' => [9 => 47, 10 => 63, 11 => 40],
+            'regolith' => [9 => 47, 10 => 20, 11 => 40],
+            'log' => [[10, 'place_building', true]],
+        ]);
 
-        $this->assertSame(77, OpeningComparison::metrics($r)['k6']);
+        $this->assertSame(63, OpeningComparison::metrics($r)['k6']);
     }
 
     public function test_k6_is_null_not_zero_when_run_ended_before_sol_10(): void
     {
-        $r = $this->report('labor', 1, ['last' => 8, 'sols' => 8]);
+        $r = $this->report('labor', 1, ['last' => 8, 'sols' => 8, 'sol_next' => [7 => 40, 8 => 56]]);
 
         $this->assertNull(OpeningComparison::metrics($r)['k6']);
     }
@@ -227,14 +286,14 @@ class OpeningComparisonTest extends TestCase
      * Seeds 1 and 2 are finished in all three openings. Seed 3 lacks cantina,
      * seed 4 has an unfinished (status active) cantina run.
      */
-    private function batch(array $p2 = ['labor' => [16, 18], 'hangar' => [19, 21], 'cantina' => [17, 19]]): array
+    private function batch(array $p2 = ['labor' => [16, 18], 'hangar' => [19, 21], 'cantina' => [17, 19]], array $extra = []): array
     {
         $reports = [];
         foreach (['labor', 'hangar', 'cantina'] as $opening) {
             foreach ([1, 2] as $i => $seed) {
-                $reports[] = $this->report($opening, $seed, [
+                $reports[] = $this->report($opening, $seed, ($extra[$opening] ?? []) + [
                     'p2' => $p2[$opening][$i],
-                    'regolith' => [10 => ['labor' => [100, 80], 'hangar' => [70, 60], 'cantina' => [95, 85]][$opening][$i]],
+                    'sol_next' => [10 => ['labor' => [100, 80], 'hangar' => [70, 60], 'cantina' => [95, 85]][$opening][$i]],
                     'status' => $opening === 'labor' && $seed === 1 ? 'completed' : 'failed',
                     'sols' => $opening === 'labor' && $seed === 1 ? 40 : 100,
                 ]);
@@ -312,5 +371,30 @@ class OpeningComparisonTest extends TestCase
 
         // Medians 17 / 18 / 17.5, all in 15-20, spread 1.
         $this->assertSame('ok', $checks['K3']['status']);
+    }
+
+    public function test_k4_check_flags_delta_above_20_ap(): void
+    {
+        $this->assertSame('ok', OpeningComparison::fromReports($this->batch())->compare()['checks']['K4']['status']);
+
+        // Hangar leaves 30 instead of 2 AP unspent in Sol 4 -> delta +28 per seed > 20.
+        $checks = OpeningComparison::fromReports($this->batch(extra: ['hangar' => ['unspent' => [4 => 30]]]))->compare()['checks'];
+        $this->assertSame('verfehlt', $checks['K4']['status']);
+    }
+
+    public function test_k2_check_states_counted_yields_and_passes_within_3_sols(): void
+    {
+        $failed = OpeningComparison::fromReports($this->batch())->compare()['checks']['K2'];
+        $this->assertSame('verfehlt', $failed['status']);
+        $this->assertStringContainsString('labor: first knowledge level>=1', $failed['detail']);
+        $this->assertStringContainsString('hangar: first mission Rg', $failed['detail']);
+        $this->assertStringContainsString('cantina: trade Rg or trust rise', $failed['detail']);
+
+        $checks = OpeningComparison::fromReports($this->batch(extra: [
+            'labor' => ['lv1' => 3, 'research_lv1' => 5],
+            'hangar' => ['lv1' => 3, 'mission' => [6 => 20]],
+            'cantina' => ['lv1' => 3, 'trade' => [4 => 5]],
+        ]))->compare()['checks'];
+        $this->assertSame('ok', $checks['K2']['status']);
     }
 }
