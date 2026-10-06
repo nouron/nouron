@@ -158,13 +158,6 @@ class BotStrategyOpeningTest extends TestCase
         return array_values(array_intersect(array_column($ordered, 'building_id'), [31, 44, 52]));
     }
 
-    private function firstCandidateIdWithOnlyLaborAffordable(BotSession $bot, string $opening): ?int
-    {
-        DB::table('user_resources')->where('user_id', $bot->userId)->update(['credits' => 60]);
-
-        return $this->firstCandidateId($bot, $opening);
-    }
-
     private function firstCandidateId(BotSession $bot, string $opening): ?int
     {
         // The candidate is memoized per BotSession until the next logged action; the

@@ -64,7 +64,7 @@ class Playtest extends Command
             return self::FAILURE;
         }
 
-        $openings = array_filter(array_map('trim', explode(',', (string) $this->option('openings'))));
+        $openings = array_unique(array_filter(array_map('trim', explode(',', (string) $this->option('openings')))));
         $unknown = array_diff($openings, BotProfile::OPENINGS);
         if ($openings === [] || $unknown !== []) {
             $this->error('Unknown opening(s): '.implode(', ', $unknown ?: ['(none)']).'. Allowed: '.implode(', ', BotProfile::OPENINGS));
@@ -91,8 +91,8 @@ class Playtest extends Command
             return self::FAILURE;
         }
 
-        $profiles = array_filter(array_map('trim', explode(',', (string) $this->option('profiles'))));
-        $seeds = array_filter(array_map('trim', explode(',', (string) $this->option('seeds'))));
+        $profiles = array_unique(array_filter(array_map('trim', explode(',', (string) $this->option('profiles')))));
+        $seeds = array_unique(array_filter(array_map('trim', explode(',', (string) $this->option('seeds')))));
         $concurrency = max(1, (int) $this->option('concurrency'));
 
         $combos = [];

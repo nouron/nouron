@@ -508,8 +508,8 @@ class OpeningComparisonTest extends TestCase
         $reports = [];
         foreach (['labor', 'hangar'] as $opening) {
             $reports[] = $this->report($opening, 1, ['status' => 'completed', 'sols' => 40, 'p2' => 16]);
-            $t = $this->report($opening, 2, ['status' => 'active', 'sols' => 20, 'p2' => 16]);
             if ($opening === 'hangar') {
+                $t = $this->report($opening, 2, ['status' => 'active', 'sols' => 20, 'p2' => 16]);
                 $t['truncated_at_sol'] = 20;
             } else {
                 $t = $this->report($opening, 2, ['status' => 'completed', 'sols' => 40, 'p2' => 16]);

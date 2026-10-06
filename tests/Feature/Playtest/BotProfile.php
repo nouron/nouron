@@ -37,6 +37,7 @@ final class BotProfile
         }
     }
 
+    /** NOTE: when adding a new dial to the constructor, copy it here too. */
     public function withOpening(string $opening): self
     {
         return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $opening);

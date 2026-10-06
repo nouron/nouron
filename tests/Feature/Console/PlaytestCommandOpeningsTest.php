@@ -76,6 +76,16 @@ class PlaytestCommandOpeningsTest extends TestCase
         Process::assertRanTimes(fn (PendingProcess $p) => $p->environment['PLAYTEST_OPENING'] === 'hangar', 1);
     }
 
+    public function test_duplicate_profiles_openings_and_seeds_start_one_child_per_distinct_combination(): void
+    {
+        Process::fake();
+        $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldReceive('reset')->once()->andReturn('nouron_playtest'));
+
+        $this->artisan('game:playtest', ['--profiles' => 'default,default', '--openings' => 'labor,labor', '--seeds' => '1,1', '--concurrency' => 2]);
+
+        Process::assertRanTimes(fn (PendingProcess $p) => true, 1);
+    }
+
     public function test_default_opening_is_auto(): void
     {
         Process::fake();
