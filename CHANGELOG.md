@@ -10,6 +10,7 @@
 - Chore: Baseline gehärtet — View `v_glx_colonies` mit `SQL SECURITY INVOKER`, Indizes auf `bar_offers`/`bar_encounters`/`locked_actionpoints`, Primärschlüssel für `building_costs`/`colony_buildings`; Run-Seed in `GameTick` per `RunSeed::reduce` (kein Overflow), Registrierungs-Log ohne SQL.
 - Chore: Dev-Panel (`tools/dev-panel.php`) nutzt die Laravel-DB (MySQL); SQLite-Altlasten entfernt (`composer.phar`, leere `nouron.db.sqlite`, `data/db/`). Parallele Tests: `migrate:fresh`-Tests laufen in der Worker-DB, zwei Tests ohne Schema-Refresh repariert (erste CI auf MySQL); `--processes=8` ca. 2,2 min statt 9,5 min seriell.
 - Fix: Hangar-First — der Hint „Raumfahrer anheuern“ erscheint erst, wenn ein Schiff angekommen ist (vorher direkt nach dem Hangar-Bau). Missionskarten zeigen den Ertrag jetzt als eigene Zeile, abgeleitet aus `config/missions.php` (die alten Lang-Texte waren nach der Credits-Anhebung veraltet).
+- Fix: Onboarding-Hints — der Hint „Kommandozentrale auf Level 2 ausbauen“ erschien nie (verlangte ein Pfadgebäude, das erst ab CC Lv2 baubar ist), und die Pfadgebäude-Hints zeigten schon bei CC Lv1 auf noch nicht baubare Gebäude; beides korrigiert. Der Erkundungs-Hint nennt jetzt die echten AP-Kosten pro Ring (2/3 statt „1 AP“) aus der Config. `game-reference.md`: Start-Regolith 300, Frachter/Drohne Hangar-Level korrigiert.
 
 ## 2026-10-02
 

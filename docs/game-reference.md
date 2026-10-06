@@ -11,7 +11,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 |---|---|---|---|---|---|
 | 1 | `credits` | Credits | User | Nein | 3000 |
 | 2 | `supply` | Versorgung | User | Nein | 10 |
-| 3 | `regolith` | Regolith | Kolonie | **Ja** | 200 |
+| 3 | `regolith` | Regolith | Kolonie | **Ja** | 300 (`game.onboarding.start_regolith`) |
 | 4 | `compounds` | Werkstoffe | Kolonie | **Ja** | 0 |
 | 5 | `organics` | Organika | Kolonie | **Ja** | 0 |
 | 12 | `trust` | Vertrauen | Kolonie | Nein | 0 |
@@ -121,8 +121,8 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 | Schiff | Supply-Kosten | Max SP | Decay-Rate | Hangar-Gate | Stärkewert |
 |---|---|---|---|---|---|
-| **Drohne** | 0 | ? | ? | Nein | 0 |
-| **Frachter** | 0 | ? | ? | Ja (Hangar Lv1) | 0 |
+| **Drohne** | 0 | ? | ? | Ja (Hangar Lv1) | 0 |
+| **Frachter** | 0 | ? | ? | Ja (Hangar Lv2) | 0 |
 | **Korvette** | 0 | ? | ? | Ja (Hangar Lv3) | 3 |
 
 > **Supply-Kosten**: alle Schiffe 0 — Schiffe verbrauchen kein Supply (Design-Entscheidung 2026-06-08, der Schlüssel `supply_cost` existiert für Schiffe nicht mehr)
