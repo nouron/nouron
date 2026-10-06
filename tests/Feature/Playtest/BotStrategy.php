@@ -1414,15 +1414,8 @@ class BotStrategy
      */
     private static function researchCandidate(BotSession $b): ?int
     {
-        // Same Rg-buffer logic as productionInvestCandidate.
-        $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
-        if ($activeAdvisors < 3) {
-            $needed = self::cheapestPendingPathBuildingCost($b);
-            if ($needed !== null && self::regolith($b) < $needed) {
-                return null;
-            }
-        }
-
+        // No Rg-buffer: knowledge research costs AP only (config/knowledge.php), so
+        // holding it back for path-building Regolith just idles the Sciencelab (T30).
         return self::researchOptions($b)['candidate'];
     }
 
@@ -1448,8 +1441,8 @@ class BotStrategy
 
     /**
      * The knowledge research could take right now, and whether any knowledge is
-     * held back only by the CC gate (game.knowledge_cc_level_cap). Ignores the
-     * path-building Regolith buffer — that's researchCandidate()'s concern.
+     * held back only by the CC gate (game.knowledge_cc_level_cap).
+     * Not Regolith-buffered: research costs AP only.
      *
      * @return array{candidate: int|null, cc_blocked: bool}
      */
