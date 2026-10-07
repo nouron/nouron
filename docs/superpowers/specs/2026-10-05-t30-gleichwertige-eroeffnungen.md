@@ -318,7 +318,7 @@ Gelesen aus den Berichten (Stichprobe je Eröffnung Seed 1; die Mediane aus 9.1 
 
 **Beispiel Labor, Seed 1 (Messwert):** Zufluss Sol 4–15 = 191 AP. Davon Bau/Projekte 43 (Sol 7: 10, Sol 14: 14, Sol 15: 19), Erkunden 23 (nur Sol 4–5), Reparatur ca. 11, **ungenutzt 114 (rund 60 %)**. Ab Sol 5 liegt der Tagesrest bei 13–16 AP von 14–16 Zufluss, also nahezu 100 % ungenutzt, bis Sol 13. Sol 14 bis 25 sind dagegen voll ausgelastet (Rest 0).
 **Hangar, Seed 1:** gleiches Bild, Restmenge 13–15 AP/Sol in Sol 6–13. Die einzigen pfadspezifischen Ausgaben sind drei Flüge zu je 2 AP (Sol 8, 10, 12).
-**Cantina, Seed 1:** Sol 6–14 **keine einzige Aktion**, Rest 14–17 AP/Sol. Es kam in diesem Lauf kein Cantina-Ereignis zur Ausführung (Stichprobe, nicht belegt für alle Seeds).
+**Cantina, Seed 1:** ab Sol 8 kaum noch Aktionen (nur Reparatur, Bar-Aktionen ohne AP-Kosten), Rest 13–17 AP/Sol. Ursachen laut Log: Regolith-Puffer für das zweite Pfadgebäude hält alle Regolith-Schritte zurück, dritter Berater erst Sol 16, Erkundung ab Sol 5 leer (Stichprobe Seed 1, nicht belegt für alle Seeds).
 
 **Wohin der Zufluss wirklich fließt (Messwerte aus dem Log, Labor Seed 1):**
 - Sol 0–1: fast alles in CC-Ausbau und Platzieren (Rg-Kette), Sol 2: Verlegung des Harvesters.
