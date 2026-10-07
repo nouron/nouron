@@ -419,3 +419,153 @@ Ring-Kosten verdoppeln. Absorbiert höchstens ca. 45 weitere AP, und zwar nur bi
 2. **Fundbudget:** ca. 40 Rg je Karte (rund 2 Harvester-Sole, ca. 15 % der Phase-1-Kette, Rendite ca. 0,6 Rg/AP)? **Empfehlung: klein starten**, nach der zweiten Messung gegen K3/K6 und die Siegquote nachziehen. Alternativ größer (ca. 60 Rg), dann zieht Phase 2 bis Sol ≈ 15–16 vor.
 3. **Pfad-Hebel am Sink** (Geologie erhöht Ertrag, Drohnen-Mission deckt Signal ohne AP auf, Cantina-Hinweis nennt Fund-Typ) in v1 oder erst nach Messung? **Empfehlung: erst nach Messung**, v1 pfadneutral. Grund: Gleichwertigkeit und Regelanzahl (vereinfachen statt stapeln); die Hebel können später jedem Pfad einen eigenen Vorteil geben.
 4. **Bot-Forschungsregel zuerst korrigieren** (Forschung ohne Rg-Puffer) und Labor-Baseline neu messen, bevor Variante A entwickelt wird? **Empfehlung: ja**, billig (klein), verhindert, dass der Sink für ein Problem gebaut wird, das zum Teil ein Bot-Artefakt ist. Zusatzfrage dabei: Soll der Cantina-Lauf (Sol 6–14 ohne Cantina-Aktion in Seed 1) separat auf Bot- oder Spawn-Ursachen geprüft werden? Empfehlung: ja, aus den Berichten der Seeds 2–8 Stichproben prüfen.
+
+---
+
+## 10. Pfad-Parität: Regolith-Einkommen, Querverbindungen, Überbrückung (2026-10-07)
+
+**Autor:** game-designer (Analyse + Vorschlag, keine Code-/Config-Änderung). Zahlen sind **Messwerte** (Baseline 2026-10-06 bzw. Neumessung Labor), **Configwerte** (gelesen aus `config/*.php`) oder **Vorschlagswerte** (so gekennzeichnet). Eigene Deutungen sind als **Annahme** markiert. Prosa-Teile wandern nach Owner-Entscheidung ins GDD §4b / §8b / §12 (zahlenfrei), Zahlen nach Config und `docs/game-reference.md`.
+
+**Owner-Zielbild (verbindlich):** Der Harvester liefert die Grundversorgung. Jeder der drei Pfade bietet zusätzlich eine **gleichwertige** Möglichkeit, das Regolith-Einkommen zu erhöhen: Labor = Geologie (dauerhaft), Hangar = spezielle Missionen, Cantina = Handel durch Gespräche und Beziehungen. Alle drei Pfade sollen sich gegenseitig stärken können; die Wartezeit bis zum ersten Pfadertrag soll überbrückt werden.
+
+> **GDD-Konflikt, Owner-Freigabe nötig:** GDD §4b („Pfad-C-Hebel: Credits statt Regolith“, Leitplanke bei den Cantina-Begegnungen) schließt einen planbaren Regolith-Hebel für die Cantina bisher ausdrücklich aus. Das Zielbild hebt diese Regel auf. Beim Umsetzen müssen §4b, §12 und die Paritätstabelle in §13.7 umgeschrieben werden (Frage F1 unten).
+
+### 10.1 Diagnose je Pfad
+
+Annahmen: Referenz-Harvester y2 (23 Rg/Sol). Geologie-Stufen als Schätzung: Lv1 Sol 6, Lv2 Sol 10, Lv3 Sol 15 (nur bei Vorrang der Geologie). Missionsertrag = Config-Ertrag × Schwierigkeitsfaktor (normal: ×1,0 bei 70 %; leicht: ×0,7 bei 85 %), Fehlschlag ohne Ertrag. Die Folgen eines Fehlschlags für das Schiff habe ich nicht geprüft.
+
+| | Labor | Hangar | Cantina |
+|---|---|---|---|
+| Quelle heute | Geologie erhöht Harvester-Ertrag (`geology_harvester_bonus_per_level` 3, 3, 2, 2, 2 kumulativ) | (a) Prospektionsflug der Drohne, 20–30 Rg, 4 Sol Umlauf; (b) Versorgungsfahrt des Frachters, 25 Rg + 10 Or, 2 Sol Umlauf; (c) Expedition 30–45 Rg nur als Loot-Eintrag | Credits→Regolith-Kaufangebote von Corvan (opportunistisch), Fen-Anliegen 20–30 Rg (50 % Erfolg, selten), Tauschgäste mit zufälliger Ware |
+| Art | dauerhaft, planbar | wiederholbar, aktiv, 70-%-Wurf | zufällig, einmalig je Angebot |
+| Größe | +3 Rg/Sol ab Lv1, bis Sol 25 etwa 70–130 Rg (Obergrenze bei Geologie-Vorrang) | (a) ≈ 4,4 Rg/Sol; (b) ≈ 7,4–8,8 Rg/Sol brutto je Frachter (Config); beides zusammen ≈ 13 Rg/Sol | Erwartungswert Fen allein ≈ 0,15 Rg/Sol (0,10 Spawn × 2/17 Gewicht × 50 % × 25 Rg); Gesamtbild ≈ 0,2–2 Rg/Sol, nicht planbar (Annahme) |
+| Voraussetzungen | Labor Lv2 (zählt für Phase 1), Analytiker, 20 AP | (a) **Geologie 1 = Labor-Kenntnis**; (b) Hangar **Lv2**, 500 Cr, freier Hangarplatz (Drohne blockiert ihn) | Cantina Lv1; Credits als Kaufkraft |
+| Wartezeit bis zum ersten Ertrag | 1–2 Sol nach Lv2 (Messung: Neumessung Labor K2 = 1) | (a) nie ohne Labor; (b) Hangar Lv2 + Frachter + Lieferung + Flug ≈ 5 Sol nach Lv1; **Messung: nie in 8/8 Läufen** | K2 = 1 nur durch die Vertrauens-Heuristik des Bots, echtes Regolith kaum |
+
+**Konstruktionsfehler:**
+1. **Hangar:** Die einzige schnell wirkende Drohnen-Regolith-Quelle hängt an einer Labor-Kenntnis (ein Pfad braucht den anderen, die Paritätsregel „nicht im Ob“ ist verletzt). Die zweite Quelle (Frachter) ist **stark, aber versteckt**: Sie liegt hinter Hangar Lv2, 500 Cr und einem Platz, den der naheliegende Erstkauf (Drohne) belegt. Kein Hint führt dorthin, und der Bot spielt sie nicht (K2 nie). **Annahme:** Das Messergebnis „nie“ ist daher überwiegend Zugangs- und Bot-Problem, nicht Ertragsproblem.
+2. **Cantina:** Handel kennt Regolith nur als Zufall. Es gibt keine Beziehung, die einen verlässlichen Zufluss erzeugt; das GDD verbietet ihn sogar. Das Vorhandene (Corvan-Kauf, Fen) ist nicht planbar und deshalb für K2 wertlos.
+3. **Labor:** unproblematisch, aber der Ertrag ist ohne Gegenstück klein, solange nur Lv1 steht (+3 gegen ≈ 23 Rg Harvester).
+4. **Querbefund:** Die Ertragshöhen liegen heute weit auseinander (Labor ≈ 3–8, Hangar im Vollbetrieb ≈ 13, Cantina ≈ 1). Würde man nur Zugang und Bot reparieren, wäre **Hangar der Überflieger**.
+
+> ⚠️ BALANCE CONCERN: Hangar-Vollbetrieb (Frachter + Drohne) liefert nach Config etwa das Doppelte des angestrebten Pfadertrags. Vor jeder Anhebung von Labor oder Cantina zuerst mit dem Profil `hangar_freighter` messen (10.6), dann entscheiden, ob Hangar gesenkt (Versorgungsfahrt 25 → ca. 18 Rg) oder die anderen angehoben werden.
+
+### 10.2 Parität definieren
+
+**Prinzip:** Gleiche Gesamthöhe, verschiedene **Art**. Gemessen wird Regolith aus Pfadquellen je Lauf (`regolith_sources`, neue Zeilen je Pfad), nicht die Eröffnung.
+
+| Größe | Zielwert (Vorschlag) | Begründung |
+|---|---|---|
+| Pfadertrag im eingeschwungenen Zustand | ≈ 6–8 Rg/Sol | ≈ 25–35 % eines y2-Harvesters; spürbar, nie Ersatz für den Harvester (Knappheit bleibt Kern-Fantasie) |
+| Kumuliert Sol 10–25 | ≈ 90–130 Rg je Pfad | Labor-Obergrenze ≈ 118 (siehe Annahmen) |
+| Abstand der Pfade | ≤ 25 % des Mittelwerts, Obergrenze Sol 25 | analog K6, aber auf Pfadquellen bezogen |
+| Erster Pfadertrag | ≤ 3 Sol nach Pfadgebäude Lv1 (K2) | bestehendes Kriterium |
+| Anteil am Gesamt-Regolith bis Sol 25 | Pfad ≈ 20–25 % des Harvesters (Σ Harvester Sol 10–25 ≈ 345) | Warnschwelle > 35 % (Knappheit verloren) |
+
+Bezug zum Budget: Die Phase-1-Kette kostet 260 Rg. Ein Pfad bringt bis Phase-1-Ende (≈ Sol 12–18) nur ≈ 20–60 Rg und verschiebt Phase 2 um etwa 1 Sol, das passt zu K3. **Annahme/Risiko:** Wer später **alle drei** Pfade baut (CC Lv4), stapelt drei Pfaderträge (≈ 20 Rg/Sol zusätzlich). Das ist nicht gemessen und ist der Hauptgrund, den Einzelertrag eher knapp zu halten (Regolith-Rechner im Memory-Ordner vor der Umsetzung gegen die Phase-2-Bilanz rechnen).
+
+**Art der Pfade:**
+- **Labor = Dauer-Rate** (einmal bezahlt, danach geschenkt, wächst mit Stufen).
+- **Hangar = Arbeit gegen Zeit und Risiko** (aktive Umläufe, AP/Proviant, Wurf).
+- **Cantina = Umwandlung und Beziehung** (Credits und Gespräche werden zu Regolith; Credits sind in Phase 1 reichlich vorhanden, ≈ 2400 zu Beginn Sol 10, und genau der Cantina-Stärke zugeordnet).
+
+### 10.3 Mechanik-Varianten je Pfad
+
+#### Hangar
+
+**H1 (empfohlen, Basis): Frachterlinie sichtbar machen und freischalten.** Kein neues System. (1) Prospektionsflug ohne Geologie-Gate (bereits entschieden, Geologie erhöht zusätzlich), (2) Geschenk-Drohne ohne Platz (bereits entschieden) löst den Platzkonflikt, (3) der Hangar zeigt vor dem Kauf „Frachter: Hangar Stufe 2, Versorgungsfahrt ≈ X Rg je Umlauf“ (Zahl aus Config). Ablauf: Hangar Lv2 (zählt als Lv2-Ausbau für Phase 1), Frachter kaufen, Versorgungsfahrt starten, nach 2 Sol Ertrag. Kosten: 2 Nav-AP + 3 Or je Fahrt (Rückfluss +10 Or), 500 Cr einmalig. Entscheidung: Fahren oder AP anderweitig nutzen, leichte (sicherer, ×0,7) gegen normale Schwierigkeit. Transparenz: Ertrag, Chance und Kosten stehen vor dem Start. Bot: einfach (Profil `hangar_freighter`, 8 Läufe). Risiko: zu stark (siehe Balance Concern).
+
+**H2: Bergungsflug (nur mit Variante A aus §9).** Ein Schiff übernimmt das Bergungsprojekt eines Funds, statt dass der Spieler Bergungs-AP einzahlt: Frachter/Drohne starten zum Fund, Umlauf nach Entfernung, Ertrag **+50 %** gegenüber Selbstbergung, dafür Zeit, Proviant und Nav-AP statt Bergungs-AP. Der Hangar wird damit zum Weg, **AP durch Zeit zu ersetzen**. Entscheidung: AP jetzt oder Schiffszeit. Zufall nur wie in A (Fund ist nach Scan sicher). Bot: mittel. Nur nach A sinnvoll.
+
+**H3: Schrotthandel / Ausmustern.** Das geplante „Schiff ausmustern“ (A+) liefert einen Schrottwert in Regolith (Vorschlag: ca. 25–40 % der Credits-Kosten in Rg-Äquivalent, z. B. Drohne ≈ 6 Rg). Eher Notfall-Ventil als Ertragsquelle; hilft beim Platzkonflikt. Nicht wiederholbar, kein Pfadertrag. Nur als Beiwerk.
+
+#### Cantina
+
+**C1 (empfohlen): „Kontor“ — Dauerangebot Credits→Regolith, Menge nach Beziehungsstufe.** Die Cantina hat ab Lv1 ein festes Tagesangebot („der Händler am Tresen hat Regolith“), eine Lieferung je Sol zum festen, angezeigten Preis. Die Losgröße wächst mit der **Beziehung zu Tomas**: Die Stufen existieren bereits (`bartender.ap_bonus_tiers` an `interaction_count`, 0/5/15/30). Gespräche kosten keine AP (Config), die Beziehung wächst mit der Nutzung. Vorschlagswerte: Lot 4 / 6 / 8 Rg je Sol, Preis ca. 30 Cr je Rg (zwischen Basispreis 25 und Uplink-Import 35, bessere Kondition als Uplink wegen Sofortlieferung), Handelsvorteil (Konsul, Kenntnis `trade`) senkt den Preis wie bei allen Kaufangeboten (`TradeAdvantageService`, keine neue Regel). Kosten und Selbstbegrenzung: bei Vollnutzung 6 Rg/Sol ≈ 180 Cr/Sol gegen +50 Cr/Sol Zuschuss; ein Startbestand von rund 2400 Cr trägt das etwa 14 Sol, danach bremst die Credits-Knappheit von selbst (Cantina-Begegnungen als Credits-Quelle). Entscheidung: Wie viel Credits-Reserve opfere ich für Regolith (Berater, Schiffe konkurrieren). Zufall: keiner; Transparenz: Preis und Lot im Angebot, Beziehungsstufe sichtbar. Wirkt **sofort nach dem Bau** (K2 = 0–1). Bot: sehr einfach (Kaufregel mit Credit-Reserve). Risiken: (1) Arbitrage mit dem Regolith-Verkaufskanal (T10): Verkaufspreis muss mindestens 30 % unter dem Kaufpreis bleiben; (2) Credits-Collapse nach Phase 1 (bekannter Befund) nicht verschärfen: Reserve-Untergrenze wie bei Corvans Organika-Losen; (3) Stufe 3 zu stark, dann Lot senken.
+
+**C2: „Gerücht“ — Gespräche decken Funde auf (nur mit Variante A).** Tomas' Gespräch liefert alle paar Sol (Vorschlag: bei jeder 4. Interaktion) ein „Gerücht“: ein zusätzliches, schon vorgescannter Fund (Typ und Menge sichtbar), der per Bergungs-AP oder Bergungsflug (H2) gehoben wird. Das passt zur Cantina-Identität „Information“ (Deva, Lenn, Vesper) und bringt Regolith nur durch Arbeit. Mittlere Größe: ≈ 3 Rg/Sol. Wirkt ab dem ersten Gespräch, füllt AP-Leerlauf (K4). Bot: mittel. Risiko: verdoppelt die Fundlogik, daher erst nach A.
+
+**C3 (verworfen als Standard): Organika↔Regolith-Tauschring für Stammkunden.** Verbessert die Tauschrate je Beziehungsstufe. Verstößt gegen die Knappheitsordnung (GDD §3/§4b) und macht den Agrardom zur Regolith-Quelle. Nur nennen, nicht empfehlen.
+
+#### Labor
+
+**L0 (empfohlen): unverändert.** Der Ertrag ist dauerhaft, planbar und früh. Zwei kleine Ergänzungen: (1) Geologie-Stufen erhöhen zusätzlich den Ertrag der Prospektion und später der Funde (bereits entschieden bzw. optional in A), jeweils als einzeln ausgewiesene Zeile („Basis + Geologie“); (2) die Anzeige am Harvester nennt den Geologie-Anteil einzeln (Transparenz). **Keine Erhöhung der Stufe-1-Wirkung**, solange nicht gemessen ist, dass Labor im Mittel unter ≈ 6 Rg/Sol bleibt.
+
+**L1 (nur falls gemessen nötig): Geologie Lv1 früher.** Erste Stufe etwas billiger (AP-Kosten Lv1 gesenkt) oder durch die Querverbindung Hangar→Labor (Feldproben, siehe 10.4) beschleunigt. Vorzug: die Querverbindung, da sie keine Zahl an der Kenntnis-Kurve ändert.
+
+### 10.4 Querverbindungen
+
+**Bestandsaufnahme (Annahme: aus Config gelesen, nicht im Code geprüft):** Vier der sechs Richtungen existieren bereits in Ansätzen, aber alle spät, gegatet oder versteckt.
+
+| Richtung | Heute vorhanden | Kandidaten | Wirkung / Größe | Verständlichkeit | Gefahr Pflichtlinie |
+|---|---|---|---|---|---|
+| Labor→Hangar | Kenntnis `cartography` senkt Nav-AP für Erkunden und Dispatch (Σ 30 %) | (a) bestehendes ausbauen: Hint „Kartografie senkt Flugkosten“; (b) Geologie erhöht Prospektionsertrag (entschieden) | Rabatt bzw. Ertragsbonus | gut | niedrig |
+| Labor→Cantina | Kenntnis `trade` erhöht Verhandlungschance und Handelsvorteil | (a) `trade` senkt den Kontor-Preis über den bestehenden Handelsvorteil (keine neue Regel); (b) Forschung schaltet Angebots-Optionen frei (Owner-Beispiel), neues Konstrukt | (a) ≈ −3 bis −5 % Preis je Stufe (Vorschlag) | (a) sehr gut | mittel: `trade` wird Pflicht für Cantina-Spieler |
+| Hangar→Labor | `mission_data_sweep`: 8 Forschungs-AP, aber Gate cartography 1 (Labor+Hangar) und 3 Sol Flug | (a) **Feldproben:** jede erfolgreiche Prospektion oder Erkundungsflug zahlt 2 Forschungs-AP in Geologie (`investBonus`); (b) `data_sweep` ohne Gate | (a) ≈ 1 AP/Sol Äquivalent; beschleunigt den Geologie-Ertrag | (a) gut, thematisch klar | niedrig |
+| Hangar→Cantina | keine | (a) Fahrtberichte: erfolgreiche Handelsfahrt oder Hilfstransport erhöht die Beziehung zu Tomas (+1 `interaction_count`) und damit Lot-Größe im Kontor; (b) Fracht verkauft über die Cantina (neues Konstrukt) | (a) Beziehungsstufe schneller | mittel: unsichtbare Verknüpfung, muss in der Fahrtmeldung stehen | niedrig |
+| Cantina→Labor | Tomas, Deva, Lenn, Sarka injizieren Bonus-AP in Kenntnisse (`investBonus`); **setzt Labor und Analytiker voraus** | Bestehendes unverändert, keine neue Regel; ohne Labor sichtbar „braucht Labor“ | 1–3 AP je Gespräch (Config), 5–15 AP je Ereignis | gut | mittel (siehe Annahme zu Tomas) |
+| Cantina→Hangar | keine (Dax liefert eine Drohne, einmalig) | (a) **Frachttipp:** Gespräch mit Tomas/Händler gibt einen Gutschein „nächste Fahrt +30 % Ertrag“ (wie Vesper/Aldra-Gutscheine, gleiches Muster); (b) Cantina nennt Wrack-/Signal-Fund (C2) | (a) ≈ +5–8 Rg je Gutschein | (a) gut, Gutscheinmuster bekannt | niedrig |
+
+**Empfehlung (kleine Auswahl, je Pfad genau ein ausgehender Bonus, bildet einen Kreis):**
+1. **Labor→Cantina:** `trade` wirkt auf den Kontor-Preis (nutzt bestehenden Handelsvorteil, null neue Regeln).
+2. **Cantina→Hangar:** Frachttipp-Gutschein (bestehendes Gutscheinmuster).
+3. **Hangar→Labor:** Feldproben (kleine Menge Geologie-AP je erfolgreichem Flug).
+
+Dazu bleiben die bestehenden Wirkungen unverändert (Tomas→Labor, Cartography→Hangar), werden aber sichtbar gemacht. **Annahme:** Die Kreisform (A hilft B hilft C hilft A) erzeugt keine Pflichtlinie, weil jeder Bonus Opportunitätskosten hat (AP für Gespräche, Flüge, Forschung) und jede Verbindung an den Pfad gebunden ist, der sie auslöst. **Nicht empfohlen:** die übrigen Kandidaten (Vollmatrix), insbesondere Forschung, die Cantina-Optionen freischaltet (b bei Labor→Cantina): neuer Zustand, unklare Anzeige.
+
+> ⚠️ BALANCE CONCERN: Die Querverbindungen bevorzugen Spieler, die alle drei Pfade bauen. Das ist gewollt (Pfad = Reihenfolge, §4b), verschiebt aber die Gewichtung hin zur Dreifach-Kolonie. Messen: Siegquote und Regolith/Sol der Dreifach-Läufe gegen Zweifach-Läufe.
+
+### 10.5 Überbrückung bis zum ersten Pfadertrag
+
+Bewertung: füllt K4/K5 · pfadneutral · Inflation · Bot · Aufwand.
+
+| Idee | K4/K5 | pfadneutral | Regolith-Inflation | Bot | Aufwand |
+|---|---|---|---|---|---|
+| **A** Signal/Tiefenscan/Bergung (§9, Owner: später verfolgen) | ja, stark (≈ 70 AP) | ja | klein (≈ 40 Rg gesamt) | mittel | M–G |
+| **B1 Starthilfe-Paket:** Beim Fertigstellen jedes Pfadgebäudes (nur die ersten beiden) liefert der Nexus ein Versorgungspaket (Vorschlag: 15 Rg, pfadspezifische Beschreibung: Gesteinsproben / Ersatzteil-Fracht / Händlergeschenk); optional ein Abholauftrag auf der Karte (6 AP) | K2 sofort erfüllt, K4 minimal | ja (gleiche Menge) | 30 Rg einmalig ≈ 1,3 Harvester-Sol | trivial | K |
+| **B2 Nexus-Vorschuss auf Pfadertrag:** Bis zu 40 Rg sofort, Rückzahlung 50 Rg über 10 Sol (Abzug am Harvester-Ertrag), einmalig, sichtbar als eigene Zeile | K6/K3 (Phase 1 schneller), K4 nein | ja | netto 0 bis negativ (Zins), glättet nur | einfach | K–M |
+| **B3 AP→Regolith „Schürfen“ (E3-Rückfallebene):** am Harvester 4 AP für 6 Rg, jede Wiederholung am gleichen Sol −1 Rg, höchstens 3 je Sol, Neustart am nächsten Sol | K4/K5 ja | ja | **hoch**, wenn Deckel zu locker (verdrängt Pfade) | trivial | K |
+| **B4 Landungsschrott:** Rund um den CC liegen 2–3 Schrott-Felder (Ring 1), die einmalig für Rückbau-AP je 4–6 Rg liefern | K4 klein (≈ 15 AP) | ja | ≈ 15 Rg | einfach | M (Kartengenerator) |
+| **B5 Pfad-Gespräch „Sondierung“ (Cantina) / „Probenflug“ (Hangar) / „Bodenprobe“ (Labor):** je Pfad eine AP-pflichtige Erstaktion (2–4 AP), die ein kleines Ergebnis liefert (Hint, Fundkarte, 5 Rg) | K1/K2 | **nein, pfadspezifisch** | klein | mittel | M |
+| **B6 Erkundungs-Fundquote:** jedes aufgedeckte Ring-2/3-Feld hat eine feste (angezeigte) Chance auf einen kleinen Fund (+2–4 Rg beim Aufdecken) | K4 klein (belohnt vorhandene AP) | ja | ≈ 20–30 Rg | trivial | K–M |
+
+**Einordnung:**
+- **A** bleibt die tragende Lösung für K4/K5, aber nicht für K2; schneller Wert erst mit größerem Aufwand.
+- **B1** ist der kleinste wirksame Schritt für K2 in **allen** Eröffnungen (Wartezeit bis zum Pfadertrag wird auf 0 gesetzt), verändert aber die AP-Nutzung kaum.
+- **B6** ist die billigste Brücke zu A (gleiche Funddaten, ohne Scan und Projekt) und ersetzt die frühere Variante B aus §9.
+- **B3** nur als Rückfallebene nach Messung. Es entwertet den Harvester und ebnet die Pfade ein, vor allem wenn der Deckel nicht eng bleibt.
+- **B2** ist die überraschendste Ergänzung: Es überbrückt exakt das „Ertrag kommt später“-Problem und bleibt neutral über die Laufzeit (Spieler zahlt zurück). Risiko: Schulden-Anzeige und eine zusätzliche Zahl im UI; deshalb nachrangig.
+- **B5** (pfadspezifische Erstaktion) ist die einzige Idee, die K1/K2 pfadgerecht löst, kostet aber drei Mechaniken. Nur ansehen, falls B1+C1+H1 nicht reichen.
+
+### 10.6 Empfohlene Reihenfolge und Messplan
+
+| Schritt | Maßnahme | Aufwand | Messung |
+|---|---|---|---|
+| 1 | **Bot-Profile:** `hangar_freighter` (Hangar Lv2 als Lv2 #1, Frachter, Versorgungsfahrten) und Cantina-Seeds 2–8 auf Bot-/Spawn-Ursachen prüfen; neue Report-Zeile Regolith aus Pfadquellen je Sol | K | 8 Läufe `hangar_freighter`: Wie hoch ist der Hangar-Pfadertrag, wenn der Zugang funktioniert? Entscheidet über Absenken Hangar vs Anheben Cantina |
+| 2 | **B1 Starthilfe-Paket** (Config + kleine Gutschrift) | K | K2 aller Eröffnungen ≤ 3; K6 Spanne ≤ 25 |
+| 3 | **H1:** Prospektion ungated, Geschenk-Drohne (bereits entschieden), Frachter-Hint und Sichtbarkeit | K–M | Hangar K2 ≤ 3, Hangar-Pfadertrag Sol 10–25 gegen 90–130 |
+| 4 | **C1 Kontor** (Spec ausarbeiten, TDD) | M | Cantina K2 ≤ 3 mit echtem Regolith; Regolith aus Kontor Sol 4–25 ≈ 60–120; Credits-Saldo nicht < Reserve |
+| 5 | Querverbindungen: Feldproben (Hangar→Labor), `trade`→Kontor-Preis (Labor→Cantina), Frachttipp (Cantina→Hangar) | K–M | Pfadertrag je Pfad nähert sich 6–8 Rg/Sol, keine Pfad-Pflichtlinie (Siegquote je Eröffnung ≤ 10 Punkte Abstand) |
+| 6 | **Variante A** (§9) mit B6 als Vorstufe; danach C2/H2 optional | M–G | K4 ≤ 45, K5 ≤ 2 (siehe §9.5) |
+| 7 | B3 / B2 nur bei Restproblemen | K | – |
+
+**Batch-Plan:** pro Runde 24 Läufe (3 Eröffnungen × 8 Seeds, gleiche Seeds wie die Baseline); nach Schritt 1 zusätzlich 8 Läufe `hangar_freighter`; nach Schritt 4 eine volle Runde; nach Schritt 6 eine volle Runde (jeweils Dauer vorher dem Owner nennen, 8/16/24 wählen lassen). **Neue Kennzahlen:** K8 Regolith aus Pfadquellen Sol 10–25 je Eröffnung, K9 Abstand der Pfadquellen (Ziel ≤ 25 %), K10 Anteil Pfadquelle am Gesamt-Regolith bis Sol 25 (Ziel 20–25 %, Warnung > 35 %). Bestehende K1–K7 bleiben Abnahmemaßstab; Bot-Siegquote ≈ 50 % bleibt Soll und ist kein Tuning-Ziel, nur eine Warnschwelle (> 65 % heißt Knappheit verloren).
+
+**Bot-Regeln dafür:** Kontor-Kaufregel (Kauf, wenn Credits über Reserve), Frachter-Fahrten priorisiert vor Erkundungsflügen, Feldproben automatisch (keine Regel), Frachttipp einlösen, später `scan_signal`/`invest_find`. Bot-Profil-Dials (Risiko, Handel) aus dem Ideenpool nur, falls K8 zwischen Profilen stark streut.
+
+### 10.7 Offene Owner-Fragen (max. 5, mit Empfehlung)
+
+1. **F1 Cantina-Regolith-Hebel erlauben?** Das GDD (§4b, §12 Leitplanke) verbietet ihn. **Empfehlung: ja, als Kontor (Credits→Regolith, Beziehungsstufen, Preis/Lot sichtbar)**; Organika→Regolith-Tausch bleibt verboten.
+2. **F2 Zielhöhe je Pfad ≈ 6–8 Rg/Sol (≈ 90–130 Rg Sol 10–25)?** Empfehlung: ja, zuerst messen (Schritt 1); wenn Hangar im Vollbetrieb deutlich darüber liegt, Versorgungsfahrt senken statt Labor/Cantina anheben.
+3. **F3 Starthilfe-Paket (≈ 15 Rg je Pfadgebäude, erste zwei) als Standard-Überbrückung vor Variante A?** Empfehlung: ja, kleinster Hebel, K2 sofort; Menge nach Messung.
+4. **F4 Querverbindungen als Kreis mit je einem neuen Bonus** (`trade`→Kontor-Preis, Frachttipp, Feldproben)? Empfehlung: ja, die drei; Tomas→Labor und Cartography→Hangar bleiben, werden sichtbar gemacht. Weitere Verbindungen erst nach Messung.
+5. **F5 Hangar-Frachter als Haupt-Regolith-Weg des Hangars bestätigen** (inkl. Hangar Lv2 als Lv2 #1 für Phase 1)? Empfehlung: ja, ergänzt um Hint und Frachter-Sichtbarkeit; bei zu hohem Ertrag Versorgungsfahrt senken, nicht den Zugang erschweren.
+
+### 10.8 Risiken
+
+- **Hangar überschießt** (≈ 13 Rg/Sol im Vollbetrieb): ohne vorherige Messung wird die Parität nach oben verschoben, nicht erreicht.
+- **Cantina-Kontor belastet Credits:** Konkurrenz zu Beratern/Schiffen ist gewollt, darf aber den Credits-Collapse nach Phase 1 nicht verschärfen; Reserve-Untergrenze und Preisabstand zum Verkaufskanal sind Pflicht.
+- **Stapelung bei Dreifach-Kolonie** (≈ +20 Rg/Sol): Einzelwerte klein halten, Phase-2-Bilanz im Regolith-Rechner prüfen.
+- **Zu viele neue Zahlen** (Lot, Preis, Gutschein, Feldproben, Starthilfe, Funde): gegen die Verständlichkeitspriorität. Gegenmaßnahme: jede Zahl steht vor der Entscheidung und gilt genau so; neue Regeln pro Schritt höchstens eine.
+- **Bot-Artefakte:** Hangar K2 „nie“ und Cantina-Heuristik sind teilweise Bot-bedingt; vor Design-Änderungen Profil und Regeln nachziehen (Schritt 1), sonst wird wieder ein Bot-Problem als Balance-Wand behandelt.
+- **GDD-Pflege:** §4b-Paritätstabelle und die Cantina-Leitplanke müssen mit dem Owner-Entscheid umgeschrieben werden, sonst widerspricht das Dokument dem Spiel.
