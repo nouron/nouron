@@ -569,3 +569,260 @@ Bewertung: füllt K4/K5 · pfadneutral · Inflation · Bot · Aufwand.
 - **Zu viele neue Zahlen** (Lot, Preis, Gutschein, Feldproben, Starthilfe, Funde): gegen die Verständlichkeitspriorität. Gegenmaßnahme: jede Zahl steht vor der Entscheidung und gilt genau so; neue Regeln pro Schritt höchstens eine.
 - **Bot-Artefakte:** Hangar K2 „nie“ und Cantina-Heuristik sind teilweise Bot-bedingt; vor Design-Änderungen Profil und Regeln nachziehen (Schritt 1), sonst wird wieder ein Bot-Problem als Balance-Wand behandelt.
 - **GDD-Pflege:** §4b-Paritätstabelle und die Cantina-Leitplanke müssen mit dem Owner-Entscheid umgeschrieben werden, sonst widerspricht das Dokument dem Spiel.
+
+---
+
+## 11. Variante D: Fundpool der Erkundung als gemeinsame Regolith-Quelle (2026-10-09)
+
+**Autor:** game-designer (Analyse + Vorschlag, keine Code-/Config-Änderung). Zahlen sind **Configwerte** (gelesen), **Messwerte** (Baseline 2026-10-06 bzw. Neumessung Labor) oder **Vorschlagswerte** (so gekennzeichnet). Eigene Deutungen sind als **Annahme** markiert. Rechnungen ohne Simulation: im Entwurf stand kein Rechenwerkzeug zur Verfügung, Erwartungswerte und Streuungen sind von Hand bzw. per Normalnäherung hergeleitet (Formeln stehen dabei) und nach der ersten Messung nachzuziehen. Der GDD-Hauptteil bleibt zahlenfrei; Mechanik-Prosa wandert nach Owner-Entscheidung nach §4b/§5/§8b/§12, Zahlen nach Config und `docs/game-reference.md`.
+
+**Owner-Ausgangslage (2026-10-09):** Harvester = konstante Quelle (gestärkt durch Geologie), Labor = Dauerrate; Hangar und Cantina = unregelmäßig. Zusätzlich „Funde durch Erkundung“ als Zufallsquelle, die alle drei Pfade stützt. Planbarer Rg-Ertrag aus Hangar und Cantina ist nicht gewollt (Kontor/Frachtlinie aus §10 daher nicht gesetzt). Querverbindungen erwünscht. Im Zweifel darf der Harvester-Grundertrag steigen.
+
+> **Annahme:** „Harvester = 1 Rg je Sol“ aus der Skizze lese ich als „gleichmäßige Rate pro Sol“, nicht wörtlich 1 Rg (Config: 16/23/30 Rg/Sol je Ertragsstufe).
+
+### 11.1 Kurzurteil
+
+1. **Der Pool trägt, aber er ist klein.** Ein Pool, der die Knappheit nicht auflöst, hat ein Start-Budget von rund 40 Rg und wächst bis Sol 25 auf rund 60 Rg (Brutto, Vorschlag). Das sind ca. 6–7 % des gesamten Regolith-Zuflusses bis Sol 25. Er füllt K4/K5 (AP-Sink, Entscheidung), er ist **keine Rate von 6–8 Rg/Sol je Pfad** und kann es nicht sein, ohne die Knappheit aufzugeben.
+2. **Die Rate-Parität aus §10.2 (6–8 Rg/Sol je Pfad) ist mit D nicht erreichbar.** D ersetzt sie durch **Wirkungs-Parität**: jeder Pfad verändert, wie viel der Spieler aus Sockel und Pool *effektiv* bekommt. Realistische Größen: Labor ca. 3–5, Hangar ca. 1,5–2 (plus gesparte AP), Cantina ca. 0–1 Rg/Sol-Äquivalent (11.7). Das ist ehrlich ungleich; die Lücke wird über den **Harvester-Grundertrag** (alle gleich) und einen Messpunkt für Cantina geschlossen, nicht über mehr Zufall.
+3. **Information ist nur dann etwas wert, wenn AP knapp sind.** In Sol 4–12 liegen 88–95 AP brach (K4). Wer dort nichts zu entscheiden hat, profitiert nicht von Gerüchten. Der Cantina-Hebel wirkt deshalb erst, sobald der Pool mehr AP binden würde, als frei sind (Nachschub-Signale, Konkurrenz zur Forschung). Das ist die wichtigste Schwäche von D und der Grund, die Cantina-Wirkung in 11.4 zweistufig zu planen.
+4. **Empfehlung:** D als Kern übernehmen, in dieser Reihenfolge: Harvester-Grundertrag, Pool v1 pfadneutral, Hangar-Bergungsflug, Cantina-Gerüchte, Querverbindungen, Nachschub. §10-Kontor und -Frachtlinie fallen weg (Owner-Vorgabe).
+
+### 11.2 Verifizierte Fakten (gelesen, nicht erinnert)
+
+| Befund | Quelle |
+|---|---|
+| Der Kartengenerator setzt `event_type` **nie** (`null` in `generateDefaultTiles()`; `randomizeOuterRingRows()` liefert gar kein Feld). `has_signal` wird in `transformTile()` abgeleitet (`event_type` gesetzt, aufgedeckt, nicht gescannt). Nur `ColonySeedDemo` setzt `event_ruin`. In echten Läufen gibt es also **keine** Signale: Tiefenscan (`deepScanTile`), `mission_deep_survey` und das Ziel `signal_tile` laufen ins Leere. | `ColonyTileService`, `ColonySeedDemo`, `HangarService` |
+| **Folgebefund:** `ruin_tile` (`event_ruin`) entsteht ebenfalls nie. `mission_ruin_expedition` und `mission_harvester_salvage` (Weg B der Harvester-Zweitinstanz) sind in echten Läufen unerreichbar. | `config/missions.php`, `HangarService` |
+| Tiefenscan kostet 2 Nav-AP, ab Uplink Lv2 1 AP, **hartcodiert** (nicht in Config). Kein Ertrag, setzt nur `is_deep_scanned`. | `ColonyTileService::deepScanTile()` |
+| `mission_deep_survey` (Drohne, `sol_distance` 2) kostet 4 Nav-AP + 6 Or und 4 Sole für dasselbe, was der Spieler selbst für 2 AP kann. Sie ist heute strikt dominiert. | `config/missions.php` |
+| Karte: Ring 2 = 12 Felder (10 % Gefahr, sonst `terrain_empty`); Ring 3 = 9 von 18 Koordinaten („Frontier“, 5 % unpassierbar, 10 % Gefahr, 50 % Regolith, 35 leer), davon 2 vorab aufgedeckt. Verdeckt sind also **12 + 7 = 19 Felder**, Aufdecken kostet 12×2 + 7×3 = **45 AP**. (Die Schätzung in 1.5 von ca. 70 AP war zu hoch.) | `randomizeOuterRingRows()`, `game.colony.explore_cost_per_ring`, `RING3_FRONTIER_COUNT` |
+| Ein Seed-Strom je Karte (`SeededRandom::generator($seed)`) mit fester Ziehreihenfolge; `RunSeed::forColony()` liefert `runs.rng_seed` reduziert. | `ColonyTileService`, `RunSeed` |
+| Harvester-Gesamtvorkommen je Kachel: 240/450/660 Rg (`resource_max`), Ertrag 16/23/30; Geologie +3/+3/+2/+2/+2 kumulativ. Eine höhere Rate verkürzt also die Laufzeit der Kachel, vergrößert aber **nicht** das Karten-Regolith. | `game.harvester`, `geology_harvester_bonus_per_level` |
+| Versorgungsfahrt (Frachter, `sol_distance` 1, 2 Nav-AP, 3 Or, Umlauf 2 Sole) zahlt **25 Rg + 10 Or**, Prospektionsflug (Drohne, `sol_distance` 2, Gate Geologie 1) 20–30 Rg. Erfolgschance 70 % (normal), 85 % (leicht, ×0,7). Das sind bereits **planbare Hangar-Raten von ca. 4–9 Rg/Sol**. Sie stehen im Widerspruch zur Owner-Vorgabe „kein planbarer Hangar-Ertrag“ und sind in D die offene Hauptfrage (11.4, Owner-Frage F2). | `config/missions.php`, `game.missions.difficulty` |
+| Bergungs-/Kapazitätsattribute für Schiffe gibt es nicht (`config/ships.php` kennt nur Kosten, Lieferzeit, Verschleiß). | `config/ships.php` |
+
+### 11.3 Der Pool (Pfad-Aufgabe 1)
+
+**Idee in einem Satz:** Auf der Karte liegen verdeckte Signale; Aufdecken zeigt, *dass* etwas da ist, Tiefenscan sagt *was*, und eine Bergung holt es gegen AP (oder Schiffszeit) ab. Gesamtmenge und Zusammensetzung sind pro Run **fest und aus dem Seed ableitbar**; Zufall steckt nur in Lage, Reihenfolge und Nachschub.
+
+#### Pool-Aufbau (Vorschlagswerte)
+
+| Größe | Vorschlag |
+|---|---|
+| Signale im Start-Pool | 7, nur auf `terrain_empty` in Ring 2 und Ring 3 (nie Ring 0/1, Gefahr, unpassierbar, Regolith-Kacheln) |
+| Zusammensetzung (fest, gemischt) | 2 Fehlalarme, 3 klein, 1 mittel, 1 groß |
+| Fund klein / mittel / groß | 4 Rg für 12 AP / 10 Rg für 16 AP / 18 Rg für 22 AP |
+| Rendite Rg je Bergungs-AP | 0,33 / 0,63 / 0,82 (bewusst gespreizt, damit Auswahl eine Entscheidung ist) |
+| Tiefenscan | 2 AP (1 mit Uplink Lv2, wie heute, aber in Config) |
+| Lage | größere Funde bevorzugt in Ring 3 (Aufdecken 3 AP gegen 2 AP, Umlauf eines Schiffs länger); fehlt ein geeignetes Ring-3-Feld, Ring 2 (**Annahme**, Generator prüft) |
+| Bergungsprojekt | wie Gebäudeausbau: Fortschritt in AP, **Deckel 4 AP/Sol je Projekt, höchstens 2 Projekte** (8 AP/Sol) |
+| Fundfeld danach | wird `terrain_empty`, frei bebaubar (Bauen auf einem Signalfeld erst nach Scan, Detail für die Umsetzung) |
+| Nachschub (Schritt 6, nicht v1) | ab Sol 8 mit 20 % je Sol ein neues Signal auf einem freien leeren Ring-2/3-Feld, Typ i. i. d. wie die Mischung oben (2/7 Fehlalarm, 3/7 klein, 1/7 mittel, 1/7 groß), höchstens 5 Stück, nach Sol 30 keine mehr |
+
+#### Start-Pool in Zahlen
+
+- Rg brutto: 3×4 + 10 + 18 = **40 Rg** (feste Summe, Streuung 0).
+- AP: Scans 7×2 = 14, Bergung 3×12 + 16 + 22 = 74, zusammen **88 AP**, Rendite 0,45 Rg/AP gesamt, 0,6–0,8 für die guten Funde. Das entspricht fast genau dem gemessenen Leerlauf von Sol 4–12 (88–95 AP): K4 sinkt für Hangar/Cantina auf rund 5–25 (Annahme: der Spieler nimmt nicht alles, Deckel 8 AP/Sol streckt es auf neun Sole). Labor-First hat durch die Forschung weniger freie AP und nimmt vor allem die guten Funde; das ist die gewollte Konkurrenz „Forschen oder Bergen“.
+- Frist: Aufdecken von Ring 2 ab Sol 2–3 möglich (2 AP je Feld), Pool damit für alle ab Sol 3–4 nutzbar, ohne Gebäude, Berater oder Kenntnis.
+
+#### Erwartungswert und Streuung
+
+Einzelnes Nachschub-Signal: X ∈ {0 (p = 2/7), 4 (3/7), 10 (1/7), 18 (1/7)}. E[X] = 5,71 Rg, E[X²] = 67,4, Var = 34,8, σ = 5,9 Rg.
+
+| Größe | Erwartung | Streuung (σ) | Anmerkung |
+|---|---|---|---|
+| Start-Pool brutto | 40 Rg | 0 | feste Mischung, nur die Lage variiert |
+| Nachschub Sol 8–25 (N ~ Bin(18; 0,2): E 3,6, σ 1,7) | 20,6 Rg | 14,8 Rg | Compound-Verteilung: Var = E[N]·Var(X) + Var(N)·E[X]² = 125 + 94 |
+| Pool brutto bis Sol 25 | 60,6 Rg | 14,8 Rg | 90-%-Bereich grob 36–85 Rg (Normalnäherung, schief nach oben) |
+| Pool-Rg am Start von Sol 10, nur Start-Pool, Selbstbergung | ca. 20 Rg (Labor ca. 12, Hangar/Cantina ca. 28) | ca. 6 Rg | Obergrenze: 6 Sole × 8 AP = 48 AP, abzüglich ca. 10 AP Scans |
+| Rg am Start von Sol 10 gesamt | siehe unten | – | der Sockel (Harvester-Kachel) dominiert die Streuung |
+
+**Bezug auf den Sockel (Annahme, Normalnäherung):** Die gemessene Spanne von K6 liegt bei 33–137 Rg (Median 63). Ich setze σ ≈ 26 (Spanne/4). Die Streuung kommt fast vollständig von der Harvester-Kachel (16/23/30 Rg/Sol: ±7 Rg/Sol ≈ ±55 Rg bis Sol 10) und vom Bot-Verhalten, **nicht vom Pool** (σ ≈ 6). Der Pool verschiebt den Mittelwert und lässt die Streuung praktisch unverändert (Quadratsumme: √(26² + 6²) = 26,7).
+
+| Szenario (Rg zu Beginn Sol 10) | Mittel | Anteil Runs unter 50 Rg | Anteil unter 40 Rg | Anteil über 110 Rg |
+|---|---|---|---|---|
+| Baseline (Messung, Median 63) | 63 | 31 % | 19 % | 4 % |
+| + Pool v1 (Selbstbergung, ø +20) | 83 | 11 % | 5 % | 18 % |
+| + Pool v1 + Harvester 18/26/34 (+3 Rg/Sol × 9 Sole = +27) | 110 | 1,5 % | 0,5 % | 50 % |
+| Nur Harvester 18/26/34 | 90 | 6 % | 2 % | 24 % |
+
+(Normalnäherung μ, σ = 26; Messwert-Spanne bis 137 bestätigt Rechtsschiefe, Werte sind Größenordnungen.)
+
+**Lesart:** Der Pool halbiert die Anzahl der „armen“ Runs (< 50 Rg zu Sol 10) von rund einem Drittel auf rund einen Zehntel, ohne dass ein einzelner Run durch Pool-Zufall arm oder reich wird. Pool + volle Harvester-Anhebung verschieben Sol 10 um rund zwei Sole nach vorn (Phase-2-Start wahrscheinlich 18 → 15,5–16, an der Untergrenze von K3, siehe 11.6). Beides zusammen ist deshalb die obere Variante, nicht die Startvariante.
+
+#### Bilanz Sol 1–25 (Referenz: Harvester-Kachel y2, Verlegung Sol 1, Zahlen in Rg)
+
+| Posten | Heute | Mit D (Vorschlag) |
+|---|---|---|
+| Start | 300 | 300 |
+| Harvester Sol 2–25 (24 Sole) | 24 × 23 = 552 | 24 × 26 = 624 |
+| Geologie Lv1 ab Sol 6 / Lv2 ab ca. Sol 13 (Labor) | 60 + 36 = 96 (nur Labor-Linie, Obergrenze) | unverändert |
+| Pool, Selbstbergung (60 Rg brutto, ca. 85 % realisiert) | – | ca. 50 |
+| Pool über Bergungsflug (Faktor 1,5 auf die Schiffsfunde, ca. 60 % der Funde) | – | ca. 50 + 15 = 65 |
+| Bedarf Phase 1 (Platzierungen, Lv2, CC Lv3, 2. Pfadgebäude) | 535 | 535 |
+| Reparatur ab Sol 5 (ca. 2 Rg/Sol) | ca. 40 | ca. 40 |
+| Verbleibend für Phase 2 (ohne Geologie, ohne Pool) | 852 − 575 = ca. 280 | 924 − 575 = ca. 350 (+ Pool 50–65) |
+
+Der Pool macht damit etwa 5–7 % der Gesamtquelle aus (Sockel mit D 924 Rg, Pool 50–65 Rg). Er löst die Knappheit nicht auf (Warnschwelle für alle Nicht-Sockel-Quellen zusammen: 35 %, siehe 10.2 K10).
+
+#### Determinismus aus `runs.rng_seed` (Vorschlag)
+
+- **Start-Pool:** wird beim Sol-1-Seeding in `OnboardingService::seedStartingTiles()` direkt nach `randomizeOuterRingRows($rngSeed)` erzeugt. **Wichtig:** ein **eigener** Generator `SeededRandom::generator($rngSeed + FIND_POOL_SALT)`, nicht der bestehende Strom. Sonst verschiebt sich jede bestehende Karte, und die gepaarten Baselines (gleiche Seeds) werden wertlos. Die bestehenden Tile-Typen bleiben seed-identisch; nur `event_type` kommt dazu.
+- **Reihenfolge der Ziehungen** (fest): Kandidatenliste (leere Ring-2/3-Felder in Koordinatenreihenfolge) → seeded Mischung → die ersten sieben bekommen die Typen aus der festen Mischung, größere bevorzugt auf Ring-3-Kandidaten.
+- **Nachschub:** je Sol ein Wurf aus `RunSeed::forColony()`, `tick` und eigenem Salt (gleiches Muster wie Sturm/Instabilität in `GameTick`), niemals aus Zeilen-IDs (R5b-Regel in `RunSeed`).
+- **Datenhaltung:** vorhandene Spalten `event_type` (neue Werte `find_small|find_medium|find_large|find_false`) und `is_deep_scanned`; zusätzlich Bergungsfortschritt je Kachel (neue Spalte `salvage_ap_spent`, Migration, Annahme).
+- **`event_ruin`** (Ruinen für Zweitinstanz und Ruinen-Expedition) sollte der Generator ebenfalls setzen (z. B. 1 Ruine ab CC Lv3 oder fest ab Karte); das ist ein eigener kleiner Fix und kein Teil des Pools (Nebenbefund 11.2).
+
+#### Was der Spieler vorab sieht (Transparenz, „angezeigte Zahl = wirkende Zahl“)
+
+- Nach dem Aufdecken: Signal-Marker auf dem Feld, im Tooltip „unbekannt, Scan 2 AP“ (Zahl aus Config, inklusive Uplink-Rabatt).
+- Nach dem Scan: Typ, Menge, Bergungs-AP und Deckel pro Sol **vorab**; Fehlalarm als eigenes Ergebnis mit Hinweis „kein Ertrag“. Zufall ist damit nur die Frage „was steckt unter dem Signal“; sie löst sich mit dem Scan, nie bei der Menge.
+- Kartenkopf: „Funde: x Signale, davon y gescannt, z Rg geborgen/offen“. Die Gesamtzahl 7 und die feste Mischung sind in der Hilfe nachlesbar (Budget-Invariante wie die zwei Rg-Kacheln), nur die **Verteilung auf Felder** ist verdeckt.
+- Hangar/Cantina-Wirkungen erscheinen als **eigene additive Zeilen** („Fund 10 Rg, Bergungsflug ×1,5 = 15 Rg; Gerücht: Gutschein +25 %“), nie als versteckter Zuschlag.
+
+### 11.4 Pfad-Eingriffe (Pfad-Aufgabe 2)
+
+| | **Labor (Planbar)** | **Hangar (Bergekapazität)** | **Cantina (Information)** |
+|---|---|---|---|
+| Mechanik | `geology` hebt die Harvester-Rate wie heute. **Kein** Zuschlag auf Funde (sonst zweite Geologie-Regel). | **Bergungsflug:** ein gedocktes Schiff holt einen *gescannten* Fund ab, statt dass der Spieler Bergungs-AP einzahlt. | Tomas' Gespräch liefert **Gerüchte**: zum nächsten ungescannten Signal Fehlalarm ja/nein, später Größenklasse; auf der letzten Stufe Vorwarnung vor Nachschub. |
+| Zahlen (Vorschlag) | unverändert (3/3/2/2/2) | Flug: Nav-AP und Proviant nach der Missionsformel (`sol_distance` = Ring − 1; Ring 2: 2 AP/3 Or/Umlauf 2 Sole; Ring 3: 4 AP/6 Or/Umlauf 4 Sole). Ertrag **Menge × 1,5**. Drohne trägt klein/mittel, Frachter auch groß. **Kein Wurf** (der Fund ist bekannt, Zufall sinkt), nur Verschleiß wie heute. | Stufen nach `bartender.interaction_count` (bestehende Schwellen 0/5/15/30): Stufe 0 nennt Fehlalarm ja/nein, Stufe 1 die Größenklasse, Stufe 2 die exakte Menge, Stufe 3 Vorwarnung 2 Sole vor Nachschub. Eine Auskunft je Gespräch, keine AP-Kosten (wie heute). |
+| Wartezeit bis zur ersten Wirkung | 1–2 Sole nach Labor Lv2 (Geologie 20 AP) | Geschenk-Drohne (ohne Slot, Owner-Entscheidung 1) ist am Fertigstellungs-Sol da; Ring-2-Flug ab Sol 3–4, **Ertrag nach 2 Solen** (K1 ≈ 0–1, K2 ≈ 2) | erstes Gespräch am Tag nach Bau: Information ab Sol 4 (K1 ≤ 1). Rg-Wirkung erst, wenn der Spieler wegen der Auskunft AP spart oder einen Fund vorzieht. |
+| Entscheidung | Forschen (Geologie) oder Bergen mit denselben AP | Schiffszeit gegen AP: Flug (Nav-AP, Proviant, Zeit, +50 %) oder Selbstbergung (AP, kein Proviant); Drohne gegen Frachter; welches Signal zuerst | Welchen Scan ich mir spare; ob ich das Gespräch führe (ein Gespräch je Sol, kostet keinen AP, aber Aufmerksamkeit); Fehlalarme umgehen |
+| Anzeige | Harvester-Karte: „Basis 26 + Geologie 3 = 29“ (Zeile einzeln) | Fundkarte: Menge, „Flug +50 % = x Rg“, Kosten, Rückkehr-Sol | Fundkarte: Gerücht-Zeile („Tomas: Fehlalarm“), Stufe der Beziehung sichtbar |
+| Bot | sehr einfach (heute) | mittel: Regel `dispatch_salvage` (größter gescannter Fund, Schiff nach Tragkraft) | einfach: Regel `ask_rumor` am Sol, Scan überspringt gemeldete Fehlalarme |
+| Wirkung Sol 25 (Rg-Äquivalent über pfadneutralem Pool, Annahme) | Geologie ca. 60–100 (Lv1 ab Sol 6, Lv2 ab ca. Sol 10–13) | ca. +25–30 (50 % auf ca. 50–60 Rg, wenn alles per Schiff) plus ca. 40–60 gesparte AP (Annahme) | 0–5 Rg direkt (ca. 8–10 gesparte Scan-AP, 4–5 Rg-Äquivalent bei 0,5 Rg/AP); mit Gutschein/Zusatzsignal (11.7) mehr |
+
+**Eröffnungs-Gleichwertigkeit (wer kann den Pool wann nutzen):**
+
+- **Pool ohne Pfad ist nutzbar** (Selbstbergung ab Sol 3–4). Das ist gewollt: die Eröffnungen sollen nicht am Pfadgebäude hängen, sonst verlieren Hangar-/Cantina-First ihren Wert am Sink. Zugleich ist der Pool für **keinen** Pfad Pflicht, weil jeder Pfad nur *verändert*, wie viel und wie sicher.
+- **Labor-First:** nutzt den Pool *und* Geologie; Konkurrenz um AP (Forschung gegen Bergung). Das ist die einzige Eröffnung mit echter AP-Knappheit in Sol 5–13.
+- **Hangar-First:** profitiert am stärksten. Die Geschenk-Drohne (Owner-Entscheidung 1) bekommt sofort eine sinnvolle Aufgabe; der Bergungsflug ist die erste pfadspezifische Aktion (K1 ≈ 0–1) und bringt Rg nach 2 Solen (K2 ≈ 2). Die Falle „Drohne blockiert den Frachter-Slot“ entfällt, weil die Geschenk-Drohne keinen Slot belegt; der Frachter hebt die Tragkraft (große Funde) und die Parallelkapazität.
+- **Cantina-First:** schwächste Rg-Wirkung. Information spart Scan-AP und Fehlalarme, aber in Sol 4–12 sind AP nicht knapp. **Einordnung:** Cantina-First bleibt gleich schnell (K3/K6), aber sie ist die Eröffnung, in der D allein **K2 nicht in Regolith** erfüllt. K2 bleibt über Vertrauen und Gäste wie heute (Baseline K2 = 1). Wenn die Messung zeigt, dass dies als Leerlauf wirkt, folgt Stufe 2 (11.7).
+- **Nutzt der Pool ohne Pfad:** ja, aber ohne Pfad ist die Entscheidung dünner (kein Schiff, keine Auskunft). Das ist akzeptabel.
+
+**Hangar-Missionen und Geschenk-Drohne, Einordnung:**
+
+- **Prospektionsflug** (20–30 Rg, Drohne, Geologie-Gate bzw. nach Owner-Entscheidung 2 ohne Gate): in D ein **konkurrierender Rg-Strom ohne Pool-Bezug** und damit der Gegenentwurf zur Owner-Vorgabe. **Empfehlung:** Prospektionsflug entfällt als Direktertrag und geht im Bergungsflug auf; Geologie erhöht dann **nicht** Prospektion, sondern wirkt (wie heute) auf den Harvester (kein Stapeln). Das ersetzt Owner-Entscheidung 2, Owner-Freigabe nötig (F2).
+- **Versorgungsfahrt** (25 Rg + 10 Or je 2 Sole, ca. 7–9 Rg/Sol je Frachter) ist ebenfalls ein planbarer Strom und größer als jeder Pool-Hebel. **Empfehlung:** Regolith aus der Versorgungsfahrt streichen, Organika/Werkstoffe-Anteil behalten (der Frachter bleibt eine Versorgungsmaschine, nur nicht für Regolith). Ersatz ist der Bergungsflug mit Frachter. Alternativ (schwächer): Regolith auf 10–12 senken. Messung `hangar_freighter` zeigt vorab, wie viel das ist.
+- **Deep Survey** (heute strikt dominiert, 11.2): entweder streichen oder zum Bergungsflug *mit Scan im Flug* machen („Fernscan“, sichert dem Hangar-Spieler den Scan ohne AP; bei Ring 3 spart er 2–3 Aufdeck-AP). Empfehlung: in den Bergungsflug integrieren (ein Flug scannt und birgt, 1 Regel statt zwei).
+- **Geschenk-Drohne:** bleibt sinnvoll und wird in D wichtiger, weil ein sofort nutzbares Schiff den ersten Bergungsflug am Fertigstellungs-Sol erlaubt. Datenmodell-Frage (wo wohnt die slotfreie Drohne) bleibt wie in Owner-Entscheidung 1 offen.
+
+### 11.5 Harvester-Grundertrag (Pfad-Aufgabe 3)
+
+**Frage:** Entlastet ein höherer Grundertrag die Pfadwirkungen, und wie viel?
+
+**Rechnung (Referenz y2, Verlegung Sol 1):** Phase-1-Bedarf 535 + Reparatur 40 = 575 Rg. Zufluss ab Start 300 + 23·(n − 1). Ideales Phase-1-Ende bei Sol 12 (23 Rg/Sol) bzw. Sol 11 (26 Rg/Sol). Der Bot braucht bei 23 Rg/Sol Sol 17–18; das heißt, der **effektive** Zufluss im Bot-Lauf liegt nur bei ca. 15–16 Rg/Sol (Verlegung, y1-Kachel, Reparatur, Fehlallokation; Annahme). Die Anhebung wirkt dort proportional (ca. +13 % → Sol 17–18 ≈ 15,5–16,5).
+
+| Variante (Ertragsstufen y1/y2/y3) | Δ je Sol (y2) | Sol-10-Bestand (Δ) | Phase-1-Ende (ideal / Bot-Schätzung) | Kachel-Laufzeit y2_d2 (450) ohne / mit Geologie Lv1 |
+|---|---|---|---|---|
+| heute 16/23/30 | – | – | 12 / 18 | 19,6 / 17,3 Sole |
+| **18/26/34 (Empfehlung, +2/+3/+4)** | +3 | +27 | 11 / 16,5 | 17,3 / 15,5 Sole |
+| 20/28/36 (obere Variante) | +5 | +45 | 10,5 / 15,5 | 16,1 / 14,5 Sole |
+
+**Nebenwirkungen:**
+- **Knappheit bleibt, weil Vorkommen nicht mitwachsen:** `resource_max` (240/450/660) bleibt unverändert, die Gesamt-Rg-Menge der Karte ändert sich nicht, nur das Tempo. Das ist ein Vorteil (Karten-Budget-Invariante, Kern-Fantasie) und ein Risiko: Kacheln sind rund 12 % früher leer, **Verlegungen rücken vor** (2 AP je Hex, Transit-Sole ohne Ertrag). Die Verlegungsentscheidung wird häufiger, nicht schwerer.
+- **Baukosten-Kette:** CC Lv3 (90) und das zweite Pfadgebäude (120) waren die Wartepunkte (Sol 8–11); ein früheres Erreichen verkürzt K5-Leerlauf, ohne AP zu binden. Die 5 Wartesole aus 1.4 schrumpfen auf ca. 3–4.
+- **Geologie relativ:** +3 gegen 23 sind 13 %, +3 gegen 26 sind 11,5 %, bei Lv5 (+12) von 52 % auf 46 %. Geologie bleibt spürbar, der Pfad Labor verliert relativ, **Hangar und Cantina gewinnen anteilig mehr** (der Sockel steigt für alle gleich).
+- **Entlastung der Pfadwirkung:** +3 Rg/Sol Sockel entspricht in Summe (Sol 2–25: +72 Rg) etwa der gesamten Hangar-Pool-Wirkung (ca. +25–30) plus der Cantina-Wirkung (0–5) zusammen, also ein Mehrfaches. Das ist der Zweifelsfall der Owner-Vorgabe: **Der Sockel kann die Pfadlücke bei Cantina/Hangar *überdecken*, aber nicht schließen** (die Pfade bleiben ungleich in der Art und im Betrag; der Sockel gibt allen den gleichen Vorsprung).
+- **Warnsignal:** Bot-Siegquote > 65 % hieße Knappheit verloren (Soll ca. 50 %, siehe Projektvorgabe). Pool + 18/26/34 zusammen verschieben Sol 10 um ca. +47 Rg; das ist die Obergrenze, darüber nicht gehen.
+- **Option G (nur nach Messung):** Wenn Labor in der Messung mehr als doppelt so viel Pfad-Rg wie Hangar liefert, die Geologie-Kurve abflachen (z. B. 2/2/2/2/2 statt 3/3/2/2/2, Summe 10 statt 12) und diesen Rg-Anteil in den Sockel schieben (der Sockel-Anstieg ist ohnehin gesetzt). Das nähert die Pfade an, ohne Zufall.
+
+**Empfehlung:** Harvester 18/26/34 als erster Schritt (eine Config-Zeile, reversibel), **vor** dem Pool, damit der Effekt isoliert messbar ist. 20/28/36 nur, wenn Pool und Pfadwirkungen allein nicht reichen.
+
+### 11.6 Querverbindungen als Modifikatoren (Pfad-Aufgabe 4)
+
+Alle sechs Richtungen, je ein Modifikator auf vorhandene Werte. Es entsteht kein zusätzliches Zufallsereignis.
+
+| Richtung | Modifikator (Vorschlag) | Größe | Bestand? | Empfehlung |
+|---|---|---|---|---|
+| Labor → Hangar | `cartography` senkt Nav-AP von Aufdecken **und** Bergungsflug (bereits implementiert für `dispatchShip`) | Σ 30 % bei Lv5 | ja | sichtbar machen („Kartografie senkt Flugkosten“), nichts Neues |
+| Labor → Cantina | `trade` senkt die Gesprächsschwelle der Gerüchtestufen um 1 Gespräch je 2 Stufen | bis −2 Gespräche | neu | **optional**; Alternative: bestehender Verhandlungs-/Preisbonus von `trade` bleibt die einzige Wirkung |
+| Hangar → Labor | **Feldproben:** jeder abgeschlossene Bergungsflug zahlt 2 Forschungs-AP in die zuletzt begonnene Kenntnis (`investBonus`) | 2 AP je Flug (ca. 10 % einer Stufe Lv1) | neu | **empfohlen** (Owner-Beispiel „Hangar-Mission senkt die AP-Kosten einer Kenntnis“) |
+| Hangar → Cantina | **Fahrtbericht:** jeder abgeschlossene Bergungsflug zählt als zusätzliches Tomas-Gespräch (+1 `interaction_count`) | +1 je Flug | neu | optional (schwach, unsichtbare Verknüpfung, muss in der Flugmeldung stehen) |
+| Cantina → Labor | Tomas' Bonus-AP und Deva/Lenn-Boni in Kenntnisse (`investBonus`) | 1–3 AP je Gespräch (Config) | ja | unverändert; **das ist bereits das Owner-Beispiel „Cantina-Gespräch reduziert AP-Kosten einer Kenntnis“**; nur „braucht Labor“ sichtbar machen |
+| Cantina → Hangar | **Gerücht-Gutschein:** ein Gespräch der Stufe 1+ vergibt einmal je 5 Gespräche „nächster Bergungsflug +25 % Menge“ (Gutscheinmuster wie Vesper/Aldra) | +25 % auf einen Flug | neu | **empfohlen** (Owner-Beispiel „Cantina-Gespräch erhöht Hangar-Ertrag“) |
+
+**Kreis (A hilft B hilft C hilft A):** Cantina → Hangar (Gutschein) → Labor (Feldproben) → Cantina (`trade`-Schwelle) bildet einen geschlossenen Kreis. Empfehlung: die beiden Hangar-Verbindungen (neu) einführen, die Labor→Cantina-Verbindung erst nach Messung, die übrigen drei sind Bestand und werden nur sichtbar gemacht.
+
+**Einordnung der Owner-Beispiele:**
+- „Forschung verbessert Handelsoptionen“: `trade` ist bereits da (Verhandlungschance, Handelsvorteil). In D ist die einzige *neue* Wirkung die Schwelle der Gerüchtestufen (optional). Eine Forschung, die neue Handelsangebote *freischaltet*, bleibt nicht empfohlen (neuer Zustand, unklare Anzeige, siehe 10.4).
+- „Cantina-Gespräch senkt AP einer Kenntnis“: vorhanden (Tomas/Deva/Lenn über `investBonus`).
+- „Cantina-Gespräch erhöht Hangar-Ertrag“: neu als Gerücht-Gutschein.
+- „Hangar-Mission senkt AP einer Kenntnis“: neu als Feldproben.
+
+> ⚠️ BALANCE CONCERN: Die Querverbindungen bevorzugen die Dreifach-Kolonie (wie in 10.4). Messen: Siegquote und Pool-Rg der Dreifach-Läufe gegen Zweifach-Läufe.
+
+### 11.7 Cantina-Lücke, zweistufig
+
+Information allein bringt in Sol 4–12 fast nichts (AP sind brach), und Credits sind in Phase 1 reichlich. Das ist die Kehrseite des Owner-Wunsches „kein planbarer Rg-Ertrag aus der Cantina“. Plan:
+
+1. **v1:** Information (11.4) plus Gutschein (11.6). Messen: K8–K10 aus 10.6 für Cantina, Siegquote und Sol-25-Pool-Rg.
+2. **v2, nur falls Cantina-Wirkung unter ca. 50 % der Hangar-Wirkung bleibt:** Gerüchte erzeugen ein **zusätzliches Signal** (mittel, vorgescannt, kein Fehlalarm), seed-bestimmt im Zeitpunkt (Chance je Gespräch ab Stufe 2: 25 %, höchstens 3 je Run). Das ist unregelmäßig, nicht planbar, an Arbeit (Bergung) gebunden und im Maximum begrenzt (30 Rg brutto, 16 AP je Fund). Es dreht „Information senkt Zufall“ um in „Information erzeugt Zufall“; deshalb nur bei Bedarf und ausdrücklich als Gegenstück zum Hangar (Menge) gedacht.
+3. **Nicht empfohlen:** Credits→Regolith-Bergungsteam (planbar durch die Hintertür) und Organika-Tausch (§3-Knappheitsordnung).
+
+### 11.8 Vergleich D gegen §10 und die Chat-Alternativen (Pfad-Aufgabe 5)
+
+| | **D** Fundpool, Pfade verändern ihn | **§10** planbare Raten (Kontor, Frachtlinie) | **A** nur Harvester + Erkundung, Labor kein Pfad | **B** Pfade senken Kosten statt Einkommen | **C** Pfade stützen Siegziele |
+|---|---|---|---|---|---|
+| Idee | gemeinsamer Pool + Sockel, Pfade ändern Menge, Sicherheit, Tempo | je Pfad eigene Rate 6–8 Rg/Sol | Regolith nur aus Sockel + Pool; Geologie und Hangar-Regolith entfallen | Pfade rabattieren Bau-/Flug-/Forschungskosten | Pfade liefern Fortschritt auf Siegbedingungen |
+| Vorteile | Eine Quelle für alle (K4/K5), Knappheit bleibt, Eröffnungen starten gleich, Owner-Vorgaben (kein planbares Hangar/Cantina-Rg) erfüllt, Querverbindungen als Modifikatoren | stärkste K2-Wirkung, einfach messbar | maximal einfach, klarste Verständlichkeit | passt zur Knappheit („weniger brauchen“), kein Inflationsrisiko | stärkt Run-Ziele, entlastet Rg-Frage |
+| Nachteile | Pfad-Rg ungleich (Labor 3–5, Hangar 1,5–2, Cantina 0–1 Rg/Sol-Äq.), Cantina-Info schwach solange AP brach sind, großer neuer Umfang (Generator, UI, Bergung) | verletzt die Owner-Vorgabe (planbar), Hangar überschießt (≈ 13 Rg/Sol), GDD §4b muss umgeschrieben werden | Labor verliert seine Pfad-Identität, Owner-Idee „Labor = Dauerrate“ entfällt | in Phase 1 sind AP/Credits nicht knapp, Rabatte wirken kaum (gleiche Schwäche wie Cantina-Info); keine Antwort auf K4/K5 | berührt die Rg-Frage nicht; Pfade ohne Ziel-Bezug bleiben leer |
+| Balance-Rechenbarkeit | gut: feste Pool-Summe, nur Lage und Nachschub streuen (σ ≈ 15 Rg bis Sol 25), Sockel dominiert die Streuung | sehr gut (Raten) | sehr gut | mittel (Kostenpfade überlagern) | schlecht (Siegziele drift-anfällig) |
+| Aufwand | groß (Generator-Seed, Tiefenscan-Config, Bergungsprojekt, Bergungsflug, Cantina-Auskunft) | mittel (Kontor, Hint, Config) | klein bis mittel (Streichen, Pool) | mittel (Rabatt-Wiring-Fallen, siehe Memory „Discount-Wiring“) | mittel bis groß |
+| Bot-Modellierung | mittel (vier neue Regeln, gut testbar) | einfach | einfach | mittel | mittel |
+| Risiko | Pool zu klein/groß, Cantina-Lücke, Prospektion/Versorgungsfahrt als Konkurrenzquelle | Hangar-Überschuss, Credits-Collapse, Owner lehnt es ab | Pfadverlust, Eröffnungs-Gleichwertigkeit bleibt offen | Rabatte wirken erst spät, Phase-1-Leerlauf bleibt | Dreifach-Bevorzugung, Siegziel-Drift |
+
+**Empfehlung: D, begleitet von Harvester 18/26/34 (11.5).** Begründung: D ist die einzige Variante, die K4/K5 löst, die Owner-Vorgaben (kein planbarer Hangar/Cantina-Ertrag) einhält und Querverbindungen ohne neue Zufallsereignisse erlaubt. Die Schwäche der Cantina wird nicht verschwiegen, sondern gemessen und zweistufig gelöst (11.7). **B** (Kostensenkung) wird als Würze in die Querverbindungen aufgenommen (Gutschein, Feldproben), nicht als Haupthebel. **A** wird teilweise übernommen: Hangar-Regolith aus Versorgungsfahrt/Prospektion fällt weg (11.4), das Labor bleibt aber über Geologie die Dauerrate. **C** bleibt separat.
+
+### 11.9 Umsetzungsreihenfolge, Messplan, Risiken, offene Fragen (Pfad-Aufgabe 6)
+
+#### Umsetzungsreihenfolge (kleinste wirksame Schritte)
+
+| Schritt | Inhalt | Aufwand | Messung (24 Läufe, gleiche Seeds) |
+|---|---|---|---|
+| 0 | Messungen aus 10.6 Schritt 1 (`hangar_freighter`, Cantina-Seeds 2–8) abwarten; die Versorgungsfahrt-Zahlen aus 11.4 hängen daran | K | vorhanden bzw. in Arbeit |
+| 1 | **Harvester-Ertrag 16/23/30 → 18/26/34** (Config) | K | K3, K6, Siegquote: Phase-2-Start 18 → ca. 16,5; K6 +27 Rg |
+| 2 | **Pool v1 pfadneutral** (= Variante A aus §9 mit festem Start-Budget): Signale im Generator (eigener Seed-Strom), Fundtypen, Tiefenscan-Kosten in Config, Bergungsprojekt mit Deckel, UI-Fundkarte, Bot-Regeln `scan_signal`/`invest_find` | M–G | K4 ≤ 45, K5 ≤ 2; K6 Abstand ≤ 25; Pool-Rg Sol 10 ≈ 20 |
+| 3 | **Hangar-Bergungsflug** (inkl. Scan im Flug, Entscheidung zu Prospektion/Versorgungsfahrt, Geschenk-Drohne) | M | Hangar K1 ≤ 1, K2 ≤ 3; Anteil Pool-Rg über Schiff 40–70 % |
+| 4 | **Cantina-Gerüchte** (Stufen nach `interaction_count`) | K–M | Cantina K4/K5 gegen Pool allein: Spar-AP durch Auskunft |
+| 5 | **Querverbindungen:** Feldproben, Gutschein; danach optional `trade`-Schwelle, Fahrtbericht | K–M | Siegquote je Eröffnung ≤ 10 Punkte Abstand; keine Pflichtlinie |
+| 6 | **Nachschub-Signale** (20 %/Sol ab Sol 8) | K–M | K4 (Sol 13+), Anteil Fund-AP am AP-Zufluss ≤ 15 % |
+| 7 | nur bei Bedarf: Cantina v2 (Zusatzsignal), Option G (Geologie-Kurve), 20/28/36 | K | gezielt |
+
+Reihenfolge-Begründung: 1 ist rückholbar und isoliert den Sockel-Effekt; 2 liefert den größten K4/K5-Hebel für alle Eröffnungen zugleich; 3 und 4 geben dem Pool pfadspezifische Wirkung; 6 erst nach Messung, weil Nachschub den Fund-AP-Anteil und die Streuung erhöht.
+
+#### Messplan (Kennzahlen, Zielwerte als Vorschlag)
+
+Bestehend: K1–K7 (2.1), K8–K10 (10.6). Neu für D:
+
+| Kennzahl | Definition | Soll |
+|---|---|---|
+| K11 Pool-Rg realisiert | Rg aus `regolith_sources.find` bis Sol 10 / Sol 25 je Eröffnung | ca. 20 / ca. 50 (Labor niedriger, Hangar höher) |
+| K12 Anteil Pool-Rg über Schiff | Rg aus Bergungsflug / Rg aus Pool gesamt | Hangar 50–80 %, Labor/Cantina ≤ 20 % |
+| K13 Fund-AP-Anteil | Scan- + Bergungs-AP / AP-Zufluss gesamt | ≤ 15 % Gesamtlauf, ≤ 40 % in Sol 4–12 |
+| K14 Fehlalarm-Scans | Scans ohne Ertrag je Lauf | Cantina deutlich niedriger als Labor/Hangar (zeigt Auskunftswirkung) |
+| K15 Pfad-Rg-Äquivalent | Geologie-Rg + Schiffs-Aufschlag (Rg) + Spar-AP × 0,5 | Abstand Labor/Hangar ≤ Faktor 2; Cantina ≥ 50 % Hangar (sonst v2) |
+
+Profile: `default` × `labor|hangar|cantina` × 8 Seeds (24 Läufe); zusätzlich 8 Läufe `hangar_freighter` vor Schritt 3, damit die Versorgungsfahrt-Entscheidung nicht blind fällt. Dauer vor jedem Batch dem Owner nennen (8/16/24 wählen lassen). Bot-Siegquote ca. 50 % bleibt Soll; > 65 % ist Warnschwelle (Knappheit verloren), ein einzelner Rückgang kein Tuning-Ziel.
+
+#### Risiken
+
+- **Pool zu klein:** Er bleibt dann ein Beschäftigungs-Sink ohne Rg-Relevanz. Gegenmittel: Start-Budget 40 → 55 Rg (Rendite bleibt, Anzahl Signale 7 → 9), nur nach Messung.
+- **Pool zu groß oder Pool-Pflichtlinie:** Er wird für jeden Spieler Standardlinie und entwertet den Harvester. Warnschwelle K13 > 25 %.
+- **Konkurrenzquellen im Hangar:** Wird Prospektionsflug/Versorgungsfahrt nicht entschärft, liefert der Hangar weiter 4–9 Rg/Sol planbar und der Pool ist nur Beiwerk (Zielkonflikt mit Owner-Vorgabe).
+- **Cantina-Lücke:** Information ohne AP-Knappheit wirkt kaum (11.7). Messen, früh entscheiden, nicht zuwarten.
+- **Fehl-Gewichtung Labor:** Geologie (3–5 Rg/Sol) bleibt die stärkste Einzelwirkung; Option G beobachten.
+- **Verständlichkeit:** Neue Zahlen: Signal-Mischung, drei Fundgrößen, Deckel, Faktor 1,5, Gutschein 25 %, Gerüchtestufen. Gegenmaßnahme: eine Fundkarte, jede Zahl vor der Entscheidung sichtbar, die Querverbindungen höchstens zwei neue Zahlen.
+- **Generatorfalle:** Würde der Pool im selben Seed-Strom erzeugt, ändert sich jede Karte der Baselines (gepaarte Vergleiche ungültig). Eigener Salt ist Pflicht (11.3).
+- **Zeilen-ID-Falle (R5b):** Nachschub nur aus `rng_seed` + Sol + Salt, nie aus Zeilen-IDs.
+- **`event_ruin`:** Wird die Ruine nicht ergänzt, bleibt Weg B der Harvester-Zweitinstanz tot (Nebenbefund 11.2, nicht Teil von D).
+
+#### Offene Owner-Fragen (max. 5, mit Vorschlag)
+
+1. **F1 Wirkungs-Parität statt Rate-Parität?** Das Ziel 6–8 Rg/Sol je Pfad (§10.2) wird mit D nicht erreicht; Vorschlag: durch „Pfad-Rg-Äquivalent bis Sol 25“ ersetzen (Labor ca. 60–100, Hangar ca. 30 plus gesparte AP, Cantina ≥ 50 % Hangar) und den Rest über den Sockel decken. **Empfehlung: ja.**
+2. **F2 Prospektionsflug und Versorgungsfahrt:** Prospektionsflug in der Bergung aufgehen lassen (ersetzt Owner-Entscheidung 2); Regolith aus der Versorgungsfahrt streichen (Organika/Werkstoffe bleiben). **Empfehlung: ja**, sonst bleibt der Hangar ein planbarer Rg-Strom. Fallback: Versorgungsfahrt auf 10–12 Rg.
+3. **F3 Harvester-Grundertrag 18/26/34?** Vorschlag: ja, vor dem Pool; 20/28/36 nur bei Bedarf. Kachel-Vorkommen bleiben (Karten-Rg-Budget unverändert).
+4. **F4 Nachschub-Signale** (20 %/Sol ab Sol 8, höchstens 5) in v1 oder erst nach Messung? **Empfehlung: erst nach Messung (Schritt 6)**; v1 ist der feste Start-Pool, weil dann die Streuung null ist und die Messung sauber bleibt.
+5. **F5 Cantina:** Information plus Gutschein (v1) und Zusatzsignal (v2) nur bei Bedarf, oder Zusatzsignal gleich? **Empfehlung: v1 zuerst, v2 nur wenn K15 für Cantina unter 50 % von Hangar fällt.**
+
+**Annahmen, die ich in diesem Abschnitt nicht belegen konnte:** (a) Normalnäherung der K6-Streuung (σ = 26), (b) 85 % realisierte Pool-Menge, (c) Anteil 60 % der Funde per Schiff, (d) Ring-3-Kandidaten reichen für die größeren Funde, (e) „1 Rg je Sol“ aus der Skizze meint eine gleichmäßige Rate.
