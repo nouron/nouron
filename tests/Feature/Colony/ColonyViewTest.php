@@ -222,7 +222,7 @@ class ColonyViewTest extends TestCase
      * A25: the active Harvester tile also carries a `sols_remaining` estimate
      * ("ca. N Sole bis Erschöpfung", A24/A25). Neutral trust + no geology so
      * the expected value matches the pure ColonyTileService::solsRemaining()
-     * formula exactly: fresh_yield(regolith_y2_d2)=23, ceil(111/23)=5.
+     * formula exactly: fresh_yield(regolith_y2_d2)=26, ceil(111/26)=5.
      */
     public function test_hexview_tiles_include_sols_remaining_for_placed_harvester(): void
     {

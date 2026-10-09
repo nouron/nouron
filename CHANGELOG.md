@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-09
+
+- Balance: Harvester-Grundertrag 16/23/30 → 18/26/34 Rg/Sol (T30 Spec §11, Pfad-Parität); `resource_max` unverändert, Kacheln leeren sich ca. 12 % früher. `docs/game-reference.md` nachgezogen.
+
 ## 2026-10-06
 
 - Feat: T30 Schritt 0 — PlaytestBot-Eröffnungsprofile (`--openings`: Labor-/Hangar-/Cantina-First), Kurzläufe (`--until-sol`) und `game:playtest-compare` (Kennzahlen K1–K7, gepaart nach Seed). Report-Namen enthalten jetzt die Eröffnung; Baseline-Messung folgt (`docs/dev-setup-mysql.md`).

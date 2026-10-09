@@ -452,17 +452,19 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter 
 
 **A44/H1 (2026-09-27):** zwei entkoppelte Achsen — Ertragstier (`y1`-`y3`) und Mächtigkeitstier (`d1`-`d3`), kombiniert zu 8 `tile_type`-Werten. `y3_d3` (bestes Tier auf beiden Achsen) existiert bewusst nicht.
 
+**T30 (2026-10-09):** Fresh Yield 16/23/30 → 18/26/34 (Pfad-Parität, Spec §11), Resource Max unverändert.
+
 **Fresh Yields** (Regolith pro Sol) und **Resource Max** (Gesamtvorkommen). **T10 (2026-09-28):** Resource Max ×1,5 (160/300/440 → 240/450/660) — behebt das Baustoff-/Kartenbudget-Problem, siehe `docs/superpowers/plans/2026-09-27-t10-regolith-credits-rekalibrierung-spec.md`:
 | Tile-Typ | Fresh Yield | Resource Max |
 |---|---|---|
-| regolith_y1_d1 | 16 Rg | 240 Rg |
-| regolith_y1_d2 | 16 Rg | 450 Rg |
-| regolith_y1_d3 | 16 Rg | 660 Rg |
-| regolith_y2_d1 | 23 Rg | 240 Rg |
-| regolith_y2_d2 | 23 Rg | 450 Rg |
-| regolith_y2_d3 | 23 Rg | 660 Rg |
-| regolith_y3_d1 | 30 Rg | 240 Rg |
-| regolith_y3_d2 | 30 Rg | 450 Rg |
+| regolith_y1_d1 | 18 Rg | 240 Rg |
+| regolith_y1_d2 | 18 Rg | 450 Rg |
+| regolith_y1_d3 | 18 Rg | 660 Rg |
+| regolith_y2_d1 | 26 Rg | 240 Rg |
+| regolith_y2_d2 | 26 Rg | 450 Rg |
+| regolith_y2_d3 | 26 Rg | 660 Rg |
+| regolith_y3_d1 | 34 Rg | 240 Rg |
+| regolith_y3_d2 | 34 Rg | 450 Rg |
 
 **H2 — Sol-1-Gegensatzpaar:** zwei der 9 Ring-3-Frontier-Koordinaten werden immer pre-explored und mit einem Kontrast-Paar belegt (eine Kombi strikt höheres Ertragstier UND strikt niedrigeres Mächtigkeitstier als die andere) — welches konkrete Paar variiert pro Run/Seed (`ColonyTileService::pickH2Pair()`).
 
