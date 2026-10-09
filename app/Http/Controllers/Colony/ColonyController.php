@@ -268,6 +268,28 @@ class ColonyController extends BaseController
         return response()->json([...$result, ...$extra], $result['ok'] ? 200 : 422);
     }
 
+    public function salvageTile(Request $request): JsonResponse
+    {
+        $data = $request->validate(['q' => 'required|integer', 'r' => 'required|integer', 'ap' => 'required|integer']);
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $result = $this->tileService->salvageFind($colony->id, (int) $data['q'], (int) $data['r'], (int) $data['ap']);
+
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user' => Auth::id(),
+                'tick' => $this->getTick(),
+                'event' => 'colony.tile_salvaged',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id, 'completed' => $result['completed']]),
+            ]);
+        }
+
+        // currentAp() carries apAvailable + regolith for the resourcebar live sync.
+        $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
+
+        return response()->json([...$result, ...$extra], $result['ok'] ? 200 : 422);
+    }
+
     // ── Building actions ──────────────────────────────────────────────────────
 
     public function availableBuildings(): JsonResponse
@@ -363,6 +385,12 @@ class ColonyController extends BaseController
         // client to keep it free. Covers every placement path, Harvester included.
         if ((int) $data['q'] === 0 && (int) $data['r'] === 0) {
             return $this->fail('tile_occupied');
+        }
+
+        // An unfinished find (scanned or not) must be salvaged before anything is built on it.
+        // This single choke point also covers Harvester relocation.
+        if (is_string($tile->event_type) && str_starts_with($tile->event_type, 'find_')) {
+            return $this->fail('tile_has_find');
         }
 
         $isHarvester = (int) $data['building_id'] === BuildingId::Harvester->value;

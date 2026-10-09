@@ -83,6 +83,7 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     // Tile actions (AJAX)
     Route::post('/tile/explore', [ColonyController::class, 'exploreTile'])->name('tile.explore');
     Route::post('/tile/deep-scan', [ColonyController::class, 'deepScanTile'])->name('tile.deep-scan');
+    Route::post('/tile/salvage', [ColonyController::class, 'salvageTile'])->name('tile.salvage');
 
     // Building actions (AJAX)
     Route::get('/buildings/available', [ColonyController::class, 'availableBuildings'])->name('buildings.available');

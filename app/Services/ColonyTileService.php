@@ -20,6 +20,7 @@ class ColonyTileService
     public function __construct(
         private readonly AdvisorService $advisorService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly TickService $tickService,
     ) {}
 
     public function getTilesForColony(int $colonyId): Collection
@@ -111,6 +112,86 @@ class ColonyTileService
         }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
+    }
+
+    /**
+     * T30 Pool v1: pay AP into a salvage project on a deep-scanned find tile.
+     * Max `salvage_cap_per_sol` AP per tile and Sol; at most `max_open_projects`
+     * started-but-unfinished projects per colony. Completion credits Regolith.
+     */
+    public function salvageFind(int $colonyId, int $q, int $r, int $ap): array
+    {
+        $fail = fn (string $code, ?string $msgKey = null) => [
+            'ok' => false, 'error' => $code, 'message' => __('colony.error_'.($msgKey ?? $code)),
+        ];
+
+        $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
+        if (! $tile) {
+            return $fail('tile_not_found');
+        }
+        if (! $tile->is_deep_scanned) {
+            return $fail('not_scanned');
+        }
+        if (! is_string($tile->event_type) || ! str_starts_with($tile->event_type, 'find_')) {
+            return $fail('no_find');
+        }
+        if ($tile->event_type === 'find_false') {
+            return $fail('find_false');
+        }
+
+        $cap = (int) config('game.finds.salvage_cap_per_sol');
+        if ($ap < 1 || $ap > $cap) {
+            return $fail('invalid_ap');
+        }
+        $tick = $this->tickService->getTickCount();
+        if ($tile->salvage_tick !== null && (int) $tile->salvage_tick === $tick) {
+            return $fail('salvage_cap');
+        }
+
+        $spent = (int) $tile->salvage_ap_spent;
+        if ($spent === 0) {
+            $open = ColonyTile::where('colony_id', $colonyId)
+                ->where('is_deep_scanned', true)
+                ->where('event_type', 'like', 'find\_%')
+                ->where('event_type', '!=', 'find_false')
+                ->where('salvage_ap_spent', '>', 0)
+                ->count();
+            if ($open >= (int) config('game.finds.max_open_projects')) {
+                return $fail('salvage_projects');
+            }
+        }
+
+        $def = config('game.finds.types')[$tile->event_type];
+        $ap = min($ap, (int) $def['ap'] - $spent);
+
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $ap) {
+            return $fail('no_nav_ap', 'no_nav_ap');
+        }
+
+        $completed = false;
+        $rg = 0;
+        DB::transaction(function () use ($tile, $colonyId, $ap, $spent, $tick, $def, &$completed, &$rg) {
+            if (! config('game.bypass.ap_checks')) {
+                $this->advisorService->lockActionPoints($colonyId, $ap);
+            }
+            $spent += $ap;
+            if ($spent >= (int) $def['ap']) {
+                $completed = true;
+                $rg = (int) $def['rg'];
+                DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)
+                    ->increment('amount', $rg);
+                $tile->event_type = null;
+                $tile->is_deep_scanned = false;
+                $tile->salvage_ap_spent = 0;
+                $tile->salvage_tick = null;
+            } else {
+                $tile->salvage_ap_spent = $spent;
+                $tile->salvage_tick = $tick;
+            }
+            $tile->save();
+        });
+
+        return ['ok' => true, 'tile' => $this->transformTile($tile), 'completed' => $completed, 'regolith' => $rg];
     }
 
     /**
