@@ -29,6 +29,7 @@ class OnboardingService
         private readonly ColonyService $colonyService,
         private readonly EventService $eventService,
         private readonly ColonyTileService $tileService,
+        private readonly FindPoolService $findPoolService,
     ) {}
 
     /**
@@ -234,17 +235,18 @@ class OnboardingService
         // owner confirmation — see HarvesterSol1BootstrapTest and the session report.
         $tiles = [
             // ── Ring 0 ────────────────────────────────────────────────────────
-            ['q' => 0, 'r' => 0, 'ring' => 0, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => 0, 'r' => 0, 'ring' => 0, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
             // ── Ring 1 ────────────────────────────────────────────────────────
-            ['q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
-            ['q' => 0, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
-            ['q' => -1, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
-            ['q' => -1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
-            ['q' => 0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
-            ['q' => 1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
+            ['q' => 0, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
+            ['q' => -1, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
+            ['q' => -1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
+            ['q' => 0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
+            ['q' => 1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null, 'event_type' => null],
         ];
 
-        $tiles = array_merge($tiles, $this->tileService->randomizeOuterRingRows($rngSeed));
+        $outer = $this->tileService->randomizeOuterRingRows($rngSeed);
+        $tiles = array_merge($tiles, $this->findPoolService->assign($outer, $rngSeed));
 
         $rows = array_map(fn ($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
         DB::table('colony_tiles')->insert($rows);
