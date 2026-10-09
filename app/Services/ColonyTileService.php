@@ -98,7 +98,7 @@ class ColonyTileService
             ->where('colony_id', $colonyId)
             ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
             ->value('level') ?? 0;
-        $scanApCost = ($uplinkLv >= 2) ? 1 : 2;
+        $scanApCost = ($uplinkLv >= 2) ? (int) config('game.finds.scan_ap_uplink') : (int) config('game.finds.scan_ap');
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $scanApCost) {
             return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2')];
@@ -306,6 +306,19 @@ class ColonyTileService
         $arr['has_signal'] = $tile->event_type !== null && (bool) $tile->is_explored && ! (bool) $tile->is_deep_scanned;
         // Hide the actual event until the tile is deep-scanned (sondiert)
         $arr['event_type'] = $tile->is_deep_scanned ? $tile->event_type : null;
+
+        $arr['find'] = null;
+        if ($tile->is_deep_scanned && is_string($tile->event_type) && str_starts_with($tile->event_type, 'find_')) {
+            $def = config('game.finds.types')[$tile->event_type] ?? ['rg' => 0, 'ap' => 0];
+            $arr['find'] = [
+                'type' => $tile->event_type,
+                'rg' => $def['rg'],
+                'ap_total' => $def['ap'],
+                'ap_spent' => (int) $tile->salvage_ap_spent,
+                'ap_cap_per_sol' => (int) config('game.finds.salvage_cap_per_sol'),
+                'false' => $tile->event_type === 'find_false',
+            ];
+        }
 
         return $arr;
     }
