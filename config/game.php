@@ -46,6 +46,21 @@ return [
         'explore_cost_default' => 1,
     ],
 
+    // T30 Pool v1 (Spec §11.3): fixed start pool of hidden finds, same size every run.
+    'finds' => [
+        'start_pool' => ['find_large' => 1, 'find_medium' => 1, 'find_small' => 3, 'find_false' => 2],
+        'types' => [
+            'find_small' => ['rg' => 4, 'ap' => 12],
+            'find_medium' => ['rg' => 10, 'ap' => 16],
+            'find_large' => ['rg' => 18, 'ap' => 22],
+            'find_false' => ['rg' => 0, 'ap' => 0],
+        ],
+        'scan_ap' => 2,
+        'scan_ap_uplink' => 1, // Uplink-Station Lv2+
+        'salvage_cap_per_sol' => 4,
+        'max_open_projects' => 2,
+    ],
+
     // IMPORTANT: The tick system assumes the server (and PHP runtime) runs in UTC.
     // AppServiceProvider::boot() enforces date_default_timezone_set('UTC') at startup.
     // Never deploy Nouron with a non-UTC system timezone — tick boundaries will drift.
