@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Models\ColonyTile;
 use App\Models\User;
 use App\Services\AdvisorService;
 use App\Services\ColonyTileService;
@@ -9,6 +10,7 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /** T30 Pool v1: salvage project (multi-Sol AP deposits, per-Sol cap, open-project limit). */
@@ -179,6 +181,45 @@ class SalvageFindTest extends TestCase
         $res = $this->actingAs($user)->postJson(route('colony.building.place'), ['building_id' => 28, 'q' => 2, 'r' => 0]);
 
         $res->assertStatus(422)->assertJson(['error' => 'tile_has_find']);
+    }
+
+    public function test_stale_read_cannot_double_credit_or_double_pay(): void
+    {
+        $this->tile(2, 'find_small', ['salvage_ap_spent' => 10, 'salvage_tick' => 9]);
+        $stale = ColonyTile::where('colony_id', self::COLONY_ID)->where('q', 2)->first();
+        $rg = $this->regolith();
+        $this->assertTrue($this->salvage(2, 4)['completed']);
+        $ap = $this->navAp();
+
+        $res = $this->salvage(2, 4);
+
+        $this->assertFalse($res['ok']);
+        $this->assertSame($rg + 4, $this->regolith());
+        $this->assertSame($ap, $this->navAp());
+        $this->assertNotNull($stale);
+    }
+
+    private function place(int $q): TestResponse
+    {
+        $user = User::where('user_id', 3)->firstOrFail();
+
+        return $this->actingAs($user)->postJson(route('colony.building.place'), ['building_id' => 28, 'q' => $q, 'r' => 0]);
+    }
+
+    public function test_placement_guard_matrix(): void
+    {
+        $z = ['is_colony_zone' => 1];
+        $this->tile(2, 'find_false', $z + ['is_deep_scanned' => 0]);
+        $this->tile(3, 'find_false', $z + ['is_deep_scanned' => 1]);
+        $this->tile(4, 'find_small', $z + ['is_deep_scanned' => 1]);
+        $this->tile(5, 'event_ruin', $z + ['is_deep_scanned' => 0]);
+        $this->tile(6, null, $z + ['is_deep_scanned' => 0]);
+
+        $this->place(2)->assertStatus(422)->assertJson(['error' => 'tile_has_find']);
+        $this->place(4)->assertStatus(422)->assertJson(['error' => 'tile_has_find']);
+        $this->assertNotSame('tile_has_find', $this->place(3)->json('error'));
+        $this->assertNotSame('tile_has_find', $this->place(5)->json('error'));
+        $this->assertNotSame('tile_has_find', $this->place(6)->json('error'));
     }
 
     public function test_salvage_route_returns_ap_and_regolith(): void

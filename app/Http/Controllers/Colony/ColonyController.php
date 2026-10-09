@@ -387,9 +387,11 @@ class ColonyController extends BaseController
             return $this->fail('tile_occupied');
         }
 
-        // An unfinished find (scanned or not) must be salvaged before anything is built on it.
-        // This single choke point also covers Harvester relocation.
-        if (is_string($tile->event_type) && str_starts_with($tile->event_type, 'find_')) {
+        // An unfinished find must be salvaged before building on it. Unscanned finds are
+        // all rejected alike (no oracle for false alarms); a scanned find_false is buildable.
+        // Single choke point, also covers Harvester relocation.
+        if (is_string($tile->event_type) && str_starts_with($tile->event_type, 'find_')
+            && ! ($tile->is_deep_scanned && $tile->event_type === 'find_false')) {
             return $this->fail('tile_has_find');
         }
 
