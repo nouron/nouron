@@ -47,12 +47,14 @@
             repairDisplayThreshold: {{ (float) config("game.repair.display_threshold", 0.7) }},
             damagedThresholdPct: {{ (float) config("game.encounter.damaged_threshold_pct", 0.66) }},
             criticalThresholdPct: {{ (float) config("game.encounter.critical_threshold_pct", 0.33) }},
+            deepScanAp: {{ (int) $deepScanAp }},
             relocateApPerHex: {{ (int) config("game.harvester.relocate_ap_per_hex", 2) }},
             phaseProgress: @json($phaseProgress),
             regolithFallbackTiles: @json($regolithFallbackTiles ?? []),
             routes: {
                 explore: '{{ route("colony.tile.explore") }}',
                 deepScan: '{{ route("colony.tile.deep-scan") }}',
+                salvage: '{{ route("colony.tile.salvage") }}',
                 buildingsAvailable: '{{ route("colony.buildings.available") }}',
                 placeBuilding: '{{ route("colony.building.place") }}',
                 investBuilding: '{{ route("colony.building.invest") }}',
@@ -80,6 +82,12 @@
                 harvesterMoveNoTargets: @json(__("colony.harvester_move_no_targets")),
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
                 regolithFallbackTileHint: @json(__("colony.regolith_fallback_tile_hint")),
+                findSalvaged: @json(__("colony.find_salvaged")),
+                findHeader: @json(__("colony.find_header")),
+                findSmall: @json(__("colony.find_small")),
+                findMedium: @json(__("colony.find_medium")),
+                findLarge: @json(__("colony.find_large")),
+                findFalse: @json(__("colony.find_false")),
                 networkError: @json(__("colony.network_error")),
                 buildLinkUnavailable: @json(__("colony.build_link_unavailable")),
                 leveldownNewLevel: @json(__("colony.leveldown_new_level")),
@@ -124,6 +132,7 @@
                  Kolonisten-Zulage moved to the Kommandozentrale dashboard (own screen,
                  no popup — see routes/web.php colony.command_center). --}}
                 <div class="canvas-info-bar">
+                    <span class="find-counters" x-text="findCountersText()"></span>
                     <details class="hex-legend">
                         <summary class="info-bar-btn">{{ __("colony.legend_title") }}</summary>
                         <ul class="hex-legend__list">
@@ -164,6 +173,9 @@
                                 <span>{{ __("colony.legend_event") }}</span>
                             </li>
                         </ul>
+                        <p class="hex-legend__help">
+                            {{ __("colony.find_help", ["total" => array_sum(config("game.finds.start_pool"))]) }}
+                        </p>
                     </details>
                 </div>
             </div>
@@ -229,7 +241,10 @@
                             <template x-if="selectedTile.has_signal && !selectedTile.is_deep_scanned">
                                 <button class="tile-action-btn" @click="doDeepScan(selectedTile)">
                                     <span class="tile-action-btn__body">{{ __("colony.deep_scan") }}</span>
-                                    @include("partials.ap-cost-chip", ["amount" => 2, "type" => "nav"])
+                                    @include("partials.ap-cost-chip", [
+                                        "amount" => $deepScanAp,
+                                        "type" => "nav",
+                                    ])
                                 </button>
                             </template>
                             {{-- Repair: the condition bar is embedded as a segmented

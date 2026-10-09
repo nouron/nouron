@@ -14,6 +14,19 @@ use Random\Randomizer;
 
 class ColonyTileService
 {
+    /**
+     * Effective deep-scan cost in Nav-AP: Uplink-Station Lv2+ (building_id=54) is cheaper.
+     */
+    public function deepScanCost(int $colonyId): int
+    {
+        $uplinkLv = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
+            ->value('level') ?? 0;
+
+        return ($uplinkLv >= 2) ? (int) config('game.finds.scan_ap_uplink') : (int) config('game.finds.scan_ap');
+    }
+
     /** Ring-3 "frontier" tile count seeded at Sol 1 — a deliberate half-subset of the full 18-tile ring. */
     private const RING3_FRONTIER_COUNT = 9;
 
@@ -94,15 +107,10 @@ class ColonyTileService
             return ['ok' => false, 'error' => 'already_scanned', 'message' => __('colony.error_already_scanned')];
         }
 
-        // Uplink-Station Lv2+ (building_id=54): deep-scan costs 1 Nav-AP instead of 2.
-        $uplinkLv = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
-            ->value('level') ?? 0;
-        $scanApCost = ($uplinkLv >= 2) ? (int) config('game.finds.scan_ap_uplink') : (int) config('game.finds.scan_ap');
+        $scanApCost = $this->deepScanCost($colonyId);
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $scanApCost) {
-            return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2')];
+            return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2', ['ap' => $scanApCost])];
         }
 
         $tile->is_deep_scanned = true;

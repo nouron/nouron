@@ -220,8 +220,9 @@ class ColonyController extends BaseController
             : [];
 
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
+        $deepScanAp = $this->tileService->deepScanCost($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────

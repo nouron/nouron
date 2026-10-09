@@ -85,6 +85,43 @@
         </div>
     </dl>
 
+    {{-- T30 find card: shown after the deep scan reveals a find on this tile. --}}
+    <template x-if="selectedTile.find">
+        <div class="find-card">
+            <template x-if="selectedTile.find.false">
+                <p class="find-card__false">{{ __("colony.find_false_notice") }}</p>
+            </template>
+            <template x-if="!selectedTile.find.false">
+                <div x-data="{ ap: 1 }" x-effect="ap = salvageMax(selectedTile.find)">
+                    <dl class="tile-dl find-card__dl">
+                        <div>
+                            <dt>{{ __("colony.find_label") }}</dt>
+                            <dd x-text="@js(__("colony.find_value")).replace(':rg', selectedTile.find.rg)"></dd>
+                        </div>
+                        <div>
+                            <dt>{{ __("colony.find_effort") }}</dt>
+                            <dd x-text="`${selectedTile.find.ap_spent}/${selectedTile.find.ap_total} AP`"></dd>
+                        </div>
+                        <div>
+                            <dt>{{ __("colony.find_cap") }}</dt>
+                            <dd x-text="@js(__("colony.find_cap_value")).replace(':ap', selectedTile.find.ap_cap_per_sol)">
+                            </dd>
+                        </div>
+                    </dl>
+                    <div class="find-card__action">
+                        <input type="number" class="find-card__ap" min="1" :max="salvageMax(selectedTile.find)"
+                            step="1" x-model.number="ap" aria-label="{{ __("colony.find_salvage_ap_label") }}" />
+                        <button type="button" class="tile-action-btn" @click="doSalvage(selectedTile, ap)">
+                            <span class="tile-action-btn__body">{{ __("colony.find_salvage") }}</span>
+                            <span class="ap-chip ap-cost-chip ap-chip--nav" aria-hidden="true"
+                                x-text="`${salvageClamp(selectedTile.find, ap)} AP`"></span>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+
     <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
         <div class="tile-resource">
             <div class="tile-bar-group">

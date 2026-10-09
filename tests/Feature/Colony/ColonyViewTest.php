@@ -366,4 +366,18 @@ class ColonyViewTest extends TestCase
         $response->assertOk();
         $response->assertSee('buildLinkUnavailable: '.json_encode(__('colony.build_link_unavailable'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), false);
     }
+
+    public function test_hexview_renders_find_card_markup_from_lang_keys(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+        $response->assertSee(route('colony.tile.salvage'), false);
+        $response->assertSee(__('colony.find_effort'), false);
+        $response->assertSee(__('colony.find_salvage'), false);
+        $response->assertSee(__('colony.find_false_notice'), false);
+        // Scan cost comes from config, never hardcoded in the markup.
+        $response->assertSee('deepScanAp: '.(int) config('game.finds.scan_ap'), false);
+    }
 }
