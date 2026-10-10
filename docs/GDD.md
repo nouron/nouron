@@ -495,6 +495,8 @@ Daraus folgt:
 - **Kolonie-Zone-Tiles** sind baubar, aber ggf. noch im Fog (`is_colony_zone=1, is_explored=0`). **Bauen auf einem solchen Tile deckt es auf** ("siedeln → sehen"). Der Spieler kann optional vorher per Navigation-AP erkunden, um vor dem Bauen zu sehen, was dort liegt (z.B. Gefahrenzone).
 - **Exploration-Zone-Tiles** bleiben Fog of War — einzeln per Navigation-AP aufgedeckt (Ring-gestaffelte Kosten s.o.). Hier liegt der Erkundungs-Lohn (Regolith fürs Harvester-Verlegen, Signale/Funde ab Ring 3).
 
+**Signale, Tiefenscan, Bergung:** Zu Run-Beginn liegt auf einigen Außenring-Feldern ein verstecktes Signal. Ein Tiefenscan kostet wenig AP und zeigt, was dahintersteckt — ein Fehlalarm, ein kleiner, mittlerer oder großer Fund. Gehoben wird ein Fund als Bergungsprojekt: AP werden über mehrere Sole investiert (mit Tagesdeckel und Projektlimit), erst bei Abschluss fließt das Regolith. Der Vorrat ist ein fester, für alle Eröffnungen identischer Pool — er begünstigt weder Labor, Hangar noch Cantina und bleibt in dieser Fassung ohne Nachschub. Zahlen: `docs/game-reference.md#17a-fundpool-t30-pool-v1-gamefinds`.
+
 > Kernregel: **Die CC erschließt nur Gelände — sie siedelt nicht ins Unbekannte.** Erschließen ≠ Erkunden. Der CC-Ausbau erkundet keine Tiles automatisch — sonst wären die beiden Achsen für den Spieler ununterscheidbar.
 
 > **Blocker unter Fog — Lücken-Deduktion (Playtest-Review 2026-07-11):** Unaufgedeckte Tiles können `terrain_impassable` sein — der Spieler riskiert beim Erkunden also Nav-AP für ein nutzloses Tile. Das ist ring-abhängig unterschiedlich bewertet und bewusst so entschieden:

@@ -478,6 +478,29 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter 
 
 ---
 
+## 17a. Fundpool (T30 Pool v1, `game.finds`)
+
+Fester Start-Pool versteckter Signale auf den Außenring-Feldern (Ring 2/3, nur `terrain_empty`), pfadneutral: für alle Eröffnungen gleich, kein Nachschub in v1. Platzierung `FindPoolService` (eigener Seed-Strom, der größte Fund bevorzugt Ring 3).
+
+| Fundtyp | Anzahl im Pool | Regolith (brutto) | Bergungs-AP |
+|---|---|---|---|
+| `find_false` (Fehlalarm) | 2 | 0 | 0 |
+| `find_small` | 3 | 4 | 12 |
+| `find_medium` | 1 | 10 | 16 |
+| `find_large` | 1 | 18 | 22 |
+
+Pool gesamt: 7 Signale, 40 Rg brutto.
+
+| Parameter | Wert | Config |
+|---|---|---|
+| Tiefenscan eines Signals | 2 AP (1 AP mit Uplink-Station Lv2+) | `finds.scan_ap`, `finds.scan_ap_uplink` |
+| Bergungs-Deckel | 4 AP je Sol und Projekt | `finds.salvage_cap_per_sol` |
+| Offene Bergungsprojekte | max. 2 | `finds.max_open_projects` |
+
+Ablauf: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, AP-Investition bis zum Fund-Preis, Regolith bei Abschluss). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`). Bot: Regeln `deep_scan_signal_tile` und `invest_find` (niedrige Priorität). Messung: `RunReport` `regolith_sources.find`, `game:playtest-compare` K11 (informativ, kein Zielwert).
+
+---
+
 ## 18. Run-Struktur
 
 *Stand: 2026-09-26 (A45 im Code umgesetzt, Werte vorläufig bis zum Abschluss des Kalibrier-Batches).*

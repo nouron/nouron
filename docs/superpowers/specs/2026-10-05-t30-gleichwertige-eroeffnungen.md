@@ -39,7 +39,7 @@ Alle anderen Deutungen in diesem Dokument sind als **Annahme** oder **Empfehlung
 | Start-Regolith | 300 | `game.onboarding.start_regolith` |
 | Start-Credits / Nexus-Vorschuss | 3000 / 3000 | `OnboardingService::seedResources()`, `seedSol1State()` |
 | Startgebäude | CC, Harvester, Wohnhabitat je Lv1, 16/20 SP; Harvester auf leerem Feld (1,0), **fördert 0** bis zur Verlegung | `OnboardingService` |
-| Harvester-Ertrag | 16 / 23 / 30 Rg/Sol (Ertragsstufe y1/y2/y3) | `game.harvester.fresh_yield` |
+| Harvester-Ertrag | 16 / 23 / 30 Rg/Sol vorher, jetzt 18 / 26 / 34 (Ertragsstufe y1/y2/y3) | `game.harvester.fresh_yield` |
 | Verlegung | 2 AP je Hex | `game.harvester.relocate_ap_per_hex` |
 | AP | 12 Basis + 2 je Berater Rang 1, **sofort ab Einstellung** (gemeinsamer Pool) | `game.ap.base`, `advisor.ap_per_rank`, `AdvisorService::getApBreakdown()` |
 | Bau-AP je Stufe | 10 für alle Gebäude (Rabatt nur über `construction`) | `database/seeders/data/buildings.php` `ap_for_levelup` |
@@ -432,7 +432,7 @@ Ring-Kosten verdoppeln. Absorbiert höchstens ca. 45 weitere AP, und zwar nur bi
 
 ### 10.1 Diagnose je Pfad
 
-Annahmen: Referenz-Harvester y2 (23 Rg/Sol). Geologie-Stufen als Schätzung: Lv1 Sol 6, Lv2 Sol 10, Lv3 Sol 15 (nur bei Vorrang der Geologie). Missionsertrag = Config-Ertrag × Schwierigkeitsfaktor (normal: ×1,0 bei 70 %; leicht: ×0,7 bei 85 %), Fehlschlag ohne Ertrag. Die Folgen eines Fehlschlags für das Schiff habe ich nicht geprüft.
+Annahmen (Stand vor Schritt 1): Referenz-Harvester y2 (23 Rg/Sol; jetzt 26). Geologie-Stufen als Schätzung: Lv1 Sol 6, Lv2 Sol 10, Lv3 Sol 15 (nur bei Vorrang der Geologie). Missionsertrag = Config-Ertrag × Schwierigkeitsfaktor (normal: ×1,0 bei 70 %; leicht: ×0,7 bei 85 %), Fehlschlag ohne Ertrag. Die Folgen eines Fehlschlags für das Schiff habe ich nicht geprüft.
 
 | | Labor | Hangar | Cantina |
 |---|---|---|---|
@@ -445,7 +445,7 @@ Annahmen: Referenz-Harvester y2 (23 Rg/Sol). Geologie-Stufen als Schätzung: Lv1
 **Konstruktionsfehler:**
 1. **Hangar:** Die einzige schnell wirkende Drohnen-Regolith-Quelle hängt an einer Labor-Kenntnis (ein Pfad braucht den anderen, die Paritätsregel „nicht im Ob“ ist verletzt). Die zweite Quelle (Frachter) ist **stark, aber versteckt**: Sie liegt hinter Hangar Lv2, 500 Cr und einem Platz, den der naheliegende Erstkauf (Drohne) belegt. Kein Hint führt dorthin, und der Bot spielt sie nicht (K2 nie). **Annahme:** Das Messergebnis „nie“ ist daher überwiegend Zugangs- und Bot-Problem, nicht Ertragsproblem.
 2. **Cantina:** Handel kennt Regolith nur als Zufall. Es gibt keine Beziehung, die einen verlässlichen Zufluss erzeugt; das GDD verbietet ihn sogar. Das Vorhandene (Corvan-Kauf, Fen) ist nicht planbar und deshalb für K2 wertlos.
-3. **Labor:** unproblematisch, aber der Ertrag ist ohne Gegenstück klein, solange nur Lv1 steht (+3 gegen ≈ 23 Rg Harvester).
+3. **Labor:** unproblematisch, aber der Ertrag ist ohne Gegenstück klein, solange nur Lv1 steht (+3 gegen ≈ 23 Rg Harvester, vorher; jetzt ≈ 26).
 4. **Querbefund:** Die Ertragshöhen liegen heute weit auseinander (Labor ≈ 3–8, Hangar im Vollbetrieb ≈ 13, Cantina ≈ 1). Würde man nur Zugang und Bot reparieren, wäre **Hangar der Überflieger**.
 
 > ⚠️ BALANCE CONCERN: Hangar-Vollbetrieb (Frachter + Drohne) liefert nach Config etwa das Doppelte des angestrebten Pfadertrags. Vor jeder Anhebung von Labor oder Cantina zuerst mit dem Profil `hangar_freighter` messen (10.6), dann entscheiden, ob Hangar gesenkt (Versorgungsfahrt 25 → ca. 18 Rg) oder die anderen angehoben werden.
@@ -578,7 +578,7 @@ Bewertung: füllt K4/K5 · pfadneutral · Inflation · Bot · Aufwand.
 
 **Owner-Ausgangslage (2026-10-09):** Harvester = konstante Quelle (gestärkt durch Geologie), Labor = Dauerrate; Hangar und Cantina = unregelmäßig. Zusätzlich „Funde durch Erkundung“ als Zufallsquelle, die alle drei Pfade stützt. Planbarer Rg-Ertrag aus Hangar und Cantina ist nicht gewollt (Kontor/Frachtlinie aus §10 daher nicht gesetzt). Querverbindungen erwünscht. Im Zweifel darf der Harvester-Grundertrag steigen.
 
-> **Annahme:** „Harvester = 1 Rg je Sol“ aus der Skizze lese ich als „gleichmäßige Rate pro Sol“, nicht wörtlich 1 Rg (Config: 16/23/30 Rg/Sol je Ertragsstufe).
+> **Annahme:** „Harvester = 1 Rg je Sol“ aus der Skizze lese ich als „gleichmäßige Rate pro Sol“, nicht wörtlich 1 Rg (Config: vorher 16/23/30, jetzt 18/26/34 Rg/Sol je Ertragsstufe).
 
 ### 11.1 Kurzurteil
 
@@ -597,7 +597,7 @@ Bewertung: füllt K4/K5 · pfadneutral · Inflation · Bot · Aufwand.
 | `mission_deep_survey` (Drohne, `sol_distance` 2) kostet 4 Nav-AP + 6 Or und 4 Sole für dasselbe, was der Spieler selbst für 2 AP kann. Sie ist heute strikt dominiert. | `config/missions.php` |
 | Karte: Ring 2 = 12 Felder (10 % Gefahr, sonst `terrain_empty`); Ring 3 = 9 von 18 Koordinaten („Frontier“, 5 % unpassierbar, 10 % Gefahr, 50 % Regolith, 35 leer), davon 2 vorab aufgedeckt. Verdeckt sind also **12 + 7 = 19 Felder**, Aufdecken kostet 12×2 + 7×3 = **45 AP**. (Die Schätzung in 1.5 von ca. 70 AP war zu hoch.) | `randomizeOuterRingRows()`, `game.colony.explore_cost_per_ring`, `RING3_FRONTIER_COUNT` |
 | Ein Seed-Strom je Karte (`SeededRandom::generator($seed)`) mit fester Ziehreihenfolge; `RunSeed::forColony()` liefert `runs.rng_seed` reduziert. | `ColonyTileService`, `RunSeed` |
-| Harvester-Gesamtvorkommen je Kachel: 240/450/660 Rg (`resource_max`), Ertrag 16/23/30; Geologie +3/+3/+2/+2/+2 kumulativ. Eine höhere Rate verkürzt also die Laufzeit der Kachel, vergrößert aber **nicht** das Karten-Regolith. | `game.harvester`, `geology_harvester_bonus_per_level` |
+| Harvester-Gesamtvorkommen je Kachel: 240/450/660 Rg (`resource_max`), Ertrag vorher 16/23/30, jetzt 18/26/34; Geologie +3/+3/+2/+2/+2 kumulativ. Eine höhere Rate verkürzt also die Laufzeit der Kachel, vergrößert aber **nicht** das Karten-Regolith. | `game.harvester`, `geology_harvester_bonus_per_level` |
 | Versorgungsfahrt (Frachter, `sol_distance` 1, 2 Nav-AP, 3 Or, Umlauf 2 Sole) zahlt **25 Rg + 10 Or**, Prospektionsflug (Drohne, `sol_distance` 2, Gate Geologie 1) 20–30 Rg. Erfolgschance 70 % (normal), 85 % (leicht, ×0,7). Das sind bereits **planbare Hangar-Raten von ca. 4–9 Rg/Sol**. Sie stehen im Widerspruch zur Owner-Vorgabe „kein planbarer Hangar-Ertrag“ und sind in D die offene Hauptfrage (11.4, Owner-Frage F2). | `config/missions.php`, `game.missions.difficulty` |
 | Bergungs-/Kapazitätsattribute für Schiffe gibt es nicht (`config/ships.php` kennt nur Kosten, Lieferzeit, Verschleiß). | `config/ships.php` |
 
@@ -637,7 +637,7 @@ Einzelnes Nachschub-Signal: X ∈ {0 (p = 2/7), 4 (3/7), 10 (1/7), 18 (1/7)}. E[
 | Pool-Rg am Start von Sol 10, nur Start-Pool, Selbstbergung | ca. 20 Rg (Labor ca. 12, Hangar/Cantina ca. 28) | ca. 6 Rg | Obergrenze: 6 Sole × 8 AP = 48 AP, abzüglich ca. 10 AP Scans |
 | Rg am Start von Sol 10 gesamt | siehe unten | – | der Sockel (Harvester-Kachel) dominiert die Streuung |
 
-**Bezug auf den Sockel (Annahme, Normalnäherung):** Die gemessene Spanne von K6 liegt bei 33–137 Rg (Median 63). Ich setze σ ≈ 26 (Spanne/4). Die Streuung kommt fast vollständig von der Harvester-Kachel (16/23/30 Rg/Sol: ±7 Rg/Sol ≈ ±55 Rg bis Sol 10) und vom Bot-Verhalten, **nicht vom Pool** (σ ≈ 6). Der Pool verschiebt den Mittelwert und lässt die Streuung praktisch unverändert (Quadratsumme: √(26² + 6²) = 26,7).
+**Bezug auf den Sockel (Annahme, Normalnäherung):** Die gemessene Spanne von K6 liegt bei 33–137 Rg (Median 63). Ich setze σ ≈ 26 (Spanne/4). Die Streuung kommt fast vollständig von der Harvester-Kachel (vorher 16/23/30 Rg/Sol: ±7 Rg/Sol ≈ ±55 Rg bis Sol 10) und vom Bot-Verhalten, **nicht vom Pool** (σ ≈ 6). Der Pool verschiebt den Mittelwert und lässt die Streuung praktisch unverändert (Quadratsumme: √(26² + 6²) = 26,7).
 
 | Szenario (Rg zu Beginn Sol 10) | Mittel | Anteil Runs unter 50 Rg | Anteil unter 40 Rg | Anteil über 110 Rg |
 |---|---|---|---|---|
@@ -711,11 +711,11 @@ Der Pool macht damit etwa 5–7 % der Gesamtquelle aus (Sockel mit D 924 Rg, Poo
 
 **Frage:** Entlastet ein höherer Grundertrag die Pfadwirkungen, und wie viel?
 
-**Rechnung (Referenz y2, Verlegung Sol 1):** Phase-1-Bedarf 535 + Reparatur 40 = 575 Rg. Zufluss ab Start 300 + 23·(n − 1). Ideales Phase-1-Ende bei Sol 12 (23 Rg/Sol) bzw. Sol 11 (26 Rg/Sol). Der Bot braucht bei 23 Rg/Sol Sol 17–18; das heißt, der **effektive** Zufluss im Bot-Lauf liegt nur bei ca. 15–16 Rg/Sol (Verlegung, y1-Kachel, Reparatur, Fehlallokation; Annahme). Die Anhebung wirkt dort proportional (ca. +13 % → Sol 17–18 ≈ 15,5–16,5).
+**Rechnung (Referenz y2, Verlegung Sol 1):** Phase-1-Bedarf 535 + Reparatur 40 = 575 Rg. Zufluss ab Start 300 + 23·(n − 1) (Stand vor Schritt 1). Ideales Phase-1-Ende bei Sol 12 (23 Rg/Sol) bzw. Sol 11 (26 Rg/Sol). Der Bot braucht bei 23 Rg/Sol Sol 17–18; das heißt, der **effektive** Zufluss im Bot-Lauf liegt nur bei ca. 15–16 Rg/Sol (Verlegung, y1-Kachel, Reparatur, Fehlallokation; Annahme). Die Anhebung wirkt dort proportional (ca. +13 % → Sol 17–18 ≈ 15,5–16,5).
 
 | Variante (Ertragsstufen y1/y2/y3) | Δ je Sol (y2) | Sol-10-Bestand (Δ) | Phase-1-Ende (ideal / Bot-Schätzung) | Kachel-Laufzeit y2_d2 (450) ohne / mit Geologie Lv1 |
 |---|---|---|---|---|
-| heute 16/23/30 | – | – | 12 / 18 | 19,6 / 17,3 Sole |
+| vorher 16/23/30 | – | – | 12 / 18 | 19,6 / 17,3 Sole |
 | **18/26/34 (Empfehlung, +2/+3/+4)** | +3 | +27 | 11 / 16,5 | 17,3 / 15,5 Sole |
 | 20/28/36 (obere Variante) | +5 | +45 | 10,5 / 15,5 | 16,1 / 14,5 Sole |
 
@@ -781,8 +781,8 @@ Information allein bringt in Sol 4–12 fast nichts (AP sind brach), und Credits
 | Schritt | Inhalt | Aufwand | Messung (24 Läufe, gleiche Seeds) |
 |---|---|---|---|
 | 0 | Messungen aus 10.6 Schritt 1 (`hangar_freighter`, Cantina-Seeds 2–8) abwarten; die Versorgungsfahrt-Zahlen aus 11.4 hängen daran | K | vorhanden bzw. in Arbeit |
-| 1 | **Harvester-Ertrag 16/23/30 → 18/26/34** (Config) | K | K3, K6, Siegquote: Phase-2-Start 18 → ca. 16,5; K6 +27 Rg |
-| 2 | **Pool v1 pfadneutral** (= Variante A aus §9 mit festem Start-Budget): Signale im Generator (eigener Seed-Strom), Fundtypen, Tiefenscan-Kosten in Config, Bergungsprojekt mit Deckel, UI-Fundkarte, Bot-Regeln `scan_signal`/`invest_find` | M–G | K4 ≤ 45, K5 ≤ 2; K6 Abstand ≤ 25; Pool-Rg Sol 10 ≈ 20 |
+| 1 | **Harvester-Ertrag 16/23/30 → 18/26/34** (Config) — **umgesetzt 2026-10-09**; gemessen: K3 17/17/16,5, K6 79/79/71,5, K4/K5 unverändert | K | K3, K6, Siegquote: Phase-2-Start 18 → ca. 16,5; K6 +27 Rg |
+| 2 | **umgesetzt (2026-10-09, Branch feat/t30-pool-v1; Messung offen)** — **Pool v1 pfadneutral** (= Variante A aus §9 mit festem Start-Budget): Signale im Generator (eigener Seed-Strom), Fundtypen, Tiefenscan-Kosten in Config, Bergungsprojekt mit Deckel, UI-Fundkarte, Bot-Regeln `deep_scan_signal_tile`/`invest_find` | M–G | K4 ≤ 45, K5 ≤ 2; K6 Abstand ≤ 25; Pool-Rg Sol 10 ≈ 20 |
 | 3 | **Hangar-Bergungsflug** (inkl. Scan im Flug, Entscheidung zu Prospektion/Versorgungsfahrt, Geschenk-Drohne) | M | Hangar K1 ≤ 1, K2 ≤ 3; Anteil Pool-Rg über Schiff 40–70 % |
 | 4 | **Cantina-Gerüchte** (Stufen nach `interaction_count`) | K–M | Cantina K4/K5 gegen Pool allein: Spar-AP durch Auskunft |
 | 5 | **Querverbindungen:** Feldproben, Gutschein; danach optional `trade`-Schwelle, Fahrtbericht | K–M | Siegquote je Eröffnung ≤ 10 Punkte Abstand; keine Pflichtlinie |
@@ -819,10 +819,10 @@ Profile: `default` × `labor|hangar|cantina` × 8 Seeds (24 Läufe); zusätzlich
 
 #### Offene Owner-Fragen (max. 5, mit Vorschlag)
 
-1. **F1 Wirkungs-Parität statt Rate-Parität?** Das Ziel 6–8 Rg/Sol je Pfad (§10.2) wird mit D nicht erreicht; Vorschlag: durch „Pfad-Rg-Äquivalent bis Sol 25“ ersetzen (Labor ca. 60–100, Hangar ca. 30 plus gesparte AP, Cantina ≥ 50 % Hangar) und den Rest über den Sockel decken. **Empfehlung: ja.**
-2. **F2 Prospektionsflug und Versorgungsfahrt:** Prospektionsflug in der Bergung aufgehen lassen (ersetzt Owner-Entscheidung 2); Regolith aus der Versorgungsfahrt streichen (Organika/Werkstoffe bleiben). **Empfehlung: ja**, sonst bleibt der Hangar ein planbarer Rg-Strom. Fallback: Versorgungsfahrt auf 10–12 Rg.
-3. **F3 Harvester-Grundertrag 18/26/34?** Vorschlag: ja, vor dem Pool; 20/28/36 nur bei Bedarf. Kachel-Vorkommen bleiben (Karten-Rg-Budget unverändert).
-4. **F4 Nachschub-Signale** (20 %/Sol ab Sol 8, höchstens 5) in v1 oder erst nach Messung? **Empfehlung: erst nach Messung (Schritt 6)**; v1 ist der feste Start-Pool, weil dann die Streuung null ist und die Messung sauber bleibt.
-5. **F5 Cantina:** Information plus Gutschein (v1) und Zusatzsignal (v2) nur bei Bedarf, oder Zusatzsignal gleich? **Empfehlung: v1 zuerst, v2 nur wenn K15 für Cantina unter 50 % von Hangar fällt.**
+1. **F1 Wirkungs-Parität statt Rate-Parität?** Das Ziel 6–8 Rg/Sol je Pfad (§10.2) wird mit D nicht erreicht; Vorschlag: durch „Pfad-Rg-Äquivalent bis Sol 25“ ersetzen (Labor ca. 60–100, Hangar ca. 30 plus gesparte AP, Cantina ≥ 50 % Hangar) und den Rest über den Sockel decken. **Empfehlung: ja.** *(Owner 2026-10-09: wie vorgeschlagen)*
+2. **F2 Prospektionsflug und Versorgungsfahrt:** Prospektionsflug in der Bergung aufgehen lassen (ersetzt Owner-Entscheidung 2); Regolith aus der Versorgungsfahrt streichen (Organika/Werkstoffe bleiben). **Empfehlung: ja**, sonst bleibt der Hangar ein planbarer Rg-Strom. Fallback: Versorgungsfahrt auf 10–12 Rg. *(Owner 2026-10-09: wie vorgeschlagen)*
+3. **F3 Harvester-Grundertrag 18/26/34?** Vorschlag: ja, vor dem Pool; 20/28/36 nur bei Bedarf. Kachel-Vorkommen bleiben (Karten-Rg-Budget unverändert). *(Umgesetzt und gemessen, siehe Schritt 1.)*
+4. **F4 Nachschub-Signale** (20 %/Sol ab Sol 8, höchstens 5) in v1 oder erst nach Messung? **Empfehlung: erst nach Messung (Schritt 6)**; v1 ist der feste Start-Pool, weil dann die Streuung null ist und die Messung sauber bleibt. *(Owner 2026-10-09: wie vorgeschlagen)*
+5. **F5 Cantina:** Information plus Gutschein (v1) und Zusatzsignal (v2) nur bei Bedarf, oder Zusatzsignal gleich? **Empfehlung: v1 zuerst, v2 nur wenn K15 für Cantina unter 50 % von Hangar fällt.** *(Owner 2026-10-09: wie vorgeschlagen)*
 
 **Annahmen, die ich in diesem Abschnitt nicht belegen konnte:** (a) Normalnäherung der K6-Streuung (σ = 26), (b) 85 % realisierte Pool-Menge, (c) Anteil 60 % der Funde per Schiff, (d) Ring-3-Kandidaten reichen für die größeren Funde, (e) „1 Rg je Sol“ aus der Skizze meint eine gleichmäßige Rate.

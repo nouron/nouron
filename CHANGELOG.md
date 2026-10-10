@@ -3,6 +3,7 @@
 ## 2026-10-09
 
 - Balance: Harvester-Grundertrag 16/23/30 → 18/26/34 Rg/Sol (T30 Spec §11, Pfad-Parität); `resource_max` unverändert, Kacheln leeren sich ca. 12 % früher. `docs/game-reference.md` nachgezogen.
+- Feat: T30 Pool v1 (Spec §11 Schritt 2) — fester pfadneutraler Fundpool (Signale, Tiefenscan, Bergungsprojekt mit Deckel, Fundkarte im Tile-Panel, Bot-Regeln, K11); Doku in `docs/game-reference.md` §17a und GDD §4a. Messung steht aus.
 
 ## 2026-10-06
 
