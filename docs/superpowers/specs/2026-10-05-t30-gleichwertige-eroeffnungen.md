@@ -826,3 +826,120 @@ Profile: `default` × `labor|hangar|cantina` × 8 Seeds (24 Läufe); zusätzlich
 5. **F5 Cantina:** Information plus Gutschein (v1) und Zusatzsignal (v2) nur bei Bedarf, oder Zusatzsignal gleich? **Empfehlung: v1 zuerst, v2 nur wenn K15 für Cantina unter 50 % von Hangar fällt.** *(Owner 2026-10-09: wie vorgeschlagen)*
 
 **Annahmen, die ich in diesem Abschnitt nicht belegen konnte:** (a) Normalnäherung der K6-Streuung (σ = 26), (b) 85 % realisierte Pool-Menge, (c) Anteil 60 % der Funde per Schiff, (d) Ring-3-Kandidaten reichen für die größeren Funde, (e) „1 Rg je Sol“ aus der Skizze meint eine gleichmäßige Rate.
+
+---
+
+## 12. Hangar: Kosten und Instanzen vs. Bays (2026-10-10)
+
+**Autor:** game-designer (Analyse + Empfehlung, keine Code-/Config-/GDD-Änderung). Zahlen sind **Configwerte** (gelesen) oder **Vorschlagswerte** (so gekennzeichnet). Handrechnungen und eigene Deutungen sind als **Annahme** markiert.
+
+**Owner-Frage (2026-10-10, sinngemäß):** Labor, Cantina und Hangar kosten auf Stufe 1 gleich viel, aber nur vom Hangar gibt es mehrere Instanzen (bis zu 3). Müsste eine Hangar-Instanz dann nicht ein Drittel kosten? Alternative: eine einzige Hangar-Instanz mit mehreren ausbaubaren Bays.
+
+### 12.1 Faktenlage (gelesen, nicht erinnert)
+
+| Befund | Wert | Quelle |
+|---|---|---|
+| Hangar-Instanzen | **unbegrenzt** (`max_instances` = null, `is_instanced` = 1), nur durch Supply und Zonen-Kacheln gebremst. „Bis zu 3“ steht nirgends im Code. | `config/buildings.php` hangar, `database/seeders/data/buildings.php` |
+| Stufen je Instanz | `max_level` 3, Stufe = Schiffsklasse: Lv1 Drohne, Lv2 Frachter, Lv3 Korvette. **Jede Instanz hat ihre eigene Stufe.** | `HangarService::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL` |
+| Schiffsplätze | 1 Instanz = 1 Schiff. Gekaufte Schiffe kommen in die erste freie Instanz, deren Stufe die Klasse trägt (T22), sonst `pending` mit Verfall nach `pending_decay_ticks`. | `HangarService::requestShip()`, `grantFreeShip()` |
+| Bestellbare Klasse | höchste Hangar-Stufe der Kolonie (`hangarMaxLevel`), betreiben kann ein Schiff aber nur eine Instanz mit passender Stufe | `HangarService::hangarMaxLevel()`, `isShipInactive()` |
+| Kosten je Instanz | Platzieren 95 + 25 Rg (Stufe 0→1 vorausbezahlt, T9), 11 AP bis Lv1, jede weitere Stufe 25 Rg + 10 AP. **Jede Instanz zahlt den vollen Preis.** | `build_cost`, `game.build.levelup_regolith_flat`, `ap_for_levelup` |
+| Supply | 6 je Stufe und Instanz (Lv0 reserviert 6) | `ResourcesService::buildingWorkplaces()` |
+| Verfall | 0,60 SP/Sol **je Instanz**, Reparatur 1 Rg + 1 AP je SP | `decay_rate`, `game.repair` |
+| Zonen-Kacheln | 6 / +3 / +3 / +3 / 0 je CC-Stufe, max. 15. Jede Hangar-Instanz belegt eine. Ungeborgene Fund-Kacheln (Pool v1) sind nicht bebaubar. | `game.colony_zone_expansion`, `ColonyController::placeBuilding()` (`tile_has_find`) |
+| Schiffe | Drohne 300 Cr, Frachter 500 Cr, Korvette 800 Cr; Frachter +2 Vertrauen je Stück | `config/ships.php` |
+| Raumfahrer | 500 Cr, Slot nur einmal (mehrere Hangar-Instanzen zählen als ein Pfadgebäude) | `config/advisors.php`, `AdvisorController` |
+| Bot | baut höchstens **2** Hangar-Instanzen (harte Sperre `$instanceCap = [44 => 2, …]`), weil er sonst alle Zonen-Kacheln mit Hangars füllte (Befund A37: 6 Instanzen, null Vertrauensgebäude). Kommentar: „Owner: Absicht sind ca. 2–3 Hangar-Instanzen“. | `BotStrategy::orderPlacementCandidates()` |
+
+**Abweichung Owner-Wahrnehmung ↔ Code:** „Bis zu 3 Instanzen“ ist eine **Owner-Absicht** (A37-Rest, 2026-09-15), kein Code-Stand. Im Code gilt: Instanzen unbegrenzt, Stufen bis 3. Die GDD-Tabelle in §4 („Hangar | 3 (Instanzen ungedeckelt)“) meint mit „3“ die Stufe. **Annahme:** Die „3“ der Owner-Frage mischt beides.
+
+**Nebenbefund (Annahme, zu prüfen):** Die Regel „bei CC Lv2 nur eines der drei Pfadgebäude“ (Config-Kommentar, GDD §4) habe ich in `ColonyController::placeBuilding()`/`buildableBuildings()` nicht gefunden. Dort wird nur das Agrardom-Gate geprüft. Begrenzt wird nur die Zahl der Berater-Slots (CC-Stufe).
+
+### 12.2 Kostenlogik
+
+**Der eigentliche Fehler ist die doppelte Bezahlung, nicht der Preis der ersten Instanz.** Wer gleichzeitig Drohne, Frachter und Korvette halten will, braucht drei Instanzen **und** drei verschiedene Stufen. Er zahlt den Platz über die Instanz und die Klasse über die Stufe, und das je Schiff.
+
+Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
+
+| Ausbau | Rg | AP (Bau) | Supply | Kacheln | Verfall SP/Sol (≈ Rg + AP/Sol Reparatur) | Schiffe | Credits (Gebäude + Personal + Schiffe) |
+|---|---|---|---|---|---|---|---|
+| Labor Lv3 / Lv5 | 170 / 220 | 31 / 51 | 18 / 30 | 1 | 0,80 | – | 400 |
+| Cantina Lv3 | 170 | 31 | 18 | 1 | 0,80 | – | 350 |
+| Hangar 1 Instanz Lv1 | 120 | 11 | 6 | 1 | 0,60 | 1 (Drohne) | 500 + 300 |
+| Hangar 1 Instanz Lv2 | 145 | 21 | 12 | 1 | 0,60 | 1 (Frachter) | 500 + 500 |
+| Hangar 2 Instanzen (Lv2 + Lv1) | 265 | 32 | 18 | 2 | 1,20 | 2 | 500 + 800 |
+| Hangar 3 Instanzen (Lv3 + Lv2 + Lv1) | 435 | 63 | 36 | 3 | 1,80 | 3 | 500 + 1.600 |
+
+**Lesart:**
+- Mit **einer** Instanz ist der Hangar preisgleich zu Labor und Cantina (je 120 bis Lv1, 170 bis Lv3) und im Verfall sogar billiger. Hier gibt es kein Problem.
+- Ab der **zweiten** Instanz kippt es. Ein zweites Schiff kostet 120 Rg, eine Kachel, 6 Supply und doppelten Verfall. Das ist so viel wie ein ganzes Pfadgebäude. Der Volle-Flotte-Hangar kostet das 2,5-Fache einer voll ausgebauten Cantina (435 gegen 170 Rg) und doppelt so viel Supply. Dazu kommen 1.600 Cr für die Schiffe.
+- **Nutzen der weiteren Plätze (Annahme):** Jeder zusätzliche Platz bringt einen weiteren parallelen Flug. Er kostet aber eigene Nav-AP, Proviant und Verschleiß. Nach F2 (Owner 2026-10-09) entfallen Versorgungsfahrt-Regolith und Prospektionsflug als planbare Ströme. Der Hangar-Ertrag hängt dann an Pool-Funden (ca. 50–60 Rg je Run) und Credits-Missionen. Ein dritter Platz hat also wenig zu tun. Der Grenznutzen fällt, der Preis bleibt voll.
+- **„Preis ÷ 3“ ist die falsche Antwort.** Die erste Instanz ist das Pfadgebäude: Sie schaltet den Raumfahrer-Slot, den Missionskatalog und die Nexus-Bestellung frei. Mit ca. 32 Rg Errichtung wäre Hangar-First rund 63 Rg billiger als Labor-/Cantina-First, also etwa 2,5 Harvester-Sole früher in Phase 2 (Annahme: 26 Rg/Sol, y2). Das verletzt G4 und K3/K6. Teuer ist nicht die erste Halle, sondern **jede weitere**. Dazu verbraucht jede weitere eine Zonen-Kachel. Die ist durch Pool v1 noch knapper geworden und mit Regolith gar nicht zu bezahlen.
+
+### 12.3 Varianten
+
+| | **A** Instanz-Preis ÷ 3 | **B1 (empfohlen)** Eine Halle, Stufe = Klasse + Bucht | **B2** Eine Halle, Buchten als eigene Ausbau-Achse | **C1** Instanzen bleiben, gestaffelt + Deckel 3 | **C2** Instanzen bleiben, Stufe koloniweit | **C3** Schiffe teurer, Gebäude bleibt |
+|---|---|---|---|---|---|---|
+| Regel | jede Instanz ca. 32 Rg | 1 Hangar, Lv n = Klasse n **und** n Buchten (Lv1: 1, Lv2: 2, Lv3: 3) | 1 Hangar, Lv1–3 = Klasse; Buchten 1→3 als eigenes Projekt (Vorschlag: je 25 Rg + 10 AP) | 1. Instanz 95, weitere z. B. 40 Rg (Vorschlag), `max_instances` 3 | Klasse = höchste Stufe aller Instanzen, Instanzen sind reine Plätze | Hangar unverändert, Schiffspreise hoch |
+| Rg volle Flotte (Drohne + Frachter + Korvette) | ca. 245 (3 × 32 + 3 × 25 + 3 Stufen à 25) | **170** (= Cantina Lv3) | 120 + 50 + 50 = 220 (= Labor Lv5) | 170 + 90 + 65 = 325 | 170 + 2 × 65 = 300 (weitere Instanzen nur Lv1) | 435 |
+| Kacheln / Supply | 3 / 36 | **1 / 18** | 1 / 18 (Vorschlag: Buchten ohne Supply) | 3 / 36 | 3 / 30 | 3 / 36 |
+| Pfad-Parität Eröffnung | **verletzt** (Hangar-First 63+ Rg billiger) | gewahrt | gewahrt | gewahrt | gewahrt | gewahrt |
+| Entscheidung für den Spieler | keine neue | Stufe aufsteigen = größere Klasse + mehr Platz (ein Schritt) | Klasse oder Platz zuerst | Halle wohin, welche Stufe in welcher Halle | Halle wohin | – |
+| Transparenz („angezeigte Zahl = wirkende Zahl“) | wie heute (Stufe je Instanz, T22-Falle bleibt) | **sehr gut:** „Hangar Stufe 2, Buchten 2/2“ | gut, aber zwei Zahlen | mittel (Preis hängt von der Anzahl ab, Stufe je Instanz bleibt) | mittel | wie heute |
+| Löst Kachelverbrauch / Bot-Sperre | nein, verschärft (billiger = mehr Hallen) | **ja** | ja | teilweise (Deckel 3) | teilweise | nein |
+| Löst T22-Falle (Frachter findet keine Halle mit Lv2) | nein | **ja** (alle Buchten haben die Hallenstufe) | ja | nein | ja | nein |
+| Ort für die Geschenk-Drohne (Owner: ohne Slot) | offen | natürlich: **Vorfeld** der Halle (fester Zusatzplatz nur für die Geschenk-Drohne) | Vorfeld | offen | offen | offen |
+| Fiktion | Hallenfeld | **Landefeld mit Andockbuchten** einer Kleinkolonie, kein Werftgelände | dito | Hallenfeld | Hallenfeld | – |
+| Aufwand | K (eine Config-Zahl) | **M–G** | G | K–M (instanzabhängige Kosten im Lese- und Vorschaupfad, Falle aus Memory „Discount-Wiring“) | M | K |
+| Urteil | verwerfen | **empfehlen** | nur falls B1 zu starr | Übergangslösung, falls B1 verschoben wird | verwerfen (halbe Lösung, gleicher Migrationsaufwand wie B1) | verwerfen (trifft Credits, nicht Kacheln, verschärft den Credits-Collapse) |
+
+**B1 im Detail (Vorschlag):**
+- **Datenmodell:** Hangar wird `is_instanced` = 0 (wie Cantina). Bucht-Anzahl = Stufe, wird **abgeleitet, nicht gespeichert**. `colony_ships.hangar_instance_id` wird zur Buchtnummer 1..3 (Annahme: Spalte umdeuten oder `bay` ergänzen, Entscheidung beim `db-migration-agent`). Die Geschenk-Drohne bekommt Bucht 0 = Vorfeld (Owner-Entscheidung 1 „belegt keinen Slot“ bleibt erfüllt).
+- **Verfall und Rückbau:** Sinkt die Stufe, entfällt die oberste Bucht. Ein Schiff dort wird **inaktiv**. Das ist die bestehende Regel „Hangar unter Schiffsstufe“ (GDD §7), keine neue. Mit dem Wiederaufbau ist es automatisch wieder aktiv.
+- **Bestellung und Queue:** Ein Schiff geht in die erste freie Bucht. Klasse ≤ Hallenstufe gilt für alle Buchten gleich. `pending` ohne freie Bucht bleibt wie heute.
+- **Reparatur:** Es gibt nur noch einen Verfallsträger. Das spart bei drei Schiffen 1,2 SP/Sol, also ca. 1,2 Rg + 1,2 AP/Sol gegenüber heute (Annahme, Handrechnung).
+- **UI:** Der Hangar-Screen listet heute schon „Slots“ (`getHangarSlots()`). Künftig zeigt er Buchten 1..Stufe plus Vorfeld; gesperrte Buchten mit „ab Stufe n“. Die Hex-Karte zeigt eine Kachel.
+- **Bot:** Die Sperre `instanceCap[44]` entfällt. Kaufregel „freie Bucht“ statt „freie Instanz“. Der Hangar-Aufstieg wird zur Platz-Regel.
+- **Migration:** Bestehende Kolonien mit mehreren Hallen werden auf eine Halle mit der höchsten Stufe zusammengeführt. Schiffe über der Buchtenzahl gehen auf `pending` (Annahme; Alternative: Run-Neustart, Owner-Frage 3). Die übrigen Kacheln werden frei, ohne Erstattung. Mit anzufassen sind `data/sql/testdata.sql`, die Szenarien in `ResetPlayer`, `ColonySeedDemo` und `docs/game-reference.md`.
+- **Wo B1 ein Prinzip berührt:** GDD §4c macht den Hangar ausdrücklich zum „einzigen Fall mit beiden Achsen“. B1 streicht diese Ausnahme. Danach gilt für alle Gebäude außer Wohnhabitat und Harvester: ein Gebäude, eine Achse. Das ist die Regel „vereinfachen statt stapeln“. §4c und §6 („max. Schiffe = Hangar-Instanzen“) müssen umgeschrieben werden.
+
+### 12.4 Wechselwirkung mit T30 (qualitativ, Annahme)
+
+| Kennzahl | A ÷ 3 | B1 | C1 |
+|---|---|---|---|
+| K1/K2 (erster Pfadnutzen/-ertrag) | unverändert, getragen von Geschenk-Drohne + Bergungsflug | unverändert. Die Geschenk-Drohne hat mit dem Vorfeld einen klaren Ort. Der Frachter für große Funde kommt mit Lv2 ohne zweite Halle. | unverändert |
+| K3 (Phase-2-Start) | Hangar-First **früher** (63+ Rg) → Abstand > 2 Sole möglich | neutral (Lv1/Lv2 kosten wie heute, Lv2 zählt weiter fürs Phase-1-Ziel) | neutral |
+| K4/K5 (Leerlauf-AP) | gering + | gering +: zweites Schiff früher (Lv2 statt 120 Rg + Kachel) → mehr Flüge = mehr Nav-AP verbraucht | gering + |
+| K6 (Rg Sol 10) | Hangar-Spanne nach oben | neutral bis +, wenn der Spieler sonst eine 2. Halle gebaut hätte | gering + |
+| K7 (Siegquote) | ungewiss | gering +: freie Kacheln und Supply für Vertrauensgebäude (task_colony_prosperity) | gering + |
+| Pool v1 / Bergungsflug | – | passt: Fund-Kacheln drücken auf die Zonen, B1 spart 2 Kacheln; Bergungsflug skaliert mit Buchten statt Hallen | teilweise |
+
+**Gleichwertigkeit:** B1 macht den Hangar in Kosten-Kurve, Kacheln und Supply **identisch zur Cantina** (170 Rg, 1 Kachel, 18 Supply bei Lv3). Damit ist es die einzige Variante, bei der die drei Pfadgebäude auch über die Eröffnung hinaus strukturell gleich gebaut sind. A verschiebt die Eröffnungs-Parität zugunsten des Hangars, C1 lindert die Lage nur.
+
+### 12.5 Empfehlung, Messplan, Risiken
+
+**Empfehlung: B1, umgesetzt zusammen mit T30 Schritt 3 (Bergungsflug + Geschenk-Drohne).** Beide greifen in die Platzlogik von `HangarService` und in den Hangar-Screen ein. Zusammen braucht es eine Migration und eine UI-Runde statt zwei, und die offene Frage „wo wohnt die slotfreie Drohne“ ist mit dem Vorfeld beantwortet. Bis dahin keine Kostenänderung am Hangar. A wird verworfen.
+
+**Messplan (24 Läufe, 3 Eröffnungen × 8 gleiche Seeds, vorher Dauer nennen):**
+
+| Kennzahl | Soll mit B1 | Warnschwelle |
+|---|---|---|
+| K1–K7 | wie §2.1/§11.9, Hangar-K3 nicht früher als Labor − 1 Sol | Hangar-First K3 > 2 Sole vor Labor |
+| Schiffe je Lauf bei Sol 25 / 40 (neu) | Hangar-First 2 / 3, andere 1 / 2 | Hangar-First > 3 (Vorfeld + 3 Buchten ausgereizt vor Sol 25) |
+| Zonen-Kacheln für Vertrauensgebäude bei Sol 40 (neu) | +1–2 gegenüber Baseline | – |
+| K12 Anteil Pool-Rg über Schiff | Hangar 50–80 % | < 40 % (Buchten werden nicht genutzt) |
+| Nav-AP-Anteil am AP-Zufluss Sol 4–25 (Hangar-First) | steigt gegenüber Baseline | > 40 % (Hangar verdrängt alles andere) |
+
+**Risiken:**
+- **Weniger Entscheidung:** Ein zweites Schiff verlangt Lv2. Wer zwei Drohnen will, muss trotzdem aufsteigen. Das ist gewollt (eine Achse), kostet aber eine Freiheit. Falls der Playtest das vermisst, auf B2 ausweichen.
+- **Frachter-Vertrauen:** Bei 3 Buchten gibt es höchstens 3 Frachter × 2 Vertrauen. Heute ist das unbegrenzt (praktisch über Kacheln begrenzt). Unkritisch, aber in K7 beobachten.
+- **Migration:** Bestehende Spielstände mit mehr als einer Halle. Das betrifft nur Dev-, Test- und Playtest-Daten, kein Live-Betrieb (Annahme).
+- **Doku-Drift:** GDD §4c, §6, §8b und `docs/game-reference.md` beschreiben das Instanzmodell. Die Doku muss im selben PR nachgezogen werden.
+- **Bot-Bug-Familie „unbegrenzt instanzierbares Gebäude frisst Kacheln“** (Memory): B1 beseitigt die Ursache für den Hangar. Das Wohnhabitat behält seine Sperre.
+
+### 12.6 Offene Owner-Fragen (max. 4, mit Vorschlag)
+
+1. **B1 als Zielbild?** Eine Halle; Stufe 1/2/3 = Schiffsklasse **und** 1/2/3 Buchten; Geschenk-Drohne auf dem Vorfeld ohne Bucht. **Vorschlag: ja.** A (÷ 3) verwerfen, weil die erste Halle das Pfadgebäude ist.
+2. **Zeitpunkt:** B1 im selben Arbeitspaket wie T30 Schritt 3 (Bergungsflug + Geschenk-Drohne)? **Vorschlag: ja**, eine Migration und eine UI-Runde. Bis dahin Hangar-Kosten unverändert lassen.
+3. **Bestehende Spielstände:** zusammenführen (höchste Stufe, überzählige Schiffe `pending`) oder den aktiven Run neu starten? **Vorschlag: zusammenführen** per Migration. Freie Kacheln werden ohne Erstattung frei.
+4. **Ausbaukosten:** Bleiben Hangar-Stufen bei flat 25 Rg (dann exakt wie Cantina), obwohl Lv2/Lv3 jetzt Klasse **und** Platz bringen? **Vorschlag: flat lassen und messen.** Erst wenn Hangar-First K3 über 2 Sole vorn liegt, Lv2/Lv3 anheben.
