@@ -22,6 +22,11 @@ trait PlaysSolLoop
     // while an endless loop still trips it within a fraction of a second.
     private const MAX_ACTIONS_PER_SOL = 200;
 
+    // CI 2026-10-09: a rule "succeeding" with an identical response and no AP/Regolith/
+    // Organics change has done nothing observable — repeating it this many times in a
+    // row aborts the Sol with the rule named, instead of silently burning the cap.
+    private const NO_OP_REPEAT_LIMIT = 3;
+
     /**
      * Advance Sols by firing rules each Sol until the run ends, tick_limit+5
      * is hit (loop-safety outer bound), or $stop(bot) returns true — checked
@@ -62,6 +67,8 @@ trait PlaysSolLoop
     private function playOneSol(BotSession $bot, array $rules): void
     {
         $blockedThisSol = [];
+        $lastNoOp = null;
+        $noOpRepeats = 0;
 
         for ($i = 0; $i < self::MAX_ACTIONS_PER_SOL; $i++) {
             $fired = false;
@@ -76,11 +83,20 @@ trait PlaysSolLoop
                     continue;
                 }
 
+                $logCount = count($bot->log);
                 $res = $rule['do']($bot, $candidate);
                 if (! $res['ok']) {
                     $blockedThisSol[] = $rule['name'];
 
                     continue;
+                }
+
+                $noOp = self::noOpSignature($bot, $logCount, $rule['name'], $res);
+                $noOpRepeats = ($noOp !== null && $noOp === $lastNoOp) ? $noOpRepeats + 1 : 0;
+                $lastNoOp = $noOp;
+                if ($noOpRepeats >= self::NO_OP_REPEAT_LIMIT) {
+                    $this->fail("Rule '{$rule['name']}' repeated a no-op success (identical response, no AP/Regolith/Organics change) on Sol {$bot->sol} — likely state desync. Response: "
+                        .json_encode($res['body'] ?? null).' Log tail: '.json_encode(array_slice($bot->log, -5)));
                 }
 
                 $fired = true;
@@ -94,5 +110,25 @@ trait PlaysSolLoop
 
         $this->fail('MAX_ACTIONS_PER_SOL exceeded on Sol '.$bot->sol.' — likely state desync. Log tail: '
             .json_encode(array_slice($bot->log, -20)));
+    }
+
+    /**
+     * Signature of a successful action that changed nothing observable — exactly one
+     * act() log entry with no AP/Regolith/Organics delta — or null when it did change
+     * something (or made no/several requests, which this check cannot judge).
+     */
+    private static function noOpSignature(BotSession $bot, int $logCountBefore, string $rule, array $res): ?string
+    {
+        if (count($bot->log) !== $logCountBefore + 1) {
+            return null;
+        }
+        $entry = $bot->log[$logCountBefore];
+        if ($entry['ap_before'] !== $entry['ap_after']
+            || $entry['regolith_before'] !== $entry['regolith_after']
+            || $entry['organics_before'] !== $entry['organics_after']) {
+            return null;
+        }
+
+        return $rule.'|'.$entry['url'].'|'.md5((string) json_encode($res['body'] ?? null));
     }
 }
