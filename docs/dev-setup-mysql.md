@@ -70,6 +70,8 @@ php artisan db:reset --force
 
 Nach Branch-Wechseln zwischen Schema-Ständen, oder wenn die Baseline geändert wurde (vor dem Produktivgang wird sie noch direkt editiert), ist ebenfalls ein frischer Aufbau nötig: `php artisan db:reset --force`.
 
+Stand 2026-10-10: Die Baseline enthält neu `colony_tiles.salvage_ap_spent` und `salvage_tick` (T30 Pool v1). Dev-DB `nouron` und die paratest-Worker-DBs (`nouron_test_test_N`) brauchen dafür einmal `php artisan db:reset --force`.
+
 ## Tests
 
 `phpunit.xml` erzwingt `DB_CONNECTION=mysql` und `DB_DATABASE=nouron_test`; Host, Port, User und Passwort sind dort nur Vorgaben (`127.0.0.1:3306`, `nouron`/`nouron`), die eine gesetzte Umgebungsvariable überschreibt (CI nutzt `root`). Die lokale `.env` spielt für Tests keine Rolle.

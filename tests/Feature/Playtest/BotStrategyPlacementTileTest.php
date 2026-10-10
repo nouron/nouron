@@ -51,6 +51,23 @@ class BotStrategyPlacementTileTest extends TestCase
         $this->assertEmpty($this->rule('place_agrardom')['when']($bot));
     }
 
+    public function test_free_zone_tile_skips_finds_but_allows_a_scanned_false_alarm(): void
+    {
+        $bot = $this->bootWithoutAgrardom();
+        $this->occupyAllZoneTilesExcept($bot, -1, 0);
+        $free = fn () => DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('q', -1)->where('r', 0);
+
+        foreach ([['find_small', 0], ['find_large', 0], ['find_medium', 1], ['find_false', 0]] as [$type, $scanned]) {
+            $free()->update(['event_type' => $type, 'is_deep_scanned' => $scanned]);
+            $this->assertEmpty($this->rule('place_agrardom')['when']($bot), "{$type}/{$scanned} must not be offered");
+        }
+
+        $free()->update(['event_type' => 'find_false', 'is_deep_scanned' => 1]);
+        $tile = $this->rule('place_agrardom')['when']($bot);
+        $this->assertNotEmpty($tile);
+        $this->assertSame(-1, (int) $tile->q);
+    }
+
     public function test_the_offered_tile_is_accepted_by_the_server(): void
     {
         $bot = $this->bootWithoutAgrardom();

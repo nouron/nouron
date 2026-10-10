@@ -3,7 +3,7 @@
 ## 2026-10-09
 
 - Balance: Harvester-Grundertrag 16/23/30 → 18/26/34 Rg/Sol (T30 Spec §11, Pfad-Parität); `resource_max` unverändert, Kacheln leeren sich ca. 12 % früher. `docs/game-reference.md` nachgezogen.
-- Feat: T30 Pool v1 (Spec §11 Schritt 2) — fester pfadneutraler Fundpool (Signale, Tiefenscan, Bergungsprojekt mit Deckel, Fundkarte im Tile-Panel, Bot-Regeln, K11); Doku in `docs/game-reference.md` §17a und GDD §4a. Messung steht aus.
+- Feat: T30 Pool v1 (Spec §11 Schritt 2) — fester pfadneutraler Fundpool (Signale, Tiefenscan, Bergungsprojekt mit Deckel, Fundkarte im Tile-Panel, Bot-Regeln, K11); Doku in `docs/game-reference.md` §17a und GDD §4a. Messung steht aus. Nachbesserungen nach Abschluss-Review: Bot meidet Fund-Kacheln beim Bauen, Hexgrid bietet sie nicht als Bauziel an, Fehlertext `tile_has_find` neutral, CommLog-Eintrag für Bergung, EN-Texte. Hinweis: Baseline erweitert (`colony_tiles.salvage_ap_spent`, `salvage_tick`) — Dev-DB und paratest-Worker-DBs einmal mit `php artisan db:reset --force` neu aufbauen.
 
 ## 2026-10-06
 

@@ -936,6 +936,11 @@ class BotStrategy
             ->where(fn ($q) => $q->where('ct.q', '!=', 0)->orWhere('ct.r', '!=', 0))
             ->where('ct.tile_type', 'like', 'terrain_%')
             ->where('ct.tile_type', '!=', 'terrain_impassable')
+            // Same predicate as ColonyController::placeBuilding(): finds block building,
+            // except a scanned false alarm (tile_has_find).
+            ->where(fn ($q) => $q->whereNull('ct.event_type')
+                ->orWhere('ct.event_type', 'not like', 'find\\_%')
+                ->orWhere(fn ($q) => $q->where('ct.is_deep_scanned', 1)->where('ct.event_type', 'find_false')))
             ->whereNotExists(function ($query) use ($b) {
                 $query->select(DB::raw(1))
                     ->from('colony_buildings as cb')
@@ -943,6 +948,9 @@ class BotStrategy
                     ->whereColumn('cb.tile_x', 'ct.q')
                     ->whereColumn('cb.tile_y', 'ct.r');
             })
+            ->orderBy('ct.ring')
+            ->orderBy('ct.q')
+            ->orderBy('ct.r')
             ->first();
     }
 

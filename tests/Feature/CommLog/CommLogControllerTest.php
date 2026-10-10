@@ -213,6 +213,19 @@ class CommLogControllerTest extends TestCase
         $this->assertNotEmpty($entries->first()['segments']);
     }
 
+    public function test_tile_salvaged_has_label_and_description(): void
+    {
+        $this->log('colony.tile_salvaged', ['colony_id' => 1, 'completed' => true]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $this->assertSame(__('comm_log.desc.tile_salvaged_done'), $entries->first()['segments'][0]['value']);
+        $this->assertNotSame('comm_log.events.colony.tile_salvaged', __('comm_log.events.colony.tile_salvaged'));
+
+        $this->log('colony.tile_salvaged', ['colony_id' => 1, 'completed' => false]);
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $this->assertSame(__('comm_log.desc.tile_salvaged'), $entries->first()['segments'][0]['value']);
+    }
+
     public function test_overcap_started_description(): void
     {
         $this->log('colony.overcap_started', ['colony_id' => 1, 'homeless' => 6, 'sols' => 3]);

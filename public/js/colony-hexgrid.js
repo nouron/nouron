@@ -988,7 +988,8 @@ function colonyHexView(config) {
                 tile.is_colony_zone &&
                 tile.is_explored &&
                 tile.tile_type.startsWith('terrain_') &&
-                tile.tile_type !== 'terrain_impassable'
+                tile.tile_type !== 'terrain_impassable' &&
+                !tileBlockedByFind(tile)
             );
         },
 
@@ -1026,7 +1027,17 @@ function colonyHexView(config) {
 function isBuildableTile(tile) {
     // Colony-zone grants build permission regardless of fog: building on a still-
     // fogged zone tile is allowed and reveals it server-side (settle → see).
-    return tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable';
+    return (
+        tile.is_colony_zone &&
+        tile.tile_type.startsWith('terrain_') &&
+        tile.tile_type !== 'terrain_impassable' &&
+        !tileBlockedByFind(tile)
+    );
+}
+
+// Unscanned signal or scanned real find: the server rejects building there (tile_has_find).
+function tileBlockedByFind(tile) {
+    return !!tile.has_signal || (tile.find != null && !tile.find.false);
 }
 
 function isHarvesterTargetTile(tile, buildingsByTile) {

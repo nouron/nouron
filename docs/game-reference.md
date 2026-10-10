@@ -497,7 +497,7 @@ Pool gesamt: 7 Signale, 40 Rg brutto.
 | Bergungs-Deckel | 4 AP je Sol und Projekt | `finds.salvage_cap_per_sol` |
 | Offene Bergungsprojekte | max. 2 | `finds.max_open_projects` |
 
-Ablauf: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, AP-Investition bis zum Fund-Preis, Regolith bei Abschluss). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`). Bot: Regeln `deep_scan_signal_tile` und `invest_find` (niedrige Priorität). Messung: `RunReport` `regolith_sources.find`, `game:playtest-compare` K11 (informativ, kein Zielwert).
+Ablauf: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, AP-Investition bis zum Fund-Preis, Regolith bei Abschluss). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`); ein echter Fund bleibt unbebaubar, bis er vollständig geborgen ist, ein gescannter Fehlalarm wird bebaubar. Bot: Regeln `deep_scan_signal_tile` und `invest_find` (niedrige Priorität). Messung: `RunReport` `regolith_sources.find`, `game:playtest-compare` K11 (informativ, kein Zielwert).
 
 ---
 

@@ -172,7 +172,7 @@ return [
     'error_invalid_ap' => 'Ungültige AP-Menge für die Bergung.',
     'error_salvage_cap' => 'An diesem Fund wurde in diesem Sol bereits gearbeitet.',
     'error_salvage_projects' => 'Es laufen bereits zu viele Bergungsprojekte — erst eines abschließen.',
-    'error_tile_has_find' => 'Auf diesem Feld liegt ein Fund — erst bergen.',
+    'error_tile_has_find' => 'Dieses Feld ist durch ein Signal blockiert – erst scannen und bergen.',
     'error_tile_not_buildable' => 'Nur bebaubare Terrain-Tiles erlaubt.',
     'error_tile_outside_colony' => 'Dieses Tile liegt außerhalb der Koloniezone.',
     'error_harvester_needs_regolith' => 'Harvester kann nur auf Regolith-Tiles platziert werden.',
