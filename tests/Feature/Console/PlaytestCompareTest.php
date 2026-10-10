@@ -75,6 +75,18 @@ class PlaytestCompareTest extends TestCase
             ->assertExitCode(0);
     }
 
+    public function test_prints_k11_pool_rg_rows_and_info_status(): void
+    {
+        $this->writeBatch();
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir]);
+        $out = Artisan::output();
+
+        $this->assertStringContainsString('K11 Pool-Rg Sol 10', $out);
+        $this->assertStringContainsString('K11 Pool-Rg Sol 25', $out);
+        $this->assertMatchesRegularExpression('/K11\s*\|\s*info\s*\|/', $out);
+    }
+
     public function test_threshold_violation_is_reported_as_verfehlt(): void
     {
         $this->writeReport('default', 'labor', 1, '20261006_120000', 16);

@@ -27,7 +27,10 @@ class PlaytestCompare extends Command
         {--since= : Only reports written at/after this date/time (e.g. 2026-10-06 or "2026-10-06 14:00")}
         {--dir= : Report directory (default: storage/logs/playtest)}';
 
-    protected $description = 'Compare PlaytestBot openings (K1-K7, paired by seed) from existing report JSONs';
+    protected $description = 'Compare PlaytestBot openings (K1-K7 and informational K11, paired by seed) from existing report JSONs';
+
+    /** Table labels for KPIs whose key is not just the upper-cased id. */
+    private const KPI_LABELS = ['k11_10' => 'K11 Pool-Rg Sol 10', 'k11_25' => 'K11 Pool-Rg Sol 25'];
 
     public function handle(): int
     {
@@ -97,7 +100,7 @@ class PlaytestCompare extends Command
         foreach ($result['kpis'] as $k => $byOpening) {
             foreach ($byOpening as $opening => $s) {
                 $rows[] = [
-                    strtoupper($k),
+                    self::KPI_LABELS[$k] ?? strtoupper($k),
                     $opening,
                     OpeningComparison::fmt($s['median']),
                     OpeningComparison::fmt($s['min']).'..'.OpeningComparison::fmt($s['max']),

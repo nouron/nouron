@@ -6,6 +6,7 @@ use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
 use App\Services\BuildingCostService;
+use App\Services\ColonyTileService;
 use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
@@ -430,6 +431,22 @@ class BotStrategy
                     : null,
                 'do' => fn (BotSession $b, int $shipId) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
                     'ship_id' => $shipId,
+                ]),
+            ],
+            [
+                'name' => 'invest_find',
+                // T30 Pool v1: deposit leftover AP into salvage projects on deep-scanned
+                // find tiles. Deliberately LAST (after build/research/explore/hire/ship
+                // rules; sol_next lives outside this list, in the Sol loop) so it only
+                // absorbs AP nothing else wanted — the pool should bind idle AP, not
+                // displace buildings. A rejected deposit blocks the rule for the Sol
+                // (PlaysSolLoop), and investFindCandidate() skips tiles already paid this
+                // tick, so it cannot spin within one Sol.
+                'when' => fn (BotSession $b) => self::investFindCandidate($b),
+                'do' => fn (BotSession $b, object $c) => $b->act('invest_find', 'POST', '/colony/tile/salvage', [
+                    'q' => $c->q,
+                    'r' => $c->r,
+                    'ap' => $c->ap,
                 ]),
             ],
         ];
@@ -2000,11 +2017,7 @@ class BotStrategy
      */
     private static function deepScanCandidate(BotSession $b): ?object
     {
-        $uplinkLv = (int) (DB::table('colony_buildings')
-            ->where('colony_id', $b->colonyId)
-            ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
-            ->value('level') ?? 0);
-        $apCost = $uplinkLv >= 2 ? 1 : 2;
+        $apCost = app(ColonyTileService::class)->deepScanCost($b->colonyId);
 
         if (self::availableAp($b) < $apCost) {
             return null;
@@ -2019,6 +2032,57 @@ class BotStrategy
             ->orderBy('q')
             ->orderBy('r')
             ->first();
+    }
+
+    /**
+     * T30 Pool v1: next salvage deposit — a deep-scanned, not yet resolved find
+     * (small/medium/large; find_false never pays) ranked by Regolith per total AP,
+     * started projects first on a tie. Skips tiles already paid this tick (one
+     * deposit per tile and Sol) and does not open a new project once
+     * max_open_projects are running. `ap` = min(cap per Sol, remaining AP of the
+     * project, available AP); 0 -> null.
+     *
+     * @return object{q:int, r:int, ap:int}|null
+     */
+    private static function investFindCandidate(BotSession $b): ?object
+    {
+        $available = self::availableAp($b);
+        if ($available < 1) {
+            return null;
+        }
+
+        $types = config('game.finds.types');
+        $tick = app(TickService::class)->getTickCount();
+        $tiles = DB::table('colony_tiles')
+            ->where('colony_id', $b->colonyId)
+            ->where('is_deep_scanned', 1)
+            ->whereIn('event_type', ['find_small', 'find_medium', 'find_large'])
+            ->orderBy('ring')->orderBy('q')->orderBy('r')
+            ->get();
+
+        $open = $tiles->filter(fn ($t) => (int) $t->salvage_ap_spent > 0)->count();
+        $canOpen = $open < (int) config('game.finds.max_open_projects');
+
+        $best = $tiles
+            ->filter(fn ($t) => ($t->salvage_tick === null || (int) $t->salvage_tick !== $tick)
+                && ((int) $t->salvage_ap_spent > 0 || $canOpen)
+                && (int) ($types[$t->event_type]['ap'] ?? 0) > (int) $t->salvage_ap_spent)
+            ->sortBy([
+                fn ($x, $y) => ($types[$y->event_type]['rg'] / $types[$y->event_type]['ap']) <=> ($types[$x->event_type]['rg'] / $types[$x->event_type]['ap']),
+                fn ($x, $y) => (int) $y->salvage_ap_spent <=> (int) $x->salvage_ap_spent,
+            ])
+            ->first();
+        if ($best === null) {
+            return null;
+        }
+
+        $ap = min(
+            (int) config('game.finds.salvage_cap_per_sol'),
+            (int) $types[$best->event_type]['ap'] - (int) $best->salvage_ap_spent,
+            $available,
+        );
+
+        return $ap < 1 ? null : (object) ['q' => (int) $best->q, 'r' => (int) $best->r, 'ap' => $ap];
     }
 
     /**
