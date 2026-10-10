@@ -581,4 +581,14 @@ class OpeningComparisonTest extends TestCase
         $this->assertStringContainsString('labor 7 / 7', $result['checks']['K11']['detail']);
         $this->assertStringContainsString('hangar 10 / 14', $result['checks']['K11']['detail']);
     }
+
+    public function test_k11_is_null_when_the_run_ended_before_the_cutoff_without_truncation(): void
+    {
+        $r = $this->report('labor', 1, ['last' => 18, 'find' => [5 => 4, 12 => 8]]);
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame(4, $m['k11_10']);
+        $this->assertNull($m['k11_25']);
+    }
 }

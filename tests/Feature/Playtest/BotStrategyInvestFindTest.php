@@ -103,15 +103,42 @@ class BotStrategyInvestFindTest extends TestCase
         $this->assertSame([$started->q, $started->r], [(int) $c->q, (int) $c->r]);
     }
 
-    public function test_rule_sits_after_all_build_research_and_hire_rules(): void
+    public function test_scan_and_invest_find_are_the_last_two_rules(): void
     {
         $names = array_column(BotStrategy::default(), 'name');
-        $pos = array_search('invest_find', $names, true);
 
-        $this->assertNotFalse($pos);
-        foreach (['hire_advisor', 'explore_tile', 'place_building', 'invest_production', 'research_knowledge', 'deep_scan_signal_tile'] as $before) {
-            $this->assertLessThan($pos, array_search($before, $names, true), "{$before} must precede invest_find");
+        $this->assertSame('invest_find', end($names));
+        $this->assertSame('deep_scan_signal_tile', $names[count($names) - 2]);
+        foreach (['hire_advisor', 'explore_tile', 'place_building', 'invest_production', 'research_knowledge', 'request_ship', 'dispatch_salvage_mission'] as $before) {
+            $pos = array_search($before, $names, true);
+            $this->assertNotFalse($pos, "{$before} missing");
+            $this->assertLessThan(count($names) - 2, $pos, "{$before} must precede the scan");
         }
+    }
+
+    public function test_deep_scan_candidate_uses_config_cost_with_and_without_uplink(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $tile = DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->whereNull('event_type')->first();
+        DB::table('colony_tiles')->where('id', $tile->id)->update(['event_type' => 'find_small', 'is_explored' => 1, 'is_deep_scanned' => 0]);
+        $scan = collect(BotStrategy::default())->firstWhere('name', 'deep_scan_signal_tile');
+        $cost = (int) config('game.finds.scan_ap');
+        $cheap = (int) config('game.finds.scan_ap_uplink');
+        $this->assertGreaterThan($cheap, $cost);
+
+        $this->giveAp($bot, $cost - 1);
+        $this->assertEmpty($scan['when']($bot));
+        $this->giveAp($bot, $cost);
+        $this->assertNotEmpty($scan['when']($bot));
+
+        DB::table('colony_buildings')->insert([
+            'colony_id' => $bot->colonyId, 'building_id' => (int) config('buildings.uplinkStation.id', 54),
+            'instance_id' => 1, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 5, 'tile_y' => 5,
+        ]);
+        $this->giveAp($bot, $cheap);
+        $this->assertNotEmpty($scan['when']($bot));
+        $this->giveAp($bot, $cheap - 1);
+        $this->assertEmpty($scan['when']($bot));
     }
 
     public function test_do_posts_to_the_salvage_endpoint_and_credits_regolith(): void

@@ -62,7 +62,7 @@ namespace App\Support;
  *  - K11 (informational, T30 Pool v1; no target, status 'info'): Regolith from
  *    salvaged finds (regolith_sources.find) summed over the snapshots before the
  *    start of Sol 10 (k11_10, Sols 1-9) and of Sol 25 (k11_25, Sols 1-24). null
- *    for a run truncated (--until-sol) before that cutoff.
+ *    for a run truncated (--until-sol) or ended before that cutoff.
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs count (status completed|failed, or a run
@@ -233,7 +233,8 @@ class OpeningComparison
 
         $truncatedAt = $report['truncated_at_sol'] ?? null;
         $findBefore = function (int $sol) use ($sols, $truncatedAt): ?int {
-            if ($truncatedAt !== null && $truncatedAt < $sol) {
+            // Not measured: truncated or ended (won/failed) before the cutoff Sol, like K6.
+            if (($truncatedAt !== null && $truncatedAt < $sol) || $sols === [] || end($sols)['sol'] < $sol - 1) {
                 return null;
             }
 

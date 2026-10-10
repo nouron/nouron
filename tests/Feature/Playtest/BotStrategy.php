@@ -217,18 +217,6 @@ class BotStrategy
                 ]),
             ],
             [
-                'name' => 'deep_scan_signal_tile',
-                // Explored tiles with an event_type (signal) must be deep-scanned before
-                // they resolve into anything usable — including the event_ruin tiles Weg B
-                // (mission_harvester_salvage) targets. The bot never did this before, so
-                // ruin/event content was structurally unreachable regardless of missions.
-                'when' => fn (BotSession $b) => self::deepScanCandidate($b),
-                'do' => fn (BotSession $b, object $tile) => $b->act('deep_scan_signal_tile', 'POST', '/colony/tile/deep-scan', [
-                    'q' => $tile->q,
-                    'r' => $tile->r,
-                ]),
-            ],
-            [
                 'name' => 'dispatch_salvage_mission',
                 // Weg B for the Harvester 2nd instance. Needs a docked freighter/corvette
                 // (mission_recon_flight's drone doesn't qualify) and a deep-scanned
@@ -431,6 +419,20 @@ class BotStrategy
                     : null,
                 'do' => fn (BotSession $b, int $shipId) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
                     'ship_id' => $shipId,
+                ]),
+            ],
+            [
+                'name' => 'deep_scan_signal_tile',
+                // T30: LOW priority (directly before invest_find) — scans only use leftover AP,
+                // the find pool must absorb idle AP, not displace buildings/research (Spec 11.3).
+                // Explored tiles with an event_type (signal) must be deep-scanned before
+                // they resolve into anything usable — including the event_ruin tiles Weg B
+                // (mission_harvester_salvage) targets. The bot never did this before, so
+                // ruin/event content was structurally unreachable regardless of missions.
+                'when' => fn (BotSession $b) => self::deepScanCandidate($b),
+                'do' => fn (BotSession $b, object $tile) => $b->act('deep_scan_signal_tile', 'POST', '/colony/tile/deep-scan', [
+                    'q' => $tile->q,
+                    'r' => $tile->r,
                 ]),
             ],
             [
