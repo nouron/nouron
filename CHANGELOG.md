@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-10
+
+- Docs: T30 Spec §12 — Hangar-Umbau (eine Halle, Stufe = Schiffsklasse + Bucht) als Zielbild entschieden, Umsetzung mit T30 Schritt 3. Messung Pool v1 (4 Seeds je Eröffnung): ungenutzte AP Sol 4–12 bei Hangar/Cantina 92/94 → 22/25, Leerlauf-Sols 3/4 → 0,5/0; Pool-Regolith bis Sol 10 noch 0. Dev-DB und paratest-Worker-DBs brauchen `php artisan db:reset --force` (Baseline-Spalten).
+
 ## 2026-10-09
 
 - Balance: Harvester-Grundertrag 16/23/30 → 18/26/34 Rg/Sol (T30 Spec §11, Pfad-Parität); `resource_max` unverändert, Kacheln leeren sich ca. 12 % früher. `docs/game-reference.md` nachgezogen.
