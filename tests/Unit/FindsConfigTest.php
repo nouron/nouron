@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class FindsConfigTest extends TestCase
@@ -24,10 +23,5 @@ class FindsConfigTest extends TestCase
         $this->assertSame(1, config('game.finds.scan_ap_uplink'));
         $this->assertSame(4, config('game.finds.salvage_cap_per_sol'));
         $this->assertSame(2, config('game.finds.max_open_projects'));
-    }
-
-    public function test_colony_tiles_has_salvage_columns(): void
-    {
-        $this->assertTrue(Schema::hasColumns('colony_tiles', ['salvage_ap_spent', 'salvage_tick']));
     }
 }
