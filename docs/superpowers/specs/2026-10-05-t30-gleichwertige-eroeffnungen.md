@@ -943,3 +943,11 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 2. **Zeitpunkt:** B1 im selben Arbeitspaket wie T30 Schritt 3 (Bergungsflug + Geschenk-Drohne)? **Vorschlag: ja**, eine Migration und eine UI-Runde. Bis dahin Hangar-Kosten unverändert lassen.
 3. **Bestehende Spielstände:** zusammenführen (höchste Stufe, überzählige Schiffe `pending`) oder den aktiven Run neu starten? **Vorschlag: zusammenführen** per Migration. Freie Kacheln werden ohne Erstattung frei.
 4. **Ausbaukosten:** Bleiben Hangar-Stufen bei flat 25 Rg (dann exakt wie Cantina), obwohl Lv2/Lv3 jetzt Klasse **und** Platz bringen? **Vorschlag: flat lassen und messen.** Erst wenn Hangar-First K3 über 2 Sole vorn liegt, Lv2/Lv3 anheben.
+
+### 12.x Owner-Entscheidungen (2026-10-10)
+
+1. **B1 ist Zielbild:** eine Halle, jede Stufe bringt Schiffsklasse und eine weitere Bucht; „Preis ÷ 3“ verworfen.
+2. **Zeitpunkt:** B1 zusammen mit T30 Schritt 3 (Bergungsflug, Geschenk-Drohne); Hangar-Preis bis dahin unverändert.
+3. **Bestehende Spielstände:** keine Rücksicht nötig (Entwicklungsphase) — Neustart statt Zusammenführung, keine Datenmigration.
+4. **Stufenkosten:** Hangar-Stufen bleiben bei flat 25 Rg; messen; Anheben nur, wenn Hangar-First mehr als 2 Sole früher in Phase 2 kommt.
+
