@@ -360,6 +360,50 @@ function colonyHexView(config) {
             }
         },
 
+        // Effective salvage AP for one action: per-Sol cap, remaining effort and the
+        // entered value (min 1).
+        salvageMax(find) {
+            if (!find) return 1;
+            return Math.max(1, Math.min(find.ap_cap_per_sol, find.ap_total - find.ap_spent));
+        },
+
+        salvageClamp(find, ap) {
+            const n = Math.floor(Number(ap)) || 1;
+            return Math.min(Math.max(1, n), this.salvageMax(find));
+        },
+
+        async doSalvage(tile, ap) {
+            const rg = tile.find?.rg ?? 0;
+            const res = await this.post(this.routes.salvage, {
+                q: tile.q,
+                r: tile.r,
+                ap: this.salvageClamp(tile.find, ap),
+            });
+            if (res.ok) {
+                this.updateTile(res.tile);
+                this.selectedTile = res.tile;
+                this.updateAp(res);
+                this.updateHint(res);
+                if (res.completed) {
+                    this.showToast(this.i18n.findSalvaged.replace(':rg', rg), 'info');
+                }
+                this.$nextTick(() => this.redrawGrid());
+            } else {
+                this.showToast(res.message ?? res.error, 'error');
+            }
+        },
+
+        // Map header: counters from tiles the player already knows about.
+        findCountersText() {
+            const signals = this.tiles.filter((t) => t.has_signal || t.find).length;
+            const scanned = this.tiles.filter((t) => t.find).length;
+            const open = this.tiles.reduce((sum, t) => sum + (t.find && !t.find.false ? t.find.rg : 0), 0);
+            return this.i18n.findHeader
+                .replace(':signals', signals)
+                .replace(':scanned', scanned)
+                .replace(':open', open);
+        },
+
         async doDeepScan(tile) {
             const res = await this.post(this.routes.deepScan, { q: tile.q, r: tile.r });
             if (res.ok) {
@@ -857,6 +901,13 @@ function colonyHexView(config) {
         },
 
         eventTypeName(type) {
+            const findNames = {
+                find_small: this.i18n.findSmall,
+                find_medium: this.i18n.findMedium,
+                find_large: this.i18n.findLarge,
+                find_false: this.i18n.findFalse,
+            };
+            if (findNames[type]) return findNames[type];
             return EVENT_TYPE_NAMES[type] ?? 'Unbekanntes Phänomen';
         },
 
@@ -937,7 +988,8 @@ function colonyHexView(config) {
                 tile.is_colony_zone &&
                 tile.is_explored &&
                 tile.tile_type.startsWith('terrain_') &&
-                tile.tile_type !== 'terrain_impassable'
+                tile.tile_type !== 'terrain_impassable' &&
+                !tileBlockedByFind(tile)
             );
         },
 
@@ -975,7 +1027,17 @@ function colonyHexView(config) {
 function isBuildableTile(tile) {
     // Colony-zone grants build permission regardless of fog: building on a still-
     // fogged zone tile is allowed and reveals it server-side (settle → see).
-    return tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable';
+    return (
+        tile.is_colony_zone &&
+        tile.tile_type.startsWith('terrain_') &&
+        tile.tile_type !== 'terrain_impassable' &&
+        !tileBlockedByFind(tile)
+    );
+}
+
+// Unscanned signal or scanned real find: the server rejects building there (tile_has_find).
+function tileBlockedByFind(tile) {
+    return !!tile.has_signal || (tile.find != null && !tile.find.false);
 }
 
 function isHarvesterTargetTile(tile, buildingsByTile) {

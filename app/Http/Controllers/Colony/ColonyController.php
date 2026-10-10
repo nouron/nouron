@@ -220,8 +220,9 @@ class ColonyController extends BaseController
             : [];
 
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
+        $deepScanAp = $this->tileService->deepScanCost($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -263,6 +264,28 @@ class ColonyController extends BaseController
             ]);
         }
 
+        $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
+
+        return response()->json([...$result, ...$extra], $result['ok'] ? 200 : 422);
+    }
+
+    public function salvageTile(Request $request): JsonResponse
+    {
+        $data = $request->validate(['q' => 'required|integer', 'r' => 'required|integer', 'ap' => 'required|integer']);
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $result = $this->tileService->salvageFind($colony->id, (int) $data['q'], (int) $data['r'], (int) $data['ap']);
+
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user' => Auth::id(),
+                'tick' => $this->getTick(),
+                'event' => 'colony.tile_salvaged',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id, 'completed' => $result['completed']]),
+            ]);
+        }
+
+        // currentAp() carries apAvailable + regolith for the resourcebar live sync.
         $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
 
         return response()->json([...$result, ...$extra], $result['ok'] ? 200 : 422);
@@ -363,6 +386,14 @@ class ColonyController extends BaseController
         // client to keep it free. Covers every placement path, Harvester included.
         if ((int) $data['q'] === 0 && (int) $data['r'] === 0) {
             return $this->fail('tile_occupied');
+        }
+
+        // An unfinished find must be salvaged before building on it. Unscanned finds are
+        // all rejected alike (no oracle for false alarms); a scanned find_false is buildable.
+        // Single choke point, also covers Harvester relocation.
+        if (is_string($tile->event_type) && str_starts_with($tile->event_type, 'find_')
+            && ! ($tile->is_deep_scanned && $tile->event_type === 'find_false')) {
+            return $this->fail('tile_has_find');
         }
 
         $isHarvester = (int) $data['building_id'] === BuildingId::Harvester->value;

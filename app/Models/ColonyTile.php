@@ -22,6 +22,8 @@ class ColonyTile extends Model
         'is_deep_scanned',
         'resource_amount',
         'resource_max',
+        'salvage_ap_spent',
+        'salvage_tick',
     ];
 
     protected function casts(): array

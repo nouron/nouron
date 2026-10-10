@@ -157,6 +157,8 @@ return new class extends Migration
             $table->boolean('is_colony_zone')->default(false);
             $table->boolean('is_explored')->default(false);
             $table->boolean('is_deep_scanned')->default(false);
+            $table->integer('salvage_ap_spent')->default(0);
+            $table->integer('salvage_tick')->nullable();
             $table->integer('resource_amount')->nullable();
             $table->integer('resource_max')->nullable();
             $table->dateTime('created_at')->nullable();

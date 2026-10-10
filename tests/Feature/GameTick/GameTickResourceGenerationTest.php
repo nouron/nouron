@@ -30,7 +30,7 @@ use Tests\TestCase;
  *
  * Covered scenarios:
  *  Happy path:
- *  - harvester placed on a full-reserve regolith_y2_d2 tile produces its fresh value (18)
+ *  - harvester placed on a full-reserve regolith_y2_d2 tile produces its fresh value (26)
  *  - bioFacility at level N generates N×10 Organics per tick (neutral trust)
  *  - Stacking: both buildings produce in the same tick
  *
@@ -108,7 +108,7 @@ class GameTickResourceGenerationTest extends TestCase
 
     /**
      * Places the Harvester (instance 1) on a fresh regolith_y2_d2 tile
-     * (fresh_yield 23, resource_max 300) — the fixture's default harvester
+     * (fresh_yield 26, resource_max 450) — the fixture's default harvester
      * row has no tile_x/tile_y, so production requires explicit placement
      * under the §4c depletion mechanic.
      */
@@ -141,7 +141,7 @@ class GameTickResourceGenerationTest extends TestCase
 
     /**
      * Harvester placed on a full-reserve regolith_y2_d2 tile produces exactly
-     * its fresh value (23) per tick at neutral trust — GDD §4c.
+     * its fresh value (26) per tick at neutral trust — GDD §4c.
      */
     public function test_harvester_generates_regolith_from_placed_tile(): void
     {
@@ -151,8 +151,8 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11200]);
 
         $after = $this->getColonyResource(self::RES_REGOLITH);
-        $this->assertEquals($before + 23, $after,
-            'Harvester on a full-reserve regolith_y2_d2 tile must produce exactly 23 Regolith per tick');
+        $this->assertEquals($before + 26, $after,
+            'Harvester on a full-reserve regolith_y2_d2 tile must produce exactly 26 Regolith per tick');
     }
 
     /**
@@ -196,8 +196,8 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         $organics = $this->getColonyResource(self::RES_ORGANICS);
 
-        // harvester on full-reserve regolith_y2_d2 tile → 23 Regolith; bioFacility level 1 → 8 Organics
-        $this->assertEquals(23, $regolith, 'Harvester on full-reserve regolith_y2_d2 tile must produce 23 Regolith');
+        // harvester on full-reserve regolith_y2_d2 tile → 26 Regolith; bioFacility level 1 → 8 Organics
+        $this->assertEquals(26, $regolith, 'Harvester on full-reserve regolith_y2_d2 tile must produce 26 Regolith');
         $this->assertEquals(8, $organics, 'BioFacility level 1 must produce 8 Organics');
     }
 
@@ -247,14 +247,14 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11211]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        $this->assertEquals(23, $regolith, 'Yield must stay at the tile fresh value regardless of the stored level');
+        $this->assertEquals(26, $regolith, 'Yield must stay at the tile fresh value regardless of the stored level');
     }
 
     // ── Trust multiplier interaction ────────────────────────────────────────────
 
     /**
      * High trust (>60) applies a 1.20× production multiplier.
-     * harvester fresh yield 23 × 1.20 = round(27.6) = 28.
+     * harvester fresh yield 26 × 1.20 = round(31.2) = 31.
      */
     public function test_high_trust_applies_production_bonus(): void
     {
@@ -276,14 +276,14 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11220]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // fresh yield 23; yield = round(23 × 1.20) = 28
-        $this->assertEquals(28, $regolith,
-            'Production at trust=75 must apply 1.20× multiplier → 28 Regolith');
+        // fresh yield 26; yield = round(26 × 1.20) = 31
+        $this->assertEquals(31, $regolith,
+            'Production at trust=75 must apply 1.20× multiplier → 31 Regolith');
     }
 
     /**
      * Low trust (<-60) applies a 0.70× production penalty.
-     * harvester fresh yield 23 × 0.70 = round(16.1) = 16.
+     * harvester fresh yield 26 × 0.70 = round(18.2) = 18.
      */
     public function test_low_trust_applies_production_penalty(): void
     {
@@ -305,9 +305,9 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11221]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // fresh yield 23; yield = round(23 × 0.70) = 16
-        $this->assertEquals(16, $regolith,
-            'Production at trust=-80 must apply 0.70× penalty → 16 Regolith');
+        // fresh yield 26; yield = round(26 × 0.70) = 18
+        $this->assertEquals(18, $regolith,
+            'Production at trust=-80 must apply 0.70× penalty → 18 Regolith');
     }
 
     // ── agronomy Kenntnis bonus ──────────────────────────────────────────────

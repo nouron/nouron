@@ -14,12 +14,26 @@ use Random\Randomizer;
 
 class ColonyTileService
 {
+    /**
+     * Effective deep-scan cost in Nav-AP: Uplink-Station Lv2+ (building_id=54) is cheaper.
+     */
+    public function deepScanCost(int $colonyId): int
+    {
+        $uplinkLv = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
+            ->value('level') ?? 0;
+
+        return ($uplinkLv >= 2) ? (int) config('game.finds.scan_ap_uplink') : (int) config('game.finds.scan_ap');
+    }
+
     /** Ring-3 "frontier" tile count seeded at Sol 1 — a deliberate half-subset of the full 18-tile ring. */
     private const RING3_FRONTIER_COUNT = 9;
 
     public function __construct(
         private readonly AdvisorService $advisorService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly TickService $tickService,
     ) {}
 
     public function getTilesForColony(int $colonyId): Collection
@@ -93,15 +107,10 @@ class ColonyTileService
             return ['ok' => false, 'error' => 'already_scanned', 'message' => __('colony.error_already_scanned')];
         }
 
-        // Uplink-Station Lv2+ (building_id=54): deep-scan costs 1 Nav-AP instead of 2.
-        $uplinkLv = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
-            ->value('level') ?? 0;
-        $scanApCost = ($uplinkLv >= 2) ? 1 : 2;
+        $scanApCost = $this->deepScanCost($colonyId);
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $scanApCost) {
-            return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2')];
+            return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2', ['ap' => $scanApCost])];
         }
 
         $tile->is_deep_scanned = true;
@@ -111,6 +120,94 @@ class ColonyTileService
         }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
+    }
+
+    /**
+     * T30 Pool v1: pay AP into a salvage project on a deep-scanned find tile.
+     * Max `salvage_cap_per_sol` AP per tile and Sol; at most `max_open_projects`
+     * started-but-unfinished projects per colony. Completion credits Regolith.
+     */
+    public function salvageFind(int $colonyId, int $q, int $r, int $ap): array
+    {
+        $fail = fn (string $code, ?string $msgKey = null) => [
+            'ok' => false, 'error' => $code, 'message' => __('colony.error_'.($msgKey ?? $code)),
+        ];
+
+        // Everything runs under row locks so a double-submit cannot pay twice, skip the
+        // once-per-Sol rule, exceed the project limit or credit Regolith twice.
+        return DB::transaction(function () use ($colonyId, $q, $r, $ap, $fail) {
+            // Lock all find rows of the colony first: serialises the open-project count.
+            $finds = ColonyTile::where('colony_id', $colonyId)
+                ->where('event_type', 'like', 'find\\_%')
+                ->lockForUpdate()
+                ->get();
+            $tile = $finds->first(fn ($t) => (int) $t->q === $q && (int) $t->r === $r)
+                ?? ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->lockForUpdate()->first();
+
+            if (! $tile) {
+                return $fail('tile_not_found');
+            }
+            if (! $tile->is_deep_scanned) {
+                return $fail('not_scanned');
+            }
+            if (! is_string($tile->event_type) || ! str_starts_with($tile->event_type, 'find_')) {
+                return $fail('no_find');
+            }
+            if ($tile->event_type === 'find_false') {
+                return $fail('find_false');
+            }
+            $def = config('game.finds.types')[$tile->event_type] ?? ['rg' => 0, 'ap' => 0];
+            if ((int) $def['ap'] <= 0) {
+                return $fail('no_find');
+            }
+
+            $cap = (int) config('game.finds.salvage_cap_per_sol');
+            if ($ap < 1 || $ap > $cap) {
+                return $fail('invalid_ap');
+            }
+            $tick = $this->tickService->getTickCount();
+            if ($tile->salvage_tick !== null && (int) $tile->salvage_tick === $tick) {
+                return $fail('salvage_cap');
+            }
+
+            $spent = (int) $tile->salvage_ap_spent;
+            if ($spent === 0) {
+                $open = $finds->filter(fn ($t) => $t->is_deep_scanned
+                    && $t->event_type !== 'find_false'
+                    && (int) $t->salvage_ap_spent > 0)->count();
+                if ($open >= (int) config('game.finds.max_open_projects')) {
+                    return $fail('salvage_projects');
+                }
+            }
+
+            $ap = min($ap, (int) $def['ap'] - $spent);
+
+            if (! config('game.bypass.ap_checks')) {
+                if ($this->advisorService->getAvailableActionPoints($colonyId) < $ap) {
+                    return $fail('no_nav_ap');
+                }
+                $this->advisorService->lockActionPoints($colonyId, $ap);
+            }
+
+            $spent += $ap;
+            $completed = $spent >= (int) $def['ap'];
+            $rg = 0;
+            if ($completed) {
+                $rg = (int) $def['rg'];
+                DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)
+                    ->increment('amount', $rg);
+                $tile->event_type = null;
+                $tile->is_deep_scanned = false;
+                $tile->salvage_ap_spent = 0;
+                $tile->salvage_tick = null;
+            } else {
+                $tile->salvage_ap_spent = $spent;
+                $tile->salvage_tick = $tick;
+            }
+            $tile->save();
+
+            return ['ok' => true, 'tile' => $this->transformTile($tile), 'completed' => $completed, 'regolith' => $rg];
+        });
     }
 
     /**
@@ -306,6 +403,19 @@ class ColonyTileService
         $arr['has_signal'] = $tile->event_type !== null && (bool) $tile->is_explored && ! (bool) $tile->is_deep_scanned;
         // Hide the actual event until the tile is deep-scanned (sondiert)
         $arr['event_type'] = $tile->is_deep_scanned ? $tile->event_type : null;
+
+        $arr['find'] = null;
+        if ($tile->is_deep_scanned && is_string($tile->event_type) && str_starts_with($tile->event_type, 'find_')) {
+            $def = config('game.finds.types')[$tile->event_type] ?? ['rg' => 0, 'ap' => 0];
+            $arr['find'] = [
+                'type' => $tile->event_type,
+                'rg' => $def['rg'],
+                'ap_total' => $def['ap'],
+                'ap_spent' => (int) $tile->salvage_ap_spent,
+                'ap_cap_per_sol' => (int) config('game.finds.salvage_cap_per_sol'),
+                'false' => $tile->event_type === 'find_false',
+            ];
+        }
 
         return $arr;
     }

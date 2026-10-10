@@ -222,7 +222,7 @@ class ColonyViewTest extends TestCase
      * A25: the active Harvester tile also carries a `sols_remaining` estimate
      * ("ca. N Sole bis Erschöpfung", A24/A25). Neutral trust + no geology so
      * the expected value matches the pure ColonyTileService::solsRemaining()
-     * formula exactly: fresh_yield(regolith_y2_d2)=23, ceil(111/23)=5.
+     * formula exactly: fresh_yield(regolith_y2_d2)=26, ceil(111/26)=5.
      */
     public function test_hexview_tiles_include_sols_remaining_for_placed_harvester(): void
     {
@@ -365,5 +365,19 @@ class ColonyViewTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('buildLinkUnavailable: '.json_encode(__('colony.build_link_unavailable'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), false);
+    }
+
+    public function test_hexview_renders_find_card_markup_from_lang_keys(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+        $response->assertSee(route('colony.tile.salvage'), false);
+        $response->assertSee(__('colony.find_effort'), false);
+        $response->assertSee(__('colony.find_salvage'), false);
+        $response->assertSee(__('colony.find_false_notice'), false);
+        // Scan cost comes from config, never hardcoded in the markup.
+        $response->assertSee('deepScanAp: '.(int) config('game.finds.scan_ap'), false);
     }
 }

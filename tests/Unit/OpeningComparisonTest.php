@@ -61,6 +61,7 @@ class OpeningComparisonTest extends TestCase
                     'harvester' => 16,
                     'mission' => $o['mission'][$s] ?? 0,
                     'trade' => $o['trade'][$s] ?? 0,
+                    'find' => $o['find'][$s] ?? 0,
                     'event' => 0,
                 ],
                 'buildings' => $buildings,
@@ -537,5 +538,57 @@ class OpeningComparisonTest extends TestCase
 
         $this->assertStringContainsString('nicht erreicht bis Cutoff', $detail);
         $this->assertStringNotContainsString('never', $detail);
+    }
+
+    // --- K11 (T30 Pool-Rg, informational) --------------------------------
+
+    public function test_k11_sums_find_regolith_before_sol_10_and_sol_25(): void
+    {
+        // Snapshots of Sols 1..9 count for "Sol 10" (start of Sol 10), 1..24 for "Sol 25".
+        $r = $this->report('labor', 1, ['last' => 30, 'find' => [3 => 4, 9 => 6, 10 => 100, 24 => 18, 25 => 100]]);
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame(10, $m['k11_10']);
+        $this->assertSame(128, $m['k11_25']);
+    }
+
+    public function test_k11_is_null_for_a_run_truncated_before_the_cutoff(): void
+    {
+        $r = $this->report('labor', 1, ['last' => 21, 'status' => 'active', 'find' => [5 => 4]]);
+        $r['truncated_at_sol'] = 21;
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame(4, $m['k11_10']);
+        $this->assertNull($m['k11_25']);
+    }
+
+    public function test_k11_median_per_opening_is_reported_as_info_only(): void
+    {
+        $reports = [
+            $this->report('labor', 1, ['last' => 30, 'find' => [5 => 4]]),
+            $this->report('labor', 2, ['last' => 30, 'find' => [5 => 10]]),
+            $this->report('hangar', 1, ['last' => 30, 'find' => [5 => 20, 15 => 8]]),
+            $this->report('hangar', 2, ['last' => 30]),
+        ];
+
+        $result = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare();
+
+        $this->assertEquals(7, $result['kpis']['k11_10']['labor']['median']);
+        $this->assertEquals(14, $result['kpis']['k11_25']['hangar']['median']);
+        $this->assertSame('info', $result['checks']['K11']['status']);
+        $this->assertStringContainsString('labor 7 / 7', $result['checks']['K11']['detail']);
+        $this->assertStringContainsString('hangar 10 / 14', $result['checks']['K11']['detail']);
+    }
+
+    public function test_k11_is_null_when_the_run_ended_before_the_cutoff_without_truncation(): void
+    {
+        $r = $this->report('labor', 1, ['last' => 18, 'find' => [5 => 4, 12 => 8]]);
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame(4, $m['k11_10']);
+        $this->assertNull($m['k11_25']);
     }
 }

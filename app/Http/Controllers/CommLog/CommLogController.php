@@ -194,6 +194,7 @@ class CommLogController extends BaseController
             'colony.building_repaired' => $this->descBuildingRepaired($params),
             'colony.tile_explored' => [$this->seg(__('comm_log.desc.tile_explored'))],
             'colony.tile_deep_scanned' => $this->descTileDeepScanned($params),
+            'colony.tile_salvaged' => [$this->seg(__(! empty($params['completed']) ? 'comm_log.desc.tile_salvaged_done' : 'comm_log.desc.tile_salvaged'))],
             'colony.renamed' => [$this->seg(__('comm_log.desc.colony_renamed'))],
             'techtree.level_up_finished' => $this->descLevelUp($params),
             'techtree.level_down' => $this->descLevelDown($params),

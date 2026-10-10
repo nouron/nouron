@@ -98,12 +98,13 @@ class PlaytestCommandOpeningsTest extends TestCase
 
     public function test_latest_report_for_never_returns_another_openings_report(): void
     {
+        // Seed 987654 never occurs in real runs, so real reports in this dir cannot interfere.
         $dir = storage_path('logs/playtest');
         if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
-        $labor = "{$dir}/default-labor-1-29990101_000000.json";
-        $hangar = "{$dir}/default-hangar-1-29990101_000001.json";
+        $labor = "{$dir}/default-labor-987654-29990101_000000.json";
+        $hangar = "{$dir}/default-hangar-987654-29990101_000001.json";
         file_put_contents($labor, json_encode(['opening' => 'labor']));
         file_put_contents($hangar, json_encode(['opening' => 'hangar']));
         $this->createdReports = [$labor, $hangar];
@@ -111,9 +112,9 @@ class PlaytestCommandOpeningsTest extends TestCase
         $command = $this->app->make(Playtest::class);
         $method = new \ReflectionMethod($command, 'latestReportFor');
 
-        $this->assertSame(['opening' => 'labor'], $method->invoke($command, 'default', 'labor', '1'));
-        $this->assertSame(['opening' => 'hangar'], $method->invoke($command, 'default', 'hangar', '1'));
-        $this->assertNull($method->invoke($command, 'default', 'cantina', '1'));
+        $this->assertSame(['opening' => 'labor'], $method->invoke($command, 'default', 'labor', '987654'));
+        $this->assertSame(['opening' => 'hangar'], $method->invoke($command, 'default', 'hangar', '987654'));
+        $this->assertNull($method->invoke($command, 'default', 'cantina', '987654'));
     }
 
     // --- --until-sol (Task 5) ---

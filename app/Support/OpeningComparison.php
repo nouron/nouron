@@ -59,6 +59,10 @@ namespace App\Support;
  *    `sol_next` log entry with sol 10 (before any Sol-10 action; the Sol-10
  *    snapshot would already include Sol-10 builds). null if there is none
  *    (run ended earlier).
+ *  - K11 (informational, T30 Pool v1; no target, status 'info'): Regolith from
+ *    salvaged finds (regolith_sources.find) summed over the snapshots before the
+ *    start of Sol 10 (k11_10, Sols 1-9) and of Sol 25 (k11_25, Sols 1-24). null
+ *    for a run truncated (--until-sol) or ended before that cutoff.
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs count (status completed|failed, or a run
@@ -157,7 +161,7 @@ class OpeningComparison
     }
 
     /**
-     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k7: ?array{won: bool, sols: int}}
+     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k7: ?array{won: bool, sols: int}}
      */
     public static function metrics(array $report): array
     {
@@ -227,6 +231,19 @@ class OpeningComparison
             }
         }
 
+        $truncatedAt = $report['truncated_at_sol'] ?? null;
+        $findBefore = function (int $sol) use ($sols, $truncatedAt): ?int {
+            // Not measured: truncated or ended (won/failed) before the cutoff Sol, like K6.
+            if (($truncatedAt !== null && $truncatedAt < $sol) || $sols === [] || end($sols)['sol'] < $sol - 1) {
+                return null;
+            }
+
+            return (int) array_sum(array_map(
+                fn ($s) => $s['sol'] < $sol ? (int) ($s['regolith_sources']['find'] ?? 0) : 0,
+                $sols,
+            ));
+        };
+
         $p2 = $report['phase2_start_sol'] ?? null;
 
         return [
@@ -236,6 +253,8 @@ class OpeningComparison
             'k4' => $k4,
             'k5' => $k5,
             'k6' => $k6,
+            'k11_10' => $findBefore(10),
+            'k11_25' => $findBefore(25),
             'k7' => isset($report['truncated_at_sol']) && ($report['outcome']['status'] ?? null) === 'active' ? null : [
                 'won' => ($report['outcome']['status'] ?? null) === 'completed',
                 'sols' => (int) ($report['outcome']['sols'] ?? 0),
@@ -293,7 +312,7 @@ class OpeningComparison
 
         $hasReference = in_array(self::REFERENCE, $this->openings, true);
         $kpis = [];
-        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6'] as $k) {
+        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25'] as $k) {
             foreach ($this->openings as $opening) {
                 $values = array_map(fn ($m) => $m[$k], $metrics[$opening] ?? []);
                 $stats = self::stats(array_values(array_filter($values, fn ($v) => $v !== null)));
@@ -343,7 +362,7 @@ class OpeningComparison
     }
 
     /**
-     * One status per criterion: 'ok', 'verfehlt', 'nicht gemessen' (K7 without full runs) or 'n/a' (not evaluable,
+     * One status per criterion: 'ok', 'verfehlt', 'info' (K11, no target), 'nicht gemessen' (K7 without full runs) or 'n/a' (not evaluable,
      * e.g. no paired seeds or no reference opening). Rules (spec 2.1):
      *  - K1 / K2 / K5: per opening, median <= 1 / <= 3 / <= 2 Sols; for K1/K2
      *    a run that never reached the event (missing > 0) fails — "never" is
@@ -359,7 +378,7 @@ class OpeningComparison
     {
         $na = fn (string $why) => ['status' => 'n/a', 'detail' => $why];
         if ($paired === []) {
-            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7'], $na('no paired seeds'));
+            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11'], $na('no paired seeds'));
         }
 
         $perOpeningMax = function (string $k, int $max) use ($kpis, $k7): array {
@@ -436,6 +455,11 @@ class OpeningComparison
             ];
         }
 
+        $k11parts = [];
+        foreach ($kpis['k11_10'] as $opening => $s) {
+            $k11parts[] = "{$opening} ".self::fmt($s['median']).' / '.self::fmt($kpis['k11_25'][$opening]['median']);
+        }
+
         return [
             'K1' => $perOpeningMax('k1', self::K1_MAX),
             'K2' => $perOpeningMax('k2', self::K2_MAX),
@@ -447,6 +471,10 @@ class OpeningComparison
             'K5' => $perOpeningMax('k5', self::K5_MAX),
             'K6' => $deltaMax('k6', self::K6_MAX_DELTA),
             'K7' => $k7check,
+            'K11' => [
+                'status' => 'info',
+                'detail' => 'Pool-Rg median Sol 10 / Sol 25: '.implode('; ', $k11parts).' (informational, no target)',
+            ],
         ];
     }
 

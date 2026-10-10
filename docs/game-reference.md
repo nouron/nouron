@@ -452,17 +452,19 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter 
 
 **A44/H1 (2026-09-27):** zwei entkoppelte Achsen — Ertragstier (`y1`-`y3`) und Mächtigkeitstier (`d1`-`d3`), kombiniert zu 8 `tile_type`-Werten. `y3_d3` (bestes Tier auf beiden Achsen) existiert bewusst nicht.
 
+**T30 (2026-10-09):** Fresh Yield 16/23/30 → 18/26/34 (Pfad-Parität, Spec §11), Resource Max unverändert.
+
 **Fresh Yields** (Regolith pro Sol) und **Resource Max** (Gesamtvorkommen). **T10 (2026-09-28):** Resource Max ×1,5 (160/300/440 → 240/450/660) — behebt das Baustoff-/Kartenbudget-Problem, siehe `docs/superpowers/plans/2026-09-27-t10-regolith-credits-rekalibrierung-spec.md`:
 | Tile-Typ | Fresh Yield | Resource Max |
 |---|---|---|
-| regolith_y1_d1 | 16 Rg | 240 Rg |
-| regolith_y1_d2 | 16 Rg | 450 Rg |
-| regolith_y1_d3 | 16 Rg | 660 Rg |
-| regolith_y2_d1 | 23 Rg | 240 Rg |
-| regolith_y2_d2 | 23 Rg | 450 Rg |
-| regolith_y2_d3 | 23 Rg | 660 Rg |
-| regolith_y3_d1 | 30 Rg | 240 Rg |
-| regolith_y3_d2 | 30 Rg | 450 Rg |
+| regolith_y1_d1 | 18 Rg | 240 Rg |
+| regolith_y1_d2 | 18 Rg | 450 Rg |
+| regolith_y1_d3 | 18 Rg | 660 Rg |
+| regolith_y2_d1 | 26 Rg | 240 Rg |
+| regolith_y2_d2 | 26 Rg | 450 Rg |
+| regolith_y2_d3 | 26 Rg | 660 Rg |
+| regolith_y3_d1 | 34 Rg | 240 Rg |
+| regolith_y3_d2 | 34 Rg | 450 Rg |
 
 **H2 — Sol-1-Gegensatzpaar:** zwei der 9 Ring-3-Frontier-Koordinaten werden immer pre-explored und mit einem Kontrast-Paar belegt (eine Kombi strikt höheres Ertragstier UND strikt niedrigeres Mächtigkeitstier als die andere) — welches konkrete Paar variiert pro Run/Seed (`ColonyTileService::pickH2Pair()`).
 
@@ -473,6 +475,29 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter 
 - Sources:
   - Weg A: Orin (corporate_contact, 400–800 Cr, 30% chance alle 15–25 Sol)
   - Weg B: Mission salvage (1× pro Ruin tile, damaged at 25% SP)
+
+---
+
+## 17a. Fundpool (T30 Pool v1, `game.finds`)
+
+Fester Start-Pool versteckter Signale auf den Außenring-Feldern (Ring 2/3, nur `terrain_empty`), pfadneutral: für alle Eröffnungen gleich, kein Nachschub in v1. Platzierung `FindPoolService` (eigener Seed-Strom, der größte Fund bevorzugt Ring 3).
+
+| Fundtyp | Anzahl im Pool | Regolith (brutto) | Bergungs-AP |
+|---|---|---|---|
+| `find_false` (Fehlalarm) | 2 | 0 | 0 |
+| `find_small` | 3 | 4 | 12 |
+| `find_medium` | 1 | 10 | 16 |
+| `find_large` | 1 | 18 | 22 |
+
+Pool gesamt: 7 Signale, 40 Rg brutto.
+
+| Parameter | Wert | Config |
+|---|---|---|
+| Tiefenscan eines Signals | 2 AP (1 AP mit Uplink-Station Lv2+) | `finds.scan_ap`, `finds.scan_ap_uplink` |
+| Bergungs-Deckel | 4 AP je Sol und Projekt | `finds.salvage_cap_per_sol` |
+| Offene Bergungsprojekte | max. 2 | `finds.max_open_projects` |
+
+Ablauf: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, AP-Investition bis zum Fund-Preis, Regolith bei Abschluss). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`); ein echter Fund bleibt unbebaubar, bis er vollständig geborgen ist, ein gescannter Fehlalarm wird bebaubar. Bot: Regeln `deep_scan_signal_tile` und `invest_find` (niedrige Priorität). Messung: `RunReport` `regolith_sources.find`, `game:playtest-compare` K11 (informativ, kein Zielwert).
 
 ---
 

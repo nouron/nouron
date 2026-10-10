@@ -3361,3 +3361,49 @@ dialog[x-ref="discoveryDialog"] {
 .offer-status--fail {
     color: var(--pico-del-color, #c0392b);
 }
+
+/* ── T30 find card + map counters ─────────────────────────────────────────── */
+
+.find-card {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #e0c040;
+    border-radius: 4px;
+    background: #fff8dc;
+}
+
+.find-card__false {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6b6b7a;
+}
+
+.find-card__dl {
+    margin-top: 0;
+}
+
+.find-card__action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.find-card__action .find-card__ap {
+    width: 4rem;
+    margin: 0;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.85rem;
+}
+
+.find-counters {
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    margin-right: auto;
+}
+
+.hex-legend__help {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+}

@@ -40,14 +40,14 @@ class ColonyTileServiceSolsRemainingTest extends TestCase
 
     public function test_rounds_up_to_next_full_sol(): void
     {
-        // fresh_yield regolith_y2_d2 = 23, rate = 23 * 1.0 = 23. 111 / 23 = 4.826 → 5.
+        // fresh_yield regolith_y2_d2 = 26, rate = 26 * 1.0 = 26. 111 / 26 = 4.27 → 5.
         $this->assertSame(5, $this->service->solsRemaining('regolith_y2_d2', 111, 300, 0, 1.0));
     }
 
     public function test_exact_division_does_not_add_an_extra_sol(): void
     {
-        // 46 / 23 = 2.0 exactly → 2, not 3.
-        $this->assertSame(2, $this->service->solsRemaining('regolith_y2_d2', 46, 300, 0, 1.0));
+        // 52 / 26 = 2.0 exactly → 2, not 3.
+        $this->assertSame(2, $this->service->solsRemaining('regolith_y2_d2', 52, 300, 0, 1.0));
     }
 
     public function test_geology_bonus_increases_rate_and_lowers_estimate(): void

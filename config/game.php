@@ -46,6 +46,21 @@ return [
         'explore_cost_default' => 1,
     ],
 
+    // T30 Pool v1 (Spec §11.3): fixed start pool of hidden finds, same size every run.
+    'finds' => [
+        'start_pool' => ['find_large' => 1, 'find_medium' => 1, 'find_small' => 3, 'find_false' => 2],
+        'types' => [
+            'find_small' => ['rg' => 4, 'ap' => 12],
+            'find_medium' => ['rg' => 10, 'ap' => 16],
+            'find_large' => ['rg' => 18, 'ap' => 22],
+            'find_false' => ['rg' => 0, 'ap' => 0],
+        ],
+        'scan_ap' => 2,
+        'scan_ap_uplink' => 1, // Uplink-Station Lv2+
+        'salvage_cap_per_sol' => 4,
+        'max_open_projects' => 2,
+    ],
+
     // IMPORTANT: The tick system assumes the server (and PHP runtime) runs in UTC.
     // AppServiceProvider::boot() enforces date_default_timezone_set('UTC') at startup.
     // Never deploy Nouron with a non-UTC system timezone — tick boundaries will drift.
@@ -110,17 +125,22 @@ return [
         // deposit) is deliberately excluded — see ColonyTileService::
         // pickRegolithCombo(). See docs/superpowers/plans/2026-09-27-a44-h1-h2-
         // vorkommen-spec.md for the full derivation.
+        //
+        // T30 (2026-10-09, docs/superpowers/specs/2026-10-05-t30-gleichwertige-
+        // eroeffnungen.md section 11, path parity): 16/23/30 -> 18/26/34 (~+12%).
+        // resource_max below stays unchanged (map regolith budget unchanged), so
+        // tiles run empty ~12% sooner.
         'fresh_yield' => [
-            'regolith_y1_d1' => 16, 'regolith_y1_d2' => 16, 'regolith_y1_d3' => 16,
-            'regolith_y2_d1' => 23, 'regolith_y2_d2' => 23, 'regolith_y2_d3' => 23,
-            'regolith_y3_d1' => 30, 'regolith_y3_d2' => 30,
+            'regolith_y1_d1' => 18, 'regolith_y1_d2' => 18, 'regolith_y1_d3' => 18,
+            'regolith_y2_d1' => 26, 'regolith_y2_d2' => 26, 'regolith_y2_d3' => 26,
+            'regolith_y3_d1' => 34, 'regolith_y3_d2' => 34,
         ],
         // T10 (2026-09-28, docs/superpowers/plans/2026-09-27-t10-regolith-credits-
         // rekalibrierung-spec.md §4/Anhang B): 160/300/440 -> 240/450/660 (x1.5).
         // Addresses the "Baustoff" problem (map budget) — orthogonal to the
         // regolith_sell_offer_chance_pct sell channel above, which addresses the
         // "Handelsware" problem (monetizing an already-existing surplus). Yield
-        // tiers (fresh_yield above) stay unchanged.
+        // tiers (fresh_yield above) were unchanged at that time (raised in T30).
         'resource_max' => [
             'regolith_y1_d1' => 240, 'regolith_y1_d2' => 450, 'regolith_y1_d3' => 660,
             'regolith_y2_d1' => 240, 'regolith_y2_d2' => 450, 'regolith_y2_d3' => 660,

@@ -17,6 +17,7 @@ return [
             'renamed' => 'Colony renamed',
             'tile_explored' => 'Sector explored',
             'tile_deep_scanned' => 'Deep scan performed',
+            'tile_salvaged' => 'Find salvaged',
             'overcap_started' => 'Housing shortage',
             'colonists_left' => 'Colonists left',
             'colonists_dismissed' => 'Colonists dismissed',
@@ -151,6 +152,8 @@ return [
         'tile_explored' => 'New sector explored.',
         'tile_deep_scanned' => 'Deep scan of a sector performed.',
         'tile_deep_scanned_coords' => 'Deep scan of sector (:q/:r) performed.',
+        'tile_salvaged' => 'Salvage work on a find advanced.',
+        'tile_salvaged_done' => 'Find fully salvaged.',
         'colony_renamed' => 'Colony renamed.',
     ],
 

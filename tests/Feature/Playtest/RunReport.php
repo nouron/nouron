@@ -100,7 +100,7 @@ class RunReport
 
     /**
      * A30/B1c: this Sol's Regolith gains by source. 'accept_bar_offer' deltas
-     * are 'trade'; the 'sol_next' delta is split into 'mission' (read from the
+     * are 'trade'; 'invest_find' deltas are 'find' (T30 salvage); the 'sol_next' delta is split into 'mission' (read from the
      * real 'hangar.mission_completed' colony_log event for this tick — no
      * re-derivation, the game already computed and logged the exact reward)
      * and 'harvester' (the remainder — Regolith has no other tick-driven
@@ -111,7 +111,7 @@ class RunReport
      */
     private function regolithSources(BotSession $bot): array
     {
-        $sources = ['harvester' => 0, 'mission' => 0, 'trade' => 0, 'event' => 0];
+        $sources = ['harvester' => 0, 'mission' => 0, 'trade' => 0, 'find' => 0, 'event' => 0];
 
         foreach ($bot->log as $entry) {
             if ($entry['sol'] !== $bot->sol || ! $entry['ok']) {
@@ -125,6 +125,10 @@ class RunReport
 
             if ($entry['rule'] === 'accept_bar_offer') {
                 $sources['trade'] += $delta;
+            } elseif ($entry['rule'] === 'invest_find') {
+                // T30 Pool v1: the completed salvage's credit; the endpoint's `regolith`
+                // field is the stock, so the observed delta is the only honest amount.
+                $sources['find'] += $delta;
             } elseif ($entry['rule'] === 'sol_next') {
                 $missionAmount = $this->missionRewardAmount($bot, 'regolith');
                 $sources['mission'] += $missionAmount;
