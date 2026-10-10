@@ -951,3 +951,258 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 3. **Bestehende Spielstände:** keine Rücksicht nötig (Entwicklungsphase) — Neustart statt Zusammenführung, keine Datenmigration.
 4. **Stufenkosten:** Hangar-Stufen bleiben bei flat 25 Rg; messen; Anheben nur, wenn Hangar-First mehr als 2 Sole früher in Phase 2 kommt.
 
+---
+
+## 13. Schritt 3: Hangar-Umbau (B1) + Bergungsflug (2026-10-10)
+
+**Autor:** game-designer (Design-Spezifikation für den Implementierungsplan; keine Code-/Config-/GDD-Änderung). Grundlage: §11.4, §11.6, §12 inkl. Owner-Entscheidungen 2026-10-10. Zeilenangaben beziehen sich auf den Stand von `feat/t30-pool-v1` (Commit 9c9476da). **Config** = gelesen, **Vorschlag** = neuer Wert, **Annahme** = eigene Deutung oder Handrechnung.
+
+### 13.1 Kernentscheidungen (Kurzfassung)
+
+| # | Entscheidung | Herkunft |
+|---|---|---|
+| E1 | Eine Hangar-Halle (`is_instanced` = 0). Stufe n = Schiffsklasse n **und** n Buchten. Die Geschenk-Drohne steht auf dem **Vorfeld** (Bucht 0), das ab Stufe 1 existiert und nur ihr gehört. | Owner 2026-10-10 |
+| E2 | Schiffe adressiert man über die **Buchtnummer** (0–3), nicht über eine Gebäude-Instanz. Die Spalten werden umbenannt, die Baseline direkt editiert, es gibt keine Datenmigration. | Owner (Neustart), Vorschlag |
+| E3 | Neue Mission `mission_find_salvage` („Bergungsflug“): Ziel ist eine Fund-Kachel, die Entfernung ergibt sich aus dem Ring, es gibt **keinen Erfolgswurf**, der Ertrag ist Fundmenge × 1,5 und die Tragkraft hängt von der Schiffsklasse ab. | §11.4, Vorschlag |
+| E4 | **Fernscan:** Der Flug darf auch ein ungescanntes Signal anfliegen. Der Scan erfolgt bei der Rückkehr. Ein Fehlalarm oder ein für das Schiff zu großer Fund heißt: Rückkehr ohne Ladung, die Kachel ist aber gescannt. | §11.4 (Deep Survey integriert), Owner-Frage F1 |
+| E5 | `mission_prospecting_flight` und `mission_deep_survey` werden gestrichen. `mission_supply_run` zahlt kein Regolith mehr, nur noch Organika. | F2 Owner 2026-10-09, §11.4 |
+| E6 | Bergungsflug und Selbstbergung schließen sich je Kachel aus. Der Flug zählt nicht gegen `max_open_projects`. | Vorschlag |
+
+### 13.2 Datenmodell B1
+
+#### Ist-Zustand (gelesen)
+
+| Ort | Heute |
+|---|---|
+| Halle | `colony_buildings` (PK `colony_id, building_id, instance_id`), Hangar = Gebäude 44, `is_instanced` = 1, `max_instances` = null (`database/seeders/data/buildings.php` Z. 10, `config/buildings.php` Z. 212–238) |
+| Schiff | `colony_ships.hangar_instance_id` (nullable; null = `pending`) zeigt auf `colony_buildings.instance_id` (Baseline Z. 322–335) |
+| Mission | `colony_hangar_missions.instance_id` (Baseline Z. 302–320). Der Join Schiff ↔ Mission läuft über `cs.hangar_instance_id = m.instance_id` (`GameTick` Z. 374–377). |
+| Slot-Logik | 1 Instanz = 1 Schiff. Bei der Bestellung sucht der Code die erste freie Instanz mit passender Stufe (`HangarService::requestShip` Z. 441–465, `grantFreeShip` Z. 511–531, `assignToHangar` Z. 555–597). Ein Schiff ist inaktiv, wenn die Stufe seiner Instanz unter seiner Klasse liegt (`isShipInactive` Z. 194, `inactiveShipRowIds` Z. 205–219). |
+| `is_instanced` | wird **nicht** von `game:sync-config` synchronisiert (`SyncConfig` Z. 16: nur decay_rate, supply_cost, max_status_points, max_level, max_instances). Die Quelle ist `database/seeders/data/buildings.php`. |
+| Geschenk-Drohne | existiert noch nicht (kein Code-Treffer) |
+
+#### Soll (minimale Änderung)
+
+| Element | Änderung |
+|---|---|
+| Halle | `database/seeders/data/buildings.php` Z. 10: `is_instanced` 1 → 0. Damit greift die bestehende Sperre für nicht-instanzierte Gebäude in `ColonyController::buildableBuildings` (Z. 322–330, „count > 0 → nicht baubar“) und in `placeBuilding` (Z. 440–446, Z. 562). Eine zweite Halle ist nicht mehr platzierbar. `max_instances` bleibt null (bei `is_instanced` = 0 bedeutungslos). Der Kommentar in `config/buildings.php` Z. 213 und Z. 228–231 wird neu geschrieben. |
+| Schiff | Baseline: `colony_ships.hangar_instance_id` → **`bay`** (`tinyInteger`, nullable). 0 = Vorfeld, 1–3 = Bucht, null = `pending`. Neu: `unique(['colony_id','bay'])` (MySQL erlaubt mehrere NULL, `pending` bleibt also möglich). |
+| Mission | Baseline: `colony_hangar_missions.instance_id` → **`bay`**, Index entsprechend umbenennen. |
+| Buchten-Anzahl | wird **abgeleitet** (= Hallenstufe), nicht gespeichert. |
+| Aktiv-Regel | Ein Schiff ist inaktiv, wenn Hallenstufe < max(Klassenstufe, Bucht). Für das Vorfeld (Bucht 0) gilt damit Klassenstufe 1. Neue Signatur `isShipInactive(int $shipId, int $hangarLevel, int $bay)`. Die Regel „Hangar unter Schiffsstufe“ (GDD §7) gilt weiter, eine geschlossene Bucht ist derselbe Fall. |
+| Belegung | Bestellung (`requestShip`): erste freie Bucht 1..Stufe. Klasse ≤ Stufe ist schon durch das `hangarMaxLevel`-Gate (Z. 346–349) gesichert. Ohne freie Bucht: `pending` wie heute. Das Vorfeld wird **nie** automatisch belegt. |
+| Dax-Schiff (`grantFreeShip`) | erste freie Bucht 1..Stufe, sonst `pending` (unverändert ohne Klassen-Gate) |
+| Zuweisen (`assignToHangar`) | Parameter `bay` ∈ 1..Stufe, frei; Bucht 0 wird abgelehnt (`bay_reserved`) |
+| Geschenk-Drohne | neue Methode `HangarService::ensureGiftDrone(int $colonyId)`, idempotent: Hallenstufe ≥ 1 und Bucht 0 leer → Drohne mit `bay` = 0, `ship_state` = `docked`, `deliver_at_tick` = aktueller Tick, ohne Kosten, Schuld und Vertrauen. Aufrufstellen: die beiden Levelup-Pfade (`ColonyController::invest` Z. 777–801 und `AbstractTechnologyService::levelup` Z. 479–490) bei Gebäude 44. Ein Abriss bis Stufe 0 mit Wiederaufbau erzeugt **keine** zweite Drohne: Schiffe auf Bucht 0 werden nie gelöscht, nur `pending`-Schiffe verfallen (`GameTick` Z. 304–310). CommLog-Ereignis `hangar.gift_drone`. |
+| Verlust/Beschädigung der Geschenk-Drohne | wie bei jedem Schiff: Verschleiß nur im Flug, Reparatur per AP, bei SP ≤ 0 Abbruch und Rückkehr mit 0 SP, kein Totalverlust (gelesen: `GameTick` Z. 398–421) |
+| Queue, Reparatur, Verschleiß | bleiben **je Schiff** (`colony_ships.status_points`, `repairShip`) und werden über `bay` adressiert. Es gibt keine Bau-Queue je Bucht (Schiffe kommen per Nexus-Lieferung). Gebäude-Verfall hat nur noch einen Träger (die Halle). |
+| Supply | Die Formel bleibt (6 je Stufe und Instanz, `ResourcesService::buildingWorkplaces()`). Bei einer Halle sind das höchstens 18. Schiffe kosten weiterhin kein Supply. |
+| Zonen-Kachel | eine einzige |
+| Unterhalt | keine Credits-Unterhaltskosten für Schiffe oder Halle (unverändert) |
+| Routen | `routes/web.php` Z. 133–135: `{instanceId}` → `{bay}` mit `whereNumber`, 0..3 |
+
+#### Betroffene Dateien
+
+| Datei | Stelle | Änderung |
+|---|---|---|
+| `database/migrations/0001_01_01_000000_baseline.php` | Z. 302–335 | Spalten umbenennen, Unique-Index |
+| `database/seeders/data/buildings.php` | Z. 10 | `is_instanced` 0 |
+| `config/buildings.php` | Z. 212–238 | Kommentar (eine Halle, Stufe = Klasse + Bucht) |
+| `app/Services/HangarService.php` | Z. 61–146 `getHangarSlots` | gibt künftig `{hangar_level, hangar_status, bays: [0..3 → {bay, open, required_level, ship}]}` zurück |
+| | Z. 194, 205–219 | Aktiv-Regel mit Bucht; Join auf die eine Halle (`instance_id` = 1) |
+| | Z. 441–465, 511–531, 555–597 | Buchtsuche statt Instanzsuche |
+| | Z. 636–768 `dispatchShip`, Z. 1013 `recallShip`, Z. 1048 `repairShip` | Parameter `bay`; Stufe aus der Halle statt aus der Instanz (Z. 663–667) |
+| | neu | `ensureGiftDrone()`, `freeBay(int $colonyId)` |
+| `app/Http/Controllers/Colony/HangarController.php` | Z. 75, 142–155, 168–262 | `bay` statt `instance_id`, Validierung `bay` 1..3 bei `assign` |
+| `app/Http/Controllers/Colony/ColonyController.php` | Z. 777–801 | Hook `ensureGiftDrone` |
+| `app/Services/Techtree/AbstractTechnologyService.php` | Z. 479–490 | Hook (nur für Gebäude 44; Annahme: dieser Pfad levelt Gebäude im Techtree) |
+| `app/Console/Commands/GameTick.php` | Z. 374–383 | Join über `bay` |
+| `resources/views/colony/hangar.blade.php`, `public/js/hangar.js` | Slot-Liste | Vorfeld plus Buchten 1–3, gesperrte Buchten „ab Stufe n“, Dispatch-, Recall- und Repair-URLs mit `bay` |
+| `app/Services/OnboardingHintService.php` | Z. 617–622 | keine Änderung nötig: Die Geschenk-Drohne ist sofort `docked`, `hasArrivedShip` greift ab Stufe 1. Test ergänzen. |
+| `data/sql/testdata.sql` | Z. 40–66 | eine Halle Lv3, Schiffe auf Bucht 1/2/3, Missionszeilen auf `bay`. Die Zeile „Hangar 2“ entfällt. |
+| `app/Console/Commands/ResetPlayer.php` | Z. 325–330 und Hangar-Szenarien | Halle bleibt Instanz 1; in den Hangar-Szenarien Geschenk-Drohne auf Bucht 0 anlegen und die Szenario-Kommentare anpassen |
+| `app/Console/Commands/ColonySeedDemo.php` | Z. 47/56/68 | `ensureGiftDrone` nach dem Hangar-Bau |
+| `lang/de|en/colony.php` | Hangar-Block (um Z. 568) | `hangar_apron`, `hangar_bay`, `hangar_bay_locked`, `hangar_error_bay_reserved`, `hangar_gift_drone_*` |
+| Tests | 22 Dateien mit `hangar_instance_id` (u. a. `tests/Feature/Hangar/*`, `Security/*`, `Playtest/*`, `OrganikaProvisioningTest`) | Umbenennung |
+
+### 13.3 Bergungsflug
+
+#### Config (Vorschlag)
+
+`config/missions.php`, neuer Eintrag (statt `mission_deep_survey` Z. 59–67 und `mission_prospecting_flight` Z. 68–75):
+
+```php
+'mission_find_salvage' => [
+    'ships' => ['drone', 'freighter'],
+    'sol_distance_by_ring' => [2 => 1, 3 => 2], // replaces fixed sol_distance; = ring − 1
+    'requires' => ['target' => 'find_tile'],
+    'target_type' => 'find_tile',
+    'reward' => ['find_salvage' => true],
+    'roll' => false,              // no success roll, wear only
+    'repeatable' => true,
+    'difficulties' => ['normal'],
+],
+'mission_supply_run' => [ ..., 'reward' => ['organics' => 10] ], // regolith removed
+```
+
+`config/ships.php`: neues Feld `find_carry` je Schiff: Drohne `['find_small','find_medium']`, Frachter `['find_small','find_medium','find_large']`, Korvette `[]`.
+`config/game.php` → `finds`: `'flight_yield_factor' => 1.5`.
+
+#### Regeln
+
+| Punkt | Regel |
+|---|---|
+| Ziel (`find_tile`) | Kachel aufgedeckt, `event_type` beginnt mit `find_`, nicht „gescannt und `find_false`“, `salvage_ap_spent` = 0, kein aktiver `mission_find_salvage` mit demselben Ziel. Unaufgedeckte Kacheln sind kein Ziel. |
+| Gescannt | Typ bekannt. Passt er nicht in `find_carry` des Schiffs, wird die Mission abgelehnt (`find_too_large`). |
+| Ungescannt (Fernscan) | zulässig für jedes tragfähige Schiff. Die Fundkarte zeigt „Inhalt unbekannt: Fehlalarm oder zu groß möglich“. |
+| Entfernung | `sol_distance` = `sol_distance_by_ring[ring]` der Zielkachel (Fallback max(1, Ring − 1)). Der Wert wird wie heute in `colony_hangar_missions.sol_distance` gespeichert. `GameTick` liest ihn bereits von dort (Z. 427), dort ist also keine Änderung nötig. |
+| Kosten | Nav-AP = Entfernung × `nav_ap_per_sol` (Config 2), durch `effectiveNavigationApCost` (Kartografie) wie bei jeder Mission gesenkt. Proviant = Entfernung × `organika_per_sol` (Config 3; ohne Gate keine Kenntnis-Skalierung). Ring 2: 2 AP, 3 Or, 2 Sole Umlauf; Ring 3: 4 AP, 6 Or, 4 Sole Umlauf. `organikaCostFor()` (Z. 774–791) bekommt die Entfernung als Parameter. |
+| Dauer | 2 × Entfernung (unverändert) |
+| Erfolg | kein Wurf: Bei `roll === false` überspringt `GameTick` Z. 439–444 die Erfolgschance, `succeeded` = 1, der Schwierigkeits-Multiplikator ist 1,0 |
+| Verschleiß | wie heute je Sol im Flug (Drohne 1,5, Frachter 1,0 SP/Sol, Config). Ring 2 mit Drohne: 3 SP, Ring 3: 6 SP. Bei SP ≤ 0: Abbruch ohne Ertrag, Ziel wieder frei. |
+| Ertrag | `(int) round(rg × flight_yield_factor)`: klein 4 → 6, mittel 10 → 15, groß 18 → 27 (bei Faktor 1,5 alle ganzzahlig). Berechnung in **einer** Funktion `findFlightYield(colonyId, type)`, die additive Zeilen liefert (`base`, `flight_bonus`). UI-Vorschau und Auszahlung nutzen dieselbe Funktion (Memory „Discount-Wiring“). |
+| Abschluss | gemeinsame Methode `ColonyTileService::completeFind($tile, int $rg)`, aus `salvageFind` Z. 195–203 herausgelöst: Rg gutschreiben, `event_type` null, Scan- und Bergungsfelder zurücksetzen, Kachel frei bebaubar. Selbstbergung und Flug nutzen dieselbe Methode. |
+| Fernscan-Ausgang | Bei Rückkehr `is_deep_scanned` = 1. Echter Fund, der passt: Bergung wie oben. `find_false`: kein Ertrag, die Kachel ist gescannter Fehlalarm und damit bebaubar (bestehende Regel `ColonyController` Z. 392–396). Zu groß: kein Ertrag, die Kachel bleibt gescannter Fund. Meldung jeweils im CommLog. |
+| Gegenseitiger Ausschluss | `salvageFind` lehnt eine Kachel mit aktivem Flug ab (`find_in_flight`). Der Flug lehnt eine Kachel mit `salvage_ap_spent` > 0 ab (`find_salvage_in_progress`, gezahlte AP bleiben im Projekt). `deepScanTile` bleibt während des Flugs erlaubt (harmlos). |
+| Projektdeckel | Der Flug zählt nicht in `max_open_projects` (Config 2). Das ist die eigentliche Hangar-Kapazität: parallel zu den zwei Selbstbergungen. |
+| Recall | Zustand `recalled`, kein Ertrag, kein Scan, Ziel frei (die Reservierung prüft nur `active`) |
+| Ziel verschwunden | Ist die Kachel bei Rückkehr kein Fund mehr (defensiv, regulär ausgeschlossen): kein Ertrag, CommLog-Hinweis |
+| Siegziel | Der Flug zählt für `task_expedition_coverage` (Schwierigkeit `normal`, erfolgreich; `RunProgressService` Z. 300–310). Owner-Frage F3. |
+| Anzeige | Die Zielliste im Dispatch-Dialog zeigt je Kachel: Ring, Nav-AP (mit Kartografie-Zeile), Or, Rückkehr-Sol, je Schiffsklasse „trägt / zu groß / unbekannt“ und den Ertrag als Zeilen („Fund 10 Rg + Flug 5 Rg = 15 Rg“). Ohne Wurf entfällt die Schwierigkeitsauswahl. |
+| Fehlercodes (neu) | `find_too_large`, `find_in_flight`, `find_salvage_in_progress`, `invalid_target` (bestehend), `bay_reserved` |
+
+#### Code-Stellen
+
+| Datei | Stelle | Änderung |
+|---|---|---|
+| `HangarService::validateTarget` | Z. 816–863 | Zweig `find_tile` plus Reservierungsprüfung (Muster wie `target_consumed`, aber nur `active`) mit `lockForUpdate` auf die Kachel. Der Zweig `signal_tile` entfällt. |
+| `HangarService::dispatchShip` | Z. 721–724 | Entfernung aus dem Ziel, Tragkraftprüfung |
+| `HangarService::getMissionCatalogFor` / `pickableTargets` | Z. 870–1008 | Ziele mit Kosten und Ertrag je Ziel; `availability` = `missing_target`, wenn keine Kachel passt |
+| `GameTick::processHangarMissions` | Z. 438–463 | `roll === false` |
+| `GameTick::payMissionRewards` | Z. 503–565 | Typ `find_salvage`: Fernscan, Tragkraft, `completeFind`. Details `{find_type, find_regolith, flight_bonus, scanned_in_flight}`. Bewusst **nicht** unter dem Schlüssel `regolith` (siehe Bot/Report). Der Typ `deep_scan` (Z. 546) und `deepScanTarget` entfallen. |
+| `ColonyTileService::salvageFind` | Z. 130–211 | Prüfung `find_in_flight`; Abschluss über `completeFind` |
+| `ColonyTileService::transformTile` | Z. 400–421 | Feld `find.in_flight` (Rückkehr-Sol) für Karte und Kachel-Panel |
+| `CommLogController` | Ausgabe von `hangar.mission_completed` | neue Detailzeilen (Annahme: die Belohnungen werden dort typweise gerendert; vor der Umsetzung prüfen) |
+| `lang/de|en/missions.php` | Z. 12–15 | `mission_find_salvage_name` „Bergungsflug“, `_desc`, Fehlertexte; `prospecting`- und `deep_survey`-Schlüssel entfernen; `mission_supply_run_desc` ohne Regolith |
+
+#### Gestrichen bzw. geändert (konkret)
+
+| Eintrag | Änderung | Begründung |
+|---|---|---|
+| `mission_prospecting_flight` (Z. 68–75) | löschen | F2: kein planbarer Hangar-Rg. Geologie wirkt nur auf den Harvester. |
+| `mission_deep_survey` (Z. 59–67) | löschen | geht im Fernscan auf (§11.2: heute strikt dominiert) |
+| `mission_supply_run` (Z. 102–109) | `reward` → `['organics' => 10]` | F2. Die Config hat hier keinen Werkstoffe-Anteil; es bleibt nur Organika. |
+| Zieltyp `signal_tile` | entfällt | keine Mission nutzt ihn mehr |
+
+> ⚠️ BALANCE CONCERN: Die Versorgungsfahrt bringt netto nur noch +7 Or je 2 Sole und 2 AP (10 Ertrag − 3 Proviant). Damit ist sie fast wertlos. Sie bleibt als Organika-Notnagel stehen; im Messlauf `mission_supply_run`-Starts zählen. Wird sie nie geflogen, folgt eine eigene Entscheidung (streichen oder Organika anheben), nicht in diesem Schritt.
+
+#### Bot und Report
+
+| Datei | Stelle | Änderung |
+|---|---|---|
+| `tests/Feature/Playtest/BotStrategy.php` | Z. 55–58 `REGOLITH_MISSIONS`, Z. 233–245 `dispatch_regolith_mission`, Z. 1621 `regolithMissionCandidate` | ersetzen durch die Regel **`dispatch_find_flight`** an derselben Stelle der Prioritätenliste. Der Name `dispatch_salvage_mission` ist schon vergeben (Harvester-Ruine). Kandidat: gescannter, echter, freier Fund; größter zuerst; Schiff = kleinste Klasse, die ihn trägt; Nav-AP und Or gedeckt. Fernscan-Flüge fliegt der Bot in v1 **nicht** (Annahme: einfacher und messbarer). |
+| | Z. 438–453 `invest_find`, Z. 2057 `investFindCandidate` | überspringt Funde, die ein eigenes aktives Schiff tragen kann, und Funde mit aktivem Flug |
+| | Z. 1034 `instanceCap` | Eintrag `44` entfernen |
+| | Z. 2259–2272 `hasFreeHangarSlot`, Z. 1907–1944 `shipToRequest` | wird zu `hasFreeBayFor(classLevel)`: Stufe ≥ Klasse und belegte Buchten 1..Stufe < Stufe. `hasAnyShip` zählt die Geschenk-Drohne, der Drohnenkauf am Anfang entfällt dadurch von selbst. Der Drohnen-Deckel 2 zählt die Geschenk-Drohne mit. |
+| `tests/Feature/Playtest/RunReport.php` | Z. 112–136 | neuer Topf `find_flight` (aus den `hangar.mission_completed`-Details `find_regolith`). `mission` enthält dann nur noch Rg aus Missionsbelohnungen (praktisch nur die Langstreckenexpedition). Z. 160: `dispatch_find_flight` in die Proviant-Regeln aufnehmen. |
+| `app/Support/OpeningComparison.php` | Z. 28–30, 41, 62–65, 242, 506 | Pfad-Aktion `dispatch_find_flight`; K2-Hangar = `mission + find_flight > 0`; K11 = `find + find_flight`; neue Kennzahl K12 = `find_flight / K11` (Sol 25) |
+| `tools/playtest-dashboard.php` | Quellen-Töpfe | `find_flight` anzeigen |
+
+**Auswirkung auf `regolith_sources.mission`:** Heute speist sich der Topf aus Versorgungsfahrt und Prospektion. Danach liegt er fast bei 0 (nur `long_range_expedition`, Kartografie 3). Bestehende Auswertungen, die „Pfad B = mission“ lesen (`RunReport` Z. 447–451 `pfad_b_frachter`), müssen `find_flight` einrechnen, sonst erscheint der Hangar-Pfad als leer.
+
+### 13.4 Erwartete Wirkung (Handrechnung, Annahme)
+
+Grundlage: Start-Pool laut Config (2 Fehlalarme, 3 klein, 1 mittel, 1 groß = 40 Rg). Mit Flug-Faktor auf alle fünf echten Funde: 60 Rg. Ring 2 hat ca. 10–11 leere Felder, Ring 3 ca. 3. Mittel und groß liegen bevorzugt auf Ring 3 (§11.3), Ring 2 trägt also überwiegend kleine Funde und Fehlalarme (Annahme).
+
+**Hangar-First, Beispielverlauf (Hangar Lv1 Sol 3, Ring 2 aufgedeckt bis Sol 4–5):**
+
+| Sol | Aktion | Rg aus Pool |
+|---|---|---|
+| 3 | Geschenk-Drohne `docked`; 1–2 Ring-2-Signale gescannt (2–4 AP), erster Flug zu einem kleinen Fund (2 AP, 3 Or) | – |
+| 5 | Rückkehr | +6 |
+| 5–9 | zwei weitere Ring-2-Flüge (klein) | +12 bis Sol 9 |
+| 9 | Ring-3-Flug mittel (4 AP, 6 Or), Rückkehr Sol 13 | +15 (Sol 13) |
+| ab Lv2 + Frachter | großer Fund per Frachter | +27 |
+
+| Kennzahl | Pool v1 gemessen (Hangar) | Erwartung Schritt 3 | Ziel |
+|---|---|---|---|
+| K1 | 0 | 0 (Geschenk-Drohne am Fertigstellungs-Sol) | ≤ 1 |
+| **K2** | nie bis Sol 25 | **2–4** (erster Ring-2-Flug; mit 2/7 Fehlalarm-Anteil ist der erste gescannte Fund manchmal leer, dann +2) | ≤ 3 |
+| K4 Σ ungenutzte AP Sol 4–12 | 22 | **35–60** (siehe Risiko R1). Ein Flug kostet 2 AP statt 12–16 AP Selbstbergung, die Funde binden also weniger AP. | Abstand ≤ 20 zu Labor/Cantina |
+| K5 | 0,5 | 0–2 | ≤ 2 |
+| K6 Rg Sol 10 | 79 (Schritt 1) | +12 bis +18 gegenüber Pool v1 | Spanne ≤ 25 über alle drei |
+| K11 Sol 10 / 25 | 0 / 10 | **12–18 / 35–55** | – |
+| K12 Anteil über Schiff | – | 70–90 % | 50–80 % |
+| K3 | 16,5–17 | −0,5 Sole | Abstand ≤ 2; Hangar nicht > 2 Sole vor Labor |
+
+**Labor-First / Cantina-First:** Der Hangar kommt dort erst als zweites Pfadgebäude (Phase-1-Ende), dann ist der Start-Pool meist schon selbst geborgen. K11 bleibt nahezu gleich, K12 ≤ 20 %. Wer bisher Frachter flog, verliert die Versorgungsfahrt-Rg (Phase 2). Vor allem Läufe mit Frachter und Geologie verlieren dadurch an Siegquote (K7).
+
+**Pflichtlinie / Überschießen:** Der Rg-Vorteil des Hangars ist nach oben begrenzt. Er beträgt höchstens +50 % auf den Pool, also +20 Rg aus dem Start-Pool. Das ist deutlich weniger als Geologie (60–100 Rg bis Sol 25, §11.4). Ein Überschießen in Rg ist damit ausgeschlossen. Das reale Risiko ist ein anderes: Der Hangar-Spieler hat **mehr freie AP** (R1), weil der Flug Selbstbergungs-AP ersetzt. Das wirkt erst in Phase 2 als Vorteil (Ring-3-Erkundung, Hallenausbau, Instandhaltung) und ist laut §11.4 bewusst Teil der Hangar-Wirkung („gesparte AP“).
+
+### 13.5 Querverbindungen (§11.6): nur Schnittstellen, Umsetzung in Schritt 5
+
+| Verbindung | Schnittstelle in Schritt 3 |
+|---|---|
+| Labor → Hangar (Kartografie senkt Flug-AP) | wirkt schon über `effectiveNavigationApCost`. In der Zielliste als eigene Zeile zeigen („Kartografie −x AP“). |
+| Hangar → Labor (Feldproben) | Für den Abschluss gibt es **eine** Stelle: `payMissionRewards`, Typ `find_salvage`. Die Details enthalten `find_type`, damit Schritt 5 dort `ResearchService::investBonus()` anhängen kann. Kein Config-Schlüssel in Schritt 3. |
+| Hangar → Cantina (Fahrtbericht) | derselbe Abschluss-Haken (`interaction_count` + 1). Nur vormerken. |
+| Cantina → Hangar (Gerücht-Gutschein +25 %) | `findFlightYield()` liefert additive Zeilen. Der Gutschein kommt später als weitere Zeile hinzu (`voucher_bonus`), nie als Änderung am Faktor. Der Verbrauch erfolgt beim **Dispatch** (Ertrag in `colony_hangar_missions.target` mitschreiben oder als eigenes Feld; Entscheidung in Schritt 5). |
+
+### 13.6 Plan-Tasks
+
+| # | Task | Dateien (Hauptstellen) | TDD-Ansatz (rot zuerst) | Aufwand |
+|---|---|---|---|---|
+| 1 | Datenmodell B1: Baseline (`bay`, Unique), Seeder `is_instanced` 0, `HangarService`-Buchtlogik, Controller, Routen, `GameTick`-Join, `testdata.sql`, Test-Umbenennung | 13.2 | Halle nicht zweimal platzierbar; Stufe 1/2/3 → 1/2/3 Buchten; Bestellung landet in der ersten freien Bucht ≤ Stufe; Bucht 2 bei Stufe 1 abgelehnt; Schiff in Bucht 3 bei Stufe 2 inaktiv, nach Ausbau aktiv; `assign` auf Bucht 0 abgelehnt; Mission läuft über `bay` und wird aufgelöst | M–G |
+| 2 | Geschenk-Drohne `ensureGiftDrone` + Hooks + CommLog + Lang | `HangarService`, `ColonyController` Z. 777, `AbstractTechnologyService` Z. 483 | Stufe 0→1 erzeugt genau eine `docked`-Drohne auf Bucht 0, ohne Credits und Schuld; Stufe 1→2 erzeugt keine; Abriss bis 0 und Wiederaufbau erzeugt keine; Bucht 1 bleibt frei; Hint-Slot-2 erkennt den Hangar sofort | K |
+| 3 | Katalog bereinigen: Prospektion und Deep Survey streichen, Versorgungsfahrt ohne Rg, `signal_tile`/`deep_scan` entfernen | `config/missions.php`, `lang/*/missions.php`, `HangarService`, `GameTick` Z. 546, Tests (`BotStrategyMissionChoiceTest`, `HangarServiceTest`, `OrganikaProvisioningTest`, `HangarShipInactiveTest`) | Katalog enthält die Schlüssel nicht mehr; Versorgungsfahrt zahlt 0 Rg | K |
+| 4 | Bergungsflug (Mission, Tragkraft, Ring-Entfernung, kein Wurf, Ertrag × 1,5, Fernscan, Ausschluss, `completeFind`) | 13.3 | je Regel-Zeile in 13.3 ein Test; dazu Adversarial: Doppel-Dispatch auf dieselbe Kachel, Selbstbergung während des Flugs, Recall, SP-Abbruch, fremde Kolonie | M–G |
+| 5 | Hangar-Screen: Vorfeld/Buchten, Dispatch-Dialog mit Zielliste je Kachel, Fundkarte „im Flug“ | `hangar.blade.php`, `hangar.js`, Kachel-Panel | Feature-Test Markup + Playwright-Check (Alpine) | M |
+| 6 | Bot und Report: `dispatch_find_flight`, `invest_find`-Ausschluss, Buchtenregel, `instanceCap` weg, Topf `find_flight`, K2/K11/K12 | 13.3 Bot und Report | Bot-Unit-Tests je Kandidat (Muster `BotStrategyInvestFindTest`); `RunReportFindSourceTest` und `OpeningComparisonTest` erweitern | M |
+| 7 | Szenarien und Doku: `ResetPlayer`, `ColonySeedDemo`, `docs/game-reference.md` (Hangar, Missionen, Schiffe, Funde), GDD (13.8) | – | Ausnahme Doku (kein Test); Szenarien per vorhandenem Szenario-Test | K |
+| 8 | Messung (13.7) | – | – | – |
+
+Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Task 5 kommt nach Task 4, damit es nur eine UI-Runde gibt. Task 6 muss vor der Messung stehen, sonst misst die Messung einen Bot ohne Bergungsflug.
+
+### 13.7 Messplan
+
+24 Läufe: `default` × `labor|hangar|cantina` × 8 gleiche Seeds (dieselben wie bei der Pool-v1-Messung, ergänzt auf 8). Volle Laufzeit für K7. Die Dauer vorher dem Owner nennen (8/16/24 wählen lassen).
+
+| Kennzahl | Soll | Warnschwelle |
+|---|---|---|
+| K1 Hangar | ≤ 1 | > 1 |
+| K2 Hangar | ≤ 3 | nie bis Sol 25 in > 2 von 8 Läufen |
+| K3 | Abstand ≤ 2 | Hangar > 2 Sole vor Labor (dann Stufenkosten anheben, Owner-Entscheidung 4) |
+| K4 | Abstand ≤ 20 | Hangar-K4 > Cantina-K4 + 20 (R1) |
+| K5 | ≤ 2 | – |
+| K6 | Spanne ≤ 25 | – |
+| K11 Sol 10 / 25 | Hangar höher als Labor/Cantina | Hangar Sol 25 < Cantina Sol 25 |
+| K12 | Hangar 50–80 %, sonst ≤ 20 % | Hangar < 40 % |
+| K7 Siegquote | ca. 50 %, je Eröffnung ≤ 10 Punkte Abstand | > 65 % oder Rückgang > 10 Punkte gegenüber Pool v1 (Versorgungsfahrt-Wegfall) |
+| Schiffe je Lauf Sol 25 / 40 (inkl. Geschenk) | Hangar-First 2 / 3 | > 3 vor Sol 25 |
+| Starts `mission_supply_run` | Information | 0 in allen Läufen (Concern 13.3) |
+| Fernscan | in v1 kein Bot-Verhalten | – |
+
+### 13.8 Risiken
+
+| # | Risiko | Gegenmittel |
+|---|---|---|
+| R1 | **K4 steigt wieder für Hangar-First.** Der Flug ersetzt 12–22 AP Selbstbergung durch 2–4 Nav-AP. Pool v1 hatte K4 gerade auf 22 gesenkt. | Messen. Wenn die Warnschwelle reißt: Fallback „Verladen“, d. h. der Flug kostet zusätzlich einen Bruchteil der Bergungs-AP beim Dispatch (Config-Schlüssel erst dann). Erst danach Nachschub-Signale (Schritt 6) vorziehen. |
+| R2 | Siegquote fällt durch den Wegfall von Versorgungsfahrt-Rg und Prospektion (planbare Phase-2-Quelle weg) | K7-Warnschwelle; Gegenmittel Pool-Größe oder Nachschub (§11.9 Schritt 6/7), nicht die Versorgungsfahrt zurückholen (Owner-Vorgabe) |
+| R3 | Umbenennung `bay` über 22 Dateien: übersehene Stellen (Blade-`x-data` mit `@js(route(...))`, Memory-Falle) | nach der Umbenennung grep über alle Blade-Views und JS; volle Suite vor dem PR |
+| R4 | Doku-Drift: GDD §4b (Pfad-B-Regolith über Frachter), §4c („einziger Fall mit beiden Achsen“), §6 („max. Schiffe = Instanzen“), §8b (Katalog, Akquise), §13.5 (Regolith-Beschaffung je Pfad), `game-reference.md` | im selben PR nachziehen (Task 7), zahlenfrei |
+| R5 | Fernscan wird als Glücksspiel empfunden (leerer Rückflug) | Wahrscheinlichkeit vorab sichtbar (Mischung in der Hilfe), Fehlalarm macht die Kachel trotzdem bebaubar, Kosten ≈ ein Scan. Falls im Playtest unbeliebt: Ziel nur „gescannt“ (eine Zeile in `validateTarget`). |
+| R6 | Der Bot fliegt in v1 keinen Fernscan, daher ist dessen Wirkung nicht gemessen | bewusst. Erst messen, ob Flüge an fehlenden Scans hängen (K12 zu niedrig), dann Bot-Regel ergänzen. |
+
+**GDD nachziehen (zahlenfrei):**
+- **§4c:** Abschnitt „Hangar: der einzige Fall mit beiden Achsen“ ersetzen durch „Hangar: eine Halle, Stufe = Klasse und Bucht; Vorfeld für die Geschenk-Drohne“. Die Zuordnungstabelle ändert die Achse auf Level.
+- **§6:** „Schiffe und Supply“: Die Höchstzahl Schiffe ist Buchten (= Stufe) plus Vorfeld. Schiffe kosten weiter kein Supply.
+- **§8b:** Akquise-Pfade (Geschenk-Drohne), Besitzmodell (Bucht/Vorfeld/`pending`), Katalog (Bergungsflug mit Fernscan und Tragkraft; Prospektion und Signalvermessung gestrichen; Versorgungsfahrt nur Organika), Kostenmodell (Entfernung aus dem Ring), Resolution (Missionen ohne Wurf).
+- **§4b / §13.5:** Der Hangar-Pfad deckt Regolith über den Bergungsflug (Fundpool), nicht über eine planbare Frachtrate.
+
+### 13.9 Offene Owner-Fragen (max. 4, mit Vorschlag)
+
+1. **F1 Fernscan:** Darf der Bergungsflug ungescannte Signale anfliegen (Risiko: Rückflug ohne Ladung, die Kachel ist danach gescannt)? **Vorschlag: ja.** Das ist die Integration von Deep Survey aus §11.4 und spart dem Hangar-Spieler den Scan.
+2. **F2 Korvette als Träger?** **Vorschlag: nein.** Die Korvette dient dem Schutz, Bergen ist Aufgabe von Drohne und Frachter. Die Tragkraft liegt in der Config und lässt sich später ändern.
+3. **F3 Zählt der Bergungsflug für `task_expedition_coverage`?** Ohne Wurf ist er ein sicherer Erfolg, aber auf höchstens 5 Flüge je Run begrenzt (Start-Pool ohne Nachschub). **Vorschlag: ja, zählt.** In K7 beobachten.
+4. **F4 Selbstbergung begonnen → Flug gesperrt?** **Vorschlag: ja, gesperrt.** Gezahlte AP bleiben im Projekt. Das ist eine klare Regel ohne Erstattung und ohne verlorene AP. Alternative: Flug erlaubt, gezahlte AP verfallen.
+
