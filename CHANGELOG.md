@@ -2,6 +2,7 @@
 
 ## 2026-10-10
 
+- Fix: CI auf master rot nach #376 — `BotSession::boot()` setzte die Kolonie nicht in die Session (zweiter Bot im selben Test spielte auf fremder Kolonie, Endlosschleife `research_knowledge`); `PlaysSolLoop` bricht identische Erfolgs-Antworten ohne Zustandsänderung nach 3 Wiederholungen ab. Salvage-Spalten-Check von Unit nach Feature (`BaselineSchemaTest`) verschoben.
 - Docs: T30 Spec §12 — Hangar-Umbau (eine Halle, Stufe = Schiffsklasse + Bucht) als Zielbild entschieden, Umsetzung mit T30 Schritt 3. Messung Pool v1 (4 Seeds je Eröffnung): ungenutzte AP Sol 4–12 bei Hangar/Cantina 92/94 → 22/25, Leerlauf-Sols 3/4 → 0,5/0; Pool-Regolith bis Sol 10 noch 0. Dev-DB und paratest-Worker-DBs brauchen `php artisan db:reset --force` (Baseline-Spalten).
 
 ## 2026-10-09

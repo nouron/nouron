@@ -80,6 +80,11 @@ class BotSession
         $run = Run::where('user_id', $userId)->where('status', 'active')->firstOrFail();
 
         $test->actingAs(User::where('user_id', $userId)->firstOrFail());
+        // actingAs() skips LoginController, which is what pins the active colony in
+        // the session. Pin it here like a real login — otherwise a second boot() in
+        // the same test keeps the previous bot's colony id in the session and every
+        // ResolvesActiveColony controller acts on the wrong colony (CI 2026-10-09).
+        $test->withSession(['activeIds.colonyId' => $colonyId]);
         $test->postJson('/lobby/start')->assertRedirect();
 
         // In a web request TickService is bound to the active run's current_tick

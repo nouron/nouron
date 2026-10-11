@@ -134,6 +134,12 @@ class BaselineSchemaTest extends TestCase
         $this->assertSame([], array_map(fn ($r) => $r->name, $keyless));
     }
 
+    /** T30 Pool v1: salvage projects persist their progress on the tile. */
+    public function test_colony_tiles_has_salvage_columns(): void
+    {
+        $this->assertTrue(Schema::hasColumns('colony_tiles', ['salvage_ap_spent', 'salvage_tick']));
+    }
+
     public function test_baseline_cannot_be_rolled_back(): void
     {
         $migration = require database_path('migrations/0001_01_01_000000_baseline.php');
