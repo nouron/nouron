@@ -302,7 +302,7 @@ return new class extends Migration
         Schema::create('colony_hangar_missions', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('colony_id');
-            $table->integer('instance_id');
+            $table->tinyInteger('bay'); // was instance_id (B1, T30 §13.2)
             $table->integer('ship_id');
             $table->text('destination');
             $table->integer('sol_distance');
@@ -313,7 +313,7 @@ return new class extends Migration
             $table->text('target')->nullable();
             $table->string('difficulty', 255)->default('normal');
             $table->boolean('succeeded')->nullable();
-            $table->index(['colony_id', 'instance_id'], 'colony_hangar_missions_colony_id_instance_id_index');
+            $table->index(['colony_id', 'bay'], 'colony_hangar_missions_colony_id_bay_index');
             $table->index(['colony_id', 'state'], 'colony_hangar_missions_colony_id_state_index');
             $table->foreign('ship_id')->references('id')->on('ships');
             $table->foreign('colony_id')->references('id')->on('glx_colonies');
@@ -326,10 +326,11 @@ return new class extends Migration
             $table->integer('level')->default(0);
             $table->double('status_points')->default(10);
             $table->integer('ap_spend')->default(0);
-            $table->integer('hangar_instance_id')->nullable();
+            $table->tinyInteger('bay')->nullable(); // 0 = apron, 1-3 = bay, null = pending
             $table->string('ship_state', 255)->default('docked');
             $table->integer('deliver_at_tick')->nullable();
             $table->integer('pending_until_tick')->nullable();
+            $table->unique(['colony_id', 'bay'], 'colony_ships_colony_id_bay_unique');
             $table->foreign('ship_id')->references('id')->on('ships');
             $table->foreign('colony_id')->references('id')->on('glx_colonies');
         });

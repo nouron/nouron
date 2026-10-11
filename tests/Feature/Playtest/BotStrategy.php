@@ -224,7 +224,7 @@ class BotStrategy
                 // this rarely fires, that's a real finding about ship/ruin availability,
                 // not a bug in the rule.
                 'when' => fn (BotSession $b) => self::salvageDispatchCandidate($b),
-                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_salvage_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_salvage_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
                     'mission_key' => 'mission_harvester_salvage',
                     'difficulty' => 'easy',
                     'target' => ['q' => $candidate['tile']->q, 'r' => $candidate['tile']->r],
@@ -238,7 +238,7 @@ class BotStrategy
                 // exhaustion had no Regolith alternative. Ahead of the compounds
                 // mission: while Regolith is scarce it is the tighter bottleneck.
                 'when' => fn (BotSession $b) => self::regolithMissionCandidate($b),
-                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_regolith_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_regolith_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
                     'mission_key' => $candidate['mission_key'],
                     'difficulty' => $candidate['difficulty'],
                 ]),
@@ -250,7 +250,7 @@ class BotStrategy
                 // Phase 2 only (Phase 1 ships belong to the bootstrap); freighters
                 // keep flying the compounds mission while Werkstoffe are scarce.
                 'when' => fn (BotSession $b) => self::creditMissionCandidate($b),
-                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_credit_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_credit_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
                     'mission_key' => $candidate['mission_key'],
                     'difficulty' => $candidate['difficulty'],
                 ]),
@@ -273,7 +273,7 @@ class BotStrategy
                 // long_range_expedition (needs cartography Lv3, a knowledge the
                 // bot may never reach) as the more reliably dispatchable option.
                 'when' => fn (BotSession $b) => self::compoundsMissionCandidate($b),
-                'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_compounds_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
+                'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_compounds_mission', 'POST', "/colony/hangar/{$ship->bay}/dispatch", [
                     'mission_key' => 'mission_salvage_sweep',
                     'difficulty' => 'normal',
                 ]),
@@ -353,7 +353,7 @@ class BotStrategy
             [
                 'name' => 'dispatch_mission',
                 'when' => fn (BotSession $b) => self::dispatchCandidate($b),
-                'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
+                'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->bay}/dispatch", [
                     'mission_key' => 'mission_recon_flight',
                     'difficulty' => 'easy',
                 ]),
@@ -479,7 +479,7 @@ class BotStrategy
                 'when' => fn (BotSession $b) => self::hasActiveObjective($b, 'task_expedition_coverage')
                     ? self::expeditionMissionCandidate($b)
                     : null,
-                'do' => fn (BotSession $b, array $candidate) => $b->act('focus_expedition_mission', 'POST', "/colony/hangar/{$candidate['ship']->hangar_instance_id}/dispatch", [
+                'do' => fn (BotSession $b, array $candidate) => $b->act('focus_expedition_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
                     'mission_key' => $candidate['mission_key'],
                     'difficulty' => $candidate['difficulty'],
                 ]),
@@ -1031,7 +1031,7 @@ class BotStrategy
         // candidate list entirely once capped, reserving tiles for other
         // building types rather than "lowest priority but still the only
         // option".
-        $instanceCap = [44 => 2, 28 => 2]; // hangar, housingComplex
+        $instanceCap = [44 => 1, 28 => 2]; // hangar (B1: one hall), housingComplex
         $buildings = array_values(array_filter($buildings, function (array $building) use ($instanceCap, $placedCounts) {
             $id = (int) $building['building_id'];
             $cap = $instanceCap[$id] ?? null;
@@ -1900,7 +1900,7 @@ class BotStrategy
      * (Sol 13-18), all of which decayed away entirely before a 2nd Hangar
      * instance opened a slot (Sol 35), wasting 1500 Credits into nothing and
      * leaving `dispatch_compounds_mission` permanently without an eligible
-     * ship for the rest of the run. Now gated on hasFreeHangarSlot() like
+     * ship for the rest of the run. Now gated on hasFreeBayFor() like
      * the bootstrap drone purchase — a freighter bought without a slot to
      * receive it is a wasted purchase, not a deferred one.
      */
@@ -1910,7 +1910,7 @@ class BotStrategy
         $droneCost = (int) config('ships.drone.nexus_cost', 0);
 
         if (! self::hasAnyShip($b)) {
-            return self::hasFreeHangarSlot($b) && $credits >= $droneCost
+            return self::hasFreeBayFor($b, 1) && $credits >= $droneCost
                 ? (int) config('ships.drone.id')
                 : null;
         }
@@ -1921,7 +1921,7 @@ class BotStrategy
         }
 
         $freighterCost = (int) config('ships.freighter.nexus_cost', 0);
-        if ($credits >= $freighterCost && self::hasFreeHangarSlot($b)) {
+        if ($credits >= $freighterCost && self::hasFreeBayFor($b, 2)) {
             return (int) config('ships.freighter.id');
         }
 
@@ -2256,19 +2256,16 @@ class BotStrategy
         return DB::table('colony_ships')->where('colony_id', $b->colonyId)->exists();
     }
 
-    private static function hasFreeHangarSlot(BotSession $b): bool
+    /** B1: a ship of class $classLevel docks only if the hall carries the class and a bay 1..level is free. */
+    private static function hasFreeBayFor(BotSession $b, int $classLevel): bool
     {
-        $hangarInstances = DB::table('colony_buildings')
-            ->where('colony_id', $b->colonyId)
-            ->where('building_id', BuildingId::Hangar->value)
-            ->pluck('instance_id');
+        $level = self::hangarLevel($b);
+        if ($level < $classLevel) {
+            return false;
+        }
 
-        $occupied = DB::table('colony_ships')
-            ->where('colony_id', $b->colonyId)
-            ->whereNotNull('hangar_instance_id')
-            ->pluck('hangar_instance_id');
-
-        return $hangarInstances->diff($occupied)->isNotEmpty();
+        return DB::table('colony_ships')->where('colony_id', $b->colonyId)
+            ->whereBetween('bay', [1, $level])->count() < $level;
     }
 
     /** Shared with RunReport — the single source for this lookup. */

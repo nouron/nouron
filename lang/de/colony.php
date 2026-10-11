@@ -561,7 +561,14 @@ return [
     // ── Hangar screen ─────────────────────────────────────────────────────────
 
     'hangar_title' => 'Hangar',
-    'hangar_slot_count' => 'Slots',
+    'hangar_slot_count' => 'Buchten',
+    'hangar_apron' => 'Vorfeld',
+    'hangar_bay' => 'Bucht :n',
+    'hangar_bay_locked' => 'ab Stufe :level',
+    'hangar_apron_reserved' => 'Platz der Geschenk-Drohne',
+    'hangar_error_bay_reserved' => 'Das Vorfeld ist der Geschenk-Drohne vorbehalten.',
+    'hangar_error_bay_closed' => 'Diese Bucht ist noch geschlossen — erst den Hangar ausbauen.',
+    'error_building_already_placed' => 'Dieses Gebäude steht bereits — es gibt nur eines davon.',
     'hangar_empty' => 'Leer',
     'hangar_build_ship' => 'Schiff bauen',
     'hangar_dispatch' => 'Entsenden',

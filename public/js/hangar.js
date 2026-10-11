@@ -41,14 +41,14 @@ function hangarCarousel(config) {
         missionCatalog: config.missionCatalog ?? [],
         hangarMaxLevel: config.hangarMaxLevel ?? 0,
 
-        // Per-instance UI state: keyed by instance_id
+        // Per-bay UI state: keyed by bay
         loading: {},
         error: {},
 
         // Mission dispatch modal state (shared across all slots)
         missionModal: {
             open: false,
-            instanceId: null,
+            bay: null,
             shipKey: null,
             selectedKey: null,
             selectedDifficulty: null,
@@ -60,7 +60,7 @@ function hangarCarousel(config) {
         // Nexus request modal state (shared across all slots)
         requestModal: {
             open: false,
-            instanceId: null,
+            bay: null,
             useNexusCredit: false,
             consulApSpent: 0,
             loading: false,
@@ -75,7 +75,7 @@ function hangarCarousel(config) {
         init() {
             this._carouselInit();
             this.slots.forEach((slot) => {
-                const id = slot.instance_id;
+                const id = slot.bay;
                 this.loading[id] = false;
                 this.error[id] = null;
             });
@@ -100,16 +100,15 @@ function hangarCarousel(config) {
          * Returns slot count info: how many slots have a ship vs total slots.
          */
         get slotInfo() {
-            const used = this.slots.filter((s) => s.ship !== null).length;
-            const total = this.slots.length;
-            return { used, total };
+            const bays = this.slots.filter((s) => s.open && s.bay > 0);
+            return { used: bays.filter((s) => s.ship !== null).length, total: bays.length };
         },
 
         /**
-         * Returns slots that have no ship assigned (free bays for pending ship assignment).
+         * Open bays without a ship (targets for assigning a pending ship; the apron is reserved).
          */
         get freeSlots() {
-            return this.slots.filter((s) => s.ship === null);
+            return this.slots.filter((s) => s.open && s.bay > 0 && s.ship === null);
         },
 
         /**
@@ -185,14 +184,14 @@ function hangarCarousel(config) {
 
         /**
          * Opens the mission dispatch dialog for a docked ship's slot.
-         * @param {number} instanceId
+         * @param {number} bay
          */
-        openMissionDialog(instanceId) {
-            const slot = this.slots.find((s) => s.instance_id === instanceId);
+        openMissionDialog(bay) {
+            const slot = this.slots.find((s) => s.bay === bay);
             const shipKey = slot?.ship ? (HANGAR_SHIP_ID_TO_KEY[slot.ship.ship_id] ?? null) : null;
             this.missionModal = {
                 open: true,
-                instanceId,
+                bay,
                 shipKey,
                 selectedKey: null,
                 selectedDifficulty: null,
@@ -296,7 +295,7 @@ function hangarCarousel(config) {
 
         /**
          * POST: dispatch the docked ship on the given catalog mission.
-         * Endpoint: POST /colony/hangar/{instanceId}/dispatch
+         * Endpoint: POST /colony/hangar/{bay}/dispatch
          * Payload: { mission_key, target? }
          * @param {object} mission - catalog entry
          */
@@ -304,14 +303,14 @@ function hangarCarousel(config) {
             this.missionModal.loading = true;
             this.missionModal.error = null;
             try {
-                const url = this.routes.dispatch.replace('__ID__', this.missionModal.instanceId);
+                const url = this.routes.dispatch.replace('__ID__', this.missionModal.bay);
                 const res = await this._post(url, {
                     mission_key: mission.key,
                     difficulty: this.missionModal.selectedDifficulty,
                     target: this.missionRequiresTarget(mission) ? this._missionTargetPayload(mission) : null,
                 });
                 if (res.ok) {
-                    this._updateSlot(this.missionModal.instanceId, res.slot);
+                    this._updateSlot(this.missionModal.bay, res.slot);
                     this.syncHangarResources(res);
                     this.closeMissionDialog();
                 } else {
@@ -327,12 +326,12 @@ function hangarCarousel(config) {
         /**
          * Opens the Nexus request dialog for a given empty slot.
          * Resets modal state and pre-selects first ship type.
-         * @param {number} instanceId
+         * @param {number} bay
          */
-        openRequestModal(instanceId) {
+        openRequestModal(bay) {
             this.requestModal = {
                 open: true,
-                instanceId,
+                bay,
                 useNexusCredit: false,
                 consulApSpent: 0,
                 loading: false,
@@ -352,7 +351,7 @@ function hangarCarousel(config) {
          * POST: request a specific ship from Nexus for the currently open empty slot.
          * Called directly from each ship button — no separate confirm step.
          * Endpoint: POST /colony/hangar/request
-         * Payload: { instance_id, ship_id, use_nexus_credit, consul_ap_spent }
+         * Payload: { bay, ship_id, use_nexus_credit, consul_ap_spent }
          * Response: { ok, slots, pending } — the ordered ship lands in the
          * "pending" list, not directly in a bay (bay stays empty until the
          * player assigns the delivered ship via assignShip()), so only
@@ -365,7 +364,7 @@ function hangarCarousel(config) {
 
             try {
                 const res = await this._post(this.routes.request, {
-                    instance_id: this.requestModal.instanceId,
+                    bay: this.requestModal.bay,
                     ship_id: shipId,
                     use_nexus_credit: this.requestModal.useNexusCredit ? 1 : 0,
                     consul_ap_spent: this.consulApFor(shipId),
@@ -409,58 +408,58 @@ function hangarCarousel(config) {
 
         /**
          * POST: recall a dispatched ship back to docked state.
-         * @param {number} instanceId
+         * @param {number} bay
          */
-        async recall(instanceId) {
-            this.loading[instanceId] = true;
-            this.error[instanceId] = null;
+        async recall(bay) {
+            this.loading[bay] = true;
+            this.error[bay] = null;
             try {
-                const url = this.routes.recall.replace('__ID__', instanceId);
+                const url = this.routes.recall.replace('__ID__', bay);
                 const res = await this._post(url, {});
                 if (res.ok) {
-                    this._updateSlot(instanceId, res.slot);
+                    this._updateSlot(bay, res.slot);
                 } else {
-                    this.error[instanceId] = res.message ?? res.error ?? 'Error.';
+                    this.error[bay] = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
-                this.error[instanceId] = 'Network error.';
+                this.error[bay] = 'Network error.';
             } finally {
-                this.loading[instanceId] = false;
+                this.loading[bay] = false;
             }
         },
 
         /**
          * POST: repair a docked ship — fixed cost (1 Construction-AP per click).
-         * @param {number} instanceId
+         * @param {number} bay
          */
-        async repair(instanceId) {
-            this.loading[instanceId] = true;
-            this.error[instanceId] = null;
+        async repair(bay) {
+            this.loading[bay] = true;
+            this.error[bay] = null;
             try {
-                const url = this.routes.repair.replace('__ID__', instanceId);
+                const url = this.routes.repair.replace('__ID__', bay);
                 const res = await this._post(url, {});
                 if (res.ok) {
-                    this._updateSlot(instanceId, res.slot);
+                    this._updateSlot(bay, res.slot);
                     this.syncHangarResources(res);
                 } else {
-                    this.error[instanceId] = res.message ?? res.error ?? 'Error.';
+                    this.error[bay] = res.message ?? res.error ?? 'Error.';
                 }
             } catch {
-                this.error[instanceId] = 'Network error.';
+                this.error[bay] = 'Network error.';
             } finally {
-                this.loading[instanceId] = false;
+                this.loading[bay] = false;
             }
         },
 
         /**
          * POST: assign a pending (unassigned) ship to a free hangar bay.
          * Endpoint: POST /colony/hangar/assign
-         * Payload: { ship_row_id, instance_id }
+         * Payload: { ship_row_id, bay }
          * @param {number} shipRowId - pending ship's row id
          */
         async assignShip(shipRowId) {
-            const instanceId = this.pendingAssignTarget[shipRowId];
-            if (!instanceId) return;
+            const bay = this.pendingAssignTarget[shipRowId];
+            if (!bay) return;
 
             this.pendingLoading[shipRowId] = true;
             this.pendingError[shipRowId] = null;
@@ -468,14 +467,14 @@ function hangarCarousel(config) {
             try {
                 const res = await this._post(this.routes.assign, {
                     ship_row_id: shipRowId,
-                    instance_id: parseInt(instanceId, 10),
+                    bay: parseInt(bay, 10),
                 });
                 if (res.ok) {
                     // Remove from pending list
                     this.pendingShips = this.pendingShips.filter((s) => s.id !== shipRowId);
                     // Update the newly assigned slot
                     if (res.slot) {
-                        this._updateSlot(parseInt(instanceId, 10), res.slot);
+                        this._updateSlot(parseInt(bay, 10), res.slot);
                     }
                     delete this.pendingAssignTarget[shipRowId];
                 } else {
@@ -490,11 +489,11 @@ function hangarCarousel(config) {
 
         /**
          * Replaces the matching slot in this.slots with an updated slot from the server.
-         * @param {number} instanceId
+         * @param {number} bay
          * @param {object} updatedSlot
          */
-        _updateSlot(instanceId, updatedSlot) {
-            const idx = this.slots.findIndex((s) => s.instance_id === instanceId);
+        _updateSlot(bay, updatedSlot) {
+            const idx = this.slots.findIndex((s) => s.bay === bay);
             if (idx !== -1) {
                 this.slots[idx] = updatedSlot;
             }

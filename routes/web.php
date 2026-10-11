@@ -130,9 +130,9 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::get('/hangar', [HangarController::class, 'index'])->name('hangar');
     Route::post('/hangar/request', [HangarController::class, 'requestShip'])->name('hangar.request');
     Route::post('/hangar/assign', [HangarController::class, 'assignToHangar'])->name('hangar.assign');
-    Route::post('/hangar/{instanceId}/dispatch', [HangarController::class, 'dispatch'])->name('hangar.dispatch');
-    Route::post('/hangar/{instanceId}/recall', [HangarController::class, 'recall'])->name('hangar.recall');
-    Route::post('/hangar/{instanceId}/repair', [HangarController::class, 'repair'])->name('hangar.repair');
+    Route::post('/hangar/{bay}/dispatch', [HangarController::class, 'dispatch'])->name('hangar.dispatch');
+    Route::post('/hangar/{bay}/recall', [HangarController::class, 'recall'])->name('hangar.recall');
+    Route::post('/hangar/{bay}/repair', [HangarController::class, 'repair'])->name('hangar.repair');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────

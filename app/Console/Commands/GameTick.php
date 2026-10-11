@@ -373,13 +373,13 @@ class GameTick extends Command
         $missions = DB::table('colony_hangar_missions as m')
             ->join('colony_ships as cs', function ($join) {
                 $join->on('cs.colony_id', '=', 'm.colony_id')
-                    ->on('cs.hangar_instance_id', '=', 'm.instance_id');
+                    ->on('cs.bay', '=', 'm.bay');
             })
             ->where('m.colony_id', $this->colonyId)
             ->where('m.state', 'active')
             ->where('cs.ship_state', 'dispatched')
             ->get([
-                'm.id as mission_id', 'm.colony_id', 'm.instance_id', 'm.destination',
+                'm.id as mission_id', 'm.colony_id', 'm.bay', 'm.destination',
                 'm.sol_distance', 'm.target', 'm.dispatch_tick',
                 'cs.id as colony_ship_id', 'cs.ship_id', 'cs.status_points',
             ]);

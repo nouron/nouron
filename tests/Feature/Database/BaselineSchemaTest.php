@@ -149,4 +149,23 @@ class BaselineSchemaTest extends TestCase
 
         $migration->down();
     }
+
+    public function test_ships_and_missions_are_addressed_by_bay_with_one_ship_per_bay(): void
+    {
+        $this->assertTrue(Schema::hasColumn('colony_ships', 'bay'));
+        $this->assertFalse(Schema::hasColumn('colony_ships', 'hangar_instance_id'));
+        $this->assertTrue(Schema::hasColumn('colony_hangar_missions', 'bay'));
+        $this->assertFalse(Schema::hasColumn('colony_hangar_missions', 'instance_id'));
+
+        DB::table('ships')->insert(['id' => 85, 'name' => 'ship_drone', 'purpose' => 'civil', 'row' => 0, 'column' => 0]);
+        DB::table('user')->insert(['user_id' => 3, 'username' => 'b', 'display_name' => '', 'role' => 'player', 'password' => 'x', 'email' => 'b@n.de', 'activation_key' => '']);
+        DB::table('glx_colonies')->insert(['id' => 1, 'name' => 'S', 'user_id' => 3, 'is_primary' => 1]);
+        $row = ['colony_id' => 1, 'ship_id' => 85, 'ship_state' => 'docked'];
+        DB::table('colony_ships')->insert([...$row, 'bay' => null]);
+        DB::table('colony_ships')->insert([...$row, 'bay' => null]); // several pending rows are fine
+        DB::table('colony_ships')->insert([...$row, 'bay' => 1]);
+
+        $this->expectException(QueryException::class);
+        DB::table('colony_ships')->insert([...$row, 'bay' => 1]);
+    }
 }

@@ -445,6 +445,13 @@ class ColonyController extends BaseController
                 ->first()
             : null;
 
+        // A non-instanced building exists once: a second placement used to silently MOVE
+        // it (and reset ap_spend). Hangar B1 relies on this (T30 §13.2) — and it is the
+        // intended rule for every non-instanced building.
+        if (! $isHarvester && ! $building->is_instanced && $existingBuilding !== null && $existingBuilding->tile_x !== null) {
+            return $this->fail('building_already_placed');
+        }
+
         $isHarvesterMove = $isHarvester
             && $existingBuilding !== null
             && $existingBuilding->tile_x !== null;

@@ -287,7 +287,14 @@ return [
     // ── Hangar screen ─────────────────────────────────────────────────────────
 
     'hangar_title' => 'Hangar',
-    'hangar_slot_count' => 'Slots',
+    'hangar_slot_count' => 'Bays',
+    'hangar_apron' => 'Apron',
+    'hangar_bay' => 'Bay :n',
+    'hangar_bay_locked' => 'from level :level',
+    'hangar_apron_reserved' => 'Reserved for the gift drone',
+    'hangar_error_bay_reserved' => 'The apron is reserved for the gift drone.',
+    'hangar_error_bay_closed' => 'This bay is still closed — upgrade the hangar first.',
+    'error_building_already_placed' => 'This building already stands — there is only one of it.',
     'hangar_empty' => 'Empty',
     'hangar_build_ship' => 'Build ship',
     'hangar_dispatch' => 'Dispatch',

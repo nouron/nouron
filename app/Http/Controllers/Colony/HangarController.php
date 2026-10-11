@@ -72,7 +72,7 @@ class HangarController extends BaseController
         // so the UI can mark them as unavailable for re-ordering.
         $commissionedShipIds = DB::table('colony_ships')
             ->where('colony_id', $colony->id)
-            ->whereNotNull('hangar_instance_id')
+            ->whereNotNull('bay')
             ->pluck('ship_id')
             ->unique()
             ->values()
@@ -136,14 +136,14 @@ class HangarController extends BaseController
     }
 
     /**
-     * Assign a pending ship to a hangar slot.
+     * Assign a pending ship to a hangar bay (1-3; the apron is reserved).
      * POST /colony/hangar/assign
      */
     public function assignToHangar(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'ship_row_id' => 'required|integer|min:1',
-            'instance_id' => 'required|integer|min:1',
+            'bay' => 'required|integer|min:0|max:3',
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -152,7 +152,7 @@ class HangarController extends BaseController
             $this->hangarService->assignToHangar(
                 $colony->id,
                 (int) $validated['ship_row_id'],
-                (int) $validated['instance_id'],
+                (int) $validated['bay'],
             );
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e);
@@ -165,7 +165,7 @@ class HangarController extends BaseController
         ]);
     }
 
-    public function dispatch(Request $request, int $instanceId): JsonResponse
+    public function dispatch(Request $request, int $bay): JsonResponse
     {
         $validated = $request->validate([
             'mission_key' => 'required|string|max:80',
@@ -181,7 +181,7 @@ class HangarController extends BaseController
         try {
             $this->hangarService->dispatchShip(
                 $colony->id,
-                $instanceId,
+                $bay,
                 $validated['mission_key'],
                 $validated['target'] ?? null,
                 $validated['difficulty'],
@@ -192,25 +192,25 @@ class HangarController extends BaseController
 
         return response()->json([
             'ok' => true,
-            'slot' => $this->fetchSlot($colony->id, $instanceId),
+            'slot' => $this->fetchSlot($colony->id, $bay),
             ...$this->currentHangarResources($colony->id),
         ]);
     }
 
-    public function recall(Request $request, int $instanceId): JsonResponse
+    public function recall(Request $request, int $bay): JsonResponse
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
         try {
-            $this->hangarService->recallShip($colony->id, $instanceId);
+            $this->hangarService->recallShip($colony->id, $bay);
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e);
         }
 
-        return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);
+        return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $bay)]);
     }
 
-    public function repair(Request $request, int $instanceId): JsonResponse
+    public function repair(Request $request, int $bay): JsonResponse
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
@@ -226,7 +226,7 @@ class HangarController extends BaseController
         }
 
         try {
-            $this->hangarService->repairShip($colony->id, $instanceId);
+            $this->hangarService->repairShip($colony->id, $bay);
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e);
         }
@@ -237,7 +237,7 @@ class HangarController extends BaseController
 
         return response()->json([
             'ok' => true,
-            'slot' => $this->fetchSlot($colony->id, $instanceId),
+            'slot' => $this->fetchSlot($colony->id, $bay),
             ...$this->currentHangarResources($colony->id),
         ]);
     }
@@ -255,11 +255,11 @@ class HangarController extends BaseController
         ];
     }
 
-    private function fetchSlot(int $colonyId, int $instanceId): ?array
+    private function fetchSlot(int $colonyId, int $bay): ?array
     {
         $slots = $this->hangarService->getHangarSlots($colonyId);
         foreach ($slots as $slot) {
-            if ($slot['instance_id'] === $instanceId) {
+            if ($slot['bay'] === $bay) {
                 return $slot;
             }
         }

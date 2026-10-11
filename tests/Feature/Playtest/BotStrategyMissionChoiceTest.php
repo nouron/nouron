@@ -128,7 +128,7 @@ class BotStrategyMissionChoiceTest extends TestCase
             'level' => 1,
             'status_points' => 20,
             'ap_spend' => 0,
-            'hangar_instance_id' => 1,
+            'bay' => 1,
             'ship_state' => 'docked',
         ]);
         DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 3)
