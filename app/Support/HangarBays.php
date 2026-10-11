@@ -34,6 +34,34 @@ final class HangarBays
         return $hangarLevel < max(self::requiredLevel($shipId), $bay, 1);
     }
 
+    public static function maxStatus(): int
+    {
+        return (int) config('game.ship_repair.max_status_points', 20);
+    }
+
+    /**
+     * T30 §13.x/7 return guarantee: a ship may start only if it comes home with SP > 0
+     * (wear_per_sol × 2 × sol_distance). One function for the dispatch guard, the hangar
+     * target list, ColonyTileService::findAction() and the PlaytestBot.
+     *
+     * @return array{ready: bool, wear: float, sp_after: float, repair_clicks: int, repair_ap: int}
+     */
+    public static function flightReadiness(int $shipId, float $statusPoints, int $solDistance): array
+    {
+        $wear = round((float) config('ships.'.self::shipKey($shipId).'.wear_per_sol', 1.0) * 2 * $solDistance, 2);
+        $spAfter = round($statusPoints - $wear, 2);
+        $perClick = max(1, (int) config('game.ship_repair.sp_per_click', 2));
+        $clicks = $spAfter > 0 ? 0 : (int) floor(-$spAfter / $perClick) + 1;
+
+        return [
+            'ready' => $spAfter > 0,
+            'wear' => $wear,
+            'sp_after' => $spAfter,
+            'repair_clicks' => $clicks,
+            'repair_ap' => $clicks * (int) config('game.ship_repair.ap_per_click', 1),
+        ];
+    }
+
     /** config/ships.php key for a ship DB id. */
     public static function shipKey(int $shipId): ?string
     {

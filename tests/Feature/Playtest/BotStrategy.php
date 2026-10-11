@@ -14,6 +14,7 @@ use App\Services\RunTaskCatalog;
 use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use App\Services\TrustService;
+use App\Support\HangarBays;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -525,11 +526,9 @@ class BotStrategy
     private static function expeditionMissionCandidate(BotSession $b): ?array
     {
         $hangar = app(HangarService::class);
-        $minSp = 20 * (float) config('missions.dispatch_min_sp_pct', 0.25); // HangarService::SHIP_MAX_STATUS
         $ships = DB::table('colony_ships')
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
-            ->where('status_points', '>=', $minSp)
             ->whereNotIn('id', $hangar->inactiveShipRowIds($b->colonyId))
             ->orderBy('id')
             ->get();
@@ -569,7 +568,7 @@ class BotStrategy
             }
 
             $shipIds = array_map(fn (string $key): int => (int) config("ships.{$key}.id"), $mission['ships']);
-            $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true));
+            $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true) && self::readyFor($ship, (int) $mission['sol_distance']));
             if ($ship !== null) {
                 return ['ship' => $ship, 'mission_key' => (string) $missionKey, 'difficulty' => $difficulty];
             }
@@ -1588,10 +1587,14 @@ class BotStrategy
         return $ccReserve === 0 || $regolith === 0 || self::regolith($b) - $regolith >= $ccReserve;
     }
 
+    /** Same return guarantee the server's dispatch guard applies (HangarBays::flightReadiness, T30 §13.x/7). */
+    private static function readyFor(object $ship, int $solDistance): bool
+    {
+        return HangarBays::flightReadiness((int) $ship->ship_id, (float) $ship->status_points, $solDistance)['ready'];
+    }
+
     private static function dispatchCandidate(BotSession $b): ?object
     {
-        $shipMaxStatus = 20; // HangarService::SHIP_MAX_STATUS — not exposed, mirrored here
-        $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
         $navApCost = 1 * (int) config('missions.nav_ap_per_sol', 2); // mission_recon_flight: sol_distance = 1
 
         if (self::availableAp($b) < $navApCost) {
@@ -1604,10 +1607,10 @@ class BotStrategy
             // mission_recon_flight is drone-only; any other ship would collect a
             // wrong_ship_type rejection.
             ->where('ship_id', (int) config('ships.drone.id'))
-            ->where('status_points', '>=', $minSp)
             // T14: a ship in a hangar below its class can't start a mission (GDD §7).
             ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
-            ->first();
+            ->get()
+            ->first(fn (object $s): bool => self::readyFor($s, (int) config('missions.catalog.mission_recon_flight.sol_distance', 1)));
     }
 
     /**
@@ -1663,11 +1666,9 @@ class BotStrategy
     private static function firstFlyableMission(BotSession $b, array $missions): ?array
     {
         $hangar = app(HangarService::class);
-        $minSp = 20 * (float) config('missions.dispatch_min_sp_pct', 0.25); // HangarService::SHIP_MAX_STATUS
         $ships = DB::table('colony_ships')
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
-            ->where('status_points', '>=', $minSp)
             ->whereNotIn('id', $hangar->inactiveShipRowIds($b->colonyId))
             ->orderBy('id')
             ->get();
@@ -1701,7 +1702,7 @@ class BotStrategy
             }
 
             $shipIds = array_map(fn (string $key): int => (int) config("ships.{$key}.id"), $mission['ships']);
-            $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true));
+            $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true) && self::readyFor($ship, (int) $mission['sol_distance']));
             if ($ship !== null) {
                 return ['ship' => $ship, 'mission_key' => $missionKey, 'difficulty' => $difficulty];
             }
@@ -2118,18 +2119,16 @@ class BotStrategy
             return null;
         }
 
-        $shipMaxStatus = 20; // HangarService::SHIP_MAX_STATUS — not exposed, mirrored here
-        $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
         $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
 
         return DB::table('colony_ships')
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
             ->whereIn('ship_id', $eligibleShipIds)
-            ->where('status_points', '>=', $minSp)
             // T14: a ship in a hangar below its class can't start a mission (GDD §7).
             ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
-            ->first();
+            ->get()
+            ->first(fn (object $s): bool => self::readyFor($s, (int) config('missions.catalog.mission_salvage_sweep.sol_distance', 4)));
     }
 
     /**
@@ -2143,22 +2142,18 @@ class BotStrategy
             return null;
         }
 
-        // Same min-SP floor as dispatchCandidate() (qa-tester review PR #244: this rule
-        // was missing it — a worn docked ship would otherwise match every Sol and fail
-        // every Sol, masking real ship/ruin-availability rarity behind a self-inflicted
-        // rejection loop).
-        $shipMaxStatus = 20; // HangarService::SHIP_MAX_STATUS — not exposed, mirrored here
-        $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
-
+        // Same return guarantee as dispatchCandidate() (qa-tester review PR #244: a worn
+        // docked ship would otherwise match every Sol and fail every Sol, masking real
+        // ship/ruin-availability rarity behind a self-inflicted rejection loop).
         $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
         $ship = DB::table('colony_ships')
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
             ->whereIn('ship_id', $eligibleShipIds)
-            ->where('status_points', '>=', $minSp)
             // T14: a ship in a hangar below its class can't start a mission (GDD §7).
             ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
-            ->first();
+            ->get()
+            ->first(fn (object $s): bool => self::readyFor($s, (int) config('missions.catalog.mission_harvester_salvage.sol_distance', 4)));
         if ($ship === null) {
             return null;
         }

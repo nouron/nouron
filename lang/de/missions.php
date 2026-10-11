@@ -67,7 +67,7 @@ return [
     // ── Dispatch errors ──────────────────────────────────────────────────────
 
     'error_wrong_ship_type' => 'Dieses Schiff ist für diese Mission nicht geeignet.',
-    'error_sp_too_low' => 'Das Schiff ist zu verschlissen für einen Einsatz — erst reparieren.',
+    'error_ship_too_worn' => 'Zu verschlissen für diesen Flug: Zustand :current, Verschleiß :wear. Erst reparieren (:ap AP).',
     'error_knowledge_gate' => 'Der Kolonie fehlt die nötige Kenntnis für diese Mission.',
     'error_invalid_target' => 'Kein gültiges Ziel für diese Mission gewählt.',
     'error_target_consumed' => 'Diese Ruine wurde bereits geborgen.',

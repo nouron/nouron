@@ -160,8 +160,8 @@ return [
         'second_instance_cc_level' => 3,
 
         // Bergungsmission (Weg B): the salvaged instance arrives damaged, not fully
-        // productive. Deliberately mirrors missions.dispatch_min_sp_pct (0.25) — same
-        // "barely operational" threshold, not a coincidence, not re-derived. Applied
+        // productive. The former ship dispatch floor was also 25 %; it was replaced by
+        // the return guarantee (T30 §13.x/7), this value stands on its own. Applied
         // against buildings.max_status_points at placement time. Full-health placement
         // (Weg A / Orin) does not use this value.
         'salvage_arrival_sp_pct' => 0.25,
@@ -325,6 +325,16 @@ return [
             4 => 4,
             5 => 3,
         ],
+    ],
+
+    // T30 §13.x/8: ship repair per ship (bay 0-3, apron included), AP only — no Regolith,
+    // no Credits (repair_cost_per_point dropped). One click = ap_per_click AP → +sp_per_click SP,
+    // capped at max_status_points. Ships wear only in flight (config/ships.php wear_per_sol);
+    // the start gate is the return guarantee HangarBays::flightReadiness(), not a percentage.
+    'ship_repair' => [
+        'max_status_points' => 20,
+        'sp_per_click' => 2,
+        'ap_per_click' => 1,
     ],
 
     // Hangar — Nexus ship ordering and pending-ship lifecycle.

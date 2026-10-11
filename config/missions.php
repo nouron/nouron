@@ -31,7 +31,7 @@ return [
     'organika_per_sol' => 3,  // dispatch provisions = sol_distance × this (before knowledge scaling)
     'organika_scaling_per_level' => 1, // −1 organika per sol per knowledge level above the gate
     'organika_floor_per_sol' => 1,    // scaling never drops below this
-    'dispatch_min_sp_pct' => 0.25,    // ships below 25% of max SP cannot be dispatched (GDD §7)
+    // Start gate: return guarantee (T30 §13.x/7) — a ship starts only if SP − wear_per_sol × 2 × sol_distance > 0, see App\Support\HangarBays::flightReadiness().
 
     'catalog' => [
 

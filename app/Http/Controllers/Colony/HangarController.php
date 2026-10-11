@@ -214,8 +214,8 @@ class HangarController extends BaseController
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
-        // Fixed cost: 1 Construction-AP per repair (mirrors building repair).
-        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
+        $apPerClick = (int) config('game.ship_repair.ap_per_click', 1);
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < $apPerClick) {
             return response()->json([
                 'ok' => false,
                 'error' => 'ap_limit',
@@ -232,7 +232,7 @@ class HangarController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks')) {
-            $this->advisorService->lockActionPoints($colony->id, 1);
+            $this->advisorService->lockActionPoints($colony->id, $apPerClick);
         }
 
         return response()->json([

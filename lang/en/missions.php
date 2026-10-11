@@ -61,7 +61,7 @@ return [
     // ── Dispatch errors ──────────────────────────────────────────────────────
 
     'error_wrong_ship_type' => 'This ship is not suited for this mission.',
-    'error_sp_too_low' => 'This ship is too worn for a mission — repair it first.',
+    'error_ship_too_worn' => 'Too worn for this flight: condition :current, wear :wear. Repair first (:ap AP).',
     'error_knowledge_gate' => 'The colony lacks the knowledge required for this mission.',
     'error_invalid_target' => 'No valid target selected for this mission.',
     'error_target_consumed' => 'This ruin has already been salvaged.',

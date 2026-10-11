@@ -36,8 +36,8 @@ namespace Tests\Feature\Hangar;
  *    - test_dispatch_ship_throws_when_ship_not_docked_building
  *    - test_dispatch_ship_throws_for_unknown_mission_key
  *    - test_dispatch_ship_throws_for_wrong_ship_type
- *    - test_dispatch_ship_throws_for_sp_too_low
- *    - test_dispatch_ship_allows_sp_exactly_at_threshold
+ *    - test_dispatch_ship_throws_ship_too_worn_when_the_courier_would_not_return
+ *    - test_dispatch_ship_allows_sp_just_above_the_wear
  *    - test_dispatch_ship_throws_for_missing_knowledge_gate
  *    - test_dispatch_ship_succeeds_with_knowledge_gate_met
  *    - test_dispatch_ship_throws_for_missing_target
@@ -54,7 +54,7 @@ namespace Tests\Feature\Hangar;
  *    - test_recall_ship_sets_mission_recalled_and_ship_docked
  *    - test_recall_ship_throws_when_no_active_mission
  *
- *  repairShip (fixed cost: 1 call = 1 Construction-AP -> +REPAIR_SP_PER_AP)
+ *  repairShip (config game.ship_repair: 1 click = ap_per_click AP -> +sp_per_click)
  *    - test_repair_ship_restores_fixed_amount_per_call
  *    - test_repair_ship_caps_status_points_at_max
  *    - test_repair_ship_throws_when_no_ship_in_bay
@@ -63,6 +63,7 @@ namespace Tests\Feature\Hangar;
  */
 
 use App\Console\Commands\GameTick;
+use App\Exceptions\GameRuleException;
 use App\Services\AdvisorService;
 use App\Services\HangarService;
 use App\Services\HarvesterEntitlementService;
@@ -703,26 +704,29 @@ class HangarServiceTest extends TestCase
         $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
     }
 
-    public function test_dispatch_ship_throws_for_sp_too_low(): void
+    public function test_dispatch_ship_throws_ship_too_worn_when_the_courier_would_not_return(): void
     {
-        // dispatch_min_sp_pct = 0.25 of max 20 = 5. 4.9 SP must be blocked.
+        // Return guarantee (T30 §13.x/7): courier run = 1 Sol out and back = 3 wear; 3.0 SP would come home at 0.
         $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_DRONE, 'docked', 4.9);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked', 3.0);
 
-        $this->expectException(\RuntimeException::class);
-
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+        try {
+            $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+            $this->fail('expected ship_too_worn');
+        } catch (GameRuleException $e) {
+            $this->assertSame('ship_too_worn', $e->errorCode);
+        }
     }
 
-    public function test_dispatch_ship_allows_sp_exactly_at_threshold(): void
+    public function test_dispatch_ship_allows_sp_just_above_the_wear(): void
     {
         $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_DRONE, 'docked', 5.0);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked', 3.5);
 
         $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
 
         $ship = DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 1)->first();
-        $this->assertSame('dispatched', $ship->ship_state, 'exactly 25% SP must still be dispatchable');
+        $this->assertSame('dispatched', $ship->ship_state, '3.5 SP - 3 wear > 0 must be dispatchable');
     }
 
     public function test_dispatch_ship_throws_for_missing_knowledge_gate(): void
@@ -963,7 +967,7 @@ class HangarServiceTest extends TestCase
             ->where('bay', 1)
             ->first();
 
-        // Fixed per call: 10.0 + REPAIR_SP_PER_AP (2) = 12.0, ap_spend +1
+        // Fixed per call: 10.0 + game.ship_repair.sp_per_click (2) = 12.0, ap_spend +ap_per_click (1)
         $this->assertSame(12.0, (float) $row->status_points);
         $this->assertSame(1, (int) $row->ap_spend);
     }

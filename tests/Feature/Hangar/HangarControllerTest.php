@@ -573,7 +573,7 @@ class HangarControllerTest extends TestCase
 
         $slot = $response->json('slot');
         $this->assertNotNull($slot['ship']);
-        // Fixed: 10.0 + REPAIR_SP_PER_AP (2) = 12.0
+        // 10.0 + game.ship_repair.sp_per_click (2) = 12.0
         $this->assertSame(12.0, (float) $slot['ship']['status_points']);
     }
 

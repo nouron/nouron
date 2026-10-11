@@ -17,10 +17,6 @@ class HangarService
 
     private const ALLOWED_SHIP_IDS = [37, 47, 85];
 
-    private const SHIP_MAX_STATUS = 20; // matches buildings.max_status_points convention
-
-    private const REPAIR_SP_PER_AP = 2;  // status_points restored per AP spent
-
     /**
      * Map ship DB IDs → ships.php config keys so we can read nexus_cost / nexus_delivery_ticks.
      */
@@ -105,6 +101,7 @@ class HangarService
                     'deliver_at_tick' => $ship->deliver_at_tick !== null ? (int) $ship->deliver_at_tick : null,
                     'active_mission' => $mission,
                     'required_hangar_level' => $this->requiredHangarLevel((int) $ship->ship_id),
+                    'readiness' => $this->readinessByDistance((int) $ship->ship_id, (float) $ship->status_points),
                     'inactive' => $inactive,
                     'inactive_reason' => $inactive ? $this->inactiveReason((int) $ship->ship_id, $bay) : null,
                 ];
@@ -446,7 +443,7 @@ class HangarService
                 'bay' => $bay,
                 'ship_state' => $shipState,
                 'level' => 0,
-                'status_points' => self::SHIP_MAX_STATUS,
+                'status_points' => HangarBays::maxStatus(),
                 'ap_spend' => 0,
                 'deliver_at_tick' => $deliverAtTick,
                 'pending_until_tick' => $pendingUntilTick,
@@ -499,7 +496,7 @@ class HangarService
                 'bay' => $bay,
                 'ship_state' => $shipState,
                 'level' => 0,
-                'status_points' => self::SHIP_MAX_STATUS,
+                'status_points' => HangarBays::maxStatus(),
                 'ap_spend' => 0,
                 'deliver_at_tick' => $currentTick + $deliveryTicks,
                 'pending_until_tick' => $pendingUntilTick,
@@ -610,12 +607,6 @@ class HangarService
                 throw $this->ruleError('wrong_ship_type', 'missions.error_wrong_ship_type');
             }
 
-            // §7 dispatch block: worn-down ships must be repaired first.
-            $minSp = self::SHIP_MAX_STATUS * (float) config('missions.dispatch_min_sp_pct', 0.25);
-            if ((float) $ship->status_points < $minSp) {
-                throw $this->ruleError('ship_sp_too_low', 'missions.error_sp_too_low');
-            }
-
             // Knowledge gate.
             $gate = $mission['requires']['knowledge'] ?? null;
             if ($gate !== null) {
@@ -655,6 +646,15 @@ class HangarService
             }
 
             $solDistance = (int) $mission['sol_distance'];
+
+            // T30 §13.x/7: return guarantee instead of the 25 % floor — a ship never
+            // starts a flight it cannot come back from.
+            $readiness = HangarBays::flightReadiness((int) $ship->ship_id, (float) $ship->status_points, $solDistance);
+            if (! $readiness['ready']) {
+                throw $this->ruleError('ship_too_worn', 'missions.error_ship_too_worn', [
+                    'current' => (float) $ship->status_points, 'wear' => $readiness['wear'], 'ap' => $readiness['repair_ap'],
+                ]);
+            }
             $baseNavApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
             $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseNavApCost);
             $organikaCost = $this->organikaCostFor($colonyId, $mission);
@@ -976,9 +976,9 @@ class HangarService
     }
 
     /**
-     * Repair a docked ship — fixed cost: one call spends 1 Construction-AP
-     * (locked by the caller) and restores REPAIR_SP_PER_AP status_points,
-     * capped at max. Mirrors the building-repair interaction (1 click = 1 AP).
+     * Repair a docked ship — fixed cost: one call spends ap_per_click Construction-AP
+     * (locked by the caller) and restores game.ship_repair.sp_per_click status_points,
+     * capped at game.ship_repair.max_status_points; AP per click is game.ship_repair.ap_per_click.
      * ap_spend on the ship row is incremented to track total AP invested.
      */
     public function repairShip(int $colonyId, int $bay): void
@@ -995,19 +995,41 @@ class HangarService
 
             $current = (float) $ship->status_points;
 
-            if ($current >= self::SHIP_MAX_STATUS) {
+            $max = HangarBays::maxStatus();
+            if ($current >= $max) {
                 throw $this->ruleError('ship_full_status');
             }
 
-            $newStatus = min(self::SHIP_MAX_STATUS, $current + self::REPAIR_SP_PER_AP);
+            $newStatus = min($max, $current + (int) config('game.ship_repair.sp_per_click', 2));
 
             DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('bay', $bay)
                 ->update([
                     'status_points' => $newStatus,
-                    'ap_spend' => $ship->ap_spend + 1,
+                    'ap_spend' => $ship->ap_spend + (int) config('game.ship_repair.ap_per_click', 1),
                 ]);
         });
+    }
+
+    /** flightReadiness() for every distance a catalog mission can have — the dialog reads it, never recomputes. */
+    private function readinessByDistance(int $shipId, float $statusPoints): array
+    {
+        $distances = [];
+        foreach (config('missions.catalog', []) as $mission) {
+            foreach ([$mission['sol_distance'] ?? null, ...array_values($mission['sol_distance_by_ring'] ?? [])] as $distance) {
+                if ($distance !== null) {
+                    $distances[(int) $distance] = true;
+                }
+            }
+        }
+        ksort($distances);
+
+        $readiness = [];
+        foreach (array_keys($distances) as $distance) {
+            $readiness[$distance] = HangarBays::flightReadiness($shipId, $statusPoints, $distance);
+        }
+
+        return $readiness;
     }
 }
