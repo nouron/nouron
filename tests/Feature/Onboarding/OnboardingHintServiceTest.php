@@ -3,6 +3,7 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Services\AdvisorService;
+use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
@@ -527,6 +528,20 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertSame('hint_advisor_slot2', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_hangar', $hint['text_key']);
+    }
+
+    public function test_advisor_slot2_hint_names_hangar_as_soon_as_the_gift_drone_stands(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeAgrardome();
+        $this->placeHangarOnly();
+        $this->app->make(HangarService::class)->ensureGiftDrone($this->colonyId);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
         $this->assertSame('colony.onboarding_hint_advisor_slot2_hangar', $hint['text_key']);
     }
 

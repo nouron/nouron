@@ -35,6 +35,7 @@ class HangarService
         private readonly AdvisorService $advisorService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly EventService $eventService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -206,6 +207,48 @@ class HangarService
     private function inactiveReason(int $shipId, int $bay = 1): string
     {
         return __('colony.hangar_ship_inactive', ['level' => max($this->requiredHangarLevel($shipId), $bay, 1)]);
+    }
+
+    /**
+     * T30 §13.2: the gift drone on the apron (bay 0). Idempotent — only when the hall
+     * stands on level >= 1 and the apron is empty. Ships on the apron are never deleted
+     * (only 'pending' ships decay, GameTick::processHangarDeliveries), so a hall
+     * demolished to 0 and rebuilt never yields a second one. No Credits, debt or trust.
+     */
+    public function ensureGiftDrone(int $colonyId): bool
+    {
+        if ($this->hangarMaxLevel($colonyId) < 1) {
+            return false;
+        }
+
+        return DB::transaction(function () use ($colonyId): bool {
+            if (DB::table('colony_ships')->where('colony_id', $colonyId)->where('bay', HangarBays::APRON)->lockForUpdate()->exists()) {
+                return false;
+            }
+
+            $tick = $this->tickService->getTickCount();
+            DB::table('colony_ships')->insert([
+                'colony_id' => $colonyId,
+                'ship_id' => (int) config('ships.drone.id'),
+                'bay' => HangarBays::APRON,
+                'ship_state' => 'docked',
+                'level' => 0,
+                'status_points' => HangarBays::maxStatus(),
+                'ap_spend' => 0,
+                'deliver_at_tick' => $tick,
+                'pending_until_tick' => null,
+            ]);
+
+            $this->eventService->createEvent([
+                'user' => (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id'),
+                'tick' => $tick,
+                'event' => 'hangar.gift_drone',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colonyId]),
+            ]);
+
+            return true;
+        });
     }
 
     /**

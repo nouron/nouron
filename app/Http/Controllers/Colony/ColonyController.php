@@ -10,6 +10,7 @@ use App\Services\CharacterCodexService;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
+use App\Services\HangarService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\NexusImportService;
@@ -52,6 +53,7 @@ class ColonyController extends BaseController
         private readonly OvercapService $overcapService,
         private readonly BuildingService $buildingService,
         private readonly BuildingCostService $buildingCostService,
+        private readonly HangarService $hangarService,
     ) {
         parent::__construct($tick);
     }
@@ -792,6 +794,10 @@ class ColonyController extends BaseController
                     'status_points' => $building->max_status_points ?? 20,
                 ]);
             $leveledUp = true;
+            // T30 §13.2: reaching hangar level 1 lands the gift drone (idempotent).
+            if ($buildingId === BuildingId::Hangar->value) {
+                $this->hangarService->ensureGiftDrone($colony->id);
+            }
             // Consumes an active Cantina-Anliegen voucher (A41), if any — it
             // already discounted $effectiveApForLevelup above via
             // ProjectBonusService::effectiveApForLevelup(); this just marks it

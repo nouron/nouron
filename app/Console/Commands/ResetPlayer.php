@@ -8,6 +8,7 @@ use App\Models\Colony;
 use App\Models\Run;
 use App\Models\User;
 use App\Services\ColonyTileService;
+use App\Services\HangarService;
 use App\Services\OnboardingService;
 use App\Services\RunProgressService;
 use App\Services\RunTaskCatalog;
@@ -329,6 +330,9 @@ class ResetPlayer extends Command
             'level' => $level, 'status_points' => 20, 'ap_spend' => 0,
             'tile_x' => -1, 'tile_y' => 1, 'placed_at_tick' => $placedAtTick,
         ]);
+        if ($level >= 1) {
+            app(HangarService::class)->ensureGiftDrone($colony->id); // T30 §13.2: gift drone on the apron
+        }
     }
 
     /** Insert Cantina/bar (52) at tile (1,-1) Ring 1. */

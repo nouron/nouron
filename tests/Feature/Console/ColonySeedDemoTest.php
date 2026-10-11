@@ -19,6 +19,13 @@ class ColonySeedDemoTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
     }
 
+    public function test_hangar_path_lands_the_gift_drone_on_the_apron(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID, '--path' => 'hangar'])->assertExitCode(0);
+
+        $this->assertSame(85, (int) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('ship_id'));
+    }
+
     public function test_unknown_colony_fails(): void
     {
         $this->artisan('colony:seed-demo', ['colony_id' => 999999])

@@ -128,6 +128,8 @@ class ResetPlayerTest extends TestCase
             ->where('colony_id', $colony->id)->where('building_id', 44)->count()); // hangar
         $this->assertSame(0, DB::table('colony_buildings')
             ->where('colony_id', $colony->id)->where('building_id', 52)->count()); // bar
+        $this->assertSame(1, DB::table('colony_ships')
+            ->where('colony_id', $colony->id)->where('bay', 0)->where('ship_id', 85)->count()); // gift drone
         $this->assertSame(1, DB::table('advisors')
             ->where('colony_id', $colony->id)->where('personell_id', config('advisors.pilot.id'))->count());
     }

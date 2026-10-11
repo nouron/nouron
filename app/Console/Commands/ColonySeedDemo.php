@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Console\Concerns\RefusesInProduction;
 use App\Services\ColonyTileService;
+use App\Services\HangarService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -102,6 +103,11 @@ class ColonySeedDemo extends Command
 
         $this->assignBuildingTiles($colonyId, $path);
         $this->info('  ✓ Building positions assigned (infirmary/temple/monument left unplaced)');
+
+        if (in_array($path, ['all', 'hangar'], true)) {
+            app(HangarService::class)->ensureGiftDrone($colonyId);
+            $this->info('  ✓ Gift drone on the apron');
+        }
 
         $this->ensurePilotAdvisor($colonyId);
         $this->info('  ✓ Pilot advisor ensured (navigation AP)');
