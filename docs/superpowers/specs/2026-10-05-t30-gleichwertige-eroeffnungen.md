@@ -1000,7 +1000,7 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 | Zuweisen (`assignToHangar`) | Parameter `bay` ∈ 1..Stufe, frei; Bucht 0 wird abgelehnt (`bay_reserved`) |
 | Geschenk-Drohne | neue Methode `HangarService::ensureGiftDrone(int $colonyId)`, idempotent: Hallenstufe ≥ 1 und Bucht 0 leer → Drohne mit `bay` = 0, `ship_state` = `docked`, `deliver_at_tick` = aktueller Tick, ohne Kosten, Schuld und Vertrauen. Aufrufstellen: die beiden Levelup-Pfade (`ColonyController::invest` Z. 777–801 und `AbstractTechnologyService::levelup` Z. 479–490) bei Gebäude 44. Ein Abriss bis Stufe 0 mit Wiederaufbau erzeugt **keine** zweite Drohne: Schiffe auf Bucht 0 werden nie gelöscht, nur `pending`-Schiffe verfallen (`GameTick` Z. 304–310). CommLog-Ereignis `hangar.gift_drone`. |
 | Verlust/Beschädigung der Geschenk-Drohne | wie bei jedem Schiff: Verschleiß nur im Flug, Reparatur per AP, bei SP ≤ 0 Abbruch und Rückkehr mit 0 SP, kein Totalverlust (gelesen: `GameTick` Z. 398–421) |
-| Queue, Reparatur, Verschleiß | bleiben **je Schiff** (`colony_ships.status_points`, `repairShip`) und werden über `bay` adressiert. Es gibt keine Bau-Queue je Bucht (Schiffe kommen per Nexus-Lieferung). Gebäude-Verfall hat nur noch einen Träger (die Halle). |
+| Queue, Reparatur, Verschleiß | bleiben **je Schiff** (`colony_ships.status_points`, `repairShip`) und werden über `bay` adressiert, **auch auf Bucht 0** (die Geschenk-Drohne ist reparierbar; nur `assign` lehnt Bucht 0 ab). Der Reparatur-Knopf je Schiffskarte bleibt (Route `colony.hangar.repair`). Die Werte wandern aus den `HangarService`-Konstanten (`SHIP_MAX_STATUS`, `REPAIR_SP_PER_AP`) nach `config/game.php → ship_repair`. Reparatur kostet **nur AP**, kein Rg und keine Credits (Owner 2026-10-11, §13.x/8). Es gibt keine Bau-Queue je Bucht (Schiffe kommen per Nexus-Lieferung). Gebäude-Verfall hat nur noch einen Träger (die Halle). |
 | Supply | Die Formel bleibt (6 je Stufe und Instanz, `ResourcesService::buildingWorkplaces()`). Bei einer Halle sind das höchstens 18. Schiffe kosten weiterhin kein Supply. |
 | Zonen-Kachel | eine einzige |
 | Unterhalt | keine Credits-Unterhaltskosten für Schiffe oder Halle (unverändert) |
@@ -1077,7 +1077,7 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 | Kosten | Nav-AP = Entfernung × `nav_ap_per_sol` (Config 2), durch `effectiveNavigationApCost` (Kartografie) wie bei jeder Mission gesenkt. Proviant = Entfernung × `organika_per_sol` (Config 3; ohne Gate keine Kenntnis-Skalierung). Ring 2: 2 AP, 3 Or, 2 Sole Umlauf; Ring 3: 4 AP, 6 Or, 4 Sole Umlauf. `organikaCostFor()` (Z. 774–791) bekommt die Entfernung als Parameter. |
 | Dauer | 2 × Entfernung (unverändert) |
 | Erfolg | kein Wurf: Bei `roll === false` überspringt `GameTick` Z. 439–444 die Erfolgschance, `succeeded` = 1, der Schwierigkeits-Multiplikator ist 1,0 |
-| Verschleiß | wie heute je Sol im Flug (Drohne 1,5, Frachter 1,0 SP/Sol, Config). Ring 2 mit Drohne: 3 SP, Ring 3: 6 SP. Bei SP ≤ 0: Abbruch ohne Ertrag, Ziel wieder frei. |
+| Verschleiß | wie heute je Sol im Flug (Drohne 1,5, Frachter 1,0 SP/Sol, Config). Ring 2 mit Drohne: 3 SP, Ring 3: 6 SP. **Rückkehr-Garantie** (Owner 2026-10-11, §13.x/7) ersetzt die 25-%-Sperre für **alle** Missionen: Start nur, wenn SP − Verschleiß-Prognose (`wear_per_sol` × 2 × Entfernung) > 0. Eine Funktion `flightReadiness` liefert `{ready, wear, sp_after, repair_clicks}` und wird von Dispatch-Guard, Zielliste, `findAction` und Bot gemeinsam genutzt. `missions.dispatch_min_sp_pct` entfällt. Der Abbruch bei SP ≤ 0 im Tick bleibt als Absicherung (Abbruch ohne Ertrag, Ziel wieder frei), tritt durch normalen Verschleiß aber nicht mehr auf. |
 | Ertrag | `(int) round(rg × finds.flight.yield_factor)`: klein 4 → 6, mittel 10 → 15, groß 18 → 27 (bei Faktor 1,5 alle ganzzahlig). Berechnung in **einer** Funktion `findFlightYield(colonyId, type)`, die additive Zeilen liefert (`base`, `flight_bonus`). UI-Vorschau und Auszahlung nutzen dieselbe Funktion (Memory „Discount-Wiring“). |
 | Abschluss | gemeinsame Methode `ColonyTileService::completeFind($tile, int $rg)`, aus `salvageFind` Z. 195–203 herausgelöst: Rg gutschreiben, `event_type` null, Scan- und Bergungsfelder zurücksetzen, Kachel frei bebaubar. Selbstbergung und Flug nutzen dieselbe Methode. |
 | Bestandsschutz | Der Flug lehnt eine Kachel mit `salvage_ap_spent` > 0 ab (`find_salvage_in_progress`). Die gezahlten AP bleiben im Projekt, das als Selbstbergung zu Ende läuft (E7, §13.4). |
@@ -1086,8 +1086,8 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 | Ziel verschwunden | Ist die Kachel bei Rückkehr kein Fund mehr (defensiv, regulär ausgeschlossen): kein Ertrag, CommLog-Hinweis |
 | Hangar während des Flugs zurückgebaut oder verfallen | Der laufende Flug kehrt normal zurück und zahlt aus (der Flug ist bezahlt). **Annahme:** `GameTick::processHangarMissions` löst Missionen unabhängig von der aktuellen Hallenstufe auf. Vor der Umsetzung prüfen, sonst Test und Fix in Task 3. |
 | Siegziel | Der Flug zählt für `task_expedition_coverage` (Schwierigkeit `normal`, erfolgreich; `RunProgressService` Z. 300–310). Owner-Entscheidung 2026-10-11. |
-| Anzeige | Die Zielliste im Dispatch-Dialog zeigt je Kachel: Ring, Nav-AP (mit Kartografie-Zeile), Or, Rückkehr-Sol, je Schiff „trägt / zu groß“ und den Ertrag als Zeilen („Fund 10 Rg + Flug 5 Rg = 15 Rg“). Ohne Wurf entfällt die Schwierigkeitsauswahl. |
-| Fehlercodes (neu) | `find_not_scanned`, `find_too_large`, `find_in_flight`, `find_salvage_in_progress`, `salvage_by_flight` (§13.4), `bay_reserved`; `invalid_target` bestehend |
+| Anzeige | Die Zielliste im Dispatch-Dialog zeigt je Kachel: Ring, Nav-AP (mit Kartografie-Zeile), Or, Rückkehr-Sol, je Schiff „trägt / zu groß“ und den Ertrag als Zeilen („Fund 10 Rg + Flug 5 Rg = 15 Rg“). Dazu kommen Verschleiß und Zustand vorher/nachher („Verschleiß −6 · Zustand 14 → 8“) bzw. die Sperrzeile „Zustand 5 reicht nicht für Verschleiß 6 – erst reparieren (1 AP)“, statt still auszugrauen. Ohne Wurf entfällt die Schwierigkeitsauswahl. |
+| Fehlercodes (neu) | `find_not_scanned`, `find_too_large`, `find_in_flight`, `find_salvage_in_progress`, `salvage_by_flight` (§13.4), `bay_reserved`, **`ship_too_worn`** (ersetzt `ship_sp_too_low`); `invalid_target` bestehend |
 
 #### Code-Stellen
 
@@ -1122,7 +1122,7 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 | `tests/Feature/Playtest/BotStrategy.php` | Z. 55–58 `REGOLITH_MISSIONS`, Z. 233–245 `dispatch_regolith_mission`, Z. 1621 `regolithMissionCandidate` | ersetzen durch die Regel **`dispatch_find_flight`** an derselben Stelle der Prioritätenliste. Der Name `dispatch_salvage_mission` ist schon vergeben (Harvester-Ruine). Kandidat: Ergebnis von `findAction` = Flug; größter zuerst; Schiff = kleinste gedockte Klasse, die ihn trägt; Nav-AP und Or gedeckt. |
 | | Z. 438–453 `invest_find`, Z. 2057 `investFindCandidate` | **nur ohne Hangar (Stufe 0 bzw. kein Gebäude)** neue Projekte. Mit Hangar nur noch Bestandsschutz-Projekte (`salvage_ap_spent` > 0) fortsetzen, sonst bleiben AP, Projektplatz und Kachel dauerhaft gebunden. Kandidat ebenfalls über `findAction`, damit Bot und Spieler dieselbe Regel sehen. |
 | | Scan-Regel (Pool v1) | unverändert. Der Flug braucht einen gescannten Fund, also muss der Bot mit Hangar weiter scannen. Test: Hangar-Kolonie mit nur ungescannten Signalen scannt zuerst. |
-| | Schiffsreparatur | **Annahme:** Der Bot repariert Schiffe mit niedrigen SP. Vor der Umsetzung prüfen. Eine Drohne mit 0 SP ohne Reparaturregel würde mit Hangar alle Funde dauerhaft liegen lassen (Bot-Falle, §13.4). |
+| | Schiffsreparatur | **Geprüft (2026-10-11): Der Bot hat keine Schiffsreparatur-Regel.** Neue Regel `repair_ship_for_flight` direkt **vor** `dispatch_find_flight` (Owner 2026-10-11, §13.x/11). Sie feuert, wenn ein Fund nur deshalb wartet, weil sein kleinstes tragendes, gedocktes, aktives Schiff an der Rückkehr-Garantie scheitert (`findAction`-Grund `ship_worn`): 1 Klick `POST /colony/hangar/{bay}/repair`, wiederholt bis flugbereit. Alle Bot-Missionskandidaten prüfen die Flugbereitschaft über `flightReadiness` statt der vier hartkodierten `20 × 0,25`. |
 | | Großfund gesperrt | keine eigene Hangar-Ausbauregel nur für Funde in v1. Die bestehende Ausbau- und Kaufreihenfolge bleibt; die Messung zeigt, wie lange große Funde warten (K16). |
 | | Z. 1034 `instanceCap` | Eintrag `44` entfernen |
 | | Z. 2259–2272 `hasFreeHangarSlot`, Z. 1907–1944 `shipToRequest` | wird zu `hasFreeBayFor(classLevel)`: Stufe ≥ Klasse und belegte Buchten 1..Stufe < Stufe. `hasAnyShip` zählt die Geschenk-Drohne, der Drohnenkauf am Anfang entfällt dadurch von selbst. Der Drohnen-Deckel 2 zählt die Geschenk-Drohne mit. |
@@ -1156,11 +1156,12 @@ Die Fundkarte zeigt immer **genau eine** Aktion plus **eine** Begründungszeile.
 | Selbstbergung begonnen | ≥ 1 | Selbst weiterbergen | `find_reason_grandfathered`: „Begonnen vor dem Hangar. Der Trupp gräbt zu Ende.“ |
 | im Flug | egal | keine | `find_reason_in_flight`: „Im Flug. Zurück an Sol N.“ |
 | tragendes Schiff gedockt und einsatzbereit | ≥ 1 | Bergungsflug | `find_reason_flight`: „Fund 10 Rg + Flug 5 Rg = 15 Rg · 2 AP · 3 Or · zurück Sol N“ |
-| tragendes Schiff vorhanden, aber unterwegs oder in Reparatur | ≥ 1 | keine (wartet) | `find_reason_ship_busy`: „Wartet: Drohne zurück an Sol N.“ bzw. „Wartet: Drohne reparieren.“ |
+| tragendes Schiff vorhanden, aber unterwegs | ≥ 1 | keine (wartet) | `find_reason_ship_busy`: „Wartet: Drohne zurück an Sol N.“ |
+| tragendes Schiff gedockt, aber zu verschlissen (Rückkehr-Garantie verfehlt) | ≥ 1 | keine (wartet) | `find_reason_ship_worn`: „Wartet: Drohne reparieren (1 AP).“ Die AP-Zahl kommt aus `flightReadiness`. Einen Zustand „in Reparatur“ gibt es nicht. |
 | großer Fund | 1 | gesperrt | `find_reason_needs_level`: „Gesperrt: Frachter nötig – Hangar Stufe 2.“ |
 | großer Fund, kein aktiver Frachter | ≥ 2 | gesperrt | `find_reason_needs_freighter`: „Gesperrt: Frachter nötig – im Nexus bestellen.“ (bzw. „Frachter inaktiv“, wenn die Halle unter Stufe 2 verfallen ist) |
 
-Prüfreihenfolge in `findAction`: ungescannt → Fehlalarm → im Flug → ohne Hangar → Bestandsschutz → Tragkraft und Schiffsstatus. Die Zahlen in der Flug-Zeile kommen aus `findFlightYield()` und den Missionskosten. Die Texte sind Vorschläge für den content-writer; Ton nüchtern und knapp.
+Prüfreihenfolge in `findAction`: ungescannt → Fehlalarm → im Flug → ohne Hangar → Bestandsschutz → Tragkraft und Schiffsstatus (unterwegs vor zu verschlissen; „flugbereit“ heißt gedockt, aktiv und `flightReadiness(...)['ready']` für die Ring-Entfernung der Kachel). Die Zahlen in der Flug-Zeile kommen aus `findFlightYield()` und den Missionskosten, die Reparatur-AP aus `flightReadiness`. Die Texte sind Vorschläge für den content-writer; Ton nüchtern und knapp.
 
 **Lore-Zeilen für die Fundkarte bzw. `find_help` (Vorschlag, 2–3 Zeilen):**
 - Ohne Hangar: „Ohne Landefeld gräbt die Kolonie selbst. Der Bergungstrupp holt den Fund mit Rover und Handwerkzeug, Schicht für Schicht.“
@@ -1210,7 +1211,7 @@ Grundlage: Start-Pool laut Config (2 Fehlalarme, 3 klein, 1 mittel, 1 groß = 40
 |---|---|---|---|
 | K1 | 0 | 0 (Geschenk-Drohne am Fertigstellungs-Sol) | ≤ 1 |
 | **K2** | nie bis Sol 25 | **2–4** (erster Ring-2-Flug; mit 2/7 Fehlalarm-Anteil ist das erste gescannte Signal manchmal leer, dann +2) | ≤ 3 |
-| K4 Σ ungenutzte AP Sol 4–12 | 22 | **40–65** (R1). Ein Flug kostet 2–4 Nav-AP statt 12–16 AP Selbstbergung. Der große Fund (22 AP selbst) fällt als AP-Abnehmer ganz weg, solange er gesperrt ist. | Abstand ≤ 20 zu Labor |
+| K4 Σ ungenutzte AP Sol 4–12 | 22 | **33–58** (R1). Ein Flug kostet 3,5–7 AP inkl. Reparatur statt 12–16 AP Selbstbergung (Reparatur fängt ca. 7,5 AP im Fenster Sol 4–12). Der große Fund (22 AP selbst) fällt als AP-Abnehmer ganz weg, solange er gesperrt ist. | Abstand ≤ 20 zu Labor |
 | K5 | 0,5 | 0–2 | ≤ 2 |
 | K6 Rg Sol 10 | 79 (Schritt 1) | +10 bis +18 gegenüber Pool v1 | Spanne ≤ 25 über alle drei |
 | K11 Sol 10 / 25 | 0 / 10 | **12–18 / 33–60** (untere Grenze ohne Frachter bis Sol 25) | – |
@@ -1243,6 +1244,8 @@ Grundlage: Start-Pool laut Config (2 Fehlalarme, 3 klein, 1 mittel, 1 groß = 40
 | 7 | Szenarien und Doku: `ResetPlayer` (Hangar-Szenarien: Geschenk-Drohne auf Bucht 0, Kommentare), `ColonySeedDemo`, `docs/game-reference.md` (Hangar, Missionen, Schiffe, Funde inkl. `finds.flight`), GDD-Nachzug (§13.9) | – | Ausnahme Doku (kein Test); Szenarien per vorhandenem Szenario-Test | K |
 | 8 | Messung (§13.8) inklusive Entscheidung über den bedingten Folgeschritt V | – | – | – |
 
+**Ergänzung (Owner 2026-10-11, §13.x/7–11):** Ein zusätzlicher Task „Reparatur & Rückkehr-Garantie“ (Config `game.ship_repair`, `flightReadiness`, `ship_too_worn`, Reparatur auf `bay` inkl. Bucht 0, Bot-Duplikate der 20 auf die Config) kommt direkt nach dem Datenmodell. Task 4 (`findAction`) bekommt den Grund `ship_worn`, Task 5 die Zustandszeilen, Task 6 die Regel `repair_ship_for_flight`, Task 7 GDD §7 und `game-reference.md` (Reparatur). Umsetzungsplan: `docs/superpowers/plans/2026-10-11-t30-schritt3-hangar-b1-bergungsflug.md`.
+
 Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Task 4 braucht Task 3 (Flug-Guards, `completeFind`). Task 5 kommt nach Task 4, damit es nur eine UI-Runde gibt und die Karte auf `findAction` aufsetzt. Task 6 muss vor der Messung stehen, sonst misst die Messung einen Bot, der mit Hangar weiter selbst bergen will und an `salvage_by_flight` scheitert. Der Folgeschritt V (Verlade-AP) ist **kein** Teil dieser 8 Tasks.
 
 ### 13.8 Messplan
@@ -1260,7 +1263,8 @@ Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Task 4 braucht Task 3 
 | K11 Sol 10 / 25 | Hangar höher als Labor/Cantina | Hangar Sol 25 < Cantina Sol 25 |
 | K12 Anteil Pool-Rg über Schiff (Sol 25) | Hangar-First ≥ 85 % (Rest = Bestandsschutz); Labor/Cantina Information | Hangar-First < 70 % (Hinweis auf Bot-Falle oder Sperre) |
 | K15 Pfad-Rg-Äquivalent | wie §11.9, Spar-AP nur, soweit genutzt | – |
-| **K16 (neu) Wartesole** | Σ Sole mit gescanntem, echtem, ungeborgenem Fund bei Hangar ≥ 1, getrennt nach Grund: `needs_level`, `needs_freighter`, `ship_busy`, `no_ship_ready` | `no_ship_ready` > 3 Sole in einem Lauf (Bot-Bug, nicht Balance); großer Fund bis Sol 40 ungeborgen in > 4 von 8 Hangar-First-Läufen |
+| **K16 (neu) Wartesole** | Σ Sole mit gescanntem, echtem, ungeborgenem Fund bei Hangar ≥ 1, getrennt nach Grund: `needs_level`, `needs_freighter`, `ship_busy`, `no_ship_ready` | `no_ship_ready` (umfasst `ship_worn` und `no_ship`) > 3 Sole in einem Lauf: Bot-Bug, nicht Balance. Bleibt er trotz `repair_ship_for_flight` hoch, ist das der Auslöser für den Folgeschritt „passive Dock-Reparatur“ (§13.x/10). Großer Fund bis Sol 40 ungeborgen in > 4 von 8 Hangar-First-Läufen |
+| Reparatur-AP je Lauf (neu, Information) | Σ AP der Bot-Regel `repair_ship_for_flight`, Sol 4–12 und Sol 1–24, neben K4 lesen (verbrauchte statt ungenutzte AP) | – |
 | **K17 (neu) Zonen-Blockade** | Sole, in denen ein gesperrter Fund (`needs_level`/`needs_freighter`) eine Zonen-Kachel belegt | > 0 in > 2 von 8 Läufen → Owner-Frage Mindestregel (§13.10) entscheiden |
 | K7 Siegquote | ca. 50 %, je Eröffnung ≤ 10 Punkte Abstand | > 65 % oder Rückgang > 10 Punkte gegenüber Pool v1 (Versorgungsfahrt-Wegfall); Läufe mit K17 > 0 gesondert ausweisen |
 | Schiffe je Lauf Sol 25 / 40 (inkl. Geschenk) | Hangar-First 2 / 3 | > 3 vor Sol 25 |
@@ -1276,7 +1280,7 @@ Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Task 4 braucht Task 3 
 
 | # | Risiko | Gegenmittel |
 |---|---|---|
-| R1 | **K4 steigt wieder für Hangar-First.** Der Flug ersetzt 12–22 AP Selbstbergung durch 2–4 Nav-AP. In der strengen Variante fällt auch der große Fund als AP-Abnehmer weg, solange er gesperrt ist. Pool v1 hatte K4 gerade auf 22 gesenkt. | Erst messen (Task 8). Liegt Hangar-K4 mehr als 20 AP über Labor-K4: Folgeschritt V „Verlade-AP“ (§13.8). Der Faktor 1,5 wird nicht gesenkt. Erst danach Nachschub-Signale (Schritt 6) vorziehen. |
+| R1 | **K4 steigt wieder für Hangar-First.** Der Flug ersetzt 12–22 AP Selbstbergung durch 3,5–7 AP inkl. Reparatur. In der strengen Variante fällt auch der große Fund als AP-Abnehmer weg, solange er gesperrt ist. Pool v1 hatte K4 gerade auf 22 gesenkt. | Erst messen (Task 8). Liegt Hangar-K4 mehr als 20 AP über Labor-K4: Folgeschritt V „Verlade-AP“ (§13.8). Der Faktor 1,5 wird nicht gesenkt. Erst danach Nachschub-Signale (Schritt 6) vorziehen. |
 | R2 | Siegquote fällt durch den Wegfall von Versorgungsfahrt-Rg und Prospektion (planbare Phase-2-Quelle weg) | K7-Warnschwelle; Gegenmittel Pool-Größe oder Nachschub (§11.9 Schritt 6/7), nicht die Versorgungsfahrt zurückholen (Owner-Vorgabe) |
 | R3 | Umbenennung `bay` über 22 Dateien: übersehene Stellen (Blade-`x-data` mit `@js(route(...))`, Memory-Falle) | nach der Umbenennung grep über alle Blade-Views und JS; volle Suite vor dem PR |
 | R4 | Doku-Drift: GDD §4b, §4c, §6, §8b, §13.5 und `game-reference.md` beschreiben noch Instanzmodell, Prospektion und Koexistenz der Bergungswege | im selben PR nachziehen (Task 7), zahlenfrei, Liste unten |
@@ -1305,6 +1309,13 @@ Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Task 4 braucht Task 3 
 4. **Ablösung, strenge Variante:** Sobald der Hangar Stufe ≥ 1 hat, gibt es für Funde nur noch den Bergungsflug. Ohne Hangar bleibt die Selbstbergung für alle Größen. Große Funde sind mit Stufe 1 gesperrt, bis Stufe 2 und ein Frachter da sind (gewollt). Die Fundkarte zeigt genau eine Aktion plus Begründungszeile.
 5. **Bestandsschutz:** Eine begonnene Selbstbergung läuft zu Ende, ohne Erstattung und ohne Umrechnung. Ein Flug dorthin ist gesperrt. Mit Hangar startet kein neues Selbstbergungsprojekt.
 6. **K4-Risiko:** erst messen. Liegt Hangar-K4 mehr als 20 AP über Labor-K4, folgen Verlade-AP beim Flugstart (Folgeschritt V); der Faktor 1,5 bleibt.
+7. **Rückkehr-Garantie statt 25-%-Sperre, für alle Missionen:** Start nur, wenn SP − Verschleiß-Prognose > 0. Eine Funktion `flightReadiness` dient Guard, Zielliste, `findAction` und Bot. Fehlercode `ship_too_worn`, `missions.dispatch_min_sp_pct` entfällt. Anlass: Mit der 25-%-Sperre durfte eine Drohne mit 5–6 SP auf Ring 3 starten und brach im letzten Tick ohne Ertrag ab.
+8. **Reparatur bleibt pro Schiff und kostet nur AP** (Variante a): 1 Klick = 1 AP = +2 SP, kein Rg, keine Credits; die Idee `repair_cost_per_point` (GDD §7) wird gestrichen. Adressiert über `bay`, Bucht 0 inklusive; Werte in `config/game.php → ship_repair`; die Bot-Duplikate der 20 lesen die Config.
+9. **Bucht-Belegung durch Reparatur** (Variante b) und **Rg-Kosten** (Variante d) verworfen.
+10. **Keine passive Dock-Reparatur in v1.** Nur falls K16 `no_ship_ready` trotz Bot-Regel > 3 Sole, als eigener Folgeschritt.
+11. **Bot:** neue Regel `repair_ship_for_flight` direkt vor `dispatch_find_flight`.
+
+Quelle der Punkte 7–11: `.superpowers/sdd/2026-10-09-t30-pool-v1-fundpool/designer-schiffsreparatur-b1.md` (game-designer 2026-10-11, Owner-Freigabe aller drei Vorschläge 2026-10-11). Handrechnung dort: Start-Pool per Flug 60 Rg für ca. 23,5 AP inkl. Reparatur (Selbstbergung 40 Rg / 74 AP).
 
 
 **Rulings 2026-10-11 (Controller, nach Designer-Vorschlag, Owner kann widerrufen):** (1) Zonen-Kachel-Sperre großer Funde: erst K17 messen, bei Bedarf Generator-Regel (a) „große Funde nie auf Zonen-Kacheln". (2) Keine eigene Bot-Regel für Frachter-Ausbau wegen großer Funde in v1; erst K16 (Wartesole) messen.
