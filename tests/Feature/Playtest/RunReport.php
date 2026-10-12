@@ -5,6 +5,7 @@ namespace Tests\Feature\Playtest;
 use App\Enums\BuildingId;
 use App\Models\Run;
 use App\Services\AdvisorService;
+use App\Services\ColonyTileService;
 use App\Services\ResourcesService;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,8 @@ class RunReport
         'dispatch_mission' => 'action',
         'dispatch_salvage_mission' => 'action',
         'dispatch_compounds_mission' => 'action',
-        'dispatch_regolith_mission' => 'action',
+        'dispatch_find_flight' => 'action',
+        'repair_ship_for_flight' => 'repair',
         'request_ship' => 'action',
     ];
 
@@ -100,7 +102,7 @@ class RunReport
 
     /**
      * A30/B1c: this Sol's Regolith gains by source. 'accept_bar_offer' deltas
-     * are 'trade'; 'invest_find' deltas are 'find' (T30 salvage); the 'sol_next' delta is split into 'mission' (read from the
+     * are 'trade'; 'invest_find' deltas are 'find' (T30 salvage); the 'sol_next' delta is split into 'mission' and 'find_flight' (read from the
      * real 'hangar.mission_completed' colony_log event for this tick — no
      * re-derivation, the game already computed and logged the exact reward)
      * and 'harvester' (the remainder — Regolith has no other tick-driven
@@ -111,7 +113,7 @@ class RunReport
      */
     private function regolithSources(BotSession $bot): array
     {
-        $sources = ['harvester' => 0, 'mission' => 0, 'trade' => 0, 'find' => 0, 'event' => 0];
+        $sources = ['harvester' => 0, 'mission' => 0, 'trade' => 0, 'find' => 0, 'find_flight' => 0, 'event' => 0];
 
         foreach ($bot->log as $entry) {
             if ($entry['sol'] !== $bot->sol || ! $entry['ok']) {
@@ -131,8 +133,11 @@ class RunReport
                 $sources['find'] += $delta;
             } elseif ($entry['rule'] === 'sol_next') {
                 $missionAmount = $this->missionRewardAmount($bot, 'regolith');
+                // T30 §13.3: salvage flights log their Regolith as rewards.find_regolith.
+                $flightAmount = $this->missionRewardAmount($bot, 'find_regolith');
                 $sources['mission'] += $missionAmount;
-                $sources['harvester'] += max(0, $delta - $missionAmount);
+                $sources['find_flight'] += $flightAmount;
+                $sources['harvester'] += max(0, $delta - $missionAmount - $flightAmount);
             }
         }
 
@@ -157,7 +162,7 @@ class RunReport
         $sources = ['agrardom' => 0, 'mission' => 0, 'trade' => 0, 'event' => 0];
         $consumption = ['hunger_consumed' => 0, 'mission_dispatch_consumed' => 0];
 
-        $dispatchRules = ['dispatch_mission', 'dispatch_salvage_mission', 'dispatch_compounds_mission', 'dispatch_regolith_mission', 'request_ship'];
+        $dispatchRules = ['dispatch_mission', 'dispatch_salvage_mission', 'dispatch_compounds_mission', 'dispatch_find_flight', 'request_ship'];
 
         foreach ($bot->log as $entry) {
             if ($entry['sol'] !== $bot->sol || ! $entry['ok']) {
@@ -184,6 +189,46 @@ class RunReport
         }
 
         return ['sources' => $sources, 'consumption' => $consumption];
+    }
+
+    /** AP actually spent this Sol by one rule (positive ap_before − ap_after of ok entries). */
+    private function ruleApSpent(BotSession $bot, string $rule): int
+    {
+        $sum = 0;
+        foreach ($bot->log as $entry) {
+            if ($entry['sol'] === $bot->sol && $entry['rule'] === $rule && $entry['ok']) {
+                $sum += max(0, ($entry['ap_before'] ?? 0) - ($entry['ap_after'] ?? 0));
+            }
+        }
+
+        return $sum;
+    }
+
+    /**
+     * T30 K16/K17: scanned real finds waiting while a hangar stands, by findAction() reason
+     * (§13.8 grouping); zone_blocked = locked finds on a colony-zone tile.
+     *
+     * @return array{needs_level:int, needs_freighter:int, ship_busy:int, no_ship_ready:int, zone_blocked:int}
+     */
+    private function findWaits(int $colonyId): array
+    {
+        $map = ['needs_level' => 'needs_level', 'needs_freighter' => 'needs_freighter', 'ship_inactive' => 'needs_freighter',
+            'ship_busy' => 'ship_busy', 'ship_worn' => 'no_ship_ready', 'no_ship' => 'no_ship_ready'];
+        $waits = ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 0];
+        $service = app(ColonyTileService::class);
+        foreach (DB::table('colony_tiles')->where('colony_id', $colonyId)->where('is_deep_scanned', 1)
+            ->whereIn('event_type', ColonyTileService::FIND_TYPES)->get() as $tile) {
+            $key = $map[$service->findAction($colonyId, $tile)['reason']] ?? null;
+            if ($key === null) {
+                continue;
+            }
+            $waits[$key]++;
+            if (in_array($key, ['needs_level', 'needs_freighter'], true) && (int) $tile->is_colony_zone === 1) {
+                $waits['zone_blocked']++;
+            }
+        }
+
+        return $waits;
     }
 
     /**
@@ -294,12 +339,14 @@ class RunReport
                 'repair_spent' => $apSpent['repair'],
                 'project_spent' => $apSpent['project'],
                 'action_spent' => $apSpent['action'],
+                'ship_repair_spent' => $this->ruleApSpent($bot, 'repair_ship_for_flight'),
                 'unspent' => $apAvailable,
             ],
             'ap_unspent' => $apAvailable,
             'cc_level' => $ccLevel,
             'advisors' => DB::table('advisors')->where('colony_id', $colonyId)->count(),
             'regolith_sources' => $regolithSources,
+            'find_waits' => $this->findWaits($colonyId),
             'organics_sources' => $organics['sources'],
             'organics_consumption' => $organics['consumption'],
             'buildings' => $buildings,
@@ -447,7 +494,7 @@ class RunReport
         $regolithPathAttribution = ['pfad_a_geologie' => 0, 'pfad_b_frachter' => 0, 'pfad_c_cantina' => 0];
         foreach ($this->sols as $sol) {
             $regolithPathAttribution['pfad_a_geologie'] += $sol['regolith_sources']['harvester'];
-            $regolithPathAttribution['pfad_b_frachter'] += $sol['regolith_sources']['mission'];
+            $regolithPathAttribution['pfad_b_frachter'] += $sol['regolith_sources']['mission'] + ($sol['regolith_sources']['find_flight'] ?? 0);
             $regolithPathAttribution['pfad_c_cantina'] += $sol['regolith_sources']['trade'];
         }
 

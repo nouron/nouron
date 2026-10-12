@@ -26,8 +26,9 @@ namespace App\Support;
  * Path actions (successful log entries, rule names from BotStrategy):
  *  - labor:   research_knowledge
  *  - hangar:  request_ship, dispatch_mission, dispatch_salvage_mission,
- *             dispatch_regolith_mission, dispatch_credit_mission,
- *             dispatch_compounds_mission, focus_expedition_mission
+ *             dispatch_find_flight, repair_ship_for_flight,
+ *             dispatch_credit_mission, dispatch_compounds_mission,
+ *             focus_expedition_mission (dispatch_regolith_mission: older reports)
  *  - cantina: accept_bar_offer, accept_bar_encounter, resolve_bar_concern,
  *             resolve_information_encounter
  *
@@ -38,7 +39,8 @@ namespace App\Support;
  *  - K2 (?int): first snapshot Sol >= Lv1 Sol with a Phase-1-relevant yield
  *    from the opening's own path, minus the Lv1 Sol. Yield = labor: any
  *    knowledge at level >= 1 (each knowledge level grants Supply/Trust/
- *    production, e.g. geology +Rg); hangar: regolith_sources.mission > 0;
+ *    production, e.g. geology +Rg); hangar: regolith_sources.mission +
+ *    regolith_sources.find_flight > 0 (T30 salvage flights);
  *    cantina: regolith_sources.trade > 0, OR a Sol with a successful cantina
  *    path action in which the snapshot's trust rose versus the previous
  *    snapshot. Credits and AP are not counted (credits are not
@@ -60,9 +62,21 @@ namespace App\Support;
  *    snapshot would already include Sol-10 builds). null if there is none
  *    (run ended earlier).
  *  - K11 (informational, T30 Pool v1; no target, status 'info'): Regolith from
- *    salvaged finds (regolith_sources.find) summed over the snapshots before the
- *    start of Sol 10 (k11_10, Sols 1-9) and of Sol 25 (k11_25, Sols 1-24). null
- *    for a run truncated (--until-sol) or ended before that cutoff.
+ *    finds (regolith_sources.find self-salvage + find_flight salvage flights)
+ *    summed over the snapshots before the start of Sol 10 (k11_10, Sols 1-9) and
+ *    of Sol 25 (k11_25, Sols 1-24). null for a run truncated (--until-sol) or
+ *    ended before that cutoff.
+ *  - K12 (informational, T30 §13.8): share in % of the K11 Sol-25 Pool-Rg that
+ *    came by ship (find_flight / k11_25 * 100, one decimal). Target hangar >= 85,
+ *    warn < 70. null if k11_25 is null or 0.
+ *  - K16 (informational): number of snapshots with at least one scanned find
+ *    waiting while a hangar stands, per reason (find_waits: needs_level,
+ *    needs_freighter, ship_busy, no_ship_ready). no_ship_ready > 3 Sols means a
+ *    bot bug (it should repair), not a balance finding.
+ *  - K17 (informational): number of snapshots with a locked find
+ *    (needs_level/needs_freighter) on a colony-zone tile (find_waits.zone_blocked).
+ *  - ship_repair_4_12 / ship_repair_25 (information next to K4): AP spent by
+ *    repair_ship_for_flight in Sols 4-12 / Sols 1-24 (ap.ship_repair_spent).
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs count (status completed|failed, or a run
@@ -94,8 +108,10 @@ class OpeningComparison
     private const PATH_RULES = [
         'labor' => ['research_knowledge'],
         'hangar' => [
-            'request_ship', 'dispatch_mission', 'dispatch_salvage_mission', 'dispatch_regolith_mission',
+            'request_ship', 'dispatch_mission', 'dispatch_salvage_mission', 'dispatch_find_flight', 'repair_ship_for_flight',
             'dispatch_credit_mission', 'dispatch_compounds_mission', 'focus_expedition_mission',
+            // Pre-T30-step-3 reports still carry the old Regolith mission rule.
+            'dispatch_regolith_mission',
         ],
         'cantina' => ['accept_bar_offer', 'accept_bar_encounter', 'resolve_bar_concern', 'resolve_information_encounter'],
     ];
@@ -103,7 +119,7 @@ class OpeningComparison
     /** Human-readable K2 yield definition per path (shown in the K2 check detail). */
     private const YIELD_LABELS = [
         'labor' => 'first knowledge level>=1',
-        'hangar' => 'first mission Rg',
+        'hangar' => 'first mission or find-flight Rg',
         'cantina' => 'trade Rg or trust rise',
     ];
 
@@ -161,7 +177,7 @@ class OpeningComparison
     }
 
     /**
-     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k7: ?array{won: bool, sols: int}}
+     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k12: ?float, k16_needs_level: int, k16_needs_freighter: int, k16_ship_busy: int, k16_no_ship_ready: int, k17: int, ship_repair_4_12: int, ship_repair_25: int, k7: ?array{won: bool, sols: int}}
      */
     public static function metrics(array $report): array
     {
@@ -232,17 +248,20 @@ class OpeningComparison
         }
 
         $truncatedAt = $report['truncated_at_sol'] ?? null;
-        $findBefore = function (int $sol) use ($sols, $truncatedAt): ?int {
+        $sumBefore = function (int $sol, array $keys) use ($sols, $truncatedAt): ?int {
             // Not measured: truncated or ended (won/failed) before the cutoff Sol, like K6.
             if (($truncatedAt !== null && $truncatedAt < $sol) || $sols === [] || end($sols)['sol'] < $sol - 1) {
                 return null;
             }
 
             return (int) array_sum(array_map(
-                fn ($s) => $s['sol'] < $sol ? (int) ($s['regolith_sources']['find'] ?? 0) : 0,
+                fn ($s) => $s['sol'] < $sol ? array_sum(array_map(fn ($k) => (int) ($s['regolith_sources'][$k] ?? 0), $keys)) : 0,
                 $sols,
             ));
         };
+        $findBefore = fn (int $sol): ?int => $sumBefore($sol, ['find', 'find_flight']);
+        $flightBefore = fn (int $sol): ?int => $sumBefore($sol, ['find_flight']);
+        $k11_25 = $findBefore(25);
 
         $p2 = $report['phase2_start_sol'] ?? null;
 
@@ -254,12 +273,27 @@ class OpeningComparison
             'k5' => $k5,
             'k6' => $k6,
             'k11_10' => $findBefore(10),
-            'k11_25' => $findBefore(25),
+            'k11_25' => $k11_25,
+            'k12' => $k11_25 ? round($flightBefore(25) / $k11_25 * 100, 1) : null,
+            'k16_needs_level' => self::solsWith($sols, 'needs_level'),
+            'k16_needs_freighter' => self::solsWith($sols, 'needs_freighter'),
+            'k16_ship_busy' => self::solsWith($sols, 'ship_busy'),
+            'k16_no_ship_ready' => self::solsWith($sols, 'no_ship_ready'),
+            'k17' => self::solsWith($sols, 'zone_blocked'),
+            // §13.8 information next to K4: repair AP spent (Sol 4-12 / Sols 1-24).
+            'ship_repair_4_12' => array_sum(array_map(fn ($s) => $s['sol'] >= 4 && $s['sol'] <= 12 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
+            'ship_repair_25' => array_sum(array_map(fn ($s) => $s['sol'] < 25 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
             'k7' => isset($report['truncated_at_sol']) && ($report['outcome']['status'] ?? null) === 'active' ? null : [
                 'won' => ($report['outcome']['status'] ?? null) === 'completed',
                 'sols' => (int) ($report['outcome']['sols'] ?? 0),
             ],
         ];
+    }
+
+    /** Number of snapshots whose find_waits[$reason] > 0 (T30 K16/K17). */
+    private static function solsWith(array $sols, string $reason): int
+    {
+        return count(array_filter($sols, fn ($s) => (int) ($s['find_waits'][$reason] ?? 0) > 0));
     }
 
     /** "never" is only honest for full runs; a truncated run just did not get there before the cutoff. */
@@ -312,7 +346,7 @@ class OpeningComparison
 
         $hasReference = in_array(self::REFERENCE, $this->openings, true);
         $kpis = [];
-        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25'] as $k) {
+        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'ship_repair_4_12', 'ship_repair_25'] as $k) {
             foreach ($this->openings as $opening) {
                 $values = array_map(fn ($m) => $m[$k], $metrics[$opening] ?? []);
                 $stats = self::stats(array_values(array_filter($values, fn ($v) => $v !== null)));
@@ -362,7 +396,7 @@ class OpeningComparison
     }
 
     /**
-     * One status per criterion: 'ok', 'verfehlt', 'info' (K11, no target), 'nicht gemessen' (K7 without full runs) or 'n/a' (not evaluable,
+     * One status per criterion: 'ok', 'verfehlt', 'info' (K11/K12/K16/K17/REP, informational), 'nicht gemessen' (K7 without full runs) or 'n/a' (not evaluable,
      * e.g. no paired seeds or no reference opening). Rules (spec 2.1):
      *  - K1 / K2 / K5: per opening, median <= 1 / <= 3 / <= 2 Sols; for K1/K2
      *    a run that never reached the event (missing > 0) fails — "never" is
@@ -378,7 +412,7 @@ class OpeningComparison
     {
         $na = fn (string $why) => ['status' => 'n/a', 'detail' => $why];
         if ($paired === []) {
-            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11'], $na('no paired seeds'));
+            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'REP'], $na('no paired seeds'));
         }
 
         $perOpeningMax = function (string $k, int $max) use ($kpis, $k7): array {
@@ -460,6 +494,11 @@ class OpeningComparison
             $k11parts[] = "{$opening} ".self::fmt($s['median']).' / '.self::fmt($kpis['k11_25'][$opening]['median']);
         }
 
+        $info = fn (string $label, array $byOpening, string $target) => [
+            'status' => 'info',
+            'detail' => $label.': '.implode('; ', array_map(fn ($o, $s) => "{$o} ".self::fmt($s['median']), array_keys($byOpening), $byOpening))." ({$target})",
+        ];
+
         return [
             'K1' => $perOpeningMax('k1', self::K1_MAX),
             'K2' => $perOpeningMax('k2', self::K2_MAX),
@@ -475,6 +514,10 @@ class OpeningComparison
                 'status' => 'info',
                 'detail' => 'Pool-Rg median Sol 10 / Sol 25: '.implode('; ', $k11parts).' (informational, no target)',
             ],
+            'K12' => $info('Pool-Rg share by ship at Sol 25, median %', $kpis['k12'], 'target hangar >= 85, warn < 70'),
+            'K16' => $info('Sols waiting (needs_level / needs_freighter / ship_busy / no_ship_ready = bot bug if > 3), median of no_ship_ready', $kpis['k16_no_ship_ready'], 'see per-reason rows'),
+            'K17' => $info('Sols with a locked find on a zone tile, median', $kpis['k17'], 'warn: > 0 in more than 2 of 8 runs'),
+            'REP' => $info('Ship repair AP Sol 4-12, median', $kpis['ship_repair_4_12'], 'information next to K4'),
         ];
     }
 
@@ -503,7 +546,7 @@ class OpeningComparison
     {
         return match ($path) {
             'labor' => array_filter($snapshot['researches'] ?? [], fn ($r) => $r['level'] >= 1) !== [],
-            'hangar' => ($snapshot['regolith_sources']['mission'] ?? 0) > 0,
+            'hangar' => (($snapshot['regolith_sources']['mission'] ?? 0) + ($snapshot['regolith_sources']['find_flight'] ?? 0)) > 0,
             'cantina' => ($snapshot['regolith_sources']['trade'] ?? 0) > 0,
             default => false,
         };

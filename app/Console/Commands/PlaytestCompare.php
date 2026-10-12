@@ -27,10 +27,21 @@ class PlaytestCompare extends Command
         {--since= : Only reports written at/after this date/time (e.g. 2026-10-06 or "2026-10-06 14:00")}
         {--dir= : Report directory (default: storage/logs/playtest)}';
 
-    protected $description = 'Compare PlaytestBot openings (K1-K7 and informational K11, paired by seed) from existing report JSONs';
+    protected $description = 'Compare PlaytestBot openings (K1-K7, informational K11/K12/K16/K17, paired by seed) from existing report JSONs';
 
     /** Table labels for KPIs whose key is not just the upper-cased id. */
-    private const KPI_LABELS = ['k11_10' => 'K11 Pool-Rg Sol 10', 'k11_25' => 'K11 Pool-Rg Sol 25'];
+    private const KPI_LABELS = [
+        'k11_10' => 'K11 Pool-Rg Sol 10',
+        'k11_25' => 'K11 Pool-Rg Sol 25',
+        'k12' => 'K12 Schiffsanteil Pool-Rg %',
+        'k16_needs_level' => 'K16 Warten Stufe',
+        'k16_needs_freighter' => 'K16 Warten Frachter',
+        'k16_ship_busy' => 'K16 Warten Schiff unterwegs',
+        'k16_no_ship_ready' => 'K16 Warten kein Schiff bereit',
+        'k17' => 'K17 Zonen-Blockade',
+        'ship_repair_4_12' => 'Reparatur-AP Sol 4-12',
+        'ship_repair_25' => 'Reparatur-AP bis Sol 25',
+    ];
 
     public function handle(): int
     {

@@ -342,11 +342,11 @@ function apUnspentPct(run) {
 }
 
 function regolithTopSource(run) {
-    const totals = { harvester: 0, mission: 0, trade: 0, event: 0 };
+    const totals = { harvester: 0, mission: 0, trade: 0, find: 0, find_flight: 0, event: 0 };
     (run.sols ?? []).forEach(s => {
         Object.keys(totals).forEach(k => { totals[k] += s.regolith_sources?.[k] ?? 0; });
     });
-    const labels = { harvester: 'Harvester', mission: 'Mission', trade: 'Handel', event: 'Ereignis' };
+    const labels = { harvester: 'Harvester', mission: 'Mission', trade: 'Handel', find: 'Fund (selbst)', find_flight: 'Bergungsflug', event: 'Ereignis' };
     const [topKey, topValue] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
     return topValue > 0 ? `${labels[topKey]} (${topValue})` : '—';
 }
@@ -403,9 +403,9 @@ detailCharts.apBreakdown = makeStackedAreaChart(
 );
 detailCharts.regolithSources = makeStackedAreaChart(
     'chart-regolith-sources',
-    ['harvester', 'mission', 'trade', 'event'],
-    ['Harvester', 'Mission', 'Handel', 'Ereignis'],
-    ['#b0ff7f', '#7fbbff', '#ffe07f', '#ff7fa0']
+    ['harvester', 'mission', 'trade', 'find', 'find_flight', 'event'],
+    ['Harvester', 'Mission', 'Handel', 'Fund (selbst)', 'Bergungsflug', 'Ereignis'],
+    ['#b0ff7f', '#7fbbff', '#ffe07f', '#c99bff', '#7fffe0', '#ff7fa0']
 );
 
 const supplyCanvas = document.getElementById('chart-supply-utilization');
@@ -464,7 +464,7 @@ function renderDetailCharts(run) {
     }
     if (detailCharts.regolithSources) {
         detailCharts.regolithSources.data.datasets.forEach(ds => {
-            const key = ['harvester', 'mission', 'trade', 'event'][detailCharts.regolithSources.data.datasets.indexOf(ds)];
+            const key = ['harvester', 'mission', 'trade', 'find', 'find_flight', 'event'][detailCharts.regolithSources.data.datasets.indexOf(ds)];
             ds.data = sols.map(s => ({ x: s.sol, y: s.regolith_sources?.[key] ?? 0 }));
         });
         detailCharts.regolithSources.update();

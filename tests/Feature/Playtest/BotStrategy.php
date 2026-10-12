@@ -48,15 +48,6 @@ class BotStrategy
 
     private const REPAIR_MAINTENANCE_PCT = 0.6;
 
-    // Below this Regolith stock the bot sends a Regolith mission if a ship can fly one.
-    private const REGOLITH_SCARCE_BELOW = 50;
-
-    // [mission_key, difficulty] in preference order — each needs its own ship class
-    // (config/missions.php `ships`), so the first one a docked ship can fly wins.
-    private const REGOLITH_MISSIONS = [
-        ['mission_supply_run', 'easy'],
-    ];
-
     /**
      * Credit missions without a target tile, most lucrative first (reward credits
      * per config/missions.php). 'normal' so a success also counts for
@@ -231,15 +222,26 @@ class BotStrategy
                 ]),
             ],
             [
-                'name' => 'dispatch_regolith_mission',
-                // Baseline 2026-09-26 (B5): dispatch_mission only ever sent recon, so
-                // the Regolith missions (freighter supply run = Path B) never flew and a colony past harvester
-                // exhaustion had no Regolith alternative. Ahead of the compounds
-                // mission: while Regolith is scarce it is the tighter bottleneck.
-                'when' => fn (BotSession $b) => self::regolithMissionCandidate($b),
-                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_regolith_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
-                    'mission_key' => $candidate['mission_key'],
-                    'difficulty' => $candidate['difficulty'],
+                'name' => 'repair_ship_for_flight',
+                // T30 §13.x/11: ships wear only in flight; a find that waits only because its
+                // ship misses the return guarantee (findAction reason ship_worn) gets one repair
+                // click per rule pass until the ship is ready. Without this a worn gift drone
+                // would leave every find on the map (K16 no_ship_ready = bot bug, not balance).
+                'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.ship_repair.ap_per_click', 1)
+                    ? self::repairForFlightCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, array $c) => $b->act('repair_ship_for_flight', 'POST', "/colony/hangar/{$c['bay']}/repair"),
+            ],
+            [
+                'name' => 'dispatch_find_flight',
+                // T30 §13.3: with a hangar, finds are salvaged by flight only. Ship, lock and
+                // wait reasons come from ColonyTileService::findAction() — the same source the
+                // guards and the find card read, so bot and player see one rule.
+                'when' => fn (BotSession $b) => self::findFlightCandidate($b),
+                'do' => fn (BotSession $b, array $c) => $b->act('dispatch_find_flight', 'POST', "/colony/hangar/{$c['bay']}/dispatch", [
+                    'mission_key' => 'mission_find_salvage',
+                    'difficulty' => 'normal',
+                    'target' => ['q' => $c['q'], 'r' => $c['r']],
                 ]),
             ],
             [
@@ -396,15 +398,9 @@ class BotStrategy
                 // this stays gated until all 3 Phase-1 advisors are active.
                 //
                 // Once all 3 are active, shipToRequest() also allows buying further
-                // ships (preferring the freighter, 500cr) WITHOUT requiring a free
-                // hangar slot: HangarService::requestShip supports ship_state =
-                // 'pending' when no slot is free (it decays after
-                // pending_decay_ticks unless a hangar is later built to receive
-                // it) — that's a real, intentional game mechanic, not a bot
-                // workaround. Since the bot's placeCandidate() logic rarely builds
-                // a second Hangar instance, requiring a free slot here would make
-                // it structurally impossible to ever exercise Path B (trade) via a
-                // freighter; see docs/handoff-ap-ratenmodell.md §4/§7.
+                // ships (preferring the freighter), but only into a free bay — a
+                // 'pending' purchase decays (A37-Rest, see its docblock). T30 B1: one
+                // hall whose level opens the bays; the gift drone sits on the apron.
                 //
                 // NOTE (2026-08-03 measurement run, seed=4242): even with this rule
                 // reachable, no ship gets bought in that run — the Hangar isn't
@@ -1017,18 +1013,12 @@ class BotStrategy
     public static function orderPlacementCandidates(array $buildings, array $placedCounts, string $opening): array
     {
         // A37-Rest (2026-09-15): a lower sort priority alone doesn't reserve
-        // zone-tile headroom — Hangar/Housing are the only AFFORDABLE
-        // candidates early game (trust buildings below need compounds,
-        // which doesn't arrive until Sol 70-90), so they fill every one of
-        // the ~16 colony-zone tiles long before trust buildings ever
-        // compete, regardless of sort order. Owner confirmed the design
-        // intent is ~2-3 Hangar instances, not unlimited ("1 Hangar = 1
-        // Schiffslot" — uncapped in config, but not meant to be built
-        // without restraint) — so these are hard-EXCLUDED from the
-        // candidate list entirely once capped, reserving tiles for other
-        // building types rather than "lowest priority but still the only
-        // option".
-        $instanceCap = [44 => 1, 28 => 2]; // hangar (B1: one hall), housingComplex
+        // zone-tile headroom — Housing is one of the few AFFORDABLE candidates
+        // early game (trust buildings need compounds, which don't arrive until
+        // Sol 70-90), so it would fill the colony-zone tiles long before trust
+        // buildings ever compete. Capped Housing is hard-EXCLUDED from the
+        // candidate list, reserving tiles for other building types.
+        $instanceCap = [28 => 2]; // housingComplex — the hangar is a single hall since B1 (T30 §13.2)
         $buildings = array_values(array_filter($buildings, function (array $building) use ($instanceCap, $placedCounts) {
             $id = (int) $building['building_id'];
             $cap = $instanceCap[$id] ?? null;
@@ -1088,8 +1078,8 @@ class BotStrategy
                 }
                 // A37-Rest continuation (2026-09-15): path priority used to
                 // apply unconditionally, not just to a path building's FIRST
-                // instance — but Hangar has uncapped max_instances (GDD
-                // "Hangar-Doppelachse"), so it kept winning every free
+                // instance — the Hangar then had uncapped max_instances (it is a
+                // single hall since T30 B1), so it kept winning every free
                 // colony-zone tile forever (found: 6 hangar instances built,
                 // zero trust buildings ever placed despite priority 2 and
                 // plenty of compounds — the zone tiles were gone before trust
@@ -1611,21 +1601,41 @@ class BotStrategy
             ->first(fn (object $s): bool => self::readyFor($s, (int) config('missions.catalog.mission_recon_flight.sol_distance', 1)));
     }
 
-    /**
-     * A Regolith mission to fly while the stock is below REGOLITH_SCARCE_BELOW:
-     * the first REGOLITH_MISSIONS entry a docked, active, intact ship can fly
-     * whose knowledge gate, Nav-AP and Organika provisions are covered — the same
-     * gates HangarService::dispatchShip() enforces.
-     *
-     * @return array{ship: object, mission_key: string, difficulty: string}|null
-     */
-    private static function regolithMissionCandidate(BotSession $b): ?array
+    /** @return array{bay:int, q:int, r:int}|null largest flyable find first; ship as chosen by findAction() */
+    private static function findFlightCandidate(BotSession $b): ?array
     {
-        if (self::regolith($b) >= self::REGOLITH_SCARCE_BELOW) {
-            return null;
-        }
+        $tiles = app(ColonyTileService::class);
+        $types = config('game.finds.types');
+        $best = DB::table('colony_tiles')
+            ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
+            ->whereIn('event_type', ColonyTileService::FIND_TYPES)
+            ->orderBy('ring')->orderBy('q')->orderBy('r')->get()
+            ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
+            ->filter(fn ($c) => $c['action']['action'] === 'flight'
+                && self::availableAp($b) >= $c['action']['costs']['nav_ap']
+                && self::organics($b) >= $c['action']['costs']['organika'])
+            ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
+            ->first();
 
-        return self::firstFlyableMission($b, self::REGOLITH_MISSIONS);
+        return $best === null ? null
+            : ['bay' => (int) $best['action']['bay'], 'q' => (int) $best['tile']->q, 'r' => (int) $best['tile']->r];
+    }
+
+    /** @return array{bay:int}|null the bay findAction() names for the largest find waiting on a worn ship */
+    private static function repairForFlightCandidate(BotSession $b): ?array
+    {
+        $tiles = app(ColonyTileService::class);
+        $types = config('game.finds.types');
+        $worn = DB::table('colony_tiles')
+            ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
+            ->whereIn('event_type', ColonyTileService::FIND_TYPES)
+            ->orderBy('ring')->orderBy('q')->orderBy('r')->get()
+            ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
+            ->filter(fn ($c) => $c['action']['reason'] === 'ship_worn')
+            ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
+            ->first();
+
+        return $worn === null ? null : ['bay' => (int) $worn['action']['bay']];
     }
 
     /**
@@ -1896,8 +1906,8 @@ class BotStrategy
      * 'pending' ship_state was a safe real-game fallback. In practice it
      * wasn't — found via the new ship_states RunReport snapshot
      * (RunReportShipSnapshotTest): a colony bought 3 pending freighters
-     * (Sol 13-18), all of which decayed away entirely before a 2nd Hangar
-     * instance opened a slot (Sol 35), wasting 1500 Credits into nothing and
+     * (Sol 13-18), all of which decayed away entirely before a free slot
+     * opened (Sol 35), wasting 1500 Credits into nothing and
      * leaving `dispatch_compounds_mission` permanently without an eligible
      * ship for the rest of the run. Now gated on hasFreeBayFor() like
      * the bootstrap drone purchase — a freighter bought without a slot to
@@ -2049,7 +2059,8 @@ class BotStrategy
      * started projects first on a tie. Skips tiles already paid this tick (one
      * deposit per tile and Sol) and does not open a new project once
      * max_open_projects are running. `ap` = min(cap per Sol, remaining AP of the
-     * project, available AP); 0 -> null.
+     * project, available AP); 0 -> null. With a hangar only grandfathered
+     * projects (T30 §13.4).
      *
      * @return object{q:int, r:int, ap:int}|null
      */
@@ -2062,12 +2073,16 @@ class BotStrategy
 
         $types = config('game.finds.types');
         $tick = app(TickService::class)->getTickCount();
+        $service = app(ColonyTileService::class);
         $tiles = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)
             ->where('is_deep_scanned', 1)
-            ->whereIn('event_type', ['find_small', 'find_medium', 'find_large'])
+            ->whereIn('event_type', ColonyTileService::FIND_TYPES)
             ->orderBy('ring')->orderBy('q')->orderBy('r')
-            ->get();
+            ->get()
+            // T30 §13.4: with a hangar only grandfathered projects continue; without, as in Pool v1.
+            ->filter(fn ($t) => in_array($service->findAction($b->colonyId, $t)['action'], ['self_salvage', 'continue_salvage'], true))
+            ->values();
 
         $open = $tiles->filter(fn ($t) => (int) $t->salvage_ap_spent > 0)->count();
         $canOpen = $open < (int) config('game.finds.max_open_projects');
