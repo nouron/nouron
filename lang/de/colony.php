@@ -736,7 +736,6 @@ return [
     'hangar_error_nexus_credit_cc_level' => 'Nexus-Kredit erfordert Kommandozentrale Stufe :level (aktuell :current).',
     'hangar_error_insufficient_credits' => 'Nicht genug Credits: :need benötigt, :have vorhanden.',
     'hangar_error_ship_not_pending' => 'Dieses Schiff wartet nicht auf einen Hangarplatz.',
-    'hangar_error_hangar_not_found' => 'Diesen Hangar gibt es in der Kolonie nicht.',
     'hangar_error_hangar_occupied' => 'In diesem Hangar steht bereits ein Schiff.',
     'hangar_error_unknown_mission' => 'Unbekannte Mission.',
     'hangar_error_no_ship_in_hangar' => 'In diesem Hangar steht kein Schiff.',

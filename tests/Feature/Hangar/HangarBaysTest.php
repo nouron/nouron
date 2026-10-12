@@ -197,6 +197,11 @@ class HangarBaysTest extends TestCase
 
         $res->assertStatus(422)->assertJson(['error' => 'bay_reserved']);
         $this->assertStringEndsWith('/hangar/2/dispatch', route('colony.hangar.dispatch', ['bay' => 2]));
+
+        foreach (['dispatch', 'recall', 'repair'] as $action) {
+            $this->actingAs(User::where('user_id', self::USER_ID)->firstOrFail())
+                ->postJson("/colony/hangar/abc/{$action}")->assertNotFound();
+        }
     }
 
     public function test_apron_ship_can_be_repaired_via_the_bay_route(): void

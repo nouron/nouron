@@ -125,7 +125,7 @@ class HangarService
     }
 
     /**
-     * Returns all pending ships for this colony (no hangar slot assigned yet).
+     * Returns all pending ships for this colony (no hangar bay assigned yet).
      * Joined with ships master table for display name.
      *
      * @return array<int, array{id: int, ship_id: int, name: string, ship_state: string, pending_until_tick: int|null}>
@@ -355,7 +355,7 @@ class HangarService
      * The ship is created immediately in colony_ships with ship_state = 'building'.
      * It transitions to 'docked' when the tick service delivers it (via processHangarDeliveries).
      *
-     * If no free hangar slot is available the ship is created with ship_state = 'pending'
+     * If no free hangar bay is available the ship is created with ship_state = 'pending'
      * and bay = NULL. A pending ship decays (deleted) after
      * config('game.hangar.pending_decay_ticks') ticks unless assigned via assignToHangar().
      *
@@ -478,7 +478,7 @@ class HangarService
             $pendingUntilTick = null;
 
             if ($bay === null) {
-                // No free hangar slot — ship enters pending state.
+                // No free hangar bay — ship enters pending state.
                 $shipState = 'pending';
                 $pendingUntilTick = $currentTick + $pendingDecayTicks;
             }
@@ -504,12 +504,12 @@ class HangarService
     /**
      * Grant a ship at no Credits cost and without touching Nexus-Kredit debt or
      * Trust (A41, Dax/smuggler concern "unofficial delivery"). Mirrors the ship
-     * creation half of requestShip() — free hangar slot lookup, colony_ships
+     * creation half of requestShip() — free hangar bay lookup, colony_ships
      * insert, delivery scheduling — but skips the cost/debt/trust branches
      * entirely, since this ship was never actually ordered through the Nexus.
      *
      * Deliberately does NOT enforce the hangar class level (HangarBays::requiredLevel) — Dax's
-     * delivery is off the books, not a catalog purchase; if no hangar slot is
+     * delivery is off the books, not a catalog purchase; if no hangar bay is
      * free (or no hangar exists yet) the ship simply enters 'pending' state
      * like any other delivery with no free slot.
      *
@@ -631,7 +631,7 @@ class HangarService
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('bay', $bay)
-                ->first();
+                ->lockForUpdate()->first();
 
             if ($ship === null) {
                 throw $this->ruleError('no_ship_in_hangar');
@@ -1123,7 +1123,7 @@ class HangarService
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('bay', $bay)
-                ->first();
+                ->lockForUpdate()->first();
 
             if ($ship === null || $ship->ship_state !== 'docked') {
                 throw $this->ruleError('no_docked_ship');

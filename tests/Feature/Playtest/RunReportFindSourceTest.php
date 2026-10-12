@@ -136,4 +136,20 @@ class RunReportFindSourceTest extends TestCase
         $this->assertSame(0, $sources['find_flight']);
         $this->assertSame(16, $sources['harvester']);
     }
+
+    public function test_flight_payout_counts_even_when_the_sol_net_delta_is_not_positive(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $bot->sol = 1;
+        DB::table('colony_log')->insert(['user' => $bot->userId, 'tick' => 1, 'event' => 'hangar.mission_completed',
+            'area' => 'colony', 'parameters' => json_encode(['rewards' => ['find_regolith' => 15, 'regolith' => 7]]),
+            'is_read' => true, 'created_at' => now()]);
+        $this->pushEntry($bot, 'sol_next', 100, 95); // payout 22 offset by spend elsewhere in the Sol
+
+        $sources = $this->sources($bot);
+
+        $this->assertSame(15, $sources['find_flight']);
+        $this->assertSame(7, $sources['mission']);
+        $this->assertSame(0, $sources['harvester']);
+    }
 }

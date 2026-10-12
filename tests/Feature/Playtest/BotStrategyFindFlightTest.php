@@ -4,7 +4,9 @@ namespace Tests\Feature\Playtest;
 
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
+use App\Services\FindFlightService;
 use App\Services\HangarService;
+use App\Services\ResourcesService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -130,6 +132,28 @@ class BotStrategyFindFlightTest extends TestCase
 
         $this->giveAp($bot, 10);
         $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay'], 'payable: repair chosen');
+    }
+
+    public function test_flight_and_repair_keep_organika_at_or_above_the_food_need(): void
+    {
+        $bot = $this->bootWithHangar(1);
+        $this->makeFind($bot, 'find_small'); // ring 2
+        $need = app(ResourcesService::class)->foodNeed($bot->colonyId);
+        $this->assertGreaterThan(0, $need, 'fixture colony must eat');
+        $cost = app(FindFlightService::class)->costs($bot->colonyId, 2)['organika'];
+        $setOrganika = fn (int $n) => DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 5)->update(['amount' => $n]);
+
+        $setOrganika($need + $cost - 1);
+        $this->assertEmpty($this->rule('dispatch_find_flight')['when']($bot), 'would drop below the food need');
+
+        $setOrganika($need + $cost);
+        $this->assertNotEmpty($this->rule('dispatch_find_flight')['when']($bot));
+
+        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 2]);
+        $setOrganika($need + $cost - 1);
+        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'repair for a flight that would starve the colony');
+        $setOrganika($need + $cost);
+        $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay']);
     }
 
     public function test_no_repair_without_a_waiting_find(): void

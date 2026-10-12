@@ -599,8 +599,6 @@ class ColonyController extends BaseController
                 if ($existingBuilding->tile_x === null) {
                     $update['ap_spend'] = max((int) $existingBuilding->ap_spend, 1);
                     $update['placed_at_tick'] = $this->getTick();
-                } elseif (! $isHarvesterMove) {
-                    $update['ap_spend'] = 1;
                 }
                 // Harvester move: tile updates, ap_spend unchanged. Relocation takes
                 // 1 Sol — no production until arrival. placed_at_tick also advances

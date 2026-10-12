@@ -582,7 +582,7 @@ class OnboardingHintService
 
     /**
      * True once at least one ship of the colony is usable: docked in a hangar or out on
-     * a mission. Ships that are still being built or waiting for a free hangar slot
+     * a mission. Ships that are still being built or waiting for a free hangar bay
      * ('building' / 'pending') are not there yet.
      */
     private function hasArrivedShip(int $colonyId): bool

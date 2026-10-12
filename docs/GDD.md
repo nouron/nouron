@@ -2324,7 +2324,7 @@ Merkregel, aus der Gegenrichtung: **ein reifer Pfad-Hebel ist etwa 60 % eines Ha
 | Pfad | Hebel | reifer Wert |
 |---|---|---|
 | A — Analytik | `geology`, kumuliert max 12 | 12 Rg/Sol |
-| B — Hangar | Bergungsflüge zum Fundpool (T30 Schritt 3; früher `mission_supply_run`, ~6,25 Rg/Sol — Regolith dort gestrichen) | einmaliger Pool, kein Dauerertrag (siehe `docs/game-reference.md`) |
+| B — Hangar | Bergungsflüge zum Fundpool (T30 Schritt 3; früher `mission_supply_run` mit Dauerertrag — Regolith dort gestrichen) | einmaliger Pool, kein Dauerertrag (siehe `docs/game-reference.md`) |
 | C — Cantina | kein dedizierter Hebel (§4b), opportunistischer Kauf via Corvan | 0 (nicht planbar/strukturell) |
 
 ```

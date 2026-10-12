@@ -721,4 +721,26 @@ class TechtreeControllerTest extends TestCase
     {
         DB::table('colony_buildings')->where('colony_id', $this->colonyIdBart)->where('building_id', 44)->update(['level' => 1]);
     }
+
+    // The ship "level / cap" display: cap = bays of the single hangar hall (= hall level), not hall rows.
+    public function test_ship_hangar_cap_is_the_hall_level_not_the_row_count(): void
+    {
+        $this->assertSame(3, (int) DB::table('colony_buildings')->where('colony_id', $this->colonyIdBart)->where('building_id', 44)->value('level'));
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $drone = null;
+        foreach ($pageData['phases'] as $phase) {
+            $drone ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'ship' && $t['id'] === 85);
+        }
+        $this->assertSame(3, $drone['hangar_cap']);
+
+        DB::table('colony_buildings')->where('colony_id', $this->colonyIdBart)->where('building_id', 44)->update(['level' => 0]);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $drone = null;
+        foreach ($pageData['phases'] as $phase) {
+            $drone ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'ship' && $t['id'] === 85);
+        }
+        $this->assertSame(1, $drone['hangar_cap'], 'a standing hall at level 0 still has the apron');
+    }
 }

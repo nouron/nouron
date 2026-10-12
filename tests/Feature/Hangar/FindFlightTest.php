@@ -355,4 +355,17 @@ class FindFlightTest extends TestCase
         $this->assertRejected('no_docked_ship', fn () => $this->app->make(HangarService::class)->repairShip(self::COLONY_ID, 0));
         $this->assertSame(10.0, (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('status_points'));
     }
+
+    public function test_second_dispatch_of_the_same_ship_to_another_find_is_refused_without_cost(): void
+    {
+        $this->ship(self::DRONE, 0);
+        $this->find(2, 2, 'find_small');
+        $this->find(-2, 2, 'find_small');
+        $this->fly(0, 2);
+        [$ap, $or] = [$this->ap(), $this->organics()];
+
+        $this->assertRejected('ship_not_docked', fn () => $this->fly(0, -2));
+        $this->assertSame([$ap, $or], [$this->ap(), $this->organics()]);
+        $this->assertSame(1, DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->where('state', 'active')->count());
+    }
 }

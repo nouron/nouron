@@ -99,7 +99,7 @@ class AdvisorController extends BaseController
         $advisorsByPersonellId = $advisors->keyBy('personell_id');
 
         // Resolve path advisor keys for positions 2–4, in placement order.
-        // Grouping ensures instanced buildings (e.g., multiple hangar instances) contribute only
+        // Grouping ensures instanced buildings (e.g., multiple Harvester instances) contribute only
         // once, ordered by their first placement (DISTINCT + ORDER BY a non-selected column is
         // rejected by MySQL).
         $pathBuildingIds = DB::table('colony_buildings')

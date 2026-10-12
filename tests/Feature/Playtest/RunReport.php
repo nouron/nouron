@@ -108,8 +108,9 @@ class RunReport
      * and 'harvester' (the remainder — Regolith has no other tick-driven
      * source). 'event' stays 0: encounters affect production/AP, not a direct
      * Regolith credit, per GDD §9 — kept as a key for forward compatibility.
-     * Only ok=true entries and positive deltas count; a rejected action or a
-     * net-negative delta (repair spend, etc.) is not a "source".
+     * Only ok=true entries and positive deltas count (a rejected action or a
+     * net-negative delta is not a "source"); the sol_next payouts are read from the
+     * log and do not need a positive net delta.
      */
     private function regolithSources(BotSession $bot): array
     {
@@ -121,7 +122,9 @@ class RunReport
             }
 
             $delta = $entry['regolith_after'] - $entry['regolith_before'];
-            if ($delta <= 0) {
+            // The Sol-end payout comes from the logged mission rewards, so it counts even
+            // when other spend made the net delta <= 0; every other rule needs a gain.
+            if ($delta <= 0 && $entry['rule'] !== 'sol_next') {
                 continue;
             }
 

@@ -392,7 +392,7 @@ class BotStrategy
                 'name' => 'request_ship',
                 // Bootstrap ship (drone, cheapest, matches mission_recon_flight — the
                 // only ship type mission_recon_flight accepts, config('missions')) is
-                // capped at one and requires a free hangar slot, so it always docks
+                // capped at one and requires a free hangar bay, so it always docks
                 // and can actually fly recon. request_ship has no mission-driven
                 // demand signal, and unbounded drone-buying (300cr each) would
                 // starve hire_advisor's remaining hires of credits permanently, so
@@ -1081,7 +1081,7 @@ class BotStrategy
                 // apply unconditionally, not just to a path building's FIRST
                 // instance — the Hangar then had uncapped max_instances (it is a
                 // single hall since T30 B1), so it kept winning every free
-                // colony-zone tile forever (found: 6 hangar instances built,
+                // colony-zone tile forever (found: 6 hangars built, back when more than one was allowed,
                 // zero trust buildings ever placed despite priority 2 and
                 // plenty of compounds — the zone tiles were gone before trust
                 // buildings got a turn). Same fix shape as bioFacility above:
@@ -1607,6 +1607,8 @@ class BotStrategy
     {
         $tiles = app(ColonyTileService::class);
         $types = config('game.finds.types');
+        // A flight must not eat the colony's food for this Sol (hunger streak / trust malus).
+        $foodNeed = app(ResourcesService::class)->foodNeed($b->colonyId);
         $best = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
             ->whereIn('event_type', ColonyTileService::FIND_TYPES)
@@ -1614,7 +1616,7 @@ class BotStrategy
             ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
             ->filter(fn ($c) => $c['action']['action'] === 'flight'
                 && self::availableAp($b) >= $c['action']['costs']['nav_ap']
-                && self::organics($b) >= $c['action']['costs']['organika'])
+                && self::organics($b) - $c['action']['costs']['organika'] >= $foodNeed)
             ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
             ->first();
 
@@ -1628,6 +1630,7 @@ class BotStrategy
         $tiles = app(ColonyTileService::class);
         $flights = app(FindFlightService::class);
         $types = config('game.finds.types');
+        $foodNeed = app(ResourcesService::class)->foodNeed($b->colonyId);
         $worn = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
             ->whereIn('event_type', ColonyTileService::FIND_TYPES)
@@ -1636,10 +1639,10 @@ class BotStrategy
             ->filter(fn ($c) => $c['action']['reason'] === 'ship_worn')
             // Repair only when the flight that follows is payable (Organika + repair AP + Nav-AP),
             // otherwise the repair AP leak and a recon could take the drone meanwhile.
-            ->filter(function ($c) use ($b, $flights) {
+            ->filter(function ($c) use ($b, $flights, $foodNeed) {
                 $costs = $flights->costs($b->colonyId, (int) $c['tile']->ring);
 
-                return self::organics($b) >= $costs['organika']
+                return self::organics($b) - $costs['organika'] >= $foodNeed
                     && (int) $c['action']['repair_ap'] + $costs['nav_ap'] <= self::availableAp($b);
             })
             ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
@@ -1905,14 +1908,14 @@ class BotStrategy
     /**
      * Which ship (if any) request_ship should buy next, or null if none is
      * affordable/allowed right now. First ship is always the cheapest drone,
-     * bought only into a free hangar slot so it actually docks and can fly
+     * bought only into a free hangar bay so it actually docks and can fly
      * mission_recon_flight. Further purchases only open up once all 3
      * Phase-1 advisors are hired, preferring the freighter (needed to ever
      * exercise the trade/Path-B code path, and now dispatch_compounds_mission)
      * over another drone.
      *
      * A37-Rest continuation (2026-09-15): the freighter branch used to buy
-     * regardless of a free hangar slot, reasoning that HangarService's
+     * regardless of a free hangar bay, reasoning that HangarService's
      * 'pending' ship_state was a safe real-game fallback. In practice it
      * wasn't — found via the new ship_states RunReport snapshot
      * (RunReportShipSnapshotTest): a colony bought 3 pending freighters

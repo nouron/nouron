@@ -6,6 +6,7 @@ use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\AdvisorService;
+use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
@@ -33,6 +34,7 @@ class TechtreeController extends BaseController
         private readonly OnboardingHintService $onboardingHintService,
         private readonly BuildingUnlockService $buildingUnlockService,
         private readonly KnowledgeEffectDescriptionService $knowledgeEffectDescriptionService,
+        private readonly HangarService $hangarService,
     ) {
         parent::__construct($tick);
     }
@@ -111,8 +113,11 @@ class TechtreeController extends BaseController
             ->groupBy('building_id')
             ->pluck('cnt', 'building_id');
 
-        // Total hangar instances (building_id=44) = ship capacity
-        $hangarCap = (int) ($instanceCounts[44] ?? 0);
+        // Ship capacity = bays of the single hangar hall (T30 B1): hall level, at least
+        // the apron once a hall stands.
+        $hangarCap = isset($instanceCounts[44])
+            ? max(1, $this->hangarService->hangarMaxLevel($colonyId))
+            : 0;
 
         // Read-only instance list for the detail panel (A43) — actions live in the colony view.
         $placedInstances = $this->buildingService->placedInstances($colonyId);
