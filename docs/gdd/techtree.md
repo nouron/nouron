@@ -69,7 +69,7 @@ Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Lab
 
 #### Schiffe
 
-Drei semantisch klare Typen: Drohne erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Slots (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
+Drei semantisch klare Typen: Drohne erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Buchten (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
 
 | Key (intern) | Name (DE) | Voraussetzung |
 |---|---|---|

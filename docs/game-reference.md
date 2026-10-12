@@ -133,7 +133,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 ## 7b. Hangar B1 (T30 Schritt 3)
 
-**Eine Halle** (`is_instanced` 0, nicht zweimal platzierbar). Stufe n = Schiffsklasse n **und** n Ladebuchten (Ladebucht 1–3). Das **Vorfeld** (Bucht 0) existiert ab Stufe 1, gehört nur der Geschenk-Drohne und zählt nicht als Bucht. Ein Schiff ist inaktiv, wenn Hallenstufe < max(Klassenstufe, Bucht). Stufenkosten unverändert flat 25 Rg. `colony_ships.bay` (NULL = `pending`), `unique(colony_id, bay)`.
+**Eine Halle** (`is_instanced` 0, nicht zweimal platzierbar). Stufe n = Schiffsklasse n **und** n Buchten (Bucht 1–3). Das **Vorfeld** (Bucht 0) existiert ab Stufe 1, gehört nur der Geschenk-Drohne und zählt nicht als Bucht. Ein Schiff ist inaktiv, wenn Hallenstufe < max(Klassenstufe, Bucht). Stufenkosten unverändert flat 25 Rg. `colony_ships.bay` (NULL = `pending`), `unique(colony_id, bay)`.
 
 **Geschenk-Drohne:** Beim ersten Erreichen von Hangar Stufe 1 steht eine Drohne auf dem Vorfeld, ohne Credits und Schuld; einmal pro Lauf (`HangarService::ensureGiftDrone`, CommLog-Eintrag).
 

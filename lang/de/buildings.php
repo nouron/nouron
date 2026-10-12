@@ -26,7 +26,7 @@ return [
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
     'hangar' => 'Hangar',
-    'hangar_desc' => 'Hangar mit Ladebuchten. Jede Ausbaustufe öffnet eine weitere Ladebucht und die nächste Schiffsklasse; auf dem Vorfeld steht die Geschenk-Drohne.',
+    'hangar_desc' => 'Hangar mit Buchten. Jede Ausbaustufe öffnet eine weitere Bucht und die nächste Schiffsklasse; auf dem Vorfeld steht die Geschenk-Drohne.',
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 

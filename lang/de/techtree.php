@@ -18,7 +18,7 @@ return [
 
     // ── Ausbaustufen-Beinamen (tier_* Keys, Design-Spec 2026-08-23) ──────────
     'tier_hangar_1' => 'Startmodul',
-    'tier_hangar_2' => 'Ladebucht',
+    'tier_hangar_2' => 'Frachtrampe',
     'tier_hangar_3' => 'Anlegestelle',
     'tier_securityHub_3' => 'Bergungsdienst',
     'tier_infirmary_3' => 'Vollausstattung',

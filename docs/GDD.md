@@ -808,9 +808,9 @@ Der Hangar ist ein einzigartiges Gebäude (genau eine Halle, keine weiteren Inst
 | Wirkung der Stufe | bedeutet | Deckel |
 |---|---|---|
 | **Schiffsklasse** | Lv1 Drohne, Lv2 Frachter, Lv3 Korvette (dazu `defense` ab Lv2) | Lv3 |
-| **Ladebuchten** | Stufe n öffnet n Ladebuchten; ein Schiff steht in genau einer Bucht | Lv3 |
+| **Buchten** | Stufe n öffnet n Buchten; ein Schiff steht in genau einer Bucht | Lv3 |
 
-Dazu kommt das **Vorfeld**: Es existiert ab Stufe 1, gehört nur der Geschenk-Drohne und zählt nicht als Bucht. Ein Schiff ist aktiv, solange die Halle mindestens seine Klassenstufe und seine Ladebucht-Nummer erreicht; sinkt sie darunter, wird es inaktiv (§7). Eine Halle fasst so ein Schiff pro Stufe, eine größere Halle auch größere Schiffe — ohne zweite Gebäudeachse, die das knappe Koloniefeld belegen würde. Zahlen und Kosten: `docs/game-reference.md#7b-hangar-b1-t30-schritt-3`.
+Dazu kommt das **Vorfeld**: Es existiert ab Stufe 1, gehört nur der Geschenk-Drohne und zählt nicht als Bucht. Ein Schiff ist aktiv, solange die Halle mindestens seine Klassenstufe und seine Buchtnummer erreicht; sinkt sie darunter, wird es inaktiv (§7). Eine Halle fasst so ein Schiff pro Stufe, eine größere Halle auch größere Schiffe — ohne zweite Gebäudeachse, die das knappe Koloniefeld belegen würde. Zahlen und Kosten: `docs/game-reference.md#7b-hangar-b1-t30-schritt-3`.
 
 ### Datenmodell: `max_level` und `max_instances`
 
@@ -868,7 +868,7 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Slots und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Buchten und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
 
 ```
 supply_cap    = min(CC-Grundbeitrag + Σ(Wohnhabitat-Stufen) × Cap-pro-Wohnhabitat-Stufe + Σ(Kenntnisse-Cap-Bonus), Hard-Cap)
@@ -901,7 +901,7 @@ Daraus folgt die Strategie-Abwägung:
 
 > **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(anwesende Kolonisten, supply_per_eater)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt; exakter Divisor: `config/game.php → food.supply_per_eater`), das **Wohnhabitat** (`supply_cap` pro Einheit, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), der **Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse** (§10), und der CC-Ausbau. Supply bleibt unverändert.
 
-> **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Slots + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
+> **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Buchten + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
 
 > **Kolonisten-Framing — vorgezogen (2026-08-02, war „Phase 4+"):** Supply wird als **Kolonisten** dargestellt — „47 Kolonisten im Einsatz / 60 verfügbar" statt „Supply 47/60". Mechanik bleibt identisch (Cap-Modell), nur die UI-Sprache wird konkreter. Implementierungsaufwand: minimal (nur Labels + Tooltips).
 >

@@ -71,7 +71,7 @@ Gilt für: Colony, Berater, Techtree, Handel, Nachrichten, Flotte, Galaxis, Syst
 
 Screens mit Carousel-Navigation (aktuell: Berater-Screen, Hangar-Screen).
 
-- Card-basierte Darstellung: eine Entität pro Card (ein Berater, ein Hangar-Slot)
+- Card-basierte Darstellung: eine Entität pro Card (ein Berater, eine Hangarbucht)
 - Navigation: Swipe auf Mobile, Pfeil-Buttons auf Desktop, Dots-Pager unterhalb der Cards als Positionsanzeige
 - Kein horizontales Scrolling der gesamten Seite — nur der Carousel-Bereich scrollt
 - Stack: Alpine.js für State (aktiver Index, Swipe-Events), PicoCSS für Card-Grundlayout, Carousel-Logik in `public/js/carousel.js` + `public/css/carousel.css`. Kein jQuery, kein Bootstrap.

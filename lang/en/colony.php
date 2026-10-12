@@ -427,7 +427,7 @@ return [
     'hangar_error_insufficient_ap' => 'Not enough AP: :requested needed, :available available.',
     'hangar_error_nexus_credit_cc_level' => 'Nexus credit requires Command Center level :level (currently :current).',
     'hangar_error_insufficient_credits' => 'Not enough Credits: :need needed, :have available.',
-    'hangar_error_ship_not_pending' => 'This ship is not waiting for a hangar slot.',
+    'hangar_error_ship_not_pending' => 'This ship is not waiting for a hangar bay.',
     'hangar_error_hangar_occupied' => 'This hangar already holds a ship.',
     'hangar_error_unknown_mission' => 'Unknown mission.',
     'hangar_error_no_ship_in_hangar' => 'There is no ship in this hangar.',
