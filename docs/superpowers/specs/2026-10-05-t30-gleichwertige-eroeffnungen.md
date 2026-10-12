@@ -1323,3 +1323,194 @@ Quelle der Punkte 7–11: `.superpowers/sdd/2026-10-09-t30-pool-v1-fundpool/desi
 
 
 **Rulings 2026-10-11 (Controller, nach Designer-Vorschlag, Owner kann widerrufen):** (1) Zonen-Kachel-Sperre großer Funde: erst K17 messen, bei Bedarf Generator-Regel (a) „große Funde nie auf Zonen-Kacheln". (2) Keine eigene Bot-Regel für Frachter-Ausbau wegen großer Funde in v1; erst K16 (Wartesole) messen.
+
+---
+
+## 14. Nach der Schritt-3-Messung: Hangar-Balance und Ausbau-Politik der Pfadgebäude (2026-10-12)
+
+**Autor:** game-designer (Analyse + Vorschlag, keine Code-, Config- oder GDD-Änderung). **Config** = gelesen, **Messung** = aus den Reports, **Vorschlag** = neuer Wert oder neue Regel, **Annahme** = Handrechnung oder eigene Deutung.
+
+**Datenbasis:** 12 Läufe (`default` × `labor|hangar|cantina` × Seeds 1–4, abgebrochen bei Sol 25), Reports `storage/logs/playtest/default-*-20261012_1738*/1739*.json`, Auswertung `php artisan game:playtest-compare --profile=default --openings=labor,hangar,cantina --seeds=1,2,3,4 --since="2026-10-12 17:30:00"`. Die Stufen-Sole in 14.2 habe ich aus den Gebäude-Snapshots je Sol gezählt (Sol 0–24, Genauigkeit ±1 Sol). Der Zeitverlauf je Sol (AP, Rg, Log) ist an Seed 1 (Hangar, Labor, Cantina) im Detail geprüft.
+
+**Owner-Vorgabe (2026-10-12):** „Der Bot sollte definitiv Stufe 2 und 3 bauen wollen – das gilt analog auch für die anderen Pfade.“
+
+### 14.1 Messergebnis Schritt 3
+
+| Kennzahl | Labor | Hangar | Cantina | Ziel | Bewertung |
+|---|---|---|---|---|---|
+| K2 erster Pfad-Ertrag (Sol) | 1,5 | 3 (vorher nie) | 1 (1 Lauf nie) | ≤ 3 | erfüllt |
+| K3 Phase-2-Start | 16,5 | **15** | 16 | Abstand ≤ 2, Hangar nicht > 2 vor Labor | erfüllt (Hangar 1,5 vorn) |
+| K4 Leerlauf-AP Sol 4–12 | 0,5 | **63** | 25 | Abstand zu Labor ≤ 20 | **Hangar verfehlt (+62,5)**, Cantina knapp verfehlt (+24,5) |
+| K5 leere Sole | 0 | 2 | 0 | ≤ 2 | Hangar am Rand |
+| K6 Rg zu Beginn Sol 10 | 79 | 97 | 69 | Spanne ≤ 25 | knapp verfehlt (28) |
+| K11 Pool-Rg bis Sol 25 | 3 | 60 | 28 | Hangar höher | erfüllt |
+| K12 Anteil über Schiff | – | 100 % | – | ≥ 85 % | erfüllt |
+| K16 Wartesole Hangar | – | `needs_level` 11, `ship_busy` 8, `no_ship_ready` 0 | – | `no_ship_ready` ≤ 3 | kein Bot-Bug; der große Fund wartet 11 Sole auf Stufe 2 |
+| K17 Zonen-Blockade | 0 | 0 | 0 | 0 | erfüllt |
+| Reparatur-AP | 0 | 0 | 0 | Information | – |
+
+**Lesart:** Hangar-First ist jetzt der schnellste Pfad (Phase 2 an Sol 15) und holt doppelt so viel aus dem Pool wie Cantina-First. Gleichzeitig liegen dort rund 63 AP in Sol 4–12 brach. Der Auslöser für Folgeschritt V (§13.8: Hangar-K4 − Labor-K4 > 20) ist erreicht.
+
+### 14.2 Ist-Analyse: wann und warum der Bot welche Stufe baut
+
+#### Stufen-Sole je Eröffnung (Messung, Median der 4 Seeds, ±1 Sol)
+
+| Eröffnung | eigenes Pfadgebäude Lv1 | eigenes Lv2 | eigenes Lv3 | 2. Pfadgebäude platziert / Lv2 | 3. Pfadgebäude |
+|---|---|---|---|---|---|
+| Labor | Sol 6 | Sol 15–16 | nie | Hangar Sol 12–13 / Sol 18–19 | bis Sol 24 nicht gebaut |
+| Hangar | Sol 6 | **Sol 18 (alle 4 Läufe)** | nie | Labor Sol 12 / Sol 14 | bis Sol 24 nicht gebaut |
+| Cantina | Sol 6 | Sol 18–19 | nie | Labor Sol 12 / Sol 15 | bis Sol 24 nicht gebaut |
+
+Das Muster ist bei allen drei Pfaden gleich: Das **eigene** Pfadgebäude steht 9–12 Sole auf Stufe 1, Stufe 3 erreicht kein Pfadgebäude. Beim Hangar fällt es nur auf, weil dort der große Fund an Stufe 2 hängt (K16 `needs_level` = 11).
+
+#### Ursachen im Code (`tests/Feature/Playtest/BotStrategy.php`, gelesen)
+
+| # | Ursache | Stelle | Wirkung in der Messung |
+|---|---|---|---|
+| U1 | **Deckel Stufe 2:** `invest_production` nimmt nur Gebäude mit `cb.level < 2`. Stufe 3+ baut nur die Fokus-Regel `focus_engineering_levelup`, und die gibt es nur bei `objectiveFocus > 0`, nicht im Profil `default`. | `productionInvestCandidate()`, `focusRules()` | Stufe 3 kommt im Profil `default` nie vor |
+| U2 | **Pfad-Puffer:** Solange weniger als 3 Berater aktiv sind, filtert der Bot jede Stufe, die Regolith kostet, sobald Rg < Preis des billigsten noch nicht platzierten Pfadgebäudes (95 + 25 Rg). | `productionInvestCandidate()` (`$buffered`), `cheapestPendingPathBuildingCost()` | Hangar Seed 1, Sol 7–11: Rg steigt 25 → 112, Stufe 2 (25 Rg) bleibt gesperrt. Ungenutzte AP 7/13/15/14/15 = **64**. Labor-First steckt dieselben Sole in Forschung (15 AP/Sol, 0 ungenutzt). Cantina-First lässt 23 AP liegen. |
+| U3 | **Sortierung nur auf das Phase-1-Ziel:** zuerst Pfadgebäude auf Stufe 0, dann der billigste Weg zu Lv2 (Rg, dann AP). Für Phase 1 reichen zwei Nicht-CC-Gebäude auf ≥ Lv2. Das Wohnhabitat (Supply-Gate-frei) und das frisch platzierte zweite Pfadgebäude gewinnen. | `productionInvestCandidate()` (`pathFirst`, `costToLevel2`) | Hangar Seed 1: Wohnhabitat Lv2 Sol 13, Labor Lv2 Sol 14, Hangar Lv2 erst Sol 18 |
+| U4 | **CC-Ausbau in Phase 2 ist kurzsichtig:** `invest_cc` steht vor allen Bauregeln und versucht ab Phase 2 jedes Sol CC Lv4 (4 × 30 = 120 Rg, `cc_upgrade_regolith_per_level`). Er scheitert, die Regel ist für das Sol gesperrt, und das Regolith fließt in tiefere Regeln ab. Ein Sparziel gibt es nicht. | Regel `invest_cc` | `resource_limit` 15–16 je Lauf in allen 12 Läufen. In Hangar Seed 1 ist es im Log jedes Sol 15–24 `invest_cc`. Für die übrigen 11 Läufe schließe ich das aus derselben Zahl (Annahme). CC bleibt bis Sol 24 auf Stufe 3. Das ist die Bug-Familie „myopische Regel“ (Memory). |
+| U5 | **Frachter erst mit 3 Beratern:** `shipToRequest()` kauft nach dem ersten Schiff nur bei ≥ 3 aktiven Beratern | `shipToRequest()` | heute nicht bindend (Stufe 2 kommt nach dem 3. Berater, `needs_freighter` = 0). Bindet sofort, sobald Stufe 2 früher kommt. |
+| U6 | **Forschung nach niedrigster ID:** Bauwesen → Kartografie → Geologie. Der Filter prüft nur die Laborstufe. | `researchOptions()` | Labor Seed 1: Bauwesen Lv3 an Sol 12, Kartografie bis Sol 22, **Geologie Lv1 erst ca. Sol 20**. Der Regolith-Hebel des Labors (§11.4: 60–100 Rg bis Sol 25) fehlt in den Bot-Läufen fast ganz. K6/K11 unterschätzen den Labor-Pfad. |
+
+**Warum der Hangar 11 Sole auf Stufe 1 bleibt:** U2 sperrt Stufe 2 bis zum zweiten Pfadgebäude (Sol 12). Danach verliert die eigene Halle nach U3 gegen Wohnhabitat und Labor. In Phase 2 frisst U4 das Regolith. Mit Hangar-Logik hat das nichts zu tun. Labor und Cantina werden aus denselben Gründen gebremst, dort fällt es nur nicht als Wartezeit auf.
+
+### 14.3 Kosten und Nutzen von Stufe 2 und 3 je Pfad
+
+Kosten je Stufe sind für alle drei Pfadgebäude gleich (Config): 25 Rg (`game.build.levelup_regolith_flat`) + 10 AP (`ap_for_levelup`, Bauwesen-Rabatt) + 6 Supply. `max_level`: Labor 5, Hangar 3, Cantina 3.
+
+| Pfad | Stufe 2 bringt (Config) | Stufe 3 bringt (Config) | Rg-Äquivalent bis Sol 25 (Annahme) |
+|---|---|---|---|
+| **Labor** | Geologie freigeschaltet (Harvester +3 / +3 / +2 Rg/Sol je Kenntnisstufe, `geology_harvester_bonus_per_level`), Kenntnis-AP −6 % | Verteidigung freigeschaltet (zusätzlich Hangar Lv2 nötig), Kenntnis-AP Σ −13 %; Lv4/5: Σ −21/−30 % | Stufe 2 an Sol 7 und Geologie zuerst: Lv1 ca. Sol 9, Lv2 ca. Sol 11, Lv3 ca. Sol 14 (14–15 AP/Sol Forschung, Rabatt 6 %). Ergibt +3 × 2 + 6 × 3 + 8 × 10 ≈ **100 Rg** bis Sol 24, abzüglich 25 Rg Stufe. Stufe 3: ca. 1 AP/Sol gespart. |
+| **Hangar** | Frachter-Klasse + Bucht 2: großer Fund wird bergbar (18 Rg × 1,5 = **27 Rg**, Ring 3: 4 AP, 6 Or; Frachter 500 Cr, +2 Vertrauen); Platz für eine zweite Drohne | Korvette (800 Cr) + Bucht 3. **Die Korvette trägt keine Funde** (E5). Sie öffnet Geleitschutz (560 Cr, 6 AP, 6 Sole), Patrouille (440 Cr + Vertrauen, braucht Verteidigung 1), Ruinen-Expedition (440 Cr). | Stufe 2: +27 Rg, etwa 11 Sole früher als heute. Stufe 3: 0 Rg; ca. 90 Cr/AP über Geleitschutz; Bucht 3 nur für ein weiteres Schiff. |
+| **Cantina** | +3 Vertrauen; Begegnung 20 → 28 %; Wette 80 → 110 Cr (Einsatz 15 → 20 Rg); Auktion 50 → 76 Cr; Kontrakt 16 → 24 Cr/Sol × 3; Angebote 2 → 3 gleichzeitig, Laufzeit 2 → 3; Anliegen 10 → 14 % | +3 Vertrauen; Begegnung 36 %; mindestens 1 Gast; 4 Angebote; 140 / 100 / 32 Cr | ca. 0 Rg (Fens 20–30 Rg bei 50 % sind selten, Wetteinsätze kosten Rg). Der Wert liegt bei Credits und Vertrauen. |
+
+**Stufe 2 belastet Phase 1 kein Regolith (Annahme, wichtig für K3):** Phase 1 verlangt ohnehin zwei Nicht-CC-Gebäude auf Lv2 (`RunProgressService::checkPhase1Completion()`). Baut der Bot das eigene Pfadgebäude früh auf Lv2, ersetzt das die Lv2 von Wohnhabitat oder zweitem Pfadgebäude. Die Rg-Summe der Phase-1-Kette bleibt gleich, nur die Reihenfolge ändert sich. Das zweite Pfadgebäude kommt um 25 / 18 ≈ 1,4 Sole später (Harvester y1). Diesen Rückstand holt der Bot danach wieder auf, weil eine Lv2 weniger fehlt.
+
+### 14.4 Ausbau-Politik für den Bot (Vorschlag)
+
+**Grundsatz:** Der Ausbau richtet sich nach dem Bedarf. Er nutzt die Phase-1-Neutralität von Stufe 2 und wird in Phase 2 über **ein** Sparziel geordnet, statt dass jede Regel einzeln am Regolith scheitert (U4). Alles hier ist Bot-Verhalten, keine Spielregel.
+
+| Pfad | Auslöser Stufe 1 → 2 | Puffer | Auslöser Stufe 2 → 3 | Hinweis |
+|---|---|---|---|---|
+| Labor | sofort nach Stufe 1, sobald 25 Rg da sind (Phase 1, zählt als Phase-1-Lv2) | Ausnahme vom Pfad-Puffer (U2), solange weniger als 2 Nicht-CC-Gebäude auf ≥ Lv2 stehen oder im Bau sind | Phase 2, Sparziel-Reihenfolge (unten) | dazu: Geologie zuerst erforschen, sobald freigeschaltet (U6). Ein Mensch würde das für Regolith so machen (Annahme). |
+| Hangar | (a) ein gescannter großer Fund wartet (`findAction` → `needs_level`) **oder** (b) wie Labor als Phase-1-Lv2 | wie Labor; bei (a) auch nach Erreichen der Phase-1-Lv2 | Phase 2, Sparziel-Reihenfolge; Korvette nur kaufen bei Credits ≥ 800 über der Reserve | Frachter-Ausnahme (U5): kaufen, wenn ein großer Fund auf `needs_freighter` wartet, Bucht 2 frei ist und danach noch die nächste Einstellung bezahlbar bleibt, auch bei weniger als 3 Beratern |
+| Cantina | wie Labor als Phase-1-Lv2 | wie Labor | Phase 2, Sparziel-Reihenfolge | Wert liegt in Credits und Vertrauen. Kein Rg-Auslöser möglich. |
+
+**Phase-2-Sparziel (Vorschlag, behebt U4 gleich mit):** Es gibt immer genau ein Ziel mit Rg-Bedarf. Bis es erreicht ist, dürfen Bau-, Platzierungs- und Rg-Handelsregeln nur das Regolith **über** diesem Bedarf ausgeben. Ausgenommen sind Ernährung (`feed_colony`) und kritische Reparatur. Reihenfolge:
+
+1. CC Lv4 (120 Rg)
+2. eigenes Pfadgebäude Lv3
+3. zweites Pfadgebäude Lv2 → Lv3
+4. drittes Pfadgebäude platzieren (120 Rg)
+5. CC Lv5 (150 Rg)
+6. Labor Lv4/5
+
+Labor Lv4/5 ist nur sinnvoll, wenn die Kenntnis-Stufen 4/5 durch CC4/5 schon erreichbar sind. Das Sparziel ersetzt `ccResearchReserve()` (T17) und arbeitet wie dieses über `regolithReserve()`.
+
+> ⚠️ BALANCE CONCERN: Ein Sparziel kann selbst zur Leerlauf-Falle werden. Dann wartet der Bot mehrere Sole auf 120 Rg, während Vertrauensgebäude liegen bleiben. Gegenmittel: das Ziel nur halten, solange es mit dem Harvester-Ertrag in höchstens 5 Solen erreichbar ist (Vorschlag), sonst überspringen. Messen: Sole mit gehaltener Reserve und ungenutztem Rg.
+
+**Einordnung in die Regelliste (Vorschlag):** neue Regel `invest_path_tier` direkt nach `invest_cc`. AP sind in Phase 1 kaum knapp, Regolith schon, deshalb ist die frühe Position unkritisch. Im Labor-First nimmt sie der Forschung 10 AP. Die Fokus-Regel `focus_engineering_levelup` bleibt unverändert.
+
+**Bot-Stellschrauben (`BotProfile`, bot-seitig):**
+- `pathTierPolicy` ∈ {`off` = heutiges Verhalten als Referenz, `lv2_early`, `lv2_lv3`}
+- `hangarLv2Trigger` ∈ {`phase1` = vor dem zweiten Pfadgebäude, `after_second_path`}
+
+Der zweite Wert ist die Rückfallebene, falls Hangar-K3 mehr als 2 Sole vor Labor liegt.
+
+### 14.5 Hangar-Balance: Verlade-AP (Folgeschritt V) und Alternativen
+
+**Diagnose:** Der K4-Abstand des Hangars entsteht vor allem im **Regolith-Warteblock vor dem zweiten Pfadgebäude** (U2, Sol 7–11). In diesem Block hat Hangar-First keinen AP-Abnehmer ohne Regolith-Kosten, Labor-First hat die Forschung. Billige Flüge verstärken das: Die Selbstbergung der vier im Fenster erreichbaren Funde (3 klein, 1 mittel) hätte 3 × 12 + 16 = 52 AP gebunden, die Flüge kosten 3 × 2 + 4 = 10 AP. Das passt zu Pool v1, wo Hangar-K4 bei 22 lag. Gemessen kosteten die Flüge keine Reparatur-AP.
+
+**Rechenbeispiel Start-Pool (Config: Funde 4/10/18 Rg, Selbstbergung 12/16/22 AP, Flug Ring 2: 2 AP, Ring 3: 4 AP, Faktor 1,5):**
+
+| Weg | AP gesamt | Rg | Rg je AP | AP im Fenster Sol 4–12 (Annahme: 3 klein + 1 mittel, groß gesperrt) |
+|---|---|---|---|---|
+| Selbstbergung (ohne Hangar) | 74 | 40 | 0,54 | 52 |
+| Bergungsflug heute | 14 (Reparatur gemessen 0) | 60 | 4,3 | 10 |
+| V1 Verlade-AP je Fundgröße 6 / 8 / 11 (≈ halbe Selbstbergung, Vorschlag §13.8) | 14 + 37 = 51 | 60 | 1,2 | 10 + 26 = 36 |
+| V2 Verlade-AP je Ring (Ring 2: +3, Ring 3: +6) | 14 + 21 = 35 | 60 | 1,7 | 10 + 15 = 25 |
+| V3 pauschal +5 AP je Flug | 14 + 25 = 39 | 60 | 1,5 | 10 + 20 = 30 |
+
+**Wirkung der Varianten und Alternativen (Annahme, ausgehend von Hangar-K4 = 63):**
+
+| Variante | K4 Hangar | K2 | K3 / K6 | K11 | Transparenz | Urteil |
+|---|---|---|---|---|---|---|
+| V1 je Fundgröße | ≈ 37 | unverändert (AP reichen) | unverändert: AP sind im Fenster ohnehin übrig, also bremst V nichts | 60 | gut: eigene Kostenzeile „Verladen 6 AP“, Chip = Nav-AP + Verlade-AP, Aufschlüsselung im Tooltip, eine Kostenfunktion für Vorschau und Abzug | **wirksamste V-Form**; allein reicht sie nicht (Abstand bleibt ≈ 36) |
+| V2 je Ring | ≈ 48 | unverändert | unverändert | 60 | gut | zu schwach |
+| V3 pauschal | ≈ 43 | unverändert | unverändert | 60 | sehr gut | zu schwach, ignoriert die Fundgröße |
+| A1 Faktor 1,5 → 1,25 | 63 | unverändert | K6 −5, K3 +0,3 | 50 | gut | Owner hat das abgelehnt (§13.x/6); trifft Rg, nicht AP |
+| A2 Flugdauer +1 Sol | ≈ 63 | +1 bis +2 (Ziel ≤ 3 gefährdet) | leicht später | 60, später | gut | verwerfen: verschiebt nur Wartezeit |
+| A3 Proviant (Organika) verdoppeln | 63 | unverändert | unverändert | 60 | gut | verwerfen: falsche Währung, Hungerrisiko |
+| A4 Bergeteam optional: Flug ohne Zusatz-AP zahlt Fund × 1,0, mit Verlade-AP Fund × 1,5 | ≈ 37, wenn AP übrig | unverändert | unverändert | 40–60 | mittel: zwei Kostenzeilen, aber eine Aktion mit Schalter | **einzige Form mit echter Entscheidung**; berührt die Regel „eine Aktion je Fund“, deshalb erst nach V1 |
+
+**Bremsen oder anheben?** Der Hangar liegt in K3 (−1,5 Sole), K6 (+18 Rg zu Labor) und K11 vorn. Der Labor-Pfad wird in den Bot-Läufen aber unter Wert gespielt (U6: Geologie erst ab ca. Sol 20). Nach F1 (Wirkungs-Parität) ist deshalb der erste Schritt, **Labor und Cantina über die Ausbau-Politik anzuheben**, nicht das Regolith des Hangars zu kürzen. V bleibt als Mittel gegen den **AP-Überfluss**, nicht gegen Regolith. Ein echter Hangar-Bremsschritt (Stufenkosten, §12.x/4) kommt nur, wenn Hangar-K3 nach dem Ausbau mehr als 2 Sole vor Labor liegt.
+
+> ⚠️ BALANCE CONCERN: V1 ist in Sol 4–12 eine Steuer ohne Entscheidung. Der Spieler hat dort AP im Überfluss und zahlt die Verlade-AP immer. V senkt K4 auf dem Papier, verbessert aber nicht das Spielgefühl („nichts Sinnvolles zu tun“). Zur Entscheidung werden Verlade-AP erst in Phase 2, wenn AP mit Bau und Forschung konkurrieren. Im menschlichen Playtest gezielt abfragen.
+
+### 14.6 Wechselwirkung: Füllt der Ausbau den Leerlauf?
+
+| Eröffnung | zusätzlicher AP-Verbrauch im Fenster Sol 4–12 | K4 Messung → Ausbau (→ mit V1) | K3 (Annahme) | K6 (Annahme) | K16 `needs_level` |
+|---|---|---|---|---|---|
+| Hangar | Stufe 2: 10 AP + Großfund-Flug: 4 AP | 63 → ≈ 49 (→ ≈ 23) | 15 → ≈ 14 (+27 Rg ca. Sol 12–13 statt Sol 24) | 97 → ≈ 72 (−25 Rg Stufe vor Sol 10) | 11 → ≈ 1–2 |
+| Labor | Stufe 2: 10 AP, kommen aus der Forschung | 0,5 → 0,5 | 16,5 → ≈ 16 (Geologie +3 bis +6 Rg/Sol ab ca. Sol 10) | 79 → ≈ 57 | – |
+| Cantina | Stufe 2: 10 AP, mehr Begegnungen (+8 %-Punkte, 2 AP je Annahme) | 25 → ≈ 15 | 16 → 16 (Stufe 2 bringt kein Regolith) | 69 → ≈ 44 | – |
+
+**Ergebnis (Annahme):**
+- Der Ausbau bindet im Fenster nur ca. 10–14 AP je Pfad. Ausbau ist durch Regolith begrenzt, nicht durch AP. Er füllt den Hangar-Leerlauf also nur zu einem Viertel.
+- Erst **Ausbau + V1** bringt den Hangar-Abstand in die Nähe der Schwelle (≈ 23 gegen ≤ 20). Cantina erreicht die Schwelle durch Stufe 2 allein (≈ 15).
+- Die K6-Spanne bleibt ≈ 28, weil alle drei Pfade die 25 Rg vor Sol 10 zahlen.
+- **K3:** Hangar und Labor werden beide schneller. Der Abstand bleibt bei ≈ 1,5–2 Sole, also an der Schwelle. Fällt er über 2, greift die Stellschraube `hangarLv2Trigger = after_second_path`.
+
+**Phase 2:** Stufe 3 aller drei Pfade kostet 75 Rg + 30 AP, dazu CC4 120 Rg. Das bindet Regolith, kaum AP. Der AP-Überschuss in Phase 2 wird heute nicht gemessen (K4/K5 enden bei Sol 12 bzw. 15). Für Phase 2 bleiben Forschung, Begegnungen und Missionen die AP-Abnehmer.
+
+**Siegquote (Annahme):**
+- Sie steigt durch Vertrauen (Cantina +3 je Stufe, Frachter +2), Geologie-Regolith, früheres CC4 (Zonenkacheln, Kenntnis-Stufe 4) und Credits über die Korvette.
+- Sie sinkt durch Regolith in Stufe 3 statt in Vertrauensgebäude.
+- Erwartung: +5 bis +15 Punkte. Warnschwelle bleibt > 65 %.
+- Die Bot-Quote ist kein Tuning-Ziel (Owner: Bot ca. 50 %, Menschen 70–80 %). Steigt sie über 65 %, zuerst prüfen, ob der Bot jetzt näher am menschlichen Spiel liegt, bevor Spielwerte angefasst werden.
+
+### 14.7 Umsetzungsreihenfolge, Messplan, Risiken
+
+| Schritt | Inhalt | Art | Aufwand | TDD-Ansatz (rot zuerst) |
+|---|---|---|---|---|
+| S1 | `invest_path_tier` Stufe 1 → 2: Phase-1-Ausnahme vom Pfad-Puffer, Hangar-Auslöser `needs_level`, Frachter-Ausnahme in `shipToRequest()`, `BotProfile::pathTierPolicy` / `hangarLv2Trigger` | Bot | M | eigenes Pfadgebäude Lv1 + 25 Rg + weniger als 2 Lv2 → Regel feuert trotz Puffer; 2 Lv2 schon da → Puffer greift wieder; großer Fund `needs_level` → Hangar-Stufe auch danach; Frachter-Kauf bei 2 Beratern nur mit wartendem Großfund und freier Bucht 2; `off` = heutiges Verhalten |
+| S2 | Forschung: Geologie zuerst, sobald freigeschaltet | Bot | K | Labor Lv2 + Harvester → Kandidat 92 vor 90 |
+| M1 | 12 Läufe bis Sol 25 (wie diese Messung) | – | – | – |
+| S3 | Phase-2-Sparziel (U4) + Stufe 2 → 3 aller Pfade + Korvettenkauf | Bot | M | Sparziel CC4 hält 120 Rg gegen `place_building`; Ernährung und kritische Reparatur ausgenommen; Ziel nicht in 5 Solen erreichbar → übersprungen; nach CC4 eigenes Pfadgebäude Lv3 |
+| M2 | 24 Läufe volle Länge (Dauer vorher nennen, Owner wählt 8/16/24) | – | – | – |
+| S4 | **nur wenn M1 Hangar-K4 − Labor-K4 > 20:** V1 Verlade-AP je Fundgröße, Config `game.finds.flight.loading_ap` | Spielregel | K–M | wie §13.8 V: Dispatch zieht Verlade-AP, Vorschau = Abzug, Ablehnung bei zu wenig AP, Chip-Summe = Abzug |
+| M3 | 12 Läufe bis Sol 25 | – | – | – |
+
+**Messschwellen:**
+
+| Kennzahl | Soll | Warnschwelle → Reaktion |
+|---|---|---|
+| K18 (neu) Stufen-Sol je Pfadgebäude (Lv2 / Lv3) | eigenes Lv2 ≤ Sol 9; eigenes Lv3 ≤ Sol 30 | eigenes Lv2 > Sol 12 → Bot-Regel prüfen |
+| K19 (neu) Sol CC Lv4 | ≤ Sol 25 | > Sol 30 → Sparziel prüfen |
+| K3 | alle 15–20, Abstand ≤ 2 | Hangar > 2 vor Labor → `hangarLv2Trigger = after_second_path`, danach Stufenkosten (§12.x/4) |
+| K4 | Abstand zu Labor ≤ 20 | Hangar > 20 nach M1 → S4 |
+| K6 | Spanne ≤ 25 | > 30 → nicht nachsteuern, solange K3 hält (K6 ist Momentaufnahme) |
+| K16 `needs_level` | ≤ 3 Sole | > 5 → S1 wirkt nicht |
+| K7 | ca. 50 %, Abstand ≤ 10 Punkte | > 65 % → Bot gegen menschliches Spiel prüfen, nicht sofort Werte senken |
+
+**Risiken:**
+
+| # | Risiko | Gegenmittel |
+|---|---|---|
+| R1 | Hangar-First wird durch den früheren Großfund (+27 Rg ca. 11 Sole früher) mehr als 2 Sole schneller als Labor | Stellschraube `after_second_path`; erst danach Stufenkosten anheben |
+| R2 | Sparziel erzeugt neuen Leerlauf (Bug-Familie „myopische Regel“ in anderer Form) | 5-Sol-Erreichbarkeit als Bedingung; Kennzahl „Sole mit gehaltener Reserve“ |
+| R3 | Stufe 2 früh trifft das Supply-Gate (6 Supply), der Bot zieht Wohnhabitat-Stufen vor | `costToLevel2` preist den Supply-Mangel bereits ein; im Test abdecken |
+| R4 | Cantina fällt ohne Rg-Hebel weiter zurück, sobald Labor und Hangar früher ausbauen | K15 Cantina < 50 % Hangar → F5 v2 (Zusatzsignal) |
+| R5 | Siegquote > 65 % | Bot-Quote ist kein Tuning-Ziel; menschlichen Playtest vorziehen |
+| R6 | V1 als Steuer ohne Entscheidung (Concern 14.5) | erst nach M1, menschlich abfragen, A4 als Ausbaustufe vormerken |
+
+**Config und Doku:** S1–S3 sind reines Bot-Verhalten in `tests/Feature/Playtest/BotStrategy.php` und `BotProfile` (Kennzahlen K18/K19 in `RunReport`/`OpeningComparison`). Keine Gebäude-, Kosten- oder Produktionswerte ändern sich, also bleiben die `game:reset-player`-Szenarien und `docs/game-reference.md` unberührt. Erst S4 bringt mit `game.finds.flight.loading_ap` eine Spielregel. Dann sind `docs/game-reference.md` (Funde), GDD-Fundpool-Abschnitt (zahlenfrei), `lang/*` (Kostenzeile) und `ColonyTileService::findAction()` (Kostenzeile) nachzuziehen.
+
+### 14.8 Offene Owner-Fragen (max. 4, mit Vorschlag)
+
+1. **Reihenfolge trotz erreichtem V-Auslöser:** zuerst Bot-Ausbau (S1/S2) messen, Verlade-AP erst danach? **Vorschlag: ja.** V allein schließt nur ca. 26 der 62 AP Abstand, ändert K3/K6 nicht und ist im Fenster eine Steuer ohne Entscheidung. Der Ausbau ist ohnehin Owner-Vorgabe und hebt Labor und Cantina an (F1).
+2. **Hangar-Stufe 2 vor dem zweiten Pfadgebäude** (Auslöser: großer Fund gescannt oder Phase-1-Lv2), inklusive Frachterkauf vor dem 3. Berater? **Vorschlag: ja.** Für Phase 1 kostet das kein zusätzliches Regolith. Rückfall `after_second_path`, falls Hangar-K3 mehr als 2 Sole vor Labor liegt.
+3. **Phase-2-Sparziel-Reihenfolge** CC4 → eigenes Pfadgebäude Lv3 → zweites Pfadgebäude Lv3 → drittes Pfadgebäude → CC5 → Labor Lv4/5? **Vorschlag: ja.** Es behebt nebenbei den CC4-Stillstand (U4), der in allen 12 Läufen auftritt.
+4. **Hangar-Stufe 3 hat keinen Fund-Nutzen** (Korvette trägt nichts, nur Bucht 3). So lassen (Stufe 3 = Credits-/Schutz-Ast) oder der Stufe eine Rolle bei der Bergung geben? **Vorschlag: so lassen und messen (K18, Credits).** Der Bot baut Stufe 3 nach CC4 und kauft die Korvette nur mit 800 Cr über der Reserve.
