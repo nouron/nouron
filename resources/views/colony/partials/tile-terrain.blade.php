@@ -130,11 +130,14 @@
                     </template>
                     <template x-if="selectedTile.find.action?.action === 'flight'">
                         <div class="find-card__action">
-                            <button type="button" class="tile-action-btn" @click="doFindFlight(selectedTile)">
+                            <button type="button" class="tile-action-btn" @click="doFindFlight(selectedTile)"
+                                :disabled="findFlightShortfall(selectedTile) !== null">
                                 <span class="tile-action-btn__body">{{ __("colony.find_flight") }}</span>
                                 <span class="ap-chip ap-cost-chip ap-chip--nav" aria-hidden="true"
                                     x-text="`${selectedTile.find.action.costs.nav_ap} AP`"></span>
                             </button>
+                            <p class="find-card__reason" x-show="findFlightShortfall(selectedTile) !== null"
+                                x-text="findFlightShortfall(selectedTile)"></p>
                         </div>
                     </template>
                 </div>

@@ -46,6 +46,16 @@ class FindFlightUiTest extends TestCase
         $this->assertStringContainsString('/colony/hangar/__BAY__/dispatch', $html);
     }
 
+    public function test_colony_view_exposes_organika_for_the_flight_button_gate(): void
+    {
+        $organika = (int) DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->value('amount');
+
+        $html = $this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('organika: '.$organika.',', $html);
+        $this->assertStringContainsString('findGateOrganika', $html);
+    }
+
     public function test_flight_dispatch_answers_with_the_tile_in_flight(): void
     {
         $res = $this->actingAs($this->bart())->postJson(route('colony.hangar.dispatch', ['bay' => 0]),
@@ -58,14 +68,21 @@ class FindFlightUiTest extends TestCase
     public function test_hangar_build_card_carries_the_salvage_notice(): void
     {
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 44)->delete();
+        // Path buildings are offered only once the Agrardom stands.
+        DB::table('colony_buildings')->updateOrInsert(['colony_id' => self::COLONY_ID, 'building_id' => 41, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 6, 'tile_y' => 6]);
 
         $buildings = $this->actingAs($this->bart())->getJson(route('colony.buildings.available'))->json('buildings');
         $hangar = collect($buildings)->firstWhere('building_id', 44);
 
-        if ($hangar !== null) {
-            $this->assertSame(__('colony.hangar_build_notice'), $hangar['notice']);
+        $this->assertNotNull($hangar, 'hangar is offered');
+        $this->assertSame(__('colony.hangar_build_notice'), $hangar['notice']);
+        foreach ($buildings as $entry) {
+            $this->assertArrayHasKey('notice', $entry);
+            if ((int) $entry['building_id'] !== 44) {
+                $this->assertNull($entry['notice'], 'only the hangar carries a notice: '.$entry['key']);
+            }
         }
-        $this->assertNotNull(collect($buildings)->first(fn ($b) => array_key_exists('notice', $b)), 'notice key present on every entry');
     }
 
     public function test_find_flight_hint_is_active_from_hangar_level_one(): void

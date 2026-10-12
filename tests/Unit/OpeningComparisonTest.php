@@ -636,6 +636,22 @@ class OpeningComparisonTest extends TestCase
         $this->assertSame([4, 8], [$m['ship_repair_4_12'], $m['ship_repair_25']]);
     }
 
+    public function test_k17_detail_names_how_many_runs_had_a_zone_blocked_find(): void
+    {
+        $wait = fn (int $zone) => ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => $zone];
+        $reports = [$this->report('labor', 1), $this->report('labor', 2), $this->report('labor', 3)];
+        $reports[0] = $this->report('labor', 1, ['waits' => [5 => $wait(1)]]);
+        $reports[1] = $this->report('labor', 2, ['waits' => [5 => $wait(1)]]);
+        $reports[] = $this->report('hangar', 1);
+        $reports[] = $this->report('hangar', 2);
+        $reports[] = $this->report('hangar', 3);
+
+        $detail = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare()['checks']['K17']['detail'];
+
+        $this->assertStringContainsString('labor 1 (2/3 runs > 0)', $detail);
+        $this->assertStringContainsString('hangar 0 (0/3 runs > 0)', $detail);
+    }
+
     public function test_k12_k16_k17_are_info_checks(): void
     {
         $result = OpeningComparison::fromReports([$this->report('labor', 1), $this->report('hangar', 1)], ['labor', 'hangar'])->compare();

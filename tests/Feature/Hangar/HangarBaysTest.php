@@ -111,6 +111,20 @@ class HangarBaysTest extends TestCase
         $this->assertSame('pending', DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->orderByDesc('id')->value('ship_state'));
     }
 
+    public function test_assign_rejects_negative_bay(): void
+    {
+        $this->hall(1);
+        $pending = $this->ship(self::DRONE, null, 'pending');
+
+        try {
+            $this->svc()->assignToHangar(self::COLONY_ID, $pending, -1);
+            $this->fail('negative bay is invalid');
+        } catch (GameRuleException $e) {
+            $this->assertSame('bay_closed', $e->errorCode);
+        }
+        $this->assertNull(DB::table('colony_ships')->where('id', $pending)->value('bay'));
+    }
+
     public function test_assign_rejects_apron_and_closed_bay(): void
     {
         $this->hall(1);

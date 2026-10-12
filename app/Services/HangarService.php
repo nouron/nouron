@@ -568,7 +568,7 @@ class HangarService
             if ($ship === null) {
                 throw $this->ruleError('ship_not_pending');
             }
-            if (! HangarBays::bayOpen($bay, $this->hangarMaxLevel($colonyId)) || $bay > HangarBays::MAX_BAY) {
+            if ($bay < 1 || ! HangarBays::bayOpen($bay, $this->hangarMaxLevel($colonyId)) || $bay > HangarBays::MAX_BAY) {
                 throw $this->ruleError('bay_closed');
             }
             if (DB::table('colony_ships')->where('colony_id', $colonyId)->where('bay', $bay)->exists()) {

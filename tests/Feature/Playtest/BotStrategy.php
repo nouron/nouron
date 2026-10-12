@@ -7,6 +7,7 @@ use App\Enums\BuildingId;
 use App\Services\AdvisorService;
 use App\Services\BuildingCostService;
 use App\Services\ColonyTileService;
+use App\Services\FindFlightService;
 use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
@@ -1625,6 +1626,7 @@ class BotStrategy
     private static function repairForFlightCandidate(BotSession $b): ?array
     {
         $tiles = app(ColonyTileService::class);
+        $flights = app(FindFlightService::class);
         $types = config('game.finds.types');
         $worn = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
@@ -1632,6 +1634,14 @@ class BotStrategy
             ->orderBy('ring')->orderBy('q')->orderBy('r')->get()
             ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
             ->filter(fn ($c) => $c['action']['reason'] === 'ship_worn')
+            // Repair only when the flight that follows is payable (Organika + repair AP + Nav-AP),
+            // otherwise the repair AP leak and a recon could take the drone meanwhile.
+            ->filter(function ($c) use ($b, $flights) {
+                $costs = $flights->costs($b->colonyId, (int) $c['tile']->ring);
+
+                return self::organics($b) >= $costs['organika']
+                    && (int) $c['action']['repair_ap'] + $costs['nav_ap'] <= self::availableAp($b);
+            })
             ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
             ->first();
 

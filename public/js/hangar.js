@@ -354,6 +354,24 @@ function hangarCarousel(config) {
             return target ? this.targetDisabled(mission, target) : false;
         },
 
+        /** Picked find target costs more Nav-AP / Organika than currently available → hint text, else null. */
+        pickedTargetShortfall(mission) {
+            if (mission.target_type !== 'find_tile') return null;
+            const target = mission.targets?.[parseInt(this.missionModal.targetIndex, 10)];
+            if (!target) return null;
+            if (target.nav_ap > mission.nav_ap_available) {
+                return this.i18n.missionGateNavAp
+                    .replace(':available', mission.nav_ap_available)
+                    .replace(':required', target.nav_ap);
+            }
+            if (target.organika > mission.organika_available) {
+                return this.i18n.missionGateOrganika
+                    .replace(':available', mission.organika_available)
+                    .replace(':required', target.organika);
+            }
+            return null;
+        },
+
         /**
          * Start button handler: first click selects the mission (revealing the
          * target picker when one is required), second click submits.
@@ -368,6 +386,7 @@ function hangarCarousel(config) {
             if (this.missionRequiresTarget(mission) && this.missionModal.targetIndex === '') return;
             if (!this.missionModal.selectedDifficulty) return;
             if (this.missionBlockedByWear(mission) || this.pickedTargetDisabled(mission)) return;
+            if (this.pickedTargetShortfall(mission) !== null) return;
             this.submitMission(mission);
         },
 

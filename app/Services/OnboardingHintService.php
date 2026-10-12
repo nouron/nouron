@@ -281,7 +281,7 @@ class OnboardingHintService
     /** T30 §13.4: once the hangar stands (hall level >= 1, the apron drone is there), finds go by ship. */
     private function checkHintFindFlight(int $colonyId): bool
     {
-        return (int) (DB::table('colony_buildings')->where('colony_id', $colonyId)->where('building_id', 44)->max('level') ?? 0) >= 1;
+        return (int) (DB::table('colony_buildings')->where('colony_id', $colonyId)->where('building_id', BuildingId::Hangar->value)->max('level') ?? 0) >= 1;
     }
 
     /**

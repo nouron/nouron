@@ -544,8 +544,10 @@
                                 <span class="hangar-mission-chip"
                                     x-text="i18n.missionChipWear + ' −' + missionCosts(mission).wear"></span>
                             </div>
-                            <p class="hangar-mission-gate-hint" x-show="mission.target_type !== 'find_tile'"
-                                x-text="readinessLine(mission.sol_distance)"></p>
+                            <p class="hangar-mission-ready-line"
+                                :class="{ 'hangar-mission-gate-hint': readinessFor(mission.sol_distance)?.ready === false }"
+                                x-show="mission.target_type !== 'find_tile'" x-text="readinessLine(mission.sol_distance)">
+                            </p>
 
                             {{-- Target picker — only for the selected mission when a target is required --}}
                             <template x-if="missionRequiresTarget(mission) && missionModal.selectedKey === mission.key">
@@ -597,9 +599,13 @@
                                     <span class="hangar-mission-gate-hint"
                                         x-text="i18n.missionGateOrganika.replace(':available', mission.organika_available).replace(':required', mission.organika)"></span>
                                 </template>
+                                <template x-if="pickedTargetShortfall(mission) !== null">
+                                    <span class="hangar-mission-gate-hint" x-text="pickedTargetShortfall(mission)"></span>
+                                </template>
                                 <button class="btn-hangar-action hangar-mission-start" @click.stop="startMission(mission)"
                                     :disabled="mission.availability !== 'ok' || missionModal.loading ||
-                                        missionBlockedByWear(mission) || pickedTargetDisabled(mission) || (
+                                        missionBlockedByWear(mission) || pickedTargetDisabled(mission) ||
+                                        pickedTargetShortfall(mission) !== null || (
                                             missionRequiresTarget(mission) && missionModal.selectedKey === mission
                                             .key && missionModal.targetIndex === '')">
                                     <span

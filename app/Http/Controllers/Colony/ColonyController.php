@@ -212,6 +212,7 @@ class ColonyController extends BaseController
         // Build-chip affordability check (greys out unaffordable buildings).
         $regolith = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 3)->value('amount') ?? 0);
         $werkstoffe = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 4)->value('amount') ?? 0);
+        $organika = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 5)->value('amount') ?? 0);
         $freeSupply = $this->resourcesService->getFreeSupply($colony->id);
         $currentSol = $this->currentSol();
         $solLimit = (int) config('game.run.tick_limit', 100);
@@ -224,7 +225,7 @@ class ColonyController extends BaseController
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
         $deepScanAp = $this->tileService->deepScanCost($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────

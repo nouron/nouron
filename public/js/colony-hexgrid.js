@@ -101,6 +101,7 @@ function colonyHexView(config) {
         apAvailable: config.apAvailable ?? 0,
         regolith: config.regolith ?? 0,
         werkstoffe: config.werkstoffe ?? 0,
+        organika: config.organika ?? 0,
         freeSupply: config.freeSupply ?? 0,
         trust: config.trust ?? 0,
         currentSol: config.currentSol ?? 0,
@@ -391,6 +392,23 @@ function colonyHexView(config) {
             } else {
                 this.showToast(res.message ?? res.error, 'error');
             }
+        },
+
+        // Find-card flight button: the flight's own costs must be payable (else the server refuses).
+        findFlightShortfall(tile) {
+            const costs = tile?.find?.action?.costs;
+            if (!costs) return null;
+            if (costs.nav_ap > this.apAvailable) {
+                return this.i18n.findGateNavAp
+                    .replace(':available', this.apAvailable)
+                    .replace(':required', costs.nav_ap);
+            }
+            if (costs.organika > this.organika) {
+                return this.i18n.findGateOrganika
+                    .replace(':available', this.organika)
+                    .replace(':required', costs.organika);
+            }
+            return null;
         },
 
         // T30 §13.4: the find card's flight button dispatches the ship findAction() chose.
@@ -819,6 +837,7 @@ function colonyHexView(config) {
                     10,
                 );
                 if (!Number.isNaN(old) && res.organika < old) this.flashResChip('.res-Or');
+                this.organika = res.organika;
                 this.syncResbarAmount('.res-Or', res.organika);
             }
             if (res.freeSupply !== undefined) this.freeSupply = res.freeSupply;

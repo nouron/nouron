@@ -212,7 +212,7 @@ class RunReport
      */
     private function findWaits(int $colonyId): array
     {
-        $map = ['needs_level' => 'needs_level', 'needs_freighter' => 'needs_freighter', 'ship_inactive' => 'needs_freighter',
+        $map = ['needs_level' => 'needs_level', 'needs_freighter' => 'needs_freighter', 'ship_inactive' => 'needs_level',
             'ship_busy' => 'ship_busy', 'ship_worn' => 'no_ship_ready', 'no_ship' => 'no_ship_ready'];
         $waits = ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 0];
         $service = app(ColonyTileService::class);
@@ -484,8 +484,8 @@ class RunReport
         // A31/B2b: Metrik 9, per-run sum of regolithSources()'s per-Sol
         // buckets. Mapping follows the real GDD path lettering, not the
         // swapped one in the old plan text: Pfad A = Analytik-Labor/Geologie
-        // (the 'harvester' bucket), Pfad B = Hangar-Frachter-Mission (the
-        // 'mission' bucket), Pfad C = Cantina/Corvan (the 'trade' bucket).
+        // (the 'harvester' bucket), Pfad B = Hangar (Frachter-Mission plus
+        // Bergungsflug: the 'mission' + 'find_flight' buckets), Pfad C = Cantina/Corvan (the 'trade' bucket).
         // Known limitation (inherited from B1c, not solved here): the
         // 'harvester' bucket still mixes the base Harvester yield with the
         // Geologie-Kenntnis bonus — separating those would need an

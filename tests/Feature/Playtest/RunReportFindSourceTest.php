@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Enums\BuildingId;
 use App\Services\HangarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -99,6 +100,25 @@ class RunReportFindSourceTest extends TestCase
         $report->snapshot($bot);
 
         $this->assertSame(['needs_level' => 1, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 1],
+            $report->build($bot)['sols'][0]['find_waits']);
+    }
+
+    public function test_find_waits_counts_an_inactive_carrier_as_needs_level(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        DB::table('colony_buildings')->insert(['colony_id' => $bot->colonyId, 'building_id' => BuildingId::Hangar->value,
+            'instance_id' => 1, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => -1, 'tile_y' => 1]);
+        DB::table('colony_ships')->insert(['colony_id' => $bot->colonyId, 'ship_id' => 47, 'bay' => 3,
+            'ship_state' => 'docked', 'status_points' => 20, 'ap_spend' => 0, 'level' => 0, 'deliver_at_tick' => null]);
+        $tile = DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('is_colony_zone', 0)
+            ->whereNull('event_type')->first();
+        DB::table('colony_tiles')->where('id', $tile->id)
+            ->update(['event_type' => 'find_large', 'is_explored' => 1, 'is_deep_scanned' => 1]);
+
+        $report = new RunReport(1);
+        $report->snapshot($bot);
+
+        $this->assertSame(['needs_level' => 1, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 0],
             $report->build($bot)['sols'][0]['find_waits']);
     }
 

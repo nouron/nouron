@@ -115,6 +115,23 @@ class BotStrategyFindFlightTest extends TestCase
         $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay']);
     }
 
+    public function test_no_repair_when_the_following_flight_is_not_payable(): void
+    {
+        $bot = $this->bootWithHangar(1);
+        $this->makeFind($bot, 'find_medium', ring: 3); // drone wear 6
+        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 5]);
+
+        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 5)->update(['amount' => 1]);
+        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'Organika too low for the ring-3 flight');
+
+        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 5)->update(['amount' => 50]);
+        $this->giveAp($bot, 1);
+        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'repair AP + nav AP exceed available AP');
+
+        $this->giveAp($bot, 10);
+        $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay'], 'payable: repair chosen');
+    }
+
     public function test_no_repair_without_a_waiting_find(): void
     {
         $bot = $this->bootWithHangar(1);
@@ -123,7 +140,7 @@ class BotStrategyFindFlightTest extends TestCase
         $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot));
     }
 
-    public function test_gift_drone_counts_as_first_ship_and_bays_gate_purchases(): void
+    public function test_gift_drone_suppresses_the_bootstrap_drone_purchase(): void
     {
         $bot = $this->bootWithHangar(1);
         DB::table('user_resources')->where('user_id', $bot->userId)->update(['credits' => 5000]);

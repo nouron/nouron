@@ -516,7 +516,13 @@ class OpeningComparison
             ],
             'K12' => $info('Pool-Rg share by ship at Sol 25, median %', $kpis['k12'], 'target hangar >= 85, warn < 70'),
             'K16' => $info('Sols waiting (needs_level / needs_freighter / ship_busy / no_ship_ready = bot bug if > 3), median of no_ship_ready', $kpis['k16_no_ship_ready'], 'see per-reason rows'),
-            'K17' => $info('Sols with a locked find on a zone tile, median', $kpis['k17'], 'warn: > 0 in more than 2 of 8 runs'),
+            'K17' => [
+                'status' => 'info',
+                'detail' => 'Sols with a locked find on a zone tile, median: '.implode('; ', array_map(
+                    fn ($o, $s) => "{$o} ".self::fmt($s['median'])." ({$s['positive']}/{$s['n']} runs > 0)",
+                    array_keys($kpis['k17']), $kpis['k17'],
+                )).' (warn: > 0 in more than 2 of 8 runs)',
+            ],
             'REP' => $info('Ship repair AP Sol 4-12, median', $kpis['ship_repair_4_12'], 'information next to K4'),
         ];
     }
@@ -563,6 +569,7 @@ class OpeningComparison
             'min' => $values === [] ? null : min($values),
             'max' => $values === [] ? null : max($values),
             'n' => count($values),
+            'positive' => count(array_filter($values, fn ($v) => $v > 0)),
         ];
     }
 

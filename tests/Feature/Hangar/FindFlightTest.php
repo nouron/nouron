@@ -236,6 +236,9 @@ class FindFlightTest extends TestCase
         $this->assertSame($rg, $this->regolith());
         $mission = DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->first();
         $this->assertSame(['completed', 0], [$mission->state, (int) $mission->succeeded], 'zero yield must not count for task_expedition_coverage');
+        $event = DB::table('colony_log')->where('event', 'hangar.mission_failed')->orderByDesc('id')->first();
+        $this->assertNotNull($event, 'a vanished find logs hangar.mission_failed');
+        $this->assertTrue(json_decode($event->parameters, true)['find_missing'], 'event carries find_missing');
     }
 
     public function test_recall_and_abort_free_the_target_without_yield(): void

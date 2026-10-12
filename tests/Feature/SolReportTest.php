@@ -275,6 +275,25 @@ class SolReportTest extends TestCase
         $this->assertTrue($line['beat']);
     }
 
+    public function test_find_missing_mission_failed_shows_the_vanished_signal_detail(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID, 'tick' => 7, 'event' => 'hangar.mission_failed', 'area' => 'colony',
+            'parameters' => json_encode(['mission_key' => 'mission_find_salvage', 'ship_id' => 85,
+                'colony_id' => self::COLONY_ID, 'difficulty' => 'normal', 'find_missing' => true]),
+            'created_at' => now(), 'is_read' => 1,
+        ]);
+
+        $events = $this->groupByKey($this->service()->buildReport($run, $before, false), 'events');
+
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('missions.sol_report_failed'));
+        $this->assertNotNull($line);
+        $this->assertSame(__('missions.sol_report_find_missing'), $line['detail']);
+    }
+
     // ── Storm outcome (GDD §9, colony-wide scope, Owner-Entscheidung 2026-09-03) ──
 
     /**
