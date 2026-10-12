@@ -341,7 +341,8 @@ Die Dauer wird vor jedem Batch geschätzt, der Owner wählt 8/16/24 Läufe.
 | K3 | je Eröffnung Median im Korridor 15–20 und nicht später als Legacy + 1 Sol |
 | K4 | je Eröffnung ≤ Legacy; Hangar − Labor ≤ 20 AP |
 | K5 | ≤ 2 je Eröffnung |
-| K19 | Pfadgebäude der Eröffnung erreicht Stufe 2 bis Sol 12 (Median) bei Hangar- und Cantina-First; Sole auf Stufe 1 ≤ 6 (heute laut Auftrag 9–12) |
+| K19 | eigenes Pfadgebäude Lv2 ≤ Sol 9 (Median, Warnung > 12) bei allen Eröffnungen; Lv3 ≤ Sol 30 |
+| K23 | CC Lv4 ≤ Sol 25 (Median, Warnung > 30) |
 | K16 | `no_ship_ready` ≤ 3 Sole je Lauf |
 | K18 | ≤ 5 % nach S8 (nur Pflicht-Schicht) |
 | Ablehnungen | je Lauf ≤ Legacy |
@@ -402,3 +403,27 @@ Reihenfolge: P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8 → P9 �
 3. Beide Engines laufen bis zur Abnahme parallel (`--engine=legacy|utility`, befristet doppelte Pflege) — nötig für gepaarte Baseline.
 4. Ein klügerer Bot darf öfter gewinnen; `default` wird nicht bewusst geschwächt, nur beobachtet (Bot-Quote ist kein Tuning-Ziel).
 5. Abgleich mit T30-Spec §14 (Branch `feat/t30-schritt4-spec`, U1–U6 vs. B1–B7) als Task P0.
+
+## 9. Abgleich mit T30-Spec §14 (P0)
+
+| T30 §14 | Utility-Spec | Umsetzung |
+|---|---|---|
+| U1 Deckel Stufe 2 | B1 | S3 `UpgradeSource`: alle Stufen bis `max_level`, Stufenterm `w_tier` (Owner-Vorgabe 2026-10-12 „Stufe 2 und 3 bauen wollen“) |
+| U2 Pfad-Puffer | B4 | S3 Sparziel (`HeuristicGoalProvider`) + Opportunitätskosten statt Puffer im Ausbau; Legacy-`place_building` behält seinen Puffer bis S4 |
+| U3 Sortierung nur aufs Phase-1-Ziel | B2, B3 | S3 Bewertung: Phasen-, Stufen-, Freischalt-, Eröffnungsterm |
+| U4 CC-Ausbau kurzsichtig | B4 | S3 `CcSource` bietet nur Bezahlbares an; unbezahlbarer CC-Ausbau wird Sparziel, Legacy-Regolith-Ausgaben halten es über `BotSession::$regolithHold` |
+| U5 Frachter erst ab 3 Beratern | – (neu) | S3 `FreighterSource`: Frachter, wenn ein gescannter großer Fund auf `needs_freighter` wartet |
+| U6 Forschung nach ID | B6 | S3 `ResearchSource`: Effekt je AP, Geologie vor Bauwesen |
+| – | B5, B7 | Folgeplan S6/S7 |
+
+**Kennzahlen:** T30 §14 K18 (Stufen-Sol je Pfadgebäude) heißt hier **K19**; T30 §14 K19 (Sol CC Lv4) heißt hier **K23** (neu). Zielwerte aus §14 übernommen: K19 eigenes Pfadgebäude Lv2 ≤ Sol 9 (Warnung > Sol 12), Lv3 ≤ Sol 30; K23 ≤ Sol 25 (Warnung > Sol 30). K20 enthält in v1 nur „Entscheidungen je Sol (Median)“; der Anteil verworfener positiver Kandidaten folgt mit S6.
+
+**Phase-2-Sparziel (§14.4):** Das Utility-Sparziel wählt nach Net/Rg statt nach fester Liste. Die Gewichte (`w_tier`, `structural_offset`) sind so gesetzt, dass CC Lv4 in Phase 2 in der Regel vor Pfadgebäude Lv3 liegt (Annahme, Messung S3). Die 5-Sol-Erreichbarkeit aus §14.4 gilt (`goal_max_wait_sols`). `pathTierPolicy`/`hangarLv2Trigger` (§14.4) werden nicht als Schalter umgesetzt, sondern über Gewichte. Verlade-AP (§14.5) ist eine Spielregel und nicht Teil dieses Vorhabens.
+
+**Präzisierungen für die Umsetzung (Plan 2026-10-12):**
+- Statt `(N − Regelindex) × 10⁶` und `upperBound()` ordnet ein **Band** (= alter Regelindex) die Kandidaten; innerhalb eines Bands entscheidet der Score. Bis S8 bleiben auch die Pflicht-Regeln als Legacy-Quellen in ihren Bändern im Sammler (sonst wäre die Golden-Gleichheit unmöglich).
+- Der Loop sperrt `res['block']` ?? Name des letzten neuen Log-Eintrags ?? Regelname und fragt eine Regel erneut, wenn nicht ihr eigener Name gesperrt wurde.
+- Strukturschritte (CC-Stufe, Pfadgebäude platzieren) sind in v1 kostenneutral bewertet: ihr Rg-Preis wird als gleich hoher Strukturwert gegengerechnet (`structural_offset` = 1,0, Annahme).
+- Neue Gewichte: `w_tier` 30, `structural_offset` 1,0, `objective_base` 150, `research_floor` 1,0, `build_ap_per_sol` 10, `nav_ap_per_sol` 4, `income_floor_rg` 8, `goal_max_wait_sols` 5, `trust_danger_margin` 10, `trust_danger_factor` 4. Profil-Gewichte werden aus den Reglern abgeleitet (`w_objective` = `objectiveFocus` × 150, `price.credits` × (1 + `savingsAggressiveness`)).
+- Engine `shadow` ist dritter Wert von `--engine`. Reports anderer Engines heißen `{profil}.{engine}-{eröffnung}-{seed}-{zeit}.json`.
+- Plan-S3 bündelt Spec-S3 (nur Ausbau), Spec-S4 (Sparziel/CC) und Spec-S5 (Forschung) sowie die Frachter-Ausnahme aus Spec-S7.
