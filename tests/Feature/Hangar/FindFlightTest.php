@@ -223,6 +223,21 @@ class FindFlightTest extends TestCase
         $this->assertSame($rg + 6, $this->regolith());
     }
 
+    public function test_flight_to_a_vanished_find_is_not_succeeded(): void
+    {
+        $this->ship(self::DRONE, 0);
+        $this->find(2, 2, 'find_small');
+        $rg = $this->regolith();
+        $this->fly(0, 2);
+        DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 2)->where('r', 0)->update(['event_type' => null]);
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 102]);
+
+        $this->assertSame($rg, $this->regolith());
+        $mission = DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->first();
+        $this->assertSame(['completed', 0], [$mission->state, (int) $mission->succeeded], 'zero yield must not count for task_expedition_coverage');
+    }
+
     public function test_recall_and_abort_free_the_target_without_yield(): void
     {
         $this->ship(self::DRONE, 0);

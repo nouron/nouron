@@ -458,6 +458,11 @@ class GameTick extends Command
                         $rewardMultiplier,
                         (int) $mission->ship_id
                     );
+                    // A salvage flight whose find vanished pays nothing: not a success, so it
+                    // does not count for task_expedition_coverage (E9).
+                    if (! empty($rewardDetails['find_missing'])) {
+                        $success = false;
+                    }
                 } elseif ($difficulty === 'hard') {
                     $extraWear = (float) config('game.missions.difficulty.hard_fail_extra_wear', 1.0);
                     $spAfterHardFail = max(0.0, (float) $newSp - $extraWear);

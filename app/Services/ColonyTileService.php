@@ -6,6 +6,7 @@ use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
+use App\Support\HangarBays;
 use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
@@ -36,6 +37,7 @@ class ColonyTileService
         private readonly AdvisorService $advisorService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly TickService $tickService,
+        private readonly FindFlightService $findFlightService,
     ) {}
 
     public function getTilesForColony(int $colonyId): Collection
@@ -158,6 +160,16 @@ class ColonyTileService
             if ($tile->event_type === 'find_false') {
                 return $fail('find_false');
             }
+            // T30 §13.4: with a hangar >= 1 finds go by flight only (grandfathered projects excepted).
+            // in_flight is checked first, so a flight still out after the hall was demolished
+            // keeps the tile locked against self-salvage too (Review Focus 2).
+            $action = $this->findAction($colonyId, $tile);
+            if ($action['reason'] === 'in_flight') {
+                return $fail('find_in_flight');
+            }
+            if (! in_array($action['action'], ['self_salvage', 'continue_salvage'], true)) {
+                return $fail('salvage_by_flight');
+            }
             $def = config('game.finds.types')[$tile->event_type] ?? ['rg' => 0, 'ap' => 0];
             if ((int) $def['ap'] <= 0) {
                 return $fail('no_find');
@@ -218,6 +230,109 @@ class ColonyTileService
         $tile->salvage_ap_spent = 0;
         $tile->salvage_tick = null;
         $tile->save();
+    }
+
+    /**
+     * T30 §13.4: the ONE allowed action for a find tile plus its reason key. Single source
+     * for salvageFind(), HangarService::assertFindFlyable(), the find card and the bot.
+     * Check order: unscanned → false alarm → in flight → without hangar → grandfathered
+     * → level/carry → ship status. "Without hangar" is derived from the hall level
+     * (no building or level 0), never stored (E6).
+     */
+    public function findAction(int $colonyId, object $tile): array
+    {
+        $type = $tile->event_type;
+        if (! (bool) $tile->is_deep_scanned) {
+            return ['action' => 'scan', 'reason' => 'unscanned'];
+        }
+        if (! in_array($type, self::FIND_TYPES, true)) {
+            return ['action' => 'none', 'reason' => 'false'];
+        }
+        $returnSol = $this->findFlightReturnSol($colonyId, (int) $tile->q, (int) $tile->r);
+        if ($returnSol !== null) {
+            return ['action' => 'none', 'reason' => 'in_flight', 'return_sol' => $returnSol];
+        }
+        $started = (int) $tile->salvage_ap_spent > 0;
+        $level = $this->hangarLevel($colonyId);
+        if ($level < 1) {
+            return ['action' => $started ? 'continue_salvage' : 'self_salvage', 'reason' => 'self'];
+        }
+        if ($started) {
+            return ['action' => 'continue_salvage', 'reason' => 'grandfathered'];
+        }
+
+        $carriers = DB::table('colony_ships')
+            ->where('colony_id', $colonyId)->whereNotNull('bay')->orderBy('bay')
+            ->get(['ship_id', 'bay', 'ship_state', 'status_points', 'deliver_at_tick'])
+            ->filter(fn ($s) => $this->findFlightService->canCarry(HangarBays::shipKey((int) $s->ship_id), $type));
+        $active = $carriers->reject(fn ($s) => HangarBays::isInactive((int) $s->ship_id, $level, (int) $s->bay));
+
+        $minLevel = $this->findFlightService->minHangarLevel($type);
+        if ($level < $minLevel || $active->isEmpty()) {
+            $inactive = $carriers->first();
+            if ($inactive !== null) {
+                return ['action' => 'locked', 'reason' => 'ship_inactive', 'ship_key' => HangarBays::shipKey((int) $inactive->ship_id),
+                    'needs_level' => max(HangarBays::requiredLevel((int) $inactive->ship_id), (int) $inactive->bay)];
+            }
+            if ($level < $minLevel) {
+                return ['action' => 'locked', 'reason' => 'needs_level', 'needs_level' => $minLevel];
+            }
+
+            return $type === 'find_large'
+                ? ['action' => 'locked', 'reason' => 'needs_freighter']
+                : ['action' => 'wait', 'reason' => 'no_ship'];
+        }
+
+        $ready = $active
+            // T30 §13.x/7: "ready" = the return guarantee for this tile's ring distance.
+            ->filter(fn ($s) => $s->ship_state === 'docked'
+                && HangarBays::flightReadiness((int) $s->ship_id, (float) $s->status_points, $this->findFlightService->solDistance((int) $tile->ring))['ready'])
+            ->sortBy([
+                fn ($a, $b) => HangarBays::requiredLevel((int) $a->ship_id) <=> HangarBays::requiredLevel((int) $b->ship_id),
+                fn ($a, $b) => (int) $a->bay <=> (int) $b->bay,
+            ])
+            ->first();
+        if ($ready !== null) {
+            $costs = $this->findFlightService->costs($colonyId, (int) $tile->ring);
+
+            return ['action' => 'flight', 'reason' => 'flight', 'bay' => (int) $ready->bay,
+                'ship_key' => HangarBays::shipKey((int) $ready->ship_id),
+                'costs' => [...$costs, 'return_sol' => $this->tickService->getTickCount() + $costs['duration']],
+                'yield' => $this->findFlightService->findFlightYield($colonyId, $type)];
+        }
+
+        $busy = $active->first(fn ($s) => in_array($s->ship_state, ['dispatched', 'building'], true));
+        if ($busy !== null) {
+            return ['action' => 'wait', 'reason' => 'ship_busy', 'ship_key' => HangarBays::shipKey((int) $busy->ship_id),
+                'return_sol' => $this->shipBackSol($colonyId, $busy)];
+        }
+        // Docked but worn: the smallest class first (that is the ship the bot repairs).
+        $worn = $active->sortBy([
+            fn ($a, $b) => HangarBays::requiredLevel((int) $a->ship_id) <=> HangarBays::requiredLevel((int) $b->ship_id),
+            fn ($a, $b) => (int) $a->bay <=> (int) $b->bay,
+        ])->first();
+        $readiness = HangarBays::flightReadiness((int) $worn->ship_id, (float) $worn->status_points, $this->findFlightService->solDistance((int) $tile->ring));
+
+        return ['action' => 'wait', 'reason' => 'ship_worn', 'ship_key' => HangarBays::shipKey((int) $worn->ship_id),
+            'bay' => (int) $worn->bay, 'repair_ap' => $readiness['repair_ap'], 'readiness' => $readiness];
+    }
+
+    private function hangarLevel(int $colonyId): int
+    {
+        return (int) (DB::table('colony_buildings')->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Hangar->value)->max('level') ?? 0);
+    }
+
+    /** Sol a busy ship is back: return of its active mission, or its Nexus delivery. */
+    private function shipBackSol(int $colonyId, object $ship): ?int
+    {
+        if ($ship->ship_state === 'building') {
+            return $ship->deliver_at_tick !== null ? (int) $ship->deliver_at_tick : null;
+        }
+        $mission = DB::table('colony_hangar_missions')->where('colony_id', $colonyId)
+            ->where('bay', (int) $ship->bay)->where('state', 'active')->first(['dispatch_tick', 'sol_distance']);
+
+        return $mission === null ? null : (int) $mission->dispatch_tick + 2 * (int) $mission->sol_distance;
     }
 
     /** Return Sol of the active salvage flight to this tile, null if none (reservation = state active only). */
@@ -437,10 +552,30 @@ class ColonyTileService
                 'ap_spent' => (int) $tile->salvage_ap_spent,
                 'ap_cap_per_sol' => (int) config('game.finds.salvage_cap_per_sol'),
                 'false' => $tile->event_type === 'find_false',
+                'action' => $this->findActionWithText((int) $tile->colony_id, $tile),
             ];
         }
 
         return $arr;
+    }
+
+    /** findAction() plus its player-facing reason line (numbers from the same source as the guards). */
+    private function findActionWithText(int $colonyId, ColonyTile $tile): array
+    {
+        $a = $this->findAction($colonyId, $tile);
+        $ship = isset($a['ship_key']) ? __("colony.hangar_ship_{$a['ship_key']}") : '';
+        $a['text'] = __("colony.find_reason_{$a['reason']}", [
+            'sol' => $a['return_sol'] ?? $a['costs']['return_sol'] ?? '',
+            'ship' => $ship,
+            'level' => $a['needs_level'] ?? '',
+            'base' => $a['yield']['base'] ?? '',
+            'bonus' => $a['yield']['flight_bonus'] ?? '',
+            'total' => $a['yield']['total'] ?? '',
+            'ap' => $a['costs']['nav_ap'] ?? $a['repair_ap'] ?? '',
+            'organika' => $a['costs']['organika'] ?? '',
+        ]);
+
+        return $a;
     }
 
     private function pickTileType(int $q, int $r, int $colonyId, int $ring = 3): string

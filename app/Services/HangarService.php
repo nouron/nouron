@@ -790,18 +790,15 @@ class HangarService
         if ($tile === null || $tile->event_type === null) {
             throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
         }
-        if (! (bool) $tile->is_deep_scanned) {
-            throw $this->ruleError('find_not_scanned', 'missions.error_find_not_scanned');
-        }
-        if (! in_array($tile->event_type, ColonyTileService::FIND_TYPES, true)) {
-            throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
-        }
-        if ((int) $tile->salvage_ap_spent > 0) {
-            throw $this->ruleError('find_salvage_in_progress', 'missions.error_find_salvage_in_progress');
-        }
-        if ($this->colonyTileService->findFlightReturnSol($colonyId, (int) $tile->q, (int) $tile->r) !== null) {
-            throw $this->ruleError('find_in_flight', 'missions.error_find_in_flight');
-        }
+        // T30 §13.4: findAction() is the single source; ship status/level reasons are
+        // left to the bay, carry and return-guarantee checks of dispatchShip().
+        match ($this->colonyTileService->findAction($colonyId, $tile)['reason']) {
+            'unscanned' => throw $this->ruleError('find_not_scanned', 'missions.error_find_not_scanned'),
+            'false' => throw $this->ruleError('invalid_target', 'missions.error_invalid_target'),
+            'in_flight' => throw $this->ruleError('find_in_flight', 'missions.error_find_in_flight'),
+            'grandfathered', 'self' => throw $this->ruleError('find_salvage_in_progress', 'missions.error_find_salvage_in_progress'),
+            default => null,
+        };
         if (! $this->findFlightService->canCarry($shipKey, $tile->event_type)) {
             throw $this->ruleError('find_too_large', 'missions.error_find_too_large');
         }

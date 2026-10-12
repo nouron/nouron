@@ -24,6 +24,7 @@ class SalvageFindTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 44)->delete(); // Pool v1 self-salvage = colony without hangar (T30 §13.4)
         config(['game.bypass.ap_checks' => false]);
         $this->atTick(10);
     }
