@@ -14,9 +14,9 @@
  *
  * requires:
  *   knowledge — ['config_key' => min_level] (config/knowledge.php keys)
- *   target    — 'signal_tile' | 'ruin_tile' (player picks a concrete tile at dispatch)
+ *   target    — 'ruin_tile' | 'find_tile' (player picks a concrete tile at dispatch)
  * target_type — what the player must select in the dispatch dialog
- *   (deep_survey: the signal tile to scan; data_sweep: the knowledge to invest in)
+ *   (find_salvage: the scanned find; data_sweep: the knowledge to invest in)
  *
  * reward value forms:
  *   int              — fixed amount
@@ -56,23 +56,6 @@ return [
             'repeatable' => true,
             'difficulties' => ['easy', 'normal'],
         ],
-        'mission_deep_survey' => [
-            'ships' => ['drone'],
-            'sol_distance' => 2,
-            'requires' => ['target' => 'signal_tile'],
-            'target_type' => 'signal_tile',
-            'reward' => ['deep_scan' => 1],
-            'repeatable' => true, // consumes one signal tile per run
-            'difficulties' => ['easy', 'normal'],
-        ],
-        'mission_prospecting_flight' => [
-            'ships' => ['drone'],
-            'sol_distance' => 2,
-            'requires' => ['knowledge' => ['geology' => 1]],
-            'reward' => ['regolith' => [20, 30]],
-            'repeatable' => true,
-            'difficulties' => ['normal', 'hard'],
-        ],
         'mission_data_sweep' => [
             'ships' => ['drone'],
             'sol_distance' => 3,
@@ -103,7 +86,7 @@ return [
             'ships' => ['freighter'],
             'sol_distance' => 1,
             'requires' => [],
-            'reward' => ['regolith' => 25, 'organics' => 10],
+            'reward' => ['organics' => 10], // T30 §13 E8: no Regolith (F2)
             'repeatable' => true,
             'difficulties' => ['easy', 'normal'],
         ],

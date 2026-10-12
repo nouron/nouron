@@ -517,7 +517,7 @@ class GameTick extends Command
 
         $resourceIds = ['regolith' => 3, 'compounds' => 4, 'organics' => 5];
         // Only quantity-shaped reward types scale with difficulty — flags/unlocks
-        // (trust_event, harvester_instance, deep_scan) stay binary regardless of difficulty.
+        // (trust_event, harvester_instance) stay binary regardless of difficulty.
         $scalableTypes = ['credits', 'regolith', 'compounds', 'organics', 'research_ap', 'reveal_tiles'];
         $details = [];
 
@@ -543,8 +543,6 @@ class GameTick extends Command
                 $this->trustService->fireEvent($colonyId, (string) $value, $tick);
             } elseif ($type === 'reveal_tiles') {
                 $value = $this->revealTiles($colonyId, (int) $value);
-            } elseif ($type === 'deep_scan') {
-                $this->deepScanTarget($colonyId, $target);
             } elseif ($type === 'research_ap') {
                 $this->grantResearchAp($colonyId, $target, (int) $value);
             } elseif ($type === 'harvester_instance') {
@@ -586,21 +584,6 @@ class GameTick extends Command
         }
 
         return $tiles->count();
-    }
-
-    /**
-     * Deep-scans the mission's target tile (player-picked at dispatch).
-     */
-    private function deepScanTarget(int $colonyId, ?array $target): void
-    {
-        if (! isset($target['q'], $target['r'])) {
-            return;
-        }
-
-        DB::table('colony_tiles')
-            ->where('colony_id', $colonyId)
-            ->where('q', (int) $target['q'])->where('r', (int) $target['r'])
-            ->update(['is_deep_scanned' => 1]);
     }
 
     /**

@@ -42,7 +42,7 @@ namespace Tests\Feature\Hangar;
  *    - test_dispatch_ship_succeeds_with_knowledge_gate_met
  *    - test_dispatch_ship_throws_for_missing_target
  *    - test_dispatch_ship_throws_for_invalid_target
- *    - test_dispatch_ship_succeeds_with_valid_signal_tile_target
+ *    - test_dispatch_ship_succeeds_with_valid_ruin_tile_target
  *    - test_dispatch_ship_throws_when_ruin_target_already_consumed
  *
  *  organikaCostFor (kenntnis-skalierung, GDD §8b)
@@ -205,7 +205,7 @@ class HangarServiceTest extends TestCase
 
     /**
      * Inserts an explored colony tile with the given event_type, ready to be
-     * picked as a mission target (signal_tile) unless already deep-scanned.
+     * picked as a mission target (ruin_tile once deep-scanned).
      */
     private function insertTile(int $q, int $r, ?string $eventType, bool $deepScanned = false): void
     {
@@ -731,22 +731,22 @@ class HangarServiceTest extends TestCase
 
     public function test_dispatch_ship_throws_for_missing_knowledge_gate(): void
     {
-        // mission_prospecting_flight requires geology Lv1 — colony has none by default.
+        // mission_long_range_expedition requires cartography Lv3 — colony has none by default.
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_DRONE, 'docked');
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_prospecting_flight');
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_long_range_expedition');
     }
 
     public function test_dispatch_ship_succeeds_with_knowledge_gate_met(): void
     {
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_DRONE, 'docked');
-        $this->setKnowledgeLevel('geology', 1);
+        $this->setKnowledgeLevel('cartography', 3);
 
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_prospecting_flight');
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_long_range_expedition');
 
         $ship = DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 1)->first();
         $this->assertSame('dispatched', $ship->ship_state);
@@ -754,37 +754,37 @@ class HangarServiceTest extends TestCase
 
     public function test_dispatch_ship_throws_for_missing_target(): void
     {
-        // mission_deep_survey requires a signal-tile target.
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        // mission_ruin_expedition requires a ruin-tile target.
+        $this->insertHangar(3, 3);
+        $this->assignShip(3, self::SHIP_CORVETTE, 'docked');
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_deep_survey');
+        $this->hangarService->dispatchShip(self::COLONY_ID, 3, 'mission_ruin_expedition');
     }
 
     public function test_dispatch_ship_throws_for_invalid_target(): void
     {
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_DRONE, 'docked');
-        // Tile has no event_type — not a valid signal tile.
+        $this->insertHangar(3, 3);
+        $this->assignShip(3, self::SHIP_CORVETTE, 'docked');
+        // Tile has no event_type — not a valid ruin tile.
         $this->insertTile(3, -3, null);
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_deep_survey', ['q' => 3, 'r' => -3]);
+        $this->hangarService->dispatchShip(self::COLONY_ID, 3, 'mission_ruin_expedition', ['q' => 3, 'r' => -3]);
     }
 
-    public function test_dispatch_ship_succeeds_with_valid_signal_tile_target(): void
+    public function test_dispatch_ship_succeeds_with_valid_ruin_tile_target(): void
     {
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_DRONE, 'docked');
-        $this->insertTile(3, -3, 'event_signal');
+        $this->insertHangar(3, 3);
+        $this->assignShip(3, self::SHIP_CORVETTE, 'docked');
+        $this->insertTile(3, -3, 'event_ruin', deepScanned: true);
 
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_deep_survey', ['q' => 3, 'r' => -3]);
+        $this->hangarService->dispatchShip(self::COLONY_ID, 3, 'mission_ruin_expedition', ['q' => 3, 'r' => -3]);
 
         $mission = DB::table('colony_hangar_missions')
-            ->where('colony_id', self::COLONY_ID)->where('bay', 1)->where('state', 'active')->first();
+            ->where('colony_id', self::COLONY_ID)->where('bay', 3)->where('state', 'active')->first();
         $this->assertSame('{"q":3,"r":-3}', $mission->target);
     }
 
@@ -880,24 +880,24 @@ class HangarServiceTest extends TestCase
 
     public function test_organika_cost_scales_down_with_knowledge_level_above_gate(): void
     {
-        $mission = config('missions.catalog.mission_prospecting_flight'); // geology Lv1 gate, dist 2
+        $mission = config('missions.catalog.mission_long_range_expedition'); // cartography Lv3 gate, dist 5
 
-        $this->setKnowledgeLevel('geology', 1);
-        $this->assertSame(6, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv1 (at gate): full rate 3/sol × 2');
+        $this->setKnowledgeLevel('cartography', 3);
+        $this->assertSame(15, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv3 (at gate): full rate 3/sol × 5');
 
-        $this->setKnowledgeLevel('geology', 2);
-        $this->assertSame(4, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv2: 1 level above gate → 2/sol × 2');
+        $this->setKnowledgeLevel('cartography', 4);
+        $this->assertSame(10, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv4: 1 level above gate → 2/sol × 5');
 
-        $this->setKnowledgeLevel('geology', 3);
-        $this->assertSame(2, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv3: 2 levels above gate → 1/sol × 2');
+        $this->setKnowledgeLevel('cartography', 5);
+        $this->assertSame(5, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'Lv5: 2 levels above gate → 1/sol × 5');
     }
 
     public function test_organika_cost_respects_floor(): void
     {
-        $mission = config('missions.catalog.mission_prospecting_flight');
-        $this->setKnowledgeLevel('geology', 5); // far above gate — must not go below the floor
+        $mission = config('missions.catalog.mission_long_range_expedition');
+        $this->setKnowledgeLevel('cartography', 9); // far above gate — must not go below the floor
 
-        $this->assertSame(2, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'floor is 1/sol × 2 sol_distance');
+        $this->assertSame(5, $this->hangarService->organikaCostFor(self::COLONY_ID, $mission), 'floor is 1/sol × 5 sol_distance');
     }
 
     public function test_organika_cost_includes_extra_cost(): void
@@ -1122,19 +1122,19 @@ class HangarServiceTest extends TestCase
 
     public function test_success_chance_adds_knowledge_bonus_above_gate(): void
     {
-        // mission_prospecting_flight requires geology Lv1 — colony sits at Lv3, 2 levels above gate.
+        // mission_long_range_expedition requires cartography Lv3 — colony sits at Lv5, 2 levels above gate.
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.geology.id')],
-            ['level' => 3, 'ap_spend' => 0]
+            ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.cartography.id')],
+            ['level' => 5, 'ap_spend' => 0]
         );
-        $mission = config('missions.catalog.mission_prospecting_flight');
+        $mission = config('missions.catalog.mission_long_range_expedition');
         $this->insertHangar(1, 3);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
         $service = $this->hangarService;
 
         $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'normal');
 
-        $this->assertEqualsWithDelta(0.70 + 2 * 0.03, $chance, 0.0001, '2 levels above the Lv1 gate => +0.06');
+        $this->assertEqualsWithDelta(0.70 + 2 * 0.03, $chance, 0.0001, '2 levels above the Lv3 gate => +0.06');
     }
 
     public function test_success_chance_is_capped(): void
@@ -1147,10 +1147,10 @@ class HangarServiceTest extends TestCase
             'active_ticks' => 0,
         ]);
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.geology.id')],
-            ['level' => 5, 'ap_spend' => 0]
+            ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.cartography.id')],
+            ['level' => 7, 'ap_spend' => 0]
         );
-        $mission = config('missions.catalog.mission_prospecting_flight');
+        $mission = config('missions.catalog.mission_long_range_expedition');
         $this->insertHangar(1, 3);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
         $service = $this->hangarService;

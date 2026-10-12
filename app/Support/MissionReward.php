@@ -21,7 +21,6 @@ final class MissionReward
 
     /** reward key => lang key of its fixed text */
     private const FIXED_PARTS = [
-        'deep_scan' => 'reward_deep_scan',
         'harvester_instance' => 'reward_harvester_instance',
     ];
 

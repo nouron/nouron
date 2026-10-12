@@ -169,15 +169,13 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 |---|---|---|---|
 | `mission_courier_run` | 1 | 3 Or | 180 Cr |
 | `mission_recon_flight` | 1 | 3 Or | 2 Tiles reveal |
-| `mission_deep_survey` | 2 | 6 Or | 1 Deep Scan |
-| `mission_prospecting_flight` (Geo Lv1+) | 2 | 6 Or | 20–30 Rg |
 | `mission_data_sweep` (Cart Lv1+) | 3 | 9 Or | 8 Research AP |
 | `mission_long_range_expedition` (Cart Lv3+) | 5 | 15 Or | 700–1100 Cr / 8–12 Wk / 30–45 Rg (1 pick) |
 
 ### Frachter
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_supply_run` | 1 | 3 Or | 25 Rg / 10 Or |
+| `mission_supply_run` | 1 | 3 Or | 10 Or |
 | `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 520 Cr + Trade Success (+2 Trust) |
 | `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 180 Cr + Encounter Won (+2 Trust) |
 
@@ -224,8 +222,6 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 |---|---|---|---|
 | `mission_courier_run` | Botenflug | Drohne | easy / normal |
 | `mission_recon_flight` | Erkundungsflug | Drohne | easy / normal |
-| `mission_deep_survey` | Signalvermessung | Drohne | easy / normal |
-| `mission_prospecting_flight` | Prospektionsflug | Drohne | normal / hard |
 | `mission_data_sweep` | Datensammelflug | Drohne | normal / hard |
 | `mission_long_range_expedition` | Fernexpedition | Drohne | normal / hard |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | easy / normal |

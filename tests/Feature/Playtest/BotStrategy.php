@@ -55,7 +55,6 @@ class BotStrategy
     // (config/missions.php `ships`), so the first one a docked ship can fly wins.
     private const REGOLITH_MISSIONS = [
         ['mission_supply_run', 'easy'],
-        ['mission_prospecting_flight', 'normal'],
     ];
 
     /**
@@ -234,8 +233,7 @@ class BotStrategy
             [
                 'name' => 'dispatch_regolith_mission',
                 // Baseline 2026-09-26 (B5): dispatch_mission only ever sent recon, so
-                // the Regolith missions (freighter supply run = Path B, drone
-                // prospecting flight) never flew and a colony past harvester
+                // the Regolith missions (freighter supply run = Path B) never flew and a colony past harvester
                 // exhaustion had no Regolith alternative. Ahead of the compounds
                 // mission: while Regolith is scarce it is the tighter bottleneck.
                 'when' => fn (BotSession $b) => self::regolithMissionCandidate($b),

@@ -9,12 +9,6 @@ return [
     'mission_recon_flight_name' => 'Recon Flight',
     'mission_recon_flight_desc' => 'The drone sweeps across uncharted terrain, radioing back what lies beyond the horizon.',
 
-    'mission_deep_survey_name' => 'Signal Survey',
-    'mission_deep_survey_desc' => 'Something out there is transmitting — the drone circles the source until it knows what it really is.',
-
-    'mission_prospecting_flight_name' => 'Prospecting Flight',
-    'mission_prospecting_flight_desc' => 'The drone probes the rubble fields for workable regolith and comes home with its sample containers full.',
-
     'mission_data_sweep_name' => 'Data Sweep',
     'mission_data_sweep_desc' => 'On one long, wide loop the drone gathers field readings that save the analysts back home weeks of legwork.',
 
@@ -86,7 +80,6 @@ return [
     'reward_organics' => ':amount Organics',
     'reward_research_ap' => '+:amount Research AP',
     'reward_reveal_tiles' => ':amount sectors charted',
-    'reward_deep_scan' => 'Deep scan of the signal',
     'reward_harvester_instance' => 'Salvaged Harvester (damaged)',
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',

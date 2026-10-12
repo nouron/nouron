@@ -788,7 +788,6 @@ class HangarService
     /**
      * Validate the player-picked mission target and return its canonical JSON.
      *
-     * signal_tile — explored tile with a hidden event, not yet deep-scanned.
      * ruin_tile   — deep-scanned event_ruin tile not yet consumed by a ruin expedition.
      * knowledge   — any knowledge id from config/knowledge.php.
      */
@@ -816,7 +815,6 @@ class HangarService
             ->first();
 
         $valid = match ($targetType) {
-            'signal_tile' => $tile !== null && $tile->is_explored && $tile->event_type !== null && ! $tile->is_deep_scanned,
             'ruin_tile' => $tile !== null && $tile->is_deep_scanned && $tile->event_type === 'event_ruin',
             default => false,
         };
@@ -962,11 +960,8 @@ class HangarService
             ->where('colony_id', $colonyId)
             ->orderBy('ring')->orderBy('q')->orderBy('r');
 
-        if ($targetType === 'signal_tile') {
-            $query->where('is_explored', 1)->whereNotNull('event_type')->where('is_deep_scanned', 0);
-        } else { // ruin_tile
-            $query->where('is_deep_scanned', 1)->where('event_type', 'event_ruin');
-        }
+        // ruin_tile (find_tile is added with the salvage flight)
+        $query->where('is_deep_scanned', 1)->where('event_type', 'event_ruin');
 
         $tiles = [];
         foreach ($query->get(['q', 'r', 'ring']) as $tile) {

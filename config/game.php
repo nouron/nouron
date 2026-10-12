@@ -59,6 +59,14 @@ return [
         'scan_ap_uplink' => 1, // Uplink-Station Lv2+
         'salvage_cap_per_sol' => 4,
         'max_open_projects' => 2,
+        // T30 §13.3: salvage flight (mission_find_salvage). yield = round(rg × yield_factor).
+        // min_hangar_level = lowest hall level whose ship class carries the find (drone 1,
+        // freighter 2) — shown as the lock reason on the find card; must match
+        // ships.*.find_carry (tests/Unit/FindFlightConfigTest).
+        'flight' => [
+            'yield_factor' => 1.5,
+            'min_hangar_level' => ['find_small' => 1, 'find_medium' => 1, 'find_large' => 2],
+        ],
     ],
 
     // IMPORTANT: The tick system assumes the server (and PHP runtime) runs in UTC.

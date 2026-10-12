@@ -9,12 +9,6 @@ return [
     'mission_recon_flight_name' => 'Erkundungsflug',
     'mission_recon_flight_desc' => 'Die Drohne zieht ihre Bahnen über unkartiertem Gelände und funkt zurück, was hinter dem Horizont liegt.',
 
-    'mission_deep_survey_name' => 'Signalvermessung',
-    'mission_deep_survey_desc' => 'Irgendetwas da draußen sendet — die Drohne kreist über der Quelle, bis klar ist, was es wirklich ist.',
-
-    'mission_prospecting_flight_name' => 'Prospektionsflug',
-    'mission_prospecting_flight_desc' => 'Die Drohne tastet die Geröllfelder nach abbauwürdigem Regolith ab und kehrt mit vollen Probencontainern heim.',
-
     'mission_data_sweep_name' => 'Datensammelflug',
     'mission_data_sweep_desc' => 'Auf weiter Schleife sammelt die Drohne Messdaten, die den Analytikern daheim Wochen an Feldarbeit ersparen.',
 
@@ -95,7 +89,6 @@ return [
     'reward_organics' => ':amount Organika',
     'reward_research_ap' => '+:amount Forschungs-AP',
     'reward_reveal_tiles' => ':amount Sektoren kartiert',
-    'reward_deep_scan' => 'Tiefenscan des Signals',
     'reward_harvester_instance' => 'Geborgener Harvester (beschädigt)',
     'reward_trust' => 'Vertrauen',
     'reward_loot_table' => 'Zufallsfund: :options',

@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 /**
  * Baseline 2026-09-26 (B5): dispatch_mission always sent mission_recon_flight/easy,
- * so the Regolith missions (Path B: freighter supply run, drone prospecting flight)
+ * so the Regolith missions (Path B: freighter supply run)
  * never flew — after harvester exhaustion the bot had no Regolith alternative. When
  * Regolith is scarce the bot now sends a Regolith mission with a ship that can fly
  * it; otherwise recon stays the drone's routine job.
@@ -57,28 +57,6 @@ class BotStrategyMissionChoiceTest extends TestCase
     public function test_no_regolith_mission_without_the_organics_for_provisions(): void
     {
         $bot = $this->bootWithDockedShip(self::SHIP_FREIGHTER, regolith: 10, organics: 0);
-
-        $this->assertEmpty($this->rule('dispatch_regolith_mission')['when']($bot));
-    }
-
-    public function test_drone_flies_prospecting_when_scarce_and_geology_is_known(): void
-    {
-        $bot = $this->bootWithDockedShip(self::SHIP_DRONE, regolith: 10);
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $bot->colonyId, 'research_id' => self::KNOWLEDGE_GEOLOGY],
-            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0],
-        );
-
-        $candidate = $this->rule('dispatch_regolith_mission')['when']($bot);
-
-        $this->assertNotEmpty($candidate);
-        $this->assertSame('mission_prospecting_flight', $candidate['mission_key']);
-        $this->assertContains($candidate['difficulty'], config('missions.catalog.mission_prospecting_flight.difficulties'));
-    }
-
-    public function test_drone_without_geology_gets_no_regolith_mission(): void
-    {
-        $bot = $this->bootWithDockedShip(self::SHIP_DRONE, regolith: 10);
 
         $this->assertEmpty($this->rule('dispatch_regolith_mission')['when']($bot));
     }
