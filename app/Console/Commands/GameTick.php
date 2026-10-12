@@ -436,15 +436,18 @@ class GameTick extends Command
             $success = true;
 
             if ($catalogEntry !== null) {
-                $successChance = $this->hangarService->successChanceFor((int) $mission->colony_id, $catalogEntry, $difficulty);
                 // The mission's position within its colony, not its global id (R5b) —
                 // see App\Support\RunSeed. Also seeds the reward rolls below.
                 $missionSeed = $rngSeed + RunSeed::rowOrdinal('colony_hangar_missions', (int) $mission->colony_id, (int) $mission->mission_id);
-                $roll = $this->seededRoll($missionSeed + 1, 0, 9999) / 10000;
-                $success = $roll <= $successChance;
+                // T30 §13.3: missions with roll === false (salvage flight) skip the success roll.
+                $rolls = ($catalogEntry['roll'] ?? true) !== false;
+                if ($rolls) {
+                    $successChance = $this->hangarService->successChanceFor((int) $mission->colony_id, $catalogEntry, $difficulty);
+                    $success = $this->seededRoll($missionSeed + 1, 0, 9999) / 10000 <= $successChance;
+                }
 
                 if ($success) {
-                    $rewardMultiplier = (float) config("game.missions.difficulty.reward_multiplier.{$difficulty}", 1.0);
+                    $rewardMultiplier = $rolls ? (float) config("game.missions.difficulty.reward_multiplier.{$difficulty}", 1.0) : 1.0;
                     $rewardDetails = $this->payMissionRewards(
                         (int) $mission->colony_id,
                         $userId,
@@ -452,7 +455,8 @@ class GameTick extends Command
                         $mission->target !== null ? json_decode($mission->target, true) : null,
                         $missionSeed,
                         $tick,
-                        $rewardMultiplier
+                        $rewardMultiplier,
+                        (int) $mission->ship_id
                     );
                 } elseif ($difficulty === 'hard') {
                     $extraWear = (float) config('game.missions.difficulty.hard_fail_extra_wear', 1.0);
@@ -507,7 +511,8 @@ class GameTick extends Command
         ?array $target,
         int $seed,
         int $tick,
-        float $rewardMultiplier = 1.0
+        float $rewardMultiplier = 1.0,
+        int $shipId = 0
     ): array {
         // loot_table: seeded pick of one entry, then resolve that entry's rewards.
         if (isset($reward['loot_table'])) {
@@ -545,6 +550,12 @@ class GameTick extends Command
                 $value = $this->revealTiles($colonyId, (int) $value);
             } elseif ($type === 'research_ap') {
                 $this->grantResearchAp($colonyId, $target, (int) $value);
+            } elseif ($type === 'find_salvage') {
+                // T30 §13.3: own detail keys, deliberately NOT 'regolith' (RunReport topf find_flight).
+                // Hook for §13.6 (Feldproben, Fahrtbericht) — find_type is in the details.
+                $details += $this->hangarService->completeFindFlight($colonyId, $target, $shipId);
+
+                continue;
             } elseif ($type === 'harvester_instance') {
                 // Weg B (mission_harvester_salvage, GDD §4c "Harvester-Zweitinstanz:
                 // Bezugsquelle", freigegeben 2026-08-05): grants the earned entitlement,

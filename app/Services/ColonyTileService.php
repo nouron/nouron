@@ -27,6 +27,8 @@ class ColonyTileService
         return ($uplinkLv >= 2) ? (int) config('game.finds.scan_ap_uplink') : (int) config('game.finds.scan_ap');
     }
 
+    public const FIND_TYPES = ['find_small', 'find_medium', 'find_large'];
+
     /** Ring-3 "frontier" tile count seeded at Sol 1 — a deliberate half-subset of the full 18-tile ring. */
     private const RING3_FRONTIER_COUNT = 9;
 
@@ -194,20 +196,41 @@ class ColonyTileService
             $rg = 0;
             if ($completed) {
                 $rg = (int) $def['rg'];
-                DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)
-                    ->increment('amount', $rg);
-                $tile->event_type = null;
-                $tile->is_deep_scanned = false;
-                $tile->salvage_ap_spent = 0;
-                $tile->salvage_tick = null;
+                $this->completeFind($tile, $rg);
             } else {
                 $tile->salvage_ap_spent = $spent;
                 $tile->salvage_tick = $tick;
+                $tile->save();
             }
-            $tile->save();
 
             return ['ok' => true, 'tile' => $this->transformTile($tile), 'completed' => $completed, 'regolith' => $rg];
         });
+    }
+
+    /** Shared completion of self-salvage and salvage flight (§13.3): credit Rg, free the tile. */
+    public function completeFind(ColonyTile $tile, int $rg): void
+    {
+        if ($rg > 0) {
+            DB::table('colony_resources')->where('colony_id', $tile->colony_id)->where('resource_id', 3)->increment('amount', $rg);
+        }
+        $tile->event_type = null;
+        $tile->is_deep_scanned = false;
+        $tile->salvage_ap_spent = 0;
+        $tile->salvage_tick = null;
+        $tile->save();
+    }
+
+    /** Return Sol of the active salvage flight to this tile, null if none (reservation = state active only). */
+    public function findFlightReturnSol(int $colonyId, int $q, int $r): ?int
+    {
+        $mission = DB::table('colony_hangar_missions')
+            ->where('colony_id', $colonyId)
+            ->where('destination', FindFlightService::MISSION_KEY)
+            ->where('state', 'active')
+            ->where('target', json_encode(['q' => $q, 'r' => $r]))
+            ->first(['dispatch_tick', 'sol_distance']);
+
+        return $mission === null ? null : (int) $mission->dispatch_tick + 2 * (int) $mission->sol_distance;
     }
 
     /**

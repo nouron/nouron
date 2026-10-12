@@ -6,6 +6,7 @@ use App\Enums\BuildingId;
 use App\Exceptions\GameRuleException;
 use App\Models\Advisor;
 use App\Models\Colony;
+use App\Models\ColonyTile;
 use App\Support\HangarBays;
 use App\Support\MissionReward;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,8 @@ class HangarService
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly EventService $eventService,
+        private readonly FindFlightService $findFlightService,
+        private readonly ColonyTileService $colonyTileService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -684,11 +687,19 @@ class HangarService
 
             // Target requirement (player-picked tile or knowledge).
             $targetJson = null;
-            if (($mission['target_type'] ?? null) !== null) {
-                $targetJson = $this->validateTarget($colonyId, $missionKey, $mission['target_type'], $target);
+            $solDistance = (int) ($mission['sol_distance'] ?? 0);
+            $targetType = $mission['target_type'] ?? null;
+            if ($targetType === 'find_tile') {
+                // T30 §13.3: the locked tile row reserves the find; distance comes from its ring.
+                $tile = DB::table('colony_tiles')->where('colony_id', $colonyId)
+                    ->where('q', (int) ($target['q'] ?? PHP_INT_MIN))->where('r', (int) ($target['r'] ?? PHP_INT_MIN))
+                    ->lockForUpdate()->first();
+                $this->assertFindFlyable($colonyId, $tile, $shipKey);
+                $targetJson = json_encode(['q' => (int) $tile->q, 'r' => (int) $tile->r]);
+                $solDistance = $this->findFlightService->solDistance((int) $tile->ring);
+            } elseif ($targetType !== null) {
+                $targetJson = $this->validateTarget($colonyId, $missionKey, $targetType, $target);
             }
-
-            $solDistance = (int) $mission['sol_distance'];
 
             // T30 §13.x/7: return guarantee instead of the 25 % floor — a ship never
             // starts a flight it cannot come back from.
@@ -700,7 +711,7 @@ class HangarService
             }
             $baseNavApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
             $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseNavApCost);
-            $organikaCost = $this->organikaCostFor($colonyId, $mission);
+            $organikaCost = $this->organikaCostFor($colonyId, $mission, $solDistance);
 
             if (! config('game.bypass.ap_checks')
                 && $this->advisorService->getAvailableActionPoints($colonyId) < $navApCost) {
@@ -749,8 +760,9 @@ class HangarService
     /**
      * Organika dispatch cost for a catalog mission: per-sol rate reduced by
      * knowledge levels above the gate (never below the floor), plus extra_cost.
+     * $solDistance overrides the catalog distance (salvage flight: from the target ring).
      */
-    public function organikaCostFor(int $colonyId, array $mission): int
+    public function organikaCostFor(int $colonyId, array $mission, ?int $solDistance = null): int
     {
         $perSol = (int) config('missions.organika_per_sol', 3);
         $gate = $mission['requires']['knowledge'] ?? null;
@@ -763,10 +775,36 @@ class HangarService
             $perSol = max($floor, $perSol - $scaling * $levelsAbove);
         }
 
-        $cost = (int) $mission['sol_distance'] * $perSol;
+        $cost = ($solDistance ?? (int) $mission['sol_distance']) * $perSol;
         $cost += (int) ($mission['extra_cost']['organics'] ?? 0);
 
         return $cost;
+    }
+
+    /**
+     * Tile-level gates of a salvage flight (§13.3). The tile row is locked by the caller,
+     * so a second dispatch to the same find waits and then sees the active mission.
+     */
+    private function assertFindFlyable(int $colonyId, ?object $tile, ?string $shipKey): void
+    {
+        if ($tile === null || $tile->event_type === null) {
+            throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
+        }
+        if (! (bool) $tile->is_deep_scanned) {
+            throw $this->ruleError('find_not_scanned', 'missions.error_find_not_scanned');
+        }
+        if (! in_array($tile->event_type, ColonyTileService::FIND_TYPES, true)) {
+            throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
+        }
+        if ((int) $tile->salvage_ap_spent > 0) {
+            throw $this->ruleError('find_salvage_in_progress', 'missions.error_find_salvage_in_progress');
+        }
+        if ($this->colonyTileService->findFlightReturnSol($colonyId, (int) $tile->q, (int) $tile->r) !== null) {
+            throw $this->ruleError('find_in_flight', 'missions.error_find_in_flight');
+        }
+        if (! $this->findFlightService->canCarry($shipKey, $tile->event_type)) {
+            throw $this->ruleError('find_too_large', 'missions.error_find_too_large');
+        }
     }
 
     /**
@@ -858,9 +896,7 @@ class HangarService
 
         $entries = [];
         foreach (config('missions.catalog', []) as $key => $mission) {
-            $dist = (int) $mission['sol_distance'];
-            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $dist * $navPerSol);
-            $organikaCost = $this->organikaCostFor($colonyId, $mission);
+            $dist = (int) ($mission['sol_distance'] ?? 0);
 
             $availability = 'ok';
             $gateInfo = null;
@@ -886,7 +922,14 @@ class HangarService
                 if ($availability === 'ok' && $targets === []) {
                     $availability = 'missing_target';
                 }
+                if ($targetType === 'find_tile') {
+                    // Header costs show the nearest pickable find; each target carries its own.
+                    $dist = $targets === [] ? $this->findFlightService->solDistance(2) : min(array_column($targets, 'sol_distance'));
+                }
             }
+
+            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $dist * $navPerSol);
+            $organikaCost = $this->organikaCostFor($colonyId, $mission, $dist);
 
             if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableAp) {
                 $availability = 'missing_ap';
@@ -900,13 +943,15 @@ class HangarService
                 $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
             }
 
+            // T30 §13.3: roll === false (salvage flight) — no success roll, no difficulty scaling.
+            $rolls = ($mission['roll'] ?? true) !== false;
             $difficultyOptions = [];
             foreach ($mission['difficulties'] ?? [] as $difficultyKey) {
                 $difficultyOptions[] = [
                     'key' => $difficultyKey,
                     'label' => __("missions.difficulty_{$difficultyKey}"),
-                    'chance_pct' => (int) round($this->successChanceFor($colonyId, $mission, $difficultyKey) * 100),
-                    'reward_multiplier' => (float) config("game.missions.difficulty.reward_multiplier.{$difficultyKey}", 1.0),
+                    'chance_pct' => $rolls ? (int) round($this->successChanceFor($colonyId, $mission, $difficultyKey) * 100) : 100,
+                    'reward_multiplier' => $rolls ? (float) config("game.missions.difficulty.reward_multiplier.{$difficultyKey}", 1.0) : 1.0,
                 ];
             }
 
@@ -928,6 +973,7 @@ class HangarService
                 'target_type' => $targetType,
                 'targets' => $targets,
                 'difficulty_options' => $difficultyOptions,
+                'roll' => $rolls,
             ];
         }
 
@@ -956,29 +1002,84 @@ class HangarService
             return $targets;
         }
 
+        if ($targetType === 'find_tile') {
+            $tick = $this->tickService->getTickCount();
+            $mission = config('missions.catalog.'.FindFlightService::MISSION_KEY);
+
+            return DB::table('colony_tiles')
+                ->where('colony_id', $colonyId)->where('is_deep_scanned', 1)
+                ->whereIn('event_type', ColonyTileService::FIND_TYPES)->where('salvage_ap_spent', 0)
+                ->orderBy('ring')->orderBy('q')->orderBy('r')
+                ->get()
+                ->reject(fn ($t) => $this->colonyTileService->findFlightReturnSol($colonyId, (int) $t->q, (int) $t->r) !== null)
+                ->map(function ($t) use ($colonyId, $tick, $mission) {
+                    $costs = $this->findFlightService->costs($colonyId, (int) $t->ring);
+                    $carry = [];
+                    foreach ($mission['ships'] as $shipKey) {
+                        $carry[$shipKey] = $this->findFlightService->canCarry($shipKey, $t->event_type);
+                    }
+
+                    return ['q' => (int) $t->q, 'r' => (int) $t->r, 'ring' => (int) $t->ring, 'find_type' => $t->event_type,
+                        ...$costs, 'return_sol' => $tick + $costs['duration'], 'carry' => $carry,
+                        'yield' => $this->findFlightService->findFlightYield($colonyId, $t->event_type)];
+                })
+                ->values()
+                ->all();
+        }
+
+        if ($targetType !== 'ruin_tile') {
+            return [];
+        }
+
+        // ruin_tile: deep-scanned ruins not yet claimed by this mission.
         $query = DB::table('colony_tiles')
             ->where('colony_id', $colonyId)
+            ->where('is_deep_scanned', 1)->where('event_type', 'event_ruin')
             ->orderBy('ring')->orderBy('q')->orderBy('r');
-
-        // ruin_tile (find_tile is added with the salvage flight)
-        $query->where('is_deep_scanned', 1)->where('event_type', 'event_ruin');
 
         $tiles = [];
         foreach ($query->get(['q', 'r', 'ring']) as $tile) {
             $targetJson = json_encode(['q' => (int) $tile->q, 'r' => (int) $tile->r]);
-            if ($targetType === 'ruin_tile'
-                && DB::table('colony_hangar_missions')
-                    ->where('colony_id', $colonyId)
-                    ->where('destination', $missionKey)
-                    ->whereIn('state', ['active', 'completed'])
-                    ->where('target', $targetJson)
-                    ->exists()) {
+            if (DB::table('colony_hangar_missions')
+                ->where('colony_id', $colonyId)
+                ->where('destination', $missionKey)
+                ->whereIn('state', ['active', 'completed'])
+                ->where('target', $targetJson)
+                ->exists()) {
                 continue; // ruin already claimed this run
             }
             $tiles[] = ['q' => (int) $tile->q, 'r' => (int) $tile->r, 'ring' => (int) $tile->ring];
         }
 
         return $tiles;
+    }
+
+    /**
+     * Tick payout of a salvage flight (§13.3). Defensive: a tile that is no longer a
+     * scanned real find, or a ship that cannot carry it, pays nothing (find_missing).
+     *
+     * @return array{find_type: ?string, find_regolith: int, flight_bonus: int, find_missing?: bool}
+     */
+    public function completeFindFlight(int $colonyId, ?array $target, int $shipId): array
+    {
+        $none = ['find_type' => null, 'find_regolith' => 0, 'flight_bonus' => 0, 'find_missing' => true];
+        if (! isset($target['q'], $target['r'])) {
+            return $none;
+        }
+
+        return DB::transaction(function () use ($colonyId, $target, $shipId, $none): array {
+            $tile = ColonyTile::where('colony_id', $colonyId)->where('q', (int) $target['q'])->where('r', (int) $target['r'])
+                ->lockForUpdate()->first();
+            $type = $tile?->event_type;
+            if ($tile === null || ! $tile->is_deep_scanned || ! in_array($type, ColonyTileService::FIND_TYPES, true)
+                || ! $this->findFlightService->canCarry(HangarBays::shipKey($shipId), $type)) {
+                return $none;
+            }
+            $yield = $this->findFlightService->findFlightYield($colonyId, $type);
+            $this->colonyTileService->completeFind($tile, $yield['total']);
+
+            return ['find_type' => $type, 'find_regolith' => $yield['total'], 'flight_bonus' => $yield['flight_bonus']];
+        });
     }
 
     /**

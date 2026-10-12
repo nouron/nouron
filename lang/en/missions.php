@@ -9,6 +9,9 @@ return [
     'mission_recon_flight_name' => 'Recon Flight',
     'mission_recon_flight_desc' => 'The drone sweeps across uncharted terrain, radioing back what lies beyond the horizon.',
 
+    'mission_find_salvage_name' => 'Salvage Flight',
+    'mission_find_salvage_desc' => 'The crew flies out to a scanned find and hauls it aboard with the salvage rig — more reaches the stores than on foot.',
+
     'mission_data_sweep_name' => 'Data Sweep',
     'mission_data_sweep_desc' => 'On one long, wide loop the drone gathers field readings that save the analysts back home weeks of legwork.',
 
@@ -59,6 +62,10 @@ return [
     'error_knowledge_gate' => 'The colony lacks the knowledge required for this mission.',
     'error_invalid_target' => 'No valid target selected for this mission.',
     'error_target_consumed' => 'This ruin has already been salvaged.',
+    'error_find_not_scanned' => 'The signal has not been scanned yet — scan it first.',
+    'error_find_too_large' => 'This find is too heavy for the ship.',
+    'error_find_in_flight' => 'A ship is already on its way to this find.',
+    'error_find_salvage_in_progress' => 'The salvage crew is already digging here — the find is finished on foot.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 
@@ -81,6 +88,7 @@ return [
     'reward_research_ap' => '+:amount Research AP',
     'reward_reveal_tiles' => ':amount sectors charted',
     'reward_harvester_instance' => 'Salvaged Harvester (damaged)',
+    'reward_find_salvage' => 'Find + flight bonus',
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',
     'reward_label' => 'Yield',
