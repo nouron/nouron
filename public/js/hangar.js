@@ -40,6 +40,7 @@ function hangarCarousel(config) {
         pendingShips: config.pendingShips ?? [],
         missionCatalog: config.missionCatalog ?? [],
         hangarMaxLevel: config.hangarMaxLevel ?? 0,
+        maxStatus: config.maxStatus,
 
         // Per-bay UI state: keyed by bay
         loading: {},
@@ -259,7 +260,98 @@ function hangarCarousel(config) {
             if (mission.target_type === 'knowledge') {
                 return target.label + ' (Lv ' + target.level + ')';
             }
+            if (mission.target_type === 'find_tile') {
+                // Per-target costs: each find has its own distance, so its own AP/Organika/duration.
+                const carry = target.carry?.[this.missionModal.shipKey] ? '' : ' — ' + this.i18n.targetTooLarge;
+                const carto =
+                    target.nav_ap < target.nav_ap_base
+                        ? ' · ' + this.i18n.targetCartography.replace(':ap', target.nav_ap_base - target.nav_ap)
+                        : '';
+                const yieldLine = this.i18n.targetFindYield
+                    .replace(':base', target.yield.base)
+                    .replace(':bonus', target.yield.flight_bonus)
+                    .replace(':total', target.yield.total);
+                return (
+                    '(' +
+                    target.q +
+                    '|' +
+                    target.r +
+                    ') Ring ' +
+                    target.ring +
+                    ' · ' +
+                    yieldLine +
+                    ' · ' +
+                    target.nav_ap +
+                    ' AP' +
+                    carto +
+                    ' · Or ' +
+                    target.organika +
+                    ' · ' +
+                    this.i18n.missionReturnLabel.replace(':sol', target.return_sol) +
+                    ' · ' +
+                    this.readinessLine(target.sol_distance) +
+                    carry
+                );
+            }
             return '(' + target.q + '|' + target.r + ') — Ring ' + target.ring;
+        },
+
+        /** Find targets the docked ship cannot carry or would not come back from stay visible but unselectable. */
+        targetDisabled(mission, target) {
+            return (
+                mission.target_type === 'find_tile' &&
+                (!target.carry?.[this.missionModal.shipKey] || this.readinessFor(target.sol_distance)?.ready === false)
+            );
+        },
+
+        /** The server-computed return guarantee (slot.ship.readiness) of the dialog's ship. */
+        readinessFor(distance) {
+            const slot = this.slots.find((s) => s.bay === this.missionModal.bay);
+            return slot?.ship?.readiness?.[distance] ?? null;
+        },
+
+        /** "Wear -6 · condition 14 -> 8" or the blocking line with the repair AP; never greyed out silently. */
+        readinessLine(distance) {
+            const r = this.readinessFor(distance);
+            if (!r) return '';
+            const sp = this.slots.find((s) => s.bay === this.missionModal.bay).ship.status_points;
+            return r.ready
+                ? this.i18n.missionWearLine.replace(':wear', r.wear).replace(':from', sp).replace(':to', r.sp_after)
+                : this.i18n.missionTooWorn.replace(':current', sp).replace(':wear', r.wear).replace(':ap', r.repair_ap);
+        },
+
+        /** Chip costs of a catalog entry; a find-flight shows the picked target's own costs, else the nearest's. */
+        missionCosts(mission) {
+            const target =
+                mission.target_type === 'find_tile' && this.missionModal.selectedKey === mission.key
+                    ? mission.targets?.[parseInt(this.missionModal.targetIndex, 10)]
+                    : null;
+            if (!target) {
+                return {
+                    nav_ap: mission.nav_ap,
+                    organika: mission.organika,
+                    duration: mission.duration,
+                    wear: this.missionWear(mission),
+                };
+            }
+            return {
+                nav_ap: target.nav_ap,
+                organika: target.organika,
+                duration: target.duration,
+                wear: this.readinessFor(target.sol_distance)?.wear ?? this.missionWear(mission),
+            };
+        },
+
+        /** Start is blocked while the picked/only distance is beyond the ship's return guarantee. */
+        missionBlockedByWear(mission) {
+            return mission.target_type !== 'find_tile' && this.readinessFor(mission.sol_distance)?.ready === false;
+        },
+
+        /** Picked find target is not allowed (cannot carry / too worn). */
+        pickedTargetDisabled(mission) {
+            if (mission.target_type !== 'find_tile') return false;
+            const target = mission.targets?.[parseInt(this.missionModal.targetIndex, 10)];
+            return target ? this.targetDisabled(mission, target) : false;
         },
 
         /**
@@ -275,6 +367,7 @@ function hangarCarousel(config) {
             }
             if (this.missionRequiresTarget(mission) && this.missionModal.targetIndex === '') return;
             if (!this.missionModal.selectedDifficulty) return;
+            if (this.missionBlockedByWear(mission) || this.pickedTargetDisabled(mission)) return;
             this.submitMission(mission);
         },
 
@@ -398,12 +491,12 @@ function hangarCarousel(config) {
 
         /**
          * Returns the CSS width percentage for the ship status bar.
-         * status_points range is 0–20.
+         * status_points range is 0–maxStatus (game.ship_repair.max_status_points, server-provided).
          * @param {number} points
          * @returns {string}
          */
         statusBarWidth(points) {
-            return Math.max(0, Math.min(100, (points / 20) * 100)) + '%';
+            return Math.max(0, Math.min(100, (points / this.maxStatus) * 100)) + '%';
         },
 
         /**

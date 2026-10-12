@@ -26,7 +26,7 @@ return [
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
     'hangar' => 'Hangar',
-    'hangar_desc' => 'Berth for a single ship — maintenance, refuelling, crew rotation. Each hangar holds exactly one corvette or freighter. Probes do not require a hangar.',
+    'hangar_desc' => 'Landing field with docking bays. Every level opens another bay and the next ship class; the gift drone stands on the apron.',
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 

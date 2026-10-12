@@ -349,6 +349,7 @@ class ColonyController extends BaseController
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
                 'supply_cost' => (int) $b->supply_cost,
+                'notice' => (int) $b->id === BuildingId::Hangar->value ? __('colony.hangar_build_notice') : null,
                 // Placing pays erect cost + first-level Regolith in one go (T9):
                 // build_cost/first_level_regolith are the breakdown, placement_cost
                 // the amount actually charged. All [resource_id => amount].

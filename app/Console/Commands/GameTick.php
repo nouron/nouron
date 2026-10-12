@@ -492,6 +492,7 @@ class GameTick extends Command
                         'ship_id' => (int) $mission->ship_id,
                         'colony_id' => (int) $mission->colony_id,
                         'difficulty' => $difficulty,
+                        'find_missing' => (bool) ($rewardDetails['find_missing'] ?? false),
                     ]),
                 ]);
             }

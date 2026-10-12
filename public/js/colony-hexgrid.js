@@ -393,6 +393,27 @@ function colonyHexView(config) {
             }
         },
 
+        // T30 §13.4: the find card's flight button dispatches the ship findAction() chose.
+        async doFindFlight(tile) {
+            const action = tile.find?.action;
+            if (!action || action.action !== 'flight') return;
+            const res = await this.post(this.routes.hangarDispatch.replace('__BAY__', action.bay), {
+                mission_key: 'mission_find_salvage',
+                difficulty: 'normal',
+                target: { q: tile.q, r: tile.r },
+            });
+            if (res.ok) {
+                if (res.tile) {
+                    this.updateTile(res.tile);
+                    this.selectedTile = res.tile;
+                }
+                this.updateAp(res);
+                this.$nextTick(() => this.redrawGrid());
+            } else {
+                this.showToast(res.message ?? res.error, 'error');
+            }
+        },
+
         // Map header: counters from tiles the player already knows about.
         findCountersText() {
             const signals = this.tiles.filter((t) => t.has_signal || t.find).length;
@@ -790,6 +811,15 @@ function colonyHexView(config) {
                 if (res.werkstoffe < this.werkstoffe) this.flashResChip('.res-Co');
                 this.werkstoffe = res.werkstoffe;
                 this.syncResbarAmount('.res-Co', res.werkstoffe);
+            }
+            // Hangar dispatches (salvage flight) charge Organika; no Alpine state, chip patch only.
+            if (res.organika !== undefined) {
+                const old = parseInt(
+                    document.querySelector('.res-Or .res-amount')?.textContent.replace(/[^0-9-]/g, ''),
+                    10,
+                );
+                if (!Number.isNaN(old) && res.organika < old) this.flashResChip('.res-Or');
+                this.syncResbarAmount('.res-Or', res.organika);
             }
             if (res.freeSupply !== undefined) this.freeSupply = res.freeSupply;
         },

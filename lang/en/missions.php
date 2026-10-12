@@ -71,6 +71,8 @@ return [
 
     'sol_report_completed' => 'Mission completed',
     'sol_report_aborted' => 'Mission aborted — ship returned unable to fly',
+    'sol_report_failed' => 'Mission failed — no find',
+    'sol_report_find_missing' => 'Salvage flight without a find — the signal was gone',
 
     // ── Difficulty ───────────────────────────────────────────────────────────
 
@@ -92,4 +94,9 @@ return [
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',
     'reward_label' => 'Yield',
+    'target_find_yield' => 'Find :base Rg + flight :bonus Rg = :total Rg',
+    'target_too_large' => 'too large for this ship',
+    'target_cartography' => 'Cartography −:ap AP',
+    'wear_line' => 'Wear −:wear · condition :from → :to',
+    'too_worn_line' => 'Condition :current is not enough for wear :wear – repair first (:ap AP)',
 ];

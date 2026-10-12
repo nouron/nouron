@@ -7,9 +7,11 @@ use App\Exceptions\GameRuleException;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
 use App\Services\ColonyService;
+use App\Services\ColonyTileService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\TickService;
+use App\Support\HangarBays;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +27,7 @@ class HangarController extends BaseController
         private readonly HangarService $hangarService,
         private readonly AdvisorService $advisorService,
         private readonly OnboardingHintService $onboardingHintService,
+        private readonly ColonyTileService $colonyTileService,
     ) {
         parent::__construct($tick);
     }
@@ -85,6 +88,7 @@ class HangarController extends BaseController
         // Gates which ship classes the request modal can offer (Lv1 Drohne,
         // Lv2 Frachter, Lv3 Korvette) — see HangarService::requestShip().
         $hangarMaxLevel = $this->hangarService->hangarMaxLevel($colony->id);
+        $maxShipStatus = HangarBays::maxStatus();
 
         return view('colony.hangar', compact(
             'slots',
@@ -100,6 +104,7 @@ class HangarController extends BaseController
             'firstVisit',
             'missionCatalog',
             'hangarMaxLevel',
+            'maxShipStatus',
         ));
     }
 
@@ -190,9 +195,15 @@ class HangarController extends BaseController
             return $this->errorResponse($e);
         }
 
+        $target = $validated['target'] ?? null;
+        $tile = config("missions.catalog.{$validated['mission_key']}.target_type") === 'find_tile' && isset($target['q'], $target['r'])
+            ? $this->colonyTileService->tileFor($colony->id, (int) $target['q'], (int) $target['r'])
+            : null;
+
         return response()->json([
             'ok' => true,
             'slot' => $this->fetchSlot($colony->id, $bay),
+            'tile' => $tile,
             ...$this->currentHangarResources($colony->id),
         ]);
     }

@@ -57,7 +57,7 @@ class ColonyHintDismissTest extends TestCase
     {
         $keys = ['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_advisor_slot2',
             'hint_invest_site', 'hint_explore', 'hint_4', 'hint_5', 'hint_build_priority', 'hint_6',
-            'hint_agrardome', 'hint_analytik', 'hint_hangar_path', 'hint_spend_remaining_ap', 'hint_end_sol'];
+            'hint_agrardome', 'hint_analytik', 'hint_hangar_path', 'hint_spend_remaining_ap', 'hint_end_sol', 'hint_find_flight'];
         foreach ($keys as $key) {
             DB::table('user_preferences')->updateOrInsert(
                 ['user_id' => self::BART_USER_ID],

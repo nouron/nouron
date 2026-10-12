@@ -535,6 +535,14 @@ class ColonyTileService
         return (int) ceil($resourceAmount / $effectiveRate);
     }
 
+    /** One transformed tile (find card refresh after a hangar dispatch), null if unknown. */
+    public function tileFor(int $colonyId, int $q, int $r): ?array
+    {
+        $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
+
+        return $tile === null ? null : $this->transformTile($tile);
+    }
+
     private function transformTile(ColonyTile $tile): array
     {
         $arr = $tile->toArray();

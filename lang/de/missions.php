@@ -88,6 +88,7 @@ return [
     'sol_report_completed' => 'Mission abgeschlossen',
     'sol_report_aborted' => 'Mission abgebrochen — Schiff kehrte flugunfähig zurück',
     'sol_report_failed' => 'Mission fehlgeschlagen — kein Fund',
+    'sol_report_find_missing' => 'Bergungsflug ohne Fund — das Signal war nicht mehr da',
 
     // ── Mission rewards (derived from config/missions.php by App\Support\MissionReward) ──
     'reward_credits' => ':amount Credits',
@@ -101,4 +102,9 @@ return [
     'reward_trust' => 'Vertrauen',
     'reward_loot_table' => 'Zufallsfund: :options',
     'reward_label' => 'Ertrag',
+    'target_find_yield' => 'Fund :base Rg + Flug :bonus Rg = :total Rg',
+    'target_too_large' => 'zu groß für dieses Schiff',
+    'target_cartography' => 'Kartografie −:ap AP',
+    'wear_line' => 'Verschleiß −:wear · Zustand :from → :to',
+    'too_worn_line' => 'Zustand :current reicht nicht für Verschleiß :wear – erst reparieren (:ap AP)',
 ];
