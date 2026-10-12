@@ -50,10 +50,13 @@ class DeepScanFindTest extends TestCase
         $res = $this->svc()->deepScanTile(self::COLONY_ID, 2, 0);
 
         $this->assertTrue($res['ok']);
+        $find = $res['tile']['find'];
+        unset($find['action']);
         $this->assertSame(
             ['type' => 'find_medium', 'rg' => 10, 'ap_total' => 16, 'ap_spent' => 0, 'ap_cap_per_sol' => 4, 'false' => false],
-            $res['tile']['find']
+            $find
         );
+        $this->assertArrayHasKey('action', $res['tile']['find']);
         $this->assertSame($before - 2, $this->navAp());
     }
 

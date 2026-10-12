@@ -486,7 +486,7 @@ class RunObjectivesTest extends TestCase
     {
         DB::table('colony_hangar_missions')->insert([
             'colony_id' => self::COLONY_ID,
-            'instance_id' => 1,
+            'bay' => 1,
             'ship_id' => self::SHIP_DRONE,
             'destination' => 'mission_courier_run',
             'sol_distance' => 1,

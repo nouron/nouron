@@ -1447,6 +1447,13 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     color: var(--color-text-secondary, #6b6b7a);
 }
 
+/* Short hint under a build card's cost row (e.g. hangar: finds go by ship). */
+.building-list-notice {
+    margin: 0.25rem 0 0;
+    font-size: 0.68rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
 /* ── Signal chip ─────────────────────────────────────────────────────────── */
 
 .chip--signal {
@@ -3375,6 +3382,12 @@ dialog[x-ref="discoveryDialog"] {
 .find-card__false {
     margin: 0;
     font-size: 0.85rem;
+    color: #6b6b7a;
+}
+
+.find-card__reason {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
     color: #6b6b7a;
 }
 

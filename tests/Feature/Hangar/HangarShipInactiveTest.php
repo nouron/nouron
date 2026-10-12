@@ -28,7 +28,7 @@ class HangarShipInactiveTest extends TestCase
 
     private const HANGAR_BUILDING = 44;
 
-    private const INSTANCE = 1;
+    private const BAY = 1;
 
     private const SHIP_FREIGHTER = 47;
 
@@ -38,9 +38,9 @@ class HangarShipInactiveTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
 
         DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->delete();
-        DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->update(['hangar_instance_id' => null]);
+        DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->update(['bay' => null]);
         DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_FREIGHTER)->update([
-            'hangar_instance_id' => self::INSTANCE,
+            'bay' => self::BAY,
             'ship_state' => 'docked',
             'status_points' => 20,
         ]);
@@ -65,8 +65,8 @@ class HangarShipInactiveTest extends TestCase
         $ship = $this->slotShip();
         $this->assertTrue($ship['inactive']);
         $this->assertNotEmpty($ship['inactive_reason'], 'the UI needs the reason, not just the flag');
-        $this->assertSame(self::INSTANCE, (int) DB::table('colony_ships')
-            ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_FREIGHTER)->value('hangar_instance_id'),
+        $this->assertSame(self::BAY, (int) DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_FREIGHTER)->value('bay'),
             'an inactive ship stays assigned to its hangar');
     }
 
@@ -75,7 +75,7 @@ class HangarShipInactiveTest extends TestCase
         $this->setHangarLevel(1);
 
         $response = $this->actingAs(User::find(self::USER_ID))
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => self::INSTANCE]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => self::BAY]), [
                 'mission_key' => 'mission_supply_run',
                 'difficulty' => 'easy',
             ]);
@@ -97,7 +97,7 @@ class HangarShipInactiveTest extends TestCase
 
         $this->assertFalse($this->slotShip()['inactive']);
         $this->app->make(HangarService::class)
-            ->dispatchShip(self::COLONY_ID, self::INSTANCE, 'mission_supply_run', null, 'easy');
+            ->dispatchShip(self::COLONY_ID, self::BAY, 'mission_supply_run', null, 'easy');
         $this->assertSame('dispatched', $this->shipState());
     }
 
@@ -108,7 +108,7 @@ class HangarShipInactiveTest extends TestCase
             ->update(['ship_state' => 'dispatched']);
         $missionId = DB::table('colony_hangar_missions')->insertGetId([
             'colony_id' => self::COLONY_ID,
-            'instance_id' => self::INSTANCE,
+            'bay' => self::BAY,
             'ship_id' => self::SHIP_FREIGHTER,
             'destination' => 'mission_supply_run',
             'sol_distance' => 1,
@@ -136,7 +136,7 @@ class HangarShipInactiveTest extends TestCase
 
         $response->assertOk();
         $slots = $response->viewData('slots');
-        $slot = collect($slots)->firstWhere('instance_id', self::INSTANCE);
+        $slot = collect($slots)->firstWhere('bay', self::BAY);
         $this->assertTrue($slot['ship']['inactive']);
         $this->assertSame(__('colony.hangar_ship_inactive', ['level' => 2]), $slot['ship']['inactive_reason']);
     }
@@ -146,7 +146,7 @@ class HangarShipInactiveTest extends TestCase
     /** @return array<string, int> */
     private function hangarKey(): array
     {
-        return ['colony_id' => self::COLONY_ID, 'building_id' => self::HANGAR_BUILDING, 'instance_id' => self::INSTANCE];
+        return ['colony_id' => self::COLONY_ID, 'building_id' => self::HANGAR_BUILDING, 'instance_id' => self::BAY];
     }
 
     private function setHangarLevel(int $level): void
@@ -158,7 +158,7 @@ class HangarShipInactiveTest extends TestCase
     private function slotShip(): array
     {
         $slots = $this->app->make(HangarService::class)->getHangarSlots(self::COLONY_ID);
-        $slot = collect($slots)->firstWhere('instance_id', self::INSTANCE);
+        $slot = collect($slots)->firstWhere('bay', self::BAY);
         $this->assertNotNull($slot['ship']);
 
         return $slot['ship'];

@@ -105,26 +105,23 @@ class HangarControllerTest extends TestCase
     }
 
     /** Lv3 by default: the fixtures dock a corvette, which needs a Lv3 hangar to fly (GDD §7). */
-    private function insertHangar(int $instanceId, float $statusPoints = 20.0, int $level = 3): void
+    private function insertHangar(int $bay, float $statusPoints = 20.0, int $level = 3): void
     {
-        DB::table('colony_buildings')->insert([
-            'colony_id' => self::COLONY_ID_BART,
-            'building_id' => self::HANGAR_BUILDING,
-            'instance_id' => $instanceId,
-            'level' => $level,
-            'status_points' => $statusPoints,
-            'ap_spend' => 0,
-        ]);
+        // B1: one hall per colony (instance 1); repeated calls reconfigure it.
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID_BART, 'building_id' => self::HANGAR_BUILDING, 'instance_id' => 1],
+            ['level' => $level, 'status_points' => $statusPoints, 'ap_spend' => 0]
+        );
     }
 
-    private function assignShip(int $instanceId, int $shipId, string $state, float $statusPoints = 20.0): void
+    private function assignShip(int $bay, int $shipId, string $state, float $statusPoints = 20.0): void
     {
         // Use updateOrInsert because the seeder may have already inserted a row
-        // for this (colony_id, ship_id) PK without hangar_instance_id set.
+        // for this (colony_id, ship_id) PK without bay set.
         DB::table('colony_ships')->updateOrInsert(
             ['colony_id' => self::COLONY_ID_BART, 'ship_id' => $shipId],
             [
-                'hangar_instance_id' => $instanceId,
+                'bay' => $bay,
                 'ship_state' => $state,
                 'level' => 1,
                 'status_points' => $statusPoints,
@@ -133,11 +130,11 @@ class HangarControllerTest extends TestCase
         );
     }
 
-    private function insertActiveMission(int $instanceId, int $shipId): int
+    private function insertActiveMission(int $bay, int $shipId): int
     {
         return DB::table('colony_hangar_missions')->insertGetId([
             'colony_id' => self::COLONY_ID_BART,
-            'instance_id' => $instanceId,
+            'bay' => $bay,
             'ship_id' => $shipId,
             'destination' => 'mission_courier_run',
             'sol_distance' => 4,
@@ -164,19 +161,19 @@ class HangarControllerTest extends TestCase
 
     public function test_dispatch_requires_auth(): void
     {
-        $this->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]))
+        $this->postJson(route('colony.hangar.dispatch', ['bay' => 1]))
             ->assertUnauthorized();
     }
 
     public function test_recall_requires_auth(): void
     {
-        $this->postJson(route('colony.hangar.recall', ['instanceId' => 1]))
+        $this->postJson(route('colony.hangar.recall', ['bay' => 1]))
             ->assertUnauthorized();
     }
 
     public function test_repair_requires_auth(): void
     {
-        $this->postJson(route('colony.hangar.repair', ['instanceId' => 1]))
+        $this->postJson(route('colony.hangar.repair', ['bay' => 1]))
             ->assertUnauthorized();
     }
 
@@ -219,17 +216,16 @@ class HangarControllerTest extends TestCase
         $this->assertFalse($response->viewData('hasPilot'));
     }
 
-    public function test_index_view_slots_count_matches_hangar_bays(): void
+    public function test_index_view_lists_apron_and_three_bays_of_the_single_hall(): void
     {
         $this->insertHangar(1);
-        $this->insertHangar(2);
 
         $response = $this->actingAs($this->bart())
             ->get(route('colony.hangar'));
 
         $response->assertOk();
         $slots = $response->viewData('slots');
-        $this->assertCount(2, $slots);
+        $this->assertSame([0, 1, 2, 3], array_column($slots, 'bay'));
     }
 
     public function test_index_view_ship_types_ordered_drone_freighter_corvette(): void
@@ -348,7 +344,7 @@ class HangarControllerTest extends TestCase
         // Drone must appear in slots for hangar bay 1, with state=building
         $slots = $response->json('slots');
         $this->assertNotEmpty($slots);
-        $droneSlot = collect($slots)->firstWhere('instance_id', 1);
+        $droneSlot = collect($slots)->firstWhere('bay', 1);
         $this->assertNotNull($droneSlot);
         $this->assertSame(self::SHIP_DRONE, $droneSlot['ship']['ship_id']);
         $this->assertSame('building', $droneSlot['ship']['ship_state']);
@@ -421,7 +417,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
                 'mission_key' => 'mission_escort_convoy',
                 'difficulty' => 'normal',
             ]);
@@ -442,7 +438,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), []);
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), []);
 
         $response->assertStatus(422);
     }
@@ -453,7 +449,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
                 'mission_key' => 'mission_does_not_exist',
                 'difficulty' => 'normal',
             ]);
@@ -468,7 +464,7 @@ class HangarControllerTest extends TestCase
         $this->insertActiveMission(1, self::SHIP_DRONE);
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
                 'mission_key' => 'mission_courier_run',
                 'difficulty' => 'normal',
             ]);
@@ -483,7 +479,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_DRONE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
                 'mission_key' => 'mission_courier_run',
             ]);
 
@@ -496,7 +492,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_DRONE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
                 'mission_key' => 'mission_courier_run',
                 'difficulty' => 'nightmare',
             ]);
@@ -510,7 +506,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_DRONE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
                 'mission_key' => 'mission_courier_run',
                 'difficulty' => 'easy',
             ]);
@@ -535,7 +531,7 @@ class HangarControllerTest extends TestCase
         $this->insertActiveMission(1, self::SHIP_DRONE);
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.recall', ['instanceId' => 1]));
+            ->postJson(route('colony.hangar.recall', ['bay' => 1]));
 
         $response->assertOk()
             ->assertJson(['ok' => true])
@@ -554,7 +550,7 @@ class HangarControllerTest extends TestCase
         // No mission inserted
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.recall', ['instanceId' => 1]));
+            ->postJson(route('colony.hangar.recall', ['bay' => 1]));
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false]);
@@ -569,7 +565,7 @@ class HangarControllerTest extends TestCase
 
         // Fixed cost: no ap_spent payload.
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), []);
+            ->postJson(route('colony.hangar.repair', ['bay' => 1]), []);
 
         $response->assertOk()
             ->assertJson(['ok' => true])
@@ -577,7 +573,7 @@ class HangarControllerTest extends TestCase
 
         $slot = $response->json('slot');
         $this->assertNotNull($slot['ship']);
-        // Fixed: 10.0 + REPAIR_SP_PER_AP (2) = 12.0
+        // 10.0 + game.ship_repair.sp_per_click (2) = 12.0
         $this->assertSame(12.0, (float) $slot['ship']['status_points']);
     }
 
@@ -587,7 +583,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 20.0); // already full
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), []);
+            ->postJson(route('colony.hangar.repair', ['bay' => 1]), []);
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false]);
@@ -661,29 +657,27 @@ class HangarControllerTest extends TestCase
 
     // ── T22: delivered ship goes to a hangar that can operate it ─────────────
 
-    public function test_request_ship_skips_free_hangar_below_ship_class(): void
+    public function test_request_ship_lands_in_first_free_bay_of_the_hall(): void
     {
-        // Instance 1 is a free Lv1 hangar, instance 2 a free Lv2 hangar.
-        // A freighter (needs Lv2) must land in instance 2, not in the first free slot.
-        $this->insertHangar(1, level: 1);
-        $this->insertHangar(2, level: 2);
+        // Lv2 hall: a freighter (class 2) docks in the first free bay, never the apron.
+        $this->insertHangar(1, level: 2);
 
         $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), ['ship_id' => self::SHIP_FREIGHTER])
             ->assertOk();
 
-        $this->assertSame(2, (int) DB::table('colony_ships')
+        $this->assertSame(1, (int) DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID_BART)
             ->where('ship_id', self::SHIP_FREIGHTER)
-            ->value('hangar_instance_id'));
+            ->value('bay'));
     }
 
-    public function test_request_ship_goes_pending_when_only_too_low_hangars_are_free(): void
+    public function test_request_ship_goes_pending_when_all_open_bays_are_taken(): void
     {
-        // The only Lv2 hangar is occupied by a drone; the free one is Lv1.
+        // Lv2 hall = bays 1 and 2, both occupied.
         $this->insertHangar(1, level: 2);
-        $this->insertHangar(2, level: 1);
         $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->assignShip(2, self::SHIP_CORVETTE, 'docked');
 
         $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), ['ship_id' => self::SHIP_FREIGHTER])
@@ -693,7 +687,7 @@ class HangarControllerTest extends TestCase
             ->where('colony_id', self::COLONY_ID_BART)
             ->where('ship_id', self::SHIP_FREIGHTER)
             ->first();
-        $this->assertNull($ship->hangar_instance_id);
+        $this->assertNull($ship->bay);
         $this->assertSame('pending', $ship->ship_state);
     }
 

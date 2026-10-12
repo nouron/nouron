@@ -210,7 +210,7 @@ return [
     // Building it grants the matching generic advisor slot (Raumfahrer) — see
     // AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
-        'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
+        'id' => 44,      // one hall; level n = ship class n and n bays (T30 §13.2 B1)
         // 120 → 95 (GDD Balance-Audit G4, 2026-08-11): all three path buildings now cost
         // the same 95 Rg — at 120 this was the only one to miss the 5-8-Sole G4 corridor
         // at the cycle-mean 12.9 Rg/Sol income (9.3 Sole). Path parity via equal cost now
@@ -225,10 +225,9 @@ return [
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
         'decay_rate' => 0.60,
         'max_status_points' => 20,
-        // max_level = 3 (GDD §4c "Hangar: der einzige Fall mit beiden Achsen", 2026-08-03):
-        // Level ist die Schiffsklasse (Lv1 Drohne, Lv2 Frachter, Lv3 Korvette) — der Techtree
-        // gatet Schiffe bereits so, das Feld holt nur nach. Instanzen bleiben die primäre
-        // Wachstumsachse (Schiffsplätze), unverändert unbegrenzt/supply-limitiert.
+        // max_level = 3: level = ship class (Lv1 drone, Lv2 freighter, Lv3 corvette) AND the
+        // number of bays (T30 §13.2 B1). Bay 0 (apron) belongs to the gift drone. One hall,
+        // no instances any more (is_instanced = 0).
         'max_level' => 3,
         // Ausbaustufen-Beinamen (2026-08-25) — jede Stufe schaltet eine neue
         // Schiffsklasse frei (echter Fähigkeits-Sprung), siehe lang/de/techtree.php

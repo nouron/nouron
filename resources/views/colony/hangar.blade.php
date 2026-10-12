@@ -26,11 +26,12 @@
             pendingShips: @json($pendingShips ?? []),
             missionCatalog: @json($missionCatalog ?? []),
             hangarMaxLevel: @json($hangarMaxLevel ?? 0),
+            maxStatus: @json($maxShipStatus),
 
             routes: {
-                dispatch: @json(route("colony.hangar.dispatch", ["instanceId" => "__ID__"])),
-                recall: @json(route("colony.hangar.recall", ["instanceId" => "__ID__"])),
-                repair: @json(route("colony.hangar.repair", ["instanceId" => "__ID__"])),
+                dispatch: @json(route("colony.hangar.dispatch", ["bay" => "__ID__"])),
+                recall: @json(route("colony.hangar.recall", ["bay" => "__ID__"])),
+                repair: @json(route("colony.hangar.repair", ["bay" => "__ID__"])),
                 request: @json(route("colony.hangar.request")),
                 assign: @json(route("colony.hangar.assign")),
             },
@@ -80,6 +81,15 @@
                 missionDifficultyChance: @json(__("missions.difficulty_chance_label")),
                 missionDifficultyReward: @json(__("missions.difficulty_reward_label")),
                 missionYield: @json(__("missions.reward_label")),
+                apron: @json(__("colony.hangar_apron")),
+                bay: @json(__("colony.hangar_bay")),
+                bayLocked: @json(__("colony.hangar_bay_locked")),
+                apronReserved: @json(__("colony.hangar_apron_reserved")),
+                targetFindYield: @json(__("missions.target_find_yield")),
+                targetTooLarge: @json(__("missions.target_too_large")),
+                targetCartography: @json(__("missions.target_cartography")),
+                missionWearLine: @json(__("missions.wear_line")),
+                missionTooWorn: @json(__("missions.too_worn_line")),
             },
         };
     </script>
@@ -115,12 +125,13 @@
 
                     <div class="carousel-track" :style="trackStyle()">
 
-                        <template x-for="(slot, i) in slots" :key="slot.instance_id">
+                        <template x-for="(slot, i) in slots" :key="slot.bay">
                             <div class="hangar-card" :class="{ 'hangar-card--current': i === activeIndex }">
 
                                 {{-- Icon area --}}
                                 <div class="hangar-icon-area">
-                                    <span class="hangar-bay-label" x-text="'Bay ' + (i + 1)"></span>
+                                    <span class="hangar-bay-label"
+                                        x-text="slot.bay === 0 ? i18n.apron : i18n.bay.replace(':n', slot.bay)"></span>
 
                                     {{-- Rocket icon when ship is present --}}
                                     <template x-if="slot.ship !== null">
@@ -165,7 +176,7 @@
                                     </template>
                                     <template x-if="slot.ship !== null && slot.ship.ship_state === 'docked'">
                                         <span class="hangar-subtitle">{{ __("colony.hangar_status") }}: <span
-                                                x-text="slot.ship.status_points + '/20'"></span></span>
+                                                x-text="slot.ship.status_points + '/' + maxStatus"></span></span>
                                     </template>
                                     <template x-if="slot.ship !== null && slot.ship.ship_state === 'building'">
                                         <span class="hangar-subtitle" x-text="i18n.deliveryPending"></span>
@@ -175,7 +186,7 @@
                                     </template>
 
                                     {{-- ── EMPTY SLOT ────────────────────────────────────────────── --}}
-                                    <template x-if="slot.ship === null">
+                                    <template x-if="slot.ship === null && slot.open && slot.bay > 0">
                                         <div style="display:contents">
 
                                             <div class="hangar-stat-row">
@@ -186,9 +197,8 @@
 
                                             {{-- "Nexus anfragen" button — opens native <dialog> modal --}}
                                             <div class="hangar-nexus-request-wrap">
-                                                <button class="btn-hangar-nexus-request"
-                                                    @click="openRequestModal(slot.instance_id)"
-                                                    :disabled="loading[slot.instance_id]">
+                                                <button class="btn-hangar-nexus-request" @click="openRequestModal(slot.bay)"
+                                                    :disabled="loading[slot.bay]">
                                                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor"
                                                         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
                                                         aria-hidden="true" class="hangar-nexus-icon">
@@ -197,11 +207,23 @@
                                                     </svg>
                                                     <span x-text="i18n.nexusRequest"></span>
                                                 </button>
-                                                <div class="hangar-error" x-show="error[slot.instance_id]"
-                                                    x-text="error[slot.instance_id]"></div>
+                                                <div class="hangar-error" x-show="error[slot.bay]" x-text="error[slot.bay]">
+                                                </div>
                                             </div>
 
                                         </div>
+                                    </template>
+
+                                    {{-- Closed bay: opens with a higher hall level --}}
+                                    <template x-if="slot.ship === null && !slot.open">
+                                        <span class="hangar-status-chip hangar-status-chip--empty"
+                                            x-text="i18n.bayLocked.replace(':level', slot.required_level)"></span>
+                                    </template>
+
+                                    {{-- Apron: reserved for the gift drone --}}
+                                    <template x-if="slot.ship === null && slot.open && slot.bay === 0">
+                                        <span class="hangar-status-chip hangar-status-chip--empty"
+                                            x-text="i18n.apronReserved"></span>
                                     </template>
 
                                     {{-- ── BUILDING (delivery pending) ──────────────────────────── --}}
@@ -253,7 +275,8 @@
 
                                             <div class="hangar-stat-row">
                                                 <span class="hangar-stat-label">{{ __("colony.hangar_status") }}</span>
-                                                <span class="hangar-stat-value" x-text="slot.ship.status_points + '/20'">
+                                                <span class="hangar-stat-value"
+                                                    x-text="slot.ship.status_points + '/' + maxStatus">
                                                 </span>
                                             </div>
 
@@ -263,14 +286,13 @@
 
                                             {{-- Action buttons — dispatch opens the mission catalog dialog --}}
                                             <div class="hangar-card-footer">
-                                                <button class="btn-hangar-action"
-                                                    @click="openMissionDialog(slot.instance_id)"
-                                                    :disabled="loading[slot.instance_id] || slot.ship.inactive">
+                                                <button class="btn-hangar-action" @click="openMissionDialog(slot.bay)"
+                                                    :disabled="loading[slot.bay] || slot.ship.inactive">
                                                     {{ __("colony.hangar_dispatch") }}
                                                 </button>
                                                 <button class="btn-hangar-action btn-hangar-action--secondary"
-                                                    @click="repair(slot.instance_id)"
-                                                    :disabled="loading[slot.instance_id] || slot.ship.status_points >= 20">
+                                                    @click="repair(slot.bay)"
+                                                    :disabled="loading[slot.bay] || slot.ship.status_points >= maxStatus">
                                                     {{ __("colony.hangar_repair") }}
                                                     @include("partials.ap-cost-chip", [
                                                         "amount" => 1,
@@ -280,8 +302,8 @@
                                             </div>
 
                                             {{-- Inline error --}}
-                                            <div class="hangar-error" x-show="error[slot.instance_id]"
-                                                x-text="error[slot.instance_id]"></div>
+                                            <div class="hangar-error" x-show="error[slot.bay]" x-text="error[slot.bay]">
+                                            </div>
 
                                         </div>
                                     </template>
@@ -308,14 +330,13 @@
                                                 </span>
                                             </div>
 
-                                            <div class="hangar-error" x-text="error[slot.instance_id]"></div>
+                                            <div class="hangar-error" x-text="error[slot.bay]"></div>
 
                                             <div class="hangar-card-footer">
                                                 <span></span>
                                                 <button class="btn-hangar-action btn-hangar-action--danger"
-                                                    @click="recall(slot.instance_id)"
-                                                    :disabled="loading[slot.instance_id]">
-                                                    <span x-text="loading[slot.instance_id] ? '…' : i18n.recall"></span>
+                                                    @click="recall(slot.bay)" :disabled="loading[slot.bay]">
+                                                    <span x-text="loading[slot.bay] ? '…' : i18n.recall"></span>
                                                 </button>
                                             </div>
 
@@ -338,7 +359,7 @@
             <div class="carousel-dots">
                 <template x-for="(slot, i) in slots" :key="'dot-' + i">
                     <button class="carousel-dot" :class="{ 'carousel-dot--active': i === activeIndex }" @click="goTo(i)"
-                        :aria-label="'Bay ' + (i + 1)"></button>
+                        :aria-label="slot.bay === 0 ? i18n.apron : i18n.bay.replace(':n', slot.bay)"></button>
                 </template>
             </div>
 
@@ -364,9 +385,9 @@
                                         {{-- Assign select --}}
                                         <select class="hangar-pending-select" x-model="pendingAssignTarget[ship.id]">
                                             <option value="" x-text="i18n.assignSelect"></option>
-                                            <template x-for="freeSlot in freeSlots" :key="freeSlot.instance_id">
-                                                <option :value="freeSlot.instance_id"
-                                                    x-text="'Bay ' + (slots.indexOf(freeSlot) + 1)">
+                                            <template x-for="freeSlot in freeSlots" :key="freeSlot.bay">
+                                                <option :value="freeSlot.bay"
+                                                    x-text="i18n.bay.replace(':n', freeSlot.bay)">
                                                 </option>
                                             </template>
                                         </select>
@@ -514,14 +535,19 @@
                             </div>
 
                             <div class="hangar-mission-chips">
-                                <span class="ap-chip ap-cost-chip ap-chip--nav" x-text="mission.nav_ap + ' AP'"></span>
-                                <span class="hangar-mission-chip" x-show="mission.organika > 0"
-                                    x-text="'Or ' + mission.organika"></span>
+                                <span class="ap-chip ap-cost-chip ap-chip--nav"
+                                    x-text="missionCosts(mission).nav_ap + ' AP'"></span>
+                                <span class="hangar-mission-chip" x-show="missionCosts(mission).organika > 0"
+                                    x-text="'Or ' + missionCosts(mission).organika"></span>
                                 <span class="hangar-mission-chip"
-                                    x-text="i18n.missionChipDuration.replace(':sols', mission.duration)"></span>
+                                    x-text="i18n.missionChipDuration.replace(':sols', missionCosts(mission).duration)"></span>
                                 <span class="hangar-mission-chip"
-                                    x-text="i18n.missionChipWear + ' −' + missionWear(mission)"></span>
+                                    x-text="i18n.missionChipWear + ' −' + missionCosts(mission).wear"></span>
                             </div>
+                            <p class="hangar-mission-ready-line"
+                                :class="{ 'hangar-mission-gate-hint': readinessFor(mission.sol_distance)?.ready === false }"
+                                x-show="mission.target_type !== 'find_tile'" x-text="readinessLine(mission.sol_distance)">
+                            </p>
 
                             {{-- Target picker — only for the selected mission when a target is required --}}
                             <template x-if="missionRequiresTarget(mission) && missionModal.selectedKey === mission.key">
@@ -530,14 +556,15 @@
                                     <select x-model="missionModal.targetIndex">
                                         <option value="" x-text="i18n.missionSelectTarget"></option>
                                         <template x-for="(target, ti) in mission.targets" :key="ti">
-                                            <option :value="ti" x-text="targetLabel(mission, target)"></option>
+                                            <option :value="ti" :disabled="targetDisabled(mission, target)"
+                                                x-text="targetLabel(mission, target)"></option>
                                         </template>
                                     </select>
                                 </label>
                             </template>
 
                             {{-- Difficulty picker — only for the selected mission --}}
-                            <template x-if="missionModal.selectedKey === mission.key">
+                            <template x-if="missionModal.selectedKey === mission.key && mission.roll">
                                 <div class="hangar-mission-difficulty" @click.stop>
                                     <template x-for="option in mission.difficulty_options" :key="option.key">
                                         <button type="button" class="hangar-difficulty-chip"
@@ -572,10 +599,15 @@
                                     <span class="hangar-mission-gate-hint"
                                         x-text="i18n.missionGateOrganika.replace(':available', mission.organika_available).replace(':required', mission.organika)"></span>
                                 </template>
+                                <template x-if="pickedTargetShortfall(mission) !== null">
+                                    <span class="hangar-mission-gate-hint" x-text="pickedTargetShortfall(mission)"></span>
+                                </template>
                                 <button class="btn-hangar-action hangar-mission-start" @click.stop="startMission(mission)"
-                                    :disabled="mission.availability !== 'ok' || missionModal.loading || (
-                                        missionRequiresTarget(mission) && missionModal.selectedKey === mission
-                                        .key && missionModal.targetIndex === '')">
+                                    :disabled="mission.availability !== 'ok' || missionModal.loading ||
+                                        missionBlockedByWear(mission) || pickedTargetDisabled(mission) ||
+                                        pickedTargetShortfall(mission) !== null || (
+                                            missionRequiresTarget(mission) && missionModal.selectedKey === mission
+                                            .key && missionModal.targetIndex === '')">
                                     <span
                                         x-text="missionModal.loading && missionModal.selectedKey === mission.key ? '…' : i18n.missionStart"></span>
                                 </button>

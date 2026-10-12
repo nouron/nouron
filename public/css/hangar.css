@@ -1050,6 +1050,13 @@ details[open] .hangar-pending-summary::before {
     margin-top: 0.15rem;
 }
 
+/* Neutral "ready" readiness line; the blocked variant adds .hangar-mission-gate-hint (warning colour). */
+.hangar-mission-ready-line {
+    font-size: 0.7rem;
+    color: var(--pico-muted-color, #888);
+    margin: 0;
+}
+
 .hangar-mission-gate-hint {
     font-size: 0.7rem;
     color: #b45309;

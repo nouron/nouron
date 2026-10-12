@@ -87,6 +87,19 @@ class PlaytestCompareTest extends TestCase
         $this->assertMatchesRegularExpression('/K11\s*\|\s*info\s*\|/', $out);
     }
 
+    public function test_prints_k12_k16_k17_rows(): void
+    {
+        $this->writeBatch();
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir]);
+        $out = Artisan::output();
+
+        $this->assertStringContainsString('K12 Schiffsanteil Pool-Rg', $out);
+        $this->assertStringContainsString('K16 Warten Stufe', $out);
+        $this->assertStringContainsString('K17 Zonen-Blockade', $out);
+        $this->assertMatchesRegularExpression('/K12\s*\|\s*info\s*\|/', $out);
+    }
+
     public function test_threshold_violation_is_reported_as_verfehlt(): void
     {
         $this->writeReport('default', 'labor', 1, '20261006_120000', 16);

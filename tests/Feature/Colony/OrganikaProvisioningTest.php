@@ -169,16 +169,16 @@ class OrganikaProvisioningTest extends TestCase
             ['colony_id' => self::COLONY_ID, 'building_id' => 44, 'instance_id' => 1],
             ['level' => 3, 'status_points' => 20, 'ap_spend' => 0] // Lv3: any ship class may fly (GDD §7)
         );
-        // TestSeeder pre-populates hangar_instance_id=1 with several fixture ships
+        // TestSeeder pre-populates bay=1 with several fixture ships
         // (a real hangar bay only ever holds one) — free the bay before assigning ours.
         DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID)
-            ->where('hangar_instance_id', 1)
+            ->where('bay', 1)
             ->where('ship_id', '!=', $shipId)
-            ->update(['hangar_instance_id' => null]);
+            ->update(['bay' => null]);
         DB::table('colony_ships')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'ship_id' => $shipId],
-            ['hangar_instance_id' => 1, 'ship_state' => 'docked', 'level' => 1, 'status_points' => 20, 'ap_spend' => 0]
+            ['bay' => 1, 'ship_state' => 'docked', 'level' => 1, 'status_points' => 20, 'ap_spend' => 0]
         );
 
         return $this->app->make(HangarService::class);

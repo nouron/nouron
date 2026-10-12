@@ -23,6 +23,8 @@ class OpeningComparisonTest extends TestCase
      *  - unspent: [sol => ap_unspent] (default 2), inflow is always 16
      *  - research_lv1: Sol from which a knowledge has level 1
      *  - mission: [sol => regolith from missions], trade: [sol => regolith from trade]
+     *  - find: [sol => regolith from self-salvage], find_flight: [sol => regolith from salvage flights]
+     *  - waits: [sol => find_waits array] (default all reasons 0)
      *  - regolith: [sol => regolith] (default 50)
      *  - sol_next: [sol => regolith_after] of the ok 'sol_next' log entry (start-of-Sol balance)
      *  - trust: [sol => trust] (default 2)
@@ -62,12 +64,14 @@ class OpeningComparisonTest extends TestCase
                     'mission' => $o['mission'][$s] ?? 0,
                     'trade' => $o['trade'][$s] ?? 0,
                     'find' => $o['find'][$s] ?? 0,
+                    'find_flight' => $o['find_flight'][$s] ?? 0,
                     'event' => 0,
                 ],
                 'buildings' => $buildings,
                 'researches' => $researches,
                 'ships' => [],
                 'ship_states' => [],
+                'find_waits' => $o['waits'][$s] ?? ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 0],
             ];
         }
 
@@ -388,7 +392,7 @@ class OpeningComparisonTest extends TestCase
         $failed = OpeningComparison::fromReports($this->batch())->compare()['checks']['K2'];
         $this->assertSame('verfehlt', $failed['status']);
         $this->assertStringContainsString('labor: first knowledge level>=1', $failed['detail']);
-        $this->assertStringContainsString('hangar: first mission Rg', $failed['detail']);
+        $this->assertStringContainsString('hangar: first mission or find-flight Rg', $failed['detail']);
         $this->assertStringContainsString('cantina: trade Rg or trust rise', $failed['detail']);
 
         $checks = OpeningComparison::fromReports($this->batch(extra: [
@@ -590,5 +594,70 @@ class OpeningComparisonTest extends TestCase
 
         $this->assertSame(4, $m['k11_10']);
         $this->assertNull($m['k11_25']);
+    }
+
+    public function test_hangar_k2_counts_find_flight_regolith(): void
+    {
+        $r = $this->report('hangar', 1, ['lv1' => 3, 'find_flight' => [5 => 6]]);
+
+        $this->assertSame(2, OpeningComparison::metrics($r)['k2']);
+    }
+
+    public function test_k11_adds_find_flight_and_k12_is_its_share_at_sol_25(): void
+    {
+        $r = $this->report('hangar', 1, ['last' => 30, 'find' => [4 => 4], 'find_flight' => [6 => 6, 12 => 15, 26 => 99]]);
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame(10, $m['k11_10']);
+        $this->assertSame(25, $m['k11_25']);
+        $this->assertSame(84.0, $m['k12']);
+    }
+
+    public function test_k16_and_k17_count_sols_per_reason(): void
+    {
+        $wait = fn (array $w) => $w + ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 0];
+        $r = $this->report('hangar', 1, ['waits' => [5 => $wait(['needs_level' => 1, 'zone_blocked' => 1]), 6 => $wait(['needs_level' => 2]), 7 => $wait(['no_ship_ready' => 1])]]);
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame([2, 0, 0, 1, 1], [$m['k16_needs_level'], $m['k16_needs_freighter'], $m['k16_ship_busy'], $m['k16_no_ship_ready'], $m['k17']]);
+    }
+
+    public function test_ship_repair_ap_is_summed_for_sol_4_to_12_and_before_25(): void
+    {
+        $r = $this->report('hangar', 1, ['last' => 30]);
+        foreach ($r['sols'] as $i => $s) {
+            $r['sols'][$i]['ap']['ship_repair_spent'] = in_array($s['sol'], [3, 5, 12, 20, 25], true) ? 2 : 0;
+        }
+
+        $m = OpeningComparison::metrics($r);
+
+        $this->assertSame([4, 8], [$m['ship_repair_4_12'], $m['ship_repair_25']]);
+    }
+
+    public function test_k17_detail_names_how_many_runs_had_a_zone_blocked_find(): void
+    {
+        $wait = fn (int $zone) => ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => $zone];
+        $reports = [$this->report('labor', 1), $this->report('labor', 2), $this->report('labor', 3)];
+        $reports[0] = $this->report('labor', 1, ['waits' => [5 => $wait(1)]]);
+        $reports[1] = $this->report('labor', 2, ['waits' => [5 => $wait(1)]]);
+        $reports[] = $this->report('hangar', 1);
+        $reports[] = $this->report('hangar', 2);
+        $reports[] = $this->report('hangar', 3);
+
+        $detail = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare()['checks']['K17']['detail'];
+
+        $this->assertStringContainsString('labor 1 (2/3 runs > 0)', $detail);
+        $this->assertStringContainsString('hangar 0 (0/3 runs > 0)', $detail);
+    }
+
+    public function test_k12_k16_k17_are_info_checks(): void
+    {
+        $result = OpeningComparison::fromReports([$this->report('labor', 1), $this->report('hangar', 1)], ['labor', 'hangar'])->compare();
+
+        foreach (['K12', 'K16', 'K17', 'REP'] as $k) {
+            $this->assertSame('info', $result['checks'][$k]['status'], $k);
+        }
     }
 }

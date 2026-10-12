@@ -95,7 +95,7 @@ class GameTickRunIsolationTest extends TestCase
             'level' => 0,
             'status_points' => 10,
             'ap_spend' => 0,
-            'hangar_instance_id' => null,
+            'bay' => null,
             'ship_state' => 'building',
             'deliver_at_tick' => 1,
             'pending_until_tick' => null,

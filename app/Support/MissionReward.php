@@ -21,8 +21,8 @@ final class MissionReward
 
     /** reward key => lang key of its fixed text */
     private const FIXED_PARTS = [
-        'deep_scan' => 'reward_deep_scan',
         'harvester_instance' => 'reward_harvester_instance',
+        'find_salvage' => 'reward_find_salvage',
     ];
 
     /** @param array<string, mixed> $reward one reward definition from config/missions.php */

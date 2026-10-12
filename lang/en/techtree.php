@@ -18,8 +18,8 @@ return [
 
     // ── Tier nicknames (tier_* keys, design spec 2026-08-23) ─────────────────
     'tier_hangar_1' => 'Launch Module',
-    'tier_hangar_2' => 'Cargo Bay',
-    'tier_hangar_3' => 'Docking Berth',
+    'tier_hangar_2' => 'Freight Ramp',
+    'tier_hangar_3' => 'Mooring Berth',
     'tier_securityHub_3' => 'Salvage Crew',
     'tier_infirmary_3' => 'Fully Equipped',
     'tier_bioFacility_3' => 'Emergency Reserve',

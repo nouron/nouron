@@ -373,13 +373,13 @@ class GameTick extends Command
         $missions = DB::table('colony_hangar_missions as m')
             ->join('colony_ships as cs', function ($join) {
                 $join->on('cs.colony_id', '=', 'm.colony_id')
-                    ->on('cs.hangar_instance_id', '=', 'm.instance_id');
+                    ->on('cs.bay', '=', 'm.bay');
             })
             ->where('m.colony_id', $this->colonyId)
             ->where('m.state', 'active')
             ->where('cs.ship_state', 'dispatched')
             ->get([
-                'm.id as mission_id', 'm.colony_id', 'm.instance_id', 'm.destination',
+                'm.id as mission_id', 'm.colony_id', 'm.bay', 'm.destination',
                 'm.sol_distance', 'm.target', 'm.dispatch_tick',
                 'cs.id as colony_ship_id', 'cs.ship_id', 'cs.status_points',
             ]);
@@ -436,15 +436,18 @@ class GameTick extends Command
             $success = true;
 
             if ($catalogEntry !== null) {
-                $successChance = $this->hangarService->successChanceFor((int) $mission->colony_id, $catalogEntry, $difficulty);
                 // The mission's position within its colony, not its global id (R5b) —
                 // see App\Support\RunSeed. Also seeds the reward rolls below.
                 $missionSeed = $rngSeed + RunSeed::rowOrdinal('colony_hangar_missions', (int) $mission->colony_id, (int) $mission->mission_id);
-                $roll = $this->seededRoll($missionSeed + 1, 0, 9999) / 10000;
-                $success = $roll <= $successChance;
+                // T30 §13.3: missions with roll === false (salvage flight) skip the success roll.
+                $rolls = ($catalogEntry['roll'] ?? true) !== false;
+                if ($rolls) {
+                    $successChance = $this->hangarService->successChanceFor((int) $mission->colony_id, $catalogEntry, $difficulty);
+                    $success = $this->seededRoll($missionSeed + 1, 0, 9999) / 10000 <= $successChance;
+                }
 
                 if ($success) {
-                    $rewardMultiplier = (float) config("game.missions.difficulty.reward_multiplier.{$difficulty}", 1.0);
+                    $rewardMultiplier = $rolls ? (float) config("game.missions.difficulty.reward_multiplier.{$difficulty}", 1.0) : 1.0;
                     $rewardDetails = $this->payMissionRewards(
                         (int) $mission->colony_id,
                         $userId,
@@ -452,8 +455,14 @@ class GameTick extends Command
                         $mission->target !== null ? json_decode($mission->target, true) : null,
                         $missionSeed,
                         $tick,
-                        $rewardMultiplier
+                        $rewardMultiplier,
+                        (int) $mission->ship_id
                     );
+                    // A salvage flight whose find vanished pays nothing: not a success, so it
+                    // does not count for task_expedition_coverage (E9).
+                    if (! empty($rewardDetails['find_missing'])) {
+                        $success = false;
+                    }
                 } elseif ($difficulty === 'hard') {
                     $extraWear = (float) config('game.missions.difficulty.hard_fail_extra_wear', 1.0);
                     $spAfterHardFail = max(0.0, (float) $newSp - $extraWear);
@@ -483,6 +492,7 @@ class GameTick extends Command
                         'ship_id' => (int) $mission->ship_id,
                         'colony_id' => (int) $mission->colony_id,
                         'difficulty' => $difficulty,
+                        'find_missing' => (bool) ($rewardDetails['find_missing'] ?? false),
                     ]),
                 ]);
             }
@@ -507,7 +517,8 @@ class GameTick extends Command
         ?array $target,
         int $seed,
         int $tick,
-        float $rewardMultiplier = 1.0
+        float $rewardMultiplier = 1.0,
+        int $shipId = 0
     ): array {
         // loot_table: seeded pick of one entry, then resolve that entry's rewards.
         if (isset($reward['loot_table'])) {
@@ -517,7 +528,7 @@ class GameTick extends Command
 
         $resourceIds = ['regolith' => 3, 'compounds' => 4, 'organics' => 5];
         // Only quantity-shaped reward types scale with difficulty — flags/unlocks
-        // (trust_event, harvester_instance, deep_scan) stay binary regardless of difficulty.
+        // (trust_event, harvester_instance) stay binary regardless of difficulty.
         $scalableTypes = ['credits', 'regolith', 'compounds', 'organics', 'research_ap', 'reveal_tiles'];
         $details = [];
 
@@ -543,10 +554,14 @@ class GameTick extends Command
                 $this->trustService->fireEvent($colonyId, (string) $value, $tick);
             } elseif ($type === 'reveal_tiles') {
                 $value = $this->revealTiles($colonyId, (int) $value);
-            } elseif ($type === 'deep_scan') {
-                $this->deepScanTarget($colonyId, $target);
             } elseif ($type === 'research_ap') {
                 $this->grantResearchAp($colonyId, $target, (int) $value);
+            } elseif ($type === 'find_salvage') {
+                // T30 §13.3: own detail keys, deliberately NOT 'regolith' (RunReport topf find_flight).
+                // Hook for §13.6 (Feldproben, Fahrtbericht) — find_type is in the details.
+                $details += $this->hangarService->completeFindFlight($colonyId, $target, $shipId);
+
+                continue;
             } elseif ($type === 'harvester_instance') {
                 // Weg B (mission_harvester_salvage, GDD §4c "Harvester-Zweitinstanz:
                 // Bezugsquelle", freigegeben 2026-08-05): grants the earned entitlement,
@@ -586,21 +601,6 @@ class GameTick extends Command
         }
 
         return $tiles->count();
-    }
-
-    /**
-     * Deep-scans the mission's target tile (player-picked at dispatch).
-     */
-    private function deepScanTarget(int $colonyId, ?array $target): void
-    {
-        if (! isset($target['q'], $target['r'])) {
-            return;
-        }
-
-        DB::table('colony_tiles')
-            ->where('colony_id', $colonyId)
-            ->where('q', (int) $target['q'])->where('r', (int) $target['r'])
-            ->update(['is_deep_scanned' => 1]);
     }
 
     /**

@@ -51,7 +51,7 @@ class ErrorResponseContractTest extends TestCase
 
     public function test_recall_without_mission_returns_code_and_message(): void
     {
-        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.recall', ['instanceId' => 1]));
+        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.recall', ['bay' => 1]));
 
         $res->assertStatus(422);
         $this->assertErrorContract($res, 'no_active_mission', 'colony.hangar_error_no_active_mission');
@@ -59,7 +59,7 @@ class ErrorResponseContractTest extends TestCase
 
     public function test_repair_without_ship_returns_code_and_message(): void
     {
-        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.repair', ['instanceId' => 1]));
+        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.repair', ['bay' => 1]));
 
         $res->assertStatus(422);
         $this->assertErrorContract($res, 'no_docked_ship', 'colony.hangar_error_no_docked_ship');
@@ -67,7 +67,7 @@ class ErrorResponseContractTest extends TestCase
 
     public function test_assign_unknown_ship_returns_code_and_message(): void
     {
-        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.assign'), ['ship_row_id' => 999999, 'instance_id' => 1]);
+        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.assign'), ['ship_row_id' => 999999, 'bay' => 1]);
 
         $res->assertStatus(422);
         $this->assertErrorContract($res, 'ship_not_pending', 'colony.hangar_error_ship_not_pending');
@@ -90,10 +90,10 @@ class ErrorResponseContractTest extends TestCase
     {
         DB::table('colony_ships')->insert([
             'colony_id' => 1, 'ship_id' => 85, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'hangar_instance_id' => 1, 'ship_state' => 'docked',
+            'bay' => 1, 'ship_state' => 'docked',
         ]);
 
-        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
+        $res = $this->actingAs($this->bart)->postJson(route('colony.hangar.dispatch', ['bay' => 1]), [
             'mission_key' => 'mission_does_not_exist',
             'difficulty' => 'normal',
         ]);

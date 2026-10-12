@@ -204,7 +204,7 @@ class BotStrategyFocusProfileTest extends TestCase
             'level' => 1,
             'status_points' => 20,
             'ap_spend' => 0,
-            'hangar_instance_id' => 1,
+            'bay' => 1,
             'ship_state' => 'docked',
         ]);
         $this->setResource($bot, 5, 50);

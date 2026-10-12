@@ -60,7 +60,6 @@ class MissionRewardTest extends TestCase
     public function test_non_numeric_rewards(): void
     {
         $this->assertSame('2 Sektoren kartiert', MissionReward::label(['reveal_tiles' => 2]));
-        $this->assertSame('Tiefenscan des Signals', MissionReward::label(['deep_scan' => 1]));
         $this->assertSame('+8 Forschungs-AP', MissionReward::label(['research_ap' => 8]));
         $this->assertSame('Geborgener Harvester (beschädigt)', MissionReward::label(['harvester_instance' => true]));
     }
@@ -89,7 +88,7 @@ class MissionRewardTest extends TestCase
                 }
             } elseif (is_array($value)) {
                 $numbers = [...$numbers, ...array_map('intval', $value)];
-            } elseif (is_int($value) && ! in_array($name, ['deep_scan'], true)) {
+            } elseif (is_int($value)) {
                 $numbers[] = $value;
             }
         }

@@ -10,6 +10,7 @@ use App\Services\CharacterCodexService;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
+use App\Services\HangarService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\NexusImportService;
@@ -52,6 +53,7 @@ class ColonyController extends BaseController
         private readonly OvercapService $overcapService,
         private readonly BuildingService $buildingService,
         private readonly BuildingCostService $buildingCostService,
+        private readonly HangarService $hangarService,
     ) {
         parent::__construct($tick);
     }
@@ -210,6 +212,7 @@ class ColonyController extends BaseController
         // Build-chip affordability check (greys out unaffordable buildings).
         $regolith = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 3)->value('amount') ?? 0);
         $werkstoffe = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 4)->value('amount') ?? 0);
+        $organika = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 5)->value('amount') ?? 0);
         $freeSupply = $this->resourcesService->getFreeSupply($colony->id);
         $currentSol = $this->currentSol();
         $solLimit = (int) config('game.run.tick_limit', 100);
@@ -222,7 +225,7 @@ class ColonyController extends BaseController
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
         $deepScanAp = $this->tileService->deepScanCost($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -347,6 +350,7 @@ class ColonyController extends BaseController
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
                 'supply_cost' => (int) $b->supply_cost,
+                'notice' => (int) $b->id === BuildingId::Hangar->value ? __('colony.hangar_build_notice') : null,
                 // Placing pays erect cost + first-level Regolith in one go (T9):
                 // build_cost/first_level_regolith are the breakdown, placement_cost
                 // the amount actually charged. All [resource_id => amount].
@@ -444,6 +448,13 @@ class ColonyController extends BaseController
                 ->where('instance_id', $requestedInstanceId)
                 ->first()
             : null;
+
+        // A non-instanced building exists once: a second placement used to silently MOVE
+        // it (and reset ap_spend). Hangar B1 relies on this (T30 §13.2) — and it is the
+        // intended rule for every non-instanced building.
+        if (! $isHarvester && ! $building->is_instanced && $existingBuilding !== null && $existingBuilding->tile_x !== null) {
+            return $this->fail('building_already_placed');
+        }
 
         $isHarvesterMove = $isHarvester
             && $existingBuilding !== null
@@ -588,8 +599,6 @@ class ColonyController extends BaseController
                 if ($existingBuilding->tile_x === null) {
                     $update['ap_spend'] = max((int) $existingBuilding->ap_spend, 1);
                     $update['placed_at_tick'] = $this->getTick();
-                } elseif (! $isHarvesterMove) {
-                    $update['ap_spend'] = 1;
                 }
                 // Harvester move: tile updates, ap_spend unchanged. Relocation takes
                 // 1 Sol — no production until arrival. placed_at_tick also advances
@@ -785,6 +794,10 @@ class ColonyController extends BaseController
                     'status_points' => $building->max_status_points ?? 20,
                 ]);
             $leveledUp = true;
+            // T30 §13.2: reaching hangar level 1 lands the gift drone (idempotent).
+            if ($buildingId === BuildingId::Hangar->value) {
+                $this->hangarService->ensureGiftDrone($colony->id);
+            }
             // Consumes an active Cantina-Anliegen voucher (A41), if any — it
             // already discounted $effectiveApForLevelup above via
             // ProjectBonusService::effectiveApForLevelup(); this just marks it

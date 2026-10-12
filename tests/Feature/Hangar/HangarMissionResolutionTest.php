@@ -41,7 +41,7 @@ class HangarMissionResolutionTest extends TestCase
 
     private const USER_ID = 3;
 
-    private const HANGAR_INSTANCE = 1;
+    private const BAY = 1;
 
     private const SHIP_DRONE = 85;
 
@@ -64,8 +64,8 @@ class HangarMissionResolutionTest extends TestCase
         // only ever holds one) so each test controls exactly one dispatched ship.
         DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID)
-            ->where('hangar_instance_id', self::HANGAR_INSTANCE)
-            ->update(['hangar_instance_id' => null]);
+            ->where('bay', self::BAY)
+            ->update(['bay' => null]);
 
         DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->delete();
     }
@@ -85,7 +85,7 @@ class HangarMissionResolutionTest extends TestCase
         DB::table('colony_ships')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'ship_id' => self::SHIP_DRONE],
             [
-                'hangar_instance_id' => self::HANGAR_INSTANCE,
+                'bay' => self::BAY,
                 'ship_state' => 'dispatched',
                 'level' => 1,
                 'status_points' => $statusPoints,
@@ -95,7 +95,7 @@ class HangarMissionResolutionTest extends TestCase
 
         return DB::table('colony_hangar_missions')->insertGetId([
             'colony_id' => self::COLONY_ID,
-            'instance_id' => self::HANGAR_INSTANCE,
+            'bay' => self::BAY,
             'ship_id' => self::SHIP_DRONE,
             'destination' => $missionKey,
             'sol_distance' => $solDistance,
@@ -145,7 +145,7 @@ class HangarMissionResolutionTest extends TestCase
         // A docked (non-dispatched) ship must be untouched by the wear step.
         DB::table('colony_ships')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'ship_id' => self::SHIP_DRONE],
-            ['hangar_instance_id' => self::HANGAR_INSTANCE, 'ship_state' => 'docked', 'level' => 1, 'status_points' => 20.0, 'ap_spend' => 0]
+            ['bay' => self::BAY, 'ship_state' => 'docked', 'level' => 1, 'status_points' => 20.0, 'ap_spend' => 0]
         );
 
         Artisan::call('game:tick', ['--run' => 1, '--tick' => 20010]);

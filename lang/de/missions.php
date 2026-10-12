@@ -9,11 +9,8 @@ return [
     'mission_recon_flight_name' => 'Erkundungsflug',
     'mission_recon_flight_desc' => 'Die Drohne zieht ihre Bahnen über unkartiertem Gelände und funkt zurück, was hinter dem Horizont liegt.',
 
-    'mission_deep_survey_name' => 'Signalvermessung',
-    'mission_deep_survey_desc' => 'Irgendetwas da draußen sendet — die Drohne kreist über der Quelle, bis klar ist, was es wirklich ist.',
-
-    'mission_prospecting_flight_name' => 'Prospektionsflug',
-    'mission_prospecting_flight_desc' => 'Die Drohne tastet die Geröllfelder nach abbauwürdigem Regolith ab und kehrt mit vollen Probencontainern heim.',
+    'mission_find_salvage_name' => 'Bergungsflug',
+    'mission_find_salvage_desc' => 'Die Crew fliegt einen gescannten Fund an und holt ihn mit dem Bergegerät an Bord — es kommt mehr ins Lager als zu Fuß.',
 
     'mission_data_sweep_name' => 'Datensammelflug',
     'mission_data_sweep_desc' => 'Auf weiter Schleife sammelt die Drohne Messdaten, die den Analytikern daheim Wochen an Feldarbeit ersparen.',
@@ -67,10 +64,14 @@ return [
     // ── Dispatch errors ──────────────────────────────────────────────────────
 
     'error_wrong_ship_type' => 'Dieses Schiff ist für diese Mission nicht geeignet.',
-    'error_sp_too_low' => 'Das Schiff ist zu verschlissen für einen Einsatz — erst reparieren.',
+    'error_ship_too_worn' => 'Zu verschlissen für diesen Flug: Zustand :current, Verschleiß :wear. Erst reparieren (:ap AP).',
     'error_knowledge_gate' => 'Der Kolonie fehlt die nötige Kenntnis für diese Mission.',
     'error_invalid_target' => 'Kein gültiges Ziel für diese Mission gewählt.',
     'error_target_consumed' => 'Diese Ruine wurde bereits geborgen.',
+    'error_find_not_scanned' => 'Das Signal ist noch nicht gescannt — erst scannen.',
+    'error_find_too_large' => 'Dieser Fund ist zu schwer für das Schiff.',
+    'error_find_in_flight' => 'Zu diesem Fund ist schon ein Schiff unterwegs.',
+    'error_find_salvage_in_progress' => 'Hier gräbt schon der Bergungstrupp — der Fund wird zu Fuß zu Ende geborgen.',
     'error_harvester_instance_full' => 'Die Kolonie hat bereits die maximale Anzahl Harvester — eine Bergung würde nichts bringen.',
     'error_invalid_difficulty' => 'Diese Schwierigkeitsstufe ist für diese Mission nicht verfügbar.',
 
@@ -86,7 +87,8 @@ return [
 
     'sol_report_completed' => 'Mission abgeschlossen',
     'sol_report_aborted' => 'Mission abgebrochen — Schiff kehrte flugunfähig zurück',
-    'sol_report_failed' => 'Mission fehlgeschlagen — kein Fund',
+    'sol_report_failed' => 'Mission fehlgeschlagen — ohne Ertrag',
+    'sol_report_find_missing' => 'Bergungsflug ohne Ertrag — das Signal war weg oder das Schiff konnte den Fund nicht tragen',
 
     // ── Mission rewards (derived from config/missions.php by App\Support\MissionReward) ──
     'reward_credits' => ':amount Credits',
@@ -95,9 +97,14 @@ return [
     'reward_organics' => ':amount Organika',
     'reward_research_ap' => '+:amount Forschungs-AP',
     'reward_reveal_tiles' => ':amount Sektoren kartiert',
-    'reward_deep_scan' => 'Tiefenscan des Signals',
     'reward_harvester_instance' => 'Geborgener Harvester (beschädigt)',
+    'reward_find_salvage' => 'Fund + Flugbonus',
     'reward_trust' => 'Vertrauen',
     'reward_loot_table' => 'Zufallsfund: :options',
     'reward_label' => 'Ertrag',
+    'target_find_yield' => 'Fund :base Rg + Flug :bonus Rg = :total Rg',
+    'target_too_large' => 'zu groß für dieses Schiff',
+    'target_cartography' => 'Kartografie −:ap AP',
+    'wear_line' => 'Verschleiß −:wear · Zustand :from → :to',
+    'too_worn_line' => 'Zustand :current reicht nicht für Verschleiß :wear – erst reparieren (:ap AP)',
 ];

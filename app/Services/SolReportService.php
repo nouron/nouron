@@ -272,7 +272,9 @@ class SolReportService
             $missionKey = $params['mission_key'] ?? '';
             $lines[] = [
                 'label' => __('missions.sol_report_failed'),
-                'detail' => __("missions.{$missionKey}_name"),
+                'detail' => ! empty($params['find_missing'])
+                    ? __('missions.sol_report_find_missing')
+                    : __("missions.{$missionKey}_name"),
                 'tone' => 'warning',
                 'beat' => true,
             ];

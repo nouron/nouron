@@ -6,6 +6,8 @@ use App\Enums\BuildingId;
 use App\Exceptions\GameRuleException;
 use App\Models\Advisor;
 use App\Models\Colony;
+use App\Models\ColonyTile;
+use App\Support\HangarBays;
 use App\Support\MissionReward;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -16,10 +18,6 @@ class HangarService
 
     private const ALLOWED_SHIP_IDS = [37, 47, 85];
 
-    private const SHIP_MAX_STATUS = 20; // matches buildings.max_status_points convention
-
-    private const REPAIR_SP_PER_AP = 2;  // status_points restored per AP spent
-
     /**
      * Map ship DB IDs → ships.php config keys so we can read nexus_cost / nexus_delivery_ticks.
      */
@@ -27,17 +25,6 @@ class HangarService
         85 => 'drone',
         37 => 'corvette',
         47 => 'freighter',
-    ];
-
-    /**
-     * Minimum hangar level required to request a given ship class from the Nexus.
-     * Level IS the ship class (config/buildings.php 'hangar' comment): Lv1 Drohne,
-     * Lv2 Frachter, Lv3 Korvette.
-     */
-    private const SHIP_ID_TO_REQUIRED_HANGAR_LEVEL = [
-        85 => 1,
-        47 => 2,
-        37 => 3,
     ];
 
     /** Machine code for a dispatch refused because the ship's hangar is below its class. */
@@ -49,75 +36,64 @@ class HangarService
         private readonly AdvisorService $advisorService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly EventService $eventService,
+        private readonly FindFlightService $findFlightService,
+        private readonly ColonyTileService $colonyTileService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
     /**
-     * Returns all hangar slots for the colony, sorted by instance_id ascending.
-     * Pending ships (hangar_instance_id IS NULL) are excluded.
-     * Each element contains the hangar bay data and the assigned ship (or null).
+     * Apron (bay 0) plus bays 1-3 of the single hangar hall (B1, T30 §13.2); [] without a
+     * hall. Pending ships (bay IS NULL) are excluded. A bay is open when the hall level
+     * reaches it; each element carries the docked ship (or null).
+     *
+     * @return list<array{bay:int, open:bool, required_level:int, hangar_level:int, hangar_status:float, ship:?array}>
      */
     public function getHangarSlots(int $colonyId): array
     {
-        $hangars = DB::table('colony_buildings')
+        $hall = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', self::HANGAR_BUILDING_ID)
             ->orderBy('instance_id')
-            ->get(['instance_id', 'level', 'status_points'])
-            ->all();
-
-        if (empty($hangars)) {
+            ->first(['level', 'status_points']);
+        if ($hall === null) {
             return [];
         }
+        $level = (int) $hall->level;
 
-        $instanceIds = array_map(fn ($h) => $h->instance_id, $hangars);
-
-        // Load all ships assigned to these hangar slots in one query (exclude pending).
         $ships = DB::table('colony_ships')
             ->join('ships', 'ships.id', '=', 'colony_ships.ship_id')
             ->where('colony_ships.colony_id', $colonyId)
-            ->whereIn('colony_ships.hangar_instance_id', $instanceIds)
+            ->whereNotNull('colony_ships.bay')
             ->get([
-                'colony_ships.id',
-                'colony_ships.ship_id',
-                'ships.name',
-                'colony_ships.ship_state',
-                'colony_ships.level',
-                'colony_ships.status_points',
-                'colony_ships.ap_spend',
-                'colony_ships.hangar_instance_id',
-                'colony_ships.deliver_at_tick',
+                'colony_ships.id', 'colony_ships.ship_id', 'ships.name', 'colony_ships.ship_state',
+                'colony_ships.level', 'colony_ships.status_points', 'colony_ships.ap_spend',
+                'colony_ships.bay', 'colony_ships.deliver_at_tick',
             ])
-            ->keyBy('hangar_instance_id')
+            ->keyBy('bay')
             ->all();
 
-        // Load active missions for all hangar slots in one query.
         $missions = DB::table('colony_hangar_missions')
             ->where('colony_id', $colonyId)
-            ->whereIn('instance_id', $instanceIds)
             ->where('state', 'active')
             ->get()
-            ->keyBy('instance_id')
+            ->keyBy('bay')
             ->all();
 
         $slots = [];
-        foreach ($hangars as $hangar) {
-            $iid = $hangar->instance_id;
-            $ship = $ships[$iid] ?? null;
-
+        for ($bay = HangarBays::APRON; $bay <= HangarBays::MAX_BAY; $bay++) {
+            $ship = $ships[$bay] ?? null;
             $shipData = null;
             if ($ship !== null) {
-                $mission = $missions[$iid] ?? null;
+                $mission = $missions[$bay] ?? null;
                 if ($mission !== null) {
                     $mission = (array) $mission;
-                    // destination carries the mission_key (catalog); enrich for the UI.
                     $mission['mission_key'] = $mission['destination'];
                     $mission['mission_name'] = __("missions.{$mission['destination']}_name");
                     $mission['return_tick'] = (int) $mission['dispatch_tick'] + 2 * (int) $mission['sol_distance'];
                 }
-                $requiredLevel = $this->requiredHangarLevel((int) $ship->ship_id);
-                $inactive = $this->isShipInactive((int) $ship->ship_id, (int) $hangar->level);
+                $inactive = HangarBays::isInactive((int) $ship->ship_id, $level, $bay);
                 $shipData = [
                     'id' => (int) $ship->id,
                     'ship_id' => (int) $ship->ship_id,
@@ -128,16 +104,19 @@ class HangarService
                     'ap_spend' => (int) $ship->ap_spend,
                     'deliver_at_tick' => $ship->deliver_at_tick !== null ? (int) $ship->deliver_at_tick : null,
                     'active_mission' => $mission,
-                    'required_hangar_level' => $requiredLevel,
+                    'required_hangar_level' => $this->requiredHangarLevel((int) $ship->ship_id),
+                    'readiness' => $this->readinessByDistance((int) $ship->ship_id, (float) $ship->status_points),
                     'inactive' => $inactive,
-                    'inactive_reason' => $inactive ? $this->inactiveReason((int) $ship->ship_id) : null,
+                    'inactive_reason' => $inactive ? $this->inactiveReason((int) $ship->ship_id, $bay) : null,
                 ];
             }
 
             $slots[] = [
-                'instance_id' => (int) $iid,
-                'hangar_level' => (int) $hangar->level,
-                'hangar_status' => (float) $hangar->status_points,
+                'bay' => $bay,
+                'open' => HangarBays::bayOpen($bay, $level),
+                'required_level' => max(1, $bay),
+                'hangar_level' => $level,
+                'hangar_status' => (float) $hall->status_points,
                 'ship' => $shipData,
             ];
         }
@@ -146,7 +125,7 @@ class HangarService
     }
 
     /**
-     * Returns all pending ships for this colony (no hangar slot assigned yet).
+     * Returns all pending ships for this colony (no hangar bay assigned yet).
      * Joined with ships master table for display name.
      *
      * @return array<int, array{id: int, ship_id: int, name: string, ship_state: string, pending_until_tick: int|null}>
@@ -156,7 +135,7 @@ class HangarService
         return DB::table('colony_ships')
             ->join('ships', 'ships.id', '=', 'colony_ships.ship_id')
             ->where('colony_ships.colony_id', $colonyId)
-            ->whereNull('colony_ships.hangar_instance_id')
+            ->whereNull('colony_ships.bay')
             ->get([
                 'colony_ships.id',
                 'colony_ships.ship_id',
@@ -182,7 +161,7 @@ class HangarService
      */
     public function requiredHangarLevel(int $shipId): int
     {
-        return self::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL[$shipId] ?? 1;
+        return HangarBays::requiredLevel($shipId);
     }
 
     /**
@@ -191,9 +170,9 @@ class HangarService
      * that level. Derived from the two levels, never stored, so a rebuilt hangar
      * reactivates the ship by itself whatever lowered it (decay, storm, Rückbau).
      */
-    public function isShipInactive(int $shipId, int $hangarLevel): bool
+    public function isShipInactive(int $shipId, int $hangarLevel, int $bay): bool
     {
-        return $hangarLevel < $this->requiredHangarLevel($shipId);
+        return HangarBays::isInactive($shipId, $hangarLevel, $bay);
     }
 
     /**
@@ -204,15 +183,13 @@ class HangarService
      */
     public function inactiveShipRowIds(int $colonyId): array
     {
-        return DB::table('colony_ships as cs')
-            ->join('colony_buildings as cb', function ($join): void {
-                $join->on('cb.colony_id', '=', 'cs.colony_id')
-                    ->on('cb.instance_id', '=', 'cs.hangar_instance_id')
-                    ->where('cb.building_id', '=', self::HANGAR_BUILDING_ID);
-            })
-            ->where('cs.colony_id', $colonyId)
-            ->get(['cs.id', 'cs.ship_id', 'cb.level'])
-            ->filter(fn (object $row): bool => $this->isShipInactive((int) $row->ship_id, (int) $row->level))
+        $level = $this->hangarMaxLevel($colonyId);
+
+        return DB::table('colony_ships')
+            ->where('colony_id', $colonyId)
+            ->whereNotNull('bay')
+            ->get(['id', 'ship_id', 'bay'])
+            ->filter(fn (object $row): bool => HangarBays::isInactive((int) $row->ship_id, $level, (int) $row->bay))
             ->map(fn (object $row): int => (int) $row->id)
             ->values()
             ->all();
@@ -230,9 +207,51 @@ class HangarService
         return new GameRuleException($code, __($langKey ?? "colony.hangar_error_{$code}", $replace));
     }
 
-    private function inactiveReason(int $shipId): string
+    private function inactiveReason(int $shipId, int $bay = 1): string
     {
-        return __('colony.hangar_ship_inactive', ['level' => $this->requiredHangarLevel($shipId)]);
+        return __('colony.hangar_ship_inactive', ['level' => max($this->requiredHangarLevel($shipId), $bay, 1)]);
+    }
+
+    /**
+     * T30 §13.2: the gift drone on the apron (bay 0). Idempotent — only when the hall
+     * stands on level >= 1 and the apron is empty. Ships on the apron are never deleted
+     * (only 'pending' ships decay, GameTick::processHangarDeliveries), so a hall
+     * demolished to 0 and rebuilt never yields a second one. No Credits, debt or trust.
+     */
+    public function ensureGiftDrone(int $colonyId): bool
+    {
+        if ($this->hangarMaxLevel($colonyId) < 1) {
+            return false;
+        }
+
+        return DB::transaction(function () use ($colonyId): bool {
+            if (DB::table('colony_ships')->where('colony_id', $colonyId)->where('bay', HangarBays::APRON)->lockForUpdate()->exists()) {
+                return false;
+            }
+
+            $tick = $this->tickService->getTickCount();
+            DB::table('colony_ships')->insert([
+                'colony_id' => $colonyId,
+                'ship_id' => (int) config('ships.drone.id'),
+                'bay' => HangarBays::APRON,
+                'ship_state' => 'docked',
+                'level' => 0,
+                'status_points' => HangarBays::maxStatus(),
+                'ap_spend' => 0,
+                'deliver_at_tick' => $tick,
+                'pending_until_tick' => null,
+            ]);
+
+            $this->eventService->createEvent([
+                'user' => (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id'),
+                'tick' => $tick,
+                'event' => 'hangar.gift_drone',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colonyId]),
+            ]);
+
+            return true;
+        });
     }
 
     /**
@@ -245,6 +264,21 @@ class HangarService
             ->where('colony_id', $colonyId)
             ->where('building_id', self::HANGAR_BUILDING_ID)
             ->max('level') ?? 0);
+    }
+
+    /** First free bay 1..hall level (the apron is never assigned automatically), or null. */
+    public function freeBay(int $colonyId): ?int
+    {
+        $level = min($this->hangarMaxLevel($colonyId), HangarBays::MAX_BAY);
+        $occupied = DB::table('colony_ships')->where('colony_id', $colonyId)->whereNotNull('bay')
+            ->pluck('bay')->map(fn ($b) => (int) $b)->all();
+        for ($bay = 1; $bay <= $level; $bay++) {
+            if (! in_array($bay, $occupied, true)) {
+                return $bay;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -321,8 +355,8 @@ class HangarService
      * The ship is created immediately in colony_ships with ship_state = 'building'.
      * It transitions to 'docked' when the tick service delivers it (via processHangarDeliveries).
      *
-     * If no free hangar slot is available the ship is created with ship_state = 'pending'
-     * and hangar_instance_id = NULL. A pending ship decays (deleted) after
+     * If no free hangar bay is available the ship is created with ship_state = 'pending'
+     * and bay = NULL. A pending ship decays (deleted) after
      * config('game.hangar.pending_decay_ticks') ticks unless assigned via assignToHangar().
      *
      * @param  int  $shipId  Must be one of ALLOWED_SHIP_IDS.
@@ -343,7 +377,7 @@ class HangarService
             throw $this->ruleError('ship_not_orderable');
         }
 
-        $requiredLevel = self::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL[$shipId];
+        $requiredLevel = HangarBays::requiredLevel($shipId);
         if ($this->hangarMaxLevel($colonyId) < $requiredLevel) {
             throw $this->ruleError('hangar_level_too_low', 'colony.hangar_request_level_too_low');
         }
@@ -438,28 +472,13 @@ class HangarService
                 $deliverAtTick = $currentTick + $deliveryTicks;
             }
 
-            // Determine hangar slot: first free slot whose level can operate this
-            // ship class (T22) — a lower hangar would leave the ship inactive.
-            $occupiedInstanceIds = DB::table('colony_ships')
-                ->where('colony_id', $colonyId)
-                ->whereNotNull('hangar_instance_id')
-                ->pluck('hangar_instance_id')
-                ->all();
-
-            $freeSlot = DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', self::HANGAR_BUILDING_ID)
-                ->where('level', '>=', $this->requiredHangarLevel($shipId))
-                ->when(! empty($occupiedInstanceIds), fn ($q) => $q->whereNotIn('instance_id', $occupiedInstanceIds))
-                ->orderBy('instance_id')
-                ->value('instance_id');
-
-            $hangarInstanceId = $freeSlot !== null ? (int) $freeSlot : null;
+            // First free bay of the single hall (never the apron).
+            $bay = $this->freeBay($colonyId);
             $shipState = 'building';
             $pendingUntilTick = null;
 
-            if ($hangarInstanceId === null) {
-                // No free hangar slot — ship enters pending state.
+            if ($bay === null) {
+                // No free hangar bay — ship enters pending state.
                 $shipState = 'pending';
                 $pendingUntilTick = $currentTick + $pendingDecayTicks;
             }
@@ -467,10 +486,10 @@ class HangarService
             DB::table('colony_ships')->insert([
                 'colony_id' => $colonyId,
                 'ship_id' => $shipId,
-                'hangar_instance_id' => $hangarInstanceId,
+                'bay' => $bay,
                 'ship_state' => $shipState,
                 'level' => 0,
-                'status_points' => self::SHIP_MAX_STATUS,
+                'status_points' => HangarBays::maxStatus(),
                 'ap_spend' => 0,
                 'deliver_at_tick' => $deliverAtTick,
                 'pending_until_tick' => $pendingUntilTick,
@@ -485,12 +504,12 @@ class HangarService
     /**
      * Grant a ship at no Credits cost and without touching Nexus-Kredit debt or
      * Trust (A41, Dax/smuggler concern "unofficial delivery"). Mirrors the ship
-     * creation half of requestShip() — free hangar slot lookup, colony_ships
+     * creation half of requestShip() — free hangar bay lookup, colony_ships
      * insert, delivery scheduling — but skips the cost/debt/trust branches
      * entirely, since this ship was never actually ordered through the Nexus.
      *
-     * Deliberately does NOT enforce SHIP_ID_TO_REQUIRED_HANGAR_LEVEL — Dax's
-     * delivery is off the books, not a catalog purchase; if no hangar slot is
+     * Deliberately does NOT enforce the hangar class level (HangarBays::requiredLevel) — Dax's
+     * delivery is off the books, not a catalog purchase; if no hangar bay is
      * free (or no hangar exists yet) the ship simply enters 'pending' state
      * like any other delivery with no free slot.
      *
@@ -508,24 +527,11 @@ class HangarService
         $pendingDecayTicks = (int) config('game.hangar.pending_decay_ticks', 5);
 
         DB::transaction(function () use ($colonyId, $shipId, $deliveryTicks, $currentTick, $pendingDecayTicks): void {
-            $occupiedInstanceIds = DB::table('colony_ships')
-                ->where('colony_id', $colonyId)
-                ->whereNotNull('hangar_instance_id')
-                ->pluck('hangar_instance_id')
-                ->all();
-
-            $freeSlot = DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', self::HANGAR_BUILDING_ID)
-                ->when(! empty($occupiedInstanceIds), fn ($q) => $q->whereNotIn('instance_id', $occupiedInstanceIds))
-                ->orderBy('instance_id')
-                ->value('instance_id');
-
-            $hangarInstanceId = $freeSlot !== null ? (int) $freeSlot : null;
+            $bay = $this->freeBay($colonyId);
             $shipState = 'building';
             $pendingUntilTick = null;
 
-            if ($hangarInstanceId === null) {
+            if ($bay === null) {
                 $shipState = 'pending';
                 $pendingUntilTick = $currentTick + $pendingDecayTicks;
             }
@@ -533,10 +539,10 @@ class HangarService
             DB::table('colony_ships')->insert([
                 'colony_id' => $colonyId,
                 'ship_id' => $shipId,
-                'hangar_instance_id' => $hangarInstanceId,
+                'bay' => $bay,
                 'ship_state' => $shipState,
                 'level' => 0,
-                'status_points' => self::SHIP_MAX_STATUS,
+                'status_points' => HangarBays::maxStatus(),
                 'ap_spend' => 0,
                 'deliver_at_tick' => $currentTick + $deliveryTicks,
                 'pending_until_tick' => $pendingUntilTick,
@@ -545,54 +551,31 @@ class HangarService
     }
 
     /**
-     * Assign a pending ship (no hangar) to a free hangar slot.
+     * Assign a pending ship (no bay) to a free bay 1..hall level. The apron (bay 0) is
+     * reserved for the gift drone.
      *
      * @param  int  $shipRowId  The auto-increment colony_ships.id (PK).
-     * @param  int  $instanceId  Hangar instance_id in colony_buildings to assign to.
      *
-     * @throws RuntimeException if the ship row or hangar slot is not suitable.
+     * @throws GameRuleException if the ship row or bay is not suitable.
      */
-    public function assignToHangar(int $colonyId, int $shipRowId, int $instanceId): void
+    public function assignToHangar(int $colonyId, int $shipRowId, int $bay): void
     {
-        DB::transaction(function () use ($colonyId, $shipRowId, $instanceId): void {
-            // Verify the ship row belongs to this colony and has no hangar assigned.
-            $ship = DB::table('colony_ships')
-                ->where('id', $shipRowId)
-                ->where('colony_id', $colonyId)
-                ->whereNull('hangar_instance_id')
-                ->first();
-
+        if ($bay === HangarBays::APRON) {
+            throw $this->ruleError('bay_reserved');
+        }
+        DB::transaction(function () use ($colonyId, $shipRowId, $bay): void {
+            $ship = DB::table('colony_ships')->where('id', $shipRowId)->where('colony_id', $colonyId)->whereNull('bay')->first();
             if ($ship === null) {
                 throw $this->ruleError('ship_not_pending');
             }
-
-            // Verify the target hangar slot exists and is free.
-            $hangarExists = DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', self::HANGAR_BUILDING_ID)
-                ->where('instance_id', $instanceId)
-                ->exists();
-
-            if (! $hangarExists) {
-                throw $this->ruleError('hangar_not_found');
+            if ($bay < 1 || ! HangarBays::bayOpen($bay, $this->hangarMaxLevel($colonyId)) || $bay > HangarBays::MAX_BAY) {
+                throw $this->ruleError('bay_closed');
             }
-
-            $slotOccupied = DB::table('colony_ships')
-                ->where('colony_id', $colonyId)
-                ->where('hangar_instance_id', $instanceId)
-                ->exists();
-
-            if ($slotOccupied) {
+            if (DB::table('colony_ships')->where('colony_id', $colonyId)->where('bay', $bay)->exists()) {
                 throw $this->ruleError('hangar_occupied');
             }
-
-            DB::table('colony_ships')
-                ->where('id', $shipRowId)
-                ->update([
-                    'hangar_instance_id' => $instanceId,
-                    'pending_until_tick' => null,
-                    'ship_state' => 'docked',
-                ]);
+            DB::table('colony_ships')->where('id', $shipRowId)
+                ->update(['bay' => $bay, 'pending_until_tick' => null, 'ship_state' => 'docked']);
         });
     }
 
@@ -633,7 +616,7 @@ class HangarService
      *
      * @param  array{q?: int, r?: int, research_id?: int}|null  $target
      */
-    public function dispatchShip(int $colonyId, int $instanceId, string $missionKey, ?array $target = null, string $difficulty = 'normal'): void
+    public function dispatchShip(int $colonyId, int $bay, string $missionKey, ?array $target = null, string $difficulty = 'normal'): void
     {
         $mission = config("missions.catalog.{$missionKey}");
         if ($mission === null) {
@@ -644,11 +627,11 @@ class HangarService
             throw $this->ruleError('invalid_difficulty', 'missions.error_invalid_difficulty');
         }
 
-        DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target, $difficulty): void {
+        DB::transaction(function () use ($colonyId, $bay, $missionKey, $mission, $target, $difficulty): void {
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
-                ->where('hangar_instance_id', $instanceId)
-                ->first();
+                ->where('bay', $bay)
+                ->lockForUpdate()->first();
 
             if ($ship === null) {
                 throw $this->ruleError('no_ship_in_hangar');
@@ -660,24 +643,14 @@ class HangarService
 
             // GDD §7 "Hangar unter Schiffsstufe": checked only here, at mission
             // start — a mission already under way is never aborted by it.
-            $hangarLevel = (int) DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', self::HANGAR_BUILDING_ID)
-                ->where('instance_id', $instanceId)
-                ->value('level');
-            if ($this->isShipInactive((int) $ship->ship_id, $hangarLevel)) {
-                throw new GameRuleException(self::ERROR_SHIP_INACTIVE, $this->inactiveReason((int) $ship->ship_id));
+            $hangarLevel = $this->hangarMaxLevel($colonyId);
+            if ($this->isShipInactive((int) $ship->ship_id, $hangarLevel, $bay)) {
+                throw new GameRuleException(self::ERROR_SHIP_INACTIVE, $this->inactiveReason((int) $ship->ship_id, $bay));
             }
 
             $shipKey = self::SHIP_ID_TO_CONFIG_KEY[(int) $ship->ship_id] ?? null;
             if (! in_array($shipKey, $mission['ships'], true)) {
                 throw $this->ruleError('wrong_ship_type', 'missions.error_wrong_ship_type');
-            }
-
-            // §7 dispatch block: worn-down ships must be repaired first.
-            $minSp = self::SHIP_MAX_STATUS * (float) config('missions.dispatch_min_sp_pct', 0.25);
-            if ((float) $ship->status_points < $minSp) {
-                throw $this->ruleError('ship_sp_too_low', 'missions.error_sp_too_low');
             }
 
             // Knowledge gate.
@@ -714,14 +687,31 @@ class HangarService
 
             // Target requirement (player-picked tile or knowledge).
             $targetJson = null;
-            if (($mission['target_type'] ?? null) !== null) {
-                $targetJson = $this->validateTarget($colonyId, $missionKey, $mission['target_type'], $target);
+            $solDistance = (int) ($mission['sol_distance'] ?? 0);
+            $targetType = $mission['target_type'] ?? null;
+            if ($targetType === 'find_tile') {
+                // T30 §13.3: the locked tile row reserves the find; distance comes from its ring.
+                $tile = DB::table('colony_tiles')->where('colony_id', $colonyId)
+                    ->where('q', (int) ($target['q'] ?? PHP_INT_MIN))->where('r', (int) ($target['r'] ?? PHP_INT_MIN))
+                    ->lockForUpdate()->first();
+                $this->assertFindFlyable($colonyId, $tile, $shipKey);
+                $targetJson = json_encode(['q' => (int) $tile->q, 'r' => (int) $tile->r]);
+                $solDistance = $this->findFlightService->solDistance((int) $tile->ring);
+            } elseif ($targetType !== null) {
+                $targetJson = $this->validateTarget($colonyId, $missionKey, $targetType, $target);
             }
 
-            $solDistance = (int) $mission['sol_distance'];
+            // T30 §13.x/7: return guarantee instead of the 25 % floor — a ship never
+            // starts a flight it cannot come back from.
+            $readiness = HangarBays::flightReadiness((int) $ship->ship_id, (float) $ship->status_points, $solDistance);
+            if (! $readiness['ready']) {
+                throw $this->ruleError('ship_too_worn', 'missions.error_ship_too_worn', [
+                    'current' => (float) $ship->status_points, 'wear' => $readiness['wear'], 'ap' => $readiness['repair_ap'],
+                ]);
+            }
             $baseNavApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
             $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseNavApCost);
-            $organikaCost = $this->organikaCostFor($colonyId, $mission);
+            $organikaCost = $this->organikaCostFor($colonyId, $mission, $solDistance);
 
             if (! config('game.bypass.ap_checks')
                 && $this->advisorService->getAvailableActionPoints($colonyId) < $navApCost) {
@@ -740,7 +730,7 @@ class HangarService
 
             DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
-                ->where('hangar_instance_id', $instanceId)
+                ->where('bay', $bay)
                 ->update(['ship_state' => 'dispatched']);
 
             if (! config('game.bypass.ap_checks') && $navApCost > 0) {
@@ -754,7 +744,7 @@ class HangarService
 
             DB::table('colony_hangar_missions')->insert([
                 'colony_id' => $colonyId,
-                'instance_id' => $instanceId,
+                'bay' => $bay,
                 'ship_id' => $ship->ship_id,
                 'destination' => $missionKey,
                 'sol_distance' => $solDistance,
@@ -770,8 +760,9 @@ class HangarService
     /**
      * Organika dispatch cost for a catalog mission: per-sol rate reduced by
      * knowledge levels above the gate (never below the floor), plus extra_cost.
+     * $solDistance overrides the catalog distance (salvage flight: from the target ring).
      */
-    public function organikaCostFor(int $colonyId, array $mission): int
+    public function organikaCostFor(int $colonyId, array $mission, ?int $solDistance = null): int
     {
         $perSol = (int) config('missions.organika_per_sol', 3);
         $gate = $mission['requires']['knowledge'] ?? null;
@@ -784,10 +775,33 @@ class HangarService
             $perSol = max($floor, $perSol - $scaling * $levelsAbove);
         }
 
-        $cost = (int) $mission['sol_distance'] * $perSol;
+        $cost = ($solDistance ?? (int) $mission['sol_distance']) * $perSol;
         $cost += (int) ($mission['extra_cost']['organics'] ?? 0);
 
         return $cost;
+    }
+
+    /**
+     * Tile-level gates of a salvage flight (§13.3). The tile row is locked by the caller,
+     * so a second dispatch to the same find waits and then sees the active mission.
+     */
+    private function assertFindFlyable(int $colonyId, ?object $tile, ?string $shipKey): void
+    {
+        if ($tile === null || $tile->event_type === null) {
+            throw $this->ruleError('invalid_target', 'missions.error_invalid_target');
+        }
+        // T30 §13.4: findAction() is the single source; ship status/level reasons are
+        // left to the bay, carry and return-guarantee checks of dispatchShip().
+        match ($this->colonyTileService->findAction($colonyId, $tile)['reason']) {
+            'unscanned' => throw $this->ruleError('find_not_scanned', 'missions.error_find_not_scanned'),
+            'false' => throw $this->ruleError('invalid_target', 'missions.error_invalid_target'),
+            'in_flight' => throw $this->ruleError('find_in_flight', 'missions.error_find_in_flight'),
+            'grandfathered', 'self' => throw $this->ruleError('find_salvage_in_progress', 'missions.error_find_salvage_in_progress'),
+            default => null,
+        };
+        if (! $this->findFlightService->canCarry($shipKey, $tile->event_type)) {
+            throw $this->ruleError('find_too_large', 'missions.error_find_too_large');
+        }
     }
 
     /**
@@ -809,7 +823,6 @@ class HangarService
     /**
      * Validate the player-picked mission target and return its canonical JSON.
      *
-     * signal_tile — explored tile with a hidden event, not yet deep-scanned.
      * ruin_tile   — deep-scanned event_ruin tile not yet consumed by a ruin expedition.
      * knowledge   — any knowledge id from config/knowledge.php.
      */
@@ -837,7 +850,6 @@ class HangarService
             ->first();
 
         $valid = match ($targetType) {
-            'signal_tile' => $tile !== null && $tile->is_explored && $tile->event_type !== null && ! $tile->is_deep_scanned,
             'ruin_tile' => $tile !== null && $tile->is_deep_scanned && $tile->event_type === 'event_ruin',
             default => false,
         };
@@ -881,9 +893,7 @@ class HangarService
 
         $entries = [];
         foreach (config('missions.catalog', []) as $key => $mission) {
-            $dist = (int) $mission['sol_distance'];
-            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $dist * $navPerSol);
-            $organikaCost = $this->organikaCostFor($colonyId, $mission);
+            $dist = (int) ($mission['sol_distance'] ?? 0);
 
             $availability = 'ok';
             $gateInfo = null;
@@ -909,7 +919,14 @@ class HangarService
                 if ($availability === 'ok' && $targets === []) {
                     $availability = 'missing_target';
                 }
+                if ($targetType === 'find_tile') {
+                    // Header costs show the nearest pickable find; each target carries its own.
+                    $dist = $targets === [] ? $this->findFlightService->solDistance(2) : min(array_column($targets, 'sol_distance'));
+                }
             }
+
+            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $dist * $navPerSol);
+            $organikaCost = $this->organikaCostFor($colonyId, $mission, $dist);
 
             if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableAp) {
                 $availability = 'missing_ap';
@@ -923,13 +940,15 @@ class HangarService
                 $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
             }
 
+            // T30 §13.3: roll === false (salvage flight) — no success roll, no difficulty scaling.
+            $rolls = ($mission['roll'] ?? true) !== false;
             $difficultyOptions = [];
             foreach ($mission['difficulties'] ?? [] as $difficultyKey) {
                 $difficultyOptions[] = [
                     'key' => $difficultyKey,
                     'label' => __("missions.difficulty_{$difficultyKey}"),
-                    'chance_pct' => (int) round($this->successChanceFor($colonyId, $mission, $difficultyKey) * 100),
-                    'reward_multiplier' => (float) config("game.missions.difficulty.reward_multiplier.{$difficultyKey}", 1.0),
+                    'chance_pct' => $rolls ? (int) round($this->successChanceFor($colonyId, $mission, $difficultyKey) * 100) : 100,
+                    'reward_multiplier' => $rolls ? (float) config("game.missions.difficulty.reward_multiplier.{$difficultyKey}", 1.0) : 1.0,
                 ];
             }
 
@@ -951,6 +970,7 @@ class HangarService
                 'target_type' => $targetType,
                 'targets' => $targets,
                 'difficulty_options' => $difficultyOptions,
+                'roll' => $rolls,
             ];
         }
 
@@ -979,26 +999,50 @@ class HangarService
             return $targets;
         }
 
+        if ($targetType === 'find_tile') {
+            $tick = $this->tickService->getTickCount();
+            $mission = config('missions.catalog.'.FindFlightService::MISSION_KEY);
+
+            return DB::table('colony_tiles')
+                ->where('colony_id', $colonyId)->where('is_deep_scanned', 1)
+                ->whereIn('event_type', ColonyTileService::FIND_TYPES)->where('salvage_ap_spent', 0)
+                ->orderBy('ring')->orderBy('q')->orderBy('r')
+                ->get()
+                ->reject(fn ($t) => $this->colonyTileService->findFlightReturnSol($colonyId, (int) $t->q, (int) $t->r) !== null)
+                ->map(function ($t) use ($colonyId, $tick, $mission) {
+                    $costs = $this->findFlightService->costs($colonyId, (int) $t->ring);
+                    $carry = [];
+                    foreach ($mission['ships'] as $shipKey) {
+                        $carry[$shipKey] = $this->findFlightService->canCarry($shipKey, $t->event_type);
+                    }
+
+                    return ['q' => (int) $t->q, 'r' => (int) $t->r, 'ring' => (int) $t->ring, 'find_type' => $t->event_type,
+                        ...$costs, 'return_sol' => $tick + $costs['duration'], 'carry' => $carry,
+                        'yield' => $this->findFlightService->findFlightYield($colonyId, $t->event_type)];
+                })
+                ->values()
+                ->all();
+        }
+
+        if ($targetType !== 'ruin_tile') {
+            return [];
+        }
+
+        // ruin_tile: deep-scanned ruins not yet claimed by this mission.
         $query = DB::table('colony_tiles')
             ->where('colony_id', $colonyId)
+            ->where('is_deep_scanned', 1)->where('event_type', 'event_ruin')
             ->orderBy('ring')->orderBy('q')->orderBy('r');
-
-        if ($targetType === 'signal_tile') {
-            $query->where('is_explored', 1)->whereNotNull('event_type')->where('is_deep_scanned', 0);
-        } else { // ruin_tile
-            $query->where('is_deep_scanned', 1)->where('event_type', 'event_ruin');
-        }
 
         $tiles = [];
         foreach ($query->get(['q', 'r', 'ring']) as $tile) {
             $targetJson = json_encode(['q' => (int) $tile->q, 'r' => (int) $tile->r]);
-            if ($targetType === 'ruin_tile'
-                && DB::table('colony_hangar_missions')
-                    ->where('colony_id', $colonyId)
-                    ->where('destination', $missionKey)
-                    ->whereIn('state', ['active', 'completed'])
-                    ->where('target', $targetJson)
-                    ->exists()) {
+            if (DB::table('colony_hangar_missions')
+                ->where('colony_id', $colonyId)
+                ->where('destination', $missionKey)
+                ->whereIn('state', ['active', 'completed'])
+                ->where('target', $targetJson)
+                ->exists()) {
                 continue; // ruin already claimed this run
             }
             $tiles[] = ['q' => (int) $tile->q, 'r' => (int) $tile->r, 'ring' => (int) $tile->ring];
@@ -1008,14 +1052,42 @@ class HangarService
     }
 
     /**
+     * Tick payout of a salvage flight (§13.3). Defensive: a tile that is no longer a
+     * scanned real find, or a ship that cannot carry it, pays nothing (find_missing).
+     *
+     * @return array{find_type: ?string, find_regolith: int, flight_bonus: int, find_missing?: bool}
+     */
+    public function completeFindFlight(int $colonyId, ?array $target, int $shipId): array
+    {
+        $none = ['find_type' => null, 'find_regolith' => 0, 'flight_bonus' => 0, 'find_missing' => true];
+        if (! isset($target['q'], $target['r'])) {
+            return $none;
+        }
+
+        return DB::transaction(function () use ($colonyId, $target, $shipId, $none): array {
+            $tile = ColonyTile::where('colony_id', $colonyId)->where('q', (int) $target['q'])->where('r', (int) $target['r'])
+                ->lockForUpdate()->first();
+            $type = $tile?->event_type;
+            if ($tile === null || ! $tile->is_deep_scanned || ! in_array($type, ColonyTileService::FIND_TYPES, true)
+                || ! $this->findFlightService->canCarry(HangarBays::shipKey($shipId), $type)) {
+                return $none;
+            }
+            $yield = $this->findFlightService->findFlightYield($colonyId, $type);
+            $this->colonyTileService->completeFind($tile, $yield['total']);
+
+            return ['find_type' => $type, 'find_regolith' => $yield['total'], 'flight_bonus' => $yield['flight_bonus']];
+        });
+    }
+
+    /**
      * Recall an active mission. Marks the mission as recalled and the ship as docked.
      */
-    public function recallShip(int $colonyId, int $instanceId): void
+    public function recallShip(int $colonyId, int $bay): void
     {
-        DB::transaction(function () use ($colonyId, $instanceId): void {
+        DB::transaction(function () use ($colonyId, $bay): void {
             $mission = DB::table('colony_hangar_missions')
                 ->where('colony_id', $colonyId)
-                ->where('instance_id', $instanceId)
+                ->where('bay', $bay)
                 ->where('state', 'active')
                 ->first();
 
@@ -1034,24 +1106,24 @@ class HangarService
 
             DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
-                ->where('hangar_instance_id', $instanceId)
+                ->where('bay', $bay)
                 ->update(['ship_state' => 'docked']);
         });
     }
 
     /**
-     * Repair a docked ship — fixed cost: one call spends 1 Construction-AP
-     * (locked by the caller) and restores REPAIR_SP_PER_AP status_points,
-     * capped at max. Mirrors the building-repair interaction (1 click = 1 AP).
+     * Repair a docked ship — fixed cost: one call spends ap_per_click Construction-AP
+     * (locked by the caller) and restores game.ship_repair.sp_per_click status_points,
+     * capped at game.ship_repair.max_status_points; AP per click is game.ship_repair.ap_per_click.
      * ap_spend on the ship row is incremented to track total AP invested.
      */
-    public function repairShip(int $colonyId, int $instanceId): void
+    public function repairShip(int $colonyId, int $bay): void
     {
-        DB::transaction(function () use ($colonyId, $instanceId): void {
+        DB::transaction(function () use ($colonyId, $bay): void {
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
-                ->where('hangar_instance_id', $instanceId)
-                ->first();
+                ->where('bay', $bay)
+                ->lockForUpdate()->first();
 
             if ($ship === null || $ship->ship_state !== 'docked') {
                 throw $this->ruleError('no_docked_ship');
@@ -1059,19 +1131,41 @@ class HangarService
 
             $current = (float) $ship->status_points;
 
-            if ($current >= self::SHIP_MAX_STATUS) {
+            $max = HangarBays::maxStatus();
+            if ($current >= $max) {
                 throw $this->ruleError('ship_full_status');
             }
 
-            $newStatus = min(self::SHIP_MAX_STATUS, $current + self::REPAIR_SP_PER_AP);
+            $newStatus = min($max, $current + (int) config('game.ship_repair.sp_per_click', 2));
 
             DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
-                ->where('hangar_instance_id', $instanceId)
+                ->where('bay', $bay)
                 ->update([
                     'status_points' => $newStatus,
-                    'ap_spend' => $ship->ap_spend + 1,
+                    'ap_spend' => $ship->ap_spend + (int) config('game.ship_repair.ap_per_click', 1),
                 ]);
         });
+    }
+
+    /** flightReadiness() for every distance a catalog mission can have — the dialog reads it, never recomputes. */
+    private function readinessByDistance(int $shipId, float $statusPoints): array
+    {
+        $distances = [];
+        foreach (config('missions.catalog', []) as $mission) {
+            foreach ([$mission['sol_distance'] ?? null, ...array_values($mission['sol_distance_by_ring'] ?? [])] as $distance) {
+                if ($distance !== null) {
+                    $distances[(int) $distance] = true;
+                }
+            }
+        }
+        ksort($distances);
+
+        $readiness = [];
+        foreach (array_keys($distances) as $distance) {
+            $readiness[$distance] = HangarBays::flightReadiness($shipId, $statusPoints, $distance);
+        }
+
+        return $readiness;
     }
 }

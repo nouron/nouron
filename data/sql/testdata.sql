@@ -37,33 +37,28 @@ INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(3,1,250);
 INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(4,1,50);
 INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(5,1,50);
 INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(12,1,0);
--- colony_buildings: two hangar bays (building_id=44) for colony 1 (Springfield).
--- Hangar 1 sits on Lv3 so every ship docked there is active: corvette needs Lv3,
--- freighter Lv2, drone Lv1 (HangarService::SHIP_ID_TO_REQUIRED_HANGAR_LEVEL, T14/T20).
--- Hangar 2 stays Lv1 (only a history row in colony_hangar_missions references it).
+-- colony_buildings: one hangar hall (building_id=44) for colony 1 (Springfield), B1 (T30 §13.2).
+-- Lv3 = three bays and every class active: drone bay 1, freighter bay 2, corvette bay 3.
 INSERT INTO colony_buildings (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,1,3,20,0,1);
-INSERT INTO colony_buildings (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,2,1,20,0,1);
 
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,29,0,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,37,9,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,47,3,10,0,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,49,12,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,83,17,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,84,16,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,5,3,0,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,29,0,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,37,9,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,47,3,10,0,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,49,12,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,83,17,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,84,16,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,5,3,0,NULL,'docked',NULL,NULL);
 
--- Assign hangar bays: corvette (ship_id=37) + freighter (ship_id=47) → hangar 1 (Lv3) on colony 1.
--- Both used to sit in Lv1 hangars and were therefore inactive since T14.
--- Drone (ship_id=85) dispatched from hangar 1, so ship_state=dispatched
-UPDATE colony_ships SET hangar_instance_id=1, ship_state='dispatched' WHERE colony_id=1 AND ship_id=85;
-UPDATE colony_ships SET hangar_instance_id=1, ship_state='docked'     WHERE colony_id=1 AND ship_id=37;
-UPDATE colony_ships SET hangar_instance_id=1, ship_state='docked'     WHERE colony_id=1 AND ship_id=47;
+-- Bays: drone (85) bay 1 (dispatched), freighter (47) bay 2, corvette (37) bay 3.
+UPDATE colony_ships SET bay=1, ship_state='dispatched' WHERE colony_id=1 AND ship_id=85;
+UPDATE colony_ships SET bay=3, ship_state='docked'     WHERE colony_id=1 AND ship_id=37;
+UPDATE colony_ships SET bay=2, ship_state='docked'     WHERE colony_id=1 AND ship_id=47;
 
 -- Hangar missions for colony 1:
--- Mission 1: drone dispatched from hangar 1, currently active
--- Mission 2: freighter recalled from hangar 2, completed (history row; the freighter now docks in hangar 1)
-INSERT INTO colony_hangar_missions (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
-INSERT INTO colony_hangar_missions (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
+-- Mission 1: drone dispatched from bay 1, currently active
+-- Mission 2: freighter recalled from bay 2 (history row)
+INSERT INTO colony_hangar_missions (colony_id,bay,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
+INSERT INTO colony_hangar_missions (colony_id,bay,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
 INSERT INTO colony_researches (colony_id,research_id,level,status_points,ap_spend) VALUES(1,9901,1,20,0);
 INSERT INTO colony_researches (colony_id,research_id,level,status_points,ap_spend) VALUES(1,96,0,10,0);
 INSERT INTO advisors (user_id,colony_id,personell_id,`rank`,active_ticks) VALUES(3,1,35,1,0);

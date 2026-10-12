@@ -118,27 +118,26 @@ class ForeignColonyActionTest extends TestCase
 
     public function test_cannot_assign_foreign_pending_ship_to_own_hangar(): void
     {
-        DB::table('colony_buildings')->insert([
-            'colony_id' => 1, 'building_id' => 44, 'instance_id' => 50,
-            'level' => 2, 'status_points' => 20, 'ap_spend' => 0,
-        ]);
+        // Fixture hall (Lv3) exists; free its bays so the only thing refusing the
+        // assignment is the foreign ownership of the ship row.
+        DB::table('colony_ships')->where('colony_id', 1)->update(['bay' => null]);
         $shipRowId = DB::table('colony_ships')->insertGetId([
             'colony_id' => $this->foreignColonyId,
             'ship_id' => 85,
             'level' => 0,
             'status_points' => 10,
             'ap_spend' => 0,
-            'hangar_instance_id' => null,
+            'bay' => null,
             'ship_state' => 'pending',
             'pending_until_tick' => 999,
         ]);
 
         $this->actingAs($this->bart)
-            ->postJson(route('colony.hangar.assign'), ['ship_row_id' => $shipRowId, 'instance_id' => 50])
+            ->postJson(route('colony.hangar.assign'), ['ship_row_id' => $shipRowId, 'bay' => 1])
             ->assertStatus(422);
 
         $ship = DB::table('colony_ships')->where('id', $shipRowId)->first();
         $this->assertSame($this->foreignColonyId, (int) $ship->colony_id);
-        $this->assertNull($ship->hangar_instance_id);
+        $this->assertNull($ship->bay);
     }
 }

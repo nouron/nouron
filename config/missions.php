@@ -14,9 +14,9 @@
  *
  * requires:
  *   knowledge — ['config_key' => min_level] (config/knowledge.php keys)
- *   target    — 'signal_tile' | 'ruin_tile' (player picks a concrete tile at dispatch)
+ *   target    — 'ruin_tile' | 'find_tile' (player picks a concrete tile at dispatch)
  * target_type — what the player must select in the dispatch dialog
- *   (deep_survey: the signal tile to scan; data_sweep: the knowledge to invest in)
+ *   (find_salvage: the scanned find; data_sweep: the knowledge to invest in)
  *
  * reward value forms:
  *   int              — fixed amount
@@ -31,7 +31,7 @@ return [
     'organika_per_sol' => 3,  // dispatch provisions = sol_distance × this (before knowledge scaling)
     'organika_scaling_per_level' => 1, // −1 organika per sol per knowledge level above the gate
     'organika_floor_per_sol' => 1,    // scaling never drops below this
-    'dispatch_min_sp_pct' => 0.25,    // ships below 25% of max SP cannot be dispatched (GDD §7)
+    // Start gate: return guarantee (T30 §13.x/7) — a ship starts only if SP − wear_per_sol × 2 × sol_distance > 0, see App\Support\HangarBays::flightReadiness().
 
     'catalog' => [
 
@@ -56,22 +56,19 @@ return [
             'repeatable' => true,
             'difficulties' => ['easy', 'normal'],
         ],
-        'mission_deep_survey' => [
-            'ships' => ['drone'],
-            'sol_distance' => 2,
-            'requires' => ['target' => 'signal_tile'],
-            'target_type' => 'signal_tile',
-            'reward' => ['deep_scan' => 1],
-            'repeatable' => true, // consumes one signal tile per run
-            'difficulties' => ['easy', 'normal'],
-        ],
-        'mission_prospecting_flight' => [
-            'ships' => ['drone'],
-            'sol_distance' => 2,
-            'requires' => ['knowledge' => ['geology' => 1]],
-            'reward' => ['regolith' => [20, 30]],
+        // T30 §13.3: salvage flight to a SCANNED real find (no remote scan, E4). Distance
+        // comes from the target's ring; no success roll (the find is known), wear only.
+        // Yield = round(find rg × game.finds.flight.yield_factor), carry per ships.*.find_carry.
+        // Counts for task_expedition_coverage (difficulty normal), not for finds.max_open_projects.
+        'mission_find_salvage' => [
+            'ships' => ['drone', 'freighter'],
+            'sol_distance_by_ring' => [2 => 1, 3 => 2], // fallback max(1, ring − 1)
+            'requires' => ['target' => 'find_tile'],
+            'target_type' => 'find_tile',
+            'reward' => ['find_salvage' => true],
+            'roll' => false,
             'repeatable' => true,
-            'difficulties' => ['normal', 'hard'],
+            'difficulties' => ['normal'],
         ],
         'mission_data_sweep' => [
             'ships' => ['drone'],
@@ -103,7 +100,7 @@ return [
             'ships' => ['freighter'],
             'sol_distance' => 1,
             'requires' => [],
-            'reward' => ['regolith' => 25, 'organics' => 10],
+            'reward' => ['organics' => 10], // T30 §13 E8: no Regolith (F2)
             'repeatable' => true,
             'difficulties' => ['easy', 'normal'],
         ],

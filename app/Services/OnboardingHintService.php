@@ -268,7 +268,20 @@ class OnboardingHintService
                 'text_key' => 'colony.onboarding_hint_harvester_low_regolith',
                 'target_url' => '/colony/view',
             ],
+            [
+                'rank' => 20,
+                'key' => 'hint_find_flight',
+                'active' => $this->checkHintFindFlight($colonyId),
+                'text_key' => 'colony.onboarding_hint_find_flight',
+                'target_url' => '/colony/hangar',
+            ],
         ];
+    }
+
+    /** T30 §13.4: once the hangar stands (hall level >= 1, the apron drone is there), finds go by ship. */
+    private function checkHintFindFlight(int $colonyId): bool
+    {
+        return (int) (DB::table('colony_buildings')->where('colony_id', $colonyId)->where('building_id', BuildingId::Hangar->value)->max('level') ?? 0) >= 1;
     }
 
     /**
@@ -569,7 +582,7 @@ class OnboardingHintService
 
     /**
      * True once at least one ship of the colony is usable: docked in a hangar or out on
-     * a mission. Ships that are still being built or waiting for a free hangar slot
+     * a mission. Ships that are still being built or waiting for a free hangar bay
      * ('building' / 'pending') are not there yet.
      */
     private function hasArrivedShip(int $colonyId): bool

@@ -26,7 +26,7 @@ return [
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
     'hangar' => 'Hangar',
-    'hangar_desc' => 'Unterstellplatz für ein Schiff — Wartung, Betankung, Besatzungswechsel. Jeder Hangar bietet Platz für genau eine Korvette oder einen Frachter. Sonden brauchen keinen eigenen Hangar.',
+    'hangar_desc' => 'Hangar mit Buchten. Jede Ausbaustufe öffnet eine weitere Bucht und die nächste Schiffsklasse; auf dem Vorfeld steht die Geschenk-Drohne.',
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 

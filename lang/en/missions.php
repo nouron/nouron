@@ -9,11 +9,8 @@ return [
     'mission_recon_flight_name' => 'Recon Flight',
     'mission_recon_flight_desc' => 'The drone sweeps across uncharted terrain, radioing back what lies beyond the horizon.',
 
-    'mission_deep_survey_name' => 'Signal Survey',
-    'mission_deep_survey_desc' => 'Something out there is transmitting — the drone circles the source until it knows what it really is.',
-
-    'mission_prospecting_flight_name' => 'Prospecting Flight',
-    'mission_prospecting_flight_desc' => 'The drone probes the rubble fields for workable regolith and comes home with its sample containers full.',
+    'mission_find_salvage_name' => 'Salvage Flight',
+    'mission_find_salvage_desc' => 'The crew flies out to a scanned find and hauls it aboard with the salvage rig — more reaches the stores than on foot.',
 
     'mission_data_sweep_name' => 'Data Sweep',
     'mission_data_sweep_desc' => 'On one long, wide loop the drone gathers field readings that save the analysts back home weeks of legwork.',
@@ -61,15 +58,21 @@ return [
     // ── Dispatch errors ──────────────────────────────────────────────────────
 
     'error_wrong_ship_type' => 'This ship is not suited for this mission.',
-    'error_sp_too_low' => 'This ship is too worn for a mission — repair it first.',
+    'error_ship_too_worn' => 'Too worn for this flight: condition :current, wear :wear. Repair first (:ap AP).',
     'error_knowledge_gate' => 'The colony lacks the knowledge required for this mission.',
     'error_invalid_target' => 'No valid target selected for this mission.',
     'error_target_consumed' => 'This ruin has already been salvaged.',
+    'error_find_not_scanned' => 'The signal has not been scanned yet — scan it first.',
+    'error_find_too_large' => 'This find is too heavy for the ship.',
+    'error_find_in_flight' => 'A ship is already on its way to this find.',
+    'error_find_salvage_in_progress' => 'The salvage crew is already digging here — the find is finished on foot.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 
     'sol_report_completed' => 'Mission completed',
     'sol_report_aborted' => 'Mission aborted — ship returned unable to fly',
+    'sol_report_failed' => 'Mission failed — no yield',
+    'sol_report_find_missing' => 'Salvage flight without yield — the signal was gone or the ship could not carry the find',
 
     // ── Difficulty ───────────────────────────────────────────────────────────
 
@@ -86,9 +89,14 @@ return [
     'reward_organics' => ':amount Organics',
     'reward_research_ap' => '+:amount Research AP',
     'reward_reveal_tiles' => ':amount sectors charted',
-    'reward_deep_scan' => 'Deep scan of the signal',
     'reward_harvester_instance' => 'Salvaged Harvester (damaged)',
+    'reward_find_salvage' => 'Find + flight bonus',
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',
     'reward_label' => 'Yield',
+    'target_find_yield' => 'Find :base Rg + flight :bonus Rg = :total Rg',
+    'target_too_large' => 'too large for this ship',
+    'target_cartography' => 'Cartography −:ap AP',
+    'wear_line' => 'Wear −:wear · condition :from → :to',
+    'too_worn_line' => 'Condition :current is not enough for wear :wear – repair first (:ap AP)',
 ];

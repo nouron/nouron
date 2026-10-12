@@ -312,7 +312,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | 5 | CC Lv2, Teil der **Pfadwahl** (siehe unten) |
 | 46 | infirmary | Krankenstation | Medical Station | 3 | CC Lv2 |
 | 52 | bar | Cantina | Cantina | 3 | CC Lv2, Teil der **Pfadwahl** (siehe unten) |
-| 44 | hangar | Hangar | Hangar | 3 (Instanzen ungedeckelt) | **CC Lv2**, Teil der **Pfadwahl** (siehe unten) |
+| 44 | hangar | Hangar | Hangar | 3 (eine Halle) | **CC Lv2**, Teil der **Pfadwahl** (siehe unten) |
 | 32 | temple | Religiöse Stätte | Sacred Site | 1 | CC Lv4 |
 | 50 | monument | Kolonialdenkmal | Colonial Monument | 1 | CC Lv5 |
 | 53 | securityHub | Leitstelle | Response Center | 3 | CC Lv3 |
@@ -442,7 +442,7 @@ Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_poi
 **Leveled vs. Instanced Buildings:**
 
 - **Leveled** — ein Objekt auf einem Tile, wird stufenweise ausgebaut (z.B. CC Lv1→5, Agrardom). Ein Klick auf das Tile → "Ausbauen". (Der Harvester ist **nicht** leveled — `max_level = 1`, §13.5.)
-- **Instanced** — jede Einheit ist ein eigenes Objekt auf einem eigenen Tile (z.B. Wohnhabitat max. 6 Einheiten, Hangar). Jede Instanz kann separat auf Lv1–3 ausgebaut werden und hat eigene Status-Points.
+- **Instanced** — jede Einheit ist ein eigenes Objekt auf einem eigenen Tile (z.B. Wohnhabitat max. 6 Einheiten). Jede Instanz kann separat auf Lv1–3 ausgebaut werden und hat eigene Status-Points.
 
 Das Config-Flag `is_instanced` in `config/buildings.php` steuert das Verhalten. In der DB haben Instanced Buildings eine `instance_id` als Teil des zusammengesetzten PK (`colony_id + building_id + instance_id`).
 
@@ -495,7 +495,7 @@ Daraus folgt:
 - **Kolonie-Zone-Tiles** sind baubar, aber ggf. noch im Fog (`is_colony_zone=1, is_explored=0`). **Bauen auf einem solchen Tile deckt es auf** ("siedeln → sehen"). Der Spieler kann optional vorher per Navigation-AP erkunden, um vor dem Bauen zu sehen, was dort liegt (z.B. Gefahrenzone).
 - **Exploration-Zone-Tiles** bleiben Fog of War — einzeln per Navigation-AP aufgedeckt (Ring-gestaffelte Kosten s.o.). Hier liegt der Erkundungs-Lohn (Regolith fürs Harvester-Verlegen, Signale/Funde in Ring 2 und 3).
 
-**Signale, Tiefenscan, Bergung:** Zu Run-Beginn liegt auf einigen Außenring-Feldern ein verstecktes Signal. Ein Tiefenscan kostet wenig AP und zeigt, was dahintersteckt — ein Fehlalarm, ein kleiner, mittlerer oder großer Fund. Solange ein echter Fund nicht geborgen ist, bleibt sein Feld unbebaubar; ein Fehlalarm gibt das Feld nach dem Scan frei. Gehoben wird ein Fund als Bergungsprojekt: AP werden über mehrere Sole investiert (mit Tagesdeckel und Projektlimit), erst bei Abschluss fließt das Regolith. Der Vorrat ist ein fester, für alle Eröffnungen identischer Pool — er begünstigt weder Labor, Hangar noch Cantina und bleibt in dieser Fassung ohne Nachschub. Zahlen: `docs/game-reference.md#17a-fundpool-t30-pool-v1-gamefinds`.
+**Signale, Tiefenscan, Bergung:** Zu Run-Beginn liegt auf einigen Außenring-Feldern ein verstecktes Signal. Ein Tiefenscan kostet wenig AP und zeigt, was dahintersteckt — ein Fehlalarm, ein kleiner, mittlerer oder großer Fund. Solange ein echter Fund nicht geborgen ist, bleibt sein Feld unbebaubar; ein Fehlalarm gibt das Feld nach dem Scan frei. Gehoben wird ein Fund auf einem von zwei Wegen, die nacheinander gelten statt nebeneinander. Ohne Hangar birgt die Kolonie selbst, als Bergungsprojekt: AP werden über mehrere Sole investiert (mit Tagesdeckel und Projektlimit), erst bei Abschluss fließt das Regolith. Sobald ein Hangar steht, gibt es für Funde nur noch den Bergungsflug (§8b): Ein Schiff holt den gescannten Fund ohne Würfelwurf ab und bringt mehr Regolith heim als die Kolonie zu Fuß, kostet dafür Navigations-AP und Organika. Eine bereits begonnene Selbstbergung läuft zu Ende, ohne Erstattung und ohne Umrechnung. Große Funde trägt nur der Frachter; mit Hangar-Stufe 1 bleiben sie bewusst gesperrt, bis Stufe 2 und ein Frachter da sind. Die Fundkarte zeigt genau eine Aktion mit einer Begründungszeile. Der Vorrat ist ein fester, für alle Eröffnungen identischer Pool — er begünstigt weder Labor, Hangar noch Cantina und bleibt in dieser Fassung ohne Nachschub. Zahlen: `docs/game-reference.md#17a-fundpool-t30-pool-v1-gamefinds`.
 
 > Kernregel: **Die CC erschließt nur Gelände — sie siedelt nicht ins Unbekannte.** Erschließen ≠ Erkunden. Der CC-Ausbau erkundet keine Tiles automatisch — sonst wären die beiden Achsen für den Spieler ununterscheidbar.
 
@@ -729,7 +729,7 @@ Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes f
 | **Harvester** | **Instanz** | **2** | Mehrere Abbaurigs auf mehreren Regolith-Tiles. Bewusst knapp gedeckelt — siehe unten. |
 | **Wohnhabitat** | Instanz (+ Level 1–3 je Instanz) | 6 | Mehrere Habitate; das Level je Instanz trägt den Supply-Cap-Beitrag (§6). |
 | **Agrardom** | Level | Lv3 | Bleibt Level-Gebäude (Owner-Entscheidung F1). Er hat mit Level und `agronomy`-Kenntnis bereits zwei Wachstumshebel — eine dritte Achse (Instanz) wäre Redundanz ohne neue Entscheidung, und eine zusätzliche Instanz würde ein knappes Koloniefeld binden, das mit einzigartigen Gebäuden konkurriert. |
-| **Hangar** | **Instanz + Level** | Instanzen offen, Lv3 | Der einzige Fall, der beide Achsen braucht — siehe unten. |
+| **Hangar** | Level (Klasse und Bucht) | Lv3 | Eine einzige Halle; die Stufe ist zugleich Schiffsklasse und Buchtenzahl — siehe unten. |
 | **Analytik-Labor** | Level | Lv3+ | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Lv4/5 haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt, §13.3), keine reinen Gate-Stufen mehr. |
 | **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
 | **Leitstelle** | Level | Lv3 | Eine pro Kolonie. |
@@ -801,16 +801,16 @@ Orin (`docs/characters/corporate_rep.md`, `config('characters')` Key `corporate_
 
 **Playtest-Monitoring:** Umzugsfrequenz pro Run (mehrere, aber keine Routine), Anteil der Sole mit Ertragserschöpfung (Ziel: niedrig), Anteil der Runs mit tatsächlich gekaufter/geborgener Zweitinstanz.
 
-### Hangar: der einzige Fall mit beiden Achsen
+### Hangar: eine Halle, Stufe = Klasse und Bucht
 
-Der Techtree gatet Schiffe über **Hangar-Level** — Drohne Lv1, Frachter Lv2, Korvette Lv3, dazu `defense` ab Hangar Lv2. Zugleich ist der Hangar instanziert. Beide Achsen haben getrennte Bedeutung:
+Der Hangar ist ein einzigartiges Gebäude (genau eine Halle, keine weiteren Instanzen). Seine Stufe trägt zwei Bedeutungen zugleich:
 
-| Achse | bedeutet | Deckel |
+| Wirkung der Stufe | bedeutet | Deckel |
 |---|---|---|
-| **Instanzen** | Schiffsplätze — wie viele Schiffe die Kolonie halten kann | offen, supply-begrenzt |
-| **Level** | Schiffsklasse — Lv1 Drohne, Lv2 Frachter, Lv3 Korvette | Lv3 |
+| **Schiffsklasse** | Lv1 Drohne, Lv2 Frachter, Lv3 Korvette (dazu `defense` ab Lv2) | Lv3 |
+| **Buchten** | Stufe n öffnet n Buchten; ein Schiff steht in genau einer Bucht | Lv3 |
 
-Beides ist intuitiv: Eine Halle fasst ein Schiff, eine größere Halle ein größeres. Die primäre Wachstumsachse bleibt die Instanz (Grundsatz oben), das Level ist ein dreistufiges Freischalt-Gate.
+Dazu kommt das **Vorfeld**: Es existiert ab Stufe 1, gehört nur der Geschenk-Drohne und zählt nicht als Bucht. Ein Schiff ist aktiv, solange die Halle mindestens seine Klassenstufe und seine Buchtnummer erreicht; sinkt sie darunter, wird es inaktiv (§7). Eine Halle fasst so ein Schiff pro Stufe, eine größere Halle auch größere Schiffe — ohne zweite Gebäudeachse, die das knappe Koloniefeld belegen würde. Zahlen und Kosten: `docs/game-reference.md#7b-hangar-b1-t30-schritt-3`.
 
 ### Datenmodell: `max_level` und `max_instances`
 
@@ -868,7 +868,7 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Slots und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Buchten und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
 
 ```
 supply_cap    = min(CC-Grundbeitrag + Σ(Wohnhabitat-Stufen) × Cap-pro-Wohnhabitat-Stufe + Σ(Kenntnisse-Cap-Bonus), Hard-Cap)
@@ -901,7 +901,7 @@ Daraus folgt die Strategie-Abwägung:
 
 > **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(anwesende Kolonisten, supply_per_eater)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt; exakter Divisor: `config/game.php → food.supply_per_eater`), das **Wohnhabitat** (`supply_cap` pro Einheit, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), der **Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse** (§10), und der CC-Ausbau. Supply bleibt unverändert.
 
-> **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Slots + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
+> **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Buchten + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
 
 > **Kolonisten-Framing — vorgezogen (2026-08-02, war „Phase 4+"):** Supply wird als **Kolonisten** dargestellt — „47 Kolonisten im Einsatz / 60 verfügbar" statt „Supply 47/60". Mechanik bleibt identisch (Cap-Modell), nur die UI-Sprache wird konkreter. Implementierungsaufwand: minimal (nur Labels + Tooltips).
 >
@@ -934,7 +934,7 @@ Ein Gebäude kann nur platziert oder um eine weitere Ausbaustufe erweitert werde
 
 | Limiter | Mechanik |
 |---------|---------|
-| Hangar-Slots | Jede Hangar-Instanz belegt ein Tile; max. Schiffe = Hangar-Instanzen |
+| Hangar-Buchten | Eine Halle; max. Schiffe = Buchten (= Stufe) plus das Vorfeld für die Geschenk-Drohne |
 | Credits | Nexus-Anfragen für Schiffe kosten Credits pro Schiff (Kosten und Typ in `config/ships.php`) |
 | Lieferzeit | Schiffe werden nicht sofort geliefert — die längsten Typen brauchen mehrere Sole Lieferzeit |
 | Navigation-AP | Außenmissions-Dispatch kostet Raumfahrer-AP (`sol_distance × 2`) — mehr parallele Missionen = mehr AP-Verbrauch |
@@ -982,7 +982,7 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 | Entität | Mechanismus | Auslöser | Gegenmaßnahme |
 |---------|-------------|----------|---------------|
 | Gebäude | Passiver Decay (`decay_rate` SP/Sol) | Zeitablauf | Repair-AP investieren |
-| Schiffe | Verschleiß (`wear_per_sol` aus config/ships.php) | Aktiver Einsatz (Außenmissionen) | Reparatur (1 Construction-AP/Klick) |
+| Schiffe | Verschleiß (`wear_per_sol` aus config/ships.php) | Aktiver Einsatz (Außenmissionen) | Reparatur (nur AP, pro Klick) |
 | Berater | Burnout-Wahrscheinlichkeit (steigt mit `active_ticks`) | Kumulierte Aktivität | Erholungsphase, Rang-Aufstieg dämpft Risiko |
 | Kenntnisse | **kein Decay** — permanentes Wissen | — | — |
 
@@ -1117,9 +1117,9 @@ max_status_points=5, decay_rate=0.5
 
 > **Notreparatur (CC und Wohnhabitat):** Wenn SP dieser kritischen Strukturen unter einen Schwellwert fällt, wird automatisch eine Notreparatur ausgelöst — kostet Credits statt AP. Verhindert unbeabsichtigten Verlust, nicht aber bewusste Vernachlässigung (Credits müssen vorhanden sein).
 
-> **Hangar unter Schiffsstufe:** Die Hangar-Stufe ist die Schiffsklasse (§4c). Sinkt ein Hangar unter die Stufe des Schiffs, das ihm zugewiesen ist, wird das Schiff **inaktiv**. Das gilt für Stufenverlust durch Verfall ebenso wie für einen Rückbau (§11.5). Inaktiv heißt:
-> - Das Schiff kann keine neue Mission starten. Es wird nicht zerstört und bleibt dem Hangar zugewiesen.
-> - Eine laufende Mission läuft unverändert weiter und endet regulär, mit Rückkehr, Ergebnis und Verschleiß. Das Schiff ist danach inaktiv, solange der Hangar noch zu niedrig ist.
+> **Hangar unter Schiffsstufe:** Die Hangar-Stufe ist die Schiffsklasse (§4c). Sinkt die Halle unter die Klassenstufe oder die Buchtnummer eines Schiffs, wird das Schiff **inaktiv**. Das gilt für Stufenverlust durch Verfall ebenso wie für einen Rückbau (§11.5). Inaktiv heißt:
+> - Das Schiff kann keine neue Mission starten. Es wird nicht zerstört und bleibt in seiner Bucht.
+> - Eine laufende Mission läuft unverändert weiter und endet regulär, mit Rückkehr, Ergebnis und Verschleiß. Das Schiff ist danach inaktiv, solange die Halle noch zu niedrig ist.
 > - Erreicht der Hangar wieder die Stufe des Schiffs, ist das Schiff automatisch wieder einsatzbereit. Der Spieler muss dafür nichts tun.
 
 > **Schiffe haben keinen passiven Decay.** Schiffs-Verschleiß entsteht durch aktiven Einsatz (Außenmissionen), nicht durch Zeitablauf — siehe §7 "Schiffs-Verschleiß".
@@ -1184,7 +1184,7 @@ Jeder Schiffstyp hat eine unterschiedliche Verschleiß-Rate pro Sol im Einsatz. 
 
 **Recall als Schonungs-Entscheidung:** Da Verschleiß pro Sol unterwegs anfällt, spart ein vorzeitiger Rückruf reale SP — Missionsertrag gegen Schiffszustand abwägen. Beim Dispatch selbst fällt kein Verschleiß an (dort wirken bereits Navigation-AP und Organika als Kosten).
 
-**Dispatch-Sperre:** Schiffe unter kritischem Status-Points-Schwellenwert können nicht entsandt werden — erst reparieren. Der Dispatch-Dialog zeigt die erwartete Verschleiß-Prognose (`wear_per_sol × sol_distance × 2`, Hin- und Rückweg) als Chip und warnt, wenn die Mission das Schiff unter die Sperr-Schwelle brächte. Schwellenwert siehe `config/ships.php`.
+**Rückkehr-Garantie:** Ein Schiff startet nur, wenn es nach der Verschleiß-Prognose (`wear_per_sol × sol_distance × 2`, Hin- und Rückweg) mit Status-Points über null zurückkommt. Das gilt für alle Missionen und ersetzt die frühere feste Prozent-Sperre, bei der ein Schiff starten durfte, das unterwegs ausfiel. Zu abgenutzte Schiffe müssen erst repariert werden; der Dispatch-Dialog zeigt die Prognose als Chip und sagt, wie viel Reparatur noch fehlt. Eine einzige Funktion rechnet das für Dispatch, Zielliste, Fundkarte und Bot.
 
 **SP ≤ 0 unterwegs:** Die Mission wird automatisch abgebrochen (`state = aborted`), das Schiff kehrt flugunfähig zurück (`docked`, 0 SP), ein etwaiger Missionsertrag entfällt. Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report. Schiffe werden **nie zerstört** — ein Totalverlust, der nur über Nexus-Ersatzkauf heilbar wäre, wäre ein Fail-Spiral-Risiko.
 
@@ -1193,11 +1193,9 @@ Jeder Schiffstyp hat eine unterschiedliche Verschleiß-Rate pro Sol im Einsatz. 
 
 > ⚠️ BALANCE CONCERN: `wear_per_sol`-Richtwerte sind ungetestet. Zielgröße: eine 3-Sol-Mission kostet 2–3 Construction-AP Reparatur (Drohne). Fühlt sich Verschleiß im Playtest wie Rauschen an → Werte ×1,5; frisst er den Construction-Pool → Drohne auf 1,0 senken.
 
-**Reparatur:** Fixkosten pro Klick — Construction-AP gegen Statuswiederherstellung, gedeckelt auf `max_status_points`. Gleiche Interaktion wie Gebäude-Reparatur, damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Exakte Kosten: siehe `config/ships.php`.
+**Reparatur:** Fixkosten pro Klick — AP gegen Statuswiederherstellung, gedeckelt auf die maximalen Status-Points. Die Reparatur kostet nur AP, weder Regolith noch Credits, und gilt je Schiff, auch auf dem Vorfeld. Gleiche Interaktion wie Gebäude-Reparatur, damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Werte: `config/game.php → ship_repair`, Tabelle in `docs/game-reference.md`. Eine passive Reparatur im Dock gibt es bewusst nicht; sie käme erst, wenn die Messung zeigt, dass Schiffe sonst dauerhaft warten.
 
-> **Offen:** Zusätzliche Credit-Kosten pro Reparatur (`config/ships.php → repair_cost_per_point`) sind im Design vorgesehen, aber noch nicht implementiert — eigener Balance-Task.
-
-> **Designabsicht:** Schiffe, die viel fliegen, brauchen Wartung. Das erzeugt eine natürliche Kosten-Nutzen-Entscheidung: Intensive Missionsnutzung ist teuer in Construction-AP, die sonst in Gebäude fließen könnten.
+> **Designabsicht:** Schiffe, die viel fliegen, brauchen Wartung. Das erzeugt eine natürliche Kosten-Nutzen-Entscheidung: Intensive Missionsnutzung ist teuer in AP, die sonst in Gebäude fließen könnten.
 
 ---
 
@@ -1256,6 +1254,7 @@ Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftka
 | **Nexus-Anfrage (Standard)** | Credits + Lieferzeit (N Sole) | Schiff landet nach N Solen auf `docked` |
 | **Nexus-Kredit** | 0 Cr jetzt + Nexus-Schulden ↑ | Schiff sofort verfügbar; Schulden-Risiko (§15) |
 | **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis; der Nachlass je AP wächst mit dem Konsul-Rang (A13) |
+| **Geschenk-Drohne** | kostenlos, einmalig | Beim ersten Hangar-Bau steht eine Drohne auf dem Vorfeld, ohne Credits und ohne Schuld (nur einmal pro Lauf) |
 | **Event / Händler** | situativ (Wrackbergung, Sonderdeal) | Schiff direkt `docked` oder `pending` |
 
 > **Hinweis Namenskollision:** Die "Konsul-Verhandlung" hier ist **risikofrei** — mehr AP kauft einen garantiert niedrigeren Preis, kein Fehlschlag möglich. Nicht zu verwechseln mit der **"Cantina-Verhandlung (Risiko-Handel)"** in §12 Kanal 1 — dort kann die Verhandlung scheitern und das Angebot geht komplett verloren. Zwei unterschiedliche Mechaniken, bewusst unterschiedlich benannt.
@@ -1268,14 +1267,14 @@ Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftka
 
 ### Schiffs-Besitz-Modell
 
-Hangare sind **operationale Slots** — nur ein Schiff pro Hangar-Instanz kann entsendet werden. Darüber hinaus können Schiffe **ohne Hangar-Zuweisung** existieren (`hangar_instance_id = NULL`, `ship_state = 'pending'`):
+Die Halle bietet **Buchten**: Stufe n öffnet n Buchten, in jeder steht höchstens ein Schiff, und nur Schiffe in einer Bucht können entsandt werden. Das **Vorfeld** ist eine zusätzliche Fläche, die nur die Geschenk-Drohne nutzt. Darüber hinaus können Schiffe **ohne Bucht** existieren (`bay = NULL`, `ship_state = 'pending'`):
 
-- Entsteht durch Wrackbergung, Händler-Kauf oder Nexus-Lieferung wenn kein freier Hangar-Slot vorhanden
-- Sichtbar im Hangar-Screen als separater Bereich "Nicht zugewiesen" mit Decay-Countdown
-- Verfällt automatisch nach N Solen (TickService) wenn nicht einem Hangar zugewiesen
+- Entsteht durch Wrackbergung, Händler-Kauf oder Nexus-Lieferung, wenn keine freie Bucht da ist
+- Sichtbar im Hangar-Screen als separater Bereich „Nicht zugewiesen“ mit Decay-Countdown
+- Verfällt automatisch nach N Solen (TickService), wenn nicht einer Bucht zugewiesen
 - **Decay-Zeit:** nach Playtest kalibrieren
 
-Mehrere Schiffe desselben Typs sind erlaubt. Die natürliche Begrenzung ergibt sich aus drei Faktoren: Koloniebauplatz, Supply-Kosten des Hangars und Credits für Nexus-Anfragen. Kein Hard-Cap nötig.
+Mehrere Schiffe desselben Typs sind erlaubt. Die natürliche Begrenzung ergibt sich aus der Zahl der Buchten (Hallenstufe) und den Credits für Nexus-Anfragen. Kein weiterer Hard-Cap nötig.
 
 ### Karten-States (Carousel)
 
@@ -1322,8 +1321,7 @@ Scheitert eine Mission, entfällt die Belohnung vollständig — das Schiff kehr
 |---|---|---|---|
 | `mission_courier_run` | Botenflug | Drohne | sofort |
 | `mission_recon_flight` | Erkundungsflug | Drohne | sofort |
-| `mission_deep_survey` | Signalvermessung | Drohne | bekanntes Signal-Tile |
-| `mission_prospecting_flight` | Prospektionsflug | Drohne | Geologie Lv1 |
+| `mission_find_salvage` | Bergungsflug | Drohne o. Frachter | gescannter Fund; Träger je Fundgröße (große Funde nur Frachter) |
 | `mission_data_sweep` | Datensammelflug | Drohne | Kartografie Lv1 |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | Frachter vorhanden |
 | `mission_trade_convoy` | Handelsfahrt | Frachter | Handel Lv1 |
@@ -1339,7 +1337,7 @@ Exakte Kosten (Navigation-AP, Organika-Proviant, Zusatzmaterialien), Distanzen, 
 
 **Schiffsrollen:** Drohne = Information (Tiles, Scans, Daten), Frachter = Güter, Korvette = Schutzdienste und Bergung. Nicht jede Mission steht jedem Schiff offen — das gibt der Akquise-Entscheidung (§8b Akquise-Pfade) strategisches Gewicht.
 
-**Gate-Schema — nur zwei Typen:** Eine Mission ist entweder an **eine Kenntnis mit Mindestlevel** gebunden oder an ein **Ziel-Tile** (Signal-/Ruinen-Tile — die Mission braucht physisch ein Ziel). Keine CC-Level- und keine Gebäude-Gates: Gebäude-Gates wären redundant (jede Kenntnis setzt das Analytik-Labor ohnehin voraus), CC-Gates wären eine dritte, schwer kommunizierbare Bedingungsart. 4 ungegatete Missionen + 2 Ziel-Missionen sind **immer** verfügbar — jedes Schiff hat ab dem ersten Sol sinnvolle Einsätze.
+**Gate-Schema — nur zwei Typen:** Eine Mission ist entweder an **eine Kenntnis mit Mindestlevel** gebunden oder an ein **Ziel-Tile** (Fund-/Ruinen-Tile — die Mission braucht physisch ein Ziel). Keine CC-Level- und keine Gebäude-Gates: Gebäude-Gates wären redundant (jede Kenntnis setzt das Analytik-Labor ohnehin voraus), CC-Gates wären eine dritte, schwer kommunizierbare Bedingungsart. 4 ungegatete Missionen + 2 Ziel-Missionen sind **immer** verfügbar — jedes Schiff hat ab dem ersten Sol sinnvolle Einsätze.
 
 **Pfadwahl-Interaktion (Hangar-first):** Wer den Hangar-Pfad vor dem Analytik-Labor wählt, hat noch keine Kenntnisforschung — die kenntnis-gebundenen Missionen erscheinen ausgegraut mit Bedingung. Das ist Absicht (geprüft 2026-07-04): Hangar-first heißt realistisch Drohne zuerst, und die Drohne ist mit 3 sofort verfügbaren Missionen am besten versorgt; der Frachter hat mit der Versorgungsfahrt eine wiederholbare, Organika-positive Kernmission. Die ausgegrauten Missionen sind die sichtbare Zugkraft, das Labor als zweites Pfadgebäude nachzuziehen — Pfade sind Sequenzierung, kein Ausschluss. ⚠️ Playtest-Beobachtungspunkt: Fühlt sich eine früh gekaufte Korvette vor dem Labor-Bau unterbeschäftigt an, ist der Hebel eine zweite ungegatete Korvetten-Mission (z.B. Umkreis-Patrouille auf „sofort" senken), nicht die Streichung der Gates.
 
@@ -1353,13 +1351,13 @@ Organika-Kosten der Mission = Basis − (Level über Gate − 1), Minimum 1 pro 
 
 Navigation-AP skalieren nie (die AP-Staffel ist das Raumfahrer-Progressionsgate, §13). Missionen ohne Kenntnis-Gate skalieren nicht. Begründung: Kostensenkung statt Belohnungserhöhung funktioniert für alle Belohnungstypen einheitlich (auch Tiles, Scans, Almanach — nicht bezifferbar), lässt Balance-Deckel unberührt, und erhält den Organika-Sink. Exakte Skalierungswerte und Basis-Kosten: `config/missions.php`.
 
-**Wiederholbarkeit:** Missionen sind wiederholbar; Ausnahmen: Signalvermessung verbraucht das Signal-Tile, Ruinen-Expedition ist einmalig pro enthülltem Ruinen-Tile. Die natürliche Drossel für alles andere ist die Kostentrias Nav-AP + Organika + Verschleiß (Reparatur: Construction-AP + Regolith, §7).
+**Wiederholbarkeit:** Missionen sind wiederholbar; Ausnahmen: Ruinen-Expedition ist einmalig pro enthülltem Ruinen-Tile. Die natürliche Drossel für alles andere ist die Kostentrias Nav-AP + Organika + Verschleiß (Reparatur: nur AP, §7).
 
 #### Resolution
 
 - **Rückkehr:** `return_tick = dispatch_tick + 2 × sol_distance`. Die Auflösung läuft im Tick im selben Schritt wie der Schiffs-Verschleiß (§7), **nach** dessen Anwendung — der SP-0-Abbruch (`state = aborted`, kein Ertrag) hat Vorrang. Bei Rückkehr: `state = completed`, Schiff `docked`, Belohnung wird gutgeschrieben, Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report.
 - **Recall:** Keine anteilige Belohnung, keine Rückerstattung — auch nicht bei sofortigem Abbruch im selben Sol wie der Dispatch (Nav-AP und Organika werden beim Dispatch instant fällig, unabhängig von der tatsächlich zurückgelegten Zeit). Keine Mindestwartezeit vor dem Recall — der Spieler kann jederzeit zurückrufen, verliert dabei aber immer die vollen Dispatch-Kosten. Der Wert des Rückrufs ist gesparter Verschleiß (§7 „Schonungs-Entscheidung") — anteilige Erträge würden systematisches Halbstrecken-Abbrechen zum Optimalpfad machen.
-- **Kein Ausgangs-Roll:** Anders als Berater-Außenmissionen (§13) gibt es kein Erfolg/Teilerfolg/Misserfolg-Würfeln — Schiffe haben kein Rang-Analogon, und die Risiko-Achse existiert bereits über Verschleiß + Abbruch. Zufall beschränkt sich auf die Belohnungshöhe der Fund-Missionen (Prospektion, Bergung, Fernexpedition), deterministisch aus dem Run-`rng_seed` (ADR 0003).
+- **Kein Ausgangs-Roll:** Anders als Berater-Außenmissionen (§13) gibt es kein Erfolg/Teilerfolg/Misserfolg-Würfeln — Schiffe haben kein Rang-Analogon, und die Risiko-Achse existiert bereits über Verschleiß + Abbruch. Zufall beschränkt sich auf die Belohnungshöhe der Fernexpedition, deterministisch aus dem Run-`rng_seed` (ADR 0003). Der Bergungsflug hat weder Wurf noch Streuung: Die Rückkehr-Garantie (§7) und die Tragkraft des Schiffs entscheiden vorab, ob er sich lohnt. Die Versorgungsfahrt liefert nur Organika, kein Regolith mehr.
 
 > **Geprüft und verworfen (2026-07-04):** Ein zustandsbasierter Missionsausgang (Rückkehr-SP bestimmt Ertragsstufe, analog §9). Da Verschleiß deterministisch ist, wäre der Ausgang beim Dispatch bereits bekannt — kein Risiko, sondern eine Doppelbestrafung langer Missionen (die Fernexpedition kehrt selbst mit vollen Start-SP bei 25% zurück und würde immer „fehlschlagen") plus Vollreparatur-Zwang vor jedem Start. Ein reiner Würfel-Fail wiederum verletzt „Opportunitätskosten statt Strafe" (§1.1): Schiffs-Missionen kosten harte Ressourcen im Voraus — ein Fehlschlag vernichtet Bezahltes. Fehlt im Playtest Spannung, ist der Hebel die Spanne der Fund-Missionen (Loot-Tabellen verbreitern), nicht ein Fehlschlag-Layer.
 
@@ -1383,7 +1381,7 @@ Jede Mission wird in `colony_hangar_missions` gespeichert (`destination` trägt 
 | Entsenden | `docked` | Mission aus Katalog wählen (gefiltert nach Schiffstyp; Chips: Nav-AP, Organika, Dauer, Verschleiß-Prognose, Belohnung; nicht erfüllte Gates ausgegraut mit Bedingungshinweis) |
 | Zurückrufen | `dispatched` | Schiff zurückrufen |
 | Reparieren | `docked`, SP < max | Repair-Order (Construction-AP) |
-| Hangar zuweisen | `pending` | Schiff einem freien Hangar-Slot zuordnen |
+| Bucht zuweisen | `pending` | Schiff einer freien Bucht zuordnen |
 
 ### Technischer Stack
 
@@ -1875,7 +1873,7 @@ Der Harvester hat **kein Level-Up** (`max_level = 1`). Er liefert je Standort ei
 |---|---|---|
 | **Sockel (alle Pfade)** | Harvester, 1 Instanz (§4c) | keine (passiv), Umzüge kosten AP |
 | **A — Analytik** | Kenntnis `geology` erhöht die Harvester-Ausbeute je Level (`game.geology_harvester_bonus_per_level`, kumulativ) | einmalig hoch (AP bis zum Ziellevel), danach null laufende Kosten |
-| **B — Hangar** | Frachter auf `mission_supply_run` (Regolith je Umlauf, `config/missions.php`) | laufend: Navigation-AP, Organika-Proviant, Verschleiß |
+| **B — Hangar** | Bergungsflüge zu den gescannten Funden des Fundpools (§4a, §8b); die Versorgungsfahrt liefert nur Organika | laufend: Navigation-AP, Organika-Proviant, Verschleiß, Reparatur-AP |
 | **C — Cantina** | kein dedizierter Hebel — Pfad C liefert Credits (§4b „Pfad-C-Hebel"); opportunistischer Credits→Regolith-Kauf via Corvan möglich | — |
 
 Die Profile sind bewusst gegensätzlich: **Analytik** verbessert den Sockel selbst — teuer im Aufbau, danach dauerhaft geschenkt, keine Logistik. **Hangar** legt einen zweiten Strom daneben — billig im Einstieg, aber jeden Sol Aufwand. **Cantina** kauft zu und wandelt Überschuss in Credits — maximal flexibel, an Credits und Angebotslage gebunden. Ob A und B die Regolith-Lücke der Zielkolonie tatsächlich schließen, rechnet §13.7 nach.
@@ -2126,7 +2124,7 @@ Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe. Persona
 
 Supply wird durch Kommandozentrale und Wohnkomplex generiert (Cap-Modell). Berater verbrauchen kein Supply.
 
-**Schiffsanzahl:** Die maximale Schiffsanzahl pro Spieler ist durch Hangar-Slots begrenzt (jede Hangar-Instanz belegt ein Tile, siehe §6). Kein Kommandanten-Pflichtmodell: Schiffe benötigen keinen zugewiesenen Raumfahrer.
+**Schiffsanzahl:** Die maximale Schiffsanzahl pro Spieler ist durch die Hangar-Buchten begrenzt (Stufe = Buchten plus Vorfeld, siehe §6). Kein Kommandanten-Pflichtmodell: Schiffe benötigen keinen zugewiesenen Raumfahrer.
 
 ---
 
@@ -2257,7 +2255,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | Errichtung (Lv0→1) | 70 Agrardom (Ramp-Gate-Ausnahme) / 95 alle drei Pfadgebäude | G4 (5–8 Sole) |
 | Level-Up | flach 25, jedes Level, jedes Nicht-CC-Gebäude (auch der Sprung 0→1 nach der Errichtung) | G4 (1–2 Sole) |
 | CC-Ausbau | Ziel-Level × 30 | zentraler Progressionshebel |
-| Weitere Instanzen (Wohnhabitat, Hangar, Agrardom) | voller `build_cost`, linear | §4c: Instanzen sind eine Designachse, keine Level |
+| Weitere Instanzen (Wohnhabitat, Agrardom) | voller `build_cost`, linear | §4c: Instanzen sind eine Designachse, keine Level |
 | Harvester-Zweitinstanz | kein Regolith — Weg A Credits, Weg B AP (§4c) | Bootstrap-Sonderrolle |
 | Startbestand | `game.onboarding.start_regolith` (Herleitung „Phase-1-Pacing" unten) | Phase-1-Ziel Sol 15–20 |
 | `mission_supply_run.sol_distance` | 1 | Hebel-Zielgröße, kurzer Entscheidungstakt |
@@ -2326,7 +2324,7 @@ Merkregel, aus der Gegenrichtung: **ein reifer Pfad-Hebel ist etwa 60 % eines Ha
 | Pfad | Hebel | reifer Wert |
 |---|---|---|
 | A — Analytik | `geology`, kumuliert max 12 | 12 Rg/Sol |
-| B — Hangar | `mission_supply_run`, ~6,25 Rg/Sol je Frachter | 6,25 Rg/Sol (1 Schiff), skaliert mit der Flotte |
+| B — Hangar | Bergungsflüge zum Fundpool (T30 Schritt 3; früher `mission_supply_run` mit Dauerertrag — Regolith dort gestrichen) | einmaliger Pool, kein Dauerertrag (siehe `docs/game-reference.md`) |
 | C — Cantina | kein dedizierter Hebel (§4b), opportunistischer Kauf via Corvan | 0 (nicht planbar/strukturell) |
 
 ```
@@ -2685,7 +2683,7 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 | Forschungsvorsprung (`task_research_lead`) | Forschung/Aufbau | Mindestens einige Kenntnisse auf Höchstlevel gebracht |
 | Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen über einer Schwelle für mehrere aufeinanderfolgende Sole |
 | Selbstversorgung (`task_self_sufficiency`) | Überleben | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen. Beide Bedingungen müssen gleichzeitig für mehrere aufeinanderfolgende Sole gelten, jeder einzelne Ausfall setzt die Serie zurück |
-| Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
+| Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b, Bergungsflüge eingeschlossen) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
 | Ingenieursleistung (`task_engineering_output`) | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
 | Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole: anhaltender Wohlstand statt eines einmaligen Peaks |
 | Expertenstab (`task_senior_advisors`) | Personal | Eine volle Berater-Mannschaft, deren Mitglieder alle den höchsten Rang erreicht haben |

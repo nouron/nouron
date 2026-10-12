@@ -34,6 +34,7 @@
             apAvailable: {{ (int) $colonyAp }},
             regolith: {{ (int) $regolith }},
             werkstoffe: {{ (int) $werkstoffe }},
+            organika: {{ (int) $organika }},
             freeSupply: {{ (int) $freeSupply }},
             trust: {{ $trust }},
             currentSol: {{ $currentSol }},
@@ -55,6 +56,7 @@
                 explore: '{{ route("colony.tile.explore") }}',
                 deepScan: '{{ route("colony.tile.deep-scan") }}',
                 salvage: '{{ route("colony.tile.salvage") }}',
+                hangarDispatch: '{{ route("colony.hangar.dispatch", ["bay" => "__BAY__"]) }}',
                 buildingsAvailable: '{{ route("colony.buildings.available") }}',
                 placeBuilding: '{{ route("colony.building.place") }}',
                 investBuilding: '{{ route("colony.building.invest") }}',
@@ -83,6 +85,8 @@
                 harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
                 regolithFallbackTileHint: @json(__("colony.regolith_fallback_tile_hint")),
                 findSalvaged: @json(__("colony.find_salvaged")),
+                findGateNavAp: @json(__("missions.gate_nav_ap_hint")),
+                findGateOrganika: @json(__("missions.gate_organika_hint")),
                 findHeader: @json(__("colony.find_header")),
                 findSmall: @json(__("colony.find_small")),
                 findMedium: @json(__("colony.find_medium")),
@@ -458,6 +462,7 @@
                                                 x-show="b.build_cost && b.build_cost[4]"
                                                 x-text="`${b.build_cost?.[4]} Wk`"></span>
                                         </div>
+                                        <p class="building-list-notice" x-show="b.notice" x-text="b.notice"></p>
                                     </li>
                                 </template>
                             </ul>

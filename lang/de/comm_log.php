@@ -44,6 +44,7 @@ return [
             'mission_completed' => 'Mission abgeschlossen',
             'mission_aborted' => 'Mission abgebrochen',
             'mission_failed' => 'Mission fehlgeschlagen',
+            'gift_drone' => 'Geschenk-Drohne gelandet',
         ],
         'encounter_won' => 'Begegnung gewonnen',
         'encounter_lost' => 'Begegnung verloren',
