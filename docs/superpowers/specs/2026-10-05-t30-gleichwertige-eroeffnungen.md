@@ -1233,6 +1233,8 @@ Grundlage: Start-Pool laut Config (2 Fehlalarme, 3 klein, 1 mittel, 1 groß = 40
 
 ### 13.7 Plan-Tasks
 
+**Status (2026-10-12): umgesetzt** nach `docs/superpowers/plans/2026-10-11-t30-schritt3-hangar-b1-bergungsflug.md` (Branch `feat/t30-schritt3-hangar-b1`); Messung (§13.8) offen. Abweichungen im Plan gegenüber der Spec: (1) `findAction` trennt die Gründe feiner (`ship_busy`, `ship_worn`, `ship_inactive`, `no_ship`); K16 fasst sie zusammen: `ship_worn`/`no_ship` → `no_ship_ready`, `ship_inactive` und `needs_level` → `needs_level`, `needs_freighter` → `needs_freighter`. (2) Die Geschenk-Drohne (Task 3) und die Szenarien kamen aus Spec-Task 7 nach vorn. (3) Reparatur-Werte liegen in `game.ship_repair`, der Schlüssel `missions.dispatch_min_sp_pct` entfiel (Rückkehr-Garantie). (4) Ein Bergungsflug mit verschwundenem Fund oder zu geringer Tragkraft zahlt nichts aus und zählt nicht als Erfolg (`find_missing`).
+
 | # | Task | Dateien (Hauptstellen) | TDD-Ansatz (rot zuerst) | Aufwand |
 |---|---|---|---|---|
 | 1 | Datenmodell B1: Baseline (`bay`, Unique), Seeder `is_instanced` 0, `HangarService`-Buchtlogik, Controller, Routen, `GameTick`-Join, `testdata.sql`, Test-Umbenennung | §13.2 | Halle nicht zweimal platzierbar; Stufe 1/2/3 → 1/2/3 Buchten; Bestellung landet in der ersten freien Bucht ≤ Stufe; Bucht 2 bei Stufe 1 abgelehnt; Schiff in Bucht 3 bei Stufe 2 inaktiv, nach Ausbau aktiv; `assign` auf Bucht 0 abgelehnt; Mission läuft über `bay` und wird aufgelöst | M–G |
@@ -1263,7 +1265,7 @@ Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Task 4 braucht Task 3 
 | K11 Sol 10 / 25 | Hangar höher als Labor/Cantina | Hangar Sol 25 < Cantina Sol 25 |
 | K12 Anteil Pool-Rg über Schiff (Sol 25) | Hangar-First ≥ 85 % (Rest = Bestandsschutz); Labor/Cantina Information | Hangar-First < 70 % (Hinweis auf Bot-Falle oder Sperre) |
 | K15 Pfad-Rg-Äquivalent | wie §11.9, Spar-AP nur, soweit genutzt | – |
-| **K16 (neu) Wartesole** | Σ Sole mit gescanntem, echtem, ungeborgenem Fund bei Hangar ≥ 1, getrennt nach Grund: `needs_level`, `needs_freighter`, `ship_busy`, `no_ship_ready` | `no_ship_ready` (umfasst `ship_worn` und `no_ship`) > 3 Sole in einem Lauf: Bot-Bug, nicht Balance. Bleibt er trotz `repair_ship_for_flight` hoch, ist das der Auslöser für den Folgeschritt „passive Dock-Reparatur“ (§13.x/10). Großer Fund bis Sol 40 ungeborgen in > 4 von 8 Hangar-First-Läufen |
+| **K16 (neu) Wartesole** | Σ Sole mit gescanntem, echtem, ungeborgenem Fund bei Hangar ≥ 1, getrennt nach Grund: `needs_level` (inkl. inaktives Trägerschiff), `needs_freighter`, `ship_busy`, `no_ship_ready` | `no_ship_ready` (umfasst `ship_worn` und `no_ship`) > 3 Sole in einem Lauf: Bot-Bug, nicht Balance. Bleibt er trotz `repair_ship_for_flight` hoch, ist das der Auslöser für den Folgeschritt „passive Dock-Reparatur“ (§13.x/10). Großer Fund bis Sol 40 ungeborgen in > 4 von 8 Hangar-First-Läufen |
 | Reparatur-AP je Lauf (neu, Information) | Σ AP der Bot-Regel `repair_ship_for_flight`, Sol 4–12 und Sol 1–24, neben K4 lesen (verbrauchte statt ungenutzte AP) | – |
 | **K17 (neu) Zonen-Blockade** | Sole, in denen ein gesperrter Fund (`needs_level`/`needs_freighter`) eine Zonen-Kachel belegt | > 0 in > 2 von 8 Läufen → Owner-Frage Mindestregel (§13.10) entscheiden |
 | K7 Siegquote | ca. 50 %, je Eröffnung ≤ 10 Punkte Abstand | > 65 % oder Rückgang > 10 Punkte gegenüber Pool v1 (Versorgungsfahrt-Wegfall); Läufe mit K17 > 0 gesondert ausweisen |

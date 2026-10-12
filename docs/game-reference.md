@@ -1,4 +1,4 @@
-# Nouron — Spielreferenz: Zahlen-Lookup (Stand 2026-09-06)
+# Nouron — Spielreferenz: Zahlen-Lookup (Stand 2026-09-06; Hangar/Funde/Bergungsflug 2026-10-12)
 
 Vollständige Referenztabellen für Coding-Aufgaben. Wird von ADR 0004 und CLAUDE.md referenziert.
 Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generierung. Bei Änderungen in `config/*.php` aktualisieren.
@@ -29,7 +29,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Analytik-Labor** | Lv2 | 95 Rg | 6 | 5 | 1 |
 | **Krankenstation** | Lv2 | 60 Rg / 25 Wk | 10 | 3 | 1 |
 | **Cantina** | Lv2 | 95 Rg | 6 | 3 | 1 |
-| **Hangar** | Lv2 | 95 Rg | 6 | 3 | ∞ |
+| **Hangar** | Lv2 | 95 Rg | 6 | 3 | 1 (eine Halle, T30 Schritt 3; Stufe 1–3 flat je 25 Rg) |
 | **Religiöse Stätte** | Lv4 | 50 Rg / 15 Wk | 4 | 1 | 1 |
 | **Kolonialdenkmal** | Lv5 | 60 Rg / 25 Wk | 2 | 1 | 1 |
 | **Leitstelle** | Lv3 | 80 Rg / 25 Wk | 8 | 3 | 1 |
@@ -48,7 +48,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Levelup-Kosten (alle außer CC)** | 25 Rg (flat, `game.build.levelup_regolith_flat`) |
 | **Platzieren (Neubau)** | Errichtungskosten + 25 Rg für Stufe 1, in einer Zahlung beim Platzieren (T9, 2026-09-25); Ausbau 0→1 danach nur AP |
 | **CC-Levelup-Kosten** | Ziel-Level × 30 Rg |
-| **Reparatur pro Punkt (SP)** | 1 Rg / Klick |
+| **Reparatur pro Punkt (SP)** | 1 Rg / Klick (Gebäude; Schiffe: nur AP, siehe 7b) |
 | **Regolith-Startbestand** | 300 Rg (`game.onboarding.start_regolith`, T9-Kalibrierung 2026-10-02: Phase-1-Ende Median Sol ~17–18, vorher 370 → Sol ~12–13) |
 | **CC-Lv2 Regolith Total** | 60 Rg |
 
@@ -119,16 +119,63 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 ## 7. Schiffe
 
-| Schiff | Supply-Kosten | Max SP | Decay-Rate | Hangar-Gate | Stärkewert |
-|---|---|---|---|---|---|
-| **Drohne** | 0 | ? | ? | Ja (Hangar Lv1) | 0 |
-| **Frachter** | 0 | ? | ? | Ja (Hangar Lv2) | 0 |
-| **Korvette** | 0 | ? | ? | Ja (Hangar Lv3) | 3 |
+| Schiff | Supply-Kosten | Max SP | Verschleiß (`wear_per_sol`) | Hangar-Gate | Trägt Funde (`find_carry`) | Stärkewert |
+|---|---|---|---|---|---|---|
+| **Drohne** | 0 | 20 | 1,5 SP/Sol | Ja (Hangar Lv1) | klein, mittel | 0 |
+| **Frachter** | 0 | 20 | 1,0 SP/Sol | Ja (Hangar Lv2) | klein, mittel, groß | 0 |
+| **Korvette** | 0 | 20 | 0,75 SP/Sol | Ja (Hangar Lv3) | keine | 3 |
 
 > **Supply-Kosten**: alle Schiffe 0 — Schiffe verbrauchen kein Supply (Design-Entscheidung 2026-06-08, der Schlüssel `supply_cost` existiert für Schiffe nicht mehr)
 
-> **Hangar-Level = Schiffsklasse**: Lv1 = Drohne, Lv2 = Frachter, Lv3 = Korvette
-> Instanzen sind separate Achse (supply-limitiert, unbegrenzt Slots theoretisch)
+> **Hangar-Level = Schiffsklasse und Buchten**: Lv1 = Drohne, Lv2 = Frachter, Lv3 = Korvette; Stufe n öffnet n Buchten (Details 7b). Max SP = `game.ship_repair.max_status_points`.
+
+---
+
+## 7b. Hangar B1 (T30 Schritt 3)
+
+**Eine Halle** (`is_instanced` 0, nicht zweimal platzierbar). Stufe n = Schiffsklasse n **und** n Ladebuchten (Ladebucht 1–3). Das **Vorfeld** (Bucht 0) existiert ab Stufe 1, gehört nur der Geschenk-Drohne und zählt nicht als Bucht. Ein Schiff ist inaktiv, wenn Hallenstufe < max(Klassenstufe, Bucht). Stufenkosten unverändert flat 25 Rg. `colony_ships.bay` (NULL = `pending`), `unique(colony_id, bay)`.
+
+**Geschenk-Drohne:** Beim ersten Erreichen von Hangar Stufe 1 steht eine Drohne auf dem Vorfeld, ohne Credits und Schuld; einmal pro Lauf (`HangarService::ensureGiftDrone`, CommLog-Eintrag).
+
+| Schiffs-Reparatur (`game.ship_repair`) | Wert |
+|---|---|
+| Deckel (`max_status_points`) | 20 SP |
+| Pro Klick (`sp_per_click` / `ap_per_click`) | +2 SP für 1 AP |
+| Kosten | nur AP (kein Rg, keine Credits), je Schiff über `bay` inkl. Vorfeld, keine passive Dock-Reparatur |
+
+**Rückkehr-Garantie** (`HangarBays::flightReadiness`, ersetzt `dispatch_min_sp_pct` = 25 %): Start nur, wenn `SP − wear_per_sol × 2 × sol_distance > 0`. Fehlercode `ship_too_worn`. Beispiel Drohne Ring 3 (Distanz 2): Verschleiß 6 SP, Start ab 7 SP, Rückkehr mit 1 SP. Gilt für alle Missionen.
+
+**Bergungsflug** (`mission_find_salvage`, `FindFlightService`): nur zu gescannten echten Funden, Schiff Drohne oder Frachter, kein Erfolgswurf (`roll` false), Schwierigkeit `normal` (zählt für `task_expedition_coverage`, nicht gegen `finds.max_open_projects`).
+
+| Ring | Sol-Distanz (`sol_distance_by_ring`) | Nav-AP (2 je Sol) | Organika (3 je Sol) | Dauer (hin und zurück) |
+|---|---|---|---|---|
+| 2 | 1 | 2 | 3 | 2 Sol |
+| 3 | 2 | 4 | 6 | 4 Sol |
+
+Nav-AP wird durch Kartografie gesenkt (`ProjectBonusService`). Ertrag `round(rg × finds.flight.yield_factor)` mit Faktor 1,5, additive Zeilen `base` + `flight_bonus`: klein 4 → 6 Rg, mittel 10 → 15 Rg, groß 18 → 27 Rg. Tragkraft aus `ships.*.find_carry` (Tabelle oben). Kein Ertrag, wenn der Fund beim Eintreffen fehlt (`find_missing`) oder das Schiff den Fund nicht tragen kann; bei SP ≤ 0 unterwegs, Abbruch oder Rückruf bleibt der Fund bestehen und wieder Flugziel.
+
+**Katalog-Änderungen:** `mission_find_salvage` neu. `mission_prospecting_flight` und `mission_deep_survey` (Signalvermessung) gestrichen, Zieltyp `signal_tile` und Belohnung `deep_scan` entfallen. `mission_supply_run` zahlt nur noch Organika (kein Regolith).
+
+**`findAction` (`ColonyTileService`)** ist die einzige Quelle, welche Aktion für eine Fundkachel gilt (Fundkarte zeigt genau eine Aktion plus Begründung):
+
+| Zustand | Aktion | Grund (`find_reason_*`) |
+|---|---|---|
+| nicht gescannt | scannen | `unscanned` |
+| Fehlalarm | keine | `false` |
+| Flug unterwegs | keine | `in_flight` |
+| kein Hangar (Stufe 0) | Selbstbergung | `self` |
+| Selbstbergung begonnen (`salvage_ap_spent` > 0) | Selbstbergung fortsetzen | `grandfathered` (Hangar steht) bzw. `self` |
+| Hangar, tragendes Schiff bereit | Flug | `flight` |
+| Schiff unterwegs/in Lieferung | warten | `ship_busy` |
+| Schiff gedockt, aber Rückkehr-Garantie verfehlt | warten (Reparatur-AP) | `ship_worn` |
+| kein tragendes Schiff, nicht groß | warten | `no_ship` |
+| tragendes Schiff nur in geschlossener Bucht | gesperrt | `ship_inactive` |
+| Hallenstufe < `finds.flight.min_hangar_level` (klein 1, mittel 1, groß 2) | gesperrt | `needs_level` |
+| großer Fund, Halle ≥ 2, kein Frachter | gesperrt | `needs_freighter` |
+
+**Strenge Variante:** Mit Hangar Stufe ≥ 1 gibt es für Funde nur noch den Flug (die Bedingung wird aus der aktuellen Hallenstufe abgeleitet, nie gespeichert). Große Funde sind mit Stufe 1 gesperrt, bis Stufe 2 und ein Frachter da sind; auf einer Zonen-Kachel kostet das Bauplatz (K17).
+
+**Kennzahlen** (`OpeningComparison`, informativ): K12 = Anteil Pool-Rg über Schiff (`regolith_sources.find_flight` / Pool gesamt); K16 = Wartesole je Grund (`needs_level` inkl. `ship_inactive`, `needs_freighter`, `ship_busy`, `no_ship_ready` = `ship_worn` + `no_ship`; `no_ship_ready` > 3 Sole = Bot-Bug); K17 = Sole, in denen ein gesperrter Fund (`needs_level`/`needs_freighter`) eine Zonen-Kachel belegt. Dazu Reparatur-AP Sol 4–12 und bis Sol 25 (Information neben K4).
 
 ---
 
@@ -172,10 +219,15 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 | `mission_data_sweep` (Cart Lv1+) | 3 | 9 Or | 8 Research AP |
 | `mission_long_range_expedition` (Cart Lv3+) | 5 | 15 Or | 700–1100 Cr / 8–12 Wk / 30–45 Rg (1 pick) |
 
+### Drohne / Frachter
+| Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
+|---|---|---|---|
+| `mission_find_salvage` (gescannter Fund) | 1 (Ring 2) / 2 (Ring 3) | 3 / 6 Or (+ 2 / 4 Nav-AP) | Fund-Rg × 1,5 (klein 6, mittel 15, groß 27; Frachter für groß), kein Wurf |
+
 ### Frachter
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_supply_run` | 1 | 3 Or | 10 Or |
+| `mission_supply_run` | 1 | 3 Or | 10 Or (nur Organika, T30: kein Regolith mehr) |
 | `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 520 Cr + Trade Success (+2 Trust) |
 | `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 180 Cr + Encounter Won (+2 Trust) |
 
@@ -193,7 +245,7 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 | `mission_perimeter_patrol` (Def Lv1+) | 3 | 9 Or | 440 Cr + Encounter Won (+2 Trust) |
 
 > **Organika-Kosten** (Provisions): base = sol_distance × 3 Oder, mit Knowledge-Scaling −1 pro Level (Floor 1)
-> **Dispatch Anforderung**: Schiff ≥25% Max-SP
+> **Dispatch Anforderung**: Rückkehr-Garantie (`SP − Verschleiß × 2 × Distanz > 0`, Fehlercode `ship_too_worn`; ersetzt die 25-%-Sperre), siehe 7b
 
 ---
 
@@ -224,6 +276,7 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | `mission_recon_flight` | Erkundungsflug | Drohne | easy / normal |
 | `mission_data_sweep` | Datensammelflug | Drohne | normal / hard |
 | `mission_long_range_expedition` | Fernexpedition | Drohne | normal / hard |
+| `mission_find_salvage` | Bergungsflug | Drohne o. Frachter | normal (kein Wurf) |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | easy / normal |
 | `mission_trade_convoy` | Handelsfahrt | Frachter | normal / hard |
 | `mission_aid_transport` | Hilfsgütertransport | Frachter | easy / normal |
@@ -485,7 +538,7 @@ Fester Start-Pool versteckter Signale auf den Außenring-Feldern (Ring 2/3, nur 
 | `find_medium` | 1 | 10 | 16 |
 | `find_large` | 1 | 18 | 22 |
 
-Pool gesamt: 7 Signale, 40 Rg brutto.
+Pool gesamt: 7 Signale, 40 Rg brutto. Mit Hangar und Flug: 60 Rg (Faktor 1,5).
 
 | Parameter | Wert | Config |
 |---|---|---|
@@ -493,7 +546,12 @@ Pool gesamt: 7 Signale, 40 Rg brutto.
 | Bergungs-Deckel | 4 AP je Sol und Projekt | `finds.salvage_cap_per_sol` |
 | Offene Bergungsprojekte | max. 2 | `finds.max_open_projects` |
 
-Ablauf: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, AP-Investition bis zum Fund-Preis, Regolith bei Abschluss). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`); ein echter Fund bleibt unbebaubar, bis er vollständig geborgen ist, ein gescannter Fehlalarm wird bebaubar. Bot: Regeln `deep_scan_signal_tile` und `invest_find` (niedrige Priorität). Messung: `RunReport` `regolith_sources.find`, `game:playtest-compare` K11 (informativ, kein Zielwert).
+| Bergungsflug (`finds.flight`, T30 Schritt 3) | Wert |
+|---|---|
+| Ertragsfaktor `yield_factor` | 1,5 (Flug-Bonus = Rundung(rg × 1,5) − rg) |
+| Mindest-Hallenstufe `min_hangar_level` | klein 1, mittel 1, groß 2 (muss zu `ships.*.find_carry` passen) |
+
+Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für alle Größen, mit Hangar nur Bergungsflug, begonnene Selbstbergungen laufen zu Ende (Bestandsschutz, keine Erstattung). Ablauf Selbstbergung: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, AP-Investition bis zum Fund-Preis, Regolith bei Abschluss). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`); ein echter Fund bleibt unbebaubar, bis er vollständig geborgen ist, ein gescannter Fehlalarm wird bebaubar. Bot: Regeln `deep_scan_signal_tile`, `invest_find` (nur ohne Hangar bzw. Bestandsschutz), `repair_ship_for_flight` und `dispatch_find_flight`. Messung: `RunReport` `regolith_sources.find` und `regolith_sources.find_flight`, `game:playtest-compare` K11/K12/K16/K17 (informativ).
 
 ---
 

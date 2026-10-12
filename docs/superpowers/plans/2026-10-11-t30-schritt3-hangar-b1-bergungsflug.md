@@ -70,24 +70,6 @@ Diese sechs Eingabeklassen bzw. Fehlerfälle impliziert die Spec, ohne dass ein 
 | `app/Console/Commands/ResetPlayer.php`, `app/Console/Commands/ColonySeedDemo.php`, `data/sql/testdata.sql` | Szenarien und Fixtures | 1, 3 |
 | `docs/game-reference.md`, `docs/GDD.md`, `CHANGELOG.md`, `ROADMAP.md`, Spec §13 | Doku | 9 |
 
----|---|---|
-| `app/Support/HangarBays.php` (neu) | reine Buchtregeln: Klassenstufe, Bucht offen, aktiv, Mindest-SP, Schiffsschlüssel | 1 |
-| `database/migrations/0001_01_01_000000_baseline.php:302-335` | `bay`-Spalten, Unique-Index | 1 |
-| `database/seeders/data/buildings.php:10` | Hangar `is_instanced` 0 | 1 |
-| `app/Services/HangarService.php` | Buchtlogik, Geschenk-Drohne, Flug-Dispatch, Auszahlung | 1, 2, 3, 4, 5 |
-| `app/Http/Controllers/Colony/HangarController.php`, `routes/web.php:133-135` | `{bay}` statt `{instanceId}` | 1, 6 |
-| `app/Http/Controllers/Colony/ColonyController.php` | Guard „schon platziert“, Hook Geschenk-Drohne, Bau-Hinweis | 1, 2, 6 |
-| `app/Console/Commands/GameTick.php` | Join über `bay`, `roll === false`, Typ `find_salvage` | 1, 3, 4 |
-| `app/Services/FindFlightService.php` (neu) | Entfernung, Kosten, Tragkraft, Ertrag des Bergungsflugs | 4 |
-| `app/Services/ColonyTileService.php` | `completeFind`, `findFlightReturnSol`, `findAction`, Guard `salvage_by_flight`, `tileFor` | 4, 5, 6 |
-| `config/missions.php`, `config/ships.php`, `config/game.php` | Katalog, `find_carry`, `finds.flight` | 3, 4 |
-| `resources/views/colony/hangar.blade.php`, `public/js/hangar.js` | Buchten, Vorfeld, Zielliste je Fund | 1, 6 |
-| `resources/views/colony/partials/tile-terrain.blade.php`, `resources/views/colony/hexview.blade.php`, `public/js/colony-hexgrid.js` | Fundkarte: eine Aktion und eine Begründung | 6 |
-| `app/Services/OnboardingHintService.php` | einmaliger Hinweis bei Hangar Stufe 1 | 6 |
-| `tests/Feature/Playtest/BotStrategy.php`, `RunReport.php`, `app/Support/OpeningComparison.php`, `app/Console/Commands/PlaytestCompare.php`, `tools/playtest-dashboard.php` | Bot-Regeln, Topf `find_flight`, K2/K11/K12/K16/K17 | 1, 3, 7 |
-| `app/Console/Commands/ResetPlayer.php`, `app/Console/Commands/ColonySeedDemo.php`, `data/sql/testdata.sql` | Szenarien und Fixtures | 1, 2 |
-| `docs/game-reference.md`, `docs/GDD.md`, `CHANGELOG.md`, `ROADMAP.md`, Spec §13 | Doku | 8 |
-
 ---
 
 ### Task 1: Datenmodell B1 (eine Halle, Buchten, Vorfeld)
@@ -2111,7 +2093,7 @@ git commit -m "feat(T30): Bergungsflug mission_find_salvage (Ring-Entfernung, ke
 - Modify: `tests/Feature/Colony/SalvageFindTest.php:23-29` (setUp ohne Hangar), `tests/Feature/Colony/DeepScanFindTest.php:52-55`
 - Test: `tests/Feature/Colony/FindActionTest.php` (neu)
 
-**Spec-Abweichung:** Die Gründe sind feiner gefasst als in der Tabelle §13.4: `ship_busy` (Schiff unterwegs oder in Lieferung), `ship_worn` (Schiff gedockt, aber verfehlt die Rückkehr-Garantie für die Ring-Entfernung der Kachel, statt „in Reparatur“, Owner §13.x/7), `ship_inactive` (tragendes Schiff nur in geschlossener Bucht) und `no_ship` (gar kein tragendes Schiff, defensiv) sind getrennt. Für K16 werden sie so zusammengefasst: `ship_busy` → `ship_busy`; `ship_worn` und `no_ship` → `no_ship_ready`; `needs_freighter` und `ship_inactive` → `needs_freighter`; `needs_level` → `needs_level`.
+**Spec-Abweichung:** Die Gründe sind feiner gefasst als in der Tabelle §13.4: `ship_busy` (Schiff unterwegs oder in Lieferung), `ship_worn` (Schiff gedockt, aber verfehlt die Rückkehr-Garantie für die Ring-Entfernung der Kachel, statt „in Reparatur“, Owner §13.x/7), `ship_inactive` (tragendes Schiff nur in geschlossener Bucht) und `no_ship` (gar kein tragendes Schiff, defensiv) sind getrennt. Für K16 werden sie so zusammengefasst: `ship_busy` → `ship_busy`; `ship_worn` und `no_ship` → `no_ship_ready`; `needs_freighter` → `needs_freighter`; `needs_level` und `ship_inactive` → `needs_level` (Umsetzung: `RunReport::findWaits`).
 
 **Interfaces:**
 - Consumes: `FindFlightService` (Task 5), `HangarBays` inkl. `flightReadiness` (Task 1/2), `findFlightReturnSol` (Task 5).
@@ -3293,7 +3275,7 @@ Run: `bin/phpunit --testsuite=playtest --filter='BotStrategyFindFlightTest|RunRe
      */
     private function findWaits(int $colonyId): array
     {
-        $map = ['needs_level' => 'needs_level', 'needs_freighter' => 'needs_freighter', 'ship_inactive' => 'needs_freighter',
+        $map = ['needs_level' => 'needs_level', 'needs_freighter' => 'needs_freighter', 'ship_inactive' => 'needs_level',
             'ship_busy' => 'ship_busy', 'ship_worn' => 'no_ship_ready', 'no_ship' => 'no_ship_ready'];
         $waits = ['needs_level' => 0, 'needs_freighter' => 0, 'ship_busy' => 0, 'no_ship_ready' => 0, 'zone_blocked' => 0];
         $service = app(ColonyTileService::class);

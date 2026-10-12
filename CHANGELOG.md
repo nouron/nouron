@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-12
+
+- Feat: T30 Schritt 3 (Spec §13) — Hangar ist eine Halle (Stufe = Schiffsklasse und Buchten, Vorfeld mit Geschenk-Drohne); gescannte Funde holt mit Hangar der Bergungsflug (x1,5, kein Wurf), ohne Hangar die Kolonie selbst, begonnene Bergungen laufen zu Ende. Prospektion und Signalvermessung gestrichen, Versorgungsfahrt ohne Regolith. Rückkehr-Garantie statt 25-%-Startsperre, Schiffsreparatur nur AP (`game.ship_repair`). Bot `dispatch_find_flight`/`repair_ship_for_flight`, Report K12/K16/K17. Baseline geändert (`bay` statt `hangar_instance_id`): Dev-DB mit `php artisan db:reset --force` neu aufbauen. Messung steht aus.
+
 ## 2026-10-10
 
 - Fix: CI auf master rot nach #376 — `BotSession::boot()` setzte die Kolonie nicht in die Session (zweiter Bot im selben Test spielte auf fremder Kolonie, Endlosschleife `research_knowledge`); `PlaysSolLoop` bricht identische Erfolgs-Antworten ohne Zustandsänderung nach 3 Wiederholungen ab. Salvage-Spalten-Check von Unit nach Feature (`BaselineSchemaTest`) verschoben.

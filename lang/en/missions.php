@@ -71,8 +71,8 @@ return [
 
     'sol_report_completed' => 'Mission completed',
     'sol_report_aborted' => 'Mission aborted — ship returned unable to fly',
-    'sol_report_failed' => 'Mission failed — no find',
-    'sol_report_find_missing' => 'Salvage flight without a find — the signal was gone',
+    'sol_report_failed' => 'Mission failed — no yield',
+    'sol_report_find_missing' => 'Salvage flight without yield — the signal was gone or the ship could not carry the find',
 
     // ── Difficulty ───────────────────────────────────────────────────────────
 

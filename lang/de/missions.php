@@ -87,8 +87,8 @@ return [
 
     'sol_report_completed' => 'Mission abgeschlossen',
     'sol_report_aborted' => 'Mission abgebrochen — Schiff kehrte flugunfähig zurück',
-    'sol_report_failed' => 'Mission fehlgeschlagen — kein Fund',
-    'sol_report_find_missing' => 'Bergungsflug ohne Fund — das Signal war nicht mehr da',
+    'sol_report_failed' => 'Mission fehlgeschlagen — ohne Ertrag',
+    'sol_report_find_missing' => 'Bergungsflug ohne Ertrag — das Signal war weg oder das Schiff konnte den Fund nicht tragen',
 
     // ── Mission rewards (derived from config/missions.php by App\Support\MissionReward) ──
     'reward_credits' => ':amount Credits',
