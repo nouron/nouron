@@ -44,6 +44,13 @@ class BotSession
     /** @var array<int, float> λ_AP after each closed Sol (report K21) */
     public array $lambdaBySol = [];
 
+    /**
+     * Regolith the utility engine is saving for (BotContext::regolithHold(), S3).
+     * Legacy spenders keep it via BotStrategy::regolithReserve(); always 0 in the
+     * legacy, adapter and shadow engines.
+     */
+    public int $regolithHold = 0;
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
 

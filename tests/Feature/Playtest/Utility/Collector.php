@@ -64,7 +64,14 @@ final class Collector
         }
 
         $shadow = $this->mode === 'shadow';
-        $ctx = $shadow ? BotContext::capture($b, $this->profile) : new BotContext(sol: $b->sol);
+        $ctx = match ($this->mode) {
+            'adapter' => new BotContext(sol: $b->sol),
+            'utility' => BotContext::capture($b, $this->profile, withGoal: true),
+            'shadow' => BotContext::capture($b, $this->profile),
+        };
+        if ($this->mode === 'utility') {
+            $b->regolithHold = $ctx->regolithHold();
+        }
         $minNet = (float) $this->weights['min_net'];
         $decision = UtilitySelector::selectFromSources($this->sources, $b, $ctx, $b->blockedThisSol, $this->cursorBand, $minNet, fullSearch: $shadow);
 

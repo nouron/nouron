@@ -1557,12 +1557,13 @@ class BotStrategy
     }
 
     /**
-     * Regolith all non-repair spending must leave in stock: the larger of the
-     * CC research reserve (T17) and the self-sufficiency reserve.
+     * Regolith all non-repair spending must leave in stock: the largest of the CC
+     * research reserve (T17), the self-sufficiency reserve and the utility
+     * engine's savings goal (BotSession::$regolithHold, 0 for the legacy engine).
      */
     private static function regolithReserve(BotSession $b): int
     {
-        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b));
+        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b), $b->regolithHold);
     }
 
     /**
