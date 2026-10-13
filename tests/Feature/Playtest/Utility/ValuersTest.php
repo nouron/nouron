@@ -65,6 +65,15 @@ class ValuersTest extends TestCase
         $this->assertSame(0, $geology->regolithCost);
     }
 
+    public function test_agronomy_has_no_effect_without_an_agrardom(): void
+    {
+        // GameTick::generateAgronomyBonus() adds nothing while no bioFacility stands.
+        $bot = BotSession::boot($this, 1);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, 2);
+
+        $this->assertArrayNotHasKey('effect', Valuers::research($bot, $this->ctx($bot), 93, 0, 0)->terms);
+    }
+
     public function test_every_knowledge_is_worth_its_ap(): void
     {
         $bot = BotSession::boot($this, 1);

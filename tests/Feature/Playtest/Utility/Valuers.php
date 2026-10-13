@@ -134,7 +134,9 @@ final class Valuers
             self::GEOLOGY => $ctx->stream((float) (config('game.geology_harvester_bonus_per_level')[$target] ?? 0), $latency),
             self::CONSTRUCTION => $ctx->stream(($cfg['ap_cost_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['build_ap_per_sol'] * $ctx->lambdaAp, $latency),
             self::CARTOGRAPHY => $ctx->stream(($cfg['nav_ap_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['nav_ap_per_sol'] * $ctx->lambdaAp, $latency),
-            self::AGRONOMY => $ctx->stream(min((int) (config('game.agronomy_agrardom_bonus_per_level')[$target] ?? 0), self::foodDeficit($b)) * $ctx->price('organics'), $latency),
+            // GameTick::generateAgronomyBonus() pays nothing while no Agrardom stands.
+            self::AGRONOMY => self::agrardomLevel($b) === 0 ? 0.0
+                : $ctx->stream(min((int) (config('game.agronomy_agrardom_bonus_per_level')[$target] ?? 0), self::foodDeficit($b)) * $ctx->price('organics'), $latency),
             default => 0.0,
         };
 
@@ -262,10 +264,15 @@ final class Valuers
     }
 
     /** Organika the colony's need exceeds the current Agrardom yield by (feed_colony stays mandatory). */
+    private static function agrardomLevel(BotSession $b): int
+    {
+        return (int) (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', self::BIO_FACILITY)
+            ->whereNotNull('tile_x')->orderBy('instance_id')->value('level') ?? 0);
+    }
+
     private static function foodDeficit(BotSession $b): int
     {
-        $level = (int) (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', self::BIO_FACILITY)
-            ->whereNotNull('tile_x')->orderBy('instance_id')->value('level') ?? 0);
+        $level = self::agrardomLevel($b);
         $curve = config('game.production_curve.'.self::BIO_FACILITY.'.'.self::RES_ORGANICS, []);
 
         return max(0, app(ResourcesService::class)->foodNeed($b->colonyId) - GameTick::cumulativeCurveYield($curve, $level));

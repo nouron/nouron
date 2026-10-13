@@ -1446,7 +1446,7 @@ class BotStrategy
      * itself resolves (config/knowledge.php levelup_costs + project bonuses via
      * knowledgeLevelupCost()), read directly from the DB — no HTTP round trip.
      */
-    private static function researchLevelupReady(BotSession $b, int $researchId): bool
+    public static function researchLevelupReady(BotSession $b, int $researchId): bool
     {
         $apSpend = (int) (DB::table('colony_researches')
             ->where('colony_id', $b->colonyId)
@@ -1460,39 +1460,30 @@ class BotStrategy
     }
 
     /**
-     * The knowledge research could take right now, and whether any knowledge is
-     * held back only by the CC gate (game.knowledge_cc_level_cap).
-     * Not Regolith-buffered: research costs AP only.
+     * Knowledge research could take right now, lowest id first: Sciencelab level
+     * met, below level 5, and not held back by the CC gate
+     * (game.knowledge_cc_level_cap). cc_blocked = at least one knowledge is held
+     * back only by that gate. Shared with the utility ResearchSource (S3).
      *
-     * @return array{candidate: int|null, cc_blocked: bool}
+     * A37 fix (kept): filtering by the SAME cap the server enforces lets the bot
+     * move on to the next eligible knowledge instead of retrying a CC-gated one
+     * forever (found 2026-09-13).
+     *
+     * @return array{eligible: list<object{id:int, level:int, ap_spend:int}>, cc_blocked: bool}
      */
-    private static function researchOptions(BotSession $b): array
+    public static function researchableKnowledge(BotSession $b): array
     {
         $sciencelabLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::Sciencelab->value)
             ->value('level') ?? 0);
-
-        // A37 fix: without this, the bot got permanently stuck on the
-        // lowest-id knowledge once its NEXT level hit `knowledge_cc_level_cap`
-        // (config/game.php — Kenntnis-Level 4/5 need CC Lv4/5) — the levelup
-        // attempt fails with 'knowledge_cc_gate' every Sol forever after, and
-        // the do() closure's fallback to 'add' only triggers on
-        // 'insufficient_ap_invested', not this error, so the rule just fails
-        // for the rest of the run. researchCandidate() never moved past that
-        // knowledge to the other 6, which then received zero investment for
-        // the remainder of the run despite abundant unspent AP (found
-        // 2026-09-13: a full 99-Sol run left 63% of daily AP unspent while
-        // stuck retrying one CC-gated knowledge). Filtering the candidate
-        // list by the SAME cap the server enforces lets the bot move on to
-        // the next eligible knowledge instead of stalling.
         $ccLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0);
         $ccCaps = config('game.knowledge_cc_level_cap', []);
 
-        $candidates = DB::table('researches as r')
+        $rows = DB::table('researches as r')
             ->leftJoin('colony_researches as cr', function ($join) use ($b) {
                 $join->on('cr.research_id', '=', 'r.id')->where('cr.colony_id', $b->colonyId);
             })
@@ -1501,21 +1492,35 @@ class BotStrategy
             ->where(fn ($q) => $q->whereNull('r.required_building_level')->orWhereRaw('? >= r.required_building_level', [$sciencelabLevel]))
             ->where(fn ($q) => $q->whereNull('cr.level')->orWhere('cr.level', '<', 5))
             ->orderBy('r.id')
-            ->get(['r.id', 'cr.level']);
+            ->get(['r.id', 'cr.level', 'cr.ap_spend']);
 
+        $eligible = [];
         $ccBlocked = false;
-        foreach ($candidates as $candidate) {
-            $currentLevel = (int) ($candidate->level ?? 0);
-            $targetLevel = $currentLevel + 1;
-            $requiredCc = $ccCaps[$targetLevel] ?? null;
-
+        foreach ($rows as $row) {
+            $level = (int) ($row->level ?? 0);
+            $requiredCc = $ccCaps[$level + 1] ?? null;
             if ($requiredCc === null || $ccLevel >= $requiredCc) {
-                return ['candidate' => (int) $candidate->id, 'cc_blocked' => $ccBlocked];
+                $eligible[] = (object) ['id' => (int) $row->id, 'level' => $level, 'ap_spend' => (int) ($row->ap_spend ?? 0)];
+            } else {
+                $ccBlocked = true;
             }
-            $ccBlocked = true;
         }
 
-        return ['candidate' => null, 'cc_blocked' => $ccBlocked];
+        return ['eligible' => $eligible, 'cc_blocked' => $ccBlocked];
+    }
+
+    /**
+     * The knowledge research could take right now and whether any knowledge is held
+     * back only by the CC gate. cc_blocked is only read when candidate is null
+     * (ccResearchReserve()), where "any" equals the former "before the first eligible".
+     *
+     * @return array{candidate: int|null, cc_blocked: bool}
+     */
+    private static function researchOptions(BotSession $b): array
+    {
+        $knowledge = self::researchableKnowledge($b);
+
+        return ['candidate' => $knowledge['eligible'][0]->id ?? null, 'cc_blocked' => $knowledge['cc_blocked']];
     }
 
     /**
