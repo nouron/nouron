@@ -7,6 +7,7 @@ use Tests\Feature\Playtest\BotSession;
 use Tests\Feature\Playtest\Utility\BotContext;
 use Tests\Feature\Playtest\Utility\Candidate;
 use Tests\Feature\Playtest\Utility\CandidateSource;
+use Tests\Feature\Playtest\Utility\Estimate;
 use Tests\Feature\Playtest\Utility\UtilitySelector;
 
 final class FakeSource implements CandidateSource
@@ -167,5 +168,67 @@ class UtilitySelectorTest extends TestCase
 
         $this->assertSame('open', $d->chosen->name);
         $this->assertSame([0, 0, 1], [$below->calls, $blocked->calls, $open->calls]);
+    }
+
+    public function test_shadow_pick_keeps_the_band_order_like_the_s3_engine(): void
+    {
+        $pick = UtilitySelector::shadowPick([self::c('low_band', 1, 1.0), self::c('high_band', 9, 5.0), self::c('feed', 9, null, 1, '', true)], [], 0.01);
+
+        $this->assertSame('low_band', $pick->name);
+    }
+
+    public function test_shadow_pick_scores_only_within_a_band(): void
+    {
+        $pick = UtilitySelector::shadowPick([self::c('a', 2, 1.0), self::c('b', 2, 3.0), self::c('c', 1, null)], [], 0.01, minBand: 2);
+
+        $this->assertSame('b', $pick->name);
+    }
+
+    public function test_shadow_pick_skips_a_scored_candidate_without_net_gain(): void
+    {
+        $pick = UtilitySelector::shadowPick([self::c('not_worth', 1, 0.0), self::c('legacy_next', 4)], [], 0.01);
+
+        $this->assertSame('legacy_next', $pick->name);
+    }
+
+    public function test_shadow_pick_is_null_without_scored_candidates(): void
+    {
+        $this->assertNull(UtilitySelector::shadowPick([self::c('legacy', 0)], [], 0.01));
+    }
+
+    public function test_free_pick_prefers_a_mandatory_candidate(): void
+    {
+        $pick = UtilitySelector::freePick([self::c('x', 5, 99.0), self::c('feed', 9, null, 1, '', true)], [], 0.01);
+
+        $this->assertSame('feed', $pick->name);
+    }
+
+    public function test_free_pick_takes_the_best_score_across_bands(): void
+    {
+        $pick = UtilitySelector::freePick([self::c('low_band', 1, 1.0), self::c('high_band', 9, 5.0), self::c('legacy', 0)], [], 0.01);
+
+        $this->assertSame('high_band', $pick->name);
+    }
+
+    public function test_free_pick_is_null_without_scored_candidates(): void
+    {
+        $this->assertNull(UtilitySelector::freePick([self::c('legacy', 0)], [], 0.01));
+    }
+
+    public function test_shadow_top3_lists_the_best_scored_eligible_candidates_across_bands(): void
+    {
+        $top = UtilitySelector::shadowTop3([
+            self::c('a', 1, 1.0), self::c('b', 9, 5.0), self::c('c', 3, 2.0), self::c('d', 2, 4.0),
+            self::c('legacy', 0), self::c('blocked', 0, 9.0), self::c('worthless', 0, 0.0),
+        ], ['blocked'], 0.01);
+
+        $this->assertSame(['b', 'd', 'c'], array_map(fn (Candidate $c): string => $c->name, $top));
+    }
+
+    public function test_with_estimate_scores_a_legacy_candidate(): void
+    {
+        $scored = self::c('legacy', 3)->withEstimate(new Estimate(['a' => 6.0], 3, 25));
+
+        $this->assertSame([6.0, 3, 25, 3, 2000], [$scored->net, $scored->apCost, $scored->regolithCost, $scored->band, $scored->milliScore()]);
     }
 }

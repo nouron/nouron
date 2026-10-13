@@ -453,8 +453,9 @@ class RunReport
     }
 
     /**
-     * Spec 2.11: K18 (share of legacy decisions, %) and K20 (median successful
-     * decisions per Sol over Sols 0..sol-1). null for a legacy run (no decisions).
+     * Spec 2.11: K18 (share of legacy decisions, %), K20 (median successful
+     * decisions per Sol over Sols 0..sol-1) and K22 (band-faithful shadow
+     * divergence, plus the cross-band one as info). null for a legacy run.
      */
     private static function utilitySummary(BotSession $bot): ?array
     {
@@ -471,12 +472,21 @@ class RunReport
             }
         }
 
+        $shadowed = array_values(array_filter($bot->decisions, fn (array $d): bool => ($d['shadow'] ?? null) !== null));
+        $diverging = array_filter($shadowed, fn (array $d): bool => $d['shadow']['name'] !== $d['name'] || $d['shadow']['key'] !== $d['key']);
+        $freed = array_values(array_filter($shadowed, fn (array $d): bool => ($d['shadow']['free'] ?? null) !== null));
+        $freeDiverging = array_filter($freed, fn (array $d): bool => $d['shadow']['free']['name'] !== $d['name'] || $d['shadow']['free']['key'] !== $d['key']);
+
         return [
             'decisions' => $n,
             'legacy_share' => round(($bySource['legacy'] ?? 0) / $n * 100, 1),
             'mandatory_share' => round(($bySource['mandatory'] ?? 0) / $n * 100, 1),
             'utility_share' => round(($bySource['utility'] ?? 0) / $n * 100, 1),
             'median_decisions_per_sol' => self::median(array_values($perSol)),
+            // K22: band-faithful (what the S3 engine would change); free = cross-band, informational only
+            'shadow_divergence' => $shadowed === [] ? null : round(count($diverging) / count($shadowed) * 100, 1),
+            'shadow_free_divergence' => $freed === [] ? null : round(count($freeDiverging) / count($freed) * 100, 1),
+            'lambda_ap' => $bot->lambdaBySol,
         ];
     }
 

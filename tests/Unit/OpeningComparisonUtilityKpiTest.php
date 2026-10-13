@@ -86,4 +86,40 @@ class OpeningComparisonUtilityKpiTest extends TestCase
         $this->assertStringContainsString('labor - (1x nicht erreicht bis Cutoff)', $checks['K23']['detail']);
         $this->assertStringContainsString('hangar 7 (target', $checks['K23']['detail']);
     }
+
+    public function test_k22_comes_from_the_shadow_divergence(): void
+    {
+        $this->assertSame(12.5, OpeningComparison::metrics($this->report('labor', 1, [], [], ['shadow_divergence' => 12.5]))['k22']);
+        $this->assertNull(OpeningComparison::metrics($this->report('labor', 1, []))['k22']);
+    }
+
+    public function test_k21_is_the_mean_lambda_per_window(): void
+    {
+        $lambda = [];
+        foreach (range(1, 15) as $s) {
+            $lambda[$s] = $s <= 12 ? 1.0 : 2.0;
+        }
+        $lambda[4] = 3.0;
+
+        $m = OpeningComparison::metrics($this->report('labor', 1, [], [], ['lambda_ap' => $lambda]));
+
+        // Sols 4-12: (3 + 8 * 1) / 9; Sols 13-25 present: 13, 14, 15 -> 2.0
+        $this->assertEqualsWithDelta(11 / 9, $m['k21_4_12'], 1e-9);
+        $this->assertEqualsWithDelta(2.0, $m['k21_13_25'], 1e-9);
+    }
+
+    public function test_k21_check_shows_both_lambda_windows(): void
+    {
+        $lambda = [];
+        foreach (range(1, 15) as $s) {
+            $lambda[$s] = $s <= 12 ? 1.0 : 2.0;
+        }
+        $reports = [$this->report('labor', 1, [], [], ['lambda_ap' => $lambda]), $this->report('hangar', 1, [], [], ['lambda_ap' => $lambda])];
+
+        $detail = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare()['checks']['K21']['detail'];
+
+        $this->assertStringContainsString('Sol 4-12 / 13-25', $detail);
+        $this->assertStringContainsString('labor 1 / 2', $detail);
+        $this->assertStringContainsString('hangar 1 / 2', $detail);
+    }
 }

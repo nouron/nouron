@@ -117,4 +117,21 @@ class AdapterGoldenTest extends TestCase
 
         return count($a) === count($b) ? 'identical' : 'second run has '.(count($b) - count($a)).' extra actions';
     }
+
+    public function test_shadow_plays_the_legacy_action_sequence_and_scores_decisions(): void
+    {
+        $profile = BotProfile::named('default')->withOpening('hangar');
+
+        $legacy = $this->play(7, BotStrategy::default($profile), 8);
+        $bot = BotSession::boot($this, 7);
+        $this->playSolsUntil($bot, UtilityStrategy::shadow($profile), self::stopAtSol(8));
+        $shadow = array_map(fn (array $e): array => [
+            $e['sol'], $e['rule'], self::normalizeUrl($e['url']), $e['status'], $e['ok'], $e['error'],
+            $e['ap_before'], $e['ap_after'], $e['regolith_before'], $e['regolith_after'],
+            $e['organics_before'], $e['organics_after'], $e['payload_hash'] ?? null,
+        ], $bot->log);
+
+        $this->assertSame($legacy, $shadow, self::firstDifference($legacy, $shadow));
+        $this->assertNotEmpty(array_filter($bot->decisions, fn (array $d): bool => $d['shadow'] !== null), 'shadow must score at least one decision');
+    }
 }

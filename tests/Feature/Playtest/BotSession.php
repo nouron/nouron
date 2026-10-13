@@ -38,6 +38,12 @@ class BotSession
     /** @var list<array> decision log of the utility engines (DecisionLog::entry()), empty for legacy */
     public array $decisions = [];
 
+    /** λ_AP (spec 2.4): EMA of the marginal AP density, null until the first Sol was closed. */
+    public ?float $lambdaAp = null;
+
+    /** @var array<int, float> λ_AP after each closed Sol (report K21) */
+    public array $lambdaBySol = [];
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
 

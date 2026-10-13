@@ -17,6 +17,12 @@ final class UtilityStrategy
         return self::fromRules(BotStrategy::default($profile), 'utility', $profile);
     }
 
+    /** Engine "shadow" (S2): legacy decides, the utility pick is only logged (K22). */
+    public static function shadow(BotProfile $profile): array
+    {
+        return self::fromRules(BotStrategy::default($profile), 'shadow', $profile);
+    }
+
     /** Golden-test reference: every legacy rule behind the selector, nothing migrated. */
     public static function adapterOnly(BotProfile $profile): array
     {

@@ -3,6 +3,7 @@
 ## 2026-10-13
 
 - Feat: PlaytestBot Utility-Modell S0+S1 — Selektor mit Legacy-Adapter (Golden-Test: gleiche Aktionsfolge wie Legacy), `game:playtest --engine=legacy|utility`, Entscheidungslog im Report, Kennzahlen K18/K19/K20/K23 in `game:playtest-compare`. Legacy-Verhalten unverändert.
+- Feat: PlaytestBot Utility-Modell S2 — Gewichte und Bewertungsbausteine (Valuation/Valuers), `--engine=shadow` (spielt Legacy, misst bandtreue Abweichung des Utility-Modells, K22), λ_AP pro Sol (K21), Schattenlog mit Termen und Top 3. Spielverhalten unverändert.
 
 ## 2026-10-12
 

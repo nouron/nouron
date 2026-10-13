@@ -732,7 +732,7 @@ class BotStrategy
             ->value('level') ?? 0);
     }
 
-    private static function runPhase(BotSession $b): int
+    public static function runPhase(BotSession $b): int
     {
         return (int) (DB::table('runs')->where('id', $b->runId)->value('phase') ?? 1);
     }
@@ -883,7 +883,7 @@ class BotStrategy
     }
 
     /** Mirrors ColonyController::agrardomPlaced() — the C16 gate condition. */
-    private static function agrardomPlaced(BotSession $b): bool
+    public static function agrardomPlaced(BotSession $b): bool
     {
         return DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -1280,7 +1280,7 @@ class BotStrategy
     }
 
     /** CC and housing are exempt from the A14 supply build gate (ColonyController::levelUpBlockedBySupply()). */
-    private static function supplyGated(object $row): bool
+    public static function supplyGated(object $row): bool
     {
         return ! in_array((int) $row->building_id, [BuildingId::CommandCenter->value, BuildingId::Housing->value], true)
             && (int) ($row->supply_cost ?? 0) > 0;
@@ -1325,7 +1325,7 @@ class BotStrategy
      * has already paid; the 0 -> 1 step of a placed site was paid together with
      * the erection (BuildingCostService::levelupRegolithDue()).
      */
-    private static function levelupRegolith(object $row): int
+    public static function levelupRegolith(object $row): int
     {
         if ((int) ($row->ap_spend ?? 0) > 0) {
             return 0;
@@ -1334,7 +1334,7 @@ class BotStrategy
         return self::buildingCosts()->levelupRegolithDue($row);
     }
 
-    private static function effectiveApForLevelup(BotSession $b, int $baseAp): int
+    public static function effectiveApForLevelup(BotSession $b, int $baseAp): int
     {
         return app(ProjectBonusService::class)->effectiveApForLevelup($b->colonyId, $baseAp);
     }
@@ -2306,7 +2306,7 @@ class BotStrategy
      * (RunProgressService::transitionToPhase2() → drawObjectives()) — during
      * Phase 1 this query simply finds no rows yet, no separate phase check needed.
      */
-    private static function hasActiveObjective(BotSession $b, string $taskKey): bool
+    public static function hasActiveObjective(BotSession $b, string $taskKey): bool
     {
         return DB::table('run_objectives')
             ->where('run_id', $b->runId)
