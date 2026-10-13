@@ -77,6 +77,11 @@ class BotStrategy
     private static float $creditSavings = 0.0;
 
     /**
+     * Invariant (utility adapter, S0): every rule's do() makes exactly ONE $b->act()
+     * under its own rule name. The legacy loop blocks the last logged name after a
+     * failure, the utility Collector blocks the chosen rule name — the two only agree
+     * while this holds. Breaking it breaks AdapterGoldenTest's Legacy = Adapter proof.
+     *
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
     public static function default(BotProfile $profile = new BotProfile): array

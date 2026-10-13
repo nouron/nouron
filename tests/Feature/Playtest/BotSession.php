@@ -175,6 +175,9 @@ class BotSession
             'regolith_after' => $regolithAfter,
             'organics_before' => $organicsBefore,
             'organics_after' => $organicsAfter,
+            // Fingerprint of the request body (the URL alone does not say which
+            // building/tile was targeted) — compared by AdapterGoldenTest.
+            'payload_hash' => md5((string) json_encode($payload)),
         ];
 
         return $norm;

@@ -13,17 +13,41 @@ use Tests\TestCase;
 /**
  * Spec 4 (S0, Golden): every legacy rule as a LegacyRuleSource behind the selector
  * must play exactly the legacy action sequence. Both runs live in this test (no
- * fixture file that could drift). Short runs (Sols 0-7) keep the playtest suite
- * fast; R5b made all game rolls depend on runs.rng_seed only, so two bots with the
- * same seed in one database play the same game. No wall clock: BotSession::boot()
- * aligns TickService with the run.
+ * fixture file that could drift). R5b made all game rolls depend on runs.rng_seed
+ * only, so two bots with the same seed in one database play the same game. No wall
+ * clock: BotSession::boot() aligns TickService with the run.
+ *
+ * Compared per action: Sol, rule, URL (row ids normalized), status, ok, error,
+ * AP/Regolith/Organics before and after, and a hash of the request payload.
+ *
+ * Scenarios (spec 4): seed 4242/labor to Sol 8 (92 actions), seed 7/hangar to
+ * Sol 13 (145 actions: first find flights, request_ship, ~50 invest_production),
+ * and the focus profile (objectiveFocus > 0: the spliced focus_* rules shift every
+ * later band index; to Sol 8 it plays the same 92 actions as default).
+ * Exercised rules: hire_advisor, place_agrardom, feed_colony, invest_cc,
+ * place_building, relocate_harvester, explore_tile, deep_scan_signal_tile,
+ * invest_production, repair_maintenance, research_knowledge, dispatch_mission,
+ * dispatch_find_flight, request_ship (+ sol_next).
+ *
+ * Known gap: rules that need mid/late-game state never fire within these short runs
+ * and are only covered structurally (band = rule index, cursor = legacy "next rule",
+ * one act() per rule under its own name — see BotStrategy::default()):
+ * repair_critical, promote_advisor, buy_merchant_item, buy_corporate_harvester_offer,
+ * place_harvester_instance2, dispatch_salvage_mission, repair_ship_for_flight,
+ * dispatch_credit_mission, dispatch_compounds_mission, invest_find, the bar rules
+ * (accept_bar_encounter, resolve_bar_concern, resolve_information_encounter,
+ * accept_bar_offer) and the focus_* rules themselves (Phase-2 objectives). Longer
+ * runs would cover them but cost minutes per scenario.
  */
 class AdapterGoldenTest extends TestCase
 {
     use PlaysSolLoop;
     use RefreshDatabase;
 
-    private const UNTIL_SOL = 8;
+    /** Sanity floor: an empty or trivially short run must not pass as "identical". */
+    private const MIN_ACTIONS = 60;
+
+    private const MIN_DISTINCT_RULES = 10;
 
     /** URL segments carrying auto-increment row ids, which differ between two bots in one database. */
     private const ID_SEGMENTS = [
@@ -32,40 +56,50 @@ class AdapterGoldenTest extends TestCase
         '#^/colony/merchant/buy/\d+$#' => '/colony/merchant/buy/#',
     ];
 
-    public static function seeds(): array
+    public static function scenarios(): array
     {
-        return ['seed 4242 labor' => [4242, 'labor'], 'seed 7 hangar' => [7, 'hangar']];
+        return [
+            'seed 4242 labor' => [4242, 'default', 'labor', 8],
+            'seed 7 hangar' => [7, 'default', 'hangar', 13],
+            'seed 4242 focus labor' => [4242, 'focus', 'labor', 8],
+        ];
     }
 
     public function test_two_legacy_runs_with_the_same_seed_play_the_same_sequence(): void
     {
         $profile = BotProfile::named('default')->withOpening('hangar');
 
-        $first = $this->play(7, BotStrategy::default($profile));
-        $second = $this->play(7, BotStrategy::default($profile));
+        $first = $this->play(7, BotStrategy::default($profile), 8);
+        $second = $this->play(7, BotStrategy::default($profile), 8);
 
         $this->assertSame($first, $second, 'Legacy itself is not deterministic — stop and report to the Owner before comparing engines. '.self::firstDifference($first, $second));
     }
 
-    #[DataProvider('seeds')]
-    public function test_adapter_plays_the_legacy_action_sequence(int $seed, string $opening): void
+    #[DataProvider('scenarios')]
+    public function test_adapter_plays_the_legacy_action_sequence(int $seed, string $profileName, string $opening, int $untilSol): void
     {
-        $profile = BotProfile::named('default')->withOpening($opening);
+        $profile = BotProfile::named($profileName)->withOpening($opening);
 
-        $legacy = $this->play($seed, BotStrategy::default($profile));
-        $adapter = $this->play($seed, UtilityStrategy::adapterOnly($profile));
+        $legacy = $this->play($seed, BotStrategy::default($profile), $untilSol);
+        $adapter = $this->play($seed, UtilityStrategy::adapterOnly($profile), $untilSol);
 
-        $this->assertGreaterThan(self::UNTIL_SOL + 5, count($legacy), 'the short run must exercise more than sol_next');
+        $this->assertGreaterThan(self::MIN_ACTIONS, count($legacy), 'the run is too short to prove anything');
+        $rules = array_unique(array_column($legacy, 1));
+        $this->assertGreaterThanOrEqual(self::MIN_DISTINCT_RULES, count($rules), 'too few distinct rules exercised: '.implode(', ', $rules));
         $this->assertSame($legacy, $adapter, self::firstDifference($legacy, $adapter));
     }
 
-    /** @return list<array{0:int, 1:string, 2:string, 3:bool, 4:?string}> */
-    private function play(int $seed, array $rules): array
+    /** @return list<list<mixed>> one tuple per logged action */
+    private function play(int $seed, array $rules, int $untilSol): array
     {
         $bot = BotSession::boot($this, $seed);
-        $this->playSolsUntil($bot, $rules, self::stopAtSol(self::UNTIL_SOL));
+        $this->playSolsUntil($bot, $rules, self::stopAtSol($untilSol));
 
-        return array_map(fn (array $e): array => [$e['sol'], $e['rule'], self::normalizeUrl($e['url']), $e['ok'], $e['error']], $bot->log);
+        return array_map(fn (array $e): array => [
+            $e['sol'], $e['rule'], self::normalizeUrl($e['url']), $e['status'], $e['ok'], $e['error'],
+            $e['ap_before'], $e['ap_after'], $e['regolith_before'], $e['regolith_after'],
+            $e['organics_before'], $e['organics_after'], $e['payload_hash'] ?? null,
+        ], $bot->log);
     }
 
     private static function normalizeUrl(string $url): string
