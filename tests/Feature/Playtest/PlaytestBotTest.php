@@ -47,7 +47,7 @@ class PlaytestBotTest extends TestCase
         $profile = self::resolveProfile();
         $bot = BotSession::boot($this, $seed);
         $rules = BotEngine::rules($profile);
-        $report = new RunReport($seed, $profile->name, $profile->opening);
+        $report = new RunReport($seed, $profile->name, $profile->opening, $profile->engine);
 
         // --until-sol N (env PLAYTEST_UNTIL_SOL): stop at the start of Sol N for short
         // Phase-1 measurement runs; none = play the whole run as before.
