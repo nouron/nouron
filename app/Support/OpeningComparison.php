@@ -84,6 +84,8 @@ namespace App\Support;
  *    Target (T30 §14): Lv2 <= Sol 9 (warn > 12), Lv3 <= Sol 30. null if never.
  *  - K20 (informational): utility_summary.median_decisions_per_sol; null for legacy.
  *  - K23 (informational): first snapshot Sol with cc_level >= 4; target <= 25, warn > 30.
+ *    K19/K23 do not distinguish "never reached" from "run cut off by --until-sol"
+ *    (both null); the detail line labels the missing runs via neverLabel (info-only).
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs count (status completed|failed, or a run
@@ -345,6 +347,23 @@ class OpeningComparison
         return $k7Stats['truncated'] > 0 ? 'nicht erreicht bis Cutoff' : 'never';
     }
 
+    /**
+     * " (Nx never)" suffix for informational KPIs; $parts = [[label, missing], ...], zero counts omitted.
+     *
+     * @param  list<array{0: string, 1: int}>  $parts
+     */
+    private static function missingSuffix(array $parts, array $k7Stats): string
+    {
+        $out = [];
+        foreach ($parts as [$label, $missing]) {
+            if ($missing) {
+                $out[] = trim("{$label} {$missing}x ".self::neverLabel($k7Stats));
+            }
+        }
+
+        return $out === [] ? '' : ' ('.implode(', ', $out).')';
+    }
+
     /** Finished = ended regularly (completed|failed) or deliberately stopped at --until-sol. */
     private static function isFinished(array $report): bool
     {
@@ -570,12 +589,19 @@ class OpeningComparison
             'K19' => [
                 'status' => 'info',
                 'detail' => 'Own path building Lv2 / Lv3 Sol, median: '.implode('; ', array_map(
-                    fn ($o) => "{$o} ".self::fmt($kpis['k19_lv2'][$o]['median']).' / '.self::fmt($kpis['k19_lv3'][$o]['median']),
+                    fn ($o) => "{$o} ".self::fmt($kpis['k19_lv2'][$o]['median']).' / '.self::fmt($kpis['k19_lv3'][$o]['median'])
+                        .self::missingSuffix([['Lv2', $kpis['k19_lv2'][$o]['missing']], ['Lv3', $kpis['k19_lv3'][$o]['missing']]], $k7[$o]),
                     array_keys($kpis['k19_lv2']),
                 )).' (target Lv2 <= 9, warn > 12; Lv3 <= 30)',
             ],
             'K20' => $info('Decisions per Sol, median', $kpis['k20'], 'informational'),
-            'K23' => $info('Sol of CC Lv4, median', $kpis['k23'], 'target <= 25, warn > 30'),
+            'K23' => [
+                'status' => 'info',
+                'detail' => 'Sol of CC Lv4, median: '.implode('; ', array_map(
+                    fn ($o, $st) => "{$o} ".self::fmt($st['median']).self::missingSuffix([['', $st['missing']]], $k7[$o]),
+                    array_keys($kpis['k23']), $kpis['k23'],
+                )).' (target <= 25, warn > 30)',
+            ],
             'REP' => $info('Ship repair AP Sol 4-12, median', $kpis['ship_repair_4_12'], 'information next to K4'),
         ];
     }

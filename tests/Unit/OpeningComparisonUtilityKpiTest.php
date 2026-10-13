@@ -75,4 +75,15 @@ class OpeningComparisonUtilityKpiTest extends TestCase
         $this->assertSame('info', $result['checks']['K19']['status']);
         $this->assertSame('info', $result['checks']['K23']['status']);
     }
+
+    public function test_k19_and_k23_details_label_runs_that_did_not_reach_the_level(): void
+    {
+        $reports = [$this->report('labor', 1, [3 => 1]), $this->report('hangar', 1, [3 => 1, 5 => 2], [7 => 4])];
+        $checks = OpeningComparison::fromReports($reports, ['labor', 'hangar'])->compare()['checks'];
+
+        $this->assertStringContainsString('labor - / - (Lv2 1x nicht erreicht bis Cutoff, Lv3 1x nicht erreicht bis Cutoff)', $checks['K19']['detail']);
+        $this->assertStringContainsString('hangar 5 / - (Lv3 1x nicht erreicht bis Cutoff)', $checks['K19']['detail']);
+        $this->assertStringContainsString('labor - (1x nicht erreicht bis Cutoff)', $checks['K23']['detail']);
+        $this->assertStringContainsString('hangar 7 (target', $checks['K23']['detail']);
+    }
 }

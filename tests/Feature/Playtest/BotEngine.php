@@ -13,6 +13,7 @@ final class BotEngine
         return match ($profile->engine) {
             'legacy' => BotStrategy::default($profile),
             'utility' => UtilityStrategy::rules($profile),
+            default => throw new \InvalidArgumentException("No rule list for engine: {$profile->engine}"),
         };
     }
 }

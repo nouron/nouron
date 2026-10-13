@@ -20,4 +20,14 @@ class BotEngineTest extends TestCase
     {
         $this->assertSame(['utility'], array_column(BotEngine::rules(BotProfile::named('default')->withEngine('utility')), 'name'));
     }
+
+    public function test_an_engine_without_a_match_arm_fails_loudly(): void
+    {
+        $profile = (new \ReflectionClass(BotProfile::class))->newInstanceWithoutConstructor();
+        (new \ReflectionProperty(BotProfile::class, 'engine'))->setValue($profile, 'ghost');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('ghost');
+        BotEngine::rules($profile);
+    }
 }

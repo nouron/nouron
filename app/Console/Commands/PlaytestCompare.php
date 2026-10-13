@@ -11,9 +11,9 @@ use Throwable;
 
 /**
  * T30 step 0: paired comparison of PlaytestBot openings by the equivalence
- * criteria K1-K7 (spec 2026-10-05, section 2.1). Read-only: reads report
- * JSONs written by game:playtest ({profile}-{opening}-{seed}-{Ymd_His}.json),
- * takes the newest report per (profile, opening, seed) and prints KPI
+ * criteria K1-K7 (spec 2026-10-05, section 2.1) plus informational utility KPIs K18/K19/K20/K23. Read-only: reads report
+ * JSONs written by game:playtest ({profile}[.{engine}]-{opening}-{seed}-{Ymd_His}.json;
+ * the engine part is omitted for legacy), takes the newest report per (profile, engine, opening, seed) and prints KPI
  * medians/ranges, the per-seed deltas to `labor` and the threshold check.
  * KPI definitions: App\Support\OpeningComparison.
  *
@@ -29,7 +29,7 @@ class PlaytestCompare extends Command
         {--since= : Only reports written at/after this date/time (e.g. 2026-10-06 or "2026-10-06 14:00")}
         {--dir= : Report directory (default: storage/logs/playtest)}';
 
-    protected $description = 'Compare PlaytestBot openings (K1-K7, informational K11/K12/K16/K17, paired by seed) from existing report JSONs';
+    protected $description = 'Compare PlaytestBot openings (K1-K7, informational K11/K12/K16/K17/K18/K19/K20/K23, paired by seed) from existing report JSONs';
 
     /** Table labels for KPIs whose key is not just the upper-cased id. */
     private const KPI_LABELS = [
