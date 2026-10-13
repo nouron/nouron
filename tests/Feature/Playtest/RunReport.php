@@ -453,6 +453,34 @@ class RunReport
     }
 
     /**
+     * Spec 2.11: K18 (share of legacy decisions, %) and K20 (median successful
+     * decisions per Sol over Sols 0..sol-1). null for a legacy run (no decisions).
+     */
+    private static function utilitySummary(BotSession $bot): ?array
+    {
+        if ($bot->decisions === []) {
+            return null;
+        }
+
+        $n = count($bot->decisions);
+        $bySource = array_count_values(array_column($bot->decisions, 'source'));
+        $perSol = array_fill(0, max(1, $bot->sol), 0);
+        foreach ($bot->decisions as $d) {
+            if ($d['ok']) {
+                $perSol[$d['sol']] = ($perSol[$d['sol']] ?? 0) + 1;
+            }
+        }
+
+        return [
+            'decisions' => $n,
+            'legacy_share' => round(($bySource['legacy'] ?? 0) / $n * 100, 1),
+            'mandatory_share' => round(($bySource['mandatory'] ?? 0) / $n * 100, 1),
+            'utility_share' => round(($bySource['utility'] ?? 0) / $n * 100, 1),
+            'median_decisions_per_sol' => self::median(array_values($perSol)),
+        ];
+    }
+
+    /**
      * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
      *               actions:array, rejections:array, burnout:array, sols:array, log:array,
      *               project_metrics:array, regolith_path_attribution:array, zero_ap_sols:array}
@@ -548,6 +576,8 @@ class RunReport
             // Raw per-action log (sol/rule/ok/error) — dashboard event markers
             // read this directly, kept unaggregated unlike 'rejections' above.
             'log' => $bot->log,
+            'decisions' => $bot->decisions,
+            'utility_summary' => self::utilitySummary($bot),
             'project_metrics' => $this->projectMetrics(),
             'regolith_path_attribution' => $regolithPathAttribution,
             'zero_ap_sols' => [

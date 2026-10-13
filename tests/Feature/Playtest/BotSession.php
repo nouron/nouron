@@ -35,6 +35,9 @@ class BotSession
      */
     public array $blockedThisSol = [];
 
+    /** @var list<array> decision log of the utility engines (DecisionLog::entry()), empty for legacy */
+    public array $decisions = [];
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
 

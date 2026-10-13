@@ -54,6 +54,7 @@ final class Collector
     public function do(BotSession $b, Decision $d): array
     {
         $res = ($d->chosen->do)($b);
+        $b->decisions[] = DecisionLog::entry($b->sol, $d, (bool) $res['ok']);
         $this->cursorBand = $res['ok'] ? -1 : $d->chosen->band;
         $res['block'] = $d->chosen->name;
 
