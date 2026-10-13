@@ -17,6 +17,9 @@ final class BotProfile
 {
     public const OPENINGS = ['auto', 'labor', 'hangar', 'cantina'];
 
+    /** legacy = BotStrategy rule list; utility = UtilityStrategy (spec 4, both until S9). */
+    public const ENGINES = ['legacy', 'utility'];
+
     public function __construct(
         public readonly string $name = 'default',
         // 0.0 = today's behaviour (spend whenever affordable, no reserve
@@ -31,16 +34,26 @@ final class BotProfile
         // bot builds FIRST (labor = sciencelab 31, hangar 44, cantina 52). 'auto' keeps
         // today's behaviour (sciencelab-first by menu order). Only affects Sol 1-~15.
         public readonly string $opening = 'auto',
+        // Which decision engine plays (spec 4): legacy rule list or utility selector.
+        public readonly string $engine = 'legacy',
     ) {
         if (! in_array($opening, self::OPENINGS, true)) {
             throw new \InvalidArgumentException("Unknown bot opening: {$opening}");
         }
+        if (! in_array($engine, self::ENGINES, true)) {
+            throw new \InvalidArgumentException("Unknown bot engine: {$engine}");
+        }
     }
 
-    /** NOTE: when adding a new dial to the constructor, copy it here too. */
+    /** NOTE: when adding a new dial to the constructor, copy it here and in withEngine() too. */
     public function withOpening(string $opening): self
     {
-        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $opening);
+        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $opening, $this->engine);
+    }
+
+    public function withEngine(string $engine): self
+    {
+        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $this->opening, $engine);
     }
 
     public static function named(string $name): self

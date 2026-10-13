@@ -203,4 +203,35 @@ class PlaytestCompareTest extends TestCase
             ->expectsOutputToContain('truncated before Sol 21')
             ->assertExitCode(0);
     }
+
+    public function test_engine_option_reads_only_that_engines_reports(): void
+    {
+        foreach (['labor' => 16, 'hangar' => 17] as $opening => $p2) {
+            $this->writeReport('default', $opening, 1, '20261012_120000', 40);
+            $this->writeReport('default.utility', $opening, 1, '20261012_120000', $p2);
+        }
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir, '--openings' => 'labor,hangar', '--engine' => 'utility']);
+
+        $this->assertMatchesRegularExpression('/K3\s*\|\s*ok\s*\|\s*labor median 16; hangar median 17/', Artisan::output());
+    }
+
+    public function test_invalid_engine_aborts(): void
+    {
+        $this->artisan('game:playtest-compare', ['--dir' => $this->dir, '--engine' => 'magic'])
+            ->expectsOutputToContain('Unknown engine: magic')
+            ->assertExitCode(1);
+    }
+
+    public function test_prints_k19_and_k23_rows(): void
+    {
+        $this->writeBatch();
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir]);
+        $out = Artisan::output();
+
+        $this->assertStringContainsString('K19 Pfad-Lv2 Sol', $out);
+        $this->assertStringContainsString('K23 CC-Lv4 Sol', $out);
+        $this->assertMatchesRegularExpression('/K19\s*\|\s*info\s*\|/', $out);
+    }
 }

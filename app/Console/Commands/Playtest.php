@@ -9,6 +9,7 @@ use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 use Tests\Feature\Playtest\BotProfile;
+use Tests\Feature\Playtest\RunReport;
 
 /**
  * Playtest — orchestrates the PlaytestBot (tests/Feature/Playtest/) across
@@ -50,6 +51,7 @@ class Playtest extends Command
     protected $signature = 'game:playtest
         {--profiles=default : Comma-separated BotProfile names}
         {--openings=auto : Comma-separated openings (auto, labor, hangar, cantina)}
+        {--engine=legacy : Bot engine (see BotProfile::ENGINES)}
         {--until-sol= : Stop each run at the start of Sol N (5-100, use >= 21 so K3/K5/K6 are meaningful) for short Phase-1 measurement runs; default: play the whole run}
         {--seeds=4242 : Comma-separated integer seeds}
         {--concurrency=10 : How many profile×opening×seed combos to run at once}';
@@ -68,6 +70,13 @@ class Playtest extends Command
         $unknown = array_diff($openings, BotProfile::OPENINGS);
         if ($openings === [] || $unknown !== []) {
             $this->error('Unknown opening(s): '.implode(', ', $unknown ?: ['(none)']).'. Allowed: '.implode(', ', BotProfile::OPENINGS));
+
+            return self::FAILURE;
+        }
+
+        $engine = (string) $this->option('engine');
+        if (! in_array($engine, BotProfile::ENGINES, true)) {
+            $this->error('Unknown engine: '.$engine.'. Allowed: '.implode(', ', BotProfile::ENGINES));
 
             return self::FAILURE;
         }
@@ -107,7 +116,7 @@ class Playtest extends Command
         $rows = [];
 
         foreach (array_chunk($combos, $concurrency) as $batch) {
-            $labels = collect($batch)->map(fn ($c) => "{$c[0]}/{$c[1]}={$c[2]}")->implode(', ');
+            $labels = collect($batch)->map(fn ($c) => RunReport::filePrefix($c[0], $engine)."/{$c[1]}={$c[2]}")->implode(', ');
             $this->line('Running batch: '.$labels);
 
             // Started one by one (not via Process::pool) so a child that exceeds the
@@ -126,6 +135,7 @@ class Playtest extends Command
                 $running["{$profile}-{$opening}-{$seed}"] = Process::env(array_filter([
                     'PLAYTEST_PROFILE' => $profile,
                     'PLAYTEST_OPENING' => $opening,
+                    'PLAYTEST_ENGINE' => $engine,
                     'PLAYTEST_SEED' => $seed,
                     'PLAYTEST_UNTIL_SOL' => $untilSol === null ? null : (string) (int) $untilSol,
                     'APP_ENV' => 'testing',
@@ -173,14 +183,14 @@ class Playtest extends Command
                     continue;
                 }
 
-                $report = $this->latestReportFor($profile, $opening, $seed);
+                $report = $this->latestReportFor($profile, $opening, $seed, $engine);
                 if ($report === null) {
                     $this->error("profile={$profile} opening={$opening} seed={$seed}: no report file found after run");
 
                     continue;
                 }
 
-                $rows[] = $this->summarize($profile, $opening, $seed, $report);
+                $rows[] = $this->summarize(RunReport::filePrefix($profile, $engine), $opening, $seed, $report);
             }
         }
 
@@ -202,9 +212,9 @@ class Playtest extends Command
             : $output;
     }
 
-    private function latestReportFor(string $profile, string $opening, string $seed): ?array
+    private function latestReportFor(string $profile, string $opening, string $seed, string $engine = 'legacy'): ?array
     {
-        $pattern = storage_path("logs/playtest/{$profile}-{$opening}-{$seed}-*.json");
+        $pattern = storage_path('logs/playtest/'.RunReport::filePrefix($profile, $engine)."-{$opening}-{$seed}-*.json");
         $matches = glob($pattern) ?: [];
         if ($matches === []) {
             return null;

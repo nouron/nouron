@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-13
+
+- Feat: PlaytestBot Utility-Modell S0+S1 — Selektor mit Legacy-Adapter (Golden-Test: gleiche Aktionsfolge wie Legacy), `game:playtest --engine=legacy|utility`, Entscheidungslog im Report, Kennzahlen K18/K19/K20/K23 in `game:playtest-compare`. Legacy-Verhalten unverändert.
+
 ## 2026-10-12
 
 - Feat: T30 Schritt 3 (Spec §13) — Hangar ist eine Halle (Stufe = Schiffsklasse und Buchten, Vorfeld mit Geschenk-Drohne); gescannte Funde holt mit Hangar der Bergungsflug (x1,5, kein Wurf), ohne Hangar die Kolonie selbst, begonnene Bergungen laufen zu Ende. Prospektion und Signalvermessung gestrichen, Versorgungsfahrt ohne Regolith. Rückkehr-Garantie statt 25-%-Startsperre, Schiffsreparatur nur AP (`game.ship_repair`). Bot `dispatch_find_flight`/`repair_ship_for_flight`, Report K12/K16/K17. Baseline geändert (`bay` statt `hangar_instance_id`): Dev-DB mit `php artisan db:reset --force` neu aufbauen. Messung steht aus.

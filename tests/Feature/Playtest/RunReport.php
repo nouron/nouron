@@ -47,7 +47,13 @@ class RunReport
         'request_ship' => 'action',
     ];
 
-    public function __construct(private readonly int $seed, private readonly string $profile = 'default', private readonly string $opening = 'auto') {}
+    public function __construct(private readonly int $seed, private readonly string $profile = 'default', private readonly string $opening = 'auto', private readonly string $engine = 'legacy') {}
+
+    /** Report file prefix: legacy keeps the historic `{profile}` name, other engines `{profile}.{engine}`. */
+    public static function filePrefix(string $profile, string $engine): string
+    {
+        return $engine === 'legacy' ? $profile : "{$profile}.{$engine}";
+    }
 
     /**
      * Sums ap_before-ap_after for this Sol's log entries, grouped by
@@ -447,6 +453,34 @@ class RunReport
     }
 
     /**
+     * Spec 2.11: K18 (share of legacy decisions, %) and K20 (median successful
+     * decisions per Sol over Sols 0..sol-1). null for a legacy run (no decisions).
+     */
+    private static function utilitySummary(BotSession $bot): ?array
+    {
+        if ($bot->decisions === []) {
+            return null;
+        }
+
+        $n = count($bot->decisions);
+        $bySource = array_count_values(array_column($bot->decisions, 'source'));
+        $perSol = array_fill(0, max(1, $bot->sol), 0);
+        foreach ($bot->decisions as $d) {
+            if ($d['ok']) {
+                $perSol[$d['sol']] = ($perSol[$d['sol']] ?? 0) + 1;
+            }
+        }
+
+        return [
+            'decisions' => $n,
+            'legacy_share' => round(($bySource['legacy'] ?? 0) / $n * 100, 1),
+            'mandatory_share' => round(($bySource['mandatory'] ?? 0) / $n * 100, 1),
+            'utility_share' => round(($bySource['utility'] ?? 0) / $n * 100, 1),
+            'median_decisions_per_sol' => self::median(array_values($perSol)),
+        ];
+    }
+
+    /**
      * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
      *               actions:array, rejections:array, burnout:array, sols:array, log:array,
      *               project_metrics:array, regolith_path_attribution:array, zero_ap_sols:array}
@@ -512,6 +546,7 @@ class RunReport
             'seed' => $this->seed,
             'profile' => $this->profile,
             'opening' => $this->opening,
+            'engine' => $this->engine,
             // Only set when the bot stopped at --until-sol N with the run still active.
             ...($truncatedAtSol !== null ? ['truncated_at_sol' => $truncatedAtSol] : []),
             'outcome' => [
@@ -541,6 +576,8 @@ class RunReport
             // Raw per-action log (sol/rule/ok/error) — dashboard event markers
             // read this directly, kept unaggregated unlike 'rejections' above.
             'log' => $bot->log,
+            'decisions' => $bot->decisions,
+            'utility_summary' => self::utilitySummary($bot),
             'project_metrics' => $this->projectMetrics(),
             'regolith_path_attribution' => $regolithPathAttribution,
             'zero_ap_sols' => [
@@ -557,7 +594,7 @@ class RunReport
             mkdir($dir, 0755, true);
         }
 
-        $path = "{$dir}/{$this->profile}-{$this->opening}-{$this->seed}-".now()->format('Ymd_His').'.json';
+        $path = "{$dir}/".self::filePrefix($this->profile, $this->engine)."-{$this->opening}-{$this->seed}-".now()->format('Ymd_His').'.json';
         file_put_contents($path, json_encode($report, JSON_PRETTY_PRINT));
 
         return $path;
@@ -566,10 +603,11 @@ class RunReport
     public function printTable(array $report): void
     {
         fwrite(STDERR, sprintf(
-            "\n[playtest] seed=%d profile=%s opening=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
+            "\n[playtest] seed=%d profile=%s opening=%s engine=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d nexus_debt_final=%d\n",
             $report['seed'],
             $report['profile'],
             $report['opening'] ?? 'auto',
+            $report['engine'] ?? 'legacy',
             $report['outcome']['status'],
             $report['outcome']['fail_reason'] ?? '-',
             $report['outcome']['sols'],

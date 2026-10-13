@@ -27,6 +27,17 @@ class BotSession
     /** @var array<int, array{sol:int, rule:string, url:string, status:int, ok:bool, error:?string, ap_before:int, ap_after:int, regolith_before:int, regolith_after:int, organics_before:int, organics_after:int}> */
     public array $log = [];
 
+    /**
+     * Names blocked for the rest of the current Sol (PlaysSolLoop, spec 3.3) —
+     * mirrored here so the utility selector can skip them. Reset every Sol.
+     *
+     * @var list<string>
+     */
+    public array $blockedThisSol = [];
+
+    /** @var list<array> decision log of the utility engines (DecisionLog::entry()), empty for legacy */
+    public array $decisions = [];
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
 
@@ -167,6 +178,9 @@ class BotSession
             'regolith_after' => $regolithAfter,
             'organics_before' => $organicsBefore,
             'organics_after' => $organicsAfter,
+            // Fingerprint of the request body (the URL alone does not say which
+            // building/tile was targeted) — compared by AdapterGoldenTest.
+            'payload_hash' => md5((string) json_encode($payload)),
         ];
 
         return $norm;

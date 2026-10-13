@@ -46,8 +46,8 @@ class PlaytestBotTest extends TestCase
         $seed = self::resolveSeed();
         $profile = self::resolveProfile();
         $bot = BotSession::boot($this, $seed);
-        $rules = BotStrategy::default($profile);
-        $report = new RunReport($seed, $profile->name, $profile->opening);
+        $rules = BotEngine::rules($profile);
+        $report = new RunReport($seed, $profile->name, $profile->opening, $profile->engine);
 
         // --until-sol N (env PLAYTEST_UNTIL_SOL): stop at the start of Sol N for short
         // Phase-1 measurement runs; none = play the whole run as before.
@@ -98,6 +98,7 @@ class PlaytestBotTest extends TestCase
         putenv('PLAYTEST_PROFILE=thrifty');
         putenv('PLAYTEST_OPENING=cantina');
         putenv('PLAYTEST_UNTIL_SOL=20');
+        putenv('PLAYTEST_ENGINE=utility');
 
         try {
             $seed = self::resolveSeed();
@@ -107,12 +108,14 @@ class PlaytestBotTest extends TestCase
             $this->assertSame('thrifty', $profile->name);
             $this->assertSame(1.0, $profile->savingsAggressiveness);
             $this->assertSame('cantina', $profile->opening);
+            $this->assertSame('utility', $profile->engine);
             $this->assertSame(20, self::resolveUntilSol());
         } finally {
             putenv('PLAYTEST_SEED');
             putenv('PLAYTEST_PROFILE');
             putenv('PLAYTEST_OPENING');
             putenv('PLAYTEST_UNTIL_SOL');
+            putenv('PLAYTEST_ENGINE');
         }
         $this->assertNull(self::resolveUntilSol());
     }
@@ -190,6 +193,7 @@ class PlaytestBotTest extends TestCase
     private static function resolveProfile(): BotProfile
     {
         return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default')
-            ->withOpening(getenv('PLAYTEST_OPENING') ?: 'auto');
+            ->withOpening(getenv('PLAYTEST_OPENING') ?: 'auto')
+            ->withEngine(getenv('PLAYTEST_ENGINE') ?: 'legacy');
     }
 }
