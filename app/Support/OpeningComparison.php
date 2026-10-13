@@ -77,6 +77,13 @@ namespace App\Support;
  *    (needs_level/needs_freighter) on a colony-zone tile (find_waits.zone_blocked).
  *  - ship_repair_4_12 / ship_repair_25 (information next to K4): AP spent by
  *    repair_ship_for_flight in Sols 4-12 / Sols 1-24 (ap.ship_repair_spent).
+ *  - K18 (informational, utility engines): utility_summary.legacy_share (% of
+ *    decisions taken by a legacy source); null for legacy reports.
+ *  - K19 (informational): first snapshot Sol with the opening's path building at
+ *    level >= 2 (k19_lv2) / >= 3 (k19_lv3); k19_lv1_sols = k19_lv2 - Lv1 Sol.
+ *    Target (T30 §14): Lv2 <= Sol 9 (warn > 12), Lv3 <= Sol 30. null if never.
+ *  - K20 (informational): utility_summary.median_decisions_per_sol; null for legacy.
+ *  - K23 (informational): first snapshot Sol with cc_level >= 4; target <= 25, warn > 30.
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs count (status completed|failed, or a run
@@ -177,7 +184,7 @@ class OpeningComparison
     }
 
     /**
-     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k12: ?float, k16_needs_level: int, k16_needs_freighter: int, k16_ship_busy: int, k16_no_ship_ready: int, k17: int, ship_repair_4_12: int, ship_repair_25: int, k7: ?array{won: bool, sols: int}}
+     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k12: ?float, k16_needs_level: int, k16_needs_freighter: int, k16_ship_busy: int, k16_no_ship_ready: int, k17: int, k18: ?float, k19_lv2: ?int, k19_lv3: ?int, k19_lv1_sols: ?int, k20: ?float, k23: ?int, ship_repair_4_12: int, ship_repair_25: int, k7: ?array{won: bool, sols: int}}
      */
     public static function metrics(array $report): array
     {
@@ -263,6 +270,10 @@ class OpeningComparison
         $flightBefore = fn (int $sol): ?int => $sumBefore($sol, ['find_flight']);
         $k11_25 = $findBefore(25);
 
+        $pathId = $path !== null ? self::PATH_BUILDINGS[$path] : null;
+        $k19lv2 = $pathId !== null ? self::levelSol($pathId, $sols, 2) : null;
+        $summary = $report['utility_summary'] ?? null;
+
         $p2 = $report['phase2_start_sol'] ?? null;
 
         return [
@@ -280,6 +291,12 @@ class OpeningComparison
             'k16_ship_busy' => self::solsWith($sols, 'ship_busy'),
             'k16_no_ship_ready' => self::solsWith($sols, 'no_ship_ready'),
             'k17' => self::solsWith($sols, 'zone_blocked'),
+            'k18' => isset($summary['legacy_share']) ? (float) $summary['legacy_share'] : null,
+            'k19_lv2' => $k19lv2,
+            'k19_lv3' => $pathId !== null ? self::levelSol($pathId, $sols, 3) : null,
+            'k19_lv1_sols' => $k19lv2 !== null && $lv1Sol !== null ? $k19lv2 - $lv1Sol : null,
+            'k20' => isset($summary['median_decisions_per_sol']) ? (float) $summary['median_decisions_per_sol'] : null,
+            'k23' => self::ccLevelSol($sols, 4),
             // §13.8 information next to K4: repair AP spent (Sol 4-12 / Sols 1-24).
             'ship_repair_4_12' => array_sum(array_map(fn ($s) => $s['sol'] >= 4 && $s['sol'] <= 12 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
             'ship_repair_25' => array_sum(array_map(fn ($s) => $s['sol'] < 25 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
@@ -294,6 +311,32 @@ class OpeningComparison
     private static function solsWith(array $sols, string $reason): int
     {
         return count(array_filter($sols, fn ($s) => (int) ($s['find_waits'][$reason] ?? 0) > 0));
+    }
+
+    /** First snapshot Sol in which $buildingId has at least $level, or null. */
+    private static function levelSol(int $buildingId, array $sols, int $level): ?int
+    {
+        foreach ($sols as $snapshot) {
+            foreach ($snapshot['buildings'] ?? [] as $key => $building) {
+                if ((int) explode(':', (string) $key)[0] === $buildingId && (int) $building['level'] >= $level) {
+                    return (int) $snapshot['sol'];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** First snapshot Sol with cc_level >= $level, or null. */
+    private static function ccLevelSol(array $sols, int $level): ?int
+    {
+        foreach ($sols as $snapshot) {
+            if ((int) ($snapshot['cc_level'] ?? 0) >= $level) {
+                return (int) $snapshot['sol'];
+            }
+        }
+
+        return null;
     }
 
     /** "never" is only honest for full runs; a truncated run just did not get there before the cutoff. */
@@ -346,7 +389,7 @@ class OpeningComparison
 
         $hasReference = in_array(self::REFERENCE, $this->openings, true);
         $kpis = [];
-        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'ship_repair_4_12', 'ship_repair_25'] as $k) {
+        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'k18', 'k19_lv2', 'k19_lv3', 'k19_lv1_sols', 'k20', 'k23', 'ship_repair_4_12', 'ship_repair_25'] as $k) {
             foreach ($this->openings as $opening) {
                 $values = array_map(fn ($m) => $m[$k], $metrics[$opening] ?? []);
                 $stats = self::stats(array_values(array_filter($values, fn ($v) => $v !== null)));
@@ -412,7 +455,7 @@ class OpeningComparison
     {
         $na = fn (string $why) => ['status' => 'n/a', 'detail' => $why];
         if ($paired === []) {
-            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'REP'], $na('no paired seeds'));
+            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'K18', 'K19', 'K20', 'K23', 'REP'], $na('no paired seeds'));
         }
 
         $perOpeningMax = function (string $k, int $max) use ($kpis, $k7): array {
@@ -523,6 +566,16 @@ class OpeningComparison
                     array_keys($kpis['k17']), $kpis['k17'],
                 )).' (warn: > 0 in more than 2 of 8 runs)',
             ],
+            'K18' => $info('Legacy share of decisions %, median', $kpis['k18'], 'informational; <= 5 after S8'),
+            'K19' => [
+                'status' => 'info',
+                'detail' => 'Own path building Lv2 / Lv3 Sol, median: '.implode('; ', array_map(
+                    fn ($o) => "{$o} ".self::fmt($kpis['k19_lv2'][$o]['median']).' / '.self::fmt($kpis['k19_lv3'][$o]['median']),
+                    array_keys($kpis['k19_lv2']),
+                )).' (target Lv2 <= 9, warn > 12; Lv3 <= 30)',
+            ],
+            'K20' => $info('Decisions per Sol, median', $kpis['k20'], 'informational'),
+            'K23' => $info('Sol of CC Lv4, median', $kpis['k23'], 'target <= 25, warn > 30'),
             'REP' => $info('Ship repair AP Sol 4-12, median', $kpis['ship_repair_4_12'], 'information next to K4'),
         ];
     }

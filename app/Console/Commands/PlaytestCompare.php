@@ -6,6 +6,7 @@ use App\Support\OpeningComparison;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Tests\Feature\Playtest\BotProfile;
+use Tests\Feature\Playtest\RunReport;
 use Throwable;
 
 /**
@@ -23,6 +24,7 @@ class PlaytestCompare extends Command
     protected $signature = 'game:playtest-compare
         {--profile=default : BotProfile name of the reports to compare}
         {--openings=labor,hangar,cantina : Comma-separated openings (auto, labor, hangar, cantina)}
+        {--engine=legacy : Engine of the reports (see BotProfile::ENGINES)}
         {--seeds= : Comma-separated seeds (default: all found)}
         {--since= : Only reports written at/after this date/time (e.g. 2026-10-06 or "2026-10-06 14:00")}
         {--dir= : Report directory (default: storage/logs/playtest)}';
@@ -39,6 +41,12 @@ class PlaytestCompare extends Command
         'k16_ship_busy' => 'K16 Warten Schiff unterwegs',
         'k16_no_ship_ready' => 'K16 Warten kein Schiff bereit',
         'k17' => 'K17 Zonen-Blockade',
+        'k18' => 'K18 Legacy-Anteil %',
+        'k19_lv2' => 'K19 Pfad-Lv2 Sol',
+        'k19_lv3' => 'K19 Pfad-Lv3 Sol',
+        'k19_lv1_sols' => 'K19 Sole auf Lv1',
+        'k20' => 'K20 Entscheidungen/Sol',
+        'k23' => 'K23 CC-Lv4 Sol',
         'ship_repair_4_12' => 'Reparatur-AP Sol 4-12',
         'ship_repair_25' => 'Reparatur-AP bis Sol 25',
     ];
@@ -49,6 +57,13 @@ class PlaytestCompare extends Command
         $unknown = array_diff($openings, BotProfile::OPENINGS);
         if ($openings === [] || $unknown !== []) {
             $this->error('Unknown opening(s): '.implode(', ', $unknown ?: ['(none)']).'. Allowed: '.implode(', ', BotProfile::OPENINGS));
+
+            return self::FAILURE;
+        }
+
+        $engine = (string) $this->option('engine');
+        if (! in_array($engine, BotProfile::ENGINES, true)) {
+            $this->error('Unknown engine: '.$engine.'. Allowed: '.implode(', ', BotProfile::ENGINES));
 
             return self::FAILURE;
         }
@@ -66,16 +81,17 @@ class PlaytestCompare extends Command
 
         $seeds = array_values(array_filter(array_map('trim', explode(',', (string) $this->option('seeds'))), fn ($s) => $s !== ''));
         $profile = (string) $this->option('profile');
+        $prefix = RunReport::filePrefix($profile, $engine);
         $dir = rtrim((string) ($this->option('dir') ?: storage_path('logs/playtest')), '/');
 
         $reports = [];
         foreach ($openings as $opening) {
             // Filenames sort chronologically by their Ymd_His suffix; later entries overwrite earlier ones.
-            $files = glob("{$dir}/{$profile}-{$opening}-*-*.json") ?: [];
+            $files = glob("{$dir}/{$prefix}-{$opening}-*-*.json") ?: [];
             sort($files);
             $newest = [];
             foreach ($files as $file) {
-                if (! preg_match('/^'.preg_quote("{$profile}-{$opening}-", '/').'(\d+)-(\d{8}_\d{6})\.json$/', basename($file), $m)) {
+                if (! preg_match('/^'.preg_quote("{$prefix}-{$opening}-", '/').'(\d+)-(\d{8}_\d{6})\.json$/', basename($file), $m)) {
                     continue;
                 }
                 if (($seeds !== [] && ! in_array($m[1], $seeds, true)) || ($since !== null && $m[2] < $since)) {
@@ -93,7 +109,7 @@ class PlaytestCompare extends Command
 
         $result = OpeningComparison::fromReports($reports, $openings)->compare();
 
-        $this->info("Profile: {$profile} — openings: ".implode(', ', $openings).' — reference: '.$result['reference']);
+        $this->info("Profile: {$profile} — engine: {$engine} — openings: ".implode(', ', $openings).' — reference: '.$result['reference']);
         $tooShort = count(array_filter($reports, fn ($r) => isset($r['truncated_at_sol']) && $r['truncated_at_sol'] < OpeningComparison::MIN_MEANINGFUL_TRUNCATION));
         if ($tooShort > 0) {
             $this->warn("Warning: {$tooShort} run(s) truncated before Sol ".OpeningComparison::MIN_MEANINGFUL_TRUNCATION.' — K3/K5/K6 are not meaningful for them.');
