@@ -83,6 +83,9 @@ namespace App\Support;
  *    level >= 2 (k19_lv2) / >= 3 (k19_lv3); k19_lv1_sols = k19_lv2 - Lv1 Sol.
  *    Target (T30 §14): Lv2 <= Sol 9 (warn > 12), Lv3 <= Sol 30. null if never.
  *  - K20 (informational): utility_summary.median_decisions_per_sol; null for legacy.
+ *  - K21 (informational, utility/shadow): mean λ_AP (utility_summary.lambda_ap) over Sols 4-12 / 13-25.
+ *  - K22 (informational, shadow engine): utility_summary.shadow_divergence (% of scored decisions a band-faithful S3 utility
+ *    engine would change; the cross-band shadow_free_divergence is report-only).
  *  - K23 (informational): first snapshot Sol with cc_level >= 4; target <= 25, warn > 30.
  *    K19/K23 do not distinguish "never reached" from "run cut off by --until-sol"
  *    (both null); the detail line labels the missing runs via neverLabel (info-only).
@@ -186,7 +189,7 @@ class OpeningComparison
     }
 
     /**
-     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k12: ?float, k16_needs_level: int, k16_needs_freighter: int, k16_ship_busy: int, k16_no_ship_ready: int, k17: int, k18: ?float, k19_lv2: ?int, k19_lv3: ?int, k19_lv1_sols: ?int, k20: ?float, k23: ?int, ship_repair_4_12: int, ship_repair_25: int, k7: ?array{won: bool, sols: int}}
+     * @return array{k1: ?int, k2: ?int, k3: ?int, k4: float, k5: int, k6: ?int, k11_10: ?int, k11_25: ?int, k12: ?float, k16_needs_level: int, k16_needs_freighter: int, k16_ship_busy: int, k16_no_ship_ready: int, k17: int, k18: ?float, k19_lv2: ?int, k19_lv3: ?int, k19_lv1_sols: ?int, k20: ?float, k21_4_12: ?float, k21_13_25: ?float, k22: ?float, k23: ?int, ship_repair_4_12: int, ship_repair_25: int, k7: ?array{won: bool, sols: int}}
      */
     public static function metrics(array $report): array
     {
@@ -275,6 +278,12 @@ class OpeningComparison
         $pathId = $path !== null ? self::PATH_BUILDINGS[$path] : null;
         $k19lv2 = $pathId !== null ? self::levelSol($pathId, $sols, 2) : null;
         $summary = $report['utility_summary'] ?? null;
+        $lambda = $summary['lambda_ap'] ?? [];
+        $lambdaMean = function (int $from, int $to) use ($lambda): ?float {
+            $values = array_values(array_filter($lambda, fn ($v, $sol) => (int) $sol >= $from && (int) $sol <= $to, ARRAY_FILTER_USE_BOTH));
+
+            return $values === [] ? null : array_sum($values) / count($values);
+        };
 
         $p2 = $report['phase2_start_sol'] ?? null;
 
@@ -298,6 +307,9 @@ class OpeningComparison
             'k19_lv3' => $pathId !== null ? self::levelSol($pathId, $sols, 3) : null,
             'k19_lv1_sols' => $k19lv2 !== null && $lv1Sol !== null ? $k19lv2 - $lv1Sol : null,
             'k20' => isset($summary['median_decisions_per_sol']) ? (float) $summary['median_decisions_per_sol'] : null,
+            'k21_4_12' => $lambdaMean(4, 12),
+            'k21_13_25' => $lambdaMean(13, 25),
+            'k22' => isset($summary['shadow_divergence']) ? (float) $summary['shadow_divergence'] : null,
             'k23' => self::ccLevelSol($sols, 4),
             // §13.8 information next to K4: repair AP spent (Sol 4-12 / Sols 1-24).
             'ship_repair_4_12' => array_sum(array_map(fn ($s) => $s['sol'] >= 4 && $s['sol'] <= 12 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
@@ -408,7 +420,7 @@ class OpeningComparison
 
         $hasReference = in_array(self::REFERENCE, $this->openings, true);
         $kpis = [];
-        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'k18', 'k19_lv2', 'k19_lv3', 'k19_lv1_sols', 'k20', 'k23', 'ship_repair_4_12', 'ship_repair_25'] as $k) {
+        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'k18', 'k19_lv2', 'k19_lv3', 'k19_lv1_sols', 'k20', 'k21_4_12', 'k21_13_25', 'k22', 'k23', 'ship_repair_4_12', 'ship_repair_25'] as $k) {
             foreach ($this->openings as $opening) {
                 $values = array_map(fn ($m) => $m[$k], $metrics[$opening] ?? []);
                 $stats = self::stats(array_values(array_filter($values, fn ($v) => $v !== null)));
@@ -474,7 +486,7 @@ class OpeningComparison
     {
         $na = fn (string $why) => ['status' => 'n/a', 'detail' => $why];
         if ($paired === []) {
-            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'K18', 'K19', 'K20', 'K23', 'REP'], $na('no paired seeds'));
+            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'K18', 'K19', 'K20', 'K21', 'K22', 'K23', 'REP'], $na('no paired seeds'));
         }
 
         $perOpeningMax = function (string $k, int $max) use ($kpis, $k7): array {
@@ -595,6 +607,14 @@ class OpeningComparison
                 )).' (target Lv2 <= 9, warn > 12; Lv3 <= 30)',
             ],
             'K20' => $info('Decisions per Sol, median', $kpis['k20'], 'informational'),
+            'K21' => [
+                'status' => 'info',
+                'detail' => 'lambda_AP Sol 4-12 / 13-25, median of run means: '.implode('; ', array_map(
+                    fn ($o, $s) => "{$o} ".self::fmt($s['median']).' / '.self::fmt($kpis['k21_13_25'][$o]['median']),
+                    array_keys($kpis['k21_4_12']), $kpis['k21_4_12'],
+                )).' (informational)',
+            ],
+            'K22' => $info('Shadow divergence % (band-faithful), median', $kpis['k22'], 'informational, S2'),
             'K23' => [
                 'status' => 'info',
                 'detail' => 'Sol of CC Lv4, median: '.implode('; ', array_map(

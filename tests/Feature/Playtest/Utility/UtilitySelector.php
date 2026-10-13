@@ -72,6 +72,73 @@ final class UtilitySelector
             : new Decision($decision->chosen, $decision->candidatesN, $decision->alternatives, $collected);
     }
 
+    /**
+     * What the S3 utility engine would pick (spec S2 shadow, §9 Präzisierungen):
+     * band first, the score decides only within a band — exactly select(). null
+     * when no candidate is scored at all (the utility has no opinion).
+     *
+     * @param  list<Candidate>  $candidates
+     * @param  list<string>  $blocked
+     */
+    public static function shadowPick(array $candidates, array $blocked, float $minNet, int $minBand = -1): ?Candidate
+    {
+        if (! self::anyScored($candidates)) {
+            return null;
+        }
+
+        return self::select(array_values(array_filter($candidates, fn (Candidate $c): bool => $c->band >= $minBand)), $blocked, $minNet)?->chosen;
+    }
+
+    /**
+     * Cross-band pick (informational only, not K22): a mandatory candidate if
+     * any (by band), else the best milli-score across all bands; null when no
+     * candidate is scored.
+     *
+     * @param  list<Candidate>  $candidates
+     * @param  list<string>  $blocked
+     */
+    public static function freePick(array $candidates, array $blocked, float $minNet, int $minBand = -1): ?Candidate
+    {
+        $eligible = array_values(array_filter($candidates, fn (Candidate $c): bool => $c->band >= $minBand && self::eligible($c, $blocked, $minNet)));
+
+        $mandatory = array_values(array_filter($eligible, fn (Candidate $c): bool => $c->mandatory));
+        if ($mandatory !== []) {
+            usort($mandatory, [self::class, 'compare']);
+
+            return $mandatory[0];
+        }
+
+        return self::shadowTop3($candidates, $blocked, $minNet, $minBand)[0] ?? null;
+    }
+
+    /**
+     * The best three scored, eligible candidates by milli-score across all bands
+     * (spec S2: read the top 3 per Sol, check whether one term dominates).
+     *
+     * @param  list<Candidate>  $candidates
+     * @param  list<string>  $blocked
+     * @return list<Candidate>
+     */
+    public static function shadowTop3(array $candidates, array $blocked, float $minNet, int $minBand = -1): array
+    {
+        $scored = array_values(array_filter($candidates, fn (Candidate $c): bool => $c->isScored() && $c->band >= $minBand && self::eligible($c, $blocked, $minNet)));
+        usort($scored, fn (Candidate $x, Candidate $y): int => [-$x->milliScore(), $x->name, $x->key] <=> [-$y->milliScore(), $y->name, $y->key]);
+
+        return array_slice($scored, 0, 3);
+    }
+
+    /** @param list<Candidate> $candidates */
+    private static function anyScored(array $candidates): bool
+    {
+        foreach ($candidates as $c) {
+            if ($c->isScored()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** @param list<string> $blocked */
     private static function eligible(Candidate $c, array $blocked, float $minNet): bool
     {

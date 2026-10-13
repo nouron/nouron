@@ -231,7 +231,7 @@ Damit verschwinden `cheapestPendingPathBuildingCost()`, `ccResearchReserve()` un
 | K19 | Stufen-Sole je Pfadgebäude: Sole auf Stufe 1, Sol von Stufe 2, Sol von Stufe 3 | `sols[].buildings` |
 | K20 | Entscheidungen je Sol (Median) und Anteil Sole mit mindestens einem verworfenen Kandidaten mit `Net > 0` (= AP-Mangel statt Leerlauf) | `decisions` |
 | K21 | Grenzdichte λ_AP im Verlauf (Sol 4–12, 13–25) | `decisions` |
-| K22 | Abweichungsquote im Schattenmodus: Anteil Entscheidungen, bei denen Utility anders gewählt hätte als Legacy | nur Schritt S2 |
+| K22 | Abweichungsquote im Schattenmodus: Anteil Entscheidungen, bei denen eine bandtreue Utility (wie S3: Band zuerst, Score nur innerhalb eines Bands) anders gewählt hätte als Legacy. Bandübergreifende Wahl nur informativ (`shadow_free_divergence`) | nur Schritt S2 |
 
 ---
 

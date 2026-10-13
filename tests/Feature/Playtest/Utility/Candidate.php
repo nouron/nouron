@@ -33,9 +33,19 @@ final readonly class Candidate
         return $this->net !== null;
     }
 
+    /** The same candidate, scored by $e (shadow mode). */
+    public function withEstimate(Estimate $e): self
+    {
+        return new self($this->name, $this->key, $this->band, $e->net(), $e->apCost, $this->do, $e->terms, $this->mandatory, $this->payload, $e->regolithCost);
+    }
+
     /** Utility per AP in milli-Rg-equivalents (spec 2.10); 0 for unscored candidates. */
     public function milliScore(): int
     {
-        return $this->net === null ? 0 : (int) round($this->net / max(1, $this->apCost) * 1000);
+        if ($this->net === null || ! is_finite($this->net)) {
+            return 0;
+        }
+
+        return (int) max(-PHP_INT_MAX / 2, min(PHP_INT_MAX / 2, round($this->net / max(1, $this->apCost) * 1000)));
     }
 }

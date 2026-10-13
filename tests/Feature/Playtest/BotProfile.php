@@ -18,7 +18,7 @@ final class BotProfile
     public const OPENINGS = ['auto', 'labor', 'hangar', 'cantina'];
 
     /** legacy = BotStrategy rule list; utility = UtilityStrategy (spec 4, both until S9). */
-    public const ENGINES = ['legacy', 'utility'];
+    public const ENGINES = ['legacy', 'utility', 'shadow'];
 
     public function __construct(
         public readonly string $name = 'default',
@@ -54,6 +54,27 @@ final class BotProfile
     public function withEngine(string $engine): self
     {
         return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $this->opening, $engine);
+    }
+
+    /**
+     * Utility weights (spec 2.9): base set from Utility/weights.php, explicit
+     * profile overrides, then what the dials and the opening derive.
+     *
+     * @return array<string, mixed>
+     */
+    public function weights(): array
+    {
+        $file = require __DIR__.'/Utility/weights.php';
+        $w = array_replace_recursive($file['base'], $file['profiles'][$this->name] ?? []);
+
+        $w['w_objective'] = $this->objectiveFocus * (float) $w['objective_base'];
+        $w['price']['credits'] = (float) $w['price']['credits'] * (1.0 + $this->savingsAggressiveness);
+        $w['credit_reserve_factor'] = 1.1 + 0.4 * $this->savingsAggressiveness;
+        if ($this->opening === 'auto') {
+            $w['opening_bias'] = 0.0;
+        }
+
+        return $w;
     }
 
     public static function named(string $name): self
