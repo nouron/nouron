@@ -40,7 +40,10 @@ final class BotContext
         public readonly array $prices = [],
     ) {}
 
-    public static function capture(BotSession $b, BotProfile $profile): self
+    /** Savings goal of this decision (S3, engine utility only). */
+    public ?SavingsGoal $goal = null;
+
+    public static function capture(BotSession $b, BotProfile $profile, bool $withGoal = false): self
     {
         $w = $profile->weights();
         $colonyId = $b->colonyId;
@@ -70,7 +73,7 @@ final class BotContext
             'trust' => (float) $w['price']['trust'] * ($trustDanger ? (float) $w['trust_danger_factor'] : 1.0),
         ];
 
-        return new self(
+        $ctx = new self(
             sol: $b->sol,
             weights: $w,
             phase: BotStrategy::runPhase($b),
@@ -91,6 +94,12 @@ final class BotContext
             objectives: $objectives,
             prices: $prices,
         );
+
+        if ($withGoal) {
+            $ctx->goal = HeuristicGoalProvider::goal($b, $ctx);
+        }
+
+        return $ctx;
     }
 
     /** Mean Regolith gain of the last three ok sol_next entries, at least $floor (spec 2.6). */
@@ -122,6 +131,26 @@ final class BotContext
     public function price(string $name): float
     {
         return $this->prices[$name] ?? 0.0;
+    }
+
+    /** Spec 2.6: delaying the goal by rg / income Sols costs Net(G) · (1 − γ^Δt); 0 for the goal itself and Regolith-free steps. */
+    public function opportunityCost(int $regolithCost, string $key): float
+    {
+        if ($this->goal === null || $regolithCost <= 0 || $key === $this->goal->key) {
+            return 0.0;
+        }
+        $delay = $regolithCost / max(1.0, $this->incomeRg);
+
+        return $this->goal->net * (1 - (float) $this->weights['gamma'] ** $delay);
+    }
+
+    /**
+     * Regolith the legacy spenders must leave in stock (BotStrategy::regolithReserve()).
+     * A path building goal holds nothing: legacy place_building keeps its own buffer.
+     */
+    public function regolithHold(): int
+    {
+        return $this->goal !== null && in_array($this->goal->kind, ['cc', 'upgrade'], true) ? $this->goal->regolithCost : 0;
     }
 
     public function phase1Urgency(): float
