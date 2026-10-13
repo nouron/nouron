@@ -27,6 +27,14 @@ class BotSession
     /** @var array<int, array{sol:int, rule:string, url:string, status:int, ok:bool, error:?string, ap_before:int, ap_after:int, regolith_before:int, regolith_after:int, organics_before:int, organics_after:int}> */
     public array $log = [];
 
+    /**
+     * Names blocked for the rest of the current Sol (PlaysSolLoop, spec 3.3) —
+     * mirrored here so the utility selector can skip them. Reset every Sol.
+     *
+     * @var list<string>
+     */
+    public array $blockedThisSol = [];
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
 

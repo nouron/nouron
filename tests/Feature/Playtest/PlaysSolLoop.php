@@ -62,40 +62,61 @@ trait PlaysSolLoop
     }
 
     /**
+     * A failed action blocks the name it was logged under (or the response's
+     * explicit `block`), falling back to the rule name. When that is the rule's own
+     * name the loop moves on to the next rule, exactly like before; otherwise the
+     * same rule is asked again (the utility collector then offers its next
+     * candidate). A block name that is already blocked falls back to the rule name,
+     * so the retry can never spin.
+     *
      * @param  array<int, array{name:string, when:callable, do:callable}>  $rules
      */
     private function playOneSol(BotSession $bot, array $rules): void
     {
+        $rules = array_values($rules);
+        $ruleCount = count($rules);
         $blockedThisSol = [];
+        $bot->blockedThisSol = [];
         $lastNoOp = null;
         $noOpRepeats = 0;
 
         for ($i = 0; $i < self::MAX_ACTIONS_PER_SOL; $i++) {
             $fired = false;
+            $r = 0;
 
-            foreach ($rules as $rule) {
+            while ($r < $ruleCount) {
+                $rule = $rules[$r];
                 if (in_array($rule['name'], $blockedThisSol, true)) {
+                    $r++;
+
                     continue;
                 }
 
                 $candidate = $rule['when']($bot);
                 if (! $candidate) {
+                    $r++;
+
                     continue;
                 }
 
                 $logCount = count($bot->log);
                 $res = $rule['do']($bot, $candidate);
                 if (! $res['ok']) {
-                    $blockedThisSol[] = $rule['name'];
+                    $block = self::blockName($bot, $logCount, $rule['name'], $res, $blockedThisSol);
+                    $blockedThisSol[] = $block;
+                    $bot->blockedThisSol = $blockedThisSol;
+                    if ($block === $rule['name']) {
+                        $r++;
+                    }
 
                     continue;
                 }
 
-                $noOp = self::noOpSignature($bot, $logCount, $rule['name'], $res);
+                $noOp = self::noOpSignature($bot, $logCount, $res);
                 $noOpRepeats = ($noOp !== null && $noOp === $lastNoOp) ? $noOpRepeats + 1 : 0;
                 $lastNoOp = $noOp;
                 if ($noOpRepeats >= self::NO_OP_REPEAT_LIMIT) {
-                    $this->fail("Rule '{$rule['name']}' repeated a no-op success (identical response, no AP/Regolith/Organics change) on Sol {$bot->sol} — likely state desync. Response: "
+                    $this->fail("Rule '{$bot->log[$logCount]['rule']}' repeated a no-op success (identical response, no AP/Regolith/Organics change) on Sol {$bot->sol} — likely state desync. Response: "
                         .json_encode($res['body'] ?? null).' Log tail: '.json_encode(array_slice($bot->log, -5)));
                 }
 
@@ -112,12 +133,21 @@ trait PlaysSolLoop
             .json_encode(array_slice($bot->log, -20)));
     }
 
+    /** @param list<string> $blocked */
+    private static function blockName(BotSession $bot, int $logCountBefore, string $ruleName, array $res, array $blocked): string
+    {
+        $name = $res['block'] ?? (count($bot->log) > $logCountBefore ? $bot->log[count($bot->log) - 1]['rule'] : $ruleName);
+
+        return in_array($name, $blocked, true) ? $ruleName : $name;
+    }
+
     /**
      * Signature of a successful action that changed nothing observable — exactly one
      * act() log entry with no AP/Regolith/Organics delta — or null when it did change
-     * something (or made no/several requests, which this check cannot judge).
+     * something (or made no/several requests, which this check cannot judge). Keyed
+     * by the logged name, so it also names the real action behind the collector.
      */
-    private static function noOpSignature(BotSession $bot, int $logCountBefore, string $rule, array $res): ?string
+    private static function noOpSignature(BotSession $bot, int $logCountBefore, array $res): ?string
     {
         if (count($bot->log) !== $logCountBefore + 1) {
             return null;
@@ -129,6 +159,6 @@ trait PlaysSolLoop
             return null;
         }
 
-        return $rule.'|'.$entry['url'].'|'.md5((string) json_encode($res['body'] ?? null));
+        return $entry['rule'].'|'.$entry['url'].'|'.md5((string) json_encode($res['body'] ?? null));
     }
 }
