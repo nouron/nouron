@@ -69,4 +69,30 @@ class BotProfileTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         BotProfile::named('default')->withOpening('forge');
     }
+
+    public function test_engine_defaults_to_legacy(): void
+    {
+        $this->assertSame('legacy', BotProfile::named('default')->engine);
+    }
+
+    public function test_with_engine_keeps_all_other_dials(): void
+    {
+        $focus = BotProfile::named('focus')->withOpening('cantina');
+        $utility = $focus->withEngine('utility');
+
+        $this->assertSame('utility', $utility->engine);
+        $this->assertSame(['focus', 1.0, 1.0, 'cantina'], [$utility->name, $utility->savingsAggressiveness, $utility->objectiveFocus, $utility->opening]);
+        $this->assertSame('legacy', $focus->engine);
+    }
+
+    public function test_with_opening_keeps_the_engine(): void
+    {
+        $this->assertSame('utility', BotProfile::named('default')->withEngine('utility')->withOpening('hangar')->engine);
+    }
+
+    public function test_unknown_engine_throws(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        BotProfile::named('default')->withEngine('magic');
+    }
 }
