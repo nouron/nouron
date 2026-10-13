@@ -40,7 +40,7 @@ class BotStrategy
     // path buildings a fresh colony can reach first. Pilot (id 89, gated on
     // Hangar being placed) sits between Scientist and Trader so the bot picks
     // up whichever path building is placed first without starving either hire.
-    private const HIRE_ORDER = [35, 36, 89, 92];
+    public const HIRE_ORDER = [35, 36, 89, 92];
 
     // Repair tiers as a share of max_status_points: below CRITICAL a building is
     // repaired first thing; below MAINTENANCE it is topped up once the Sol's
@@ -1907,7 +1907,7 @@ class BotStrategy
             ->value('amount') ?? 0);
     }
 
-    private static function hangarLevel(BotSession $b): int
+    public static function hangarLevel(BotSession $b): int
     {
         return (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -2288,7 +2288,7 @@ class BotStrategy
     }
 
     /** B1: a ship of class $classLevel docks only if the hall carries the class and a bay 1..level is free. */
-    private static function hasFreeBayFor(BotSession $b, int $classLevel): bool
+    public static function hasFreeBayFor(BotSession $b, int $classLevel): bool
     {
         $level = self::hangarLevel($b);
         if ($level < $classLevel) {
