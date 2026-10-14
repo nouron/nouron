@@ -927,7 +927,7 @@ class BotStrategy
      * other zone tile was built on, and place_building ate tile_occupied every Sol
      * (baseline 2026-09-26, B7/T23).
      */
-    private static function freeZoneTile(BotSession $b): ?object
+    public static function freeZoneTile(BotSession $b): ?object
     {
         return DB::table('colony_tiles as ct')
             ->where('ct.colony_id', $b->colonyId)

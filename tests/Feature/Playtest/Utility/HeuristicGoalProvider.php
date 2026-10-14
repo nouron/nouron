@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Playtest\Utility;
 
+use App\Enums\BuildingId;
 use App\Services\ResourcesService;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotSession;
@@ -50,13 +51,16 @@ final class HeuristicGoalProvider
             $options[] = new SavingsGoal('cc', $key, $rg, Valuers::cc($b, $ctx, $cc)->net(), $key, $rg <= $ctx->regolith);
         }
 
+        $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
         $path = self::nextPathBuilding($b, $ctx);
-        if ($path !== null) {
+        // Review S3 I4/M8: a placement without a free zone tile is no goal; a supply-blocked
+        // one only while a housing level can lift the block (its chain, spec 2.6).
+        if ($path !== null && BotStrategy::freeZoneTile($b) !== null
+            && (! self::pathSupplyBlocked($path, $freeSupply) || self::housingStepOpen($b))) {
             $e = Valuers::pathPlacement($b, $ctx, $path);
             $options[] = new SavingsGoal('path', 'place:'.$path, $e->regolithCost, $e->net(), 'place:'.$path, $e->regolithCost <= $ctx->regolith);
         }
 
-        $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
         foreach (Valuers::upgradeRows($b) as $row) {
             $rg = BotStrategy::levelupRegolith($row);
             $supplyBlocked = ! ResourcesService::reservesFirstLevel($row) && BotStrategy::supplyGated($row) && $freeSupply < (int) $row->supply_cost;
@@ -75,8 +79,25 @@ final class HeuristicGoalProvider
         return $options;
     }
 
+    /** Placing $buildingId needs more supply than is free (BotStrategy::placeCandidate()'s gate). */
+    public static function pathSupplyBlocked(int $buildingId, int $freeSupply): bool
+    {
+        return (int) (DB::table('buildings')->where('id', $buildingId)->value('supply_cost') ?? 0) > $freeSupply;
+    }
+
+    private static function housingStepOpen(BotSession $b): bool
+    {
+        foreach (Valuers::upgradeRows($b) as $row) {
+            if ((int) $row->building_id === BuildingId::Housing->value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Next unplaced path building of the opening's order, if the CC allows one more (placed < CC level − 1) and the Agrardom stands. */
-    private static function nextPathBuilding(BotSession $b, BotContext $ctx): ?int
+    public static function nextPathBuilding(BotSession $b, BotContext $ctx): ?int
     {
         if (! BotStrategy::agrardomPlaced($b)) {
             return null;

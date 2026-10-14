@@ -164,4 +164,47 @@ class HeuristicGoalProviderTest extends TestCase
         $this->assertSame($ctx->goal->regolithCost - $sols * 26, $ctx->regolithHold());
         $this->assertGreaterThan(0, $ctx->regolithHold());
     }
+
+    private function pendingPathBot(): BotSession
+    {
+        $bot = BotSession::boot($this, 1);
+        $this->setCc($bot, 2);
+        $this->placeAt($bot, 41, 1);
+        foreach ([31, 44, 52] as $pathId) {
+            DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $pathId)->delete();
+        }
+        $this->setResource($bot, 3, 60);
+        foreach ([26, 26, 26] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+
+        return $bot;
+    }
+
+    /** @return list<string> */
+    private function optionKeys(BotSession $bot): array
+    {
+        return array_map(fn (SavingsGoal $g): string => $g->key, HeuristicGoalProvider::options($bot, $this->ctx($bot, 'hangar')));
+    }
+
+    public function test_a_supply_blocked_path_placement_stays_an_option_only_with_a_housing_step(): void
+    {
+        $bot = $this->pendingPathBot();
+        $this->setSupply($bot, 0);
+        $this->assertContains('place:44', $this->optionKeys($bot), 'housing can lift the supply block');
+
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', BuildingId::Housing->value)->delete();
+
+        $this->assertNotContains('place:44', $this->optionKeys($bot), 'nothing can lift the supply block');
+    }
+
+    public function test_a_path_placement_without_a_free_zone_tile_is_no_option(): void
+    {
+        $bot = $this->pendingPathBot();
+        $this->assertContains('place:44', $this->optionKeys($bot));
+
+        DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->update(['is_colony_zone' => 0]);
+
+        $this->assertNotContains('place:44', $this->optionKeys($bot));
+    }
 }

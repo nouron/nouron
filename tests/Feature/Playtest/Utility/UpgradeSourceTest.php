@@ -75,6 +75,28 @@ class UpgradeSourceTest extends TestCase
         $this->assertNotContains('invest:31:1', $this->keys($bot));
     }
 
+    public function test_a_supply_blocked_path_placement_gives_housing_its_enabling_value(): void
+    {
+        $bot = $this->boot(100);
+        $this->setPhase($bot, 2);
+        $this->setCc($bot, 3);
+        $this->placeAt($bot, 41, 1);
+        $this->placeAt($bot, BuildingId::Hangar->value, 3);   // max level: no blocked upgrade of its own
+        $this->placeAt($bot, BuildingId::Housing->value, 1);
+        $this->setSupply($bot, 0);
+        foreach ([26, 26, 26] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+
+        $ctx = BotContext::capture($bot, BotProfile::named('default')->withOpening('hangar'), withGoal: true);
+        $housing = collect((new UpgradeSource(17))->candidates($bot, $ctx))->firstWhere('key', 'invest:28:1');
+
+        $this->assertSame('place:'.BuildingId::Sciencelab->value, $ctx->goal?->key, 'the supply-blocked placement stays the goal');
+        $this->assertNotNull($housing);
+        $this->assertGreaterThanOrEqual(Valuers::pathPlacement($bot, $ctx, BuildingId::Sciencelab->value)->net() - 0.001, $housing->terms['enable'] ?? 0.0);
+        $this->assertArrayNotHasKey('opportunity', $housing->terms, 'housing is the goal\'s chain (spec 2.6)');
+    }
+
     public function test_a_running_cycle_beats_an_otherwise_equal_new_one(): void
     {
         $bot = $this->boot(100);
