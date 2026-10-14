@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-14
+
+- Feat: PlaytestBot Utility-Modell S3 — `--engine=utility` baut Pfadgebäude-Stufen, CC, Forschung (Effekt je AP) und Frachter nach Nutzen mit Sparziel; λ_AP gedeckelt, Agrardom-Ausbau und Compounds-Mission (Organika-Proviant) korrigiert. Spielverhalten unverändert.
+
 ## 2026-10-13
 
 - Feat: PlaytestBot Utility-Modell S0+S1 — Selektor mit Legacy-Adapter (Golden-Test: gleiche Aktionsfolge wie Legacy), `game:playtest --engine=legacy|utility`, Entscheidungslog im Report, Kennzahlen K18/K19/K20/K23 in `game:playtest-compare`. Legacy-Verhalten unverändert.
