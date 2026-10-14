@@ -45,6 +45,7 @@ final class ResearchSource implements CandidateSource
                     ? $s->act('research_knowledge', 'POST', "/techtree/research/{$id}/order", ['order' => 'levelup'])
                     : $s->act('research_knowledge', 'POST', "/techtree/research/{$id}/order", ['order' => 'add', 'ap' => 1]),
                 terms: $estimate->terms,
+                cycleAp: $estimate->cycleAp,
             );
         }
 

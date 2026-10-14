@@ -95,6 +95,7 @@ final class UpgradeSource implements CandidateSource
                 ]),
                 terms: $estimate->terms,
                 regolithCost: $estimate->regolithCost,
+                cycleAp: $estimate->cycleAp,
             );
         }
 

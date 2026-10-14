@@ -60,6 +60,7 @@ final class CcSource implements CandidateSource
             ]),
             terms: $estimate->terms,
             regolithCost: $estimate->regolithCost,
+            cycleAp: $estimate->cycleAp,
         )];
     }
 }

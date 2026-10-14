@@ -13,6 +13,8 @@ return [
         'horizon_max' => 40,
         'lambda_ap_start' => 0.5,
         'lambda_ap_ema' => 0.3,
+        // Review S3 I5: cap of the marginal density fed into λ (best regular density, geology Lv1 ≈ 2.5, spec 2.5).
+        'lambda_ap_max' => 3.0,
         'price' => ['credits' => 0.04, 'organics' => 1.0, 'compounds' => 3.0, 'trust' => 2.0],
         'scarcity_clamp' => [0.5, 4.0],
         'trust_danger_margin' => 10,

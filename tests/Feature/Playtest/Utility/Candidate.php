@@ -26,6 +26,8 @@ final readonly class Candidate
         public bool $mandatory = false,
         public mixed $payload = null,
         public int $regolithCost = 0,
+        /** AP of the whole level/cycle the candidate works on; 0 = apCost (review S3 I5) */
+        public int $cycleAp = 0,
     ) {}
 
     public function isScored(): bool
@@ -36,7 +38,17 @@ final readonly class Candidate
     /** The same candidate, scored by $e (shadow mode). */
     public function withEstimate(Estimate $e): self
     {
-        return new self($this->name, $this->key, $this->band, $e->net(), $e->apCost, $this->do, $e->terms, $this->mandatory, $this->payload, $e->regolithCost);
+        return new self($this->name, $this->key, $this->band, $e->net(), $e->apCost, $this->do, $e->terms, $this->mandatory, $this->payload, $e->regolithCost, $e->cycleAp);
+    }
+
+    /**
+     * Net per AP of the whole cycle — the marginal density λ_AP is measured from
+     * (review S3 I5): the click that finishes a cycle must not claim the whole
+     * cycle's net. null for unscored candidates.
+     */
+    public function cycleDensity(): ?float
+    {
+        return $this->net === null || ! is_finite($this->net) ? null : $this->net / max(1, $this->apCost, $this->cycleAp);
     }
 
     /** Utility per AP in milli-Rg-equivalents (spec 2.10); 0 for unscored candidates. */

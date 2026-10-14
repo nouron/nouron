@@ -83,7 +83,7 @@ final class Collector
 
             return null;
         }
-        $this->pendingMarginal = $decision->chosen->isScored() ? $decision->chosen->milliScore() / 1000 : null;
+        $this->pendingMarginal = $this->marginal($decision->chosen);
 
         return $shadow ? $this->withShadow($decision, $b, $ctx) : $decision;
     }
@@ -103,7 +103,7 @@ final class Collector
         $chosenEstimate = null;
         foreach ($scored as $c) {
             if ($c->key === $decision->chosen->key && $c->band === $decision->chosen->band && $c->isScored()) {
-                $this->pendingMarginal = $c->milliScore() / 1000;
+                $this->pendingMarginal = $this->marginal($c);
                 $chosenEstimate = $c;
             }
         }
@@ -116,6 +116,18 @@ final class Collector
             UtilitySelector::shadowTop3($scored, $blocked, $minNet, $this->cursorBand),
             $chosenEstimate,
         );
+    }
+
+    /**
+     * Marginal density of an executed candidate for λ_AP (review S3 I5): net per
+     * AP of the whole cycle, capped at lambda_ap_max — λ prices the advisor-slot
+     * value it is partly measured from, so an uncapped density feeds back.
+     */
+    private function marginal(Candidate $c): ?float
+    {
+        $density = $c->cycleDensity();
+
+        return $density === null ? null : min($density, (float) $this->weights['lambda_ap_max']);
     }
 
     /** Spec 2.4: λ_AP ← EMA(marginal density of the closed Sol); idle AP at the end count as 0. */

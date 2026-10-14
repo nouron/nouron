@@ -41,7 +41,8 @@ final class Valuers
         $id = (int) $row->building_id;
         $target = (int) $row->level + 1;
         $regolith = BotStrategy::levelupRegolith($row);
-        $ap = max(1, BotStrategy::effectiveApForLevelup($b, (int) ($row->ap_for_levelup ?? 10)) - (int) $row->ap_spend);
+        $cycleAp = BotStrategy::effectiveApForLevelup($b, (int) ($row->ap_for_levelup ?? 10));
+        $ap = max(1, $cycleAp - (int) $row->ap_spend);
         $isPath = in_array($id, self::PATH_IDS, true);
 
         $terms = ['cost_rg' => -1.0 * $regolith];
@@ -77,7 +78,7 @@ final class Valuers
             $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target']);
         }
 
-        return new Estimate($terms, $ap, $regolith);
+        return new Estimate($terms, $ap, $regolith, $cycleAp);
     }
 
     public static function cc(BotSession $b, BotContext $ctx, object $cc): Estimate
@@ -86,7 +87,8 @@ final class Valuers
         $level = (int) $cc->level;
         $target = $level + 1;
         $regolith = BotStrategy::levelupRegolith($cc);
-        $ap = max(1, BotStrategy::effectiveApForLevelup($b, (int) ($cc->ap_for_levelup ?? 10)) - (int) $cc->ap_spend);
+        $cycleAp = BotStrategy::effectiveApForLevelup($b, (int) ($cc->ap_for_levelup ?? 10));
+        $ap = max(1, $cycleAp - (int) $cc->ap_spend);
 
         $terms = ['cost_rg' => -1.0 * $regolith, 'structural' => $regolith * (float) $w['structural_offset']];
         if ($ctx->phase === 1 && $target <= 3) {
@@ -118,7 +120,7 @@ final class Valuers
             }
         }
 
-        return new Estimate($terms, $ap, $regolith);
+        return new Estimate($terms, $ap, $regolith, $cycleAp);
     }
 
     public static function research(BotSession $b, BotContext $ctx, int $researchId, int $level, int $apSpend): Estimate
@@ -127,7 +129,8 @@ final class Valuers
         $target = $level + 1;
         $cfg = collect(config('knowledge'))->first(fn (array $k): bool => (int) $k['id'] === $researchId) ?? [];
         $fallback = (int) (DB::table('researches')->where('id', $researchId)->value('ap_for_levelup') ?? 0);
-        $ap = max(1, app(ResearchService::class)->knowledgeLevelupCost($b->colonyId, $researchId, $fallback) - $apSpend);
+        $cycleAp = app(ResearchService::class)->knowledgeLevelupCost($b->colonyId, $researchId, $fallback);
+        $ap = max(1, $cycleAp - $apSpend);
         $latency = (int) ceil($ap / max(1, $ctx->apInflow));
 
         $effect = match ($researchId) {
@@ -149,7 +152,7 @@ final class Valuers
             $terms['trust'] = $trust * $ctx->price('trust');
         }
 
-        return new Estimate($terms, $ap, 0);
+        return new Estimate($terms, $ap, 0, $cycleAp);
     }
 
     public static function pathPlacement(BotSession $b, BotContext $ctx, int $buildingId): Estimate

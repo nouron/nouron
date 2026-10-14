@@ -10,6 +10,8 @@ final readonly class Estimate
         public array $terms,
         public int $apCost,
         public int $regolithCost,
+        /** AP of the whole level/cycle (λ_AP density, review S3 I5); 0 = apCost */
+        public int $cycleAp = 0,
     ) {}
 
     public function net(): float
@@ -19,6 +21,6 @@ final readonly class Estimate
 
     public function withTerm(string $name, float $value): self
     {
-        return new self([...$this->terms, $name => $value], $this->apCost, $this->regolithCost);
+        return new self([...$this->terms, $name => $value], $this->apCost, $this->regolithCost, $this->cycleAp);
     }
 }
