@@ -142,6 +142,20 @@ class HeuristicGoalProviderTest extends TestCase
         $this->assertGreaterThan($ctx->opportunityCost(25, 'invest:44:1'), $ctx->opportunityCost(50, 'invest:31:1'));
     }
 
+    public function test_the_slack_above_the_hold_costs_no_opportunity(): void
+    {
+        // Same slack the hold leaves legacy spenders (50 Rg, hold 42): spending it does not delay the goal.
+        $bot = $this->phase2WithCc3(50);
+        foreach ([26, 26, 26] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+        $ctx = $this->ctx($bot);
+        $gamma = (float) $ctx->weights['gamma'];
+
+        $this->assertSame(0.0, $ctx->opportunityCost(8, 'invest:44:1'));
+        $this->assertEqualsWithDelta($ctx->goal->net * (1 - $gamma ** ((25 - 8) / 26)), $ctx->opportunityCost(25, 'invest:44:1'), 1e-9);
+    }
+
     public function test_a_pending_path_building_is_a_goal_with_a_hold(): void
     {
         $bot = BotSession::boot($this, 1);

@@ -134,13 +134,22 @@ final class BotContext
         return $this->prices[$name] ?? 0.0;
     }
 
-    /** Spec 2.6: delaying the goal by rg / income Sols costs Net(G) · (1 − γ^Δt); 0 for the goal itself and Regolith-free steps. */
+    /**
+     * Spec 2.6: delaying the goal by Δt Sols costs Net(G) · (1 − γ^Δt); 0 for the
+     * goal itself and Regolith-free steps. Δt counts only the Regolith beyond the
+     * slack above regolithHold() — the same slack legacy spenders may use, since
+     * spending it does not delay the goal's purchase (review S3 I1).
+     */
     public function opportunityCost(int $regolithCost, string $key): float
     {
         if ($this->goal === null || $regolithCost <= 0 || $key === $this->goal->key) {
             return 0.0;
         }
-        $delay = $regolithCost / max(1.0, $this->incomeRg);
+        $beyondSlack = $regolithCost - max(0, $this->regolith - $this->regolithHold());
+        if ($beyondSlack <= 0) {
+            return 0.0;
+        }
+        $delay = $beyondSlack / max(1.0, $this->incomeRg);
 
         return $this->goal->net * (1 - (float) $this->weights['gamma'] ** $delay);
     }
