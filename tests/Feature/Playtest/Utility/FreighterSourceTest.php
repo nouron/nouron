@@ -5,6 +5,7 @@ namespace Tests\Feature\Playtest\Utility;
 use App\Enums\BuildingId;
 use App\Services\HangarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
 use Tests\Feature\Playtest\Utility\Sources\FreighterSource;
@@ -41,7 +42,8 @@ class FreighterSourceTest extends TestCase
         $candidates = $this->candidates($bot);
 
         $this->assertSame(['ship:freighter'], array_map(fn (Candidate $c) => $c->key, $candidates));
-        $this->assertSame('request_ship', $candidates[0]->name);
+        // Review S3 M3: own name, so a failed freighter request does not block legacy request_ship for the Sol.
+        $this->assertSame('request_freighter', $candidates[0]->name);
         $this->assertGreaterThan(0.0, $candidates[0]->net);
     }
 
@@ -54,6 +56,19 @@ class FreighterSourceTest extends TestCase
     {
         $bot = $this->bootHangar2((int) config('ships.freighter.nexus_cost'));
         $this->makeFind($bot, 'find_large');
+
+        $this->assertSame([], $this->candidates($bot));
+    }
+
+    public function test_the_credit_reserve_guard_blocks_the_freighter(): void
+    {
+        // Review S3 M3: same guard as legacy request_ship (BotStrategy::creditReserveGuardBlocks()).
+        $buffer = (int) round((int) config('game.run.tasks.task_credit_reserve.threshold', 4000) * 1.1);
+        $bot = $this->bootHangar2($buffer - 1);
+        $this->makeFind($bot, 'find_large');
+        $this->assertNotSame([], $this->candidates($bot), 'fixture: affordable without the objective');
+
+        DB::table('run_objectives')->insert(['run_id' => $bot->runId, 'task_key' => 'task_credit_reserve', 'target_value' => 1, 'current_value' => 0]);
 
         $this->assertSame([], $this->candidates($bot));
     }
