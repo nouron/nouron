@@ -51,6 +51,12 @@ class BotSession
      */
     public int $regolithHold = 0;
 
+    /** Building whose placement is the savings goal itself: exempt from $regolithHold (review S3 I1). */
+    public ?int $holdExemptBuildingId = null;
+
+    /** Step id of the current savings goal (HeuristicGoalProvider, sticky until bought — review S3 I7). */
+    public ?string $savingsGoalStep = null;
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
 

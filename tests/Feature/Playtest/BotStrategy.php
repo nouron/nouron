@@ -1165,8 +1165,10 @@ class BotStrategy
                 }
 
                 // Placing pays the erection and the 0 -> 1 Regolith in one go (T9).
+                // The utility goal's own placement only keeps the legacy reserves, not its own hold.
                 $placementCost = self::buildingCosts()->placementCost((int) $building['building_id']);
-                if (! self::fitsAboveCcReserve($b, $ccReserve, (int) ($placementCost[self::RES_REGOLITH] ?? 0))) {
+                $reserve = (int) $building['building_id'] === $b->holdExemptBuildingId ? self::regolithReserve($b, withHold: false) : $ccReserve;
+                if (! self::fitsAboveCcReserve($b, $reserve, (int) ($placementCost[self::RES_REGOLITH] ?? 0))) {
                     continue;
                 }
                 $costs = self::costList($placementCost);
@@ -1561,9 +1563,9 @@ class BotStrategy
      * research reserve (T17), the self-sufficiency reserve and the utility
      * engine's savings goal (BotSession::$regolithHold, 0 for the legacy engine).
      */
-    private static function regolithReserve(BotSession $b): int
+    private static function regolithReserve(BotSession $b, bool $withHold = true): int
     {
-        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b), $b->regolithHold);
+        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b), $withHold ? $b->regolithHold : 0);
     }
 
     /**

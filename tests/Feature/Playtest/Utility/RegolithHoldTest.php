@@ -5,6 +5,7 @@ namespace Tests\Feature\Playtest\Utility;
 use App\Enums\BuildingId;
 use App\Services\BuildingCostService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
 use Tests\Feature\Playtest\BotStrategy;
@@ -39,18 +40,38 @@ class RegolithHoldTest extends TestCase
         $this->assertNotNull($this->placeCandidate($this->bootRich()));
     }
 
-    public function test_a_hold_keeps_legacy_placements_above_the_saved_regolith(): void
+    public function test_a_hold_leaves_legacy_placement_only_the_slack(): void
     {
         $bot = $this->bootRich();
-        $bot->regolithHold = 150;
 
+        $bot->regolithHold = 190;   // 10 Rg slack: no placement is that cheap
+        $this->assertNull($this->placeCandidate($bot));
+
+        $bot->regolithHold = 130;   // 70 Rg slack: housing (65) fits, path buildings do not
+        $this->logSolNext($bot, 0);  // invalidate the place_candidate memo
         $candidate = $this->placeCandidate($bot);
+        $this->assertNotNull($candidate);
+        $placementRegolith = (int) (app(BuildingCostService::class)->placementCost((int) $candidate[0]['building_id'])[3] ?? 0);
+        $this->assertLessThanOrEqual(70, $placementRegolith, 'placement must not dip into the hold: '.json_encode($candidate[0]));
+    }
 
-        if ($candidate !== null) {
-            $placementRegolith = (int) (app(BuildingCostService::class)->placementCost((int) $candidate[0]['building_id'])[3] ?? 0);
-            $this->assertGreaterThanOrEqual(150, 200 - $placementRegolith, 'placement must not dip into the hold: '.json_encode($candidate[0]));
+    public function test_the_goal_s_own_path_placement_is_exempt_from_the_hold(): void
+    {
+        $bot = $this->bootRich();
+        foreach ([31, 44, 52] as $pathId) {
+            DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $pathId)->delete();
         }
-        $this->assertTrue(true);
+        $this->setResource($bot, 3, 130);
+        $bot->regolithHold = 120;
+        $place = fn () => collect(BotStrategy::default(BotProfile::named('default')->withOpening('hangar')))
+            ->firstWhere('name', 'place_building')['when']($bot);
+
+        $this->assertNull($place(), 'without the exemption the hold blocks the goal itself');
+
+        $bot->holdExemptBuildingId = BuildingId::Hangar->value;
+        $this->logSolNext($bot, 0);   // invalidate the place_candidate memo
+
+        $this->assertSame(BuildingId::Hangar->value, (int) ($place()[0]['building_id'] ?? 0));
     }
 
     /** Phase 2, CC Lv3, Regolith short of CC Lv4 (HeuristicGoalProviderTest fixture). */
@@ -78,7 +99,28 @@ class RegolithHoldTest extends TestCase
 
         UtilityStrategy::rules(BotProfile::named('default'))[0]['when']($bot);
 
-        $this->assertSame(120, $bot->regolithHold);
+        $this->assertSame(42, $bot->regolithHold, 'CC Lv4 (120) in 3 Sols at 26/Sol from 50: 8 Rg slack');
+        $this->assertNull($bot->holdExemptBuildingId);
+    }
+
+    public function test_a_path_goal_exempts_its_own_placement(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $this->setCc($bot, 2);
+        $this->placeAt($bot, 41, 1);
+        foreach ([31, 44, 52] as $pathId) {
+            DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $pathId)->delete();
+        }
+        $this->setResource($bot, 3, 60);
+        $this->setSupply($bot, 1000);
+        foreach ([26, 26, 26] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+        $this->giveAp($bot, 15);
+
+        UtilityStrategy::rules(BotProfile::named('default')->withOpening('hangar'))[0]['when']($bot);
+
+        $this->assertSame(BuildingId::Hangar->value, $bot->holdExemptBuildingId);
     }
 
     public function test_shadow_and_adapter_engines_never_set_a_hold(): void

@@ -71,6 +71,7 @@ final class Collector
         };
         if ($this->mode === 'utility') {
             $b->regolithHold = $ctx->regolithHold();
+            $b->holdExemptBuildingId = $ctx->holdExemptBuildingId();
         }
         $minNet = (float) $this->weights['min_net'];
         $decision = UtilitySelector::selectFromSources($this->sources, $b, $ctx, $b->blockedThisSol, $this->cursorBand, $minNet, fullSearch: $shadow);

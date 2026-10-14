@@ -145,13 +145,30 @@ final class BotContext
     }
 
     /**
-     * Regolith the legacy spenders must leave in stock (BotStrategy::regolithReserve()).
-     * Every goal kind holds — legacy place_building's own path buffer only
-     * applies below 3 advisors (review S3 I2).
+     * Regolith the legacy spenders must leave in stock (BotStrategy::regolithReserve()),
+     * review S3 I1. Legacy spenders are unscored, so they cannot pay opportunity
+     * cost; instead they get exactly the slack that does not delay the goal: the
+     * goal is bought after ceil(missing / income) Sols, and whatever the stock
+     * holds beyond cost − that many Sols of income is free. 0 Rg missing → the
+     * whole cost is held (a ready goal, kept until bought). Every goal kind
+     * holds: legacy place_building's own path buffer only applies below 3
+     * advisors (review S3 I2). Always <= the stock.
      */
     public function regolithHold(): int
     {
-        return $this->goal?->regolithCost ?? 0;
+        if ($this->goal === null) {
+            return 0;
+        }
+        $income = max(1.0, $this->incomeRg);
+        $sols = (int) ceil(max(0, $this->goal->regolithCost - $this->regolith) / $income);
+
+        return max(0, $this->goal->regolithCost - (int) floor($sols * $income));
+    }
+
+    /** The goal's own path placement must not be blocked by its own hold (legacy place_building executes it). */
+    public function holdExemptBuildingId(): ?int
+    {
+        return $this->goal?->placementBuildingId();
     }
 
     public function phase1Urgency(): float
