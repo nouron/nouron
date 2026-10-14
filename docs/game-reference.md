@@ -37,6 +37,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Trading Post** | Lv4 | 100 Rg / 25 Wk | 6 | 3 | 1 |
 
 > **Rg** = Regolith, **Wk** = Werkstoffe (compounds)
+> **Pfad-Gebäude-Gate** (Analytik-Labor/Hangar/Cantina, Server-Regel seit 2026-10-14, `game.path_building_gate.cc_level_offset` = 1): ein neues Pfad-Gebäude nur solange `platzierte Pfad-Gebäude < CC-Level − 1` — CC Lv2: 1, Lv3: 2, Lv4: alle 3. Gesperrte Einträge bleiben im Baumenü sichtbar (mit Begründung); stehende Pfad-Gebäude bleiben bei CC-Rückbau unberührt.
 > Max Level für alle Nicht-CC-Gebäude seit dem Ausbaustufen-System (2026-08-26, `config/buildings.php`). Wohnhabitat: Level 3 **pro Instanz**, 6 Instanzen. Depot/Lagerhalle ist seit 2026-06-22 entfernt.
 
 ---

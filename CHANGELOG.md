@@ -3,6 +3,7 @@
 ## 2026-10-14
 
 - Feat: PlaytestBot Utility-Modell S3 — `--engine=utility` baut Pfadgebäude-Stufen, CC, Forschung (Effekt je AP) und Frachter nach Nutzen mit Sparziel; λ_AP gedeckelt, Agrardom-Ausbau und Compounds-Mission (Organika-Proviant) korrigiert. Spielverhalten unverändert.
+- Feat: Pfad-Gebäude-Gate (GDD §16) ist jetzt Server-Regel — ein neues Pfad-Gebäude nur bei `platzierte < CC-Level − 1` (Fehler `path_building_gate`), im Baumenü gesperrt mit Begründung; Bot und Onboarding-Hinweise beachten das Gate.
 
 ## 2026-10-13
 

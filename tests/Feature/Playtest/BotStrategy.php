@@ -1018,6 +1018,11 @@ class BotStrategy
      */
     public static function orderPlacementCandidates(array $buildings, array $placedCounts, string $opening): array
     {
+        // Path-building gate (PathBuildingGateService, server rule 2026-10-14): the
+        // build menu lists a gated path building as locked — placing it would only
+        // collect a path_building_gate rejection.
+        $buildings = array_values(array_filter($buildings, fn (array $building): bool => ! ($building['locked'] ?? false)));
+
         // A37-Rest (2026-09-15): a lower sort priority alone doesn't reserve
         // zone-tile headroom — Housing is one of the few AFFORDABLE candidates
         // early game (trust buildings need compounds, which don't arrive until

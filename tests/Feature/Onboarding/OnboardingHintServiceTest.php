@@ -1294,6 +1294,29 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('hint_analytik', $hint['key']);
     }
 
+    /**
+     * Path-building gate (PathBuildingGateService, server rule 2026-10-14): at CC2
+     * with the Cantina standing, a second path building is refused server-side —
+     * neither the Analytik nor the Hangar hint may point at it.
+     */
+    public function test_path_hints_silent_when_the_path_building_gate_is_full(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints(); // Cantina, Agrardom, Sciencelab, Hangar placed
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 25)
+            ->update(['level' => 2, 'ap_spend' => 0]);
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->whereIn('building_id', [31, 44])->delete();
+        $this->setRunTick(8);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotContains($hint['key'] ?? null, ['hint_analytik', 'hint_hangar_path', 'hint_build_priority']);
+    }
+
     public function test_analytik_hint_silent_without_agrardome_placed(): void
     {
         // Path buildings require a placed Agrardom server-side — the hint must not

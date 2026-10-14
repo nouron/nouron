@@ -50,6 +50,9 @@ class BotStrategyOpeningTest extends TestCase
     public function test_hangar_opening_continues_with_sciencelab_then_bar(): void
     {
         $bot = $this->bootAtCc2WithAgrardom();
+        // The follow-up order, not the path-building gate (BotStrategyPathBuildingGateTest):
+        // CC Lv4 leaves room for all three path buildings.
+        $this->setCcLevel($bot, 4);
         $this->placeBuilding($bot, 44);
 
         $this->assertSame(31, $this->firstCandidateId($bot, 'hangar'));
@@ -61,6 +64,7 @@ class BotStrategyOpeningTest extends TestCase
     public function test_cantina_opening_continues_with_sciencelab_before_hangar(): void
     {
         $bot = $this->bootAtCc2WithAgrardom();
+        $this->setCcLevel($bot, 3);
         $this->placeBuilding($bot, 52);
 
         $this->assertSame(31, $this->firstCandidateId($bot, 'cantina'));
@@ -114,6 +118,13 @@ class BotStrategyOpeningTest extends TestCase
         DB::table('user_resources')->where('user_id', $bot->userId)->update(['credits' => 5000, 'supply' => 1000]);
 
         return $bot;
+    }
+
+    private function setCcLevel(BotSession $bot, int $level): void
+    {
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->update(['level' => $level]);
     }
 
     private function placeBuilding(BotSession $bot, int $buildingId): void

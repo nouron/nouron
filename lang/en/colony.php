@@ -145,7 +145,8 @@ return [
 
     // ── Error messages ────────────────────────────────────────────────────────
 
-    'error_path_gate_locked' => 'Path locked — upgrade the Command Center to the next level first.',
+    'error_path_building_gate' => 'Another path building requires Command Center Lv:level.',
+    'path_building_locked' => 'Another path building from CC Lv:level',
     'error_agrardom_required' => 'Build the Agrarian Dome first — mandatory prerequisite for all path buildings.',
     'error_tile_not_found' => 'Tile not found.',
     'error_ring_locked' => 'Ring not unlocked.',

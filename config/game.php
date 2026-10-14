@@ -294,6 +294,15 @@ return [
         'levelup_regolith_flat' => 25,
     ],
 
+    // Path-building build gate (GDD §16 "Slot-System", Gate-Logik; server rule since
+    // 2026-10-14): a NEW path building (sciencelab/hangar/bar) may only be placed while
+    // placed path buildings < CC level − cc_level_offset. With 1: CC Lv2 → one, Lv3 →
+    // two, Lv4 → all three. Already placed path buildings are never affected.
+    // See App\Services\PathBuildingGateService.
+    'path_building_gate' => [
+        'cc_level_offset' => 1,
+    ],
+
     'repair' => [
         // 2 → 1 (GDD §13.7, 2026-08-03): with repair also costing 1 Construction-AP,
         // 1 Rg/click makes Instandhaltung [Rg/Sol] = Instandhaltung [AP/Sol] = Σ decay_rate —
