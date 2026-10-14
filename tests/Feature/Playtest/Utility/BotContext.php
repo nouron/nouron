@@ -40,7 +40,10 @@ final class BotContext
         public readonly array $prices = [],
     ) {}
 
-    public static function capture(BotSession $b, BotProfile $profile): self
+    /** Savings goal of this decision (S3, engine utility only). */
+    public ?SavingsGoal $goal = null;
+
+    public static function capture(BotSession $b, BotProfile $profile, bool $withGoal = false): self
     {
         $w = $profile->weights();
         $colonyId = $b->colonyId;
@@ -65,12 +68,13 @@ final class BotContext
 
         $prices = [
             'credits' => (float) $w['price']['credits'] * Valuation::scarcity($creditDemand, $credits, $lo, $hi),
-            'organics' => (float) $w['price']['organics'] * Valuation::scarcity(app(ResourcesService::class)->foodNeed($colonyId) * 3, $organics, $lo, $hi),
+            // Review S3 (P3): ship provisions count as Organika demand next to the colony's food need.
+            'organics' => (float) $w['price']['organics'] * Valuation::scarcity((app(ResourcesService::class)->foodNeed($colonyId) + Valuers::provisionsPerSol($b)) * 3, $organics, $lo, $hi),
             'compounds' => (float) $w['price']['compounds'],
             'trust' => (float) $w['price']['trust'] * ($trustDanger ? (float) $w['trust_danger_factor'] : 1.0),
         ];
 
-        return new self(
+        $ctx = new self(
             sol: $b->sol,
             weights: $w,
             phase: BotStrategy::runPhase($b),
@@ -91,6 +95,12 @@ final class BotContext
             objectives: $objectives,
             prices: $prices,
         );
+
+        if ($withGoal) {
+            $ctx->goal = HeuristicGoalProvider::goal($b, $ctx);
+        }
+
+        return $ctx;
     }
 
     /** Mean Regolith gain of the last three ok sol_next entries, at least $floor (spec 2.6). */
@@ -122,6 +132,53 @@ final class BotContext
     public function price(string $name): float
     {
         return $this->prices[$name] ?? 0.0;
+    }
+
+    /**
+     * Spec 2.6: delaying the goal by Δt Sols costs Net(G) · (1 − γ^Δt); 0 for the
+     * goal itself and Regolith-free steps. Δt counts only the Regolith beyond the
+     * slack above regolithHold() — the same slack legacy spenders may use, since
+     * spending it does not delay the goal's purchase (review S3 I1).
+     */
+    public function opportunityCost(int $regolithCost, string $key): float
+    {
+        if ($this->goal === null || $regolithCost <= 0 || $key === $this->goal->key) {
+            return 0.0;
+        }
+        $beyondSlack = $regolithCost - max(0, $this->regolith - $this->regolithHold());
+        if ($beyondSlack <= 0) {
+            return 0.0;
+        }
+        $delay = $beyondSlack / max(1.0, $this->incomeRg);
+
+        return $this->goal->net * (1 - (float) $this->weights['gamma'] ** $delay);
+    }
+
+    /**
+     * Regolith the legacy spenders must leave in stock (BotStrategy::regolithReserve()),
+     * review S3 I1. Legacy spenders are unscored, so they cannot pay opportunity
+     * cost; instead they get exactly the slack that does not delay the goal: the
+     * goal is bought after ceil(missing / income) Sols, and whatever the stock
+     * holds beyond cost − that many Sols of income is free. 0 Rg missing → the
+     * whole cost is held (a ready goal, kept until bought). Every goal kind
+     * holds: legacy place_building's own path buffer only applies below 3
+     * advisors (review S3 I2). Always <= the stock.
+     */
+    public function regolithHold(): int
+    {
+        if ($this->goal === null) {
+            return 0;
+        }
+        $income = max(1.0, $this->incomeRg);
+        $sols = (int) ceil(max(0, $this->goal->regolithCost - $this->regolith) / $income);
+
+        return max(0, $this->goal->regolithCost - (int) floor($sols * $income));
+    }
+
+    /** The goal's own path placement must not be blocked by its own hold (legacy place_building executes it). */
+    public function holdExemptBuildingId(): ?int
+    {
+        return $this->goal?->placementBuildingId();
     }
 
     public function phase1Urgency(): float

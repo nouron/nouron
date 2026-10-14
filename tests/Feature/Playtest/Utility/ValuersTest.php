@@ -3,6 +3,7 @@
 namespace Tests\Feature\Playtest\Utility;
 
 use App\Enums\BuildingId;
+use App\Services\ResourcesService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
@@ -65,14 +66,52 @@ class ValuersTest extends TestCase
         $this->assertSame(0, $geology->regolithCost);
     }
 
-    public function test_every_knowledge_is_worth_its_ap(): void
+    public function test_agronomy_has_no_effect_without_an_agrardom(): void
     {
+        // GameTick::generateAgronomyBonus() adds nothing while no bioFacility stands.
+        $bot = BotSession::boot($this, 1);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, 2);
+
+        $this->assertArrayNotHasKey('effect', Valuers::research($bot, $this->ctx($bot), 93, 0, 0)->terms);
+    }
+
+    private function addShip(BotSession $bot, int $shipId, int $bay): void
+    {
+        DB::table('colony_ships')->insert(['colony_id' => $bot->colonyId, 'ship_id' => $shipId, 'bay' => $bay, 'ship_state' => 'docked',
+            'level' => 0, 'status_points' => 20, 'ap_spend' => 0]);
+    }
+
+    public function test_agrardom_level_2_is_worth_it_when_ships_need_provisions(): void
+    {
+        // Review S3 (P3): the food term only saw the colony's own need, never mission provisions.
+        $bot = BotSession::boot($this, 1);
+        $this->placeAt($bot, 41, 1);
+        $this->setResource($bot, 5, 20);
+        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->delete();
+        $foodNeed = app(ResourcesService::class)->foodNeed($bot->colonyId);
+        $this->assertLessThanOrEqual(8, $foodNeed, 'fixture: Lv1 (8 Or) covers the colony');
+
+        $without = Valuers::upgrade($bot, $this->ctx($bot), Valuers::buildingRow($bot, 41, 1));
+        // Enough ships that their provisions (3 Or/Sol each) exceed what Lv1 leaves over.
+        foreach (range(1, intdiv(8 - $foodNeed, 3) + 1) as $bay) {
+            $this->addShip($bot, (int) config('ships.freighter.id'), $bay);
+        }
+        $with = Valuers::upgrade($bot, $this->ctx($bot), Valuers::buildingRow($bot, 41, 1));
+
+        $this->assertGreaterThan($without->terms['food'] ?? 0.0, $with->terms['food'] ?? 0.0);
+        $this->assertGreaterThan(0.0, $with->net());
+    }
+
+    public function test_only_knowledge_with_an_effect_is_worth_its_ap(): void
+    {
+        // Review S3 I6: research_floor 0 — a level without a valued effect is worth nothing.
         $bot = BotSession::boot($this, 1);
         $ctx = $this->ctx($bot);
 
-        foreach (range(90, 96) as $id) {
+        foreach ([90, 91, 92] as $id) {
             $this->assertGreaterThan(0.0, Valuers::research($bot, $ctx, $id, 0, 0)->net(), "knowledge {$id}");
         }
+        $this->assertSame(0.0, Valuers::research($bot, $ctx, 95, 0, 0)->net(), 'trade: no valued effect');
     }
 
     public function test_housing_level_up_in_phase_2_without_a_need_is_not_worth_its_regolith(): void

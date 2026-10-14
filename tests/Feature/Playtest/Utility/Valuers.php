@@ -41,7 +41,8 @@ final class Valuers
         $id = (int) $row->building_id;
         $target = (int) $row->level + 1;
         $regolith = BotStrategy::levelupRegolith($row);
-        $ap = max(1, BotStrategy::effectiveApForLevelup($b, (int) ($row->ap_for_levelup ?? 10)) - (int) $row->ap_spend);
+        $cycleAp = BotStrategy::effectiveApForLevelup($b, (int) ($row->ap_for_levelup ?? 10));
+        $ap = max(1, $cycleAp - (int) $row->ap_spend);
         $isPath = in_array($id, self::PATH_IDS, true);
 
         $terms = ['cost_rg' => -1.0 * $regolith];
@@ -77,7 +78,7 @@ final class Valuers
             $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target']);
         }
 
-        return new Estimate($terms, $ap, $regolith);
+        return new Estimate($terms, $ap, $regolith, $cycleAp);
     }
 
     public static function cc(BotSession $b, BotContext $ctx, object $cc): Estimate
@@ -86,7 +87,8 @@ final class Valuers
         $level = (int) $cc->level;
         $target = $level + 1;
         $regolith = BotStrategy::levelupRegolith($cc);
-        $ap = max(1, BotStrategy::effectiveApForLevelup($b, (int) ($cc->ap_for_levelup ?? 10)) - (int) $cc->ap_spend);
+        $cycleAp = BotStrategy::effectiveApForLevelup($b, (int) ($cc->ap_for_levelup ?? 10));
+        $ap = max(1, $cycleAp - (int) $cc->ap_spend);
 
         $terms = ['cost_rg' => -1.0 * $regolith, 'structural' => $regolith * (float) $w['structural_offset']];
         if ($ctx->phase === 1 && $target <= 3) {
@@ -118,7 +120,7 @@ final class Valuers
             }
         }
 
-        return new Estimate($terms, $ap, $regolith);
+        return new Estimate($terms, $ap, $regolith, $cycleAp);
     }
 
     public static function research(BotSession $b, BotContext $ctx, int $researchId, int $level, int $apSpend): Estimate
@@ -127,14 +129,17 @@ final class Valuers
         $target = $level + 1;
         $cfg = collect(config('knowledge'))->first(fn (array $k): bool => (int) $k['id'] === $researchId) ?? [];
         $fallback = (int) (DB::table('researches')->where('id', $researchId)->value('ap_for_levelup') ?? 0);
-        $ap = max(1, app(ResearchService::class)->knowledgeLevelupCost($b->colonyId, $researchId, $fallback) - $apSpend);
+        $cycleAp = app(ResearchService::class)->knowledgeLevelupCost($b->colonyId, $researchId, $fallback);
+        $ap = max(1, $cycleAp - $apSpend);
         $latency = (int) ceil($ap / max(1, $ctx->apInflow));
 
         $effect = match ($researchId) {
             self::GEOLOGY => $ctx->stream((float) (config('game.geology_harvester_bonus_per_level')[$target] ?? 0), $latency),
             self::CONSTRUCTION => $ctx->stream(($cfg['ap_cost_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['build_ap_per_sol'] * $ctx->lambdaAp, $latency),
             self::CARTOGRAPHY => $ctx->stream(($cfg['nav_ap_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['nav_ap_per_sol'] * $ctx->lambdaAp, $latency),
-            self::AGRONOMY => $ctx->stream(min((int) (config('game.agronomy_agrardom_bonus_per_level')[$target] ?? 0), self::foodDeficit($b)) * $ctx->price('organics'), $latency),
+            // GameTick::generateAgronomyBonus() pays nothing while no Agrardom stands.
+            self::AGRONOMY => self::agrardomLevel($b) === 0 ? 0.0
+                : $ctx->stream(min((int) (config('game.agronomy_agrardom_bonus_per_level')[$target] ?? 0), self::foodDeficit($b)) * $ctx->price('organics'), $latency),
             default => 0.0,
         };
 
@@ -147,7 +152,7 @@ final class Valuers
             $terms['trust'] = $trust * $ctx->price('trust');
         }
 
-        return new Estimate($terms, $ap, 0);
+        return new Estimate($terms, $ap, 0, $cycleAp);
     }
 
     public static function pathPlacement(BotSession $b, BotContext $ctx, int $buildingId): Estimate
@@ -261,13 +266,32 @@ final class Valuers
         return $value;
     }
 
-    /** Organika the colony's need exceeds the current Agrardom yield by (feed_colony stays mandatory). */
+    private static function agrardomLevel(BotSession $b): int
+    {
+        return (int) (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', self::BIO_FACILITY)
+            ->whereNotNull('tile_x')->orderBy('instance_id')->value('level') ?? 0);
+    }
+
+    /**
+     * Organika per Sol the colony's ships fly on (review S3, P3): every ship can be
+     * out on a mission or find flight, each Sol of flight costs organika_per_sol.
+     */
+    public static function provisionsPerSol(BotSession $b): int
+    {
+        return (int) config('missions.organika_per_sol', 3) * DB::table('colony_ships')->where('colony_id', $b->colonyId)->count();
+    }
+
+    /**
+     * Organika the colony's need plus ship provisions exceed the current Agrardom
+     * yield by (feed_colony stays mandatory). Kept as a cap on the food term: the
+     * scarcity price never drops below 0.5, so uncapped surplus Organika would make
+     * every Agrardom level the densest upgrade.
+     */
     private static function foodDeficit(BotSession $b): int
     {
-        $level = (int) (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', self::BIO_FACILITY)
-            ->whereNotNull('tile_x')->orderBy('instance_id')->value('level') ?? 0);
+        $level = self::agrardomLevel($b);
         $curve = config('game.production_curve.'.self::BIO_FACILITY.'.'.self::RES_ORGANICS, []);
 
-        return max(0, app(ResourcesService::class)->foodNeed($b->colonyId) - GameTick::cumulativeCurveYield($curve, $level));
+        return max(0, app(ResourcesService::class)->foodNeed($b->colonyId) + self::provisionsPerSol($b) - GameTick::cumulativeCurveYield($curve, $level));
     }
 }

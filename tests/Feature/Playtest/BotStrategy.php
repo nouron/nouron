@@ -40,7 +40,7 @@ class BotStrategy
     // path buildings a fresh colony can reach first. Pilot (id 89, gated on
     // Hangar being placed) sits between Scientist and Trader so the bot picks
     // up whichever path building is placed first without starving either hire.
-    private const HIRE_ORDER = [35, 36, 89, 92];
+    public const HIRE_ORDER = [35, 36, 89, 92];
 
     // Repair tiers as a share of max_status_points: below CRITICAL a building is
     // repaired first thing; below MAINTENANCE it is topped up once the Sol's
@@ -927,7 +927,7 @@ class BotStrategy
      * other zone tile was built on, and place_building ate tile_occupied every Sol
      * (baseline 2026-09-26, B7/T23).
      */
-    private static function freeZoneTile(BotSession $b): ?object
+    public static function freeZoneTile(BotSession $b): ?object
     {
         return DB::table('colony_tiles as ct')
             ->where('ct.colony_id', $b->colonyId)
@@ -1159,32 +1159,50 @@ class BotStrategy
             // above that level-up's price may go into new buildings.
             $ccReserve = self::regolithReserve($b);
 
+            // Review S3 I4 (diagnostic only): why the highest-priority building was skipped.
+            $reason = $buildings === [] ? 'none_available' : null;
             foreach ($buildings as $building) {
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
+                    $reason ??= 'path_buffer';
+
                     continue;
                 }
 
                 // Placing pays the erection and the 0 -> 1 Regolith in one go (T9).
+                // The utility goal's own placement only keeps the legacy reserves, not its own hold.
                 $placementCost = self::buildingCosts()->placementCost((int) $building['building_id']);
-                if (! self::fitsAboveCcReserve($b, $ccReserve, (int) ($placementCost[self::RES_REGOLITH] ?? 0))) {
+                $placementRegolith = (int) ($placementCost[self::RES_REGOLITH] ?? 0);
+                $reserve = (int) $building['building_id'] === $b->holdExemptBuildingId ? self::regolithReserve($b, withHold: false) : $ccReserve;
+                if (! self::fitsAboveCcReserve($b, $reserve, $placementRegolith)) {
+                    $reason ??= $b->regolithHold > 0 && self::fitsAboveCcReserve($b, self::regolithReserve($b, withHold: false), $placementRegolith)
+                        ? 'hold' : 'reserve';
+
                     continue;
                 }
                 $costs = self::costList($placementCost);
                 if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
+                    $reason ??= 'resources';
+
                     continue;
                 }
                 if ((int) $building['supply_cost'] > $freeSupply) {
+                    $reason ??= 'supply';
+
                     continue;
                 }
 
                 $tile = self::freeZoneTile($b);
 
                 if ($tile === null) {
+                    $b->notePlaceNull('no_tile');
+
                     return null;
                 }
 
                 return [$building, $tile];
             }
+
+            $b->notePlaceNull($reason ?? 'none_available');
 
             return null;
         });
@@ -1446,7 +1464,7 @@ class BotStrategy
      * itself resolves (config/knowledge.php levelup_costs + project bonuses via
      * knowledgeLevelupCost()), read directly from the DB — no HTTP round trip.
      */
-    private static function researchLevelupReady(BotSession $b, int $researchId): bool
+    public static function researchLevelupReady(BotSession $b, int $researchId): bool
     {
         $apSpend = (int) (DB::table('colony_researches')
             ->where('colony_id', $b->colonyId)
@@ -1460,39 +1478,30 @@ class BotStrategy
     }
 
     /**
-     * The knowledge research could take right now, and whether any knowledge is
-     * held back only by the CC gate (game.knowledge_cc_level_cap).
-     * Not Regolith-buffered: research costs AP only.
+     * Knowledge research could take right now, lowest id first: Sciencelab level
+     * met, below level 5, and not held back by the CC gate
+     * (game.knowledge_cc_level_cap). cc_blocked = at least one knowledge is held
+     * back only by that gate. Shared with the utility ResearchSource (S3).
      *
-     * @return array{candidate: int|null, cc_blocked: bool}
+     * A37 fix (kept): filtering by the SAME cap the server enforces lets the bot
+     * move on to the next eligible knowledge instead of retrying a CC-gated one
+     * forever (found 2026-09-13).
+     *
+     * @return array{eligible: list<object{id:int, level:int, ap_spend:int}>, cc_blocked: bool}
      */
-    private static function researchOptions(BotSession $b): array
+    public static function researchableKnowledge(BotSession $b): array
     {
         $sciencelabLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::Sciencelab->value)
             ->value('level') ?? 0);
-
-        // A37 fix: without this, the bot got permanently stuck on the
-        // lowest-id knowledge once its NEXT level hit `knowledge_cc_level_cap`
-        // (config/game.php — Kenntnis-Level 4/5 need CC Lv4/5) — the levelup
-        // attempt fails with 'knowledge_cc_gate' every Sol forever after, and
-        // the do() closure's fallback to 'add' only triggers on
-        // 'insufficient_ap_invested', not this error, so the rule just fails
-        // for the rest of the run. researchCandidate() never moved past that
-        // knowledge to the other 6, which then received zero investment for
-        // the remainder of the run despite abundant unspent AP (found
-        // 2026-09-13: a full 99-Sol run left 63% of daily AP unspent while
-        // stuck retrying one CC-gated knowledge). Filtering the candidate
-        // list by the SAME cap the server enforces lets the bot move on to
-        // the next eligible knowledge instead of stalling.
         $ccLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0);
         $ccCaps = config('game.knowledge_cc_level_cap', []);
 
-        $candidates = DB::table('researches as r')
+        $rows = DB::table('researches as r')
             ->leftJoin('colony_researches as cr', function ($join) use ($b) {
                 $join->on('cr.research_id', '=', 'r.id')->where('cr.colony_id', $b->colonyId);
             })
@@ -1501,21 +1510,35 @@ class BotStrategy
             ->where(fn ($q) => $q->whereNull('r.required_building_level')->orWhereRaw('? >= r.required_building_level', [$sciencelabLevel]))
             ->where(fn ($q) => $q->whereNull('cr.level')->orWhere('cr.level', '<', 5))
             ->orderBy('r.id')
-            ->get(['r.id', 'cr.level']);
+            ->get(['r.id', 'cr.level', 'cr.ap_spend']);
 
+        $eligible = [];
         $ccBlocked = false;
-        foreach ($candidates as $candidate) {
-            $currentLevel = (int) ($candidate->level ?? 0);
-            $targetLevel = $currentLevel + 1;
-            $requiredCc = $ccCaps[$targetLevel] ?? null;
-
+        foreach ($rows as $row) {
+            $level = (int) ($row->level ?? 0);
+            $requiredCc = $ccCaps[$level + 1] ?? null;
             if ($requiredCc === null || $ccLevel >= $requiredCc) {
-                return ['candidate' => (int) $candidate->id, 'cc_blocked' => $ccBlocked];
+                $eligible[] = (object) ['id' => (int) $row->id, 'level' => $level, 'ap_spend' => (int) ($row->ap_spend ?? 0)];
+            } else {
+                $ccBlocked = true;
             }
-            $ccBlocked = true;
         }
 
-        return ['candidate' => null, 'cc_blocked' => $ccBlocked];
+        return ['eligible' => $eligible, 'cc_blocked' => $ccBlocked];
+    }
+
+    /**
+     * The knowledge research could take right now and whether any knowledge is held
+     * back only by the CC gate. cc_blocked is only read when candidate is null
+     * (ccResearchReserve()), where "any" equals the former "before the first eligible".
+     *
+     * @return array{candidate: int|null, cc_blocked: bool}
+     */
+    private static function researchOptions(BotSession $b): array
+    {
+        $knowledge = self::researchableKnowledge($b);
+
+        return ['candidate' => $knowledge['eligible'][0]->id ?? null, 'cc_blocked' => $knowledge['cc_blocked']];
     }
 
     /**
@@ -1552,12 +1575,13 @@ class BotStrategy
     }
 
     /**
-     * Regolith all non-repair spending must leave in stock: the larger of the
-     * CC research reserve (T17) and the self-sufficiency reserve.
+     * Regolith all non-repair spending must leave in stock: the largest of the CC
+     * research reserve (T17), the self-sufficiency reserve and the utility
+     * engine's savings goal (BotSession::$regolithHold, 0 for the legacy engine).
      */
-    private static function regolithReserve(BotSession $b): int
+    private static function regolithReserve(BotSession $b, bool $withHold = true): int
     {
-        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b));
+        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b), $withHold ? $b->regolithHold : 0);
     }
 
     /**
@@ -1902,7 +1926,7 @@ class BotStrategy
             ->value('amount') ?? 0);
     }
 
-    private static function hangarLevel(BotSession $b): int
+    public static function hangarLevel(BotSession $b): int
     {
         return (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -2150,6 +2174,13 @@ class BotStrategy
             return null;
         }
 
+        // Review S3 (2026-10-14, owner-approved legacy fix): same provisions gate as
+        // firstFlyableMission() — without it the dispatch ate no_organika every Sol.
+        $hangar = app(HangarService::class);
+        if (self::organics($b) < $hangar->organikaCostFor($b->colonyId, config('missions.catalog.mission_salvage_sweep'))) {
+            return null;
+        }
+
         $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
 
         return DB::table('colony_ships')
@@ -2283,7 +2314,7 @@ class BotStrategy
     }
 
     /** B1: a ship of class $classLevel docks only if the hall carries the class and a bay 1..level is free. */
-    private static function hasFreeBayFor(BotSession $b, int $classLevel): bool
+    public static function hasFreeBayFor(BotSession $b, int $classLevel): bool
     {
         $level = self::hangarLevel($b);
         if ($level < $classLevel) {
