@@ -68,7 +68,8 @@ final class BotContext
 
         $prices = [
             'credits' => (float) $w['price']['credits'] * Valuation::scarcity($creditDemand, $credits, $lo, $hi),
-            'organics' => (float) $w['price']['organics'] * Valuation::scarcity(app(ResourcesService::class)->foodNeed($colonyId) * 3, $organics, $lo, $hi),
+            // Review S3 (P3): ship provisions count as Organika demand next to the colony's food need.
+            'organics' => (float) $w['price']['organics'] * Valuation::scarcity((app(ResourcesService::class)->foodNeed($colonyId) + Valuers::provisionsPerSol($b)) * 3, $organics, $lo, $hi),
             'compounds' => (float) $w['price']['compounds'],
             'trust' => (float) $w['price']['trust'] * ($trustDanger ? (float) $w['trust_danger_factor'] : 1.0),
         ];

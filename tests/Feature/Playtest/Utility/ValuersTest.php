@@ -3,6 +3,7 @@
 namespace Tests\Feature\Playtest\Utility;
 
 use App\Enums\BuildingId;
+use App\Services\ResourcesService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
@@ -72,6 +73,33 @@ class ValuersTest extends TestCase
         $this->placeAt($bot, BuildingId::Sciencelab->value, 2);
 
         $this->assertArrayNotHasKey('effect', Valuers::research($bot, $this->ctx($bot), 93, 0, 0)->terms);
+    }
+
+    private function addShip(BotSession $bot, int $shipId, int $bay): void
+    {
+        DB::table('colony_ships')->insert(['colony_id' => $bot->colonyId, 'ship_id' => $shipId, 'bay' => $bay, 'ship_state' => 'docked',
+            'level' => 0, 'status_points' => 20, 'ap_spend' => 0]);
+    }
+
+    public function test_agrardom_level_2_is_worth_it_when_ships_need_provisions(): void
+    {
+        // Review S3 (P3): the food term only saw the colony's own need, never mission provisions.
+        $bot = BotSession::boot($this, 1);
+        $this->placeAt($bot, 41, 1);
+        $this->setResource($bot, 5, 20);
+        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->delete();
+        $foodNeed = app(ResourcesService::class)->foodNeed($bot->colonyId);
+        $this->assertLessThanOrEqual(8, $foodNeed, 'fixture: Lv1 (8 Or) covers the colony');
+
+        $without = Valuers::upgrade($bot, $this->ctx($bot), Valuers::buildingRow($bot, 41, 1));
+        // Enough ships that their provisions (3 Or/Sol each) exceed what Lv1 leaves over.
+        foreach (range(1, intdiv(8 - $foodNeed, 3) + 1) as $bay) {
+            $this->addShip($bot, (int) config('ships.freighter.id'), $bay);
+        }
+        $with = Valuers::upgrade($bot, $this->ctx($bot), Valuers::buildingRow($bot, 41, 1));
+
+        $this->assertGreaterThan($without->terms['food'] ?? 0.0, $with->terms['food'] ?? 0.0);
+        $this->assertGreaterThan(0.0, $with->net());
     }
 
     public function test_only_knowledge_with_an_effect_is_worth_its_ap(): void

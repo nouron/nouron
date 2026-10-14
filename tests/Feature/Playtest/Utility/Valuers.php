@@ -266,18 +266,32 @@ final class Valuers
         return $value;
     }
 
-    /** Organika the colony's need exceeds the current Agrardom yield by (feed_colony stays mandatory). */
     private static function agrardomLevel(BotSession $b): int
     {
         return (int) (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', self::BIO_FACILITY)
             ->whereNotNull('tile_x')->orderBy('instance_id')->value('level') ?? 0);
     }
 
+    /**
+     * Organika per Sol the colony's ships fly on (review S3, P3): every ship can be
+     * out on a mission or find flight, each Sol of flight costs organika_per_sol.
+     */
+    public static function provisionsPerSol(BotSession $b): int
+    {
+        return (int) config('missions.organika_per_sol', 3) * DB::table('colony_ships')->where('colony_id', $b->colonyId)->count();
+    }
+
+    /**
+     * Organika the colony's need plus ship provisions exceed the current Agrardom
+     * yield by (feed_colony stays mandatory). Kept as a cap on the food term: the
+     * scarcity price never drops below 0.5, so uncapped surplus Organika would make
+     * every Agrardom level the densest upgrade.
+     */
     private static function foodDeficit(BotSession $b): int
     {
         $level = self::agrardomLevel($b);
         $curve = config('game.production_curve.'.self::BIO_FACILITY.'.'.self::RES_ORGANICS, []);
 
-        return max(0, app(ResourcesService::class)->foodNeed($b->colonyId) - GameTick::cumulativeCurveYield($curve, $level));
+        return max(0, app(ResourcesService::class)->foodNeed($b->colonyId) + self::provisionsPerSol($b) - GameTick::cumulativeCurveYield($curve, $level));
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Playtest\Utility;
 
 use App\Services\ResourcesService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
 use Tests\TestCase;
@@ -59,6 +60,21 @@ class BotContextTest extends TestCase
 
         $this->assertEqualsWithDelta($w['price']['organics'] * Valuation::scarcity($foodNeed * 3, 0, 0.5, 4.0), $empty, 1e-9);
         $this->assertGreaterThanOrEqual($full, $empty);
+    }
+
+    public function test_ship_provisions_raise_the_organics_demand(): void
+    {
+        // Review S3 (P3): every ship flies on provisions (missions.organika_per_sol per Sol).
+        $bot = BotSession::boot($this, 1);
+        $this->setResource($bot, 5, 5);
+        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->delete();
+        $profile = BotProfile::named('default');
+        $without = BotContext::capture($bot, $profile)->price('organics');
+
+        DB::table('colony_ships')->insert(['colony_id' => $bot->colonyId, 'ship_id' => (int) config('ships.freighter.id'), 'bay' => 2,
+            'ship_state' => 'docked', 'level' => 0, 'status_points' => 20, 'ap_spend' => 0]);
+
+        $this->assertGreaterThan($without, BotContext::capture($bot, $profile)->price('organics'));
     }
 
     public function test_lambda_comes_from_the_session_once_tracked(): void
