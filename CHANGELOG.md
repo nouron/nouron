@@ -2,6 +2,7 @@
 
 ## 2026-10-14
 
+- Docs: Entwürfe Bergung ohne Sol-Deckel, Regolith-Wirtschaft (Inventar + Budget-Modell) mit Owner-Entscheiden; noch keine Config-Änderung.
 - Feat: PlaytestBot Utility-Modell S3 — `--engine=utility` baut Pfadgebäude-Stufen, CC, Forschung (Effekt je AP) und Frachter nach Nutzen mit Sparziel; λ_AP gedeckelt, Agrardom-Ausbau und Compounds-Mission (Organika-Proviant) korrigiert. Spielverhalten unverändert.
 
 ## 2026-10-13
