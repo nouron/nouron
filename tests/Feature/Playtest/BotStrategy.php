@@ -1159,34 +1159,50 @@ class BotStrategy
             // above that level-up's price may go into new buildings.
             $ccReserve = self::regolithReserve($b);
 
+            // Review S3 I4 (diagnostic only): why the highest-priority building was skipped.
+            $reason = $buildings === [] ? 'none_available' : null;
             foreach ($buildings as $building) {
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
+                    $reason ??= 'path_buffer';
+
                     continue;
                 }
 
                 // Placing pays the erection and the 0 -> 1 Regolith in one go (T9).
                 // The utility goal's own placement only keeps the legacy reserves, not its own hold.
                 $placementCost = self::buildingCosts()->placementCost((int) $building['building_id']);
+                $placementRegolith = (int) ($placementCost[self::RES_REGOLITH] ?? 0);
                 $reserve = (int) $building['building_id'] === $b->holdExemptBuildingId ? self::regolithReserve($b, withHold: false) : $ccReserve;
-                if (! self::fitsAboveCcReserve($b, $reserve, (int) ($placementCost[self::RES_REGOLITH] ?? 0))) {
+                if (! self::fitsAboveCcReserve($b, $reserve, $placementRegolith)) {
+                    $reason ??= $b->regolithHold > 0 && self::fitsAboveCcReserve($b, self::regolithReserve($b, withHold: false), $placementRegolith)
+                        ? 'hold' : 'reserve';
+
                     continue;
                 }
                 $costs = self::costList($placementCost);
                 if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
+                    $reason ??= 'resources';
+
                     continue;
                 }
                 if ((int) $building['supply_cost'] > $freeSupply) {
+                    $reason ??= 'supply';
+
                     continue;
                 }
 
                 $tile = self::freeZoneTile($b);
 
                 if ($tile === null) {
+                    $b->notePlaceNull('no_tile');
+
                     return null;
                 }
 
                 return [$building, $tile];
             }
+
+            $b->notePlaceNull($reason ?? 'none_available');
 
             return null;
         });

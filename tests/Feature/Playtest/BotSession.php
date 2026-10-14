@@ -57,8 +57,23 @@ class BotSession
     /** Step id of the current savings goal (HeuristicGoalProvider, sticky until bought — review S3 I7). */
     public ?string $savingsGoalStep = null;
 
+    /**
+     * Why place_building found no candidate, per Sol and reason (review S3 I4,
+     * diagnostic only): hold / reserve / path_buffer / resources / supply /
+     * no_tile / none_available — the reason of the highest-priority building.
+     * Counted once per distinct state (the candidate search is memoized).
+     *
+     * @var array<int, array<string, int>>
+     */
+    public array $placeNullReasons = [];
+
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
+
+    public function notePlaceNull(string $reason): void
+    {
+        $this->placeNullReasons[$this->sol][$reason] = ($this->placeNullReasons[$this->sol][$reason] ?? 0) + 1;
+    }
 
     private function __construct(
         private readonly TestCase $test,

@@ -588,6 +588,8 @@ class RunReport
             'log' => $bot->log,
             'decisions' => $bot->decisions,
             'utility_summary' => self::utilitySummary($bot),
+            // Review S3 I4: why place_building found nothing, per Sol (diagnostic).
+            'place_null_reasons' => $bot->placeNullReasons,
             'project_metrics' => $this->projectMetrics(),
             'regolith_path_attribution' => $regolithPathAttribution,
             'zero_ap_sols' => [
