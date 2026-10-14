@@ -33,6 +33,9 @@ if (is_dir($reportDir)) {
             'mtime' => filemtime($path),
             'profile' => $data['profile'] ?? 'default',
             'opening' => $data['opening'] ?? 'auto', // absent in reports from before T30
+            'engine' => $data['engine'] ?? 'legacy', // absent in reports from before the utility bot
+            'decisions' => $data['decisions'] ?? [],
+            'utility_summary' => $data['utility_summary'] ?? null,
             'seed' => $data['seed'],
             'outcome' => $data['outcome'] ?? ['status' => 'unknown'],
             'phase2_start_sol' => $data['phase2_start_sol'] ?? null,
@@ -65,6 +68,9 @@ if (is_dir($reportDir)) {
 <div class="pd-layout">
     <div class="pd-sidebar">
         <h2>Läufe (<?= count($runs) ?>)</h2>
+        <label class="pd-engine-filter">Engine:
+            <select id="pd-engine-filter"><option value="">alle</option></select>
+        </label>
         <?php if (empty($runs)) { ?>
             <p class="pd-empty">Keine Reports in <code>storage/logs/playtest/</code>. Erst <code>php artisan game:playtest</code> laufen lassen.</p>
         <?php } else { ?>
@@ -77,6 +83,7 @@ if (is_dir($reportDir)) {
             <span class="pd-event-toggles-label">Ereignis-Marker:</span>
             <label><input type="checkbox" id="pd-event-cc" checked> CC-Level-Aufstieg</label>
             <label><input type="checkbox" id="pd-event-advisor" checked> Berater angestellt</label>
+            <label><input type="checkbox" id="pd-event-path" checked> Pfadgebäude Stufe 2/3</label>
         </div>
 
         <div class="pd-chart-stack">
@@ -98,13 +105,15 @@ if (is_dir($reportDir)) {
             <div class="pd-chart-card"><h3>AP-Bilanz (Repair / Projekt / Handlung / Rest)</h3><canvas id="chart-ap-breakdown"></canvas></div>
             <div class="pd-chart-card"><h3>Regolith-Quellen (Harvester / Mission / Handel / Ereignis)</h3><canvas id="chart-regolith-sources"></canvas></div>
             <div class="pd-chart-card"><h3>Supply-Auslastung</h3><canvas id="chart-supply-utilization"></canvas></div>
+            <div class="pd-chart-card"><h3>Pfadgebäude-Stufen (Labor / Hangar / Cantina) + CC</h3><canvas id="chart-path-levels"></canvas></div>
         </div>
 
         <table class="pd-summary">
             <thead>
                 <tr>
-                    <th>Profil</th><th>Seed</th><th>Outcome</th><th>Phase 2 ab Sol</th><th>Objectives</th><th>Score</th><th>Aktionen</th>
+                    <th>Profil</th><th>Engine</th><th>Seed</th><th>Outcome</th><th>Phase 2 ab Sol</th><th>Objectives</th><th>Score</th><th>Aktionen</th>
                     <th>AP Ungenutzt %</th><th>Rego Top-Quelle</th><th>Supply Max %</th><th>Projekte</th><th>Harvester-Umzüge</th><th>Letztes Projekt (Sol)</th>
+                    <th>Pfad Lv2 / Lv3 (Sol)</th><th>CC Lv4 (Sol)</th><th>Reparatur-AP</th><th>Legacy-Anteil (K18)</th><th>Entsch./Sol (K20)</th>
                     <th>Top-Rejections</th>
                 </tr>
             </thead>
@@ -116,10 +125,11 @@ if (is_dir($reportDir)) {
         <div class="pd-log-header">
             <h3>Aktions-Log</h3>
             <select id="pd-log-run-select"></select>
+            <label><input type="checkbox" id="pd-log-decisions"> Entscheidungen (Utility)</label>
         </div>
         <div class="pd-log-scroll">
             <table class="pd-log-table">
-                <thead><tr><th>Sol</th><th>Aktion</th><th>Status</th></tr></thead>
+                <thead id="pd-log-head"><tr><th>Sol</th><th>Aktion</th><th>Status</th></tr></thead>
                 <tbody id="pd-log-body"></tbody>
             </table>
         </div>
@@ -143,8 +153,12 @@ function colorFor(run) {
     return runColors[key];
 }
 
+function engineTag(run) {
+    return run.engine && run.engine !== 'legacy' ? `[${run.engine}]` : '';
+}
+
 function runLabel(run) {
-    return `${run.profile}/${run.opening} · seed ${run.seed}`;
+    return `${run.profile}/${run.opening}${engineTag(run)} · seed ${run.seed}`;
 }
 
 // ── Sidebar ──────────────────────────────────────────────────────────────
@@ -155,6 +169,7 @@ if (listEl) {
     RUNS.forEach((run, idx) => {
         const item = document.createElement('label');
         item.className = 'pd-run-item';
+        item.dataset.engine = run.engine || 'legacy';
         const swatch = document.createElement('span');
         swatch.className = 'pd-run-swatch';
         swatch.style.background = colorFor(run);
@@ -168,7 +183,7 @@ if (listEl) {
         const text = document.createElement('span');
         text.className = 'pd-run-label';
         const outcomeClass = run.outcome.status === 'completed' ? 'pd-run-outcome-completed' : 'pd-run-outcome-failed';
-        text.innerHTML = `<span class="pd-run-profile">${run.profile}/${run.opening}</span> #${run.seed} <span class="${outcomeClass}">${run.outcome.status}</span>`;
+        text.innerHTML = `<span class="pd-run-profile">${run.profile}/${run.opening}${engineTag(run)}</span> #${run.seed} <span class="${outcomeClass}">${run.outcome.status}</span>`;
         item.append(checkbox, swatch, text);
         listEl.appendChild(item);
 
@@ -181,9 +196,58 @@ if (listEl) {
     });
 }
 
+// Engine filter: hides sidebar rows of other engines and unticks them.
+const engineFilter = document.getElementById('pd-engine-filter');
+if (engineFilter) {
+    [...new Set(RUNS.map(r => r.engine || 'legacy'))].sort().forEach(e => {
+        engineFilter.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`);
+    });
+    engineFilter.addEventListener('change', () => {
+        listEl?.querySelectorAll('.pd-run-item').forEach(item => {
+            const hide = engineFilter.value !== '' && item.dataset.engine !== engineFilter.value;
+            item.style.display = hide ? 'none' : '';
+            const cb = item.querySelector('input');
+            if (hide && cb.checked) {
+                cb.checked = false;
+                selected.delete(Number(cb.dataset.idx));
+            }
+        });
+        render();
+    });
+}
+
 // ── Event markers ────────────────────────────────────────────────────────
 // Derived from sols[] deltas — no extra data needed beyond what's already
 // snapshotted per Sol. Cached per run since RUNS is immutable after load.
+const PATH_BUILDINGS = [
+    { id: 31, name: 'Labor', color: '#7fbbff' },
+    { id: 44, name: 'Hangar', color: '#ffe07f' },
+    { id: 52, name: 'Cantina', color: '#ff7fa0' },
+];
+
+// Highest level of any instance of a building per Sol snapshot.
+function buildingLevel(snapshot, buildingId) {
+    let lv = 0;
+    Object.entries(snapshot.buildings ?? {}).forEach(([key, info]) => {
+        if (Number(key.split(':')[0]) === buildingId) lv = Math.max(lv, info.level ?? 0);
+    });
+    return lv;
+}
+
+// {level: first Sol reaching it} for a path building.
+function pathLevelSols(run, buildingId) {
+    const out = {};
+    (run.sols ?? []).forEach(s => {
+        const lv = buildingLevel(s, buildingId);
+        for (let l = 1; l <= lv; l++) if (out[l] === undefined) out[l] = s.sol;
+    });
+    return out;
+}
+
+function firstCcSol(run, level) {
+    return (run.sols ?? []).find(s => s.cc_level >= level)?.sol;
+}
+
 const eventsCache = new Map();
 function eventsFor(run) {
     if (eventsCache.has(run)) return eventsCache.get(run);
@@ -199,6 +263,12 @@ function eventsFor(run) {
         }
         prevCc = s.cc_level;
         prevAdvisors = s.advisors;
+    });
+    PATH_BUILDINGS.forEach(pb => {
+        [2, 3].forEach(lv => {
+            const first = pathLevelSols(run, pb.id)[lv];
+            if (first !== undefined) events.push({ sol: first, type: 'path', label: `${pb.name} Lv${lv}` });
+        });
     });
     eventsCache.set(run, events);
     return events;
@@ -244,6 +314,7 @@ function activeEventTypes() {
     const types = [];
     if (document.getElementById('pd-event-cc')?.checked) types.push('cc');
     if (document.getElementById('pd-event-advisor')?.checked) types.push('advisor');
+    if (document.getElementById('pd-event-path')?.checked) types.push('path');
     return types;
 }
 
@@ -310,6 +381,7 @@ function render() {
         const outcomeText = run.outcome.status === 'completed' ? 'completed' : `failed (${run.outcome.fail_reason || '?'})`;
         return `<tr>
             <td>${run.profile}/${run.opening}</td>
+            <td>${run.engine || 'legacy'}</td>
             <td>${run.seed}</td>
             <td class="${outcomeClass}">${outcomeText}</td>
             <td>${run.phase2_start_sol ?? '—'}</td>
@@ -322,6 +394,11 @@ function render() {
             <td>${run.project_metrics?.project_durations?.length ?? 0}</td>
             <td>${harvesterMoveCount(run)}</td>
             <td>${run.project_metrics?.last_completion_sol ?? '—'}</td>
+            <td>${pathTierCell(run)}</td>
+            <td>${firstCcSol(run, 4) ?? 'nicht erreicht'}</td>
+            <td>${repairAp(run)}</td>
+            <td>${run.utility_summary ? run.utility_summary.legacy_share + '%' : '—'}</td>
+            <td>${run.utility_summary?.median_decisions_per_sol ?? '—'}</td>
             <td class="pd-rejections">${rejections || '—'}</td>
         </tr>`;
     }).join('');
@@ -356,6 +433,20 @@ function supplyMaxPct(run) {
     if (sols.length === 0) return '—';
     const max = Math.max(...sols.map(s => s.supply?.utilization ?? 0));
     return `${Math.round(max * 100)}%`;
+}
+
+// Opening's path building = the one with the highest level at the end.
+function pathTierCell(run) {
+    const last = run.sols?.[run.sols.length - 1];
+    if (!last) return '—';
+    return PATH_BUILDINGS.map(pb => {
+        const sols = pathLevelSols(run, pb.id);
+        return `${pb.name}: ${sols[2] ?? '–'} / ${sols[3] ?? '–'}`;
+    }).join('<br>');
+}
+
+function repairAp(run) {
+    return (run.sols ?? []).reduce((sum, s) => sum + (s.ap?.repair_spent ?? 0), 0);
 }
 
 function harvesterMoveCount(run) {
@@ -449,6 +540,28 @@ if (supplyCanvas) {
     });
 }
 
+detailCharts.pathLevels = (() => {
+    const canvas = document.getElementById('chart-path-levels');
+    if (!canvas) return null;
+    const series = [...PATH_BUILDINGS, { name: 'CC', color: '#ffffff' }];
+    return new Chart(canvas, {
+        type: 'line',
+        data: { datasets: series.map(p => ({
+            label: p.name, data: [], borderColor: p.color, backgroundColor: p.color,
+            borderWidth: 2, pointRadius: 0, stepped: true, borderDash: p.name === 'CC' ? [4, 3] : [],
+        })) },
+        options: {
+            responsive: true,
+            animation: false,
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'Sol', color: '#888' }, ticks: { color: '#888' }, grid: { color: '#1e1e30' } },
+                y: { min: 0, ticks: { color: '#888', stepSize: 1 }, grid: { color: '#1e1e30' } },
+            },
+            plugins: { legend: { labels: { color: '#ccc', boxWidth: 12, font: { size: 10 } } } },
+        },
+    });
+})();
+
 function renderDetailCharts(run) {
     const label = document.getElementById('pd-detail-run-label');
     if (label) label.textContent = run ? runLabel(run) : '–';
@@ -468,6 +581,12 @@ function renderDetailCharts(run) {
             ds.data = sols.map(s => ({ x: s.sol, y: s.regolith_sources?.[key] ?? 0 }));
         });
         detailCharts.regolithSources.update();
+    }
+    if (detailCharts.pathLevels) {
+        const ds = detailCharts.pathLevels.data.datasets;
+        PATH_BUILDINGS.forEach((pb, i) => { ds[i].data = sols.map(s => ({ x: s.sol, y: buildingLevel(s, pb.id) })); });
+        ds[PATH_BUILDINGS.length].data = sols.map(s => ({ x: s.sol, y: s.cc_level }));
+        detailCharts.pathLevels.update();
     }
     if (detailCharts.supplyUtilization) {
         detailCharts.supplyUtilization.data.datasets[0].data = sols.map(s => ({ x: s.sol, y: s.supply?.utilization ?? 0 }));
@@ -489,8 +608,26 @@ function renderLogSelect(activeRuns) {
     renderDetailCharts(activeRuns[logSelect.selectedIndex] ?? null);
 }
 
+const logHead = document.getElementById('pd-log-head');
+const decisionsToggle = document.getElementById('pd-log-decisions');
+
+function renderDecisionTable(run) {
+    logHead.innerHTML = '<tr><th>Sol</th><th>Quelle</th><th>Aktion</th><th>Score</th><th>Netto</th><th>Alternativen</th><th>OK</th></tr>';
+    if (!run || !run.decisions || run.decisions.length === 0) {
+        logBody.innerHTML = '<tr><td colspan="7" class="pd-empty">Keine Entscheidungen (Legacy-Engine oder älterer Report).</td></tr>';
+        return;
+    }
+    const alt = d => (d.alternatives ?? []).map(a => typeof a === 'string' ? a : (a.name ?? JSON.stringify(a))).join(', ');
+    logBody.innerHTML = run.decisions.map(d => `<tr class="${d.ok ? 'pd-log-ok' : 'pd-log-error'}" title="${JSON.stringify(d.terms ?? {}).replace(/"/g, '&quot;')}">
+        <td>${d.sol}</td><td>${d.source}</td><td>${d.name}</td><td>${d.score ?? '—'}</td><td>${d.net ?? '—'}</td>
+        <td>${alt(d)}</td><td>${d.ok ? 'OK' : 'x'}</td>
+    </tr>`).join('');
+}
+
 function renderLogTable(run) {
     if (!logBody) return;
+    if (decisionsToggle?.checked) return renderDecisionTable(run);
+    if (logHead) logHead.innerHTML = '<tr><th>Sol</th><th>Aktion</th><th>Status</th></tr>';
     if (!run || !run.log || run.log.length === 0) {
         logBody.innerHTML = '<tr><td colspan="3" class="pd-empty">Kein Log in diesem Report (ältere Reports vor 2026-08-17 haben keins).</td></tr>';
         return;
@@ -508,6 +645,11 @@ logSelect?.addEventListener('change', () => {
     renderDetailCharts(activeRuns[logSelect.selectedIndex] ?? null);
 });
 
+decisionsToggle?.addEventListener('change', () => {
+    const activeRuns = [...selected].map(idx => RUNS[idx]).filter(Boolean);
+    renderLogTable(activeRuns[logSelect.selectedIndex] ?? null);
+});
+document.getElementById('pd-event-path')?.addEventListener('change', render);
 document.getElementById('pd-event-cc')?.addEventListener('change', render);
 document.getElementById('pd-event-advisor')?.addEventListener('change', render);
 
