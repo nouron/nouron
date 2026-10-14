@@ -3,6 +3,7 @@
 namespace Tests\Feature\Playtest;
 
 use App\Enums\BuildingId;
+use App\Services\HangarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -33,6 +34,19 @@ class BotStrategyInactiveShipTest extends TestCase
 
         $this->assertNotEmpty($candidate);
         $this->assertSame(self::SHIP_FREIGHTER, (int) $candidate->ship_id);
+    }
+
+    public function test_compounds_mission_waits_for_its_organika_provisions(): void
+    {
+        // Review S3: the server rejects the dispatch with no_organika (HangarService::dispatchShip()).
+        $bot = $this->bootWithDockedFreighter(hangarLevel: 2);
+        $provisions = app(HangarService::class)->organikaCostFor($bot->colonyId, config('missions.catalog.mission_salvage_sweep'));
+        $this->setOrganics($bot, $provisions - 1);
+
+        $this->assertEmpty($this->rule('dispatch_compounds_mission')['when']($bot));
+
+        $this->setOrganics($bot, $provisions);
+        $this->assertNotEmpty($this->rule('dispatch_compounds_mission')['when']($bot));
     }
 
     public function test_salvage_mission_skips_a_freighter_in_a_level_1_hangar(): void
@@ -72,13 +86,19 @@ class BotStrategyInactiveShipTest extends TestCase
             'bay' => 1,
             'ship_state' => 'docked',
         ]);
-        // mission_salvage_sweep needs construction Lv1.
+        // mission_salvage_sweep needs construction Lv1 and its Organika provisions.
+        $this->setOrganics($bot, 100);
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $bot->colonyId, 'research_id' => 90],
             ['level' => 1, 'status_points' => 20, 'ap_spend' => 0],
         );
 
         return $bot;
+    }
+
+    private function setOrganics(BotSession $bot, int $amount): void
+    {
+        DB::table('colony_resources')->updateOrInsert(['colony_id' => $bot->colonyId, 'resource_id' => 5], ['amount' => $amount]);
     }
 
     /**

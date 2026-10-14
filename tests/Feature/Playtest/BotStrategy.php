@@ -2174,6 +2174,13 @@ class BotStrategy
             return null;
         }
 
+        // Review S3 (2026-10-14, owner-approved legacy fix): same provisions gate as
+        // firstFlyableMission() — without it the dispatch ate no_organika every Sol.
+        $hangar = app(HangarService::class);
+        if (self::organics($b) < $hangar->organikaCostFor($b->colonyId, config('missions.catalog.mission_salvage_sweep'))) {
+            return null;
+        }
+
         $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
 
         return DB::table('colony_ships')
