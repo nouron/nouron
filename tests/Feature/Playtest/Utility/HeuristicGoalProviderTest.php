@@ -84,7 +84,7 @@ class HeuristicGoalProviderTest extends TestCase
         $this->assertGreaterThan($ctx->opportunityCost(25, 'invest:44:1'), $ctx->opportunityCost(50, 'invest:31:1'));
     }
 
-    public function test_a_pending_path_building_is_a_goal_without_a_hold(): void
+    public function test_a_pending_path_building_is_a_goal_with_a_hold(): void
     {
         $bot = BotSession::boot($this, 1);
         $this->setCc($bot, 2);
@@ -100,6 +100,8 @@ class HeuristicGoalProviderTest extends TestCase
         $ctx = $this->ctx($bot, 'hangar');
 
         $this->assertSame(['path', 'place:44'], [$ctx->goal?->kind, $ctx->goal?->key]);
-        $this->assertSame(0, $ctx->regolithHold(), 'legacy place_building keeps its own buffer for path buildings');
+        // Review S3 I2: legacy place_building's own path buffer only applies below 3 advisors.
+        $this->assertSame($ctx->goal->regolithCost, $ctx->regolithHold());
+        $this->assertGreaterThan(0, $ctx->regolithHold());
     }
 }

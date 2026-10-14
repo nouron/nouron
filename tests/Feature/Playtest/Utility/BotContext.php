@@ -146,11 +146,12 @@ final class BotContext
 
     /**
      * Regolith the legacy spenders must leave in stock (BotStrategy::regolithReserve()).
-     * A path building goal holds nothing: legacy place_building keeps its own buffer.
+     * Every goal kind holds — legacy place_building's own path buffer only
+     * applies below 3 advisors (review S3 I2).
      */
     public function regolithHold(): int
     {
-        return $this->goal !== null && in_array($this->goal->kind, ['cc', 'upgrade'], true) ? $this->goal->regolithCost : 0;
+        return $this->goal?->regolithCost ?? 0;
     }
 
     public function phase1Urgency(): float
