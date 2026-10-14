@@ -38,7 +38,6 @@ class ResearchSourceTest extends TestCase
         $bot = $this->bootWithLab(2);
         $keys = array_map(fn (Candidate $c) => $c->key, $this->candidates($bot));
         $this->assertContains('research:92', $keys, 'fixture: geology must be researchable at lab Lv2');
-        $this->assertContains('research:90', $keys);
 
         $this->assertSame('research:92', UtilitySelector::select($this->candidates($bot), [])->chosen->key);
     }
@@ -48,10 +47,24 @@ class ResearchSourceTest extends TestCase
         $bot = $this->bootWithLab(5);
         $this->setCc($bot, 3);
         foreach (range(90, 96) as $id) {
-            $this->setKnowledge($bot, $id, $id === 90 ? 2 : 3);
+            $this->setKnowledge($bot, $id, $id === 92 ? 2 : 3);
         }
 
-        $this->assertSame(['research:90'], array_map(fn (Candidate $c) => $c->key, $this->candidates($bot)));
+        $this->assertSame(['research:92'], array_map(fn (Candidate $c) => $c->key, $this->candidates($bot)));
+    }
+
+    public function test_research_below_the_minimum_density_is_not_offered(): void
+    {
+        // Review S3 I6: research is no endless AP sink — below the small self-salvage
+        // density (research_min_density) the AP fall through to scans and salvage.
+        $bot = $this->bootWithLab(2);
+        $candidates = $this->candidates($bot);
+
+        $this->assertContains('research:92', array_map(fn (Candidate $c) => $c->key, $candidates), 'geology stays worth it');
+        $this->assertNotContains('research:95', array_map(fn (Candidate $c) => $c->key, $candidates), 'trade has no valued effect');
+        foreach ($candidates as $c) {
+            $this->assertGreaterThanOrEqual(0.3, $c->net / $c->apCost, $c->key);
+        }
     }
 
     public function test_do_levels_up_when_ready_and_adds_otherwise(): void

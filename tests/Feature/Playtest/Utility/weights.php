@@ -30,7 +30,10 @@ return [
         'opening_bias' => 30.0,
         'opening_bias_until_sol' => 15,
         'info_zone_tile' => 8.0,
-        'research_floor' => 1.0,
+        // Review S3 I6: no floor — a level without a valued effect is worth nothing, and research
+        // below the small self-salvage density (spec 2.5, ≈ 0.3/AP) leaves the AP to scans/salvage.
+        'research_floor' => 0.0,
+        'research_min_density' => 0.3,
         'build_ap_per_sol' => 10,
         'nav_ap_per_sol' => 4,
         'income_floor_rg' => 8,

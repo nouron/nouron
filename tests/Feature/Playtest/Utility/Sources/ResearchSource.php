@@ -9,7 +9,7 @@ use Tests\Feature\Playtest\Utility\Candidate;
 use Tests\Feature\Playtest\Utility\CandidateSource;
 use Tests\Feature\Playtest\Utility\Valuers;
 
-/** S3 (T30 §14 U6): every researchable knowledge, valued by its next level's effect per AP. */
+/** S3 (T30 §14 U6): every researchable knowledge, valued by its next level's effect per AP, above research_min_density. */
 final class ResearchSource implements CandidateSource
 {
     public function __construct(private readonly int $band) {}
@@ -30,10 +30,15 @@ final class ResearchSource implements CandidateSource
             return [];
         }
 
+        $minDensity = (float) $ctx->weights['research_min_density'];
         $candidates = [];
         foreach (BotStrategy::researchableKnowledge($b)['eligible'] as $knowledge) {
             $id = $knowledge->id;
             $estimate = Valuers::research($b, $ctx, $id, $knowledge->level, $knowledge->ap_spend);
+            // Review S3 I6: band 19 comes before scans and salvage — only research worth more per AP.
+            if ($estimate->net() / max(1, $estimate->apCost) < $minDensity) {
+                continue;
+            }
             $candidates[] = new Candidate(
                 name: 'research_knowledge',
                 key: 'research:'.$id,

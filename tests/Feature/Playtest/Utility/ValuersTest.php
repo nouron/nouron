@@ -74,14 +74,16 @@ class ValuersTest extends TestCase
         $this->assertArrayNotHasKey('effect', Valuers::research($bot, $this->ctx($bot), 93, 0, 0)->terms);
     }
 
-    public function test_every_knowledge_is_worth_its_ap(): void
+    public function test_only_knowledge_with_an_effect_is_worth_its_ap(): void
     {
+        // Review S3 I6: research_floor 0 — a level without a valued effect is worth nothing.
         $bot = BotSession::boot($this, 1);
         $ctx = $this->ctx($bot);
 
-        foreach (range(90, 96) as $id) {
+        foreach ([90, 91, 92] as $id) {
             $this->assertGreaterThan(0.0, Valuers::research($bot, $ctx, $id, 0, 0)->net(), "knowledge {$id}");
         }
+        $this->assertSame(0.0, Valuers::research($bot, $ctx, 95, 0, 0)->net(), 'trade: no valued effect');
     }
 
     public function test_housing_level_up_in_phase_2_without_a_need_is_not_worth_its_regolith(): void
