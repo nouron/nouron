@@ -50,6 +50,10 @@ return [
         // trägt CC-Ausbau jetzt als teuersten Einzelposten des Runs (Bilanz: 75% Sockel-
         // Deckung der Zielkolonie), s. Handoff docs/handoff-ap-ratenmodell.md §7.
         'cc_upgrade_regolith_per_level' => 30,
+        // AP threshold per target level (Owner 2026-10-15, "AP bremst"): the CC is the
+        // pace-setter, rising AP on top of the Regolith above. Read via
+        // BuildingCostService::levelupAp(); a level without an entry keeps ap_for_levelup (10).
+        'cc_upgrade_ap_by_level' => [2 => 10, 3 => 20, 4 => 30, 5 => 40],
         'supply_cap' => 10,      // flat cap once CC level >= 1 (does not scale with level)
         'supply_cost' => 0,
         'trust_per_lv' => 0,

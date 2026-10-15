@@ -31,41 +31,38 @@ class RunProgressService
     /**
      * Check whether all Phase-1 completion conditions are met.
      *
-     * Conditions (GDD §15):
-     *  1. Command Center (building_id = 25) at level >= 3.
-     *  2. At least 2 non-CC buildings (building_id != 25, any type, not just
-     *     production) at level >= 2. Confirmed intentional (Owner-Frage F7,
-     *     ROADMAP 2026-09-08) — the looser "any building" condition is correct,
-     *     not a bug.
-     *  3. At least 3 active advisors (colony assigned, not on cooldown).
+     * Conditions (GDD §15, Owner 2026-10-15 "Phase 1 = Grundaufbau"):
+     *  1. Command Center at level >= 2.
+     *  2. Harvester, Housing and Agrardom each at level >= 1.
+     *  3. At least one path building (Sciencelab, Hangar or Cantina) at level >= 1.
+     *  4. At least 2 active advisors (colony assigned, not on cooldown).
      */
     public function checkPhase1Completion(Run $run): bool
     {
         $ccId = BuildingId::CommandCenter->value;
 
-        // Condition 1 — CC level >= 3
-        $ccReady = DB::table('colony_buildings')
+        // Phase 1 = Grundaufbau (Owner 2026-10-15, GDD §15): CC Lv2; Harvester, Wohnhabitat,
+        // Agrardom and one path building each at Lv1+; two available advisors. CC Lv3 and
+        // the second path building open Phase 2.
+        $levels = DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
-            ->where('building_id', $ccId)
-            ->where('level', '>=', 3)
-            ->exists();
+            ->where('level', '>=', 1)
+            ->pluck('level', 'building_id');
+        $standing = fn (int $id): bool => $levels->has($id);
 
-        if (! $ccReady) {
+        if ((int) $levels->get($ccId, 0) < 2) {
             return false;
         }
 
-        // Condition 2 — at least 2 non-CC production buildings at level >= 2
-        $productionCount = DB::table('colony_buildings')
-            ->where('colony_id', $run->colony_id)
-            ->where('building_id', '!=', $ccId)
-            ->where('level', '>=', 2)
-            ->count();
-
-        if ($productionCount < 2) {
+        $basics = [BuildingId::Harvester->value, BuildingId::Housing->value, BuildingId::BioFacility->value];
+        if (! collect($basics)->every($standing)) {
             return false;
         }
 
-        // Condition 3 — at least 3 active advisors on this colony
+        if (! collect(PathBuildingGateService::PATH_BUILDING_IDS)->contains($standing)) {
+            return false;
+        }
+
         $activeAdvisors = Advisor::where('colony_id', $run->colony_id)
             ->where(function ($q) use ($run): void {
                 $q->whereNull('unavailable_until_tick')
@@ -73,7 +70,7 @@ class RunProgressService
             })
             ->count();
 
-        return $activeAdvisors >= 3;
+        return $activeAdvisors >= 2;
     }
 
     // ── Phase transition ─────────────────────────────────────────────────────
@@ -541,7 +538,7 @@ class RunProgressService
             return;
         }
 
-        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $warningSol = (int) config('game.run.phase1_warning_sol', 17);
         if ($run->current_tick < $warningSol) {
             return;
         }
@@ -634,7 +631,7 @@ class RunProgressService
             return 'nexus_debt';
         }
 
-        if ($run->phase === 1 && $run->current_tick >= (int) config('game.run.phase1_deadline_sol', 30)) {
+        if ($run->phase === 1 && $run->current_tick >= (int) config('game.run.phase1_deadline_sol', 20)) {
             return 'phase1_deadline';
         }
 

@@ -567,8 +567,10 @@ Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für
 |---|---|
 | **Tick Limit** | 100 Ticks (default) |
 | **Tick Length** | 24 hours (1 Sol = 1 Tick) |
-| **Phase 1 Deadline** | Sol 30 (hard fail) |
-| **Phase 1 Warning** | Sol 22 (Nexus escalates) |
+| **Phase 1 Deadline** | Sol 20 (hard fail, `game.run.phase1_deadline_sol`, Owner 2026-10-15) |
+| **Phase 1 Warning** | Sol 17 (Nexus escalates, `game.run.phase1_warning_sol`) |
+| **Phase-1-Ende** | Grundaufbau (`RunProgressService::checkPhase1Completion`, Owner 2026-10-15): CC Lv2; Harvester, Wohnhabitat, Agrardom und ein Pfadgebäude je mindestens Lv1; zwei Berater. Zielfenster Sol 12–15. CC Lv3 eröffnet Phase 2. |
+| **CC-Ausbau AP** | je Ziel-Level 10/20/30/40 für Lv2–Lv5 (`buildings.commandCenter.cc_upgrade_ap_by_level`), zusätzlich zum Regolith (30 × Ziel-Level). |
 | **Trust Fail Threshold** | Trust < −20 (instant fail) |
 | **Nexus Debt Cap** | 12000 Cr (instant fail) |
 | **Countdown** | `countdown_sols_before_limit` 20 → Gesamt-Sol 80 |

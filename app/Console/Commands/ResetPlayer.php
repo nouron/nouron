@@ -30,7 +30,7 @@ use function Laravel\Prompts\table;
  *
  * Scenarios:
  *   fresh           Sol 1 clean start (default)
- *   pre-phase2      CC Lv3 + Agrardom Lv2 + Sciencelab Lv1 + 2 advisors — one hire away from Phase 2
+ *   pre-phase2      CC Lv3 + Agrardom Lv2 + Sciencelab Lv1 + 2 advisors — Phase-1 Grundaufbau met, Phase 2 starts on the next Sol
  *   phase2          Phase 2 active (tick 15), 3 objectives drawn, realistic early-Phase-2 state
  *   near-fail-trust Phase 2, trust = −15 (threshold −20), depleted Organika reserves
  *   near-deadline   Phase 2, tick = 95 (5 sols left), upgraded buildings, 1 objective done
@@ -64,7 +64,7 @@ class ResetPlayer extends Command
 
     private const SCENARIO_LABELS = [
         'fresh' => 'Sol 1          — Neustart (Standard)',
-        'pre-phase2' => 'Pre-Phase 2    — CC Lv3 + 2 Berater, 1 Hire fehlt für Phase-2-Trigger',
+        'pre-phase2' => 'Pre-Phase 2    — Grundaufbau erfüllt, Phase 2 startet beim nächsten Sol',
         'phase2' => 'Phase 2        — Tick 15, 3 Objectives offen, frühe Phase 2',
         'near-fail-trust' => 'Vertrauenskrise — Trust −15 (Grenze −20), Tick 30, Org-Reserven leer',
         'near-deadline' => 'Deadline       — Tick 95 (5 Sols verbleibend), 1 Objective erledigt',

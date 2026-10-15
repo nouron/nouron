@@ -192,7 +192,7 @@ class ColonyController extends BaseController
                 // The 0 -> 1 step of a placed site was paid on placement (T9) — 0 then.
                 $b->levelup_cost = $this->buildingCostService->levelupRegolithDue($b);
                 $b->first_level_prepaid = BuildingCostService::firstLevelPrepaid($b);
-                $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
+                $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp((int) $b->building_id, (int) $b->level + 1, (int) $b->ap_for_levelup));
                 $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
 
                 return $b;
@@ -782,7 +782,7 @@ class ColonyController extends BaseController
         // accurate. A shortfall blocks the invest entirely, before any AP is spent.
         // The 0 -> 1 cycle of a placed site was already paid on placement (T9) —
         // levelupRegolithDue() returns 0 for it, whatever its ap_spend reads.
-        $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $building->ap_for_levelup);
+        $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp($buildingId, (int) $row->level + 1, (int) $building->ap_for_levelup));
         $isCycleStart = (int) $row->ap_spend === 0;
         $levelupRegolith = $isCycleStart
             ? $this->buildingCostService->levelupRegolithDue($row)
@@ -1540,7 +1540,7 @@ class ColonyController extends BaseController
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->buildingCostService->levelupRegolithDue($row);
         $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
-        $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
+        $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, $this->buildingCostService->levelupAp((int) $row->building_id, (int) $row->level + 1, (int) $row->ap_for_levelup));
         $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
 
         return $row;

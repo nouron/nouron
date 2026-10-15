@@ -46,7 +46,8 @@ final class Valuers
         $isPath = in_array($id, self::PATH_IDS, true);
 
         $terms = ['cost_rg' => -1.0 * $regolith];
-        if ($ctx->phase === 1 && (($target === 2 && $ctx->nonCcLevel2 < 2) || ($target === 1 && $isPath && $ctx->advisors < 3))) {
+        // Phase 1 = Grundaufbau (2026-10-15): the first path building at Lv1 and two advisors.
+        if ($ctx->phase === 1 && $target === 1 && $isPath && $ctx->advisors < 2) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($isPath && $target >= 2) {
@@ -87,11 +88,11 @@ final class Valuers
         $level = (int) $cc->level;
         $target = $level + 1;
         $regolith = BotStrategy::levelupRegolith($cc);
-        $cycleAp = BotStrategy::effectiveApForLevelup($b, (int) ($cc->ap_for_levelup ?? 10));
+        $cycleAp = BotStrategy::effectiveApForLevelup($b, app(BuildingCostService::class)->levelupAp(BuildingId::CommandCenter->value, $target, (int) ($cc->ap_for_levelup ?? 10)));
         $ap = max(1, $cycleAp - (int) $cc->ap_spend);
 
         $terms = ['cost_rg' => -1.0 * $regolith, 'structural' => $regolith * (float) $w['structural_offset']];
-        if ($ctx->phase === 1 && $target <= 3) {
+        if ($ctx->phase === 1 && $target <= 2) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($target >= 4) {
@@ -165,7 +166,7 @@ final class Valuers
             'tier' => (float) $w['w_tier'],
             'advisor_slot' => self::advisorSlotValue($ctx),
         ];
-        if ($ctx->phase === 1 && $ctx->advisors < 3) {
+        if ($ctx->phase === 1 && $ctx->advisors < 2) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($buildingId === $ctx->openingBuildingId && $ctx->sol <= (int) $w['opening_bias_until_sol']) {

@@ -51,6 +51,20 @@ class BuildingCostService
         return (int) config('game.build.levelup_regolith_flat', 25);
     }
 
+    /**
+     * AP threshold of the level-up to $targetLevel. The Command Center follows the rising
+     * curve in buildings.commandCenter.cc_upgrade_ap_by_level (GDD §13.7 "Taktgeber CC");
+     * every other building — and a CC level without a curve entry — keeps $baseAp.
+     */
+    public function levelupAp(int $buildingId, int $targetLevel, int $baseAp): int
+    {
+        if ($buildingId !== BuildingId::CommandCenter->value) {
+            return $baseAp;
+        }
+
+        return (int) (config('buildings.commandCenter.cc_upgrade_ap_by_level', [])[$targetLevel] ?? $baseAp);
+    }
+
     /** Regolith of the 0 -> 1 step, prepaid on placement. */
     public function firstLevelRegolith(int $buildingId): int
     {

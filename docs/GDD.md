@@ -321,7 +321,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 > **Agrardom ist Pflichtgebäude vor CC Lv2.** Der Agrardom gehört nicht zur Pfadwahl-Gruppe. Begründung: Sol 1/2 garantieren nur Bau- und Erkundungs-AP-Verwendung, keinen Ressourcenfluss. Ohne Agrardom bliebe Organika auf 0, bis der Spieler ihn irgendwann wählt — in der Zwischenzeit frisst die Verpflegungsmechanik (§4a „Organika") den nicht vorhandenen Vorrat, und der eskalierende Trust-Malus (`TrustService::hungerPenalty`) greift vor der ersten bewussten Wirtschaftsentscheidung. Deshalb ist er das erste Bauprojekt der Kolonie (`hint_agrardome`, §16.2) und ein hartes Gate: `placeBuilding()` verlangt den Agrardom vor jedem Pfadgebäude. Zusätzlich blockt der CC-Sprung von Stufe 1 auf 2 ohne Agrardom (`agrardom_required`).
 >
-> **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar , aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Was die drei Pfade inhaltlich sind, steht in **§4b „Die drei Pfade"**; die Slot- und Gate-Mechanik in §13 „Slot-System".
+> **Pfadwahl ab CC Lv2 (CC Lv2 → Lv4):** Das erste Pfadgebäude gehört in Phase 1, das zweite und dritte (CC Lv3 bzw. Lv4) in Phase 2. Der Zeitpunkt ergibt sich aus dem CC-Takt (AP-Kosten je CC-Stufe, §4 „Level-Up"), nicht aus einer festen Sol-Zahl. Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar , aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Was die drei Pfade inhaltlich sind, steht in **§4b „Die drei Pfade"**; die Slot- und Gate-Mechanik in §13 „Slot-System".
 >
 > **Leitstelle (CC Lv3) — optionaler Resilienz-Baustein:** Die Leitstelle ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
 >
@@ -360,7 +360,7 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 
 **2. Level-Up (jedes Level, flach — keine Eskalation):**
 - **Regolith:** Ein fester Prozentsatz der Errichtungskosten pro Level (siehe `config/buildings.php`). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
-- **CC-Upgrade (Sonderfall):** skaliert mit dem Ziel-Level, das CC ist der zentrale Progressionshebel und soll eine bewusste Regolith-Investition bleiben (siehe `config/buildings.php`).
+- **CC-Upgrade (Sonderfall):** skaliert mit dem Ziel-Level, das CC ist der zentrale Progressionshebel. Er bleibt eine bewusste Regolith-Investition und kostet seit 2026-10-15 **zusätzlich steigende AP je Stufe** (siehe `config/buildings.php`, `docs/game-reference.md`) — AP ist die Währung des Tempos. Zusammen mit dem Stufen-Gate (§13 „Slot-System") entscheidet die CC, wie schnell die Kolonie in die Tiefe wachsen darf.
 - Harvester: **kein Level-Up** (Entscheidung 2026-08-02, §13.5). Er liefert ein festes Regolith-Grundeinkommen je Standort; Wachstum kommt aus einer zweiten Instanz (max. 2, §4c), aus Missionen, Events und Handel.
 
 **3. Reparatur (laufender Dauer-Sink):**
@@ -1393,7 +1393,7 @@ Alpine.js + PicoCSS. Carousel-Logik in `public/js/carousel.js`, Styles in `publi
 
 Begegnungen finden ausschließlich auf der Kolonieoberfläche statt (Hex-Grid, §4a); Flotten und Systemkarte sind gestrichen (§8). Es gibt kein Kampfsystem, keine Stärkewerte, keine Schiffe.
 
-**Implementiert.** `EncounterService` löst alle drei Gefahrentypen pro Sol auf, Ausgangsstufen basieren auf dem SP-Zustand (siehe unten). Sturm nutzt eine 1-Sol-Vorwarnung über `colony_log` und wirkt koloniweit (`GameTick::rollStorm()`/`resolveStormWarning()`); Geologische Instabilität und Seuchenausbruch treffen sofort ohne Vorwarnung. Ein Cooldown zwischen Ereignissen (`game.encounter.cooldown_sols`) puffert gegen Spiral-Risiko. In Phase 1 rampt die Trigger-Chance von 0 auf volle Stärke (`game.encounter.phase1_ramp_sols`), damit die Sol-30-Deadline erreichbar bleibt — früh ist die Welt schwächer, aber nicht harmlos. Lore: Der Startbestand kommt aus einem automatisierten Frontier-Depot; frisch gelandete Kolonien sind verwundbarer.
+**Implementiert.** `EncounterService` löst alle drei Gefahrentypen pro Sol auf, Ausgangsstufen basieren auf dem SP-Zustand (siehe unten). Sturm nutzt eine 1-Sol-Vorwarnung über `colony_log` und wirkt koloniweit (`GameTick::rollStorm()`/`resolveStormWarning()`); Geologische Instabilität und Seuchenausbruch treffen sofort ohne Vorwarnung. Ein Cooldown zwischen Ereignissen (`game.encounter.cooldown_sols`) puffert gegen Spiral-Risiko. In Phase 1 rampt die Trigger-Chance von 0 auf volle Stärke (`game.encounter.phase1_ramp_sols`), damit die Phase-1-Frist (Sol 20) erreichbar bleibt — *Annahme:* Die Rampenlänge wurde für die frühere Frist kalibriert und ist gegen die kürzere neu zu prüfen — früh ist die Welt schwächer, aber nicht harmlos. Lore: Der Startbestand kommt aus einem automatisierten Frontier-Depot; frisch gelandete Kolonien sind verwundbarer.
 
 Die Kolonie ist keine Festung, sondern eine verwundbare Ansiedlung auf einer kaum erschlossenen Welt. Gefahren haben keinen Marschbefehl und keine Absicht — sie sind lokale Zwischenfälle: Wetter, Geologie, Erschöpfung der Kolonisten. Es gibt keine Konfrontation im militärischen Sinn, nur einen Zustand vorher und einen Zustand danach.
 
@@ -1939,9 +1939,11 @@ Berater-Slots öffnen nicht allein über CC-Level, sondern analog zu den Pfad-Ge
 | CC Lv3 + 2. Pfad-Gebäude | Slot 3 | **generisch:** Analytiker/Raumfahrer/Konsul |
 | CC Lv4 + 3. Pfad-Gebäude | Slot 4 | **generisch:** Analytiker/Raumfahrer/Konsul |
 
+> **Phasen-Zuordnung (Owner 2026-10-15):** Slot 1 und Slot 2 gehören zum Grundaufbau (Phase 1: Baumeister plus Berater des ersten Pfades). Slot 3 und Slot 4 öffnen erst mit CC Lv3 bzw. Lv4 und gehören damit zu Phase 2. Die Berater-Slot-Tabelle selbst bleibt unverändert; nur die Phase-1-Abschlussbedingung verlangt zwei statt drei Berater.
+
 > Es gibt **vier** Berater-Slots. Die Leitstelle ist kein Slot-Gate (Stratege zurückgestellt, siehe „Die vier Berater-Typen").
 
-**Die drei Pfade** (siehe §4 "Pfadwahl ab Sol 3"):
+**Die drei Pfade** (siehe §4 "Pfadwahl ab CC Lv2"):
 
 | Pfad | Gebäude | Beratertyp | Domäne | CC-Gate | Slot |
 |------|---------|-----------|--------|---------|------|
@@ -1949,9 +1951,9 @@ Berater-Slots öffnen nicht allein über CC-Level, sondern analog zu den Pfad-Ge
 | B | Hangar | Raumfahrer | navigation | CC Lv2 (Pfadwahl) | 2–4 (generisch) |
 | C | Cantina (bar) | Konsul | economy | CC Lv2 (Pfadwahl) | 2–4 (generisch) |
 
-**Gate-Logik (Bau, nicht nur Berater):** Alle drei Pfad-Gebäude sind ab CC Lv2 grundsätzlich baubar — aber gleichzeitig gilt ein zusätzliches Bau-Gate: `Anzahl bereits gebauter Pfad-Gebäude < CC-Level − 1`. Bei CC Lv2 darf also nur **eines** der drei gebaut werden; das zweite schaltet erst bei CC Lv3 frei, das dritte erst bei CC Lv4. Das Gate ist eine Server-Regel (`PathBuildingGateService`); das Baumenü zeigt gesperrte Pfad-Gebäude mit Begründung. Es gibt **keine permanente Ausschließung** — wer bei CC2 die Cantina wählt, bekommt Sciencelab und Hangar bei CC3 bzw. CC4 trotzdem, nur später. Die "Wahl" bei Sol 3 bestimmt **Reihenfolge und Zeitvorsprung**, nicht endgültigen Zugang. Das hält die Entscheidung gewichtig (wer zuerst baut, bekommt den zugehörigen Berater-Slot 1–2 CC-Level früher als bei den anderen beiden Pfaden), vermeidet aber einen harten Lockout, der bei einer frühen Sol-3-Entscheidung zu hart wäre (Nouron-Prinzip: keine bestrafenden Permanent-Konsequenzen für frühe Entscheidungen, siehe §1.1).
+**Gate-Logik (Bau, nicht nur Berater):** Alle drei Pfad-Gebäude sind ab CC Lv2 grundsätzlich baubar — aber gleichzeitig gilt ein zusätzliches Bau-Gate: `Anzahl bereits gebauter Pfad-Gebäude < CC-Level − 1`. Bei CC Lv2 darf also nur **eines** der drei gebaut werden; das zweite schaltet erst bei CC Lv3 frei, das dritte erst bei CC Lv4. Das Gate ist eine Server-Regel (`PathBuildingGateService`); das Baumenü zeigt gesperrte Pfad-Gebäude mit Begründung. Es gibt **keine permanente Ausschließung** — wer bei CC2 die Cantina wählt, bekommt Sciencelab und Hangar bei CC3 bzw. CC4 trotzdem, nur später. Die frühe Wahl des ersten Pfadgebäudes (Phase 1) bestimmt **Reihenfolge und Zeitvorsprung**, nicht endgültigen Zugang. Das hält die Entscheidung gewichtig (wer zuerst baut, bekommt den zugehörigen Berater-Slot 1–2 CC-Level früher als bei den anderen beiden Pfaden), vermeidet aber einen harten Lockout, der bei einer so frühen Entscheidung zu hart wäre (Nouron-Prinzip: keine bestrafenden Permanent-Konsequenzen für frühe Entscheidungen, siehe §1.1).
 
-**Stufen-Gate (alle Nicht-CC-Gebäude):** Eine Ausbaustufe eines Gebäudes braucht eine Kommandozentrale mindestens gleicher Stufe — ein Lv3-Gebäude setzt CC Lv3 voraus. Die Kommandozentrale ist damit der Taktgeber der Kolonie-Entwicklung; wer sie nicht ausbaut, bleibt in der Breite stecken statt in der Tiefe zu eilen. Server-Regel (`BuildingService::ccLevelTooLow()`), Fehlercode `building_cc_gate`.
+**Stufen-Gate (alle Nicht-CC-Gebäude):** Eine Ausbaustufe eines Gebäudes braucht eine Kommandozentrale mindestens gleicher Stufe — ein Lv3-Gebäude setzt CC Lv3 voraus. Die Kommandozentrale ist damit der Taktgeber der Kolonie-Entwicklung; wer sie nicht ausbaut, bleibt in der Breite stecken statt in der Tiefe zu eilen. Der CC-Ausbau selbst kostet steigend AP (§4 „Level-Up"), er bremst also über die knappe Handlungsressource. In Phase 1 greift das Gate kaum (alles bleibt auf Lv1, CC auf Lv2); es wirkt ab Phase 2, wo CC Lv3 den Auftakt bildet. Server-Regel (`BuildingService::ccLevelTooLow()`), Fehlercode `building_cc_gate`.
 
 **Reihenfolge-Auflösung:** Der Slot, den ein Pfad-Gebäude belegt, ergibt sich aus der **Baureihenfolge** dieses Gebäudes relativ zu den anderen beiden — nicht aus dem Gebäudetyp selbst. Werden (im seltenen Fall ausreichender Ressourcen-Reserven) zwei Pfad-Gebäude im selben Sol fertiggestellt, entscheidet ein fixer, nicht spielerseitig beeinflussbarer Tie-Break in der Reihenfolge **Sciencelab → Hangar → Cantina** (aufsteigend nach `building_id`: 31 < 44 < 52). Dieser Tie-Break ist ein reines Implementierungsdetail ohne Spielerrelevanz außerhalb des Edge-Case.
 
@@ -2256,10 +2258,10 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | `decay_rate` | vier Klassen 0,40 / 0,60 / 0,80 / 1,20 | G2, G3 |
 | Errichtung (Lv0→1) | 70 Agrardom (Ramp-Gate-Ausnahme) / 95 alle drei Pfadgebäude | G4 (5–8 Sole) |
 | Level-Up | flach 25, jedes Level, jedes Nicht-CC-Gebäude (auch der Sprung 0→1 nach der Errichtung) | G4 (1–2 Sole) |
-| CC-Ausbau | Ziel-Level × 30 | zentraler Progressionshebel |
+| CC-Ausbau | Ziel-Level × Faktor in Regolith, zusätzlich steigende AP je Ziel-Level (Owner 2026-10-15) | zentraler Progressionshebel, Taktgeber über das Stufen-Gate |
 | Weitere Instanzen (Wohnhabitat, Agrardom) | voller `build_cost`, linear | §4c: Instanzen sind eine Designachse, keine Level |
 | Harvester-Zweitinstanz | kein Regolith — Weg A Credits, Weg B AP (§4c) | Bootstrap-Sonderrolle |
-| Startbestand | `game.onboarding.start_regolith` (Herleitung „Phase-1-Pacing" unten) | Phase-1-Ziel Sol 15–20 |
+| Startbestand | `game.onboarding.start_regolith` (Herleitung „Phase-1-Pacing" unten) | Phase-1-Ziel Sol 12–15 |
 | `mission_supply_run.sol_distance` | 1 | Hebel-Zielgröße, kurzer Entscheidungstakt |
 | `geology`-Effekt | +3/3/2/2/2 je Level, kumuliert max 12 Rg/Sol | ~60 % eines Harvesters (Merkregel für einen reifen Hebel) |
 | `knowledge.levelup_costs` | steigend je Level, Amortisation ~7 Sole | Kopplung an `ap.base` |
@@ -2346,20 +2348,21 @@ Gemeinsam übersteigen A und B die benötigte Hebelhöhe um ~29 % — wenn beide
 
 #### Phase-1-Pacing: Startbestand
 
-**Ziel (Owner):** Phase 1 (`checkPhase1Completion()`: CC Lv3 + 2 Nicht-CC-Gebäude ≥ Lv2 + 3 Berater) im Regelfall Sol 15–20, spätestens Sol 25; harte Grenze ist Fail State 4 (Sol 30, §18.2). Credits sind für die drei Ersteinstellungen nicht bindend (Startkapital reicht), AP ist auf dem Referenzpfad nicht bindend — der Engpass ist Regolith gegen die Ratengrenze des Harvesters.
+**Ziel (Owner, Entscheidung 2026-10-15):** Phase 1 ist der **Grundaufbau** (`checkPhase1Completion()`: CC Lv2, Agrardom, Harvester, Wohnhabitat und das erste Pfadgebäude stehen, jeweils mindestens Lv1, dazu zwei Berater) und endet im Regelfall Sol 12–15, als harte Grenze gilt Fail State 4 (Sol 20, Owner-Korrektur 2026-10-15, vorher Sol 30; §18.2). Wer schon in Phase 1 CC Lv3 oder Pfadgebäude-Tiefe erreicht, hatte zu viele Ressourcen übrig — Lv3 in Phase 1 ist ausdrücklich nicht gewollt. CC Lv3 ist der Auftakt von Phase 2; Pfadgebäude Lv2/Lv3, das zweite Pfadgebäude und der dritte Berater gehören ebenfalls dorthin. Credits sind für die zwei Ersteinstellungen nicht bindend (Startkapital reicht).
+
+**Taktgeber CC (Regolith plus steigende AP):** Die Kommandozentrale kostet weiterhin Regolith (Ziel-Level × Faktor) und **zusätzlich steigende AP je Ausbaustufe** (Owner-Entscheid 2026-10-15; `config/buildings.php`, Werte in `docs/game-reference.md`). Zusammen mit dem Stufen-Gate (§13 „Slot-System": Gebäude-Stufe N braucht CC-Stufe ≥ N) ist die CC damit der eine sichtbare Engpass der Kolonie-Entwicklung: Wer Tiefe will, muss zuerst Regolith und AP für die CC aufbringen.
 
 **Bedarfskette Phase 1, günstigster Pfad** (Kommandozentrale, Harvester und Wohnhabitat existieren als Sol-1-Bootstrap auf Lv1; Agrardom und Pfadgebäude werden neu errichtet und starten auf Level 0):
 
 | Posten | Rg |
 |---|---|
-| CC Lv1→Lv2→Lv3 (Ziel-Level × 30) | 150 |
-| Agrardom: Errichtung 70 + Lv0→1 (25) + Lv1→2 (25) | 120 |
-| Wohnhabitat: nur noch Lv1→2 | 25 |
-| Pfadgebäude 1: Errichtung 95 + Lv0→1 (25) — öffnet Slot 2 | 120 |
-| Pfadgebäude 2: Errichtung 95 + Lv0→1 (25) — öffnet Slot 3 | 120 |
-| **Summe** | **535** |
+| CC Lv1→Lv2 (Ziel-Level × Faktor; zusätzlich AP, hier nicht gezählt) | 60 |
+| Agrardom: Errichtung 70 + Lv0→1 (25) | 95 |
+| Wohnhabitat, Harvester | 0 (Bootstrap, Lv1 reicht) |
+| Pfadgebäude 1: Errichtung 95 + Lv0→1 (25) — öffnet Slot 2 (= zweiter Berater) | 120 |
+| **Summe** | **275** |
 
-Beide Pfadgebäude sind notwendig, nicht optional: Slot 2 öffnet mit dem ersten, Slot 3 (= dritter Berater) mit dem zweiten (§13 „Slot-System"). Der Harvester produziert ab Sol 2 nahe dem Frischwert (~17 Rg/Sol auf einem mittleren Ertrags-Tile, solange das Vorkommen nicht knapp wird); Reparatur wird als konservative Marge angesetzt, obwohl frisch errichtete Gebäude im Fenster die Reparaturschwelle kaum erreichen:
+Die alte Kette (CC Lv3, Agrardom Lv2, Wohnhabitat Lv2, zwei Pfadgebäude; Summe 535) ist damit auf rund die Hälfte geschrumpft. Das zweite Pfadgebäude und Slot 3 (= dritter Berater) sind kein Phase-1-Bedarf mehr (§13 „Slot-System"). Der Harvester produziert ab Sol 2 nahe dem Frischwert (~17 Rg/Sol auf einem mittleren Ertrags-Tile, solange das Vorkommen nicht knapp wird); Reparatur wird als konservative Marge angesetzt, obwohl frisch errichtete Gebäude im Fenster die Reparaturschwelle kaum erreichen:
 
 ```
 Verfügbar(N) = Startbestand + Ertrag × (N − 1) − Reparatur-Marge × N
@@ -2367,20 +2370,32 @@ Verfügbar(N) = Startbestand + Ertrag × (N − 1) − Reparatur-Marge × N
 
 Phase 1 endet, sobald Verfügbar die Bedarfskette deckt und die Ausführung (Reihenfolgezwang, Erkundung, AP-Takt) nachgezogen hat. Jedes Regolith weniger im Startbestand verschiebt das Ende um den Kehrwert des Harvester-Ertrags nach hinten — der Startbestand ist deshalb der direkteste Pacing-Hebel.
 
+> ⚠️ BALANCE CONCERN (offen, Owner-Entscheidung 2026-10-15 nötig): Mit der kleineren Abschlussbedingung deckt der heutige Startbestand die Bedarfskette fast allein; Phase 1 endet ohne Gegenmaßnahme deutlich vor dem Zielfenster Sol 12–15 (Bedarf nur rund die Hälfte der Kette, für die der Startbestand kalibriert wurde; die Messung vom 2026-10-02 lag mit der alten Kette bei Sol 17–18 im damaligen Fenster 15–20). Das neue Fenster Sol 12–15 (Owner-Korrektur 2026-10-15) ist kürzer als das alte; der Abstand zur Wunschlage ist dadurch kleiner, aber nicht null — Startbestand und Zeit-Hebel sind gegen die neue Kette neu zu messen. Mögliche Hebel, **keiner entschieden**:
+> 1. **Startbestand senken** (direkt, aber der Spieler startet dann spürbar knapp; Regolith statt AP bindet).
+> 2. **Erkundungs- oder Lagerzwang** als Vorbedingung (z. B. Tiles erkunden, ein Mindest-Lagerbestand) — erhöht Aktivität statt Wartezeit, braucht aber saubere Spielerkommunikation.
+> 3. **Zielfenster anpassen** (Phase 2 früher beginnen lassen) — verschöbe die Nexus-Leiter (§15), ändert aber nichts am Aufbau.
+>
+> **Owner-Vorgabe zum Gegenhebel (2026-10-15):** Endet Phase 1 vor dem Zielfenster, soll ein Hebel zusätzliche AP und Kosten binden (AP-Sinks, kein Wartezwang). Drei Vorschläge zur Owner-Auswahl, *Annahmen, nicht entschieden*:
+> - **A. Zusätzliches Pflichtgebäude** (z. B. Krankenstation oder Uplink-Station als Phase-1-Bedingung, Lv1) — Vorteil: klare, planbare Entscheidung mit echten Regolith-, AP- und Supply-Kosten; Nachteil: verengt die Eröffnungs-Freiheit (Spieler-Parität der drei Pfade, Supply-Cap muss neu gerechnet werden).
+> - **B. Reparatur-/Instandhaltungs-Sink**: Phase 1 endet erst, wenn alle Gebäude über der Reparaturschwelle stehen und eine erste Erkundungs- bzw. Lageraufgabe erledigt ist — Vorteil: bindet AP und Regolith organisch über bestehende Systeme; Nachteil: wirkt wie Strafe, kaum steuerbar, schwer zu kommunizieren.
+> - **C. Bindung der Berater-Einstellung an eine AP-Aufgabe** (der zweite Berater muss eingearbeitet bzw. der Berater-Slot per Invest freigeschaltet werden) — Vorteil: nutzt das AP-System direkt und belohnt aktives Spiel; Nachteil: bremst genau die Handlungsfähigkeit, die Phase 1 aufbauen soll.
+>
+> *Annahme (nicht entschieden):* Wahrscheinlichste Wahl ist A, ergänzt um eine gestraffte AP-Kurve der CC-Stufen; die Wahl braucht eine Messung (PlaytestBot, ≥ 8 Seeds) gegen die neue Bedingung.
+
 **Neuherleitung nach A44 H1/H2:** Das Bild „ein mittleres Tile mit Frischwert, plus Poor-Tile-Worst-Case" gilt nicht mehr. Der Ertrag hängt jetzt vom Ertrags-Tier des gewählten Start-Vorkommens ab, die Standzeit vom Mächtigkeits-Tier, und der Spieler wählt bei Sol 1 zwischen zwei bekannten Vorkommen mit Zielkonflikt (§4c). Der Startbestand wird deshalb nicht mehr aus einem Rechenwert gesetzt, sondern **empirisch am Median** kalibriert: PlaytestBot über einen Seed-Satz, Messgröße `phase2_start_sol` (Phase-1-Ende). Der Bot nimmt dabei jeweils das Vorkommen, das seine Regel wählt — damit streut die Messung automatisch über die neuen Kartenvarianten.
 
-**Kalibrierung (Messung 2026-10-02, 8–9 Seeds, Profil default):** Mit dem alten, noch auf das 3-stufige Modell gerechneten Startbestand lag das Phase-1-Ende im Median bei Sol 12–13 (Sol 11 bei guter Karte, Sol 14 sonst) — klar unter dem Zielkorridor. Ein um gut zwei Dutzend Sol-Erträge geringerer Startbestand (Größenordnung: Differenz ÷ Ertrag ≈ vier Sole) hebt den Median in den Korridor (Sol 14–18, Median ≈ Sol 17–18) und lässt die Streuung zwischen guter und schlechter Karte als gewollte Variabilität (G5) stehen. Alle gemessenen Läufe erreichen Phase 2, es gibt keine Regolith-Sackgasse in Phase 1.
+**Kalibrierung (Messung 2026-10-02, 8–9 Seeds, Profil default):** Mit dem alten, noch auf das 3-stufige Modell gerechneten Startbestand lag das Phase-1-Ende im Median bei Sol 12–13 (Sol 11 bei guter Karte, Sol 14 sonst) — klar unter dem Zielkorridor. Ein um gut zwei Dutzend Sol-Erträge geringerer Startbestand (Größenordnung: Differenz ÷ Ertrag ≈ vier Sole) hebt den Median in den Korridor (Sol 14–18, Median ≈ Sol 17–18) und lässt die Streuung zwischen guter und schlechter Karte als gewollte Variabilität (G5) stehen. Alle gemessenen Läufe erreichen Phase 2, es gibt keine Regolith-Sackgasse in Phase 1. *(Veraltet seit 2026-10-15: gemessen gegen die alte Abschlussbedingung mit CC Lv3, zwei Pfadgebäuden und drei Beratern. Neumessung gegen die Grundaufbau-Bedingung steht aus.)*
 
-**Sturm-Reserve bewusst gestrichen:** Der frühere Aufschlag als Reserve gegen einen Kritisch-Treffer in Phase 1 entfällt. Stürme treffen weiterhin (die Rampe dämpft die Chance, §9), aber die Kalibrierung zielt auf den Korridor-Mittelwert statt auf eine Pufferlage an dessen unterer Kante; ein Treffer verschiebt das Phase-1-Ende innerhalb des Korridors nach hinten, bleibt aber deutlich vor der Fail-State-Grenze (Sol 30).
+**Sturm-Reserve bewusst gestrichen:** Der frühere Aufschlag als Reserve gegen einen Kritisch-Treffer in Phase 1 entfällt. Stürme treffen weiterhin (die Rampe dämpft die Chance, §9), aber die Kalibrierung zielt auf den Korridor-Mittelwert statt auf eine Pufferlage an dessen unterer Kante; ein Treffer verschiebt das Phase-1-Ende innerhalb des Korridors nach hinten, bleibt aber vor der Fail-State-Grenze (Sol 20). *(Mit der auf Sol 20 vorgezogenen Frist ist der Puffer klein: ein Sturm-Treffer plus schwaches Start-Vorkommen kann die Frist erreichen — ⚠️ BALANCE CONCERN, per Bot-Batch prüfen.)*
 
 **Schwaches Start-Vorkommen** (niedriges Ertrags- und Mächtigkeits-Tier): Das Vorkommen erschöpft sich vor Phase-1-Ende, eine frühe Zwangsverlegung ist eingebaut — gewollte Variabilität (G5), keine zu behebende Lücke; der Startbestand wird nicht auf diesen Fall ausgelegt.
 
-**Bewusst nicht angefasst:** `resource_max` der mittleren Tile-Kombinationen (bindet im Zielfenster nicht — kumulierte Extraktion beim Floor-Sol liegt deutlich unter der Mengengrenze; eine Anhebung kostete nur Umzugstakt, §4c); `fresh_yield` (mehr Rate = schnellerer Vorlauf auf dieselbe Mengenwand, kürzere Standzeit); Pfadgebäude-Preise (pro Gebäude gegen G4 kalibriert, das Phase-1-Problem ist kumulativ); CC-Ausbaukosten (kein Engpass); Hire-Credits (nicht bindend, und eine Senkung würde den späteren Rang-2/3-Unterhaltsdruck abschwächen).
+**Bewusst nicht angefasst:** `resource_max` der mittleren Tile-Kombinationen (bindet im Zielfenster nicht — kumulierte Extraktion beim Floor-Sol liegt deutlich unter der Mengengrenze; eine Anhebung kostete nur Umzugstakt, §4c); `fresh_yield` (mehr Rate = schnellerer Vorlauf auf dieselbe Mengenwand, kürzere Standzeit); Pfadgebäude-Preise (pro Gebäude gegen G4 kalibriert, das Phase-1-Problem ist kumulativ); CC-Ausbaukosten in Regolith (bleiben, zusätzlich kommen steigende AP, siehe „Taktgeber CC"); Hire-Credits (nicht bindend, und eine Senkung würde den späteren Rang-2/3-Unterhaltsdruck abschwächen).
 
 **Empirisch:** Ein Bot-Befund außerhalb des Korridors ist nur dann ein Gegenbeweis gegen den Startbestand, wenn der Bot nach dem Errichten eines Pfadgebäudes dessen Lv0→1-Sprung tatsächlich zuerst fertigstellt (wie ein menschlicher Spieler) — Bot-Ausführungsdefekte sind kein Balance-Hebel.
 
 **Nebenbefunde:**
-- Der Supply-Cap zwingt in Phase 1 keine zweite Wohnhabitat-Instanz: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv2 und zwei Pfadgebäude auf Lv1 exakt, ohne jeden Puffer. Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben `supply_cost` tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freier Supply und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 (etwa eine zweite Harvester-Instanz) setzt das Wohnhabitat-Levelup ebenfalls voraus.
+- Der Supply-Cap zwingt in Phase 1 keine zweite Wohnhabitat-Instanz und kein Wohnhabitat-Levelup mehr: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv1 und ein Pfadgebäude auf Lv1 mit Puffer. *(Früher, mit zwei Pfadgebäuden und Agrardom Lv2, ging er exakt ohne Puffer auf; das zweite Pfadgebäude in Phase 2 setzt das Wohnhabitat-Levelup wieder voraus — Prüfauftrag.)* Die folgende Überlegung gilt weiter für diesen Phase-2-Übergang: Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben `supply_cost` tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freier Supply und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 (etwa eine zweite Harvester-Instanz) setzt das Wohnhabitat-Levelup ebenfalls voraus.
 - Die Pfadgebäude sind in Regolith gleich, in AP nicht: Analytik-Labor und Hangar sind AP-Klasse „Groß", Cantina „Mittel". Da AP in Phase 1 nicht bindet, ändert das nichts am Pacing, ist aber eine Inkonsistenz gegen die Paritäts-Anforderung (§4b) — bei Gelegenheit prüfen.
 - Das „harte" Agrardom-Gate für den CC-Lv2-Ausbau (§4) ist seit 2026-09-23 im Code (`investBuilding()`, `agrardom_required`, ROADMAP C16 erledigt).
 
@@ -2398,7 +2413,8 @@ Der Organika-Verbrauch skaliert über `food_need = intdiv(anwesende Kolonisten, 
 | Instandhaltung fühlt sich spät schlaff an | levelskalierte Reparatur (`1 + floor((level−1)/3)` AP je SP, §13.5) | `decay_rate` global anheben — trifft das Early Game am härtesten |
 | Ein Pfad hängt sichtbar zurück | den betreffenden **Hebel** anheben | Sockel oder Baukosten — die sind pfadneutral |
 | Mehr als 4 Sole pro Run an Regolith blockiert (G5) | Startbestand, dann Errichtungspreise | die Hebel — sie greifen zu spät für die frühe Klemme |
-| Phase 1 dauert typisch > Sol 25 | Startbestand (nur wenn die Bedarfskette gegen den Sol-1-Bootstrap-Zustand nachgerechnet ist), sonst Ausführungsfriktion suchen | `resource_max` — bindet im Zielfenster nicht |
+| Phase 1 dauert typisch > Sol 17 | Startbestand (nur wenn die Bedarfskette gegen den Sol-1-Bootstrap-Zustand nachgerechnet ist), sonst Ausführungsfriktion suchen | `resource_max` — bindet im Zielfenster nicht |
+| Phase 1 endet typisch vor Sol 12 (erwartet nach 2026-10-15, Grundaufbau-Bedingung) | Hebelliste in „Phase-1-Pacing" oben (Startbestand, CC-AP-Kurve, Erkundung/Lager); Wahl offen | Phase-1-Bedingung wieder auf Lv3 anheben — Lv3 gehört bewusst in Phase 2 |
 
 #### Wo dieser Satz unsicher ist
 
@@ -2639,7 +2655,7 @@ Jede Partie von Nouron ist eine abgeschlossene **Expeditionsmission**. Es gibt k
 
 #### Phase 1 — "Kolonie stabilisieren" (Pflicht)
 
-Dauer: typischerweise 10–20 Sole. Kann nicht übersprungen werden. Ziel ist eine lebensfähige, selbsttragende Kolonie.
+Dauer: Ziel Sol 12–15 (Owner, Korrektur 2026-10-15; Fail State 4 bei Sol 20, vorher Sol 30). Kann nicht übersprungen werden. Phase 1 ist der **Grundaufbau**: eine lebensfähige, selbsttragende Kolonie mit Versorgung, Regolith-Einkommen, Wohnraum und dem ersten Pfad — nicht mehr. Tiefe (CC Lv3, Pfadgebäude-Stufen, zweiter Pfad, dritter Berater) ist Stoff von Phase 2.
 
 **Startzustand (jeder Run):**
 - CommandCenter Level 1 — bereits gebaut, betriebsbereit
@@ -2649,7 +2665,7 @@ Dauer: typischerweise 10–20 Sole. Kann nicht übersprungen werden. Ziel ist ei
 
 **Abschlussbedingungen (BEIDE müssen erfüllt sein):**
 
-Phase 1 endet, wenn: (1) Infrastruktur ausreichend ist (mehrere Gebäude auf mehreren Leveln + CommandCenter aufgestuft) und (2) Personal vorhanden ist (mindestens 3 Berater aktiv). Die beiden Bedingungen sind eindeutig messbar und werden im Spieler-Interface angezeigt.
+Phase 1 endet, wenn: (1) der Grundaufbau steht — Kommandozentrale auf Lv2, dazu Agrardom, Harvester, Wohnhabitat und das erste Pfadgebäude, jeweils mindestens Lv1 — und (2) Personal vorhanden ist (mindestens zwei Berater aktiv: der Baumeister und der Berater des ersten Pfades). Die beiden Bedingungen sind eindeutig messbar und werden im Spieler-Interface angezeigt.
 
 Die zwei Bedingungen decken die Kernsysteme ab: Aufbau (Gebäude) und Handlungsfähigkeit (AP). Sie sind eindeutig messbar und fur Neuspieler verstandlich.
 
@@ -2659,7 +2675,7 @@ Phase 1 endet automatisch, sobald beide Bedingungen gleichzeitig erfüllt sind. 
 
 #### Phase 2 — "Expeditionsmission"
 
-Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 müssen bis zu einem Run-spezifischen Sol erfullt werden.**
+Startet direkt nach Phase 1. Auftakt ist der Ausbau der Kommandozentrale auf Lv3: Er öffnet (über das Stufen-Gate) Pfadgebäude-Stufen 2 und 3, das zweite Pfadgebäude und damit Berater-Slot 3 (§13 „Slot-System"). Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 müssen bis zu einem Run-spezifischen Sol erfullt werden.**
 
 **Runlänge:** Die Frist beträgt 100 Sole (`run.tick_limit`). Ein Sieg um Sol 70–85 gelingt nur mit einem sehr guten Run und etwas Glück; realistisch fällt der Sieg zwischen Sol 85 und 95 (Owner-Vorgabe, Korridor-Tabelle in §18.4). Das ist lang genug für strategische Tiefe und kurz genug für Wiederholbarkeit. Dieser Korridor ist auch die Referenzgröße für alle AP- und Ressourcen-Balancingwerte.
 
@@ -2724,7 +2740,7 @@ Die Warnungen sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeit oh
 
 > **Implementierungsstand (A45, umgesetzt):** Die Leiter wird aus `run.nexus_checkpoints` gelesen und prüft Fortschritt statt Erfüllung. Der beste Serienstand je Aufgabe wird gespeichert (`run_objectives.best_streak_value`) und zählt als Fortschritt.
 
-> ⚠️ BALANCE CONCERN: Die Leiter ist an einem Phase-1-Ende um Sol 15–20 ausgerichtet. Phase-2-Sol 65 entspricht dann Gesamt-Sol 80–85, also dem oberen Ende des Einzel-Korridors „gezielt Sol 70–85". Ein solider Run, der realistisch erst um Sol 85–95 siegt (§18.4), liegt am Sanktionspunkt eventuell noch knapp unter „eine Aufgabe erfüllt". Der laufende Kalibrier-Batch muss zeigen, wie oft ein gezielt spielender Bot die Sanktion trotzdem auslöst. Trifft sie solide Runs regelmäßig, bestraft sie das beabsichtigte Tempo. Stellschraube ist dann die Anforderung an Phase-2-Sol 65, nicht die Aufgaben-Zielwerte.
+> ⚠️ BALANCE CONCERN: Die Leiter ist an einem Phase-1-Ende um Sol 12–15 ausgerichtet (Owner 2026-10-15; vorher Sol 15–20 — Phase-2-Sol 65 entspricht dann eher Gesamt-Sol 77–80, die folgende Rechnung ist neu zu prüfen). Phase-2-Sol 65 entspricht dann Gesamt-Sol 80–85, also dem oberen Ende des Einzel-Korridors „gezielt Sol 70–85". Ein solider Run, der realistisch erst um Sol 85–95 siegt (§18.4), liegt am Sanktionspunkt eventuell noch knapp unter „eine Aufgabe erfüllt". Der laufende Kalibrier-Batch muss zeigen, wie oft ein gezielt spielender Bot die Sanktion trotzdem auslöst. Trifft sie solide Runs regelmäßig, bestraft sie das beabsichtigte Tempo. Stellschraube ist dann die Anforderung an Phase-2-Sol 65, nicht die Aufgaben-Zielwerte.
 
 ---
 
@@ -2913,7 +2929,7 @@ Der Run endet in demselben Tick, in dem die zweite Objective abgeschlossen wird.
 
 **Frühzeitiger Sieg belohnt Effizienz:** Die Score-Formel enthält `(tick_limit − done_tick) × 10` — ein Sieg bei Sol 75 ergibt mehr Punkte als derselbe Sieg bei Sol 95. Das schafft permanenten Anreiz für schnelles Spielen, ohne Erkundung und Aufbau zu bestrafen.
 
-**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte — sowie Phase-1-Fristbruch, Sol 30, Fail State 4 unten, der einzige der vier Fail States, der ausschließlich in Phase 1 auslösen kann).
+**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte — sowie Phase-1-Fristbruch, Sol 20, Fail State 4 unten, der einzige der vier Fail States, der ausschließlich in Phase 1 auslösen kann).
 
 ---
 
@@ -2988,18 +3004,18 @@ Exakte Schwellwerte für die UI-Warnstufen: Implementierung in `RunProgressServi
 
 #### Fail State 4 — Phase-1-Fristbruch
 
-**Bedingung:** `run.phase === 1 && current_tick >= config('game.run.phase1_deadline_sol')` → Standardwert **Sol 30**
+**Bedingung:** `run.phase === 1 && current_tick >= config('game.run.phase1_deadline_sol')` → Standardwert **Sol 20** (Owner-Korrektur 2026-10-15, vorher Sol 30)
 
 **Auslösung:** Instant in dem Tick, in dem die Deadline erreicht wird, sofern Phase 1 noch nicht abgeschlossen ist (`RunProgressService::checkPhase1Completion()`).
 
-Owner-Vorgabe: Phase 1 im Normalfall Sol 15–20, spätestens Sol 30. Der bindende Engpass ist der Regolith-Startbestand — nicht der Harvester-Ertrag, nicht `resource_max`, nicht die Berater-Hire-Credits; Herleitung in §13.7 „Phase-1-Pacing". Empirisch erreicht der PlaytestBot `phase2_start_sol` im Korridor (Messung 2026-10-02, siehe §13.7).
+Owner-Vorgabe: Phase 1 (Grundaufbau: CC Lv2, Agrardom, Harvester, Wohnhabitat und erstes Pfadgebäude jeweils mindestens Lv1, zwei Berater) im Normalfall Sol 12–15, spätestens Sol 20 (Frist, vorher Sol 30). Die Frist liegt damit nur wenige Sole hinter dem Zielfenster — die Verkleinerung der Bedingung gleicht das teilweise aus, ein Puffer für Rückschläge bleibt klein. Bindende Engpässe waren bisher der Regolith-Startbestand und, seit den zusätzlichen AP-Kosten der CC-Stufen, der AP-Takt; Herleitung und offene Hebelwahl in §13.7 „Phase-1-Pacing". Die Messung vom 2026-10-02 (PlaytestBot, Korridor) gilt nur für die alte, größere Bedingung.
 
 **Warnstufen (Nexus-Funk):**
 
 | Sol | Maßnahme |
 |-----|---------|
-| Sol 22 (`config('game.run.phase1_warning_sol')`) | Nexus-Funk-Warnung von Nexus, sofern Phase 1 noch nicht abgeschlossen — einmalig pro Run |
-| Sol 30 | Fail State — Run endet sofort |
+| Warn-Sol (`config('game.run.phase1_warning_sol')`, *Annahme:* rund drei Sole vor der Frist, d. h. um Sol 17 — der alte Wert Sol 22 läge hinter der neuen Frist und ist anzupassen) | Nexus-Funk-Warnung von Nexus, sofern Phase 1 noch nicht abgeschlossen — einmalig pro Run |
+| Sol 20 | Fail State — Run endet sofort |
 
 Vollständiges Design: `docs/superpowers/specs/2026-08-12-phase1-sol30-deadline-design.md`.
 
@@ -3056,7 +3072,7 @@ Der Run-Ende-Screen ersetzt die Kolonie-Ansicht unmittelbar nach `endRun()`. Er 
 
 | Phase | Sols | Anmerkung |
 |-------|------|-----------|
-| Phase 1 — Stabilisierung | 15–25 | CC Lv3 + 2 weitere Gebäude ≥ Lv2 (Code-Bedingung; Wortlaut „Produktionsgebäude" ist Owner-Frage F7) + 3 Berater — Ziel Sol 15–20, hart Sol 30 |
+| Phase 1 — Stabilisierung | 12–20 | Grundaufbau: CC Lv2, Agrardom, Harvester, Wohnhabitat und erstes Pfadgebäude jeweils ≥ Lv1, zwei Berater — Ziel Sol 12–15, hart Sol 20 (CC Lv3 ist Auftakt von Phase 2) |
 | Phase 2 früh — Einrichten | ~15–20 | Pfad-Gebäude ausbauen, Berater einstellen, die zwei Ziel-Aufgaben wählen |
 | Phase 2 mitte — Aufgaben | ~30–40 | Kernarbeit an den zwei Ziel-Aufgaben |
 | Phase 2 spät — Abschluss | ~10–15 | Zweite Aufgabe abschließen, dritte optional |
@@ -3075,23 +3091,23 @@ Die Frist lässt bewusst wenig Puffer über dem realistischen Korridor. Ein holp
 
 **Pacing-Kontrollpunkte (Nexus-Interventionen in Phase-2-Sol):**
 
-`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht in Gesamt-Sol und nicht mit absoluten Tick-Nummern). Die Kontrollpunkte bilden eine **steigende Leiter** und prüfen **Fortschritt statt Erfüllung** (Owner-Entscheidung 2026-09-26; Lesart der Schwellen, „je Anforderung eine andere Aufgabe" und Serien-Regel in §15 „2 von 3"-Mechanik). Jeder Kontrollpunkt wird genau an seinem Phase-2-Sol geprüft. Bei einem Phase-1-Abschluss um Gesamt-Sol 20 ergibt sich:
+`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht in Gesamt-Sol und nicht mit absoluten Tick-Nummern). Die Kontrollpunkte bilden eine **steigende Leiter** und prüfen **Fortschritt statt Erfüllung** (Owner-Entscheidung 2026-09-26; Lesart der Schwellen, „je Anforderung eine andere Aufgabe" und Serien-Regel in §15 „2 von 3"-Mechanik). Jeder Kontrollpunkt wird genau an seinem Phase-2-Sol geprüft. Bei einem Phase-1-Abschluss um Gesamt-Sol 15 ergibt sich:
 
-| Phase-2-Sol | Gesamt-Sol (bei Phase-1-Ende Sol 20) | Anforderung (Mindestwerte, je Anforderung eine andere Aufgabe) | Bei Verfehlen |
+| Phase-2-Sol | Gesamt-Sol (bei Phase-1-Ende Sol 15) | Anforderung (Mindestwerte, je Anforderung eine andere Aufgabe) | Bei Verfehlen |
 |-------------|--------------------------------------|------------------------------|---------------|
-| 30 | ~50 | eine Aufgabe mindestens zur Hälfte | erste Nexus-Warnung |
-| 50 | ~70 | eine Aufgabe mindestens zu drei Vierteln, eine zweite mindestens zur Hälfte | zweite Warnung |
-| 55 (und danach) | ~75 | Prüfung der Schuldengrenze (Fail State 2), kein Leiter-Schritt | Fail |
-| 65 | ~85 | eine Aufgabe erfüllt, eine zweite mindestens zu drei Vierteln | Berater-Sanktion |
+| 30 | ~45 | eine Aufgabe mindestens zur Hälfte | erste Nexus-Warnung |
+| 50 | ~65 | eine Aufgabe mindestens zu drei Vierteln, eine zweite mindestens zur Hälfte | zweite Warnung |
+| 55 (und danach) | ~70 | Prüfung der Schuldengrenze (Fail State 2), kein Leiter-Schritt | Fail |
+| 65 | ~80 | eine Aufgabe erfüllt, eine zweite mindestens zu drei Vierteln | Berater-Sanktion |
 
-Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt allein an der Gesamt-Frist und erscheint bei `tick_limit` − `countdown_sols_before_limit` (§18.2 Fail State 3), unabhängig davon, wann Phase 2 begonnen hat. Die frühere zusätzliche Kopplung an Phase-2-Sol 80, die den Countdown bei einem Phase-1-Ende um Sol 20 aufs Run-Ende schob, ist entfernt (A45).
+Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt allein an der Gesamt-Frist und erscheint bei `tick_limit` − `countdown_sols_before_limit` (§18.2 Fail State 3), unabhängig davon, wann Phase 2 begonnen hat. Die frühere zusätzliche Kopplung an Phase-2-Sol 80, die den Countdown bei einem Phase-1-Ende um Sol 15 aufs Run-Ende schob, ist entfernt (A45).
 
 **Anpassungsrichtlinien nach Playtest:** Das `tick_limit` bleibt bei 100 (Owner-Entscheidung). Stellschrauben sind die Aufgaben-Parameter und die Phase-1-Bedingungen, nicht die Frist.
 
 | Beobachtung | Maßnahme |
 |-------------|---------|
-| Phase 1 endet typisch vor Sol 15 | Phase-1-Abschlussbedingungen verschärfen oder den Regolith-Startbestand senken (§13.7) |
-| Phase 1 dauert typisch länger als Sol 25 | Phase-1-Abschlussbedingungen lockern |
+| Phase 1 endet typisch vor Sol 12 | Pacing-Hebel aus §13.7 „Phase-1-Pacing" (Startbestand, CC-AP-Kurve, Erkundung/Lager); die Bedingung nicht wieder um Lv3 verschärfen (Owner 2026-10-15) |
+| Phase 1 dauert typisch länger als Sol 20 | Phase-1-Abschlussbedingungen lockern |
 | Gezielt gespielte Aufgabe typisch erst nach Sol 85 | Zielwert dieser Aufgabe in `run.tasks` senken |
 | Aufgabe wird ohne gezieltes Spiel vor Sol ~90 erreicht | Zielwert dieser Aufgabe in `run.tasks` erhöhen |
 

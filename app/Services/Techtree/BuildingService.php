@@ -3,6 +3,7 @@
 namespace App\Services\Techtree;
 
 use App\Enums\BuildingId;
+use App\Services\BuildingCostService;
 use App\Services\ResourcesService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -163,6 +164,17 @@ class BuildingService extends AbstractTechnologyService
             ->value('level') ?? 0);
 
         return $ccLevel < $targetLevel - (int) config('game.building_cc_level_offset', 0);
+    }
+
+    /**
+     * The Command Center follows the rising AP curve (BuildingCostService::levelupAp()).
+     */
+    protected function resolveApForLevelup(int $colonyId, int $entityId, object $entity): int
+    {
+        $base = parent::resolveApForLevelup($colonyId, $entityId, $entity);
+        $level = (int) ($this->getColonyEntity($colonyId, $entityId)->level ?? 0);
+
+        return app(BuildingCostService::class)->levelupAp($entityId, $level + 1, $base);
     }
 
     /**

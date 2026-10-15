@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  * Ordered rule list — not an AI. Per Sol, rules are tried top to bottom;
  * the first one whose `when` matches fires via `do`, and the loop restarts
  * from rule 1. Rules 1-6 cover the Phase-1 core (checkPhase1Completion:
- * CC Lv3 + 2 production buildings Lv2 + 3 advisors).
+ * CC Lv2 + Harvester/Housing/Agrardom + one path building Lv1 + 2 advisors).
  */
 class BotStrategy
 {
