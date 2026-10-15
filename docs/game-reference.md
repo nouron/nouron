@@ -148,12 +148,12 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 **Bergungsflug** (`mission_find_salvage`, `FindFlightService`): nur zu gescannten echten Funden, Schiff Drohne oder Frachter, kein Erfolgswurf (`roll` false), Schwierigkeit `normal` (zählt für `task_expedition_coverage`, nicht gegen `finds.max_open_projects`).
 
-| Ring | Sol-Distanz (`sol_distance_by_ring`) | Nav-AP (2 je Sol) | Organika (3 je Sol) | Dauer (hin und zurück) |
+| Ring | Sol-Distanz (`sol_distance_by_ring`) | Nav-AP (pauschal, `finds.flight.nav_ap`) | Organika (1 je Sol, `finds.flight.organika_per_sol`) | Dauer (hin und zurück) |
 |---|---|---|---|---|
-| 2 | 1 | 2 | 3 | 2 Sol |
-| 3 | 2 | 4 | 6 | 4 Sol |
+| 2 | 1 | 1 | 1 | 2 Sol |
+| 3 | 2 | 1 | 2 | 4 Sol |
 
-Nav-AP wird durch Kartografie gesenkt (`ProjectBonusService`). Ertrag `round(rg × finds.flight.yield_factor)` mit Faktor 1,5, additive Zeilen `base` + `flight_bonus`: klein 4 → 6 Rg, mittel 10 → 15 Rg, groß 18 → 27 Rg. Tragkraft aus `ships.*.find_carry` (Tabelle oben). Kein Ertrag, wenn der Fund beim Eintreffen fehlt (`find_missing`) oder das Schiff den Fund nicht tragen kann; bei SP ≤ 0 unterwegs, Abbruch oder Rückruf bleibt der Fund bestehen und wieder Flugziel.
+Der Flug verschleißt das Schiff nicht (keine Rückkehr-Garantie nötig). Ertrag = Fundmenge (`finds.types.*.rg`, kein Faktor): klein 4, mittel 10, groß 18 Rg; die Zeilenstruktur (`base`, `total`) bleibt für spätere Zusätze. Tragkraft aus `ships.*.find_carry` (Tabelle oben). Kein Ertrag, wenn der Fund beim Eintreffen fehlt (`find_missing`) oder das Schiff den Fund nicht tragen kann; bei SP ≤ 0 unterwegs, Abbruch oder Rückruf bleibt der Fund bestehen und wieder Flugziel.
 
 **Katalog-Änderungen:** `mission_find_salvage` neu. `mission_prospecting_flight` und `mission_deep_survey` (Signalvermessung) gestrichen, Zieltyp `signal_tile` und Belohnung `deep_scan` entfallen. `mission_supply_run` zahlt nur noch Organika (kein Regolith).
 
