@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  * Ordered rule list — not an AI. Per Sol, rules are tried top to bottom;
  * the first one whose `when` matches fires via `do`, and the loop restarts
  * from rule 1. Rules 1-6 cover the Phase-1 core (checkPhase1Completion:
- * CC Lv2 + Harvester/Housing/Agrardom + one path building Lv1 + 2 advisors).
+ * CC Lv2 + Harvester/Housing/Agrardom/Uplink + one path building Lv1 + 2 advisors).
  */
 class BotStrategy
 {
@@ -1087,6 +1087,11 @@ class BotStrategy
                 // fall through to the normal tiers.
                 if (in_array($id, $pathIds, true) && ($placedCounts[$id] ?? 0) === 0) {
                     return $id === $nextPathId ? 1 : 2;
+                }
+                // Phase 1 Grundaufbau needs the Uplink-Station at Lv1 (2026-10-15) — it
+                // is placed alongside the remaining path buildings, before generic ones.
+                if ($id === BuildingId::UplinkStation->value && ($placedCounts[$id] ?? 0) === 0) {
+                    return 2;
                 }
                 if (in_array($id, $trustBuildingIds, true)) {
                     return 3;

@@ -187,6 +187,11 @@ class BotStrategyServerGatesTest extends TestCase
     {
         $bot = BotSession::boot($this, 1);
 
+        // These tests set Housing to Lv2/Lv3 directly; the building-vs-CC level gate
+        // (building_cc_gate) is not under test here, so keep the CC out of the way.
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)->update(['level' => 5]);
+
         $tile = DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('is_colony_zone', 1)
             ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('colony_buildings as cb')
                 ->where('cb.colony_id', $bot->colonyId)

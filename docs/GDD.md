@@ -2348,7 +2348,7 @@ Gemeinsam übersteigen A und B die benötigte Hebelhöhe um ~29 % — wenn beide
 
 #### Phase-1-Pacing: Startbestand
 
-**Ziel (Owner, Entscheidung 2026-10-15):** Phase 1 ist der **Grundaufbau** (`checkPhase1Completion()`: CC Lv2, Agrardom, Harvester, Wohnhabitat und das erste Pfadgebäude stehen, jeweils mindestens Lv1, dazu zwei Berater) und endet im Regelfall Sol 12–15, als harte Grenze gilt Fail State 4 (Sol 20, Owner-Korrektur 2026-10-15, vorher Sol 30; §18.2). Wer schon in Phase 1 CC Lv3 oder Pfadgebäude-Tiefe erreicht, hatte zu viele Ressourcen übrig — Lv3 in Phase 1 ist ausdrücklich nicht gewollt. CC Lv3 ist der Auftakt von Phase 2; Pfadgebäude Lv2/Lv3, das zweite Pfadgebäude und der dritte Berater gehören ebenfalls dorthin. Credits sind für die zwei Ersteinstellungen nicht bindend (Startkapital reicht).
+**Ziel (Owner, Entscheidung 2026-10-15):** Phase 1 ist der **Grundaufbau** (`checkPhase1Completion()`: CC Lv2, Agrardom, Harvester, Wohnhabitat, Uplink-Station und das erste Pfadgebäude stehen, jeweils mindestens Lv1, dazu zwei Berater) und endet im Regelfall Sol 12–15, als harte Grenze gilt Fail State 4 (Sol 20, Owner-Korrektur 2026-10-15, vorher Sol 30; §18.2). Wer schon in Phase 1 CC Lv3 oder Pfadgebäude-Tiefe erreicht, hatte zu viele Ressourcen übrig — Lv3 in Phase 1 ist ausdrücklich nicht gewollt. CC Lv3 ist der Auftakt von Phase 2; Pfadgebäude Lv2/Lv3, das zweite Pfadgebäude und der dritte Berater gehören ebenfalls dorthin. Credits sind für die zwei Ersteinstellungen nicht bindend (Startkapital reicht).
 
 **Taktgeber CC (Regolith plus steigende AP):** Die Kommandozentrale kostet weiterhin Regolith (Ziel-Level × Faktor) und **zusätzlich steigende AP je Ausbaustufe** (Owner-Entscheid 2026-10-15; `config/buildings.php`, Werte in `docs/game-reference.md`). Zusammen mit dem Stufen-Gate (§13 „Slot-System": Gebäude-Stufe N braucht CC-Stufe ≥ N) ist die CC damit der eine sichtbare Engpass der Kolonie-Entwicklung: Wer Tiefe will, muss zuerst Regolith und AP für die CC aufbringen.
 
@@ -2665,7 +2665,7 @@ Dauer: Ziel Sol 12–15 (Owner, Korrektur 2026-10-15; Fail State 4 bei Sol 20, v
 
 **Abschlussbedingungen (BEIDE müssen erfüllt sein):**
 
-Phase 1 endet, wenn: (1) der Grundaufbau steht — Kommandozentrale auf Lv2, dazu Agrardom, Harvester, Wohnhabitat und das erste Pfadgebäude, jeweils mindestens Lv1 — und (2) Personal vorhanden ist (mindestens zwei Berater aktiv: der Baumeister und der Berater des ersten Pfades). Die beiden Bedingungen sind eindeutig messbar und werden im Spieler-Interface angezeigt.
+Phase 1 endet, wenn: (1) der Grundaufbau steht — Kommandozentrale auf Lv2, dazu Agrardom, Harvester, Wohnhabitat, Uplink-Station und das erste Pfadgebäude, jeweils mindestens Lv1 — und (2) Personal vorhanden ist (mindestens zwei Berater aktiv: der Baumeister und der Berater des ersten Pfades). Die beiden Bedingungen sind eindeutig messbar und werden im Spieler-Interface angezeigt.
 
 Die zwei Bedingungen decken die Kernsysteme ab: Aufbau (Gebäude) und Handlungsfähigkeit (AP). Sie sind eindeutig messbar und fur Neuspieler verstandlich.
 
@@ -3008,7 +3008,7 @@ Exakte Schwellwerte für die UI-Warnstufen: Implementierung in `RunProgressServi
 
 **Auslösung:** Instant in dem Tick, in dem die Deadline erreicht wird, sofern Phase 1 noch nicht abgeschlossen ist (`RunProgressService::checkPhase1Completion()`).
 
-Owner-Vorgabe: Phase 1 (Grundaufbau: CC Lv2, Agrardom, Harvester, Wohnhabitat und erstes Pfadgebäude jeweils mindestens Lv1, zwei Berater) im Normalfall Sol 12–15, spätestens Sol 20 (Frist, vorher Sol 30). Die Frist liegt damit nur wenige Sole hinter dem Zielfenster — die Verkleinerung der Bedingung gleicht das teilweise aus, ein Puffer für Rückschläge bleibt klein. Bindende Engpässe waren bisher der Regolith-Startbestand und, seit den zusätzlichen AP-Kosten der CC-Stufen, der AP-Takt; Herleitung und offene Hebelwahl in §13.7 „Phase-1-Pacing". Die Messung vom 2026-10-02 (PlaytestBot, Korridor) gilt nur für die alte, größere Bedingung.
+Owner-Vorgabe: Phase 1 (Grundaufbau: CC Lv2, Agrardom, Harvester, Wohnhabitat, Uplink-Station und erstes Pfadgebäude jeweils mindestens Lv1, zwei Berater) im Normalfall Sol 12–15, spätestens Sol 20 (Frist, vorher Sol 30). Die Frist liegt damit nur wenige Sole hinter dem Zielfenster — die Verkleinerung der Bedingung gleicht das teilweise aus, ein Puffer für Rückschläge bleibt klein. Bindende Engpässe waren bisher der Regolith-Startbestand und, seit den zusätzlichen AP-Kosten der CC-Stufen, der AP-Takt; Herleitung und offene Hebelwahl in §13.7 „Phase-1-Pacing". Die Messung vom 2026-10-02 (PlaytestBot, Korridor) gilt nur für die alte, größere Bedingung.
 
 **Warnstufen (Nexus-Funk):**
 
@@ -3072,7 +3072,7 @@ Der Run-Ende-Screen ersetzt die Kolonie-Ansicht unmittelbar nach `endRun()`. Er 
 
 | Phase | Sols | Anmerkung |
 |-------|------|-----------|
-| Phase 1 — Stabilisierung | 12–20 | Grundaufbau: CC Lv2, Agrardom, Harvester, Wohnhabitat und erstes Pfadgebäude jeweils ≥ Lv1, zwei Berater — Ziel Sol 12–15, hart Sol 20 (CC Lv3 ist Auftakt von Phase 2) |
+| Phase 1 — Stabilisierung | 12–20 | Grundaufbau: CC Lv2, Agrardom, Harvester, Wohnhabitat, Uplink-Station und erstes Pfadgebäude jeweils ≥ Lv1, zwei Berater — Ziel Sol 12–15, hart Sol 20 (CC Lv3 ist Auftakt von Phase 2) |
 | Phase 2 früh — Einrichten | ~15–20 | Pfad-Gebäude ausbauen, Berater einstellen, die zwei Ziel-Aufgaben wählen |
 | Phase 2 mitte — Aufgaben | ~30–40 | Kernarbeit an den zwei Ziel-Aufgaben |
 | Phase 2 spät — Abschluss | ~10–15 | Zweite Aufgabe abschließen, dritte optional |

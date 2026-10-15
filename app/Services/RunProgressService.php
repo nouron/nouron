@@ -33,7 +33,7 @@ class RunProgressService
      *
      * Conditions (GDD §15, Owner 2026-10-15 "Phase 1 = Grundaufbau"):
      *  1. Command Center at level >= 2.
-     *  2. Harvester, Housing and Agrardom each at level >= 1.
+     *  2. Harvester, Housing, Agrardom and Uplink-Station each at level >= 1.
      *  3. At least one path building (Sciencelab, Hangar or Cantina) at level >= 1.
      *  4. At least 2 active advisors (colony assigned, not on cooldown).
      */
@@ -42,7 +42,7 @@ class RunProgressService
         $ccId = BuildingId::CommandCenter->value;
 
         // Phase 1 = Grundaufbau (Owner 2026-10-15, GDD §15): CC Lv2; Harvester, Wohnhabitat,
-        // Agrardom and one path building each at Lv1+; two available advisors. CC Lv3 and
+        // Agrardom, Uplink-Station and one path building each at Lv1+; two available advisors. CC Lv3 and
         // the second path building open Phase 2.
         $levels = DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
@@ -54,7 +54,7 @@ class RunProgressService
             return false;
         }
 
-        $basics = [BuildingId::Harvester->value, BuildingId::Housing->value, BuildingId::BioFacility->value];
+        $basics = [BuildingId::Harvester->value, BuildingId::Housing->value, BuildingId::BioFacility->value, BuildingId::UplinkStation->value];
         if (! collect($basics)->every($standing)) {
             return false;
         }

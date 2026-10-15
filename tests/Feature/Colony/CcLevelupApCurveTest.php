@@ -23,16 +23,16 @@ class CcLevelupApCurveTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
-        config(['buildings.commandCenter.cc_upgrade_ap_by_level' => [2 => 10, 3 => 20, 4 => 30, 5 => 40]]);
+        config(['buildings.commandCenter.cc_upgrade_ap_by_level' => [2 => 20, 3 => 40, 4 => 60, 5 => 80]]);
     }
 
     public function test_cc_ap_follows_the_curve_by_target_level_and_other_buildings_stay_flat(): void
     {
         $costs = app(BuildingCostService::class);
 
-        $this->assertSame(10, $costs->levelupAp(25, 2, 10));
-        $this->assertSame(20, $costs->levelupAp(25, 3, 10));
-        $this->assertSame(40, $costs->levelupAp(25, 5, 10));
+        $this->assertSame(20, $costs->levelupAp(25, 2, 10));
+        $this->assertSame(40, $costs->levelupAp(25, 3, 10));
+        $this->assertSame(80, $costs->levelupAp(25, 5, 10));
         $this->assertSame(10, $costs->levelupAp(28, 3, 10));
         $this->assertSame(10, $costs->levelupAp(25, 1, 10), 'no curve entry -> base value');
     }
@@ -51,11 +51,11 @@ class CcLevelupApCurveTest extends TestCase
 
     public function test_cc_lv2_to_lv3_needs_the_full_curve_value_in_invested_ap(): void
     {
-        $this->setCc(2, 10);   // flat 10 would level up on the next click
+        $this->setCc(2, 20);   // a flat 10 or the Lv2 value would level up on the next click
         $this->invest()->assertOk();
         $this->assertSame(2, (int) DB::table('colony_buildings')->where('colony_id', 1)->where('building_id', 25)->value('level'));
 
-        $this->setCc(2, 19);
+        $this->setCc(2, 39);
         $this->invest()->assertOk();
         $this->assertSame(3, (int) DB::table('colony_buildings')->where('colony_id', 1)->where('building_id', 25)->value('level'));
     }

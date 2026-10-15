@@ -53,7 +53,7 @@ return [
         // AP threshold per target level (Owner 2026-10-15, "AP bremst"): the CC is the
         // pace-setter, rising AP on top of the Regolith above. Read via
         // BuildingCostService::levelupAp(); a level without an entry keeps ap_for_levelup (10).
-        'cc_upgrade_ap_by_level' => [2 => 10, 3 => 20, 4 => 30, 5 => 40],
+        'cc_upgrade_ap_by_level' => [2 => 20, 3 => 40, 4 => 60, 5 => 80],
         'supply_cap' => 10,      // flat cap once CC level >= 1 (does not scale with level)
         'supply_cost' => 0,
         'trust_per_lv' => 0,

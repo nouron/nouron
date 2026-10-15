@@ -8,7 +8,7 @@ namespace Tests\Feature;
  * Covered scenarios:
  *
  * PHASE-1 COMPLETION
- *   - Grundaufbau (Owner 2026-10-15): CC Lv2, Agrardom/Harvester/Wohnhabitat Lv1, one path building Lv1, 2 advisors
+ *   - Grundaufbau (Owner 2026-10-15): CC Lv2, Agrardom/Harvester/Wohnhabitat/Uplink-Station Lv1, one path building Lv1, 2 advisors
  *
  * DRAW OBJECTIVES
  *   - drawObjectives creates 3 objectives for run
@@ -217,7 +217,7 @@ class RunProgressServiceTest extends TestCase
     private function makeGrundaufbau(): void
     {
         $this->setBuildingLevel(25, 2);                 // CC Lv2
-        foreach ([27, 28, 41, 31] as $id) {              // Harvester, Wohnhabitat, Agrardom, first path building
+        foreach ([27, 28, 41, 54, 31] as $id) {          // Harvester, Wohnhabitat, Agrardom, Uplink-Station, first path building
             $this->setBuildingLevel($id, 1);
         }
         DB::table('colony_buildings')->where('colony_id', $this->colonyId)->whereIn('building_id', [44, 52])->update(['level' => 0]);
@@ -242,7 +242,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_phase1_needs_each_basic_building_at_lv1(): void
     {
-        foreach ([27, 28, 41] as $missing) {
+        foreach ([27, 28, 41, 54] as $missing) {
             $this->makeGrundaufbau();
             DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', $missing)->update(['level' => 0]); // all instances
 

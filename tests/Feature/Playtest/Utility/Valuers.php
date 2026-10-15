@@ -47,7 +47,7 @@ final class Valuers
 
         $terms = ['cost_rg' => -1.0 * $regolith];
         // Phase 1 = Grundaufbau (2026-10-15): the first path building at Lv1 and two advisors.
-        if ($ctx->phase === 1 && $target === 1 && $isPath && $ctx->advisors < 2) {
+        if ($ctx->phase === 1 && $target === 1 && (($isPath && $ctx->advisors < 2) || $id === BuildingId::UplinkStation->value)) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($isPath && $target >= 2) {
