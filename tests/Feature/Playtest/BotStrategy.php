@@ -7,7 +7,6 @@ use App\Enums\BuildingId;
 use App\Services\AdvisorService;
 use App\Services\BuildingCostService;
 use App\Services\ColonyTileService;
-use App\Services\FindFlightService;
 use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
@@ -228,17 +227,6 @@ class BotStrategy
                 ]),
             ],
             [
-                'name' => 'repair_ship_for_flight',
-                // T30 §13.x/11: ships wear only in flight; a find that waits only because its
-                // ship misses the return guarantee (findAction reason ship_worn) gets one repair
-                // click per rule pass until the ship is ready. Without this a worn gift drone
-                // would leave every find on the map (K16 no_ship_ready = bot bug, not balance).
-                'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.ship_repair.ap_per_click', 1)
-                    ? self::repairForFlightCandidate($b)
-                    : null,
-                'do' => fn (BotSession $b, array $c) => $b->act('repair_ship_for_flight', 'POST', "/colony/hangar/{$c['bay']}/repair"),
-            ],
-            [
                 'name' => 'dispatch_find_flight',
                 // T30 §13.3: with a hangar, finds are salvaged by flight only. Ship, lock and
                 // wait reasons come from ColonyTileService::findAction() — the same source the
@@ -438,18 +426,15 @@ class BotStrategy
             ],
             [
                 'name' => 'invest_find',
-                // T30 Pool v1: deposit leftover AP into salvage projects on deep-scanned
-                // find tiles. Deliberately LAST (after build/research/explore/hire/ship
-                // rules; sol_next lives outside this list, in the Sol loop) so it only
-                // absorbs AP nothing else wanted — the pool should bind idle AP, not
-                // displace buildings. A rejected deposit blocks the rule for the Sol
-                // (PlaysSolLoop), and investFindCandidate() skips tiles already paid this
-                // tick, so it cannot spin within one Sol.
+                // Self-salvage (no hangar): one instant action per deep-scanned find, flat AP.
+                // Deliberately LAST (after build/research/explore/hire/ship rules; sol_next
+                // lives outside this list, in the Sol loop) so it only absorbs AP nothing
+                // else wanted — the pool should bind idle AP, not displace buildings.
+                // A rejected salvage blocks the rule for the Sol (PlaysSolLoop).
                 'when' => fn (BotSession $b) => self::investFindCandidate($b),
                 'do' => fn (BotSession $b, object $c) => $b->act('invest_find', 'POST', '/colony/tile/salvage', [
                     'q' => $c->q,
                     'r' => $c->r,
-                    'ap' => $c->ap,
                 ]),
             ],
         ];
@@ -1658,33 +1643,6 @@ class BotStrategy
             : ['bay' => (int) $best['action']['bay'], 'q' => (int) $best['tile']->q, 'r' => (int) $best['tile']->r];
     }
 
-    /** @return array{bay:int}|null the bay findAction() names for the largest find waiting on a worn ship */
-    private static function repairForFlightCandidate(BotSession $b): ?array
-    {
-        $tiles = app(ColonyTileService::class);
-        $flights = app(FindFlightService::class);
-        $types = config('game.finds.types');
-        $foodNeed = app(ResourcesService::class)->foodNeed($b->colonyId);
-        $worn = DB::table('colony_tiles')
-            ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
-            ->whereIn('event_type', ColonyTileService::FIND_TYPES)
-            ->orderBy('ring')->orderBy('q')->orderBy('r')->get()
-            ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
-            ->filter(fn ($c) => $c['action']['reason'] === 'ship_worn')
-            // Repair only when the flight that follows is payable (Organika + repair AP + Nav-AP),
-            // otherwise the repair AP leak and a recon could take the drone meanwhile.
-            ->filter(function ($c) use ($b, $flights, $foodNeed) {
-                $costs = $flights->costs($b->colonyId, (int) $c['tile']->ring);
-
-                return self::organics($b) - $costs['organika'] >= $foodNeed
-                    && (int) $c['action']['repair_ap'] + $costs['nav_ap'] <= self::availableAp($b);
-            })
-            ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
-            ->first();
-
-        return $worn === null ? null : ['bay' => (int) $worn['action']['bay']];
-    }
-
     /**
      * Credit mission for any profile (Owner 2026-09-30): Phase 2 only, the first
      * CREDIT_MISSIONS entry a docked, active, intact ship can fly. Freighter
@@ -2101,59 +2059,29 @@ class BotStrategy
     }
 
     /**
-     * T30 Pool v1: next salvage deposit — a deep-scanned, not yet resolved find
-     * (small/medium/large; find_false never pays) ranked by Regolith per total AP,
-     * started projects first on a tie. Skips tiles already paid this tick (one
-     * deposit per tile and Sol) and does not open a new project once
-     * max_open_projects are running. `ap` = min(cap per Sol, remaining AP of the
-     * project, available AP); 0 -> null. With a hangar only grandfathered
-     * projects (T30 §13.4).
+     * Next self-salvage: a deep-scanned find the colony may dig itself (no hangar; find_false
+     * never pays), best Regolith per AP first, payable with the available AP.
      *
-     * @return object{q:int, r:int, ap:int}|null
+     * @return object{q:int, r:int}|null
      */
     private static function investFindCandidate(BotSession $b): ?object
     {
         $available = self::availableAp($b);
-        if ($available < 1) {
-            return null;
-        }
-
         $types = config('game.finds.types');
-        $tick = app(TickService::class)->getTickCount();
         $service = app(ColonyTileService::class);
-        $tiles = DB::table('colony_tiles')
+
+        $best = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)
             ->where('is_deep_scanned', 1)
             ->whereIn('event_type', ColonyTileService::FIND_TYPES)
             ->orderBy('ring')->orderBy('q')->orderBy('r')
             ->get()
-            // T30 §13.4: with a hangar only grandfathered projects continue; without, as in Pool v1.
-            ->filter(fn ($t) => in_array($service->findAction($b->colonyId, $t)['action'], ['self_salvage', 'continue_salvage'], true))
-            ->values();
-
-        $open = $tiles->filter(fn ($t) => (int) $t->salvage_ap_spent > 0)->count();
-        $canOpen = $open < (int) config('game.finds.max_open_projects');
-
-        $best = $tiles
-            ->filter(fn ($t) => ($t->salvage_tick === null || (int) $t->salvage_tick !== $tick)
-                && ((int) $t->salvage_ap_spent > 0 || $canOpen)
-                && (int) ($types[$t->event_type]['ap'] ?? 0) > (int) $t->salvage_ap_spent)
-            ->sortBy([
-                fn ($x, $y) => ($types[$y->event_type]['rg'] / $types[$y->event_type]['ap']) <=> ($types[$x->event_type]['rg'] / $types[$x->event_type]['ap']),
-                fn ($x, $y) => (int) $y->salvage_ap_spent <=> (int) $x->salvage_ap_spent,
-            ])
+            ->filter(fn ($t) => $service->findAction($b->colonyId, $t)['action'] === 'self_salvage'
+                && (int) $types[$t->event_type]['ap'] <= $available)
+            ->sortByDesc(fn ($t) => $types[$t->event_type]['rg'] / $types[$t->event_type]['ap'])
             ->first();
-        if ($best === null) {
-            return null;
-        }
 
-        $ap = min(
-            (int) config('game.finds.salvage_cap_per_sol'),
-            (int) $types[$best->event_type]['ap'] - (int) $best->salvage_ap_spent,
-            $available,
-        );
-
-        return $ap < 1 ? null : (object) ['q' => (int) $best->q, 'r' => (int) $best->r, 'ap' => $ap];
+        return $best === null ? null : (object) ['q' => (int) $best->q, 'r' => (int) $best->r];
     }
 
     /**

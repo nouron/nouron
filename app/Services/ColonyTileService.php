@@ -128,26 +128,19 @@ class ColonyTileService
     }
 
     /**
-     * T30 Pool v1: pay AP into a salvage project on a deep-scanned find tile.
-     * Max `salvage_cap_per_sol` AP per tile and Sol; at most `max_open_projects`
-     * started-but-unfinished projects per colony. Completion credits Regolith.
+     * Self-salvage of a deep-scanned find (colony without hangar): one instant action,
+     * flat AP per find size (`game.finds.types.*.ap`), Regolith credited at once, tile freed.
+     * No per-Sol cap, no project limit (Owner 2026-10-13).
      */
-    public function salvageFind(int $colonyId, int $q, int $r, int $ap): array
+    public function salvageFind(int $colonyId, int $q, int $r): array
     {
         $fail = fn (string $code, ?string $msgKey = null) => [
             'ok' => false, 'error' => $code, 'message' => __('colony.error_'.($msgKey ?? $code)),
         ];
 
-        // Everything runs under row locks so a double-submit cannot pay twice, skip the
-        // once-per-Sol rule, exceed the project limit or credit Regolith twice.
-        return DB::transaction(function () use ($colonyId, $q, $r, $ap, $fail) {
-            // Lock all find rows of the colony first: serialises the open-project count.
-            $finds = ColonyTile::where('colony_id', $colonyId)
-                ->where('event_type', 'like', 'find\\_%')
-                ->lockForUpdate()
-                ->get();
-            $tile = $finds->first(fn ($t) => (int) $t->q === $q && (int) $t->r === $r)
-                ?? ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->lockForUpdate()->first();
+        // Row lock: a double-submit cannot pay twice or credit Regolith twice.
+        return DB::transaction(function () use ($colonyId, $q, $r, $fail) {
+            $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->lockForUpdate()->first();
 
             if (! $tile) {
                 return $fail('tile_not_found');
@@ -161,41 +154,20 @@ class ColonyTileService
             if ($tile->event_type === 'find_false') {
                 return $fail('find_false');
             }
-            // T30 §13.4: with a hangar >= 1 finds go by flight only (grandfathered projects excepted).
-            // in_flight is checked first, so a flight still out after the hall was demolished
-            // keeps the tile locked against self-salvage too (Review Focus 2).
+            // T30 §13.4: with a hangar >= 1 finds go by flight only. in_flight is checked first,
+            // so a flight still out after the hall was demolished keeps the tile locked too.
             $action = $this->findAction($colonyId, $tile);
             if ($action['reason'] === 'in_flight') {
                 return $fail('find_in_flight');
             }
-            if (! in_array($action['action'], ['self_salvage', 'continue_salvage'], true)) {
+            if ($action['action'] !== 'self_salvage') {
                 return $fail('salvage_by_flight');
             }
             $def = config('game.finds.types')[$tile->event_type] ?? ['rg' => 0, 'ap' => 0];
-            if ((int) $def['ap'] <= 0) {
+            $ap = (int) $def['ap'];
+            if ($ap <= 0) {
                 return $fail('no_find');
             }
-
-            $cap = (int) config('game.finds.salvage_cap_per_sol');
-            if ($ap < 1 || $ap > $cap) {
-                return $fail('invalid_ap');
-            }
-            $tick = $this->tickService->getTickCount();
-            if ($tile->salvage_tick !== null && (int) $tile->salvage_tick === $tick) {
-                return $fail('salvage_cap');
-            }
-
-            $spent = (int) $tile->salvage_ap_spent;
-            if ($spent === 0) {
-                $open = $finds->filter(fn ($t) => $t->is_deep_scanned
-                    && $t->event_type !== 'find_false'
-                    && (int) $t->salvage_ap_spent > 0)->count();
-                if ($open >= (int) config('game.finds.max_open_projects')) {
-                    return $fail('salvage_projects');
-                }
-            }
-
-            $ap = min($ap, (int) $def['ap'] - $spent);
 
             if (! config('game.bypass.ap_checks')) {
                 if ($this->advisorService->getAvailableActionPoints($colonyId) < $ap) {
@@ -204,19 +176,10 @@ class ColonyTileService
                 $this->advisorService->lockActionPoints($colonyId, $ap);
             }
 
-            $spent += $ap;
-            $completed = $spent >= (int) $def['ap'];
-            $rg = 0;
-            if ($completed) {
-                $rg = (int) $def['rg'];
-                $this->completeFind($tile, $rg);
-            } else {
-                $tile->salvage_ap_spent = $spent;
-                $tile->salvage_tick = $tick;
-                $tile->save();
-            }
+            $rg = (int) $def['rg'];
+            $this->completeFind($tile, $rg);
 
-            return ['ok' => true, 'tile' => $this->transformTile($tile), 'completed' => $completed, 'regolith' => $rg];
+            return ['ok' => true, 'tile' => $this->transformTile($tile), 'completed' => true, 'regolith' => $rg];
         });
     }
 
@@ -232,15 +195,13 @@ class ColonyTileService
         }
         $tile->event_type = null;
         $tile->is_deep_scanned = false;
-        $tile->salvage_ap_spent = 0;
-        $tile->salvage_tick = null;
         $tile->save();
     }
 
     /**
      * T30 §13.4: the ONE allowed action for a find tile plus its reason key. Single source
      * for salvageFind(), HangarService::assertFindFlyable(), the find card and the bot.
-     * Check order: unscanned → false alarm → in flight → without hangar → grandfathered
+     * Check order: unscanned → false alarm → in flight → without hangar
      * → level/carry → ship status. "Without hangar" is derived from the hall level
      * (no building or level 0), never stored (E6).
      */
@@ -257,13 +218,9 @@ class ColonyTileService
         if ($returnSol !== null) {
             return ['action' => 'none', 'reason' => 'in_flight', 'return_sol' => $returnSol];
         }
-        $started = (int) $tile->salvage_ap_spent > 0;
         $level = $this->hangarLevel($colonyId);
         if ($level < 1) {
-            return ['action' => $started ? 'continue_salvage' : 'self_salvage', 'reason' => 'self'];
-        }
-        if ($started) {
-            return ['action' => 'continue_salvage', 'reason' => 'grandfathered'];
+            return ['action' => 'self_salvage', 'reason' => 'self'];
         }
 
         $carriers = DB::table('colony_ships')
@@ -288,10 +245,9 @@ class ColonyTileService
                 : ['action' => 'wait', 'reason' => 'no_ship'];
         }
 
+        // Salvage flights do not wear ships, so any docked carrier is ready.
         $ready = $active
-            // T30 §13.x/7: "ready" = the return guarantee for this tile's ring distance.
-            ->filter(fn ($s) => $s->ship_state === 'docked'
-                && HangarBays::flightReadiness((int) $s->ship_id, (float) $s->status_points, $this->findFlightService->solDistance((int) $tile->ring))['ready'])
+            ->filter(fn ($s) => $s->ship_state === 'docked')
             ->sortBy([
                 fn ($a, $b) => HangarBays::requiredLevel((int) $a->ship_id) <=> HangarBays::requiredLevel((int) $b->ship_id),
                 fn ($a, $b) => (int) $a->bay <=> (int) $b->bay,
@@ -306,20 +262,10 @@ class ColonyTileService
                 'yield' => $this->findFlightService->findFlightYield($colonyId, $type)];
         }
 
-        $busy = $active->first(fn ($s) => in_array($s->ship_state, ['dispatched', 'building'], true));
-        if ($busy !== null) {
-            return ['action' => 'wait', 'reason' => 'ship_busy', 'ship_key' => HangarBays::shipKey((int) $busy->ship_id),
-                'return_sol' => $this->shipBackSol($colonyId, $busy)];
-        }
-        // Docked but worn: the smallest class first (that is the ship the bot repairs).
-        $worn = $active->sortBy([
-            fn ($a, $b) => HangarBays::requiredLevel((int) $a->ship_id) <=> HangarBays::requiredLevel((int) $b->ship_id),
-            fn ($a, $b) => (int) $a->bay <=> (int) $b->bay,
-        ])->first();
-        $readiness = HangarBays::flightReadiness((int) $worn->ship_id, (float) $worn->status_points, $this->findFlightService->solDistance((int) $tile->ring));
+        $busy = $active->first();
 
-        return ['action' => 'wait', 'reason' => 'ship_worn', 'ship_key' => HangarBays::shipKey((int) $worn->ship_id),
-            'bay' => (int) $worn->bay, 'repair_ap' => $readiness['repair_ap'], 'readiness' => $readiness];
+        return ['action' => 'wait', 'reason' => 'ship_busy', 'ship_key' => HangarBays::shipKey((int) $busy->ship_id),
+            'return_sol' => $this->shipBackSol($colonyId, $busy)];
     }
 
     private function hangarLevel(int $colonyId): int
@@ -562,8 +508,6 @@ class ColonyTileService
                 'type' => $tile->event_type,
                 'rg' => $def['rg'],
                 'ap_total' => $def['ap'],
-                'ap_spent' => (int) $tile->salvage_ap_spent,
-                'ap_cap_per_sol' => (int) config('game.finds.salvage_cap_per_sol'),
                 'false' => $tile->event_type === 'find_false',
                 'action' => $this->findActionWithText((int) $tile->colony_id, $tile),
             ];
@@ -581,10 +525,8 @@ class ColonyTileService
             'sol' => $a['return_sol'] ?? $a['costs']['return_sol'] ?? '',
             'ship' => $ship,
             'level' => $a['needs_level'] ?? '',
-            'base' => $a['yield']['base'] ?? '',
-            'bonus' => $a['yield']['flight_bonus'] ?? '',
             'total' => $a['yield']['total'] ?? '',
-            'ap' => $a['costs']['nav_ap'] ?? $a['repair_ap'] ?? '',
+            'ap' => $a['costs']['nav_ap'] ?? '',
             'organika' => $a['costs']['organika'] ?? '',
         ]);
 

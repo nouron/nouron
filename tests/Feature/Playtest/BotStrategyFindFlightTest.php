@@ -35,12 +35,12 @@ class BotStrategyFindFlightTest extends TestCase
         $service->lockActionPoints($bot->colonyId, $service->getTotalActionPoints($bot->colonyId) - $ap);
     }
 
-    private function makeFind(BotSession $bot, string $type, bool $scanned = true, int $spent = 0, int $ring = 2): object
+    private function makeFind(BotSession $bot, string $type, bool $scanned = true, int $ring = 2): object
     {
         $tile = DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->whereNull('event_type')
             ->where('is_colony_zone', 0)->where('ring', $ring)->orderBy('q')->orderBy('r')->first();
         DB::table('colony_tiles')->where('id', $tile->id)->update(['event_type' => $type, 'is_explored' => 1,
-            'is_deep_scanned' => $scanned ? 1 : 0, 'salvage_ap_spent' => $spent, 'salvage_tick' => null]);
+            'is_deep_scanned' => $scanned ? 1 : 0]);
 
         return DB::table('colony_tiles')->where('id', $tile->id)->first();
     }
@@ -72,16 +72,6 @@ class BotStrategyFindFlightTest extends TestCase
         $this->assertEmpty($this->rule('invest_find')['when']($bot), 'no self-salvage with a hangar');
     }
 
-    public function test_grandfathered_project_is_continued_after_the_hangar_stands(): void
-    {
-        $bot = $this->bootWithHangar(1);
-        $tile = $this->makeFind($bot, 'find_small', spent: 4);
-
-        $c = $this->rule('invest_find')['when']($bot);
-
-        $this->assertSame([(int) $tile->q, (int) $tile->r], [$c->q, $c->r]);
-    }
-
     public function test_hangar_colony_with_only_unscanned_signals_scans_first(): void
     {
         $bot = $this->bootWithHangar(1);
@@ -91,50 +81,16 @@ class BotStrategyFindFlightTest extends TestCase
         $this->assertSame((int) $tile->id, (int) $this->rule('deep_scan_signal_tile')['when']($bot)->id);
     }
 
-    public function test_worn_gift_drone_gets_repaired_then_flies(): void
+    public function test_worn_drone_flies_without_repair(): void
     {
         $bot = $this->bootWithHangar(1);
-        $this->makeFind($bot, 'find_small'); // ring 2: drone wear 3
-        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 2]);
-        $this->assertEmpty($this->rule('dispatch_find_flight')['when']($bot));
+        $this->makeFind($bot, 'find_medium', ring: 3);
+        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 1]);
 
-        $c = $this->rule('repair_ship_for_flight')['when']($bot);
-        $this->assertSame(0, $c['bay']);
-        $this->assertTrue($this->rule('repair_ship_for_flight')['do']($bot, $c)['ok']);
-
-        $this->assertSame(4.0, (float) DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->value('status_points'));
-        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'ready now — no further repair');
-        $this->assertNotEmpty($this->rule('dispatch_find_flight')['when']($bot));
+        $this->assertNotEmpty($this->rule('dispatch_find_flight')['when']($bot), 'salvage flights do not wear ships');
     }
 
-    public function test_bot_repairs_before_a_ring_3_flight_instead_of_starting(): void
-    {
-        $bot = $this->bootWithHangar(1);
-        $this->makeFind($bot, 'find_medium', ring: 3); // drone wear 6
-        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 5]);
-
-        $this->assertEmpty($this->rule('dispatch_find_flight')['when']($bot), 'old 25 % floor would have started and aborted');
-        $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay']);
-    }
-
-    public function test_no_repair_when_the_following_flight_is_not_payable(): void
-    {
-        $bot = $this->bootWithHangar(1);
-        $this->makeFind($bot, 'find_medium', ring: 3); // drone wear 6
-        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 5]);
-
-        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 5)->update(['amount' => 1]);
-        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'Organika too low for the ring-3 flight');
-
-        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 5)->update(['amount' => 50]);
-        $this->giveAp($bot, 1);
-        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'repair AP + nav AP exceed available AP');
-
-        $this->giveAp($bot, 10);
-        $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay'], 'payable: repair chosen');
-    }
-
-    public function test_flight_and_repair_keep_organika_at_or_above_the_food_need(): void
+    public function test_flight_keeps_organika_at_or_above_the_food_need(): void
     {
         $bot = $this->bootWithHangar(1);
         $this->makeFind($bot, 'find_small'); // ring 2
@@ -148,20 +104,6 @@ class BotStrategyFindFlightTest extends TestCase
 
         $setOrganika($need + $cost);
         $this->assertNotEmpty($this->rule('dispatch_find_flight')['when']($bot));
-
-        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 2]);
-        $setOrganika($need + $cost - 1);
-        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot), 'repair for a flight that would starve the colony');
-        $setOrganika($need + $cost);
-        $this->assertSame(0, $this->rule('repair_ship_for_flight')['when']($bot)['bay']);
-    }
-
-    public function test_no_repair_without_a_waiting_find(): void
-    {
-        $bot = $this->bootWithHangar(1);
-        DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 2]);
-
-        $this->assertEmpty($this->rule('repair_ship_for_flight')['when']($bot));
     }
 
     public function test_gift_drone_suppresses_the_bootstrap_drone_purchase(): void
@@ -176,7 +118,7 @@ class BotStrategyFindFlightTest extends TestCase
     {
         $names = array_column(BotStrategy::default(), 'name');
         $this->assertNotContains('dispatch_regolith_mission', $names);
-        $this->assertSame(array_search('dispatch_find_flight', $names, true) - 1, array_search('repair_ship_for_flight', $names, true), 'directly before');
+        $this->assertNotContains('repair_ship_for_flight', $names, 'salvage flights need no repair');
         $this->assertLessThan(array_search('dispatch_credit_mission', $names, true), array_search('dispatch_find_flight', $names, true));
     }
 }

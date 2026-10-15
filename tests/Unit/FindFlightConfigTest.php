@@ -13,7 +13,8 @@ class FindFlightConfigTest extends TestCase
         $this->assertSame(['find_small', 'find_medium'], config('ships.drone.find_carry'));
         $this->assertSame(['find_small', 'find_medium', 'find_large'], config('ships.freighter.find_carry'));
         $this->assertSame([], config('ships.corvette.find_carry'));
-        $this->assertSame(1.5, config('game.finds.flight.yield_factor'));
+        $this->assertNull(config('game.finds.flight.yield_factor'), 'Flight yield = find Rg, no factor');
+        $this->assertSame([1, 1], [config('game.finds.flight.nav_ap'), config('game.finds.flight.organika_per_sol')]);
     }
 
     /** min_hangar_level must equal the smallest class that carries the type — the lock reason must say what the guard checks. */

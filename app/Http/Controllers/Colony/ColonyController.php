@@ -270,9 +270,9 @@ class ColonyController extends BaseController
 
     public function salvageTile(Request $request): JsonResponse
     {
-        $data = $request->validate(['q' => 'required|integer', 'r' => 'required|integer', 'ap' => 'required|integer']);
+        $data = $request->validate(['q' => 'required|integer', 'r' => 'required|integer']);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
-        $result = $this->tileService->salvageFind($colony->id, (int) $data['q'], (int) $data['r'], (int) $data['ap']);
+        $result = $this->tileService->salvageFind($colony->id, (int) $data['q'], (int) $data['r']);
 
         if ($result['ok']) {
             $this->eventService->createEvent([
