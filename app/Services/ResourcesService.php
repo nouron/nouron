@@ -8,6 +8,7 @@ use App\Models\ColonyResource;
 use App\Models\Resource;
 use App\Models\UserResource;
 use App\Services\Concerns\ValidatesId;
+use App\Support\RegolithLedger;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -130,17 +131,18 @@ class ResourcesService
     /**
      * Deduct all costs from the colony in a single transaction.
      *
+     * @param  string|null  $tag  Regolith-ledger sink tag (RegolithLedger), observation only
      * @return bool true on success, false if any deduction fails
      */
-    public function payCosts(iterable $costs, int|string $colonyId): bool
+    public function payCosts(iterable $costs, int|string $colonyId, ?string $tag = null): bool
     {
         $this->validateId($colonyId);
 
-        return DB::transaction(function () use ($costs, $colonyId) {
+        return DB::transaction(function () use ($costs, $colonyId, $tag) {
             foreach ($costs as $cost) {
                 $resourceId = is_array($cost) ? $cost['resource_id'] : $cost->resource_id;
                 $amount = is_array($cost) ? $cost['amount'] : $cost->amount;
-                $this->decreaseAmount((int) $colonyId, (int) $resourceId, (int) $amount);
+                $this->decreaseAmount((int) $colonyId, (int) $resourceId, (int) $amount, $tag);
             }
 
             return true;
@@ -154,12 +156,14 @@ class ResourcesService
      * the colony row.
      *
      * @param  bool  $forceUserResToBeColRes  If true, even credits/supply go to colony_resources
+     * @param  string|null  $tag  Regolith-ledger source/sink tag (RegolithLedger), observation only
      */
     public function increaseAmount(
         int $colonyId,
         int $resId,
         int $amount,
-        bool $forceUserResToBeColRes = false
+        bool $forceUserResToBeColRes = false,
+        ?string $tag = null,
     ): bool {
         $this->validateId($colonyId);
         $this->validateId($resId);
@@ -193,12 +197,16 @@ class ResourcesService
             ['amount' => $current + $amount]
         );
 
+        if ($resId === RegolithLedger::RES_REGOLITH) {
+            RegolithLedger::record($colonyId, $tag, $amount);
+        }
+
         return true;
     }
 
-    public function decreaseAmount(int $colonyId, int $resId, int $amount): bool
+    public function decreaseAmount(int $colonyId, int $resId, int $amount, ?string $tag = null): bool
     {
-        return $this->increaseAmount($colonyId, $resId, -$amount);
+        return $this->increaseAmount($colonyId, $resId, -$amount, tag: $tag);
     }
 
     /**

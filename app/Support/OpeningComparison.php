@@ -89,6 +89,13 @@ namespace App\Support;
  *  - K23 (informational): first snapshot Sol with cc_level >= 4; target <= 25, warn > 30.
  *    K19/K23 do not distinguish "never reached" from "run cut off by --until-sol"
  *    (both null); the detail line labels the missing runs via neverLabel (info-only).
+ *  - RG (informational, Regolith ledger, budget spec E.1/E.2): rg_in_1_12 /
+ *    rg_in_13_25 = mean Regolith inflow per Sol (sum of all regolith_sources
+ *    buckets) over the snapshots of Sols 1-12 / 13-25, null without snapshots in
+ *    the window; rg_harvester_share = regolith_sources.harvester / inflow in % over
+ *    Sols 13-25 (null without inflow); rg_resource_limit = rejected log entries with
+ *    error resource_limit. Reports before the ledger carry the old remainder bucket
+ *    as 'harvester', so their share reads too high.
  *  - K7: won = outcome.status === 'completed', sols = outcome.sols.
  *
  * Comparison: only finished runs count (status completed|failed, or a run
@@ -287,6 +294,16 @@ class OpeningComparison
 
         $p2 = $report['phase2_start_sol'] ?? null;
 
+        $inflow = fn (array $s): int => (int) array_sum(array_map('intval', $s['regolith_sources'] ?? []));
+        $window = fn (int $from, int $to): array => array_values(array_filter($sols, fn ($s) => $s['sol'] >= $from && $s['sol'] <= $to));
+        $meanInflow = function (int $from, int $to) use ($window, $inflow): ?float {
+            $w = $window($from, $to);
+
+            return $w === [] ? null : round(array_sum(array_map($inflow, $w)) / count($w), 1);
+        };
+        $lateInflow = array_sum(array_map($inflow, $window(13, 25)));
+        $lateHarvester = array_sum(array_map(fn ($s) => (int) ($s['regolith_sources']['harvester'] ?? 0), $window(13, 25)));
+
         return [
             'k1' => $k1,
             'k2' => $k2,
@@ -314,6 +331,10 @@ class OpeningComparison
             // §13.8 information next to K4: repair AP spent (Sol 4-12 / Sols 1-24).
             'ship_repair_4_12' => array_sum(array_map(fn ($s) => $s['sol'] >= 4 && $s['sol'] <= 12 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
             'ship_repair_25' => array_sum(array_map(fn ($s) => $s['sol'] < 25 ? (int) ($s['ap']['ship_repair_spent'] ?? 0) : 0, $sols)),
+            'rg_in_1_12' => $meanInflow(1, 12),
+            'rg_in_13_25' => $meanInflow(13, 25),
+            'rg_harvester_share' => $lateInflow > 0 ? round($lateHarvester / $lateInflow * 100, 1) : null,
+            'rg_resource_limit' => count(array_filter($report['log'] ?? [], fn ($e) => empty($e['ok']) && ($e['error'] ?? null) === 'resource_limit')),
             'k7' => isset($report['truncated_at_sol']) && ($report['outcome']['status'] ?? null) === 'active' ? null : [
                 'won' => ($report['outcome']['status'] ?? null) === 'completed',
                 'sols' => (int) ($report['outcome']['sols'] ?? 0),
@@ -420,7 +441,7 @@ class OpeningComparison
 
         $hasReference = in_array(self::REFERENCE, $this->openings, true);
         $kpis = [];
-        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'k18', 'k19_lv2', 'k19_lv3', 'k19_lv1_sols', 'k20', 'k21_4_12', 'k21_13_25', 'k22', 'k23', 'ship_repair_4_12', 'ship_repair_25'] as $k) {
+        foreach (['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k11_10', 'k11_25', 'k12', 'k16_needs_level', 'k16_needs_freighter', 'k16_ship_busy', 'k16_no_ship_ready', 'k17', 'k18', 'k19_lv2', 'k19_lv3', 'k19_lv1_sols', 'k20', 'k21_4_12', 'k21_13_25', 'k22', 'k23', 'ship_repair_4_12', 'ship_repair_25', 'rg_in_1_12', 'rg_in_13_25', 'rg_harvester_share', 'rg_resource_limit'] as $k) {
             foreach ($this->openings as $opening) {
                 $values = array_map(fn ($m) => $m[$k], $metrics[$opening] ?? []);
                 $stats = self::stats(array_values(array_filter($values, fn ($v) => $v !== null)));
@@ -486,7 +507,7 @@ class OpeningComparison
     {
         $na = fn (string $why) => ['status' => 'n/a', 'detail' => $why];
         if ($paired === []) {
-            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'K18', 'K19', 'K20', 'K21', 'K22', 'K23', 'REP'], $na('no paired seeds'));
+            return array_fill_keys(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K11', 'K12', 'K16', 'K17', 'K18', 'K19', 'K20', 'K21', 'K22', 'K23', 'REP', 'RG'], $na('no paired seeds'));
         }
 
         $perOpeningMax = function (string $k, int $max) use ($kpis, $k7): array {
@@ -623,6 +644,14 @@ class OpeningComparison
                 )).' (target <= 25, warn > 30)',
             ],
             'REP' => $info('Ship repair AP Sol 4-12, median', $kpis['ship_repair_4_12'], 'information next to K4'),
+            'RG' => [
+                'status' => 'info',
+                'detail' => 'Rg inflow/Sol 1-12 / 13-25, Harvester share % 13-25, resource_limit rejections, median: '.implode('; ', array_map(
+                    fn ($o) => "{$o} ".self::fmt($kpis['rg_in_1_12'][$o]['median']).' / '.self::fmt($kpis['rg_in_13_25'][$o]['median'])
+                        .', '.self::fmt($kpis['rg_harvester_share'][$o]['median']).' %, '.self::fmt($kpis['rg_resource_limit'][$o]['median']).'x',
+                    array_keys($kpis['rg_in_1_12']),
+                )).' (informational, budget spec E.2)',
+            ],
         ];
     }
 

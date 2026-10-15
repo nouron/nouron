@@ -25,6 +25,7 @@ use App\Services\ResourcesService;
 use App\Services\RunProgressService;
 use App\Services\TickService;
 use App\Services\TrustService;
+use App\Support\RegolithLedger;
 use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Console\Command;
@@ -327,7 +328,7 @@ class GameTick extends Command
             ->get();
 
         foreach ($due as $import) {
-            $this->resourcesService->increaseAmount($import->colony_id, $import->resource_id, $import->amount);
+            $this->resourcesService->increaseAmount($import->colony_id, $import->resource_id, $import->amount, tag: 'import');
 
             $this->eventService->createEvent([
                 'user' => (int) (DB::table('glx_colonies')->where('id', $import->colony_id)->value('user_id') ?? 0),
@@ -521,6 +522,8 @@ class GameTick extends Command
         int $shipId = 0
     ): array {
         // loot_table: seeded pick of one entry, then resolve that entry's rewards.
+        // Regolith ledger: a direct Regolith reward is ore, a loot-table pick is loot.
+        $ledgerTag = isset($reward['loot_table']) ? 'mission_loot' : 'mission_ore';
         if (isset($reward['loot_table'])) {
             $table = $reward['loot_table'];
             $reward = $table[$this->seededRoll($seed, 0, count($table) - 1)];
@@ -550,6 +553,9 @@ class GameTick extends Command
                     ->where('colony_id', $colonyId)
                     ->where('resource_id', $resourceIds[$type])
                     ->update(['amount' => DB::raw('amount + '.(int) $value)]);
+                if ($resourceIds[$type] === RegolithLedger::RES_REGOLITH) {
+                    RegolithLedger::record($colonyId, $ledgerTag, (int) $value);
+                }
             } elseif ($type === 'trust_event') {
                 $this->trustService->fireEvent($colonyId, (string) $value, $tick);
             } elseif ($type === 'reveal_tiles') {
@@ -764,6 +770,9 @@ class GameTick extends Command
                     ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
                     ['amount' => DB::raw("amount + {$returned}")]
                 );
+                if ((int) $resId === RegolithLedger::RES_REGOLITH) {
+                    RegolithLedger::record((int) $cb->colony_id, 'recycle', $returned);
+                }
             }
         }
     }
@@ -1012,6 +1021,9 @@ class GameTick extends Command
                     ColonyResource::where('colony_id', $colony->id)
                         ->where('resource_id', $resourceId)
                         ->update(['amount' => DB::raw("amount + {$yield}")]);
+                    if ((int) $resourceId === RegolithLedger::RES_REGOLITH) {
+                        RegolithLedger::record((int) $colony->id, 'production', $yield);
+                    }
                 }
             }
         }
@@ -1104,6 +1116,14 @@ class GameTick extends Command
 
             $credited = (int) round($base * $multiplier);
             $totalCredited += $credited;
+
+            // Regolith ledger (M2): the geology share is what the bonus added after
+            // trust/staffing rounding; the rest is the Harvester's own yield.
+            if (RegolithLedger::active()) {
+                $baseOnly = (int) round(self::harvesterYield($tile->tile_type, $remaining, $configMax, 0) * $multiplier);
+                RegolithLedger::record((int) $colony->id, 'harvester_base', $baseOnly);
+                RegolithLedger::record((int) $colony->id, 'geology', $credited - $baseOnly);
+            }
 
             $newRemaining = max(0, $remaining - $credited);
             DB::table('colony_tiles')

@@ -673,7 +673,7 @@ class ColonyController extends BaseController
             foreach ($buildCost as $resourceId => $amount) {
                 $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
             }
-            $this->resourcesService->payCosts($costs, $colony->id);
+            $this->resourcesService->payCosts($costs, $colony->id, 'build_place');
         }
 
         $this->eventService->createEvent([
@@ -798,7 +798,8 @@ class ColonyController extends BaseController
         if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
             $this->resourcesService->payCosts(
                 [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
-                $colony->id
+                $colony->id,
+                $buildingId === BuildingId::CommandCenter->value ? 'cc_upgrade' : 'build_levelup'
             );
         }
 
@@ -957,7 +958,8 @@ class ColonyController extends BaseController
         if ($repairCostsRegolith) {
             $this->resourcesService->payCosts(
                 [['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]],
-                $colony->id
+                $colony->id,
+                'repair'
             );
         }
 
