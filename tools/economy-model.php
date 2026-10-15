@@ -27,12 +27,12 @@ $new = (int) ($o['new'] ?? 0);       // 1 = planned sources (Schürfflug, Erzgas
 // ASSUMPTIONS (override via --set=key=val). Rg/Sol are expected values incl. utilisation.
 $A = [
     'build_ap' => 10, 'place_ap' => 11, 'explore_ap_p1' => 6, 'research_share_labor' => 0.33,
-    'research_share_p2' => 0.40, 'repair_ap_share_p2' => 0.16,
+    'research_share_p2' => 0.40,
     'pool_rg' => 40, 'finds_rg_per_sol' => 0.0,         // current game: pool only
     'cantina_guest_rg_per_sol' => 0.8,                   // measured ~0.8 (cantina_guest 68/40 Sols)
     'drone_flight_rg_per_sol' => 2.8, 'freighter_flight_rg_per_sol' => 5.6,   // new: Schürfflug
     'cantina_ore_rg_per_sol' => 3.5, 'cartography_per_lv' => 0.52, 'trade_per_lv' => 0.72,  // new
-    'repair_rg_factor' => 0.35, 'relocate_ap' => 6, 'map_budget' => 2300, 'trust_mult_p2' => 1.04, 'harvester_downtime' => 0.04,
+    'repair_start' => 10, 'repair_cap_share' => 0.35, 'relocate_ap' => 6, 'map_budget' => 2300, 'trust_mult_p2' => 1.04, 'harvester_downtime' => 0.04,
 ];
 foreach (explode(',', $o['set'] ?? '') as $kv) {
     if (str_contains($kv, '=')) {
@@ -48,7 +48,7 @@ $decay = fn ($b) => $bcfg[$b]['decay_rate'] ?? 0;
 $place = fn ($b) => ($bcfg[$b]['build_cost'][3] ?? 0) + $flat;
 
 // Buy list: [key, label, rg, ap, effect]. effect: [type, value]
-$P = fn ($b, $l = null) => ['key' => "$b+", 'b' => $b, 'rg' => $place($b), 'ap' => $A['place_ap'], 'lbl' => ($l ?? $b).' neu'];
+$P = fn ($b, $l = null) => ['key' => "$b+", 'new' => true, 'b' => $b, 'rg' => $place($b), 'ap' => $A['place_ap'], 'lbl' => ($l ?? $b).' neu'];
 $L = fn ($b, $lv) => ['key' => "$b$lv", 'b' => $b, 'rg' => $flat, 'ap' => $A['build_ap'], 'lbl' => "$b Lv$lv"];
 $CC = fn ($lv) => ['key' => "cc$lv", 'b' => 'commandCenter', 'rg' => $ccPer * $lv, 'ap' => $A['build_ap'], 'lbl' => "CC Lv$lv"];
 $H = fn ($n) => ['key' => "housing$n", 'b' => 'housingComplex', 'rg' => $flat, 'ap' => $A['build_ap'], 'lbl' => "Wohnhabitat Lv$n"];
@@ -65,7 +65,16 @@ $plans = [
         $L('bioFacility', 2), $L('sciencelab', 3), $P('uplinkStation'), $CC(4), $P('hangar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('hangar', 2),
         $P('infirmary'), $L('bioFacility', 3), $CC(5), $L('sciencelab', 5), $L('hangar', 3), $L('bar', 3)],
 ];
-// Reuse of the same 'housingComplex' label on Lv3: fix key clash by index below.
+// Optional tail (not required for a win): extra buildings bought only when Rg and AP allow; once it
+// is exhausted the economy is repair-only. Keys are made unique per item.
+$tail = [$P('tradingPost'), $P('securityHub'), $P('housingComplex', 'Wohnhabitat #2'), $L('infirmary', 2), $P('monument'), $P('temple'),
+    $L('housingComplex', 4), $L('tradingPost', 2), $L('securityHub', 2), $L('housingComplex', 5)];
+foreach ($plans as $n => $pl) {
+    foreach ($tail as $i => $t) {
+        $t['key'] .= "#$i";
+        $plans[$n][] = $t;
+    }
+}
 
 function advisorAp(int $sol, array $startSols): float
 {
@@ -96,14 +105,24 @@ function run(string $opening, array $plan, array $A, array $ctx): array
     $geoLv = 0;
     $geoAp = 0;
     $geoCost = [20, 28, 36, 44, 52];
-    $done = [];
     $idx = 0;
     $progress = 0.0;
     $paid = false;
     $advisors = [1];   // Baumeister Sol 1
     $rows = [];
     $tot = ['in' => [], 'out' => [], 'rgBound' => 0, 'unusedAp' => 0, 'apTotal' => 0];
-    $repairDebt = 0.0;
+    $debtAp = $debtRg = 0.0;
+    $decayExempt = fn ($lv) => array_sum(array_map(fn ($b) => isset($lv[$b]) ? $bcfg[$b]['decay_rate'] : 0, ['commandCenter', 'harvester']));
+    $decayRepairable = function ($lv) use ($bcfg) {
+        $d = 0;
+        foreach ($lv as $b => $v) {
+            if (isset($bcfg[$b]) && ! in_array($b, ['commandCenter', 'harvester']) && is_int($v) && $v > 0) {
+                $d += $bcfg[$b]['decay_rate'] * ($b === 'housingComplex' ? max(1, intdiv($v, 2)) : 1);   // housing: ~1 instance per 2 levels
+            }
+        }
+
+        return $d;
+    };
     $poolGiven = false;
     $milestone = [];
     foreach (range(1, $sols) as $sol) {
@@ -120,15 +139,18 @@ function run(string $opening, array $plan, array $A, array $ctx): array
         // --- fixed AP drains
         $explore = $sol <= 12 ? $A['explore_ap_p1'] : 0;
         $p2 = $sol > 15;
-        $decaySum = 0;
-        foreach ($level as $b => $lv) {
-            if (isset($bcfg[$b]) && ! in_array($b, ['commandCenter', 'harvester'])) {
-                $decaySum += ($bcfg[$b]['decay_rate'] ?? 0) * (is_int($lv) ? 1 : 0);
-            }
-        }
-        $repairAp = $p2 ? $A['repair_ap_share_p2'] * $apUse : ($sol > 6 ? 1.5 : 0);
-        $repairRg = min($repairAp, 1.0 * $decaySum * 1.0);          // 1 Rg per SP repaired
-        $repairRg = $p2 ? $A['repair_rg_factor'] * min($repairAp, $decaySum + 1.2) : 0;   // bot repairs late/partial (ledger: ~0.6 Rg/Sol)
+        // --- repair: decay accrues per Sol from the built stock (CC/Harvester AP-only), repaired
+        // from Sol repair_start with at most repair_cap_share of the AP; 1 AP + 1 Rg per SP.
+        $debtAp += $decayExempt($level);
+        $debtRg += $decayRepairable($level);
+        $debt = $debtAp + $debtRg;
+        $rep = $sol >= $A['repair_start'] ? min($debt, $A['repair_cap_share'] * $apUse) : 0;
+        $repShareRg = $debt > 0 ? $debtRg / $debt : 0;
+        $repairRg = min($rep * $repShareRg, max(0, $rg));
+        $rep = $repShareRg > 0 ? $repairRg / $repShareRg : $rep;   // Rg-limited repairs shrink proportionally
+        $debtRg -= $repairRg;
+        $debtAp -= $rep * (1 - $repShareRg);
+        $repairAp = $rep;
         $labor = isset($level['sciencelab']);
         $researchShare = $labor ? ($p2 ? $A['research_share_p2'] : ($opening === 'labor' ? $A['research_share_labor'] : 0.02)) : 0;
         $researchAp = $researchShare * $apUse;
@@ -155,6 +177,7 @@ function run(string $opening, array $plan, array $A, array $ctx): array
         $rg -= $repairRg;
         // --- spend build AP on the plan (greedy, strict order)
         $blocked = false;
+        $spent = 0;
         while ($buildAp > 0 && $idx < count($plan)) {
             $it = $plan[$idx];
             if (! $paid) {
@@ -163,7 +186,8 @@ function run(string $opening, array $plan, array $A, array $ctx): array
                     break;
                 }
                 $rg -= $it['rg'];
-                $sink = str_starts_with($it['key'], 'cc') ? 'cc_upgrade' : (str_ends_with($it['key'], '+') ? 'build_place' : 'build_levelup');
+                $spent += $it['rg'];
+                $sink = str_starts_with($it['key'], 'cc') ? 'cc_upgrade' : (isset($it['new']) ? 'build_place' : 'build_levelup');
                 $tot['out'][$sink] = ($tot['out'][$sink] ?? 0) + $it['rg'];
                 $paid = true;
             }
@@ -174,7 +198,7 @@ function run(string $opening, array $plan, array $A, array $ctx): array
                 $b = $it['b'];
                 if ($b) {
                     $level[$b] = (is_int($level[$b] ?? null) ? $level[$b] : 0) + 1;
-                    if (in_array($b, ['sciencelab', 'hangar', 'bar']) && str_ends_with($it['key'], '+')) {
+                    if (in_array($b, ['sciencelab', 'hangar', 'bar']) && isset($it['new'])) {
                         $level[$b.'_since'] = $sol + 1;
                     }
                 }
@@ -219,10 +243,12 @@ function run(string $opening, array $plan, array $A, array $ctx): array
             $rg += $v;
             $tot['in'][$k] = ($tot['in'][$k] ?? 0) + $v;
         }
-        $rows[] = ['sol' => $sol, 'ap' => round($ap, 1), 'in' => round(array_sum($inc), 1), 'rg' => round($rg), 'tile' => round($tile), 'plan' => $plan[min($idx, count($plan) - 1)]['lbl'], 'bound' => $blocked];
+        $rows[] = ['sol' => $sol, 'debt' => round($debtAp + $debtRg, 1), 'rep' => round($repairRg, 1), 'spent' => $spent, 'ap' => round($ap, 1), 'in' => round(array_sum($inc), 1), 'rg' => round($rg), 'tile' => round($tile), 'plan' => $plan[min($idx, count($plan) - 1)]['lbl'], 'bound' => $blocked];
     }
 
-    return compact('rows', 'tot', 'milestone', 'rg');
+    $backlog = $debtAp + $debtRg;
+
+    return compact('rows', 'tot', 'milestone', 'rg', 'backlog');
 }
 
 $names = ['labor', 'hangar', 'cantina'];
@@ -260,6 +286,13 @@ foreach ($res as $n => $r) {
     }
     printf("\nSumme in=%d out=%d Ausschoepfung=%d%% Rg-bound-Sole=%d ungenutzte AP=%d (%d%%) Endbestand=%d\n", $in, $out, $in ? 100 * $out / $in : 0,
         $r['tot']['rgBound'], $r['tot']['unusedAp'], 100 * $r['tot']['unusedAp'] / max(1, $r['tot']['apTotal']), $r['rg']);
+    $late = array_filter($r['rows'], fn ($x) => $x['sol'] > 40);
+    if ($late) {
+        $li = array_sum(array_column($late, 'in'));
+        $lr = array_sum(array_column($late, 'rep'));
+        $ls = array_sum(array_column($late, 'spent'));
+        printf("Sol 41+: Zufluss=%d Kaeufe=%d Reparatur=%d (%d%% des Zuflusses) Rueckstand=%d SP\n", $li, $ls, $lr, $li ? 100 * $lr / $li : 0, $r['backlog']);
+    }
     $m = $r['milestone'];
     printf("Meilensteine: Phase-1-Ende(2.Pfad Lv1)~Sol %s, CC3 Sol %s, CC4 Sol %s, CC5 Sol %s, Geologie Lv1..5 Sol %s\n",
         $m[$n === 'labor' ? 'hangar+' : ($n === 'hangar' ? 'sciencelab+' : 'sciencelab+')] ?? '-', $m['cc3'] ?? '-', $m['cc4'] ?? '-', $m['cc5'] ?? '-',
