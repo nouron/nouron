@@ -87,7 +87,6 @@
                 apronReserved: @json(__("colony.hangar_apron_reserved")),
                 targetFindYield: @json(__("missions.target_find_yield")),
                 targetTooLarge: @json(__("missions.target_too_large")),
-                targetCartography: @json(__("missions.target_cartography")),
                 missionWearLine: @json(__("missions.wear_line")),
                 missionTooWorn: @json(__("missions.too_worn_line")),
             },

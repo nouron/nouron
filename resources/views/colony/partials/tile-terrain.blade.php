@@ -92,39 +92,20 @@
                 <p class="find-card__false">{{ __("colony.find_false_notice") }}</p>
             </template>
             <template x-if="!selectedTile.find.false">
-                <div x-data="{ ap: 1 }" x-effect="ap = salvageMax(selectedTile.find)">
+                <div>
                     <dl class="tile-dl find-card__dl">
                         <div>
                             <dt>{{ __("colony.find_label") }}</dt>
                             <dd x-text="@js(__("colony.find_value")).replace(':rg', selectedTile.find.rg)"></dd>
                         </div>
-                        <template
-                            x-if="['self_salvage', 'continue_salvage'].includes(selectedTile.find.action?.action)">
-                            <div>
-                                <dt>{{ __("colony.find_effort") }}</dt>
-                                <dd x-text="`${selectedTile.find.ap_spent}/${selectedTile.find.ap_total} AP`"></dd>
-                            </div>
-                        </template>
-                        <template
-                            x-if="['self_salvage', 'continue_salvage'].includes(selectedTile.find.action?.action)">
-                            <div>
-                                <dt>{{ __("colony.find_cap") }}</dt>
-                                <dd
-                                    x-text="@js(__("colony.find_cap_value")).replace(':ap', selectedTile.find.ap_cap_per_sol)">
-                                </dd>
-                            </div>
-                        </template>
                     </dl>
                     <p class="find-card__reason" x-text="selectedTile.find.action?.text"></p>
-                    <template x-if="['self_salvage', 'continue_salvage'].includes(selectedTile.find.action?.action)">
+                    <template x-if="selectedTile.find.action?.action === 'self_salvage'">
                         <div class="find-card__action">
-                            <input type="number" class="find-card__ap" min="1"
-                                :max="salvageMax(selectedTile.find)" step="1" x-model.number="ap"
-                                aria-label="{{ __("colony.find_salvage_ap_label") }}" />
-                            <button type="button" class="tile-action-btn" @click="doSalvage(selectedTile, ap)">
+                            <button type="button" class="tile-action-btn" @click="doSalvage(selectedTile)">
                                 <span class="tile-action-btn__body">{{ __("colony.find_salvage") }}</span>
                                 <span class="ap-chip ap-cost-chip ap-chip--nav" aria-hidden="true"
-                                    x-text="`${salvageClamp(selectedTile.find, ap)} AP`"></span>
+                                    x-text="`${selectedTile.find.ap_total} AP`"></span>
                             </button>
                         </div>
                     </template>

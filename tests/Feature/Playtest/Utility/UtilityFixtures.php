@@ -68,7 +68,7 @@ trait UtilityFixtures
         $tile = DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->whereNull('event_type')
             ->where('is_colony_zone', 0)->where('ring', $ring)->orderBy('q')->orderBy('r')->first();
         DB::table('colony_tiles')->where('id', $tile->id)->update(['event_type' => $type, 'is_explored' => 1,
-            'is_deep_scanned' => 1, 'salvage_ap_spent' => 0, 'salvage_tick' => null]);
+            'is_deep_scanned' => 1]);
 
         return DB::table('colony_tiles')->where('id', $tile->id)->first();
     }

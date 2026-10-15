@@ -50,21 +50,21 @@ return [
     'finds' => [
         'start_pool' => ['find_large' => 1, 'find_medium' => 1, 'find_small' => 3, 'find_false' => 2],
         'types' => [
-            'find_small' => ['rg' => 4, 'ap' => 12],
-            'find_medium' => ['rg' => 10, 'ap' => 16],
-            'find_large' => ['rg' => 18, 'ap' => 22],
+            'find_small' => ['rg' => 4, 'ap' => 3],
+            'find_medium' => ['rg' => 10, 'ap' => 4],
+            'find_large' => ['rg' => 18, 'ap' => 6],
             'find_false' => ['rg' => 0, 'ap' => 0],
         ],
         'scan_ap' => 2,
         'scan_ap_uplink' => 1, // Uplink-Station Lv2+
-        'salvage_cap_per_sol' => 4,
-        'max_open_projects' => 2,
-        // T30 §13.3: salvage flight (mission_find_salvage). yield = round(rg × yield_factor).
+        // T30 §13.3: salvage flight (mission_find_salvage). Yield = the find's Rg (no factor);
+        // flat nav_ap per flight, Organika per Sol of distance, no ship wear (Owner 2026-10-13).
         // min_hangar_level = lowest hall level whose ship class carries the find (drone 1,
         // freighter 2) — shown as the lock reason on the find card; must match
         // ships.*.find_carry (tests/Unit/FindFlightConfigTest).
         'flight' => [
-            'yield_factor' => 1.5,
+            'nav_ap' => 1,
+            'organika_per_sol' => 1,
             'min_hangar_level' => ['find_small' => 1, 'find_medium' => 1, 'find_large' => 2],
         ],
     ],

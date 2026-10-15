@@ -71,7 +71,6 @@ return [
     'error_find_not_scanned' => 'Das Signal ist noch nicht gescannt — erst scannen.',
     'error_find_too_large' => 'Dieser Fund ist zu schwer für das Schiff.',
     'error_find_in_flight' => 'Zu diesem Fund ist schon ein Schiff unterwegs.',
-    'error_find_salvage_in_progress' => 'Hier gräbt schon der Bergungstrupp — der Fund wird zu Fuß zu Ende geborgen.',
     'error_harvester_instance_full' => 'Die Kolonie hat bereits die maximale Anzahl Harvester — eine Bergung würde nichts bringen.',
     'error_invalid_difficulty' => 'Diese Schwierigkeitsstufe ist für diese Mission nicht verfügbar.',
 
@@ -102,9 +101,9 @@ return [
     'reward_trust' => 'Vertrauen',
     'reward_loot_table' => 'Zufallsfund: :options',
     'reward_label' => 'Ertrag',
-    'target_find_yield' => 'Fund :base Rg + Flug :bonus Rg = :total Rg',
+    'error_find_self_salvage' => 'Ohne Hangar birgt die Kolonie Funde selbst.',
+    'target_find_yield' => 'Fund :total Rg',
     'target_too_large' => 'zu groß für dieses Schiff',
-    'target_cartography' => 'Kartografie −:ap AP',
     'wear_line' => 'Verschleiß −:wear · Zustand :from → :to',
     'too_worn_line' => 'Zustand :current reicht nicht für Verschleiß :wear – erst reparieren (:ap AP)',
 ];

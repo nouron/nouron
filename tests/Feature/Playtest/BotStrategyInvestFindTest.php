@@ -3,16 +3,14 @@
 namespace Tests\Feature\Playtest;
 
 use App\Services\AdvisorService;
-use App\Services\TickService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * T30 Pool v1: rule invest_find puts leftover AP into salvage projects on
- * deep-scanned find tiles — best yield (rg per total AP) first, cap and
- * remainder respected, never on find_false / unscanned tiles, one deposit
- * per tile and Sol, at most max_open_projects projects.
+ * Rule invest_find self-salvages deep-scanned find tiles (no hangar) with leftover
+ * AP — best yield (Rg per AP) first, only what the AP cover, never on
+ * find_false / unscanned tiles, never with a hangar (flights take over).
  */
 class BotStrategyInvestFindTest extends TestCase
 {
@@ -21,9 +19,9 @@ class BotStrategyInvestFindTest extends TestCase
     public function test_picks_the_find_with_the_best_rg_per_ap(): void
     {
         $bot = BotSession::boot($this, 1);
-        $small = $this->makeFind($bot, 'find_small');   // 4/12 = 0.33
-        $large = $this->makeFind($bot, 'find_large');   // 18/22 = 0.82
-        $medium = $this->makeFind($bot, 'find_medium'); // 10/16 = 0.63
+        $small = $this->makeFind($bot, 'find_small');   // 4/3 = 1.33
+        $large = $this->makeFind($bot, 'find_large');   // 18/6 = 3.0
+        $medium = $this->makeFind($bot, 'find_medium'); // 10/4 = 2.5
         $this->giveAp($bot, 10);
 
         $c = $this->rule()['when']($bot);
@@ -42,65 +40,31 @@ class BotStrategyInvestFindTest extends TestCase
         $this->assertEmpty($this->rule()['when']($bot));
     }
 
-    public function test_deposit_respects_cap_remainder_and_available_ap(): void
+    public function test_only_finds_payable_with_the_available_ap_qualify(): void
     {
         $bot = BotSession::boot($this, 1);
-        $t = $this->makeFind($bot, 'find_small'); // 12 AP total
-        $cap = (int) config('game.finds.salvage_cap_per_sol');
+        $this->makeFind($bot, 'find_large'); // 6 AP
+        $small = $this->makeFind($bot, 'find_small'); // 3 AP
 
-        $this->giveAp($bot, 12);
-        $this->assertSame($cap, (int) $this->rule()['when']($bot)->ap);
+        $this->giveAp($bot, 5);
+        $c = $this->rule()['when']($bot);
+        $this->assertSame([$small->q, $small->r], [(int) $c->q, (int) $c->r], 'large find (6 AP) is out of reach');
 
         $this->giveAp($bot, 2);
-        $this->assertSame(2, (int) $this->rule()['when']($bot)->ap);
-
-        $this->giveAp($bot, 12);
-        DB::table('colony_tiles')->where('id', $t->id)->update(['salvage_ap_spent' => 10, 'salvage_tick' => 1]);
-        app(TickService::class)->setTickCount(5);
-        $this->assertSame(2, (int) $this->rule()['when']($bot)->ap);
-
-        $this->giveAp($bot, 0);
         $this->assertEmpty($this->rule()['when']($bot));
     }
 
-    public function test_tile_already_paid_this_tick_is_not_a_candidate(): void
+    public function test_no_candidate_with_a_hangar(): void
     {
         $bot = BotSession::boot($this, 1);
-        $tick = app(TickService::class)->getTickCount();
-        $this->makeFind($bot, 'find_large', spent: 4, salvageTick: $tick);
-        $this->giveAp($bot, 10);
-
-        $this->assertEmpty($this->rule()['when']($bot));
-    }
-
-    public function test_no_new_project_when_open_project_limit_is_reached(): void
-    {
-        $bot = BotSession::boot($this, 1);
-        $tick = app(TickService::class)->getTickCount();
-        for ($i = 0; $i < (int) config('game.finds.max_open_projects'); $i++) {
-            $this->makeFind($bot, 'find_small', spent: 4, salvageTick: $tick - 1);
-        }
-        $fresh = $this->makeFind($bot, 'find_large');
-        $this->giveAp($bot, 10);
-
-        $c = $this->rule()['when']($bot);
-
-        // Only the started projects qualify, not the untouched (better) large find.
-        $this->assertNotEmpty($c);
-        $this->assertNotSame([$fresh->q, $fresh->r], [(int) $c->q, (int) $c->r]);
-    }
-
-    public function test_started_project_wins_a_yield_tie(): void
-    {
-        $bot = BotSession::boot($this, 1);
-        $tick = app(TickService::class)->getTickCount();
         $this->makeFind($bot, 'find_small');
-        $started = $this->makeFind($bot, 'find_small', spent: 4, salvageTick: $tick - 1);
         $this->giveAp($bot, 10);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $bot->colonyId, 'building_id' => 44, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 5, 'tile_y' => 5]
+        );
 
-        $c = $this->rule()['when']($bot);
-
-        $this->assertSame([$started->q, $started->r], [(int) $c->q, (int) $c->r]);
+        $this->assertEmpty($this->rule()['when']($bot), 'with a hangar finds go by flight');
     }
 
     public function test_scan_and_invest_find_are_the_last_two_rules(): void
@@ -144,7 +108,7 @@ class BotStrategyInvestFindTest extends TestCase
     public function test_do_posts_to_the_salvage_endpoint_and_credits_regolith(): void
     {
         $bot = BotSession::boot($this, 1);
-        $t = $this->makeFind($bot, 'find_small', spent: 8);
+        $t = $this->makeFind($bot, 'find_small');
         $this->giveAp($bot, 10);
         $rule = $this->rule();
         $c = $rule['when']($bot);
@@ -170,7 +134,7 @@ class BotStrategyInvestFindTest extends TestCase
         $service->lockActionPoints($bot->colonyId, $total - $ap);
     }
 
-    private function makeFind(BotSession $bot, string $type, bool $scanned = true, int $spent = 0, ?int $salvageTick = null): object
+    private function makeFind(BotSession $bot, string $type, bool $scanned = true): object
     {
         // pick one not yet used by an earlier makeFind call in this test
         $tile = DB::table('colony_tiles')
@@ -181,7 +145,6 @@ class BotStrategyInvestFindTest extends TestCase
             ->first();
         DB::table('colony_tiles')->where('id', $tile->id)->update([
             'event_type' => $type, 'is_explored' => 1, 'is_deep_scanned' => $scanned ? 1 : 0,
-            'salvage_ap_spent' => $spent, 'salvage_tick' => $salvageTick,
         ]);
 
         return DB::table('colony_tiles')->where('id', $tile->id)->first();

@@ -17,11 +17,12 @@ class FindsConfigTest extends TestCase
             $rg += $count * $types[$type]['rg'];
         }
         $this->assertSame(40, $rg);
-        $this->assertSame(['rg' => 18, 'ap' => 22], $types['find_large']);
+        $this->assertSame([3, 4, 6], [$types['find_small']['ap'], $types['find_medium']['ap'], $types['find_large']['ap']]);
+        $this->assertSame(['rg' => 18, 'ap' => 6], $types['find_large']);
         $this->assertSame(['rg' => 0, 'ap' => 0], $types['find_false']);
         $this->assertSame(2, config('game.finds.scan_ap'));
         $this->assertSame(1, config('game.finds.scan_ap_uplink'));
-        $this->assertSame(4, config('game.finds.salvage_cap_per_sol'));
-        $this->assertSame(2, config('game.finds.max_open_projects'));
+        $this->assertNull(config('game.finds.salvage_cap_per_sol'));
+        $this->assertNull(config('game.finds.max_open_projects'));
     }
 }

@@ -361,24 +361,11 @@ function colonyHexView(config) {
             }
         },
 
-        // Effective salvage AP for one action: per-Sol cap, remaining effort and the
-        // entered value (min 1).
-        salvageMax(find) {
-            if (!find) return 1;
-            return Math.max(1, Math.min(find.ap_cap_per_sol, find.ap_total - find.ap_spent));
-        },
-
-        salvageClamp(find, ap) {
-            const n = Math.floor(Number(ap)) || 1;
-            return Math.min(Math.max(1, n), this.salvageMax(find));
-        },
-
-        async doSalvage(tile, ap) {
+        async doSalvage(tile) {
             const rg = tile.find?.rg ?? 0;
             const res = await this.post(this.routes.salvage, {
                 q: tile.q,
                 r: tile.r,
-                ap: this.salvageClamp(tile.find, ap),
             });
             if (res.ok) {
                 this.updateTile(res.tile);

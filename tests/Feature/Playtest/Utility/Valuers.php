@@ -233,7 +233,7 @@ final class Valuers
 
     /**
      * Scanned finds waiting for exactly this hangar level (findAction needs_level /
-     * ship_inactive), worth rg × yield_factor; a large one also needs a freighter.
+     * ship_inactive), worth rg; a large one also needs a freighter.
      */
     private static function waitingFindValue(BotSession $b, BotContext $ctx, int $target): float
     {
@@ -248,7 +248,7 @@ final class Valuers
             if (! in_array($action['reason'], ['needs_level', 'ship_inactive'], true) || (int) ($action['needs_level'] ?? 0) > $target) {
                 continue;
             }
-            $worth = (int) $types[$tile->event_type]['rg'] * (float) config('game.finds.flight.yield_factor');
+            $worth = (int) $types[$tile->event_type]['rg'];
             if ($tile->event_type === 'find_large') {
                 $largeValue += $worth;
             } else {
