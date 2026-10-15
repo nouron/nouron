@@ -183,6 +183,9 @@ class BotStrategyFoodAndLevel2Test extends TestCase
     {
         $bot = BotSession::boot($this, 1);
         $this->placeAt($bot, self::BIO_FACILITY, $level);
+        // Building Lv N needs CC Lv >= N (building_cc_gate): the Lv2 targets need CC Lv2.
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)->update(['level' => max($level + 1, 2)]);
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => $bot->colonyId, 'resource_id' => 3],
             ['amount' => 1000],

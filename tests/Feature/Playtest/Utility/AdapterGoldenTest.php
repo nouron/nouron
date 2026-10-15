@@ -47,7 +47,12 @@ class AdapterGoldenTest extends TestCase
     /** Sanity floor: an empty or trivially short run must not pass as "identical". */
     private const MIN_ACTIONS = 60;
 
-    private const MIN_DISTINCT_RULES = 10;
+    /**
+     * Phase 1 is now the Grundaufbau (CC Lv2, Uplink, building CC gate, CC AP 20/40/60/80): the labor
+     * scenarios spend their first 8 Sols on foundation rules and no longer reach invest_production /
+     * research_knowledge. The hangar scenario (Sol 13) still exercises 10+; the labor ones 9.
+     */
+    private const MIN_DISTINCT_RULES = 9;
 
     /** URL segments carrying auto-increment row ids, which differ between two bots in one database. */
     private const ID_SEGMENTS = [

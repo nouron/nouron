@@ -61,6 +61,16 @@ final class HeuristicGoalProvider
             $options[] = new SavingsGoal('path', 'place:'.$path, $e->regolithCost, $e->net(), 'place:'.$path, $e->regolithCost <= $ctx->regolith);
         }
 
+        // Phase 1 Grundaufbau (2026-10-15): the Uplink-Station must stand. Without a goal the
+        // bot spent every Rg on level-ups first and never reached its 80 Rg (measurement 3).
+        $uplinkId = BuildingId::UplinkStation->value;
+        if ($ctx->phase === 1 && BotStrategy::ccLevel($b) >= 2 && BotStrategy::agrardomPlaced($b)
+            && ! DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', $uplinkId)->whereNotNull('tile_x')->exists()
+            && BotStrategy::freeZoneTile($b) !== null && ! self::pathSupplyBlocked($uplinkId, $freeSupply)) {
+            $e = Valuers::uplinkPlacement($b, $ctx);
+            $options[] = new SavingsGoal('path', 'place:'.$uplinkId, $e->regolithCost, $e->net(), 'place:'.$uplinkId, $e->regolithCost <= $ctx->regolith);
+        }
+
         foreach (Valuers::upgradeRows($b) as $row) {
             $rg = BotStrategy::levelupRegolith($row);
             $supplyBlocked = ! ResourcesService::reservesFirstLevel($row) && BotStrategy::supplyGated($row) && $freeSupply < (int) $row->supply_cost;

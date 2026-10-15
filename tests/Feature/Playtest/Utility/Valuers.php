@@ -176,6 +176,20 @@ final class Valuers
         return new Estimate($terms, 1, $regolith);
     }
 
+    /** Uplink-Station placement: only worth its Phase-1 Grundaufbau requirement (urgent from Sol 15). */
+    public static function uplinkPlacement(BotSession $b, BotContext $ctx): Estimate
+    {
+        $w = $ctx->weights;
+        $regolith = (int) (app(BuildingCostService::class)->placementCost(BuildingId::UplinkStation->value)[3] ?? 0);
+        $terms = [
+            'cost_rg' => -1.0 * $regolith,
+            'structural' => $regolith * (float) $w['structural_offset'],
+            'phase1' => (float) $w['w_phase1'] * $ctx->phase1Urgency(),
+        ];
+
+        return new Estimate($terms, 1, $regolith);
+    }
+
     /** One more advisor: Rank-1 AP stream valued at λ_AP minus its upkeep (spec 2.3). */
     public static function advisorSlotValue(BotContext $ctx): float
     {

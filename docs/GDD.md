@@ -647,7 +647,7 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 | Bezahlt mit | AP im Voraus | AP + Organika + Verschleiß, laufend | Credits, laufend |
 | Risiko | langsamer Start, Ertrag kommt spät | Logistikaufwand jeden Sol, Schiffe verschleißen | Angebotslage ist nicht vollständig planbar |
 
-**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihr Primäreffekt ist der Supply-Cap-Bonus (§6), also mehr Ausbautiefe. Der Analytiker liefert zusätzlich den stärksten Außenmissions-Bonus des Spiels (eine Kenntnis steigt gratis um ein Level, §13). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
+**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihre Wirkung liegt in den Kenntnis-Effekten (§10); der frühere Supply-Cap-Bonus entfällt seit 2026-10-15, mehr Ausbautiefe kommt allein aus Wohnraum (§6). Der Analytiker liefert zusätzlich den stärksten Außenmissions-Bonus des Spiels (eine Kenntnis steigt gratis um ein Level, §13). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
 
 **Pfad B — Hangar.** Der Pfad der aktiven Versorgung. Schiffe erschließen den Missionskatalog (§8b) und damit die breiteste Ressourcenbasis im Spiel — Regolith, Organika, Credits, Almanach-Funde und Tile-Aufklärung kommen alle über Missionen. Der Preis ist dauerhafter Aufwand: jede Mission kostet AP und Proviant, Schiffe verschleißen und wollen repariert werden. Wer diesen Pfad zuerst geht, hat früh viele Hebel, muss sie aber jeden Sol bedienen.
 
@@ -868,10 +868,10 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Buchten und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Der Cap speist sich ausschließlich aus Wohnraum: Kommandozentrale und Wohnhabitate. Kenntnisse erhöhen den Cap **nicht** — Kolonisten brauchen Betten, und Wissen schafft keine. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Buchten und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
 
 ```
-supply_cap    = min(CC-Grundbeitrag + Σ(Wohnhabitat-Stufen) × Cap-pro-Wohnhabitat-Stufe + Σ(Kenntnisse-Cap-Bonus), Hard-Cap)
+supply_cap    = min(CC-Grundbeitrag + Σ(Wohnhabitat-Stufen) × Cap-pro-Wohnhabitat-Stufe, Hard-Cap)
 laufende_last = Σ(Gebäude-Level × supply_cost) + Σ(supply_cost platzierter Gebäude auf Stufe 0)
 freies_supply = supply_cap − laufende_last
 ```
@@ -899,7 +899,9 @@ Daraus folgt die Strategie-Abwägung:
 
 > **Warum die Spreizung der `supply_cost`-Werte trägt:** Die Nennwerte sind bewusst gespreizt, aber weil sie mit dem Level multipliziert werden, ist die effektive Spreizung weit größer. Produktionsgebäude sind supply-billig, Dienstleistungsgebäude teuer. Ein hoch ausgebautes Analytik-Labor kann so viel Cap binden wie mehrere niedriger ausgebaute Produktionsgebäude zusammen. Das ist die eigentliche Kompositionsentscheidung des Supply-Systems — sie war nur durch die zweideutige Formel oben nicht sichtbar. Exakte `supply_cost`-Werte: `config/buildings.php` / `docs/game-reference.md`.
 
-> **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(anwesende Kolonisten, supply_per_eater)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt; exakter Divisor: `config/game.php → food.supply_per_eater`), das **Wohnhabitat** (`supply_cap` pro Einheit, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), der **Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse** (§10), und der CC-Ausbau. Supply bleibt unverändert.
+> **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(anwesende Kolonisten, supply_per_eater)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt; exakter Divisor: `config/game.php → food.supply_per_eater`), das **Wohnhabitat** (`supply_cap` pro Einheit, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), und der CC-Ausbau. Supply bleibt unverändert. *(Das Argument „Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse" trägt seit 2026-10-15 nicht mehr: Kenntnisse speisen den Cap nicht mehr, siehe „Supply-Cap-Quellen".)*
+
+> **Offene Prüfung (nicht entschieden):** Ob Supply doch gestrichen werden kann, wird nach der Neumessung zur Wohnbau-Entscheidung (2026-10-15) erneut geprüft. Das Stufen-Gate (Gebäude-Stufe ≤ CC-Stufe) bremst die Tiefe inzwischen mit; es ist offen, ob Supply daneben noch eine eigene Rolle trägt. Bis dahin bleibt Supply unverändert.
 
 > **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Buchten + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
 
@@ -917,7 +919,8 @@ Ein Gebäude kann nur platziert oder um eine weitere Ausbaustufe erweitert werde
 |--------|-------------------|
 | CommandCenter | fester Grundbeitrag, sobald die Kommandozentrale steht — unabhängig von ihrer Ausbaustufe (so im Code umgesetzt) |
 | Wohnhabitat | wächst mit jeder Ausbaustufe jeder Instanz (Stufe × Wert, summiert), begrenzte Instanzzahl (ergibt Tile-Limit) |
-| Kenntnisse | **nicht-linear pro Level** (siehe unten) |
+
+**Kenntnisse sind keine Cap-Quelle** (Owner-Entscheidung 2026-10-15, Variante B). Wohnhabitate sind damit die einzige Wachstumsquelle des Caps; Wohnbau wird zu einer echten AP- und Regolith-Ausgabe, die der Spieler neben Produktion und Pfadgebäuden einplanen muss. Begründung: Im Playtest ersetzte der Kenntnis-Cap den Wohnbau — der Cap-Anteil der Kenntnisse machte bei Sol 39 über die Hälfte des Gesamt-Caps aus, während vom Wohnhabitat nur ein kleiner Teil der möglichen Stufen genutzt wurde. Das passt nicht zu „AP bremst" und ist lore-technisch schwer zu begründen.
 
 > ⚠️ BALANCE CONCERN: Die Formel oben und Config-Kommentare (`buildings.commandCenter.supply_cap`, `game.supply.cap_commandcenter`) beschreiben den CC-Beitrag als „pro Level", der Code (`GameTick::calculateSupply()`, `ResourcesService::getSupplyBreakdown()`) rechnet ihn flach. Folge für A14: Ein Stufenverlust der Kommandozentrale senkt den Cap nicht — Überkapazität entsteht faktisch nur über Wohnhabitate. Owner-Entscheidung offen, welche Variante gilt; bis dahin beschreibt dieser Abschnitt den Code-Stand.
 
@@ -926,7 +929,7 @@ Ein Gebäude kann nur platziert oder um eine weitere Ausbaustufe erweitert werde
 
 > **Tile-Budget:** Ein fester Anteil der Kolonie-Tiles ist für Nicht-CC-Gebäude reserviert, der Rest für Wohnhabitate — bei voller Belegung ist kein weiteres Wohnhabitat mehr möglich, ohne ein anderes Gebäude zu opfern. Exakte Tile-Zahlen: `config/game.php → colony_zone_expansion`. Bewusste Designentscheidung für Knappheit.
 
-> **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung des Hard-Caps schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
+> **Designabsicht:** CC (flach) und Wohnhabitate sind die einzigen Cap-Quellen. Wer tiefer ausbauen will, muss zuerst Wohnraum investieren. Ob der Hard-Cap ohne Kenntnis-Anteil überhaupt noch erreichbar ist, klärt die Neumessung (Annahme: eher nein, er wirkt dann nur noch als Sicherheitsgrenze).
 
 ### Schiffe und Supply
 
@@ -967,13 +970,11 @@ Jedes Gebäude hat einen individuellen Supply-Kosten-Wert (geringe für Produkti
 >
 > **Ausnahmen:** Kommandozentrale und Wohnhabitat belegen kein Supply und sind nie gesperrt — sie schaffen den Wohnraum, auch aus einer Überkapazität heraus. Der **erste Harvester** ist als Starthilfe ohne Prüfung platzierbar, damit die Regolith-Quelle immer erreichbar bleibt; er reserviert seine Arbeitsplätze trotzdem. Ein zweiter Harvester wird normal geprüft. Weil das Gate damit jeden anderen Zuwachs der Last abdeckt, kann Überkapazität — vom Sonderfall des ungeprüften ersten Harvesters abgesehen — nur noch durch den Verlust von Wohnraum entstehen (siehe „Überkapazität — Konsequenzen" unten).
 
-### Kenntnisse als Supply-Cap-Quelle
+### Kenntnisse und Supply
 
-Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kenntnisse hat 5 Level; die Bonus-Progression ist nicht-linear (Glockenform: mittlere Level sind effizienter als Extremwerte). Kenntnisse haben **keinen Decay** — einmal erforschtes Wissen bleibt permanent.
+Kenntnisse **kosten kein Supply** und **erhöhen den Cap nicht** (seit 2026-10-15, siehe „Supply-Cap-Quellen"). Sie haben **keinen Decay** — einmal erforschtes Wissen bleibt permanent. Ihre Wirkung liegt in den übrigen Kenntnis-Effekten (§10).
 
-Kenntnisse geben mit jedem Level einen Cap-Bonus, gestaffelt mit einer **glockenförmigen Kurve** (mittlere Level liefern den besten Wert pro AP, Extrem-Level sind ineffizienter). Alle Kenntnisse kombiniert können den Hard-Cap erreichen, aber kein einzelner Pfad reicht dafür — der Spieler muss breit recherchieren.
-
-**Strategische Implikation:** Das System belohnt Breite (mehrere Kenntnisse auf mittlerem Level) über Tiefe (wenige Kenntnisse maxed). Exakte Progressionswerte: `config/knowledge.php`.
+> ⚠️ BALANCE CONCERN: Mit dem Wegfall des Cap-Bonus verlieren die Kenntnisse ihren früheren Primärnutzen und sind für sich schwächer attraktiv, besonders Kenntnisse, die bisher keinen eigenen mechanischen Effekt tragen. Ersatz-Ideen (Owner 2026-10-15): (1) *verworfen* — Kenntnisse senken NICHT die Arbeitsplatz-Last/`supply_cost` von Gebäudetypen (zu stark); (2) Kenntnisse verstärken ihren Fachbereich stärker (z. B. mehr Ertrag, bessere Missions-/Ereignis-Ausgänge) — **ok**; (3) Kenntnisse schalten Gebäude-Ausbaustufen oder Optionen frei (Gate statt Bonus) — **ok**. Konkrete Ausgestaltung nach der Neumessung.
 
 ### Entropie-Übersicht
 
@@ -994,7 +995,7 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 'supply' => [
     // cap_commandcenter, cap_housingcomplex, cap_max: siehe docs/game-reference.md
     // Abschnitt 10 (Supply-Cap-Formel)
-    // knowledge_cap_per_level: nicht-linear pro Kenntnis-Level (Glockenform, siehe oben)
+    // knowledge_cap_per_level: entfällt (Kenntnisse speisen den Cap nicht mehr, 2026-10-15)
     // Berater kosten kein Supply — Upkeep läuft über Credits (config/game.php → advisors)
     // ship_cost: siehe „Schiffe und Supply" unten
 ],
@@ -1010,7 +1011,7 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Arbeitspl�
 
 | Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
 |-------------|----------------|--------------|---------------|
-| Supply-Cap | **Summe der Gebäudelevel** (Ausbautiefe) | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
+| Supply-Cap | **Summe der Gebäudelevel** (Ausbautiefe) | permanent | CC ausbauen, Wohnhabitate bauen |
 | Bauplatz | Anzahl Gebäude (begrenzte Tile-Zahl) | permanent | — (harte Grenze) |
 | AP | Arbeitsleistung pro Sol | täglich | mehr/bessere Berater, Kostenboni (§13.3) |
 | Gebäude-Decay | Stand von Gebäuden; skaliert mit der **Anzahl Gebäudetypen**, nicht mit deren Level | täglich | Reparatur (AP + Regolith pro SP, siehe §4) |
@@ -1496,7 +1497,7 @@ Bereits implementierte Effekte (`config/knowledge.php`):
 - `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
 - Analytik-Labor Lv4/5 senkt die AP-Kosten von Kenntnis-Levelups (§13.3) — kein Kenntnis-, sondern ein Gebäudeeffekt, hier der Vollständigkeit halber.
 
-Nicht jede Kenntnis trägt zwingend einen mechanischen Effekt dieser Art — alle Kenntnisse tragen zusätzlich einheitlich zum Supply-Cap-Wachstum bei (§7). Welche Kenntnis welchen Effekt trägt und in welcher Höhe, ist ausschließlich in `config/knowledge.php` gepflegt; Lookup-Tabelle: `docs/game-reference.md#kenntnisse-7-levelup-kosten-effekte`.
+Nicht jede Kenntnis trägt zwingend einen mechanischen Effekt dieser Art — der frühere einheitliche Beitrag zum Supply-Cap entfällt seit 2026-10-15 (§6). Welche Kenntnis welchen Effekt trägt und in welcher Höhe, ist ausschließlich in `config/knowledge.php` gepflegt; Lookup-Tabelle: `docs/game-reference.md#kenntnisse-7-levelup-kosten-effekte`.
 
 > **TODO Design:** Weitere Kenntnis-Effekte (insbesondere für Kenntnisse ohne eigenen mechanischen Effekt bislang) sind offen für spätere Balancing-Passes — nach Playtest, wenn klar ist, welche Lücken am meisten drücken.
 
@@ -1519,11 +1520,9 @@ Statt Kenntnisse zu leveln (AP → Kenntnis Lv1→5) würden Kenntnisse durch **
 
 **Verhältnis zum bestehenden Kenntnisse-System:** Würde Level-Modell (Lv1–5) ersetzen oder ergänzen. Erst nach Playtest-Feedback entscheiden ob der Umbau den Gewinn rechtfertigt.
 
-### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
+### Kein Supply-Cap-Bonus mehr (entfallen 2026-10-15)
 
-Jede Kenntnis erhöht den Supply-Cap stufenweise mit jedem Level. Der Bonus ist nicht-linear — mittlere Level sind effizienter als Extremwerte (Glockenform). Details in §6 und `config/game.php → supply.knowledge_cap_per_level`.
-
-Maximum aller 7 Kenntnisse auf Lv5: 7 × 20 = **140 Cap-Bonus**. In der Praxis lohnt sich Breite (viele Kenntnisse auf Lv2–3) mehr als Tiefe (wenige auf Lv5).
+Der frühere Primäreffekt, ein Supply-Cap-Bonus je Kenntnis-Level, ist entfallen (Owner-Entscheidung, Variante B): Kolonisten brauchen Wohnraum, Wissen schafft keine Betten (§6). Ein Ersatz-Primäreffekt ist nicht erfunden; Ideen dazu stehen als Balance-Hinweis in §6 „Kenntnisse und Supply".
 
 Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, health, defense) — Details siehe §14.
 
@@ -2395,7 +2394,7 @@ Phase 1 endet, sobald Verfügbar die Bedarfskette deckt und die Ausführung (Rei
 **Empirisch:** Ein Bot-Befund außerhalb des Korridors ist nur dann ein Gegenbeweis gegen den Startbestand, wenn der Bot nach dem Errichten eines Pfadgebäudes dessen Lv0→1-Sprung tatsächlich zuerst fertigstellt (wie ein menschlicher Spieler) — Bot-Ausführungsdefekte sind kein Balance-Hebel.
 
 **Nebenbefunde:**
-- Der Supply-Cap zwingt in Phase 1 keine zweite Wohnhabitat-Instanz und kein Wohnhabitat-Levelup mehr: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv1 und ein Pfadgebäude auf Lv1 mit Puffer. *(Früher, mit zwei Pfadgebäuden und Agrardom Lv2, ging er exakt ohne Puffer auf; das zweite Pfadgebäude in Phase 2 setzt das Wohnhabitat-Levelup wieder voraus — Prüfauftrag.)* Die folgende Überlegung gilt weiter für diesen Phase-2-Übergang: Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben `supply_cost` tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freier Supply und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 (etwa eine zweite Harvester-Instanz) setzt das Wohnhabitat-Levelup ebenfalls voraus.
+- Der Supply-Cap zwingt in Phase 1 keine zweite Wohnhabitat-Instanz und kein Wohnhabitat-Levelup mehr: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv1 und ein Pfadgebäude auf Lv1 mit Puffer. *(Früher, mit zwei Pfadgebäuden und Agrardom Lv2, ging er exakt ohne Puffer auf; das zweite Pfadgebäude in Phase 2 setzt das Wohnhabitat-Levelup wieder voraus — Prüfauftrag.)* Die folgende Überlegung gilt weiter für diesen Phase-2-Übergang: Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben `supply_cost` tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freier Supply und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 (etwa eine zweite Harvester-Instanz) setzt das Wohnhabitat-Levelup ebenfalls voraus. *(Seit 2026-10-15 liefern Kenntnisse keinen Cap mehr, §6: Der Sol-1-Cap ändert sich dadurch nicht, aber ab Phase 2 kommt jedes weitere Cap-Wachstum allein aus Wohnbau — dessen AP- und Regolith-Kosten sind dort fest einzuplanen, Prüfauftrag in der Neumessung.)*
 - Die Pfadgebäude sind in Regolith gleich, in AP nicht: Analytik-Labor und Hangar sind AP-Klasse „Groß", Cantina „Mittel". Da AP in Phase 1 nicht bindet, ändert das nichts am Pacing, ist aber eine Inkonsistenz gegen die Paritäts-Anforderung (§4b) — bei Gelegenheit prüfen.
 - Das „harte" Agrardom-Gate für den CC-Lv2-Ausbau (§4) ist seit 2026-09-23 im Code (`investBuilding()`, `agrardom_required`, ROADMAP C16 erledigt).
 

@@ -221,4 +221,40 @@ class HeuristicGoalProviderTest extends TestCase
 
         $this->assertNotContains('place:44', $this->optionKeys($bot));
     }
+
+    public function test_the_unplaced_uplink_station_is_a_goal_in_phase_1(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $this->setCc($bot, 2);
+        $this->placeAt($bot, 41, 1);
+        $this->setResource($bot, 3, 20);
+        $this->setSupply($bot, 1000);
+        foreach ([20, 20, 20] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+
+        $options = HeuristicGoalProvider::options($bot, $this->ctx($bot));
+        $uplink = collect($options)->first(fn (SavingsGoal $g): bool => $g->key === 'place:'.BuildingId::UplinkStation->value);
+
+        $this->assertNotNull($uplink, 'Phase 1 needs the Uplink-Station: the bot must save Regolith for it');
+        $this->assertSame('path', $uplink->kind, 'path kind exempts its own placement from the hold');
+        $this->assertSame(105, $uplink->regolithCost);
+    }
+
+    public function test_no_uplink_goal_once_it_is_placed_or_in_phase_2(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $this->setCc($bot, 2);
+        $this->placeAt($bot, 41, 1);
+        $this->placeAt($bot, BuildingId::UplinkStation->value, 1);
+        $this->setResource($bot, 3, 20);
+        $this->setSupply($bot, 1000);
+        foreach ([20, 20, 20] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+
+        $keys = array_map(fn (SavingsGoal $g): string => $g->key, HeuristicGoalProvider::options($bot, $this->ctx($bot)));
+
+        $this->assertNotContains('place:'.BuildingId::UplinkStation->value, $keys);
+    }
 }

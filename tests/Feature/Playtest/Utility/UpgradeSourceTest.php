@@ -36,6 +36,7 @@ class UpgradeSourceTest extends TestCase
         $this->setResource($bot, 3, $regolith);
         $this->setSupply($bot, 1000);
         $this->giveAp($bot, 15);
+        $this->setCc($bot, 2);   // Lv2 steps need CC Lv2 (building_cc_gate)
 
         return $bot;
     }
@@ -55,6 +56,7 @@ class UpgradeSourceTest extends TestCase
     {
         $bot = $this->boot(100);
         $this->setPhase($bot, 2);
+        $this->setCc($bot, 3);   // Lv3 step needs CC Lv3
         $this->placeAt($bot, BuildingId::Hangar->value, 2);
 
         $this->assertContains('invest:44:1', $this->keys($bot));

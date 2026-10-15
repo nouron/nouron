@@ -16,7 +16,7 @@ class ShadowModeTest extends TestCase
     public function test_shadow_decision_keeps_the_legacy_choice_and_carries_band_and_free_pick(): void
     {
         $bot = BotSession::boot($this, 1);
-        $this->setCc($bot, 2);
+        $this->setCc($bot, 1);   // phase 1: only the CC Lv2 step is urgent
         $rules = [
             ['name' => 'explore_tile', 'when' => fn () => (object) ['q' => 1, 'r' => 0], 'do' => fn () => ['ok' => true]],
             ['name' => 'invest_cc', 'when' => fn () => true, 'do' => fn () => ['ok' => true]],
