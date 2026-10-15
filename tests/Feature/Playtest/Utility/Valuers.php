@@ -192,7 +192,9 @@ final class Valuers
             ->whereNotNull('cb.tile_x')
             ->where(fn ($q) => $q->whereNull('bld.max_level')->orWhereColumn('cb.level', '<', 'bld.max_level'))
             ->orderBy('cb.building_id')->orderBy('cb.instance_id')
-            ->get()->all();
+            ->get()
+            ->reject(fn (object $row): bool => BotStrategy::ccGated($b, $row))
+            ->values()->all();
     }
 
     public static function buildingRow(BotSession $b, int $buildingId, int $instanceId): ?object

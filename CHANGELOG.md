@@ -4,6 +4,7 @@
 
 - Feat: Regolith-Buchungsjournal im PlaytestBot-Report (`regolith_ledger`: Zuflüsse/Abflüsse je Quelle bzw. Senke und Sol, Bilanz-Invariante im Test); `regolith_sources.harvester` ist jetzt der reine Harvester-Ertrag, neue Töpfe Geologie/Import/Recycling/Anliegen, Compare-Zeilen Rg-Zufluss/Sol, Harvester-Anteil, `resource_limit`-Abweisungen, Dashboard mit Senken-Chart. Spielverhalten unverändert.
 - Feat: Bergung ohne Sol-Deckel — Selbstbergung ist eine Sofort-Aktion (klein/mittel/groß 3/4/6 AP, kein Tageslimit, kein Projektlimit); der Bergungsflug kostet pauschal 1 AP + 1 Organika je Sol Entfernung, verschleißt nicht und bringt exakt die Fundmenge (`yield_factor` entfällt). Bot (`invest_find`, `repair_ship_for_flight` entfernt), Fundkarte, Texte, GDD §4a/§8b und `game-reference` angepasst; Spalten `salvage_ap_spent`/`salvage_tick` bleiben ungenutzt im Schema. Rechenmodell `tools/economy-model.php` (Erwartungswerte aus der Config) neu.
+- Feat: Gebäude-Stufen-Gate — eine Ausbaustufe eines Nicht-CC-Gebäudes braucht mindestens gleich hohe Kommandozentrale (Server-Regel `building_cc_gate` in `investBuilding()` und Techtree, `game.building_cc_level_offset` = 0); Bot überspringt gesperrte Stufen. Im Referenzlauf stand das Analytik-Labor ohne Gate schon in Sol 12 auf Lv5, die CC auf Lv3 in Sol 2.
 
 ## 2026-10-14
 

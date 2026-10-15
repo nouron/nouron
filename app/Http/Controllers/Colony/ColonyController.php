@@ -750,6 +750,18 @@ class ColonyController extends BaseController
             return $this->fail('max_level_reached');
         }
 
+        // CC level gate (player rule: building level N needs CC level N). Checked before
+        // any AP or Regolith is touched, like the gates around it.
+        if ($this->buildingService->ccLevelTooLow($colony->id, $buildingId, $instanceId)) {
+            $required = (int) $row->level + 1 - (int) config('game.building_cc_level_offset', 0);
+
+            return $this->fail(
+                'building_cc_gate',
+                __('colony.error_building_cc_gate', ['level' => $required]),
+                ['required_cc_level' => $required],
+            );
+        }
+
         // Supply build gate (GDD §6 "Supply als Bau-Gate", A14): the next level must
         // fit into the free cap (cap − workplaces). Unfilled workplaces after an
         // over-capacity departure keep occupying the cap, so the gate stays closed

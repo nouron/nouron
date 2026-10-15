@@ -299,6 +299,13 @@ return [
     // placed path buildings < CC level − cc_level_offset. With 1: CC Lv2 → one, Lv3 →
     // two, Lv4 → all three. Already placed path buildings are never affected.
     // See App\Services\PathBuildingGateService.
+    // Building level gate (player rule, 2026-10-15): a non-CC building level needs a
+    // Command Center of at least the same level. Offset lowers the requirement
+    // (0 = same level, 1 = one level below). Enforced in
+    // BuildingService::ccLevelTooLow() via ColonyController::investBuilding() and the
+    // techtree levelup path.
+    'building_cc_level_offset' => 0,
+
     'path_building_gate' => [
         'cc_level_offset' => 1,
     ],

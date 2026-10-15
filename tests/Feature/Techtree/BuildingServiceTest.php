@@ -37,6 +37,12 @@ class BuildingServiceTest extends TestCase
             'unavailable_until_tick' => null,
         ]);
 
+        // These tests drive levelups up to Lv4; the building-vs-CC level gate has its own
+        // tests below, so lift the CC out of the way here.
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 25])
+            ->update(['level' => 5]);
+
         // A building needs a tile before it can gain a level (BuildingService::isPlaced()).
         // The fixture carries no tile coordinates, so place the rows these tests level up.
         DB::table('colony_buildings')
@@ -218,6 +224,34 @@ class BuildingServiceTest extends TestCase
         // Now infirmary is level=4 → uses 12 supply; cap=11 → free=max(0,11-12)=0 < 3 → blocked
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 11]);
         $this->assertFalse($this->service->levelup($this->colonyId, $this->entityId));
+    }
+
+    /**
+     * Rule for players: a building level needs a Command Center of at least the same
+     * level. Infirmary 3 -> 4 is refused while the CC is below Lv4.
+     */
+    public function test_levelup_is_blocked_until_the_cc_reaches_the_target_level(): void
+    {
+        DB::table('buildings')->where('id', $this->entityId)->update(['max_level' => null]);
+        $setCc = fn (int $level) => DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 25])
+            ->update(['level' => $level]);
+
+        $setCc(3);
+        $this->assertSame('building_cc_gate', $this->service->levelupBlocker($this->colonyId, $this->entityId));
+        $this->assertFalse($this->service->levelup($this->colonyId, $this->entityId));
+
+        $setCc(4);
+        $this->assertNotSame('building_cc_gate', $this->service->levelupBlocker($this->colonyId, $this->entityId));
+    }
+
+    public function test_the_cc_itself_is_not_subject_to_the_building_cc_gate(): void
+    {
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 25])
+            ->update(['level' => 1]);
+
+        $this->assertNotSame('building_cc_gate', $this->service->levelupBlocker($this->colonyId, 25));
     }
 
     public function test_levelup_allowed_when_supply_bypassed(): void

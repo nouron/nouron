@@ -11,6 +11,7 @@ use App\Services\HangarService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunTaskCatalog;
+use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use App\Services\TrustService;
@@ -586,6 +587,7 @@ class BotStrategy
             ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.ap_for_levelup')
             ->get()
             ->reject(fn (object $row): bool => self::supplyGated($row) && $freeSupply < (int) $row->supply_cost)
+            ->reject(fn (object $row): bool => self::ccGated($b, $row))
             ->filter(function (object $row) use ($b, $ccReserve, $regolith): bool {
                 $cost = self::levelupRegolith($row);
 
@@ -1240,6 +1242,9 @@ class BotStrategy
         $ccReserve = self::regolithReserve($b);
         $rows = $rows->filter(fn (object $row): bool => self::fitsAboveCcReserve($b, $ccReserve, self::levelupRegolith($row)))->values();
 
+        // Building level needs CC level (ColonyController::investBuilding() 'building_cc_gate').
+        $rows = $rows->reject(fn (object $row): bool => self::ccGated($b, $row))->values();
+
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
         // server rejects a level-up with supply_limit while free supply is below the
         // building's supply_cost; CC and housing are exempt, and so is the 0 -> 1
@@ -1285,6 +1290,12 @@ class BotStrategy
     private static function pathFirst(object $row, array $pathIds): int
     {
         return in_array((int) $row->building_id, $pathIds, true) && (int) $row->level === 0 ? 0 : 1;
+    }
+
+    /** Server gate 'building_cc_gate': the next building level needs a CC of at least that level. */
+    public static function ccGated(BotSession $b, object $row): bool
+    {
+        return app(BuildingService::class)->ccLevelTooLow($b->colonyId, (int) $row->building_id, (int) $row->instance_id);
     }
 
     /** CC and housing are exempt from the A14 supply build gate (ColonyController::levelUpBlockedBySupply()). */

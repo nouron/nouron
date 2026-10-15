@@ -146,6 +146,7 @@ return [
     // ── Error messages ────────────────────────────────────────────────────────
 
     'error_path_building_gate' => 'Another path building requires Command Center Lv:level.',
+    'error_building_cc_gate' => 'This level needs Command Center Lv:level — upgrade the Command Center first.',
     'path_building_locked' => 'Another path building from CC Lv:level',
     'error_agrardom_required' => 'Build the Agrarian Dome first — mandatory prerequisite for all path buildings.',
     'error_tile_not_found' => 'Tile not found.',

@@ -138,7 +138,31 @@ class BuildingService extends AbstractTechnologyService
             return 'not_placed';
         }
 
+        if ($this->ccLevelTooLow($colonyId, $entityId, $instanceId)) {
+            return 'building_cc_gate';
+        }
+
         return parent::levelupBlocker($colonyId, $entityId, $instanceId);
+    }
+
+    /**
+     * Player rule: a building level needs a Command Center of at least the same level
+     * (game.building_cc_level_offset lowers the requirement; 0 = same level). The CC
+     * itself is exempt.
+     */
+    public function ccLevelTooLow(int $colonyId, int $buildingId, ?int $instanceId): bool
+    {
+        if ($buildingId === BuildingId::CommandCenter->value) {
+            return false;
+        }
+
+        $targetLevel = (int) ($this->getColonyEntity($colonyId, $buildingId, $instanceId)->level) + 1;
+        $ccLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->value('level') ?? 0);
+
+        return $ccLevel < $targetLevel - (int) config('game.building_cc_level_offset', 0);
     }
 
     /**
