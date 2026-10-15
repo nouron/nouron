@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-15
+
+- Feat: Regolith-Buchungsjournal im PlaytestBot-Report (`regolith_ledger`: Zuflüsse/Abflüsse je Quelle bzw. Senke und Sol, Bilanz-Invariante im Test); `regolith_sources.harvester` ist jetzt der reine Harvester-Ertrag, neue Töpfe Geologie/Import/Recycling/Anliegen, Compare-Zeilen Rg-Zufluss/Sol, Harvester-Anteil, `resource_limit`-Abweisungen, Dashboard mit Senken-Chart. Spielverhalten unverändert.
+
 ## 2026-10-14
 
 - Docs: Entwürfe Bergung ohne Sol-Deckel, Regolith-Wirtschaft (Inventar + Budget-Modell) mit Owner-Entscheiden; noch keine Config-Änderung.

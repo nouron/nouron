@@ -2,6 +2,7 @@
 
 namespace App\Services\Techtree;
 
+use App\Enums\BuildingId;
 use App\Services\AdvisorService;
 use App\Services\Concerns\ValidatesId;
 use App\Services\ResourcesService;
@@ -377,7 +378,7 @@ abstract class AbstractTechnologyService
                         foreach ($costs as $cost) {
                             $repairCost = (int) floor($cost->amount / $maxStatusPoints) * $statusGained;
                             if ($repairCost > 0) {
-                                $this->resourcesService->decreaseAmount($colonyId, $cost->resource_id, $repairCost);
+                                $this->resourcesService->decreaseAmount($colonyId, $cost->resource_id, $repairCost, 'repair');
                             }
                         }
                     }
@@ -476,8 +477,9 @@ abstract class AbstractTechnologyService
         $costs = $this->getEntityCosts($entityId);
         $rowKeys = $this->rowKeys($colonyId, $entityId, $instanceId);
 
-        DB::transaction(function () use ($colonyId, $currentLevel, $maxStatus, $costs, $rowKeys) {
-            $this->resourcesService->payCosts($costs, $colonyId);
+        $ledgerTag = $this->regolithLedgerTag($entityId, 'levelup');
+        DB::transaction(function () use ($colonyId, $currentLevel, $maxStatus, $costs, $rowKeys, $ledgerTag) {
+            $this->resourcesService->payCosts($costs, $colonyId, $ledgerTag);
 
             $updateData = [
                 'level' => $currentLevel + 1,
@@ -490,6 +492,22 @@ abstract class AbstractTechnologyService
         });
 
         return true;
+    }
+
+    /**
+     * Regolith-ledger sink tag (RegolithLedger) for a techtree payment — observation only:
+     * Command Center level-ups are cc_upgrade, other buildings build_levelup, knowledge research.
+     */
+    private function regolithLedgerTag(int $entityId, string $action): string
+    {
+        if ($this->masterTable() === 'researches') {
+            return "research_{$action}";
+        }
+        if ($action === 'levelup' && $entityId === BuildingId::CommandCenter->value) {
+            return 'cc_upgrade';
+        }
+
+        return "build_{$action}";
     }
 
     /**
@@ -548,9 +566,10 @@ abstract class AbstractTechnologyService
         $costs = $this->leveldownCosts($entityId);
         $rowKeys = $this->rowKeys($colonyId, $entityId, $instanceId);
 
-        DB::transaction(function () use ($colonyId, $currentLevel, $maxStatus, $costs, $rowKeys) {
+        $ledgerTag = $this->regolithLedgerTag($entityId, 'leveldown');
+        DB::transaction(function () use ($colonyId, $currentLevel, $maxStatus, $costs, $rowKeys, $ledgerTag) {
             if ($costs->isNotEmpty()) {
-                $this->resourcesService->payCosts($costs, $colonyId);
+                $this->resourcesService->payCosts($costs, $colonyId, $ledgerTag);
             }
 
             $newLevel = $this->leveldownTargetLevel($currentLevel);

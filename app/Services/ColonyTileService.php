@@ -7,6 +7,7 @@ use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
 use App\Support\HangarBays;
+use App\Support\RegolithLedger;
 use App\Support\RunSeed;
 use App\Support\SeededRandom;
 use Illuminate\Support\Collection;
@@ -219,11 +220,15 @@ class ColonyTileService
         });
     }
 
-    /** Shared completion of self-salvage and salvage flight (§13.3): credit Rg, free the tile. */
-    public function completeFind(ColonyTile $tile, int $rg): void
+    /**
+     * Shared completion of self-salvage and salvage flight (§13.3): credit Rg, free the tile.
+     * $ledgerTag: Regolith-ledger source (find_self / find_flight), observation only.
+     */
+    public function completeFind(ColonyTile $tile, int $rg, string $ledgerTag = 'find_self'): void
     {
         if ($rg > 0) {
             DB::table('colony_resources')->where('colony_id', $tile->colony_id)->where('resource_id', 3)->increment('amount', $rg);
+            RegolithLedger::record((int) $tile->colony_id, $ledgerTag, $rg);
         }
         $tile->event_type = null;
         $tile->is_deep_scanned = false;

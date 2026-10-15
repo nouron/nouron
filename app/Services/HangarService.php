@@ -1073,7 +1073,7 @@ class HangarService
                 return $none;
             }
             $yield = $this->findFlightService->findFlightYield($colonyId, $type);
-            $this->colonyTileService->completeFind($tile, $yield['total']);
+            $this->colonyTileService->completeFind($tile, $yield['total'], 'find_flight');
 
             return ['find_type' => $type, 'find_regolith' => $yield['total'], 'flight_bonus' => $yield['flight_bonus']];
         });
