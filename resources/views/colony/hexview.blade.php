@@ -426,10 +426,10 @@
                                         :class="{
                                             'building-list-item--selected': pendingBuilding?.building_id === b
                                                 .building_id,
-                                            'building-list-item--disabled': !canAffordBuilding(b)
+                                            'building-list-item--disabled': !canPlaceBuilding(b)
                                         }"
-                                        :aria-disabled="!canAffordBuilding(b)"
-                                        @click="canAffordBuilding(b) && selectPendingBuilding(b)">
+                                        :aria-disabled="!canPlaceBuilding(b)"
+                                        @click="canPlaceBuilding(b) && selectPendingBuilding(b)">
                                         <div class="building-list-row">
                                             <span class="building-list-name">
                                                 @foreach ($buildingChipData as $key => $chip)
@@ -463,6 +463,8 @@
                                                 x-text="`${b.build_cost?.[4]} Wk`"></span>
                                         </div>
                                         <p class="building-list-notice" x-show="b.notice" x-text="b.notice"></p>
+                                        <p class="building-list-notice" x-show="b.locked_reason"
+                                            x-text="b.locked_reason"></p>
                                     </li>
                                 </template>
                             </ul>

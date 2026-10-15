@@ -162,7 +162,7 @@ function colonyHexView(config) {
                 if (buildId) {
                     await this.toggleBuildMode();
                     const match = this.availableBuildings.find((b) => b.building_id === buildId);
-                    if (match) {
+                    if (match && !match.locked) {
                         this.selectPendingBuilding(match);
                     } else if (this.buildMode) {
                         // Not in the build menu right now (prerequisite, instance cap,
@@ -861,6 +861,13 @@ function colonyHexView(config) {
         syncResbarAmount(selector, value) {
             const el = document.querySelector(`${selector} .res-amount`);
             if (el) el.textContent = value.toLocaleString('de-DE');
+        },
+
+        // Selectable in the build menu: not locked by a server gate (path-building
+        // gate, ColonyController::availableBuildings()) and affordable.
+        canPlaceBuilding(b) {
+            if (b.locked) return false;
+            return this.canAffordBuilding(b);
         },
 
         // Build chip affordability: placing always costs exactly 1 AP

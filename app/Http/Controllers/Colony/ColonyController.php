@@ -17,6 +17,7 @@ use App\Services\NexusImportService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
 use App\Services\OvercapService;
+use App\Services\PathBuildingGateService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
@@ -54,6 +55,7 @@ class ColonyController extends BaseController
         private readonly BuildingService $buildingService,
         private readonly BuildingCostService $buildingCostService,
         private readonly HangarService $hangarService,
+        private readonly PathBuildingGateService $pathBuildingGate,
     ) {
         parent::__construct($tick);
     }
@@ -62,12 +64,6 @@ class ColonyController extends BaseController
 
     /** Regolith resource id (colony_resources). */
     private const RES_REGOLITH = 3;
-
-    /**
-     * Buildings that count as path choices (sciencelab, hangar, bar).
-     * At CC Lv2 the player may place one; each additional CC level unlocks one more.
-     */
-    private const PATH_BUILDING_IDS = [31, 44, 52];
 
     /** Whether an Agrardom (bioFacility) has been placed in the given colony. */
     private function agrardomPlaced(int $colonyId): bool
@@ -311,6 +307,10 @@ class ColonyController extends BaseController
             ->toArray();
 
         $agrardomPlaced = $this->agrardomPlaced($colony->id);
+        // Path-building gate (PathBuildingGateService): a gated path building stays
+        // listed but locked, with the CC level it waits for as the reason.
+        $pathGateLevel = $this->pathBuildingGate->requiredCcLevelForNext($colony->id);
+        $pathGateLocked = $ccLevel < $pathGateLevel;
 
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level', 'max_instances',
@@ -334,13 +334,14 @@ class ColonyController extends BaseController
                 if ($b->required_building_id === BuildingId::CommandCenter->value && $ccLevel < (int) ($b->required_building_level ?? 1)) {
                     return false;
                 }
-                if (in_array($b->id, self::PATH_BUILDING_IDS, true) && ! $agrardomPlaced) {
+                if (PathBuildingGateService::isPathBuilding((int) $b->id) && ! $agrardomPlaced) {
                     return false;
                 }
 
                 return true;
             })
             ->map(fn ($b) => [
+                ...$this->pathGateLock((int) $b->id, $pathGateLocked, $pathGateLevel),
                 'building_id' => $b->id,
                 'key' => $b->name,
                 'label' => __('techtree.'.$b->name),
@@ -502,8 +503,27 @@ class ColonyController extends BaseController
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.
         // Agrardom is a hard prerequisite for CC Lv2 — building a path building before
         // Agrardom would leave the player unable to advance.
-        if (in_array((int) $data['building_id'], self::PATH_BUILDING_IDS, true) && ! $this->agrardomPlaced($colony->id)) {
+        if (PathBuildingGateService::isPathBuilding((int) $data['building_id']) && ! $this->agrardomPlaced($colony->id)) {
             return $this->fail('agrardom_required');
+        }
+
+        // Path-building gate (GDD §16 Gate-Logik, server rule since 2026-10-14): a new
+        // path building needs placed path buildings < CC level − offset. Standing ones
+        // never reach this point (building_already_placed above).
+        $pathGateLevel = $this->pathBuildingGate->blockingCcLevel(
+            $colony->id,
+            (int) $data['building_id'],
+            (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', BuildingId::CommandCenter->value)
+                ->value('level'),
+        );
+        if ($pathGateLevel !== null) {
+            return $this->fail(
+                'path_building_gate',
+                __('colony.error_path_building_gate', ['level' => $pathGateLevel]),
+                ['required_cc_level' => $pathGateLevel],
+            );
         }
 
         // Verlegekosten 1 → 2 AP je Hex (GDD §4c, freigegeben 2026-08-03) — the
@@ -1347,6 +1367,22 @@ class ColonyController extends BaseController
         }
 
         return $this->resourcesService->getFreeSupply($colonyId) < $supplyCost;
+    }
+
+    /**
+     * Build-menu lock fields of one entry: path buildings past the path-building
+     * gate stay listed but locked, with the CC level they wait for as the reason.
+     *
+     * @return array{locked: bool, locked_reason: string|null}
+     */
+    private function pathGateLock(int $buildingId, bool $pathGateLocked, int $pathGateLevel): array
+    {
+        $locked = $pathGateLocked && PathBuildingGateService::isPathBuilding($buildingId);
+
+        return [
+            'locked' => $locked,
+            'locked_reason' => $locked ? __('colony.path_building_locked', ['level' => $pathGateLevel]) : null,
+        ];
     }
 
     private function fail(string $code, ?string $message = null, array $extra = []): JsonResponse

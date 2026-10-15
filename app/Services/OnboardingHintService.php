@@ -22,6 +22,7 @@ class OnboardingHintService
         private readonly ColonyTileService $colonyTileService,
         private readonly TickService $tickService,
         private readonly BuildingCostService $buildingCostService,
+        private readonly PathBuildingGateService $pathBuildingGate,
     ) {}
 
     /**
@@ -853,7 +854,9 @@ class OnboardingHintService
      * buildings are not offered in the build menu at all, so a "build one now" hint
      * would point at something that cannot be built yet — and, worse, it outranked
      * the "upgrade the CC" hint (hint_3), which therefore never showed
-     * (found in the 2026-10-05 playtest / T30 spec).
+     * (found in the 2026-10-05 playtest / T30 spec). The same holds for the
+     * path-building gate (PathBuildingGateService): once the CC level's share of
+     * path buildings stands, the next one is refused server-side.
      */
     private function pathChoiceOpen(int $colonyId): bool
     {
@@ -869,7 +872,8 @@ class OnboardingHintService
             ->whereIn('id', [31, 44, 52])
             ->min('required_building_level');
 
-        return $ccLevel >= max(1, $requiredCcLevel);
+        return $ccLevel >= max(1, $requiredCcLevel)
+            && $ccLevel >= $this->pathBuildingGate->requiredCcLevelForNext($colonyId);
     }
 
     /**
