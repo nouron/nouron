@@ -76,6 +76,14 @@ Beim Aufruf zuerst prüfen:
 - `CLAUDE.md` — Projektkontext, Ressourcen-/Gebäude-Tabellen
 - `config/buildings.php`, `config/advisors.php`, `config/game.php` — Canonical source of truth für Zahlen
 
+## Balancing-Vorschläge: Messen vor Rechnen (Skill `nouron-balance-pass`)
+
+Bei Pacing-/Kosten-/AP-Vorschlägen gilt das Verfahren des Skills `nouron-balance-pass`. Kurzfassung:
+- Zuerst das Entscheidungsdokument (`docs/superpowers/specs/*-entscheidungen.md`) und, falls vorhanden, die Mess-Tabelle lesen (`php tools/phase1-budget.php --since=...`), bevor du Hebel vorschlägst. Verfügt der Auftrag über keine Messdaten, fordere sie an, statt zu schätzen.
+- Eigene Rechnungen (z. B. "Minimum kostet X AP/Rg") im Bericht als **Annahme (gerechnet)** kennzeichnen. Gemessene Werte nennen Quelle und Batch. Am 2026-10-16 war ein gerechneter AP-Bedarf (125 AP) mehr als doppelt so hoch wie der gemessene (~52 AP für Gebäude); die Erkundung (~45 AP) fehlte in der Rechnung ganz.
+- Prüfe bei jedem Vorschlag, ob er vom Bot-Verhalten abhängt (Erkundung, Extras, Reihenfolge), und benenne diese Abhängigkeit als offene Variable.
+- Nur ein Hebel pro Vorschlag-Variante, mit erwarteter Wirkung als Zahl, damit die Messung die Hypothese widerlegen kann.
+
 ## Szenario-Pflege (game:reset-player)
 
 `app/Console/Commands/ResetPlayer.php` enthält Testszenarien (`pre-phase2`, `phase2`, `near-fail-trust`, `near-deadline`, `objectives-done`) mit hartcodierten Ressourcen- und Gebäudewerten.

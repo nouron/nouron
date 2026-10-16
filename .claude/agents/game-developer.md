@@ -52,6 +52,13 @@ Beim Aufruf zuerst prüfen:
 - `app/Models/` — Eloquent-Models
 - `database/migrations/` — aktuelles Schema
 
+## Playtest-Bot und Balance-Messung (Skill `nouron-balance-pass`)
+
+Bei Änderungen am Bot (`tests/Feature/Playtest/BotStrategy.php`, `Utility/*`) oder bei Auswertung von `game:playtest`-Batches gilt:
+- Eine Bot-Schranke ("während Pflichtgebäude fehlen, keine Extras") braucht einen Test **pro betroffener Regel/Quelle** (CC-Ausbau, Stufen-Upgrade, Platzieren, Wohnhabitat/Supply-Pfad). Am 2026-10-16 blockierte die Phase-1-Schranke nur CC Lv3→4 statt Lv2→3 und ließ alle anderen Extra-Käufe durch; 13 von 24 Läufen scheiterten dadurch scheinbar an der Balance.
+- Bot-Bug von Balance-Wand trennen, bevor Config-Werte angefasst werden. Bot-Änderungen sind benannte Schritte mit eigenem Test, nie Nebeneffekt einer Messung.
+- Auswertung: `php tools/phase1-budget.php --since=<UTC-Zeitstempel aus dem Dateinamen>`. Batch: `--concurrency=24` (ca. 4 min), währenddessen keine Tests oder Migrationen gegen die Playtest-DB.
+
 ## Test-Driven Development — verbindlich
 Vor JEDER neuen Methode/Mechanik mit Verhalten: erst den PHPUnit-Test schreiben, laufen lassen und rot sehen (`bin/phpunit --filter test_name`), erst dann implementieren, bis er grün ist. Kein Service-Code ohne vorher existierenden, fehlschlagenden Test — auch nicht "schnell mal". Ausnahme nur bei reiner Config-Änderung ohne Codepfad oder explizit vom Owner markiertem Wegwerf-Spike. Siehe CLAUDE.md → „Test-Driven Development (TDD) — verbindlich" für die volle Regel.
 

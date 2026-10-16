@@ -91,6 +91,14 @@ Bei der Kenntnis-Effekte-Serie (2026-08-30, PR #283) blieb ein Anzeige-/Vorschau
 - [ ] Bei kleinen Ganzzahl-Basiskosten (unter ~10): rechnet die Rabatt-Prozentkurve gegen `ProjectBonusService::applyDiscount()`s `round()`-Formel tatsächlich einen sichtbaren Effekt aus, oder rundet sie bei jedem Level auf den Ausgangswert zurück (No-Op)? Von Hand nachrechnen, nicht annehmen.
 - [ ] Wenn Config-Werte geändert werden, die in `docs/game-reference.md` gelistet sind: dort mitziehen (wird nicht automatisch geprüft, siehe CLAUDE.md-Merge-Checkliste).
 
+## Bot-Schranken-Checkliste (bei jeder "Bot soll X vor Y tun"-Regel, Skill `nouron-balance-pass`)
+
+Phase-1-Schranke vom 2026-10-16: sie blockierte die falsche Stufe (CC Lv3→4 statt Lv2→3) und ließ andere Extra-Käufe durch; 13 von 24 Läufen scheiterten scheinbar an der Balance.
+
+- [ ] Pro Kaufpfad ein eigener Test: CC-Ausbau, Stufen-Upgrade (`UpgradeSource`), Platzieren (`placeCandidate`), Ziel-Optionen (`HeuristicGoalProvider`). Ein Test für nur einen Pfad beweist die Schranke nicht.
+- [ ] Grenzstufen testen (Lv1→2 und Lv2→3, nicht nur "irgendeine Stufe"), und den Fall "Voraussetzung erfüllt -> Schranke fällt weg".
+- [ ] Gegenprobe im Batch: Wenn der Bot Pflichtgebäude nicht baut, in den Reports prüfen, wofür er das Rg/AP stattdessen ausgibt (`php tools/phase1-budget.php`), bevor ein Test als ausreichend gilt.
+
 ## Output-Format
 Vollständige PHPUnit-Test-Klassen liefern, direkt ausführbar. Kurzer Kommentar oben mit abgedeckten Szenarien.
 ## Code-Style (Linter — Pflicht)

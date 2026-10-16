@@ -108,6 +108,7 @@ Bei reaktivierten/bestehenden Dateien mit Coverage-Lücke (siehe `bin/phpunit --
 
 - Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)
 - Owner: Mario (tech.mario@outlook.de)
+- **Balance-Arbeit** (Kosten, AP, Einnahmen, Pacing, Bot-Messungen): zuerst Skill `nouron-balance-pass` und `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md` lesen — messen vor rechnen, eine Änderung pro Messung.
 
 ### Pre-commit Lint-Hook
 
