@@ -4,8 +4,11 @@
 // Usage: php tools/phase1-budget.php [--since=YYYYMMDD_HHMMSS] [--dir=storage/logs/playtest]
 //        [--engine=utility] [--profile=NAME] [--min=445] [--json]
 // --since compares against the UTC timestamp in the report file name.
-// --min is the Regolith cost of the Phase-1 minimum. It is CALCULATED (gerechnet), not
-// measured: Wohnhabitat 65 + Agrardom 95 + Uplink 105 + path building 120 + CC Lv2 60.
+// --min is the Regolith cost of the Phase-1 minimum. Default `auto`: CALCULATED (gerechnet)
+// from the current config per opening: Agrardom + Uplink + the opening's path building
+// (each erect cost + flat first-level Rg) + CC Lv2. Wohnhabitat Lv1 is given at start.
+// Config changes therefore move the buffer; pass --min=N to override. The config is
+// the one on disk NOW: for reports measured under other costs pass --min explicitly.
 // Everything else (AP per bot rule, Rg available/out, Phase-1-end Sol) is MEASURED from the
 // reports, counted up to and including `phase2_start_sol` (= first Sol of Phase 2).
 
@@ -13,7 +16,25 @@ $o = getopt('', ['since::', 'dir::', 'engine::', 'profile::', 'min::', 'json']);
 $dir = $o['dir'] ?? __DIR__.'/../storage/logs/playtest';
 $engine = $o['engine'] ?? 'utility';
 $profile = $o['profile'] ?? null;
-$min = (float) ($o['min'] ?? 445);
+$minOpt = $o['min'] ?? 'auto';
+
+// Regolith of the Phase-1 minimum per opening, from config (no Laravel needed).
+function min_from_config(string $opening): float
+{
+    if (! function_exists('env')) {
+        function env($k, $d = null)
+        {
+            return $d;
+        }
+    }
+    $b = require __DIR__.'/../config/buildings.php';
+    $flat = (float) (require __DIR__.'/../config/game.php')['build']['levelup_regolith_flat'];
+    $place = fn ($k) => (float) ($b[$k]['build_cost'][3] ?? 0) + $flat;
+    $path = ['labor' => 'sciencelab', 'hangar' => 'hangar', 'cantina' => 'bar'][$opening] ?? 'sciencelab';
+
+    return $place('bioFacility') + $place('uplinkStation') + $place($path)
+        + 2 * (float) $b['commandCenter']['cc_upgrade_regolith_per_level'];
+}
 $since = $o['since'] ?? null;
 
 function stats(array $v): array
@@ -84,7 +105,9 @@ foreach (glob(rtrim($dir, '/').'/*.json') ?: [] as $file) {
 
 $res = [];
 foreach ($by as $op => $d) {
+    $min = $minOpt === 'auto' ? min_from_config($op) : (float) $minOpt;
     $res[$op] = [
+        'min_rg' => $min,
         'runs' => count($d['p1_end'] ?? []),
         'fails' => $d['fails'],
         'p1_end_sol' => stats($d['p1_end'] ?? []),
@@ -102,11 +125,11 @@ if (isset($o['json'])) {
     return;
 }
 
-echo "Phase-1-Budget (engine=$engine, since=".($since ?? '-').", Minimum $min Rg = gerechnet)\n";
+echo "Phase-1-Budget (engine=$engine, since=".($since ?? '-').", Minimum $minOpt Rg = gerechnet)\n";
 foreach ($res as $op => $r) {
     $e = $r['p1_end_sol'];
     $s = $r['rg_slack'];
-    printf("\n== %s: %d Laeufe, %d Frist-Fails | Phase-1-Ende Sol %s / %s / %s (min/med/max)\n", $op, $r['runs'], $r['fails'], $e['min'], $e['median'], $e['max']);
+    printf("\n== %s (Minimum %d Rg): %d Laeufe, %d Frist-Fails | Phase-1-Ende Sol %s / %s / %s (min/med/max)\n", $op, $r['min_rg'], $r['runs'], $r['fails'], $e['min'], $e['median'], $e['max']);
     printf("   Rg-Puffer (verfuegbar - Minimum): %s / %s / %s\n", $s['min'], $s['median'], $s['max']);
     echo '   Rg-Senken (Mittel): '.json_encode($r['rg_out_by_sink'])."\n";
     echo "   AP je Regel (Mittel, Summe {$r['ap_total_mean']}): ".json_encode($r['ap_by_rule'])."\n";

@@ -19,6 +19,8 @@ Stand: 2026-10-16. Gehört zu ROADMAP T35 (Pacing) und T31 (Regolith-Wirtschaft)
 | Puffer 100–250 Rg | vorläufig (Annahme des Owners bestätigt) | Spieltest zeigt anderes Bedürfnis |
 | Zeit kommt aus einer Nicht-Rg-Bremse (AP), nicht aus höheren Rg-Kosten | vorläufig | Messung zeigt, dass AP nicht der Engpass ist |
 | Grund-AP global senken (statt Phase-1-Sonderregel), Boni heben sie später wieder | vorläufig | Phase 2+ wird zäh |
+| Pro-Ziel-AP-Deckel pro Sol gilt als Schema für **alle** Berater-Typen (Baumeister: Gebäude; Forscher, Pilot, Händler: je eigene Ziele), Basis + Rang-Bonus je Berater; Kenntnisse können Deckel unterschiedlich beeinflussen (Owner 2026-10-16). Baumeister-Deckel `base` 4 ist aktiv | vorläufig | Messung zeigt, dass die Deckel Phase 2+ bremsen |
+| Deckel wächst **nicht** mit der Zielstufe (Hebel 2 verworfen, Owner 2026-10-16) | fest | – |
 | Einnahmeseite (Start-Rg, Harvester, Geologie) ist Hebel mit T31 | vorläufig | T31-Paket (Start 260) widerspricht |
 
 ## Hebel (was wir verändern dürfen)
@@ -36,6 +38,7 @@ Rg-Kosten, Werkstoff-Kosten, flache 25 Rg je Ausbaustufe, AP je Ausbaustufe, Gru
 - **Erkundung (geklärt 2026-10-16, Q19):** Der Default-Bot gibt ~45 von ~117 Phase-1-AP für `explore_tile` aus. Gebäude-Platzierung braucht keine Erkundung, nur der Harvester-Umzug (`ColonyController.php:406-412`). Profil `lean-explore` erkundet nur dafür: 0 Erkundungs-AP, Phase-1-Ende bei Grund-AP 12/7/6 = Sol 9/10/11 (Default-Profil: 9/12/13).
 - **Phase 1 ist in allen Messungen Regolith-gebunden (gemessen):** Rg-Einkommen ist ab Sol 5 konstant ~21/Sol; verfügbares Rg am Phase-1-Ende liegt immer bei ~426–430 (also Bot kauft das Minimum und Phase 1 endet, sobald das Rg reicht). Grund-AP wirkt fast nur darüber, dass der **Harvester später Einkommen liefert** (erstes Einkommen Sol 3 bei Grund-AP 12, Sol 4–5 bei 7, Sol 5 bei 6). Ein Rg-Puffer kostet damit Zeit: ~+5 Sol je 100 Rg. Offen: wie Phase 1 für den Minimum-Spieler länger wird, ohne das Einkommen zu verzögern (Zeit-Bremse statt Rg- oder Grund-AP-Bremse).
 - **Grund-AP** 12 → 7 oder 6, davon hängt Phase 1 und das Tempo danach ab (Phase 2+ ungemessen).
+- **AP-Deckel nach Phase 1 (Owner-Auftrag 2026-10-16):** Der Pool bleibt unverändert, der Deckel begrenzt nur AP je Gebäude und Sol. Gerechnet: CC-Ausbau (20/40/60/80 AP) hat bei Deckel 6/7/8 eine Mindestbauzeit von ~28 Sol (Lv5 frühestens Sol ~40); Ränge des Baumeisters kommen erst nach 15 bzw. 45 aktiven Sol. Zu klären: Rang-Boni (Annahme +2/+3/+4), andere Bonusquellen (Kenntnisse, Projekte); ein Deckel-Wachstum mit der Zielstufe ist **verworfen**. Der Deckel soll außerdem für die anderen Berater gelten (Forscher: Forschung, Pilot: Erkundung/Flüge, Händler: Handel); Zuordnung Ziel/Basis/Bonus je Berater ist offen (Designer-Vorschlag angefordert). Erst messen (Phase-2-Verlauf mit Deckel an/aus bis Sol ~60: CC-Stufe je Sol, ungenutzte AP), dann entscheiden.
 - **Regolith-Hebel** für den Puffer: Start-Rg, Pflichtgebäude-Kosten oder Harvester-Ertrag (Q18).
 
 ## Messprotokoll
@@ -56,8 +59,17 @@ Regeln: eine Änderung pro Messung; vorher Hypothese und erwartete Zahlen notier
 | 5 | Bot nach Fix, Grund-AP 12 | Sol 8–9, 0 Fails | Minimum bei Sol 8–9 fertig |
 | Sweep | Grund-AP 8 / 7 / 6 | Sol 11 / 12 / 13 | Puffer ≈ 0 bei Start 300 |
 | Sweep | 7 mit Start 360 / 400, 6 mit 360 | Sol 12 / 12 / 13 | Puffer 59 / 99 / 77 (Median) |
+| Q21 | AP-Deckel `base` 4/5/6 (wirksam 6–8, Baumeister in Sol 0), beide Profile | Sol 11–13, 0 Frist-Fails | Zellen kaum unterscheidbar: wirksamer Deckel 6/7/8 ergibt Kette 10/9/9 Sol. Rg-Puffer gegen 445 Rg gemessen 53–89 (siehe Korrektur) |
+| Puffer-1 | Deckel 4 + Uplink-Platzierung 80 → 40, beide Profile | Sol 13 (Cantina Default 11, lean 14) | Platzierungskosten wirkten (Uplink 65 statt 105); Puffer gegen Minimum 340: Median 158–198 |
 | Q19 | Profil `lean-explore`, Grund-AP 12 / 7 / 6 | Sol 9 / 10 / 11 (Spanne 7–11) | Erkundungs-AP 0 statt 45; Rg-Puffer ≈ −15 (Rg-gebunden); Labor steckt freie AP in Forschung (nicht vergleichbar). Hinweis: Batchgrenzen per Zeitstempel getrennt, `--since` allein mischt Batches. |
 
+## Korrektur 2026-10-16 (Rg-Minimum und Puffer-Maß)
+
+- Das "Minimum 445 Rg" war **falsch gerechnet**: Wohnhabitat Lv1 ist beim Start schon da. Das echte Minimum ist Agrardom 95 + Uplink 105 + Pfadgebäude 120 + CC Lv2 60 = **380 Rg** (mit Uplink 65: 340). `tools/phase1-budget.php` berechnet es jetzt aus der Config (`--min=auto`, pro Eröffnung).
+- Mit dem korrekten Minimum liegt der Rg-Puffer bei Phase-1-Ende (Sol 12–13, AP-Deckel 4) im Median bei **118–158 Rg** (Uplink 105) bzw. 158–198 (Uplink 65). Das Ziel 100–250 wird damit **ohne Kostensenkung** erreicht (Zahlen bei Uplink 105 sind aus den Läufen umgerechnet, nicht separat gemessen; sie stimmen mit den Zellen "Deckel 4/5/6" gegen 445 plus 65 überein).
+- Bot-Befund (nicht behoben): Der Bot kauft in Sol 0 ein **zweites Wohnhabitat** (65 Rg), das bis Phase-1-Ende auf Stufe 0 bleibt. Für den Menschen-Puffer irrelevant, für den Bot sind es 65 tote Rg.
+
 ## Änderungen
+- 2026-10-16: Rg-Minimum von 445 auf 380 korrigiert, Puffer-Maß dynamisch (Config statt fester Zahl).
 
 - 2026-10-16: Dokument angelegt.

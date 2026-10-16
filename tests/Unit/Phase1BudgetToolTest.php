@@ -103,4 +103,35 @@ class Phase1BudgetToolTest extends TestCase
         $this->assertSame(1, $lean['labor']['runs']);
         $this->assertSame(5, $lean['labor']['p1_end_sol']['median']);
     }
+
+    public function test_min_auto_is_computed_from_config_per_opening(): void
+    {
+        // Wohnhabitat Lv1 is given at start, so the minimum buys: Agrardom, Uplink, the opening's
+        // path building (each placement = erect cost + flat first-level Rg) and CC Lv2.
+        $b = (function () {
+            if (! function_exists('env')) {
+                function env($k, $d = null)
+                {
+                    return $d;
+                }
+            }
+
+            return [require dirname(__DIR__, 2).'/config/buildings.php', require dirname(__DIR__, 2).'/config/game.php'];
+        })();
+        [$bld, $game] = $b;
+        $flat = $game['build']['levelup_regolith_flat'];
+        $place = fn ($k) => $bld[$k]['build_cost'][3] + $flat;
+        $cc2 = 2 * $bld['commandCenter']['cc_upgrade_regolith_per_level'];
+
+        $this->report('labor', 1, 3, [], []);
+        $this->report('hangar', 1, 3, [], []);
+        $this->report('cantina', 1, 3, [], []);
+        $out = shell_exec('php '.escapeshellarg(dirname(__DIR__, 2).'/tools/phase1-budget.php').' --dir='.escapeshellarg($this->dir).' --min=auto --json 2>/dev/null');
+        $res = json_decode((string) $out, true);
+
+        $base = $place('bioFacility') + $place('uplinkStation') + $cc2;
+        $this->assertSame($base + $place('sciencelab'), (int) $res['labor']['min_rg']);
+        $this->assertSame($base + $place('hangar'), (int) $res['hangar']['min_rg']);
+        $this->assertSame($base + $place('bar'), (int) $res['cantina']['min_rg']);
+    }
 }
