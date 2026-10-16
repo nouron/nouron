@@ -89,6 +89,8 @@ const EVENT_TYPE_NAMES = {
 
 function colonyHexView(config) {
     return {
+        // Shared AP-bar helpers (apCapReached, apSegClasses, apCapLimitPos): public/js/ap-bar.js
+        ...window.NouronApBar,
         tiles: config.tiles,
         colony: config.colony,
         ccLevel: config.ccLevel,
@@ -469,38 +471,6 @@ function colonyHexView(config) {
                 const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
             }
-        },
-
-        // Per-building per-Sol AP cap (game.build.ap_cap_per_sol): true once today's
-        // allowance of this building is used up. Always false while the cap is off.
-        apCapReached(building) {
-            return !!building?.ap_cap && building.ap_cap.remaining <= 0;
-        },
-
-        // Left offset (percent of bar width) of the "day limit" marker: the boundary after
-        // the segments still investable today. null = no marker (cap off, or boundary at bar end).
-        apCapLimitPos(building) {
-            const cap = building?.ap_cap;
-            if (!cap || !building.ap_for_levelup) return null;
-            const boundary = Math.min(building.ap_spend + Math.max(cap.remaining, 0), building.ap_for_levelup);
-            if (boundary >= building.ap_for_levelup) return null;
-            return (boundary / building.ap_for_levelup) * 100;
-        },
-
-        // Extra CSS classes for segment i (1-based) of the Ausbauen AP bar. With the cap
-        // off only the plain filled state applies, so the bar looks as it always did.
-        // Capped: filled-earlier / filled-today / free-today (default) / locked-today.
-        apSegClasses(building, i) {
-            const cap = building.ap_cap;
-            const spend = building.ap_spend;
-            if (!cap) return { 'btn-seg--filled': i <= spend };
-            const earlier = spend - cap.spent;
-            return {
-                'btn-seg--filled': i <= spend,
-                'btn-seg--today': i > earlier && i <= spend,
-                'btn-seg--free': i > spend && i <= spend + Math.max(cap.remaining, 0),
-                'btn-seg--locked': i > spend + Math.max(cap.remaining, 0),
-            };
         },
 
         async doInvestAp(building) {

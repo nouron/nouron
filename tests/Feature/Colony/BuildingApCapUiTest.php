@@ -45,8 +45,9 @@ class BuildingApCapUiTest extends TestCase
     public function test_client_script_handles_cap_error_code(): void
     {
         $js = file_get_contents(public_path('js/colony-hexgrid.js'));
-
         $this->assertStringContainsString("'building_ap_cap'", $js);
+
+        $js = file_get_contents(public_path('js/ap-bar.js'));
         $this->assertStringContainsString('btn-seg--locked', $js);
         $this->assertStringContainsString('btn-seg--today', $js);
     }
@@ -66,9 +67,9 @@ class BuildingApCapUiTest extends TestCase
             ->get(route('colony.view'))->assertOk()->getContent();
 
         $this->assertStringContainsString('tile-action-btn--hascap', $html);
-        $css = file_get_contents(public_path('css/colony.css'));
+        $css = file_get_contents(public_path('css/ap-upgrade-button.css'));
         $this->assertStringContainsString('.tile-action-btn--hascap:hover .tile-action-btn__tip', $css);
         $this->assertStringContainsString('.btn-seg-limit', $css);
-        $this->assertStringContainsString('apCapLimitPos(', file_get_contents(public_path('js/colony-hexgrid.js')));
+        $this->assertStringContainsString('apCapLimitPos(', file_get_contents(public_path('js/ap-bar.js')));
     }
 }

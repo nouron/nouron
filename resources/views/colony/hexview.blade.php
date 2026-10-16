@@ -276,31 +276,16 @@
                              footer strip inside the button, shown whenever a level-up is
                              possible. --}}
                             <template x-if="buildingCanLevelUp(selectedBuilding)">
-                                <button class="tile-action-btn tile-action-btn--barred"
-                                    :class="{
-                                        'tile-action-btn--secondary': canRepair(selectedBuilding),
-                                        'tile-action-btn--hascap': !!selectedBuilding.ap_cap,
-                                        'tile-action-btn--capped': apCapReached(selectedBuilding),
-                                    }"
-                                    x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
-                                    :aria-disabled="apCapReached(selectedBuilding) ? 'true' : null"
-                                    :aria-describedby="selectedBuilding.ap_cap ? 'ap-cap-tip' : null"
-                                    @click="doInvestAp(selectedBuilding)">
-                                    <span class="tile-action-btn__body">
-                                        <span class="tile-action-btn__main"
-                                            x-text="selectedBuilding.ap_spend === 0
-                                                ? `Stufe ${selectedBuilding.level + 1} starten (0/${selectedBuilding.ap_for_levelup})`
-                                                : `{{ __("colony.invest_ap") }} ${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup}`"></span>
-                                    </span>
-                                    @include("partials.ap-cost-chip", [
-                                        "amount" => 1,
-                                        "type" => "build",
-                                    ])
-                                    @include("colony.partials.ap-bar", ["hoverExpr" => "hover"])
-                                    <span id="ap-cap-tip" class="tile-action-btn__tip" role="tooltip">
-                                        {{ __("colony.ap_cap_tooltip") }}
-                                    </span>
-                                </button>
+                                @include("partials.ap-upgrade-button", [
+                                    "row" => "selectedBuilding",
+                                    "click" => "doInvestAp(selectedBuilding)",
+                                    "btnLabel" =>
+                                        "selectedBuilding.ap_spend === 0 ? 'Stufe ' + (selectedBuilding.level + 1) + ' starten (0/' + selectedBuilding.ap_for_levelup + ')' : " .
+                                        \Illuminate\Support\Js::from(__("colony.invest_ap")) .
+                                        " + ' ' + selectedBuilding.ap_spend + '/' + selectedBuilding.ap_for_levelup",
+                                    "classExpr" => "'tile-action-btn--secondary': canRepair(selectedBuilding),",
+                                    "tipId" => "ap-cap-tip",
+                                ])
                             </template>
                             <template
                                 x-if="selectedBuilding?.building_key === 'building_harvester' && selectedBuilding?.level > 0 && !selectedBuilding?.in_transit">

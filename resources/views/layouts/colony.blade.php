@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="{{ asset("css/dialogs.css") }}?v={{ filemtime(public_path("css/dialogs.css")) }}">
     <link rel="stylesheet" href="{{ asset("css/feedback.css") }}?v={{ filemtime(public_path("css/feedback.css")) }}">
     <link rel="stylesheet" href="{{ asset("css/colony.css") }}?v={{ filemtime(public_path("css/colony.css")) }}">
+    <link rel="stylesheet"
+        href="{{ asset("css/ap-upgrade-button.css") }}?v={{ filemtime(public_path("css/ap-upgrade-button.css")) }}">
     <link rel="stylesheet" href="{{ asset("css/swipe.css") }}?v={{ filemtime(public_path("css/swipe.css")) }}">
     <link rel="stylesheet" href="{{ asset("css/carousel.css") }}?v={{ filemtime(public_path("css/carousel.css")) }}">
     @stack("styles")
@@ -243,6 +245,7 @@
     @endauth
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+    <script src="{{ asset("js/ap-bar.js") }}?v={{ filemtime(public_path("js/ap-bar.js")) }}"></script>
     <script src="{{ asset("js/swipe.js") }}"></script>
     <script src="{{ asset("js/carousel.js") }}"></script>
     @if (request()->routeIs("colony.view"))

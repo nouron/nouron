@@ -346,21 +346,17 @@
                                 {{-- AP invest bar for knowledge --}}
                                 <template x-if="selectedTech.ap_for_levelup > 0 && selectedTech.status !== 'locked'">
                                     <div class="detail-ap-section">
-                                        <div class="detail-row detail-row--ap">
-                                            <span class="detail-row-label">{{ __("techtree.detail_ap_invest") }}</span>
-                                            <span
-                                                x-text="selectedTech.ap_spend + ' / ' + selectedTech.ap_for_levelup + ' AP'"></span>
-                                        </div>
-                                        <div class="detail-ap-bar">
-                                            <template x-for="n in selectedTech.ap_for_levelup" :key="n">
-                                                <span
-                                                    :class="n <= selectedTech.ap_spend ? 'ap-seg ap-seg--done' : (selectedTech
-                                                        .ap_available > 0 ? 'ap-seg ap-seg--todo' :
-                                                        'ap-seg ap-seg--locked')"
-                                                    @click="n > selectedTech.ap_spend && selectedTech.ap_available > 0 && investAp(selectedTech, 'research', n - selectedTech.ap_spend)">
-                                                </span>
-                                            </template>
-                                        </div>
+                                        @include("partials.ap-upgrade-button", [
+                                            "row" => "selectedTech",
+                                            "click" => "investAp(selectedTech, 'research', 1)",
+                                            "btnLabel" =>
+                                                \Illuminate\Support\Js::from(__("techtree.detail_ap_invest")) .
+                                                " + ' ' + selectedTech.ap_spend + '/' + selectedTech.ap_for_levelup",
+                                            "chip" => "research",
+                                            "blockedExpr" =>
+                                                "selectedTech.ap_available <= 0 || selectedTech.ap_spend >= selectedTech.ap_for_levelup",
+                                            "tipId" => "ap-cap-tip-tech",
+                                        ])
                                         <template
                                             x-if="selectedTech.ap_available <= 0 && selectedTech.ap_spend < selectedTech.ap_for_levelup">
                                             <p class="detail-ap-hint">{{ __("techtree.hint_no_research_ap") }}</p>
@@ -368,28 +364,35 @@
                                     </div>
                                 </template>
                             </div>
-                        </template>
-
-                        {{-- SHIP --}}
-                        <template x-if="selectedTech.type === 'ship'">
-                            <div>
-                                <template x-if="selectedTech.level > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_count") }}</span>
-                                        <span
-                                            x-text="selectedTech.level + (selectedTech.hangar_cap ? ' / ' + selectedTech.hangar_cap : '')"></span>
-                                    </div>
-                                </template>
-                                @include("partials.required-list-chips", ["expr" => "selectedTech"])
-                            </div>
-                        </template>
-
+                            <template
+                                x-if="selectedTech.ap_available <= 0 && selectedTech.ap_spend < selectedTech.ap_for_levelup">
+                                <p class="detail-ap-hint">{{ __("techtree.hint_no_research_ap") }}</p>
+                            </template>
                     </div>
+            </template>
+    </div>
+    </template>
 
-                    <button class="detail-close" @click="closeDetail()">{{ __("techtree.detail_close") }}</button>
+    {{-- SHIP --}}
+    <template x-if="selectedTech.type === 'ship'">
+        <div>
+            <template x-if="selectedTech.level > 0">
+                <div class="detail-row">
+                    <span class="detail-row-label">{{ __("techtree.detail_count") }}</span>
+                    <span
+                        x-text="selectedTech.level + (selectedTech.hangar_cap ? ' / ' + selectedTech.hangar_cap : '')"></span>
                 </div>
             </template>
-        </aside>
+            @include("partials.required-list-chips", ["expr" => "selectedTech"])
+        </div>
+    </template>
+
+    </div>
+
+    <button class="detail-close" @click="closeDetail()">{{ __("techtree.detail_close") }}</button>
+    </div>
+    </template>
+    </aside>
 
     </div>{{-- .techtree-page --}}
 

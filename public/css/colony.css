@@ -891,49 +891,12 @@ button.btn-sol:hover,
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
 }
 
-/* On the Ausbauen button (secondary white, or red primary when no repair is
-   pending): green fill reads on both; neutral translucent empty track. */
-.btn-segbar--ap .btn-seg {
-    background: rgba(0, 0, 0, 0.14);
-}
-.btn-segbar--ap .btn-seg--filled {
-    background: #27ae60;
-}
-
-/* Per-Sol AP cap (ap_cap): AP invested today get a darker green so they read as
-   "this Sol" against earlier Sols; segments beyond today's allowance are dimmed. */
-.btn-segbar--ap .btn-seg--today {
-    background: #1e8449;
-}
-.btn-segbar--ap .btn-seg--free {
-    background: rgba(0, 0, 0, 0.3);
-}
-.btn-segbar--ap .btn-seg--locked {
-    background: rgba(0, 0, 0, 0.05);
-}
-
-/* Day-limit marker: thin vertical rule at the boundary of what can still be
-   invested today. Overhangs the bar slightly; absolutely positioned so the flex
-   layout of the segments is untouched. */
-.btn-seg-limit {
-    position: absolute;
-    top: -0.2rem;
-    bottom: -0.2rem;
-    width: 2px;
-    margin-left: -1px;
-    background: #1a1a1a;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
-    border-radius: 1px;
-}
-
-/* Desktop-only +1 hover preview: the next segment lights up faintly. Gated to
-   (hover: hover) so a tap on touch can never leave a ghost segment stuck on. */
+/* Desktop-only +1 hover preview on the Reparieren bar (the Ausbauen ghost lives in
+   ap-upgrade-button.css). Gated to (hover: hover) so a tap on touch can never leave
+   a ghost segment stuck on. */
 @media (hover: hover) and (pointer: fine) {
     .btn-segbar--status .btn-seg--ghost {
         background: rgba(255, 255, 255, 0.62);
-    }
-    .btn-segbar--ap .btn-seg--ghost {
-        background: rgba(39, 174, 96, 0.5);
     }
 }
 
@@ -1186,47 +1149,6 @@ button.btn-sol:hover,
     background: #e8f0f8;
     border-color: #4a6a88;
     color: #2a4a68;
-}
-
-/* Cap reached: same look as a disabled button, but stays focusable (no :disabled)
-   so the explanatory tooltip shows on hover and keyboard focus. */
-.tile-action-btn--capped {
-    cursor: not-allowed;
-}
-.tile-action-btn--capped > :not(.tile-action-btn__tip):not(.btn-segbar) {
-    opacity: 0.4;
-}
-.tile-action-btn--capped:not(.tile-action-btn--secondary) {
-    background: #e8c4bf;
-    border-color: #e8c4bf;
-}
-.tile-action-btn--capped:hover {
-    background: var(--color-accent);
-}
-.tile-action-btn--secondary.tile-action-btn--capped:hover {
-    background: transparent;
-    border-color: #7a9ab8;
-    color: #4a6a88;
-}
-.tile-action-btn__tip {
-    display: none;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% + 0.35rem);
-    padding: 0.45rem 0.6rem;
-    border-radius: 4px;
-    background: #333;
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 400;
-    line-height: 1.35;
-    z-index: 5;
-    pointer-events: none;
-}
-.tile-action-btn--hascap:hover .tile-action-btn__tip,
-.tile-action-btn--hascap:focus-visible .tile-action-btn__tip {
-    display: block;
 }
 
 /* Inline note shown in the action strip (e.g. harvester in transit) */

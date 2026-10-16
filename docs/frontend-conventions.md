@@ -115,3 +115,10 @@ Verbindliches Set — keine weiteren Schwellwerte einführen:
 | Container in `em`/`rem` | Fixe `px`-Grössen für Icons und Portraits |
 | Neue Panel-/Card-Klassen mit dem Wrapper-Container prefixen (z.B. `.tech-panel .detail-row`) | Bare Klassen wie `.detail-row` ohne Scope — PicoCSS hat globale `aside li`/`aside ul`-Regeln, die bei gleicher Spezifität gewinnen und neue Styles unsichtbar machen (Bug in PR #305/#306, Techtree-Sidebar) |
 | Sekundäre Detail-Zeilen (Werte neben Meta-Labels, Listeneinträge) klein + `font-weight: 500` halten, angelehnt an die Description-Textgröße (~0.8rem) | Body-Werte in Sidebars mit `font-weight: 600–700` + `~0.95rem` — wirkt in schmalen Panels zu groß/prägnant, nicht "modern/elegant/minimal" |
+
+### Upgrade-Button mit segmentiertem AP-Balken (geteilte Komponente)
+
+Colony „Ausbauen“ und Techtree-Kenntnis-Button nutzen **eine** Komponente: Partial `resources/views/partials/ap-upgrade-button.blade.php` (`@include`, Params `row`, `click`, `btnLabel`, `chip`, `classExpr`, `blockedExpr`, `tipId` — nicht `label` nennen, das liest der eingebundene `ap-cost-chip`), Logik `public/js/ap-bar.js` (`window.NouronApBar`, in die Alpine-Komponente spreaden), Styles `public/css/ap-upgrade-button.css`. Keine eigenen Balken-Klassen/-Logik in Screen-Dateien.
+
+- Zeilen-Vertrag: `ap_spend`, `ap_for_levelup` Pflicht; `ap_cap: null | { cap, spent, remaining }` optional. `null` = schlichter Balken. Gesetzt = vier Zustände (früher gefüllt / heute gefüllt `--today` / heute frei `--free` / heute gesperrt `--locked`), Tageslimit-Marker `.btn-seg-limit`, Tooltip `colony.ap_cap_tooltip`; `remaining <= 0` sperrt den Button (`aria-disabled`).
+- Neue Screens mit Upgrade-Buttons binden dieses Partial ein; ein neues Backend-Feld `ap_cap` schaltet die Zustände automatisch frei.

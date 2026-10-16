@@ -1,5 +1,7 @@
 function techtreeView(config) {
     return {
+        // Shared AP-bar helpers (apCapReached, apSegClasses, apCapLimitPos): public/js/ap-bar.js
+        ...window.NouronApBar,
         phases: config.phases,
         colonyViewUrl: config.colonyViewUrl ?? '/colony/view',
         i18n: config.i18n ?? {},
