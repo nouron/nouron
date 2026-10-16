@@ -30,7 +30,7 @@ class BuildingInvestTest extends TestCase
 
     private const CC_ID = 25;
 
-    private const CC_AP_FOR_LEVELUP = 10;
+    private const CC_AP_FOR_LEVELUP = 20;   // cc_upgrade_ap_by_level[2] (config/buildings.php)
 
     private const CC_MAX_SP = 20;
 
@@ -151,9 +151,9 @@ class BuildingInvestTest extends TestCase
 
     public function test_invest_reaches_levelup_earlier_with_an_active_voucher(): void
     {
-        // 25% off ap_for_levelup=10 -> effective threshold 8 (round(7.5)=8).
+        // 25% off CC Lv1->2 (20 AP) -> effective threshold 15.
         $this->insertVoucher(25, 'information_broker');
-        $this->setCcState(['level' => 1, 'ap_spend' => 7, 'status_points' => 16]);
+        $this->setCcState(['level' => 1, 'ap_spend' => 14, 'status_points' => 16]);
 
         $response = $this->invest();
 
@@ -164,7 +164,7 @@ class BuildingInvestTest extends TestCase
     public function test_invest_levelup_consumes_the_active_voucher(): void
     {
         $this->insertVoucher(25, 'information_broker');
-        $this->setCcState(['level' => 1, 'ap_spend' => 7, 'status_points' => 16]);
+        $this->setCcState(['level' => 1, 'ap_spend' => 14, 'status_points' => 16]);
 
         $this->invest()->assertJsonPath('leveled_up', true);
 

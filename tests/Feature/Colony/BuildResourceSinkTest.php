@@ -173,7 +173,7 @@ class BuildResourceSinkTest extends TestCase
 
     public function test_cc_levelup_does_not_deduct_regolith_again_on_completion(): void
     {
-        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2, cycle already started
+        $this->setCc(['level' => 1, 'ap_spend' => 19, 'status_points' => 16]);   // 1 AP from Lv2 (20 AP), cycle already started
         $before = $this->colonyRes(self::RES_REGOLITH);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
@@ -185,12 +185,12 @@ class BuildResourceSinkTest extends TestCase
     public function test_construction_knowledge_reduces_ap_needed_for_levelup(): void
     {
         // construction Lv5 (research_id=90) = 15% discount → CC's ap_for_levelup
-        // (10) drops to round(10 * 0.85) = 9. One less invest click needed to level up.
+        // (20 for Lv1->2) drops to round(20 * 0.85) = 17. Three fewer invest clicks needed.
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => 90],
             ['level' => 5, 'ap_spend' => 0, 'status_points' => 20]
         );
-        $this->setCc(['level' => 1, 'ap_spend' => 8, 'status_points' => 16]);   // 1 AP from the discounted threshold (9)
+        $this->setCc(['level' => 1, 'ap_spend' => 16, 'status_points' => 16]);   // 1 AP from the discounted threshold (17)
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertOk()->assertJsonPath('leveled_up', true);
