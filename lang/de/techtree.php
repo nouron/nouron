@@ -168,8 +168,7 @@ return [
     'error_insufficient_supply' => 'Nicht genug freie Kolonisten — erst Wohnhabitat ausbauen.',
     'error_max_level' => 'Maximalstufe bereits erreicht.',
     'error_knowledge_cc_gate' => 'Kommandozentrale zu niedrig für diese Kenntnisstufe — erst ausbauen.',
-    // TODO content-writer: Platzhaltertext
-    'error_building_ap_cap' => 'Heute sind in dieses Gebäude keine weiteren AP investierbar — morgen weiter.',
+    'error_building_ap_cap' => 'Mehr Arbeit schafft die Baucrew an diesem Gebäude heute nicht. Morgen geht es weiter — oder an einem anderen Gebäude.',
     'error_building_cc_gate' => 'Kommandozentrale zu niedrig für diese Ausbaustufe — Gebäudestufe braucht mindestens gleiche Kommandozentralen-Stufe.',
     'error_insufficient_ap' => 'Nicht genug AP verfügbar für diese Investition.',
     // Gebäude-Orders gehören ins Tile-Panel der Kolonieansicht (A43, GDD techtree §11.5)

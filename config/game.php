@@ -301,7 +301,7 @@ return [
         // the rule off. Repair and placement are not capped.
         // See App\Services\BuildingApCapService.
         'ap_cap_per_sol' => [
-            'base' => null,
+            'base' => 4,
             'engineer_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],
         ],
     ],

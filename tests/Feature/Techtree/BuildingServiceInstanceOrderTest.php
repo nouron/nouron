@@ -252,6 +252,7 @@ class BuildingServiceInstanceOrderTest extends TestCase
 
     public function test_placed_building_can_still_be_levelled_up(): void
     {
+        config(['game.build.ap_cap_per_sol.base' => null]);   // tests the build flow, not the per-Sol AP cap
         config(['game.bypass.ap_checks' => true, 'game.bypass.resource_costs' => true]);
         $this->place(self::BAR, 1, 2, -1);
 
