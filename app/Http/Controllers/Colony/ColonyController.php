@@ -160,6 +160,7 @@ class ColonyController extends BaseController
         // single required_building_id (no required_building2_id, unlike researches).
         $buildingNames = DB::table('buildings')->pluck('name', 'id');
 
+        $apCap = $this->apCapService->capFor($colony->id);
         $buildings = DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colony->id)
@@ -172,6 +173,8 @@ class ColonyController extends BaseController
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
                 'colony_buildings.pending_until_tick',
+                'colony_buildings.ap_cap_tick',
+                'colony_buildings.ap_cap_spent',
                 'buildings.name as building_key',
                 'buildings.max_level',
                 'buildings.ap_for_levelup',
@@ -180,7 +183,7 @@ class ColonyController extends BaseController
                 'buildings.required_building_level',
             )
             ->get()
-            ->map(function ($b) use ($globalTick, $colony, $buildingNames) {
+            ->map(function ($b) use ($globalTick, $colony, $buildingNames, $apCap) {
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
                 $b->description = __('buildings.'.preg_replace('/^building_/', '', $b->building_key).'_desc');
@@ -196,6 +199,8 @@ class ColonyController extends BaseController
                 $b->first_level_prepaid = BuildingCostService::firstLevelPrepaid($b);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp((int) $b->building_id, (int) $b->level + 1, (int) $b->ap_for_levelup));
                 $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
+                $b->ap_cap = $this->apCapService->stateFromRow($apCap, $b);
+                unset($b->ap_cap_tick, $b->ap_cap_spent);
 
                 return $b;
             });
@@ -1535,6 +1540,8 @@ class ColonyController extends BaseController
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
                 'colony_buildings.pending_until_tick',
+                'colony_buildings.ap_cap_tick',
+                'colony_buildings.ap_cap_spent',
                 'buildings.name as building_key',
                 'buildings.max_level',
                 'buildings.max_instances',
@@ -1559,6 +1566,8 @@ class ColonyController extends BaseController
         $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, $this->buildingCostService->levelupAp((int) $row->building_id, (int) $row->level + 1, (int) $row->ap_for_levelup));
         $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
+        $row->ap_cap = $this->apCapService->stateFromRow($this->apCapService->capFor($colonyId), $row);
+        unset($row->ap_cap_tick, $row->ap_cap_spent);
 
         return $row;
     }

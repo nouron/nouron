@@ -376,6 +376,7 @@ class TechtreeControllerTest extends TestCase
             'max_status_points' => $maxSp,
             'q' => 1,
             'r' => -1,
+            'ap_cap' => ['cap' => 8, 'spent' => 0, 'remaining' => 8],
         ], $housing['instances'][1]);
 
         $sciencelab = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 31);

@@ -20,6 +20,7 @@ Stand: 2026-10-16. Gehört zu ROADMAP T35 (Pacing) und T31 (Regolith-Wirtschaft)
 | Zeit kommt aus einer Nicht-Rg-Bremse (AP), nicht aus höheren Rg-Kosten | vorläufig | Messung zeigt, dass AP nicht der Engpass ist |
 | Grund-AP global senken (statt Phase-1-Sonderregel), Boni heben sie später wieder | vorläufig | Phase 2+ wird zäh |
 | Pro-Ziel-AP-Deckel pro Sol gilt als Schema für **alle** Berater-Typen (Baumeister: Gebäude; Forscher, Pilot, Händler: je eigene Ziele), Basis + Rang-Bonus je Berater; Kenntnisse können Deckel unterschiedlich beeinflussen (Owner 2026-10-16). Baumeister-Deckel `base` 4 ist aktiv | vorläufig | Messung zeigt, dass die Deckel Phase 2+ bremsen |
+| Deckel für Pilot und Konsul nur vorbereitet (`base` null); Rang-Bonus aller Berater = bestehender Pool-Beitrag (2/3/4); Belohnungs-AP (Daten-Sweep, Cantina-Bonus, Gutscheine) vom Deckel ausgenommen; Kenntnis-Deckel (Analytiker) zuerst messen, dann entscheiden (Owner 2026-10-16) | vorläufig | Messung zeigt Labor-First benachteiligt |
 | Deckel wächst **nicht** mit der Zielstufe (Hebel 2 verworfen, Owner 2026-10-16) | fest | – |
 | Einnahmeseite (Start-Rg, Harvester, Geologie) ist Hebel mit T31 | vorläufig | T31-Paket (Start 260) widerspricht |
 

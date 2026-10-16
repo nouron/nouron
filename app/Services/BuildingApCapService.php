@@ -40,11 +40,7 @@ class BuildingApCapService
             ->where(['colony_id' => $colonyId, 'building_id' => $buildingId, 'instance_id' => $instanceId])
             ->first(['ap_cap_tick', 'ap_cap_spent']);
 
-        if ($row === null || $row->ap_cap_tick === null || (int) $row->ap_cap_tick !== $this->tickService->getTickCount()) {
-            return 0;
-        }
-
-        return (int) $row->ap_cap_spent;
+        return $this->spentFromRow($row);
     }
 
     /**
@@ -54,13 +50,37 @@ class BuildingApCapService
      */
     public function state(int $colonyId, int $buildingId, int $instanceId): ?array
     {
-        $cap = $this->capFor($colonyId);
+        $row = DB::table('colony_buildings')
+            ->where(['colony_id' => $colonyId, 'building_id' => $buildingId, 'instance_id' => $instanceId])
+            ->first(['ap_cap_tick', 'ap_cap_spent']);
+
+        return $this->stateFromRow($this->capFor($colonyId), $row);
+    }
+
+    /**
+     * Cap state from an already loaded colony_buildings row (needs ap_cap_tick/ap_cap_spent)
+     * and a cap resolved once via capFor() — list paths use this to avoid one query per row.
+     *
+     * @return array{cap: int, spent: int, remaining: int}|null
+     */
+    public function stateFromRow(?int $cap, ?object $row): ?array
+    {
         if ($cap === null) {
             return null;
         }
-        $spent = $this->spentThisSol($colonyId, $buildingId, $instanceId);
+        $spent = $this->spentFromRow($row);
 
         return ['cap' => $cap, 'spent' => $spent, 'remaining' => max(0, $cap - $spent)];
+    }
+
+    private function spentFromRow(?object $row): int
+    {
+        // The counter belongs to the Sol stored beside it; a stale tick means nothing spent today.
+        if ($row === null || $row->ap_cap_tick === null || (int) $row->ap_cap_tick !== $this->tickService->getTickCount()) {
+            return 0;
+        }
+
+        return (int) $row->ap_cap_spent;
     }
 
     /** True when $ap more points would exceed this Sol's cap for the row. */

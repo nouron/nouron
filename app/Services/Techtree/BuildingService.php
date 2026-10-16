@@ -76,7 +76,7 @@ class BuildingService extends AbstractTechnologyService
      * ordered by instance_id — a row counts as placed under the same rule as
      * isPlaced(): the anchored Command Center always, any other row only with a tile.
      *
-     * @return array<int, list<array{instance_id: int, level: int, max_level: int|null, status_points: int, max_status_points: int, q: int|null, r: int|null}>>
+     * @return array<int, list<array{instance_id: int, level: int, max_level: int|null, status_points: int, max_status_points: int, q: int|null, r: int|null, ap_cap: array{cap: int, spent: int, remaining: int}|null}>>
      */
     public function placedInstances(int $colonyId): array
     {
@@ -95,11 +95,15 @@ class BuildingService extends AbstractTechnologyService
                 'colony_buildings.status_points',
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
+                'colony_buildings.ap_cap_tick',
+                'colony_buildings.ap_cap_spent',
                 'buildings.max_level',
                 'buildings.max_status_points',
             )
             ->get();
 
+        $capService = app(BuildingApCapService::class);
+        $cap = $capService->capFor($colonyId);
         $instances = [];
         foreach ($rows as $row) {
             $instances[(int) $row->building_id][] = [
@@ -110,6 +114,7 @@ class BuildingService extends AbstractTechnologyService
                 'max_status_points' => (int) $row->max_status_points,
                 'q' => $row->tile_x !== null ? (int) $row->tile_x : null,
                 'r' => $row->tile_y !== null ? (int) $row->tile_y : null,
+                'ap_cap' => $capService->stateFromRow($cap, $row),
             ];
         }
 
