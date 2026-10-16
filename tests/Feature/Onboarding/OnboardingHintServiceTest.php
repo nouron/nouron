@@ -3,6 +3,7 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\TickService;
@@ -738,6 +739,48 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
+        $this->assertSame('hint_invest_site', $hint['key']);
+    }
+
+    public function test_invest_site_hint_is_silent_when_every_site_hit_this_sols_ap_cap(): void
+    {
+        // The per-Sol AP cap blocks further AP into the only open site: advising "invest AP
+        // into the running site" would send the player into a disabled button.
+        config(['game.build.ap_cap_per_sol.base' => 3]);
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $cap = app(BuildingApCapService::class)->capFor($this->colonyId);
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 41)
+            ->update([
+                'level' => 0, 'ap_spend' => $cap, 'status_points' => 4,
+                'ap_cap_tick' => app(TickService::class)->getTickCount(), 'ap_cap_spent' => $cap,
+            ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_invest_site', $hint['key'] ?? null);
+    }
+
+    public function test_invest_site_hint_still_fires_while_a_site_has_cap_left_this_sol(): void
+    {
+        config(['game.build.ap_cap_per_sol.base' => 3]);
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $cap = app(BuildingApCapService::class)->capFor($this->colonyId);
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 41)
+            ->update([
+                'level' => 0, 'ap_spend' => 2, 'status_points' => 4,
+                'ap_cap_tick' => app(TickService::class)->getTickCount(), 'ap_cap_spent' => $cap - 1,
+            ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
         $this->assertSame('hint_invest_site', $hint['key']);
     }
 

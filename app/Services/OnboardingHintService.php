@@ -23,6 +23,7 @@ class OnboardingHintService
         private readonly TickService $tickService,
         private readonly BuildingCostService $buildingCostService,
         private readonly PathBuildingGateService $pathBuildingGate,
+        private readonly BuildingApCapService $apCapService,
     ) {}
 
     /**
@@ -685,14 +686,21 @@ class OnboardingHintService
         // A "site" is a placed level-0 building (construction site) or any started
         // level-up (ap_spend > 0) — the latter without a tile condition, because the
         // CC is anchored (tile_x NULL) rather than placed.
-        $hasSite = DB::table('colony_buildings')
+        $sites = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where(function ($q) {
                 $q->where(function ($site) {
                     $site->whereNotNull('tile_x')->where('level', 0);
                 })->orWhere('ap_spend', '>', 0);
             })
-            ->exists();
+            ->get(['ap_cap_tick', 'ap_cap_spent']);
+
+        // A site that already took its per-Sol AP cap cannot absorb more AP today, so it
+        // must not trigger "invest into the running site" (the button would be disabled).
+        $cap = $this->apCapService->capFor($colonyId);
+        $hasSite = $sites->contains(
+            fn ($row) => ($this->apCapService->stateFromRow($cap, $row)['remaining'] ?? 1) > 0
+        );
         if (! $hasSite) {
             return false;
         }

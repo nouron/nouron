@@ -13,7 +13,7 @@ return [
     'build_cost_first_level' => 'level 1',
     'first_level_prepaid' => 'Level 1 was paid on placement — completing it only costs AP.',
     'repair' => 'Repair',
-    'ap_per_tile' => '1 AP/tile',
+    'ap_per_tile' => ':n AP/tile',
 
     // ── Repair errors ─────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ return [
     'onboarding_hint_agrardome' => 'The colony\'s first build project: the Agrarian Dome. Without it CC Level 2 stays locked and Organics stay at zero — place it today and sink the remaining Construction AP into it. Invested Construction AP carries over across Sols, even if one Sol isn\'t enough.',
     'onboarding_hint_analytik' => 'No Analytics Lab — Research AP has nowhere to go. The colony stays scientifically stuck.',
     'onboarding_hint_hangar_path' => 'Build the Hangar first, then hire a Pilot — only then do missions and Navigation AP become properly available.',
-    'onboarding_hint_invest_site' => 'Don\'t let Construction AP go to waste — invest it in the active construction project. Whatever is invested stays; completion gets closer.',
+    'onboarding_hint_invest_site' => 'Don\'t let Construction AP go to waste — invest it in a running construction project. Each takes only a limited amount of AP per Sol; whatever is invested stays, and completion gets closer.',
     'onboarding_hint_explore' => 'Use Navigation AP for exploration (:ring2 AP per tile in ring 2, :ring3 AP in ring 3) — Regolith deposits and unknown signals wait beyond the zone.',
     'onboarding_end_sol' => 'End the Sol — all sensible actions taken. The next Sol brings fresh action points and new developments.',
     'onboarding_hint_spend_ap_construction' => 'Construction AP remaining — invest it in a building or pre-fund CC upgrade. AP expires at Sol end.',

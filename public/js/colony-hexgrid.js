@@ -94,6 +94,7 @@ function colonyHexView(config) {
         tiles: config.tiles,
         colony: config.colony,
         ccLevel: config.ccLevel,
+        harvesterSecondCcLevel: config.harvesterSecondCcLevel ?? 3,
         ccBuildingId: config.ccBuildingId ?? 25,
         buildings: config.buildings ?? [],
         buildingCatalog: config.buildingCatalog ?? {},
@@ -714,6 +715,50 @@ function colonyHexView(config) {
         // guess made client-side about an entitlement the client cannot observe.
         hasSecondHarvesterInstance() {
             return this.buildings.some((b) => b.building_key === 'building_harvester' && b.instance_id === 2);
+        },
+
+        // The second Harvester button is only offered once its CC gate is met — below it the
+        // server would just answer error_harvester_second_instance_cc_gate (UX trap: the target
+        // tile of a relocation used to offer ONLY this dead-end button).
+        canPlaceSecondHarvester(tile) {
+            return (
+                !!tile &&
+                !this.hasSecondHarvesterInstance() &&
+                this.ccLevel >= this.harvesterSecondCcLevel &&
+                this.isHarvesterTarget(tile)
+            );
+        },
+
+        // The single (first) Harvester can be relocated straight from a valid target tile.
+        movableHarvester() {
+            return (
+                this.buildings.find(
+                    (b) =>
+                        b.building_key === 'building_harvester' &&
+                        (b.instance_id ?? 1) === 1 &&
+                        b.level > 0 &&
+                        b.tile_x !== null &&
+                        !b.in_transit,
+                ) ?? null
+            );
+        },
+
+        canMoveHarvesterHere(tile) {
+            return !!tile && this.movableHarvester() !== null && this.isHarvesterTarget(tile);
+        },
+
+        harvesterMoveCostTo(tile) {
+            const hv = this.movableHarvester();
+            if (!hv || !tile) return 0;
+            return Math.max(1, this.hexDistance(hv.tile_x, hv.tile_y, tile.q, tile.r) * this.relocateApPerHex);
+        },
+
+        async moveHarvesterHere(tile) {
+            const hv = this.movableHarvester();
+            if (!hv) return;
+            this.movingHarvesterInstanceId = hv.instance_id ?? 1;
+            await this.doMoveHarvester(tile);
+            this.movingHarvesterInstanceId = null;
         },
 
         async doPlaceHarvesterInstance2(tile) {

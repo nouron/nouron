@@ -14,7 +14,7 @@ return [
     'build_cost_first_level' => 'Stufe 1',
     'first_level_prepaid' => 'Stufe 1 ist mit der Platzierung bezahlt — der Ausbau kostet nur noch AP.',
     'repair' => 'Reparieren',
-    'ap_per_tile' => '1 AP/Feld',
+    'ap_per_tile' => ':n AP/Feld',
     // Owner-Fund 2026-09-05: sichtbare Zustandsanzeige über dem Reparieren-Button.
     // Wert "Zustand" bereits an anderer Stelle exakt für dasselbe Konzept etabliert
     // (onboarding_hint_encounter, run.task_engineering_output, comm_log.building_repaired)
@@ -115,7 +115,7 @@ return [
     'onboarding_hint_agrardome' => 'Erstes Bauprojekt der Kolonie: der Agrardom. Ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null — heute platzieren, restliche AP hineinstecken. Investierte AP bleiben über Sol-Grenzen erhalten, auch wenn ein Sol nicht reicht.',
     'onboarding_hint_analytik' => 'Kein Analytik-Labor — AP können nirgendwo landen. Die Kolonie bleibt wissenschaftlich auf der Stelle.',
     'onboarding_hint_hangar_path' => 'Erst den Hangar bauen, dann einen Raumfahrer einstellen — erst dann stehen Missionen und AP für Erkundung richtig zur Verfügung.',
-    'onboarding_hint_invest_site' => 'AP nicht verfallen lassen — in die laufende Baustelle investieren. Was eingezahlt ist, bleibt; der Abschluss rückt damit näher.',
+    'onboarding_hint_invest_site' => 'AP nicht verfallen lassen — in eine laufende Baustelle investieren. Jede nimmt pro Sol nur begrenzt AP auf; was eingezahlt ist, bleibt, und der Abschluss rückt näher.',
     'onboarding_hint_explore' => 'AP für Erkundung einsetzen (:ring2 AP pro Feld in Ring 2, :ring3 AP in Ring 3) — jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
     'onboarding_hint_encounter' => 'Gebäude mit niedrigem Zustand sind anfälliger für Zwischenfälle — regelmäßige Reparatur zahlt sich doppelt aus.',
     'onboarding_end_sol' => 'Sol beenden — alle sinnvollen Aktionen getätigt. Nächster Sol bringt frische Aktionspunkte und neue Entwicklungen.',

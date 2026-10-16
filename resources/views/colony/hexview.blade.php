@@ -28,6 +28,7 @@
             tiles: @json($tiles),
             colony: @json(["id" => $colony->id, "name" => $colony->name]),
             ccLevel: {{ (int) $ccLevel }},
+            harvesterSecondCcLevel: {{ (int) config("game.harvester.second_instance_cc_level", 3) }},
             ccBuildingId: {{ \App\Enums\BuildingId::CommandCenter->value }},
             buildings: @json($buildings),
             buildingCatalog: @json($buildingChipData->map(fn($chip) => ["label" => $chip["label"]])),
@@ -294,7 +295,9 @@
                                     <span class="tile-action-btn__body">{{ __("colony.harvester_move") }}</span>
                                     @include("partials.ap-cost-chip", [
                                         "type" => "build",
-                                        "label" => __("colony.ap_per_tile"),
+                                        "label" => __("colony.ap_per_tile", [
+                                            "n" => (int) config("game.harvester.relocate_ap_per_hex"),
+                                        ]),
                                     ])
                                 </button>
                             </template>
@@ -308,6 +311,16 @@
                                     <span class="tile-action-btn__body">{{ __("colony.build") }}</span>
                                 </button>
                             </template>
+                            {{-- Relocate the single Harvester straight from a valid target tile
+                             (the move is otherwise only reachable via the Harvester tile). --}}
+                            <template x-if="!selectedBuilding && canMoveHarvesterHere(selectedTile)">
+                                <button class="tile-action-btn tile-action-btn--secondary"
+                                    @click="moveHarvesterHere(selectedTile)">
+                                    <span class="tile-action-btn__body">{{ __("colony.harvester_move") }}</span>
+                                    <span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true"
+                                        x-text="harvesterMoveCostTo(selectedTile) + ' AP'"></span>
+                                </button>
+                            </template>
                             {{-- Second Harvester instance (GDD §4c "Harvester-Zweitinstanz:
                              Bezugsquelle") — placement, not the build menu (Harvester is
                              excluded from getBuildableBuildings(), see
@@ -318,8 +331,7 @@
                              mission), so a rejected attempt surfaces the real reason
                              (error_harvester_second_instance_locked / _cc_gate) instead of
                              the button silently disappearing. --}}
-                            <template
-                                x-if="!selectedBuilding && isHarvesterTarget(selectedTile) && !hasSecondHarvesterInstance()">
+                            <template x-if="!selectedBuilding && canPlaceSecondHarvester(selectedTile)">
                                 <button class="tile-action-btn tile-action-btn--secondary"
                                     @click="doPlaceHarvesterInstance2(selectedTile)">
                                     <span class="tile-action-btn__body">{{ __("colony.harvester_place_second") }}</span>
