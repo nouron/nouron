@@ -34,7 +34,8 @@ final class CcSource implements CandidateSource
         $level = (int) $cc->level;
         if (($cc->max_level !== null && $level >= (int) $cc->max_level)
             || ($level === 1 && ! BotStrategy::agrardomPlaced($b))
-            || ($ctx->phase === 1 && $level >= 3)) {
+            || ($ctx->phase === 1 && $level >= 3)
+            || ! BotStrategy::phase1Allows($b, BuildingId::CommandCenter->value, $level + 1)) {
             return [];
         }
         $regolith = BotStrategy::levelupRegolith($cc);

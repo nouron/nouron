@@ -257,4 +257,46 @@ class HeuristicGoalProviderTest extends TestCase
 
         $this->assertNotContains('place:'.BuildingId::UplinkStation->value, $keys);
     }
+
+    /** Phase 1 with CC Lv2, Agrardom + Housing standing, a path building placed at Lv1, Uplink-Station still missing. */
+    private function phase1MissingUplink(int $regolith): BotSession
+    {
+        $bot = BotSession::boot($this, 1);
+        $this->setCc($bot, 2);
+        $this->placeAt($bot, 41, 1);
+        $this->placeAt($bot, BuildingId::Housing->value, 1);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, 1);
+        $this->setResource($bot, 3, $regolith);
+        $this->setSupply($bot, 1000);
+        foreach ([20, 20, 20] as $gain) {
+            $this->logSolNext($bot, $gain);
+        }
+
+        return $bot;
+    }
+
+    public function test_phase_1_with_a_missing_requirement_offers_no_non_required_regolith_step(): void
+    {
+        $bot = $this->phase1MissingUplink(150);
+
+        $keys = array_map(fn (SavingsGoal $g): string => $g->key, HeuristicGoalProvider::options($bot, $this->ctx($bot, 'hangar')));
+
+        $this->assertContains('place:'.BuildingId::UplinkStation->value, $keys);
+        $this->assertNotContains('cc:25:3', $keys, 'CC Lv3 is not a Phase-1 requirement');
+        $this->assertNotContains('invest:'.BuildingId::Housing->value.':1', $keys, 'Wohnhabitat Lv2 is not a requirement (supply is not short)');
+        $this->assertNotContains('invest:41:1', $keys, 'Agrardom Lv2 is not a requirement');
+        $this->assertNotContains('invest:'.BuildingId::Sciencelab->value.':1', $keys, 'path building Lv2 is not a requirement');
+        $this->assertNotContains('place:'.BuildingId::Hangar->value, $keys, 'a second path building is not a requirement');
+        $this->assertSame('place:'.BuildingId::UplinkStation->value, $this->ctx($bot, 'hangar')->goal?->key);
+    }
+
+    public function test_the_non_required_steps_return_once_all_phase_1_buildings_stand(): void
+    {
+        $bot = $this->phase1MissingUplink(150);
+        $this->placeAt($bot, BuildingId::UplinkStation->value, 1);
+
+        $keys = array_map(fn (SavingsGoal $g): string => $g->key, HeuristicGoalProvider::options($bot, $this->ctx($bot)));
+
+        $this->assertContains('cc:25:3', $keys);
+    }
 }

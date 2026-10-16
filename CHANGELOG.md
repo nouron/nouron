@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-16
+
+- Fix/Tooling: PlaytestBot kauft in Phase 1 erst die Pflichtgebäude (Schranke auf CC Lv2, Stufen, Platzierung; vorher scheiterten 13 von 24 Läufen am Bot), neue Mess-Tabelle `tools/phase1-budget.php`, Economy-Modell mit Phase-1-Kaufliste, Skill `nouron-balance-pass` und Entscheidungsdokument `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`. Keine Config-Änderung.
+
 ## 2026-10-15
 
 - Feat: Regolith-Buchungsjournal im PlaytestBot-Report (`regolith_ledger`: Zuflüsse/Abflüsse je Quelle bzw. Senke und Sol, Bilanz-Invariante im Test); `regolith_sources.harvester` ist jetzt der reine Harvester-Ertrag, neue Töpfe Geologie/Import/Recycling/Anliegen, Compare-Zeilen Rg-Zufluss/Sol, Harvester-Anteil, `resource_limit`-Abweisungen, Dashboard mit Senken-Chart. Spielverhalten unverändert.

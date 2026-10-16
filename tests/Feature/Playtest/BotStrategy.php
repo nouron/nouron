@@ -8,6 +8,7 @@ use App\Services\AdvisorService;
 use App\Services\BuildingCostService;
 use App\Services\ColonyTileService;
 use App\Services\HangarService;
+use App\Services\PathBuildingGateService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunTaskCatalog;
@@ -725,6 +726,77 @@ class BotStrategy
     }
 
     /**
+     * Phase 1 and a building requirement of RunProgressService::checkPhase1Completion() is still
+     * missing: CC Lv2, Harvester / Wohnhabitat / Agrardom / Uplink-Station Lv1, one path building Lv1.
+     * The advisor requirement is not a Regolith matter and is left out.
+     */
+    public static function phase1BuildingsOpen(BotSession $b): bool
+    {
+        if (self::runPhase($b) !== 1) {
+            return false;
+        }
+        $levels = DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('level', '>=', 1)->pluck('level', 'building_id');
+        $basics = [BuildingId::Harvester->value, BuildingId::Housing->value, self::BIO_FACILITY, BuildingId::UplinkStation->value];
+
+        return (int) $levels->get(BuildingId::CommandCenter->value, 0) < 2
+            || ! collect($basics)->every(fn (int $id): bool => $levels->has($id))
+            || ! collect(PathBuildingGateService::PATH_BUILDING_IDS)->contains(fn (int $id): bool => $levels->has($id));
+    }
+
+    /**
+     * Whether a Regolith step ($targetLevel of $buildingId) may be taken while Phase 1 still lacks a
+     * building requirement (bot assumption: Regolith is the bottleneck, so nothing beyond the
+     * requirements is bought before they stand). Always true outside Phase 1 or once all stand.
+     * Exception: Wohnhabitat levels while the supply cap blocks a missing Uplink-Station / first path building.
+     */
+    public static function phase1Allows(BotSession $b, int $buildingId, int $targetLevel): bool
+    {
+        if (! self::phase1BuildingsOpen($b)) {
+            return true;
+        }
+        if ($buildingId === BuildingId::CommandCenter->value) {
+            return $targetLevel <= 2;
+        }
+        $required = [BuildingId::Harvester->value, BuildingId::Housing->value, self::BIO_FACILITY, BuildingId::UplinkStation->value, ...PathBuildingGateService::PATH_BUILDING_IDS];
+        if (in_array($buildingId, $required, true) && $targetLevel <= 1) {
+            return true;
+        }
+
+        return $buildingId === BuildingId::Housing->value && self::phase1SupplyBlocked($b);
+    }
+
+    /** Phase 1: placing a not yet placed building is a requirement (one path building only). */
+    public static function phase1AllowsPlacement(BotSession $b, int $buildingId): bool
+    {
+        if (! self::phase1BuildingsOpen($b)) {
+            return true;
+        }
+        if (in_array($buildingId, PathBuildingGateService::PATH_BUILDING_IDS, true)) {
+            return ! DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+                ->whereIn('building_id', PathBuildingGateService::PATH_BUILDING_IDS)->whereNotNull('tile_x')->exists();
+        }
+
+        return in_array($buildingId, [BuildingId::Housing->value, self::BIO_FACILITY, BuildingId::UplinkStation->value], true);
+    }
+
+    /** A missing Phase-1 placement (Uplink-Station, or the first path building) needs more supply than is free. */
+    private static function phase1SupplyBlocked(BotSession $b): bool
+    {
+        $free = app(ResourcesService::class)->getFreeSupply($b->colonyId);
+        $placed = fn (array $ids): bool => DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+            ->whereIn('building_id', $ids)->whereNotNull('tile_x')->exists();
+        $missing = [];
+        if (! $placed([BuildingId::UplinkStation->value])) {
+            $missing[] = BuildingId::UplinkStation->value;
+        }
+        if (! $placed(PathBuildingGateService::PATH_BUILDING_IDS)) {
+            $missing = [...$missing, ...PathBuildingGateService::PATH_BUILDING_IDS];
+        }
+
+        return $missing !== [] && (int) DB::table('buildings')->whereIn('id', $missing)->min('supply_cost') > $free;
+    }
+
+    /**
      * Available AP in the shared colony pool (GDD §13.1 — single pool, no
      * per-domain split anymore).
      */
@@ -1159,6 +1231,11 @@ class BotStrategy
             // Review S3 I4 (diagnostic only): why the highest-priority building was skipped.
             $reason = $buildings === [] ? 'none_available' : null;
             foreach ($buildings as $building) {
+                if (! self::phase1AllowsPlacement($b, (int) $building['building_id'])) {
+                    $reason ??= 'phase1_extra';
+
+                    continue;
+                }
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
                     $reason ??= 'path_buffer';
 

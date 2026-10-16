@@ -74,4 +74,11 @@ class CcSourceTest extends TestCase
         $this->assertSame(['cc:25:4'], array_map(fn (Candidate $c) => $c->key, $candidates));
         $this->assertGreaterThan(0.0, $candidates[0]->net);
     }
+
+    public function test_phase_1_cc_level_3_is_not_offered_while_the_uplink_station_is_missing(): void
+    {
+        $bot = $this->boot(2, 500);
+
+        $this->assertSame([], $this->candidates($bot));
+    }
 }

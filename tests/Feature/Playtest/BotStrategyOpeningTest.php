@@ -52,6 +52,7 @@ class BotStrategyOpeningTest extends TestCase
         $bot = $this->bootAtCc2WithAgrardom();
         // The follow-up order, not the path-building gate (BotStrategyPathBuildingGateTest):
         // CC Lv4 leaves room for all three path buildings.
+        DB::table('runs')->where('id', $bot->runId)->update(['phase' => 2]);   // a second path building is a Phase-2 matter
         $this->setCcLevel($bot, 4);
         $this->placeBuilding($bot, 44);
 
@@ -64,6 +65,7 @@ class BotStrategyOpeningTest extends TestCase
     public function test_cantina_opening_continues_with_sciencelab_before_hangar(): void
     {
         $bot = $this->bootAtCc2WithAgrardom();
+        DB::table('runs')->where('id', $bot->runId)->update(['phase' => 2]);   // a second path building is a Phase-2 matter
         $this->setCcLevel($bot, 3);
         $this->placeBuilding($bot, 52);
 

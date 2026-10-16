@@ -54,15 +54,19 @@ $CC = fn ($lv) => ['key' => "cc$lv", 'b' => 'commandCenter', 'rg' => $ccPer * $l
 $H = fn ($n) => ['key' => "housing$n", 'b' => 'housingComplex', 'rg' => $flat, 'ap' => $A['build_ap'], 'lbl' => "Wohnhabitat Lv$n"];
 $FREIGHTER = ['key' => 'freighter', 'b' => null, 'rg' => 0, 'ap' => 0, 'lbl' => 'Frachter (nur Cr)'];
 
+// Phase 1 = Grundaufbau (RunProgressService::checkPhase1Completion): Harvester + Wohnhabitat Lv1 stand at the
+// start; the minimum is Agrardom, Uplink-Station, the opening's path building and CC Lv2 - bought first.
+// Everything after that is extra (Phase 2 and later).
+$phase1 = fn (string $path) => [$P('bioFacility'), $P('uplinkStation'), $P($path), $CC(2)];
 $plans = [
-    'labor' => [$P('bioFacility'), $CC(2), $P('sciencelab'), $L('sciencelab', 2), $H(2), $CC(3), $P('hangar'), $L('hangar', 2),
-        $L('bioFacility', 2), $L('sciencelab', 3), $P('uplinkStation'), $CC(4), $P('bar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('bar', 2),
+    'labor' => [...$phase1('sciencelab'), $L('sciencelab', 2), $H(2), $CC(3), $P('hangar'), $L('hangar', 2),
+        $L('bioFacility', 2), $L('sciencelab', 3), $CC(4), $P('bar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('bar', 2),
         $P('infirmary'), $L('bioFacility', 3), $CC(5), $L('sciencelab', 5), $L('hangar', 3), $L('bar', 3)],
-    'hangar' => [$P('bioFacility'), $CC(2), $P('hangar'), $L('hangar', 2), $H(2), $CC(3), $P('sciencelab'), $L('sciencelab', 2),
-        $L('bioFacility', 2), $L('sciencelab', 3), $P('uplinkStation'), $CC(4), $P('bar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('bar', 2),
+    'hangar' => [...$phase1('hangar'), $L('hangar', 2), $H(2), $CC(3), $P('sciencelab'), $L('sciencelab', 2),
+        $L('bioFacility', 2), $L('sciencelab', 3), $CC(4), $P('bar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('bar', 2),
         $P('infirmary'), $L('bioFacility', 3), $CC(5), $L('sciencelab', 5), $L('bar', 3), $L('hangar', 3)],
-    'cantina' => [$P('bioFacility'), $CC(2), $P('bar'), $L('bar', 2), $H(2), $CC(3), $P('sciencelab'), $L('sciencelab', 2),
-        $L('bioFacility', 2), $L('sciencelab', 3), $P('uplinkStation'), $CC(4), $P('hangar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('hangar', 2),
+    'cantina' => [...$phase1('bar'), $L('bar', 2), $H(2), $CC(3), $P('sciencelab'), $L('sciencelab', 2),
+        $L('bioFacility', 2), $L('sciencelab', 3), $CC(4), $P('hangar'), $L('housingComplex', 3), $L('sciencelab', 4), $L('hangar', 2),
         $P('infirmary'), $L('bioFacility', 3), $CC(5), $L('sciencelab', 5), $L('hangar', 3), $L('bar', 3)],
 ];
 // Optional tail (not required for a win): extra buildings bought only when Rg and AP allow; once it
@@ -294,7 +298,10 @@ foreach ($res as $n => $r) {
         printf("Sol 41+: Zufluss=%d Kaeufe=%d Reparatur=%d (%d%% des Zuflusses) Rueckstand=%d SP\n", $li, $ls, $lr, $li ? 100 * $lr / $li : 0, $r['backlog']);
     }
     $m = $r['milestone'];
-    printf("Meilensteine: Phase-1-Ende(2.Pfad Lv1)~Sol %s, CC3 Sol %s, CC4 Sol %s, CC5 Sol %s, Geologie Lv1..5 Sol %s\n",
-        $m[$n === 'labor' ? 'hangar+' : ($n === 'hangar' ? 'sciencelab+' : 'sciencelab+')] ?? '-', $m['cc3'] ?? '-', $m['cc4'] ?? '-', $m['cc5'] ?? '-',
+    $pathKey = ['labor' => 'sciencelab+', 'hangar' => 'hangar+', 'cantina' => 'bar+'][$n];
+    $p1 = array_map(fn ($k) => $m[$k] ?? null, ['bioFacility+', 'uplinkStation+', $pathKey, 'cc2']);
+    $p1End = in_array(null, $p1, true) ? '-' : max($p1);
+    printf("Meilensteine: Phase-1-Ende (alle Pflichtgebaeude)~Sol %s, CC3 Sol %s, CC4 Sol %s, CC5 Sol %s, Geologie Lv1..5 Sol %s\n",
+        $p1End, $m['cc3'] ?? '-', $m['cc4'] ?? '-', $m['cc5'] ?? '-',
         implode('/', array_map(fn ($i) => $m["geo$i"] ?? '-', range(1, 5))));
 }

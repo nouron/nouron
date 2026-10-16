@@ -44,6 +44,7 @@ class UpgradeSourceTest extends TestCase
     public function test_own_path_building_goes_to_level_2_before_housing_and_agrardom(): void
     {
         $bot = $this->boot(60);
+        $this->setPhase($bot, 2);   // Phase 1 buys no Lv2 steps while a requirement is missing
         $this->placeAt($bot, BuildingId::Hangar->value, 1);
         $this->placeAt($bot, BuildingId::Housing->value, 1);
         $this->placeAt($bot, 41, 1);
@@ -66,6 +67,7 @@ class UpgradeSourceTest extends TestCase
     public function test_a_supply_blocked_target_gives_housing_its_enabling_value(): void
     {
         $bot = $this->boot(100);
+        $this->setPhase($bot, 2);
         $this->placeAt($bot, BuildingId::Sciencelab->value, 1);
         $this->placeAt($bot, BuildingId::Housing->value, 1);
         $this->setSupply($bot, 0);
@@ -135,5 +137,40 @@ class UpgradeSourceTest extends TestCase
         $this->assertNotNull($ctx->goal, 'fixture must open a savings goal');
         $this->assertNotNull($hangar);
         $this->assertLessThan(0.0, $hangar->terms['opportunity'] ?? 0.0);
+    }
+
+    public function test_phase_1_skips_non_required_level_ups_while_a_requirement_is_missing(): void
+    {
+        $bot = $this->boot(300);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, 1);
+        $this->placeAt($bot, BuildingId::Housing->value, 1);
+        $this->placeAt($bot, 41, 1);
+
+        $keys = $this->keys($bot);
+
+        $this->assertNotContains('invest:31:1', $keys, 'path building Lv2 is not required');
+        $this->assertNotContains('invest:28:1', $keys, 'Wohnhabitat Lv2 is not required');
+        $this->assertNotContains('invest:41:1', $keys, 'Agrardom Lv2 is not required');
+    }
+
+    public function test_phase_1_still_builds_a_placed_level_0_path_building(): void
+    {
+        $bot = $this->boot(300);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, 0);
+        $this->placeAt($bot, BuildingId::Housing->value, 1);
+        $this->placeAt($bot, 41, 1);
+
+        $this->assertContains('invest:31:1', $this->keys($bot));
+    }
+
+    public function test_phase_1_housing_level_up_stays_while_supply_blocks_the_uplink(): void
+    {
+        $bot = $this->boot(300);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, 1);
+        $this->placeAt($bot, BuildingId::Housing->value, 1);
+        $this->placeAt($bot, 41, 1);
+        $this->setSupply($bot, 0);
+
+        $this->assertContains('invest:28:1', $this->keys($bot));
     }
 }
