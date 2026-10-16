@@ -4,6 +4,8 @@
 
 - Fix/Tooling: PlaytestBot kauft in Phase 1 erst die Pflichtgebäude (Schranke auf CC Lv2, Stufen, Platzierung; vorher scheiterten 13 von 24 Läufen am Bot), neue Mess-Tabelle `tools/phase1-budget.php`, Economy-Modell mit Phase-1-Kaufliste, Skill `nouron-balance-pass` und Entscheidungsdokument `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`. Keine Config-Änderung.
 - Feat: Pro-Gebäude-AP-Deckel pro Sol (`game.build.ap_cap_per_sol`, Basis 4 + Baumeister-Bonus je Rang, aktiv; Server-Code `building_ap_cap`, Bot weicht aus) als Zeit-Bremse für Phase 1; Bot-Profil `lean-explore` (erkundet nur für Harvester-Umzug), `--profile`-Filter in `tools/phase1-budget.php`. Migration `colony_buildings.ap_cap_tick/ap_cap_spent`. Messung: Phase-1-Ende Sol 12–13, Rg-Puffer 118–158 (Minimum 380 Rg). UI: Deckel im segmentierten Ausbauen-Balken (heute gefüllt / frei / gesperrt, Tagesgrenze als Markierung, Tooltip ohne neuen Text); eine gemeinsame Komponente (`partials/ap-upgrade-button`, `ap-bar.js`, `ap-upgrade-button.css`) rendert den Ausbauen-Button und den Kenntnis-Button (1 AP pro Klick, Kachelreihe entfällt); Listenzeilen offen.
+- Fix: Harvester-Verlegen in Sol 0 — das Zielfeld bot nur "Harvester platzieren" (zweite Instanz, unter CC 3 immer abgelehnt), jetzt erscheint der Button nur ab CC-Level der Zweitinstanz und das Zielfeld hat einen Button "Verlegen" mit echtem AP-Chip (2 AP/Hex statt "1 AP/Feld"); Server-Verlegen war unverändert korrekt.
+- Tooling: `tools/ap-idle.php` (Idle-AP-Anteil, Sciencelab-/CC-Meilensteine je Eröffnung); Phase-2-Messung (Deckel an/aus) und Befund zu ungenutzten AP bei Hangar/Cantina in `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`.
 
 ## 2026-10-15
 
