@@ -158,6 +158,8 @@ return [
 
     // TODO(content-writer): placeholder wording, path-building build gate (2026-10-14).
     'error_path_building_gate' => 'Weiteres Pfad-Gebäude erst ab Kommandozentrale Lv:level.',
+    // TODO content-writer: Platzhaltertext
+    'error_building_ap_cap' => 'Heute sind höchstens :cap AP in dieses Gebäude investierbar — morgen weiter.',
     'error_building_cc_gate' => 'Diese Ausbaustufe braucht Kommandozentrale Lv:level — erst die Kommandozentrale ausbauen.',
     'path_building_locked' => 'Weiteres Pfad-Gebäude ab CC Lv:level',
     'error_agrardom_required' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für alle Pfad-Gebäude.',

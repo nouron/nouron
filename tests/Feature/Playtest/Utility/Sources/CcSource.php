@@ -28,7 +28,7 @@ final class CcSource implements CandidateSource
     public function candidates(BotSession $b, BotContext $ctx): array
     {
         $cc = Valuers::ccRow($b);
-        if ($cc === null || $ctx->apAvailable < 1) {
+        if ($cc === null || $ctx->apAvailable < 1 || BotStrategy::apCapped($b, BuildingId::CommandCenter->value, 1)) {
             return [];
         }
         $level = (int) $cc->level;

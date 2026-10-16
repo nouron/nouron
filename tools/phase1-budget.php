@@ -2,16 +2,17 @@
 
 // Phase-1 budget table from game:playtest reports (no Laravel needed).
 // Usage: php tools/phase1-budget.php [--since=YYYYMMDD_HHMMSS] [--dir=storage/logs/playtest]
-//        [--engine=utility] [--min=445] [--json]
+//        [--engine=utility] [--profile=NAME] [--min=445] [--json]
 // --since compares against the UTC timestamp in the report file name.
 // --min is the Regolith cost of the Phase-1 minimum. It is CALCULATED (gerechnet), not
 // measured: Wohnhabitat 65 + Agrardom 95 + Uplink 105 + path building 120 + CC Lv2 60.
 // Everything else (AP per bot rule, Rg available/out, Phase-1-end Sol) is MEASURED from the
 // reports, counted up to and including `phase2_start_sol` (= first Sol of Phase 2).
 
-$o = getopt('', ['since::', 'dir::', 'engine::', 'min::', 'json']);
+$o = getopt('', ['since::', 'dir::', 'engine::', 'profile::', 'min::', 'json']);
 $dir = $o['dir'] ?? __DIR__.'/../storage/logs/playtest';
 $engine = $o['engine'] ?? 'utility';
+$profile = $o['profile'] ?? null;
 $min = (float) ($o['min'] ?? 445);
 $since = $o['since'] ?? null;
 
@@ -44,7 +45,8 @@ foreach (glob(rtrim($dir, '/').'/*.json') ?: [] as $file) {
         continue;
     }
     $j = json_decode((string) file_get_contents($file), true);
-    if (! is_array($j) || ($j['engine'] ?? null) !== $engine) {
+    if (! is_array($j) || ($j['engine'] ?? null) !== $engine
+        || ($profile !== null && ($j['profile'] ?? null) !== $profile)) {
         continue;
     }
     $op = $j['opening'];

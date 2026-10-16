@@ -3,6 +3,7 @@
 namespace App\Services\Techtree;
 
 use App\Enums\BuildingId;
+use App\Services\BuildingApCapService;
 use App\Services\BuildingCostService;
 use App\Services\ResourcesService;
 use Illuminate\Support\Collection;
@@ -192,6 +193,13 @@ class BuildingService extends AbstractTechnologyService
             return 'not_placed';
         }
 
+        // Per-building per-Sol construction AP cap (game.build.ap_cap_per_sol): only the
+        // level-up investment ('add') is capped, never repair/remove.
+        if ($action === 'add' && ! $bypassPoolCheck
+            && app(BuildingApCapService::class)->wouldExceed($colonyId, $entityId, $instanceId ?? 1, abs($points))) {
+            return 'building_ap_cap';
+        }
+
         return parent::investBlocker($colonyId, $entityId, $action, $points, $bypassPoolCheck, $instanceId);
     }
 
@@ -343,6 +351,11 @@ class BuildingService extends AbstractTechnologyService
      */
     public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1, ?int $instanceId = null): bool
     {
-        return $this->_invest($colonyId, $entityId, $action, $points, instanceId: $instanceId);
+        $ok = $this->_invest($colonyId, $entityId, $action, $points, instanceId: $instanceId);
+        if ($ok && $action === 'add') {
+            app(BuildingApCapService::class)->record($colonyId, $entityId, $instanceId ?? 1, abs($points));
+        }
+
+        return $ok;
     }
 }

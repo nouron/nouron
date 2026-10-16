@@ -209,6 +209,7 @@ final class Valuers
             ->orderBy('cb.building_id')->orderBy('cb.instance_id')
             ->get()
             ->reject(fn (object $row): bool => BotStrategy::ccGated($b, $row))
+            ->reject(fn (object $row): bool => BotStrategy::apCapped($b, (int) $row->building_id, (int) $row->instance_id))
             ->values()->all();
     }
 

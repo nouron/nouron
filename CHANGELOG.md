@@ -3,6 +3,7 @@
 ## 2026-10-16
 
 - Fix/Tooling: PlaytestBot kauft in Phase 1 erst die Pflichtgebäude (Schranke auf CC Lv2, Stufen, Platzierung; vorher scheiterten 13 von 24 Läufen am Bot), neue Mess-Tabelle `tools/phase1-budget.php`, Economy-Modell mit Phase-1-Kaufliste, Skill `nouron-balance-pass` und Entscheidungsdokument `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`. Keine Config-Änderung.
+- Feat: Pro-Gebäude-AP-Deckel pro Sol (`game.build.ap_cap_per_sol`, Basis + Baumeister-Bonus je Rang, Standard aus; Server-Code `building_ap_cap`, Bot weicht aus) als Zeit-Bremse für Phase 1; Bot-Profil `lean-explore` (erkundet nur für Harvester-Umzug), `--profile`-Filter in `tools/phase1-budget.php`. Migration `colony_buildings.ap_cap_tick/ap_cap_spent`. Messung: Phase-1-Ende Sol 11–13 bei wirksamem Deckel 6–8. Platzhalter-Text `error_building_ap_cap` und UI-Anzeige offen.
 
 ## 2026-10-15
 

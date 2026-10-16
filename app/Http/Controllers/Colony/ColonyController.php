@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\BuildingCostService;
 use App\Services\CharacterCodexService;
 use App\Services\ColonyService;
@@ -56,6 +57,7 @@ class ColonyController extends BaseController
         private readonly BuildingCostService $buildingCostService,
         private readonly HangarService $hangarService,
         private readonly PathBuildingGateService $pathBuildingGate,
+        private readonly BuildingApCapService $apCapService,
     ) {
         parent::__construct($tick);
     }
@@ -774,6 +776,18 @@ class ColonyController extends BaseController
             return $this->fail('supply_limit');
         }
 
+        // Per-building per-Sol AP cap (game.build.ap_cap_per_sol): a time brake on
+        // construction. Checked before any AP or Regolith is touched.
+        if ($this->apCapService->wouldExceed($colony->id, $buildingId, $instanceId)) {
+            $cap = (int) $this->apCapService->capFor($colony->id);
+
+            return $this->fail(
+                'building_ap_cap',
+                __('colony.error_building_ap_cap', ['cap' => $cap]),
+                ['cap' => $cap],
+            );
+        }
+
         // Construction knowledge (plus any active discount voucher) discounts the AP
         // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
         // and-encounters-design.md §2). Level-up Regolith is charged on the click that
@@ -806,6 +820,7 @@ class ColonyController extends BaseController
         if (! config('game.bypass.ap_checks')) {
             $this->advisorService->lockActionPoints($colony->id, 1);
         }
+        $this->apCapService->record($colony->id, $buildingId, $instanceId, 1);
 
         if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
             $this->resourcesService->payCosts(
@@ -883,6 +898,7 @@ class ColonyController extends BaseController
                 'tiles' => $tiles,
                 'activeHint' => $this->resolveHint($colony->id),
                 'phase_progress' => $this->colonyService->getPhaseProgress($colony),
+                'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
                 ...$this->currentAp($colony->id),
             ]);
         }
@@ -899,6 +915,7 @@ class ColonyController extends BaseController
             'building' => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
             'nav_unlocked' => $navUnlocked,
+            'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
             'activeHint' => $this->resolveHint($colony->id),
             ...($leveledUp ? ['phase_progress' => $this->colonyService->getPhaseProgress($colony)] : []),
             ...$this->currentAp($colony->id),

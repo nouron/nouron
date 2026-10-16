@@ -5,6 +5,7 @@ namespace Tests\Feature\Playtest;
 use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\BuildingCostService;
 use App\Services\ColonyTileService;
 use App\Services\HangarService;
@@ -188,6 +189,7 @@ class BotStrategy
                 // collecting an agrardom_required rejection.
                 'when' => fn (BotSession $b) => self::ccLevel($b) < (self::runPhase($b) >= 2 ? 5 : 3)
                     && self::availableAp($b) >= 1
+                    && ! self::apCapped($b, BuildingId::CommandCenter->value, 1)
                     && (self::ccLevel($b) !== 1 || self::agrardomPlaced($b)),
                 'do' => fn (BotSession $b) => $b->act('invest_cc', 'POST', '/colony/building/invest', [
                     'building_id' => BuildingId::CommandCenter->value,
@@ -287,7 +289,7 @@ class BotStrategy
             ],
             [
                 'name' => 'explore_tile',
-                'when' => fn (BotSession $b) => self::exploreCandidate($b),
+                'when' => fn (BotSession $b) => self::exploreCandidate($b, $profile->exploreOnlyWhenNeeded),
                 'do' => fn (BotSession $b, object $tile) => $b->act('explore_tile', 'POST', '/colony/tile/explore', [
                     'q' => $tile->q,
                     'r' => $tile->r,
@@ -589,6 +591,7 @@ class BotStrategy
             ->get()
             ->reject(fn (object $row): bool => self::supplyGated($row) && $freeSupply < (int) $row->supply_cost)
             ->reject(fn (object $row): bool => self::ccGated($b, $row))
+            ->reject(fn (object $row): bool => self::apCapped($b, (int) $row->building_id, (int) $row->instance_id))
             ->filter(function (object $row) use ($b, $ccReserve, $regolith): bool {
                 $cost = self::levelupRegolith($row);
 
@@ -1012,8 +1015,33 @@ class BotStrategy
             ->first();
     }
 
-    private static function exploreCandidate(BotSession $b): ?object
+    private static function exploreCandidate(BotSession $b, bool $onlyWhenNeeded = false): ?object
     {
+        // Profile `lean-explore` (Q19): the only exploration the server demands in Phase 1 is
+        // an explored regolith target for a harvester relocation (ColonyController::placeBuilding(),
+        // 'not_explored'); regular buildings may sit on fogged zone tiles. So explore only while a
+        // relocation is wanted and no explored free regolith tile exists, cheapest ring first and
+        // without peeking at fogged tile types or preferring zone tiles.
+        if ($onlyWhenNeeded) {
+            if (self::harvesterSitsOnGoodTile($b) || self::freeExploredRegolithTile($b) !== null) {
+                return null;
+            }
+
+            $tile = DB::table('colony_tiles')
+                ->where('colony_id', $b->colonyId)
+                ->where('is_explored', 0)
+                ->orderBy('ring')
+                ->orderBy('q')
+                ->orderBy('r')
+                ->first();
+            if ($tile === null) {
+                return null;
+            }
+            $cost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+
+            return self::availableAp($b) < $cost ? null : $tile;
+        }
+
         // No ring cap: harvesterRelocateCandidate() only ever offers already-explored
         // regolith tiles, so once ring<=2 regolith is exhausted the bot must be able
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
@@ -1327,6 +1355,10 @@ class BotStrategy
         // Building level needs CC level (ColonyController::investBuilding() 'building_cc_gate').
         $rows = $rows->reject(fn (object $row): bool => self::ccGated($b, $row))->values();
 
+        // Per-Sol construction AP cap (game.build.ap_cap_per_sol): a building whose cap
+        // is used up for this Sol is not offered — the AP spreads to the next one.
+        $rows = $rows->reject(fn (object $row): bool => self::apCapped($b, (int) $row->building_id, (int) $row->instance_id))->values();
+
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
         // server rejects a level-up with supply_limit while free supply is below the
         // building's supply_cost; CC and housing are exempt, and so is the 0 -> 1
@@ -1357,6 +1389,10 @@ class BotStrategy
         ])->values();
 
         $first = $rows->first();
+        if ($housing !== null && self::apCapped($b, (int) $housing->building_id, (int) $housing->instance_id)) {
+            $housing = null;
+        }
+
         if ($first !== null && $blocked($first)
             && $housing !== null
             && (! $buffered || self::levelupRegolith($housing) === 0)
@@ -1378,6 +1414,16 @@ class BotStrategy
     public static function ccGated(BotSession $b, object $row): bool
     {
         return app(BuildingService::class)->ccLevelTooLow($b->colonyId, (int) $row->building_id, (int) $row->instance_id);
+    }
+
+    /**
+     * Server rule 'building_ap_cap' (BuildingApCapService): this building row has used
+     * up its per-Sol construction AP cap, so another invest click would be rejected.
+     * Always false while the cap is off.
+     */
+    public static function apCapped(BotSession $b, int $buildingId, int $instanceId = 1): bool
+    {
+        return app(BuildingApCapService::class)->wouldExceed($b->colonyId, $buildingId, $instanceId);
     }
 
     /** CC and housing are exempt from the A14 supply build gate (ColonyController::levelUpBlockedBySupply()). */
@@ -1477,7 +1523,7 @@ class BotStrategy
             ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.max_level')
             ->first();
 
-        if ($row === null) {
+        if ($row === null || self::apCapped($b, (int) $row->building_id, (int) $row->instance_id)) {
             return null;
         }
         if ((int) $row->level === 0) {
@@ -2281,40 +2327,11 @@ class BotStrategy
             return null;
         }
 
-        // Check if currently on a valid regolith tile with substantial resources remaining (>50)
-        if ($harvester->tile_x !== null && $harvester->tile_y !== null) {
-            $currentTile = DB::table('colony_tiles')
-                ->where('colony_id', $b->colonyId)
-                ->where('q', $harvester->tile_x)
-                ->where('r', $harvester->tile_y)
-                ->first();
-
-            if ($currentTile && str_starts_with($currentTile->tile_type, 'regolith_') && ($currentTile->resource_amount ?? 0) > 50) {
-                return null;
-            }
+        if (self::harvesterSitsOnGoodTile($b)) {
+            return null;
         }
 
-        // Find an explored, unbuilt regolith tile with available resources (qa-tester
-        // review PR #244: same missing-occupied-check bug as harvesterInstance2Candidate
-        // had — orderByDesc('resource_amount') often picked an already-built tile,
-        // e.g. the harvester's own current one, wasting several Sols of tile_occupied
-        // rejections before landing on a free one by chance).
-        $targetTile = DB::table('colony_tiles as ct')
-            ->where('ct.colony_id', $b->colonyId)
-            ->where('ct.is_explored', 1)
-            ->where('ct.tile_type', 'like', 'regolith_%')
-            ->where('ct.resource_amount', '>', 0)
-            ->whereNotExists(function ($query) use ($b) {
-                $query->select(DB::raw(1))
-                    ->from('colony_buildings as cb')
-                    ->where('cb.colony_id', $b->colonyId)
-                    ->whereColumn('cb.tile_x', 'ct.q')
-                    ->whereColumn('cb.tile_y', 'ct.r');
-            })
-            ->orderByDesc('ct.resource_amount')
-            ->orderBy('ct.q')
-            ->orderBy('ct.r')
-            ->first();
+        $targetTile = self::freeExploredRegolithTile($b);
 
         if (! $targetTile) {
             return null;
@@ -2332,6 +2349,52 @@ class BotStrategy
         }
 
         return $targetTile;
+    }
+
+    /** True when harvester instance 1 stands on a regolith tile with substantial (>50) resources left. */
+    private static function harvesterSitsOnGoodTile(BotSession $b): bool
+    {
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('instance_id', 1)
+            ->first();
+
+        if (! $harvester || $harvester->tile_x === null || $harvester->tile_y === null) {
+            return false;
+        }
+
+        $currentTile = DB::table('colony_tiles')
+            ->where('colony_id', $b->colonyId)
+            ->where('q', $harvester->tile_x)
+            ->where('r', $harvester->tile_y)
+            ->first();
+
+        return $currentTile && str_starts_with($currentTile->tile_type, 'regolith_') && ($currentTile->resource_amount ?? 0) > 50;
+    }
+
+    /**
+     * Explored, unbuilt regolith tile with resources left (qa-tester review PR #244: the
+     * occupied check is needed, else the harvester's own tile gets picked).
+     */
+    private static function freeExploredRegolithTile(BotSession $b): ?object
+    {
+        return DB::table('colony_tiles as ct')
+            ->where('ct.colony_id', $b->colonyId)
+            ->where('ct.is_explored', 1)
+            ->where('ct.tile_type', 'like', 'regolith_%')
+            ->where('ct.resource_amount', '>', 0)
+            ->whereNotExists(function ($query) use ($b) {
+                $query->select(DB::raw(1))
+                    ->from('colony_buildings as cb')
+                    ->where('cb.colony_id', $b->colonyId)
+                    ->whereColumn('cb.tile_x', 'ct.q')
+                    ->whereColumn('cb.tile_y', 'ct.r');
+            })
+            ->orderByDesc('ct.resource_amount')
+            ->orderBy('ct.q')
+            ->orderBy('ct.r')
+            ->first();
     }
 
     private static function hasAnyShip(BotSession $b): bool

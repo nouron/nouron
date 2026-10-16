@@ -292,6 +292,18 @@ return [
         // cost on placement (Owner rule 2026-09-25, T9) — see BuildingCostService.
         // CC scales separately (config/buildings.php cc_upgrade_regolith_per_level).
         'levelup_regolith_flat' => 25,
+
+        // Per-building per-Sol cap on construction AP invested toward a level-up
+        // (Owner decision 2026-10-16): a time brake for Phase 1 that leaves Regolith
+        // income alone and stops a building (CC included) from finishing, or gaining
+        // several levels, in a single Sol. Cap = base + engineer bonus for the
+        // advisor's rank (an unavailable engineer adds nothing). base = null switches
+        // the rule off. Repair and placement are not capped.
+        // See App\Services\BuildingApCapService.
+        'ap_cap_per_sol' => [
+            'base' => null,
+            'engineer_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],
+        ],
     ],
 
     // Path-building build gate (GDD §16 "Slot-System", Gate-Logik; server rule since

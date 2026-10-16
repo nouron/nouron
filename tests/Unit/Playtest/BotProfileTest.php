@@ -95,4 +95,22 @@ class BotProfileTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         BotProfile::named('default')->withEngine('magic');
     }
+
+    public function test_explore_only_when_needed_is_off_by_default_and_on_for_lean_explore(): void
+    {
+        $this->assertFalse(BotProfile::named('default')->exploreOnlyWhenNeeded);
+        $lean = BotProfile::named('lean-explore');
+        $this->assertSame('lean-explore', $lean->name);
+        $this->assertTrue($lean->exploreOnlyWhenNeeded);
+        $this->assertSame(0.0, $lean->savingsAggressiveness);
+        $this->assertSame(0.0, $lean->objectiveFocus);
+    }
+
+    public function test_with_opening_and_engine_keep_explore_only_when_needed(): void
+    {
+        $lean = BotProfile::named('lean-explore');
+
+        $this->assertTrue($lean->withOpening('hangar')->exploreOnlyWhenNeeded);
+        $this->assertTrue($lean->withEngine('utility')->exploreOnlyWhenNeeded);
+    }
 }

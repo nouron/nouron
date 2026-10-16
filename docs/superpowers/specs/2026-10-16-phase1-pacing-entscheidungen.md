@@ -33,7 +33,8 @@ Rg-Kosten, Werkstoff-Kosten, flache 25 Rg je Ausbaustufe, AP je Ausbaustufe, Gru
 
 ## Offene Variablen
 
-- **Erkundung:** Der Bot gibt ~45 von ~117 Phase-1-AP für `explore_tile` aus. Wie viel Erkundung Phase 1 braucht, ist offen (Q19).
+- **Erkundung (geklärt 2026-10-16, Q19):** Der Default-Bot gibt ~45 von ~117 Phase-1-AP für `explore_tile` aus. Gebäude-Platzierung braucht keine Erkundung, nur der Harvester-Umzug (`ColonyController.php:406-412`). Profil `lean-explore` erkundet nur dafür: 0 Erkundungs-AP, Phase-1-Ende bei Grund-AP 12/7/6 = Sol 9/10/11 (Default-Profil: 9/12/13).
+- **Phase 1 ist in allen Messungen Regolith-gebunden (gemessen):** Rg-Einkommen ist ab Sol 5 konstant ~21/Sol; verfügbares Rg am Phase-1-Ende liegt immer bei ~426–430 (also Bot kauft das Minimum und Phase 1 endet, sobald das Rg reicht). Grund-AP wirkt fast nur darüber, dass der **Harvester später Einkommen liefert** (erstes Einkommen Sol 3 bei Grund-AP 12, Sol 4–5 bei 7, Sol 5 bei 6). Ein Rg-Puffer kostet damit Zeit: ~+5 Sol je 100 Rg. Offen: wie Phase 1 für den Minimum-Spieler länger wird, ohne das Einkommen zu verzögern (Zeit-Bremse statt Rg- oder Grund-AP-Bremse).
 - **Grund-AP** 12 → 7 oder 6, davon hängt Phase 1 und das Tempo danach ab (Phase 2+ ungemessen).
 - **Regolith-Hebel** für den Puffer: Start-Rg, Pflichtgebäude-Kosten oder Harvester-Ertrag (Q18).
 
@@ -55,6 +56,7 @@ Regeln: eine Änderung pro Messung; vorher Hypothese und erwartete Zahlen notier
 | 5 | Bot nach Fix, Grund-AP 12 | Sol 8–9, 0 Fails | Minimum bei Sol 8–9 fertig |
 | Sweep | Grund-AP 8 / 7 / 6 | Sol 11 / 12 / 13 | Puffer ≈ 0 bei Start 300 |
 | Sweep | 7 mit Start 360 / 400, 6 mit 360 | Sol 12 / 12 / 13 | Puffer 59 / 99 / 77 (Median) |
+| Q19 | Profil `lean-explore`, Grund-AP 12 / 7 / 6 | Sol 9 / 10 / 11 (Spanne 7–11) | Erkundungs-AP 0 statt 45; Rg-Puffer ≈ −15 (Rg-gebunden); Labor steckt freie AP in Forschung (nicht vergleichbar). Hinweis: Batchgrenzen per Zeitstempel getrennt, `--since` allein mischt Batches. |
 
 ## Änderungen
 

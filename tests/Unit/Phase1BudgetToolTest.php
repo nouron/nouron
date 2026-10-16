@@ -21,10 +21,10 @@ class Phase1BudgetToolTest extends TestCase
         rmdir($this->dir);
     }
 
-    private function report(string $opening, int $seed, int $p2, array $log, array $perSol, int $start = 300): void
+    private function report(string $opening, int $seed, int $p2, array $log, array $perSol, int $start = 300, string $profile = 'default'): void
     {
-        file_put_contents("{$this->dir}/default.utility-{$opening}-{$seed}-20261016_100000.json", json_encode([
-            'seed' => $seed, 'profile' => 'default', 'opening' => $opening, 'engine' => 'utility',
+        file_put_contents("{$this->dir}/{$profile}.utility-{$opening}-{$seed}-20261016_100000.json", json_encode([
+            'seed' => $seed, 'profile' => $profile, 'opening' => $opening, 'engine' => 'utility',
             'outcome' => ['status' => 'active', 'fail_reason' => null],
             'phase2_start_sol' => $p2,
             'log' => $log,
@@ -89,5 +89,18 @@ class Phase1BudgetToolTest extends TestCase
         $res = $this->run_tool('--since=20261016_110000');
 
         $this->assertSame([], $res);
+    }
+
+    public function test_profile_filter_keeps_only_matching_profile_reports(): void
+    {
+        $this->report('labor', 1, 3, [], [], 300, 'default');
+        $this->report('labor', 2, 5, [], [], 300, 'lean-explore');
+
+        $all = $this->run_tool();
+        $lean = $this->run_tool('--profile=lean-explore');
+
+        $this->assertSame(2, $all['labor']['runs']);
+        $this->assertSame(1, $lean['labor']['runs']);
+        $this->assertSame(5, $lean['labor']['p1_end_sol']['median']);
     }
 }
