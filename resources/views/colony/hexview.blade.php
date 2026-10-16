@@ -277,8 +277,14 @@
                              possible. --}}
                             <template x-if="buildingCanLevelUp(selectedBuilding)">
                                 <button class="tile-action-btn tile-action-btn--barred"
-                                    :class="canRepair(selectedBuilding) ? 'tile-action-btn--secondary' : ''"
+                                    :class="{
+                                        'tile-action-btn--secondary': canRepair(selectedBuilding),
+                                        'tile-action-btn--hascap': !!selectedBuilding.ap_cap,
+                                        'tile-action-btn--capped': apCapReached(selectedBuilding),
+                                    }"
                                     x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
+                                    :aria-disabled="apCapReached(selectedBuilding) ? 'true' : null"
+                                    :aria-describedby="selectedBuilding.ap_cap ? 'ap-cap-tip' : null"
                                     @click="doInvestAp(selectedBuilding)">
                                     <span class="tile-action-btn__body">
                                         <span class="tile-action-btn__main"
@@ -291,6 +297,9 @@
                                         "type" => "build",
                                     ])
                                     @include("colony.partials.ap-bar", ["hoverExpr" => "hover"])
+                                    <span id="ap-cap-tip" class="tile-action-btn__tip" role="tooltip">
+                                        {{ __("colony.ap_cap_tooltip") }}
+                                    </span>
                                 </button>
                             </template>
                             <template

@@ -471,12 +471,46 @@ function colonyHexView(config) {
             }
         },
 
+        // Per-building per-Sol AP cap (game.build.ap_cap_per_sol): true once today's
+        // allowance of this building is used up. Always false while the cap is off.
+        apCapReached(building) {
+            return !!building?.ap_cap && building.ap_cap.remaining <= 0;
+        },
+
+        // Left offset (percent of bar width) of the "day limit" marker: the boundary after
+        // the segments still investable today. null = no marker (cap off, or boundary at bar end).
+        apCapLimitPos(building) {
+            const cap = building?.ap_cap;
+            if (!cap || !building.ap_for_levelup) return null;
+            const boundary = Math.min(building.ap_spend + Math.max(cap.remaining, 0), building.ap_for_levelup);
+            if (boundary >= building.ap_for_levelup) return null;
+            return (boundary / building.ap_for_levelup) * 100;
+        },
+
+        // Extra CSS classes for segment i (1-based) of the Ausbauen AP bar. With the cap
+        // off only the plain filled state applies, so the bar looks as it always did.
+        // Capped: filled-earlier / filled-today / free-today (default) / locked-today.
+        apSegClasses(building, i) {
+            const cap = building.ap_cap;
+            const spend = building.ap_spend;
+            if (!cap) return { 'btn-seg--filled': i <= spend };
+            const earlier = spend - cap.spent;
+            return {
+                'btn-seg--filled': i <= spend,
+                'btn-seg--today': i > earlier && i <= spend,
+                'btn-seg--free': i > spend && i <= spend + Math.max(cap.remaining, 0),
+                'btn-seg--locked': i > spend + Math.max(cap.remaining, 0),
+            };
+        },
+
         async doInvestAp(building) {
+            if (this.apCapReached(building)) return;
             const res = await this.post(this.routes.investBuilding, {
                 building_id: building.building_id,
                 instance_id: building.instance_id ?? 1,
             });
             if (res.ok) {
+                if (res.ap_cap !== undefined && res.building) res.building.ap_cap = res.ap_cap;
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
@@ -507,6 +541,12 @@ function colonyHexView(config) {
                     if (res.leveled_up) this.$nextTick(() => this.redrawGrid());
                 }
             } else {
+                if (res.error === 'building_ap_cap' && building.ap_cap) {
+                    // Server says today's allowance is gone: lock the bar without a reload.
+                    const cap = res.cap ?? building.ap_cap.cap;
+                    this.updateBuilding({ ...building, ap_cap: { cap, spent: cap, remaining: 0 } });
+                    if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+                }
                 let msg = res.message ?? res.error;
                 if (res.error === 'resource_limit' && res.cost?.[3]) {
                     const needed = res.cost[3];
