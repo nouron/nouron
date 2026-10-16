@@ -29,6 +29,8 @@
             colony: @json(["id" => $colony->id, "name" => $colony->name]),
             ccLevel: {{ (int) $ccLevel }},
             harvesterSecondCcLevel: {{ (int) config("game.harvester.second_instance_cc_level", 3) }},
+            buildingCcLevelOffset: {{ (int) config("game.building_cc_level_offset", 0) }},
+            ccGateTemplate: @json(__("colony.error_building_cc_gate", ["level" => ":level"])),
             ccBuildingId: {{ \App\Enums\BuildingId::CommandCenter->value }},
             buildings: @json($buildings),
             buildingCatalog: @json($buildingChipData->map(fn($chip) => ["label" => $chip["label"]])),
@@ -285,6 +287,7 @@
                                         \Illuminate\Support\Js::from(__("colony.invest_ap")) .
                                         " + ' ' + selectedBuilding.ap_spend + '/' + selectedBuilding.ap_for_levelup",
                                     "classExpr" => "'tile-action-btn--secondary': canRepair(selectedBuilding),",
+                                    "gateReasonExpr" => "ccGateReason(selectedBuilding)",
                                     "tipId" => "ap-cap-tip",
                                 ])
                             </template>

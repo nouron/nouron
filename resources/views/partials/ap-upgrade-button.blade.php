@@ -16,6 +16,8 @@
                        "day limit" marker at ap_spend + remaining, and a hover/focus
                        tooltip (colony.ap_cap_tooltip). remaining <= 0 disables the
                        button (aria-disabled, tooltip stays reachable).
+      Cap decoration (states, marker) only shows once ap_spend > 0; at a level
+                       start the bar is plain. Reached-state/tooltip are independent of that.
       Knowledge rows carry no ap_cap yet; the states appear automatically once they do.
 
     Params:
@@ -28,21 +30,28 @@
                      "'tile-action-btn--secondary': canRepair(selectedBuilding)".
       blockedExpr  — optional extra Alpine condition that disables the button
                      (e.g. no AP left), besides the per-Sol cap.
+      gateReasonExpr — optional Alpine expression yielding a prerequisite-unmet reason
+                     text (string) or null. A reason blocks the button (same disabled
+                     look/aria-disabled) and its text is the tooltip; it takes precedence
+                     over the day-cap reason. The cap tooltip shows only when a cap applies
+                     (capped, or the day-limit marker is visible).
       tipId        — unique id of the tooltip element (aria-describedby).
 --}}
 @php
-    $blocked = "apCapReached({$row})" . (!empty($blockedExpr) ? " || ({$blockedExpr})" : "");
+    $gate = !empty($gateReasonExpr) ? $gateReasonExpr : "null";
+    $blocked = "!!({$gate}) || apCapReached({$row})" . (!empty($blockedExpr) ? " || ({$blockedExpr})" : "");
+    $tipOn = "!!({$gate}) || apCapTipApplies({$row})";
     $tipId = $tipId ?? "ap-cap-tip";
 @endphp
 <button class="tile-action-btn tile-action-btn--barred ap-upgrade-btn"
     :class="{
         {!! $classExpr ?? "" !!}
-            'tile-action-btn--hascap': !!{{ $row }}.ap_cap,
+            'tile-action-btn--hascap': {{ $tipOn }},
             'tile-action-btn--capped': {{ $blocked }},
     }"
     x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
     :aria-disabled="({{ $blocked }}) ? 'true' : null"
-    :aria-describedby="{{ $row }}.ap_cap ? '{{ $tipId }}' : null"
+    :aria-describedby="({{ $tipOn }}) ? '{{ $tipId }}' : null"
     @click="if (!({{ $blocked }})) { {{ $click }} }">
     <span class="tile-action-btn__body">
         <span class="tile-action-btn__main" x-text="{{ $btnLabel }}"></span>
@@ -59,6 +68,6 @@
         <span class="btn-seg-limit" x-show="apCapLimitPos({{ $row }}) !== null" x-cloak
             :style="{ left: apCapLimitPos({{ $row }}) + '%' }"></span>
     </span>
-    <span id="{{ $tipId }}" class="tile-action-btn__tip"
-        role="tooltip">{{ __("colony.ap_cap_tooltip") }}</span>
+    <span id="{{ $tipId }}" class="tile-action-btn__tip" role="tooltip"
+        x-text="{{ $gate }} || {{ \Illuminate\Support\Js::from(__("colony.ap_cap_tooltip")) }}"></span>
 </button>

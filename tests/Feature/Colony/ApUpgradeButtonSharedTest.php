@@ -85,4 +85,41 @@ class ApUpgradeButtonSharedTest extends TestCase
         // The capped red button keeps its red background (no pale pink that hides the bar).
         $this->assertStringNotContainsString('#e8c4bf', $css);
     }
+
+    public function test_cap_decoration_only_shows_once_ap_was_invested(): void
+    {
+        $js = file_get_contents(public_path('js/ap-bar.js'));
+
+        // Level start (ap_spend 0): plain bar and no marker; reached-state stays independent.
+        $this->assertStringContainsString('if (!cap || spend === 0)', $js);
+        $this->assertStringContainsString('row.ap_spend === 0', $js);
+        $this->assertMatchesRegularExpression('/apCapReached\(row\) \{\s*return !!row\?\.ap_cap && row\.ap_cap\.remaining <= 0;/', $js);
+    }
+
+    public function test_gate_blocked_state_with_reason_precedence_over_cap_tooltip(): void
+    {
+        $js = file_get_contents(public_path('js/ap-bar.js'));
+        $this->assertStringContainsString('apCapTipApplies', $js);
+
+        $partial = file_get_contents(resource_path('views/partials/ap-upgrade-button.blade.php'));
+        $this->assertStringContainsString('gateReasonExpr', $partial);
+        // Gate reason wins over the cap text in the tooltip.
+        $this->assertMatchesRegularExpression('/\{\{ \$gate \}\} \|\| /', $partial);
+
+        $hex = file_get_contents(public_path('js/colony-hexgrid.js'));
+        $this->assertStringContainsString('ccGateReason(building)', $hex);
+    }
+
+    public function test_gate_tooltip_text_is_the_servers_gate_error_text(): void
+    {
+        $html = $this->actingAs(User::where('user_id', 3)->firstOrFail())
+            ->get(route('colony.view'))->assertOk()->getContent();
+
+        $text = __('colony.error_building_cc_gate', ['level' => ':level']);
+        $this->assertStringContainsString(json_encode($text), $html);
+        $this->assertStringContainsString('buildingCcLevelOffset', $html);
+        // Single rule definition: the server uses the same lang key and config offset.
+        $controller = file_get_contents(app_path('Http/Controllers/Colony/ColonyController.php'));
+        $this->assertStringContainsString("__('colony.error_building_cc_gate'", $controller);
+    }
 }

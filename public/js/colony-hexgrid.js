@@ -95,6 +95,8 @@ function colonyHexView(config) {
         colony: config.colony,
         ccLevel: config.ccLevel,
         harvesterSecondCcLevel: config.harvesterSecondCcLevel ?? 3,
+        buildingCcLevelOffset: config.buildingCcLevelOffset ?? 0,
+        ccGateTemplate: config.ccGateTemplate ?? '',
         ccBuildingId: config.ccBuildingId ?? 25,
         buildings: config.buildings ?? [],
         buildingCatalog: config.buildingCatalog ?? {},
@@ -1069,6 +1071,18 @@ function colonyHexView(config) {
 
         // Levelling up is possible while the building is below its max level
         // (null max_level = unlimited).
+        // CC level gate (mirror of BuildingService::ccLevelTooLow, the server stays the source
+        // of truth): a non-CC level N needs CC level >= N - offset. Returns the reason text
+        // (the server's own error text) or null when the level-up is allowed.
+        ccGateReason(building) {
+            if (!building || building.building_id === this.ccBuildingId) return null;
+            const cc = this.buildings.find((b) => b.building_id === this.ccBuildingId);
+            const ccLevel = cc ? cc.level : this.ccLevel;
+            const required = building.level + 1 - this.buildingCcLevelOffset;
+            if (ccLevel >= required) return null;
+            return this.ccGateTemplate.replace(':level', required);
+        },
+
         buildingCanLevelUp(building) {
             return !!building && (building.max_level === null || building.level < building.max_level);
         },
