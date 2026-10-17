@@ -371,6 +371,7 @@ return [
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
+    'sol_report_supply_used' => ':used of :cap occupied',
     'sol_report_food' => 'Provisions',
     'sol_report_food_ok' => ':amount Organics distributed to the kitchens — the colony is fed',
     'sol_report_overcap' => 'Shelter',
@@ -400,11 +401,15 @@ return [
 
     // Screen 2 — Phase progress
     'sol_report_screen2_title' => 'Phase Progress',
-    'sol_report_phase1_title' => 'Phase 1 — Stabilisation',
+    'sol_report_phase1_title' => 'Phase 1 — Foundation',
     'sol_report_phase2_title' => 'Phase 2 — Nexus Directives',
-    'sol_report_phase1_cc' => 'Command Center at Level 3',
-    'sol_report_phase1_buildings' => '2 buildings at Level 2',
-    'sol_report_phase1_advisors' => '3 active advisors',
+    'sol_report_phase1_cc_level' => 'Command Center at Level 2',
+    'sol_report_phase1_harvester' => 'Harvester built',
+    'sol_report_phase1_housing' => 'Housing complex built',
+    'sol_report_phase1_agrardom' => 'Agrardom built',
+    'sol_report_phase1_uplink' => 'Uplink station built',
+    'sol_report_phase1_path_building' => 'One path building built (Sciencelab, Hangar or Cantina)',
+    'sol_report_phase1_advisors' => '2 active advisors',
     'sol_report_phase2_objective_hidden' => 'Directive not yet known — unlocked during play',
     'sol_report_phase2_objective_done' => 'Fulfilled',
     'sol_report_next_screen' => 'Continue',

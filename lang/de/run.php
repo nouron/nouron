@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'phase1_complete' => 'Phase 1 abgeschlossen — Die Stabilisierungsphase ist erreicht. Nexus aktiviert die nächste Direktivenreihe.',
+    'phase1_complete' => 'Phase 1 abgeschlossen — Der Grundaufbau steht. Nexus aktiviert die nächste Direktivenreihe.',
     'run_completed' => 'Mission erfüllt — Die Expedition ist abgeschlossen. Die Kolonie besteht weiter, trotz allem.',
     'run_failed_trust' => 'Abberufung — Das Vertrauen der Kolonisten ist zerbröckelt. Die Führung wird abberufen.',
     'run_failed_time' => 'Zeitablauf — Die Konzessionslaufzeit ist verstrichen. Der Nexus zieht den Direktor zurück.',
@@ -25,7 +25,7 @@ return [
     'result_title_failed' => 'Mission gescheitert',
     'result_fail_trust' => 'Die Kolonisten haben die Führung aufgegeben. Das Vertrauen ist zu weit gesunken.',
     'result_fail_time' => 'Die Konzessionslaufzeit ist verstrichen, ohne dass das Ziel erreicht wurde.',
-    'result_fail_phase1_deadline' => 'Die Stabilisierungsphase wurde nicht rechtzeitig abgeschlossen. Nexus hat die Reißleine gezogen.',
+    'result_fail_phase1_deadline' => 'Der Grundaufbau wurde nicht rechtzeitig abgeschlossen. Nexus hat die Reißleine gezogen.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Erreicht in Sol :current von :limit',
     'result_objective_fulfilled' => 'Erfüllt',

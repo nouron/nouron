@@ -39,38 +39,54 @@ class RunProgressService
      */
     public function checkPhase1Completion(Run $run): bool
     {
-        $ccId = BuildingId::CommandCenter->value;
+        return collect($this->phase1Criteria((int) $run->colony_id, (int) $run->current_tick))
+            ->every(fn (array $c): bool => $c['done']);
+    }
 
-        // Phase 1 = Grundaufbau (Owner 2026-10-15, GDD §15): CC Lv2; Harvester, Wohnhabitat,
-        // Agrardom, Uplink-Station and one path building each at Lv1+; two available advisors. CC Lv3 and
-        // the second path building open Phase 2.
+    /**
+     * Phase-1 (Grundaufbau) criteria with progress — single source of truth for both
+     * checkPhase1Completion() and the progress screens (ColonyService::getPhaseProgress).
+     *
+     * @return list<array{key: string, current: int, target: int, done: bool}>
+     */
+    public function phase1Criteria(int $colonyId, int $currentTick): array
+    {
         $levels = DB::table('colony_buildings')
-            ->where('colony_id', $run->colony_id)
+            ->where('colony_id', $colonyId)
             ->where('level', '>=', 1)
             ->pluck('level', 'building_id');
         $standing = fn (int $id): bool => $levels->has($id);
 
-        if ((int) $levels->get($ccId, 0) < 2) {
-            return false;
+        $criteria = [];
+        $criteria[] = $this->criterion('cc_level', min((int) $levels->get(BuildingId::CommandCenter->value, 0), 2), 2);
+
+        $basics = [
+            'harvester' => BuildingId::Harvester,
+            'housing' => BuildingId::Housing,
+            'agrardom' => BuildingId::BioFacility,
+            'uplink' => BuildingId::UplinkStation,
+        ];
+        foreach ($basics as $key => $id) {
+            $criteria[] = $this->criterion($key, $standing($id->value) ? 1 : 0, 1);
         }
 
-        $basics = [BuildingId::Harvester->value, BuildingId::Housing->value, BuildingId::BioFacility->value, BuildingId::UplinkStation->value];
-        if (! collect($basics)->every($standing)) {
-            return false;
-        }
+        $criteria[] = $this->criterion('path_building', collect(PathBuildingGateService::PATH_BUILDING_IDS)->contains($standing) ? 1 : 0, 1);
 
-        if (! collect(PathBuildingGateService::PATH_BUILDING_IDS)->contains($standing)) {
-            return false;
-        }
-
-        $activeAdvisors = Advisor::where('colony_id', $run->colony_id)
-            ->where(function ($q) use ($run): void {
+        $activeAdvisors = Advisor::where('colony_id', $colonyId)
+            ->where(function ($q) use ($currentTick): void {
                 $q->whereNull('unavailable_until_tick')
-                    ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+                    ->orWhere('unavailable_until_tick', '<', $currentTick);
             })
             ->count();
+        $criteria[] = $this->criterion('advisors', min($activeAdvisors, 2), 2);
 
-        return $activeAdvisors >= 2;
+        return $criteria;
+    }
+
+    /** @return array{key: string, current: int, target: int, done: bool} */
+    private function criterion(string $key, int $current, int $target): array
+    {
+        return ['key' => $key, 'current' => $current, 'target' => $target, 'done' => $current >= $target];
     }
 
     // ── Phase transition ─────────────────────────────────────────────────────

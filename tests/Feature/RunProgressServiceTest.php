@@ -58,8 +58,10 @@ namespace Tests\Feature;
 
 use App\Events\RunEnded;
 use App\Models\Advisor;
+use App\Models\Colony;
 use App\Models\Run;
 use App\Models\RunObjective;
+use App\Services\ColonyService;
 use App\Services\RunProgressService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -273,6 +275,39 @@ class RunProgressServiceTest extends TestCase
         Advisor::where('colony_id', $this->colonyId)->where('personell_id', 36)->delete();
 
         $this->assertFalse($this->service->checkPhase1Completion($this->makeRun()));
+    }
+
+    public function test_phase_progress_lists_exactly_the_grundaufbau_criteria(): void
+    {
+        $this->makeGrundaufbau();
+        $this->makeRun();
+        $colony = Colony::findOrFail($this->colonyId);
+
+        $progress = app(ColonyService::class)->getPhaseProgress($colony);
+
+        $this->assertSame(1, $progress['phase']);
+        $this->assertSame(
+            ['cc_level', 'harvester', 'housing', 'agrardom', 'uplink', 'path_building', 'advisors'],
+            array_column($progress['criteria'], 'key')
+        );
+        $this->assertSame([true], array_values(array_unique(array_column($progress['criteria'], 'done'))));
+    }
+
+    public function test_phase_progress_flags_missing_uplink_and_path_building_and_agrees_with_completion(): void
+    {
+        $this->makeGrundaufbau();
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->whereIn('building_id', [54, 31, 44, 52])->update(['level' => 0]);
+        $run = $this->makeRun();
+        $colony = Colony::findOrFail($this->colonyId);
+
+        $criteria = collect(app(ColonyService::class)->getPhaseProgress($colony)['criteria'])->keyBy('key');
+
+        $this->assertFalse($criteria['uplink']['done']);
+        $this->assertFalse($criteria['path_building']['done']);
+        $this->assertTrue($criteria['cc_level']['done']);
+        $this->assertSame(2, $criteria['cc_level']['target']);
+        $this->assertSame(2, $criteria['advisors']['target']);
+        $this->assertFalse($this->service->checkPhase1Completion($run));
     }
 
     // ── drawObjectives ────────────────────────────────────────────────────────

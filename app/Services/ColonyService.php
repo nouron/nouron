@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\BuildingId;
-use App\Models\Advisor;
 use App\Models\Colony;
 use App\Services\Concerns\ValidatesId;
 use Illuminate\Support\Collection;
@@ -126,53 +124,13 @@ class ColonyService
         }
 
         $colonyId = $colony->id;
-        $ccId = BuildingId::CommandCenter->value;
-
         if ((int) $run->phase === 1) {
-            $ccLevel = (int) (DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', $ccId)
-                ->value('level') ?? 0);
+            $criteria = array_map(
+                fn (array $c): array => $c + ['label' => __('colony.sol_report_phase1_'.$c['key'])],
+                app(RunProgressService::class)->phase1Criteria($colonyId, (int) $run->current_tick)
+            );
 
-            $buildingsLv2 = DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', '!=', $ccId)
-                ->where('level', '>=', 2)
-                ->count();
-
-            $advisorCount = Advisor::where('colony_id', $colonyId)
-                ->where(function ($q) use ($run): void {
-                    $q->whereNull('unavailable_until_tick')
-                        ->orWhere('unavailable_until_tick', '<', $run->current_tick);
-                })
-                ->count();
-
-            return [
-                'phase' => 1,
-                'criteria' => [
-                    [
-                        'key' => 'cc_level',
-                        'label' => __('colony.sol_report_phase1_cc'),
-                        'current' => min($ccLevel, 3),
-                        'target' => 3,
-                        'done' => $ccLevel >= 3,
-                    ],
-                    [
-                        'key' => 'buildings_lv2',
-                        'label' => __('colony.sol_report_phase1_buildings'),
-                        'current' => min($buildingsLv2, 2),
-                        'target' => 2,
-                        'done' => $buildingsLv2 >= 2,
-                    ],
-                    [
-                        'key' => 'advisors',
-                        'label' => __('colony.sol_report_phase1_advisors'),
-                        'current' => min($advisorCount, 3),
-                        'target' => 3,
-                        'done' => $advisorCount >= 3,
-                    ],
-                ],
-            ];
+            return ['phase' => 1, 'criteria' => $criteria];
         }
 
         $taskCatalog = app(RunTaskCatalog::class);

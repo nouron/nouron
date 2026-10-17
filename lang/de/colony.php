@@ -659,6 +659,7 @@ return [
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
+    'sol_report_supply_used' => ':used von :cap belegt',
     'sol_report_food' => 'Verpflegung',
     'sol_report_food_ok' => ':amount Organika in die Küchen geflossen — die Kolonie ist versorgt',
     'sol_report_overcap' => 'Unterkunft',
@@ -688,11 +689,15 @@ return [
 
     // Screen 2 — Phase progress
     'sol_report_screen2_title' => 'Fortschritt der Phase',
-    'sol_report_phase1_title' => 'Phase 1 — Stabilisierung',
+    'sol_report_phase1_title' => 'Phase 1 — Grundaufbau',
     'sol_report_phase2_title' => 'Phase 2 — Nexus-Direktiven',
-    'sol_report_phase1_cc' => 'Kontrollzentrum auf Stufe 3',
-    'sol_report_phase1_buildings' => '2 Gebäude auf Stufe 2',
-    'sol_report_phase1_advisors' => '3 aktive Berater',
+    'sol_report_phase1_cc_level' => 'Kontrollzentrum auf Stufe 2',
+    'sol_report_phase1_harvester' => 'Harvester gebaut',
+    'sol_report_phase1_housing' => 'Wohnhabitat gebaut',
+    'sol_report_phase1_agrardom' => 'Agrardom gebaut',
+    'sol_report_phase1_uplink' => 'Uplink-Station gebaut',
+    'sol_report_phase1_path_building' => 'Ein Pfadgebäude gebaut (Labor, Hangar oder Cantina)',
+    'sol_report_phase1_advisors' => '2 aktive Berater',
     'sol_report_phase2_objective_hidden' => 'Direktive noch unbekannt — im Spielverlauf erspielt',
     'sol_report_phase2_objective_done' => 'Erfüllt',
     'sol_report_next_screen' => 'Weiter',

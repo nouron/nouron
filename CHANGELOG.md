@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-17
+
+- Fix: Phase-1-Ziele (Sol-Übersicht und Kommandozentrale) zeigen jetzt den echten Grundaufbau (Kontrollzentrum Stufe 2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude, 2 Berater); eine gemeinsame Prüfung (`RunProgressService::phase1Criteria`) speist Abschluss und Anzeige. Titel "Grundaufbau" statt "Stabilisierung".
+- Fix: Berater-Slot-Hinweis nennt nur noch Pfadgebäude, deren Berater noch nicht angestellt ist.
+- Fix: Hinweisleiste: eine offene Baustelle mit freiem AP-Deckel gewinnt auch ab Kontrollzentrum Stufe 2 gegen die "AP übrig"-/Erkunden-Hinweise (vorher nur bis Stufe 1).
+- Fix: Karte zeigt nach einem Fehlalarm keinen orangen Ereignis-Marker/Farbe mehr (`hasActiveEvent` in `colony-hexgrid.js`).
+- Fix: Sol-Übersicht zeigt bei "Kolonisten" belegte von maximalen Plätzen statt nur der Kappe.
+
 ## 2026-10-16
 
 - Fix/Tooling: PlaytestBot kauft in Phase 1 erst die Pflichtgebäude (Schranke auf CC Lv2, Stufen, Platzierung; vorher scheiterten 13 von 24 Läufen am Bot), neue Mess-Tabelle `tools/phase1-budget.php`, Economy-Modell mit Phase-1-Kaufliste, Skill `nouron-balance-pass` und Entscheidungsdokument `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`. Keine Config-Änderung.

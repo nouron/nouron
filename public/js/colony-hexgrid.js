@@ -1774,7 +1774,7 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     }
 
     // Event indicator dot (top-left, orange — only when deep-scanned)
-    if (tile.is_deep_scanned && tile.event_type) {
+    if (hasActiveEvent(tile)) {
         g.appendChild(svgCircle(cx - size * 0.38, cy - size * 0.38, 4, '#e67e22', '#fff'));
     }
 
@@ -1831,11 +1831,17 @@ function buildFogDefs() {
     return defs;
 }
 
+// Deep-scanned tile with something left to act on. A resolved Fehlalarm (find_false) has
+// no yield, so it must not keep the event marker/colour on the map.
+function hasActiveEvent(tile) {
+    return !!tile.is_deep_scanned && !!tile.event_type && tile.event_type !== 'find_false';
+}
+
 function getTileColor(tile) {
     if (!tile.is_explored && !tile.is_colony_zone) return LOCKED_COLOR; // state 4: exploration-zone fog
     if (!tile.is_explored) return FOG_COLOR; // state 3: colony-zone fog (buildable but undiscovered)
     if (tile.q === 0 && tile.r === 0) return CC_COLOR;
-    if (tile.is_deep_scanned && tile.event_type) return EVENT_COLOR;
+    if (hasActiveEvent(tile)) return EVENT_COLOR;
 
     // Colony-zone terrain_empty is clearly lighter than exploration zone.
     if (tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable') {
@@ -1851,7 +1857,7 @@ function getTileStroke(tile, isCC) {
     if (!tile.is_explored && !tile.is_colony_zone) return [LOCKED_STROKE, '1.5'];
     // State 3 (colony-zone fog): dashed border echoes the "buildable" affordance.
     if (!tile.is_explored) return [FOG_STROKE, '1.5'];
-    if (tile.is_deep_scanned && tile.event_type) return [EVENT_STROKE, '1.5'];
+    if (hasActiveEvent(tile)) return [EVENT_STROKE, '1.5'];
     if (tile.tile_type === 'terrain_impassable') return ['#555', '0'];
 
     // Colony-zone terrain: lighter stroke matching the buildable fill.
