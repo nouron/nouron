@@ -3,6 +3,22 @@
    Kenntnis button). Loaded after colony.css by layouts/colony.blade.php; the base
    .btn-segbar/.btn-seg/.tile-action-btn rules stay in colony.css. */
 
+/* Segments wrap into rows of at most 10 (ap-bar.js apBarLayout sets --seg-cols per bar and
+   --seg-rows per button): 1 segment = 1 AP stays legible for big costs. The bar grows upward
+   from its bottom anchor, so the button reserves one extra strip of height per additional row. */
+.btn-segbar--ap {
+    display: grid;
+    grid-template-columns: repeat(var(--seg-cols, 10), minmax(0, 1fr));
+    height: auto;
+    gap: 2px;
+}
+.btn-segbar--ap .btn-seg {
+    height: 0.28rem;
+}
+.ap-upgrade-btn {
+    padding-bottom: calc(0.8rem + (var(--seg-rows, 1) - 1) * (0.28rem + 2px));
+}
+
 /* On the Ausbauen button (secondary white, or red primary when no repair is
    pending): green fill reads on both; neutral translucent empty track. */
 .btn-segbar--ap .btn-seg {
@@ -29,8 +45,8 @@
    layout of the segments is untouched. */
 .btn-seg-limit {
     position: absolute;
-    top: -0.2rem;
-    bottom: -0.2rem;
+    top: calc(var(--limit-row, 0) * (0.28rem + 2px) - 0.2rem);
+    height: calc(0.28rem + 0.4rem);
     width: 2px;
     margin-left: -1px;
     background: #1a1a1a;

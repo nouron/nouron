@@ -285,6 +285,21 @@ class BuildResourceSinkTest extends TestCase
         $this->assertSame(11, $sp);
     }
 
+    public function test_building_row_carries_the_regolith_repair_cost_actually_charged(): void
+    {
+        $this->ensureBuildableTile(1, 0);
+        config(['game.bypass.supply_checks' => true]);
+        $this->place(46, 1, 0)->assertJsonPath('ok', true);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)
+            ->update(['level' => 1, 'status_points' => 10]);
+        $this->setCc(['level' => 2, 'status_points' => 10]);
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
+            ->assertOk()->assertJsonPath('building.repair_cost', 1);
+        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 25])
+            ->assertOk()->assertJsonPath('building.repair_cost', 0);
+    }
+
     // ── Nexus compound import ──────────────────────────────────────────────────
 
     public function test_nexus_import_requires_uplink(): void

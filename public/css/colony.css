@@ -1134,6 +1134,31 @@ button.btn-sol:hover,
     font-size: 0.7rem;
 }
 
+/* Cost chips of one action button (Rg + AP), pinned right and never shrunk */
+.tile-action-btn__costs {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    flex-shrink: 0;
+}
+.tile-action-btn__costs .ap-cost-chip {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.68rem;
+}
+
+/* Regolith cost chip next to the AP chip (partials/rg-cost-chip). "Short" = not
+   enough Regolith for this click. */
+.rg-cost-chip {
+    background: #fdf0e0;
+    color: #8a4a0a;
+}
+.rg-cost-chip--short {
+    background: #fee2e2;
+    color: #b91c1c;
+    text-decoration: line-through;
+}
+
 .tile-action-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -3408,4 +3433,9 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0.5rem 0 0;
     font-size: 0.75rem;
     color: #6b6b7a;
+}
+
+/* Labels next to the cost chips stay on one line where they fit; the chips never shrink. */
+.tile-action-btn--barred .tile-action-btn__main {
+    white-space: nowrap;
 }

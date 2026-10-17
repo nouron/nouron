@@ -13,6 +13,7 @@ return [
     'build_cost_first_level' => 'level 1',
     'first_level_prepaid' => 'Level 1 was paid on placement — completing it only costs AP.',
     'repair' => 'Repair',
+    'repair_full_tooltip' => 'Condition is already at 100 %, nothing to repair.',
     'ap_per_tile' => ':n AP/tile',
 
     // ── Repair errors ─────────────────────────────────────────────────────────

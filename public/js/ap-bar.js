@@ -8,6 +8,8 @@
  * `ap_cap: null | { cap, spent, remaining }` (null/absent = cap off, plain bar).
  */
 window.NouronApBar = {
+    AP_BAR_MAX_COLS: 10,
+
     // True once today's allowance of this row is used up. Always false while the cap is off.
     apCapReached(row) {
         return !!row?.ap_cap && row.ap_cap.remaining <= 0;
@@ -19,14 +21,32 @@ window.NouronApBar = {
         return this.apCapReached(row) || this.apCapLimitPos(row) !== null;
     },
 
-    // Left offset (percent of bar width) of the "day limit" marker (only once AP was invested): the boundary after
-    // the segments still investable today. null = no marker (cap off, or boundary at bar end).
-    apCapLimitPos(row) {
+    // Segments wrap into rows of at most AP_BAR_MAX_COLS so 1 segment = 1 AP stays legible
+    // for big costs. Columns are balanced across the rows (11 -> 2 rows of 6, not 10 + 1).
+    apBarLayout(row) {
+        const n = Math.max(row?.ap_for_levelup ?? 0, 1);
+        const rows = Math.ceil(n / window.NouronApBar.AP_BAR_MAX_COLS);
+        return { rows, cols: Math.ceil(n / rows) };
+    },
+
+    // Position of the "day limit" marker (only once AP was invested): the boundary after the
+    // segments still investable today, as { left: percent of row width, row: 0-based row index }.
+    // null = no marker (cap off, or boundary at bar end).
+    apCapLimitPlace(row) {
         const cap = row?.ap_cap;
         if (!cap || !row.ap_for_levelup || row.ap_spend === 0) return null;
         const boundary = Math.min(row.ap_spend + Math.max(cap.remaining, 0), row.ap_for_levelup);
         if (boundary >= row.ap_for_levelup) return null;
-        return (boundary / row.ap_for_levelup) * 100;
+        const { cols } = this.apBarLayout(row);
+        // A boundary at the start of a row is drawn at the right end of the row above.
+        const rowIdx = Math.ceil(boundary / cols) - 1;
+        return { left: ((boundary - rowIdx * cols) / cols) * 100, row: rowIdx };
+    },
+
+    // Left offset (percent of row width) of the marker, or null (kept for callers that only
+    // need "is there a marker").
+    apCapLimitPos(row) {
+        return this.apCapLimitPlace(row)?.left ?? null;
     },
 
     // CSS classes for segment i (1-based). With the cap off, or at a level start (nothing

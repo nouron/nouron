@@ -258,20 +258,41 @@
                              footer strip inside the button. Local hover flag drives the
                              desktop-only +1 SP ghost segment; CSS gates the ghost to
                              (hover: hover) so it never sticks on touch. A fully repaired
-                             building has no Reparieren button and shows no bar (intended). --}}
-                            <template x-if="canRepair(selectedBuilding)">
+                             building keeps the button, but disabled (aria-disabled, no
+                             bar) with a tooltip giving the reason. Construction sites
+                             (level 0) are not repairable and show no button. --}}
+                            <template x-if="selectedBuilding && selectedBuilding.level >= 1">
                                 <button class="tile-action-btn tile-action-btn--barred" x-data="{ hover: false }"
+                                    :class="{
+                                        'tile-action-btn--secondary': !canRepair(selectedBuilding),
+                                        'tile-action-btn--hascap tile-action-btn--capped': !canRepair(selectedBuilding),
+                                    }"
+                                    :aria-disabled="canRepair(selectedBuilding) ? null : 'true'"
+                                    :aria-describedby="canRepair(selectedBuilding) ? null : 'repair-full-tip'"
                                     @mouseenter="hover = true" @mouseleave="hover = false"
-                                    @click="doRepair(selectedBuilding)">
+                                    @click="if (canRepair(selectedBuilding)) doRepair(selectedBuilding)">
                                     <span class="tile-action-btn__body">
                                         <span class="tile-action-btn__main"
                                             x-text="`{{ __("colony.repair") }} +${repairStepPct(selectedBuilding)} %`"></span>
                                     </span>
-                                    @include("partials.ap-cost-chip", [
-                                        "amount" => 1,
-                                        "type" => "build",
-                                    ])
-                                    @include("colony.partials.condition-bar", ["hoverExpr" => "hover"])
+                                    <span class="tile-action-btn__costs">
+                                        @include("partials.rg-cost-chip", [
+                                            "amountExpr" =>
+                                                "canRepair(selectedBuilding) ? (selectedBuilding.repair_cost ?? 0) : 0",
+                                        ])
+                                        @include("partials.ap-cost-chip", [
+                                            "amount" => 1,
+                                            "type" => "build",
+                                        ])
+                                    </span>
+                                    <template x-if="canRepair(selectedBuilding)">
+                                        @include("colony.partials.condition-bar", [
+                                            "hoverExpr" => "hover",
+                                        ])
+                                    </template>
+                                    <span id="repair-full-tip" class="tile-action-btn__tip" role="tooltip">
+                                        {{ __("colony.repair_full_tooltip") }}
+                                    </span>
                                 </button>
                             </template>
 
@@ -288,6 +309,8 @@
                                         " + ' ' + selectedBuilding.ap_spend + '/' + selectedBuilding.ap_for_levelup",
                                     "classExpr" => "'tile-action-btn--secondary': canRepair(selectedBuilding),",
                                     "gateReasonExpr" => "ccGateReason(selectedBuilding)",
+                                    "rgExpr" =>
+                                        "selectedBuilding.ap_spend === 0 ? (selectedBuilding.levelup_cost ?? 0) : 0",
                                     "tipId" => "ap-cap-tip",
                                 ])
                             </template>

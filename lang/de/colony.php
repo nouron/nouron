@@ -14,6 +14,7 @@ return [
     'build_cost_first_level' => 'Stufe 1',
     'first_level_prepaid' => 'Stufe 1 ist mit der Platzierung bezahlt — der Ausbau kostet nur noch AP.',
     'repair' => 'Reparieren',
+    'repair_full_tooltip' => 'Der Zustand liegt bereits bei 100 %, hier gibt es nichts zu reparieren.',
     'ap_per_tile' => ':n AP/Feld',
     // Owner-Fund 2026-09-05: sichtbare Zustandsanzeige über dem Reparieren-Button.
     // Wert "Zustand" bereits an anderer Stelle exakt für dasselbe Konzept etabliert

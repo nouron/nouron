@@ -5,7 +5,7 @@
     public/css/ap-upgrade-button.css.
 
     The button shows the label, the AP-cost chip and a segmented footer bar (one
-    segment per AP needed). On desktop hover the next segment lights up as a +1 ghost.
+    segment per AP needed, wrapped into rows of at most 10). On desktop hover the next segment lights up as a +1 ghost.
 
     Row contract (the Alpine object named by $row):
       ap_spend, ap_for_levelup            — required, drive the bar
@@ -35,6 +35,8 @@
                      look/aria-disabled) and its text is the tooltip; it takes precedence
                      over the day-cap reason. The cap tooltip shows only when a cap applies
                      (capped, or the day-limit marker is visible).
+      rgExpr       — optional Alpine expression yielding the Regolith this click charges
+                     (rg-cost-chip next to the AP chip; hidden at 0, red when unaffordable).
       tipId        — unique id of the tooltip element (aria-describedby).
 --}}
 @php
@@ -49,15 +51,21 @@
             'tile-action-btn--hascap': {{ $tipOn }},
             'tile-action-btn--capped': {{ $blocked }},
     }"
-    x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
-    :aria-disabled="({{ $blocked }}) ? 'true' : null"
+    x-data="{ hover: false }" :style="{ '--seg-rows': apBarLayout({{ $row }}).rows }" @mouseenter="hover = true"
+    @mouseleave="hover = false" :aria-disabled="({{ $blocked }}) ? 'true' : null"
     :aria-describedby="({{ $tipOn }}) ? '{{ $tipId }}' : null"
     @click="if (!({{ $blocked }})) { {{ $click }} }">
     <span class="tile-action-btn__body">
         <span class="tile-action-btn__main" x-text="{{ $btnLabel }}"></span>
     </span>
-    @include("partials.ap-cost-chip", ["amount" => 1, "type" => $chip ?? "build"])
-    <span class="btn-segbar btn-segbar--ap" aria-hidden="true">
+    <span class="tile-action-btn__costs">
+        @if (!empty($rgExpr))
+            @include("partials.rg-cost-chip", ["amountExpr" => $rgExpr])
+        @endif
+        @include("partials.ap-cost-chip", ["amount" => 1, "type" => $chip ?? "build"])
+    </span>
+    <span class="btn-segbar btn-segbar--ap" aria-hidden="true"
+        :style="{ '--seg-cols': apBarLayout({{ $row }}).cols }">
         <template x-for="i in {{ $row }}.ap_for_levelup" :key="i">
             <span class="btn-seg"
                 :class="{
@@ -65,8 +73,12 @@
                     'btn-seg--ghost': hover && i === {{ $row }}.ap_spend + 1 && !({{ $blocked }}),
                 }"></span>
         </template>
-        <span class="btn-seg-limit" x-show="apCapLimitPos({{ $row }}) !== null" x-cloak
-            :style="{ left: apCapLimitPos({{ $row }}) + '%' }"></span>
+        <span class="btn-seg-limit" x-show="apCapLimitPlace({{ $row }}) !== null" x-cloak
+            :style="{
+                left: apCapLimitPos({{ $row }}) + '%',
+                '--limit-row': apCapLimitPlace({{ $row }})
+                    ?.row ?? 0
+            }"></span>
     </span>
     <span id="{{ $tipId }}" class="tile-action-btn__tip" role="tooltip"
         x-text="{{ $gate }} || {{ \Illuminate\Support\Js::from(__("colony.ap_cap_tooltip")) }}"></span>

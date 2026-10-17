@@ -196,7 +196,8 @@ class BuildingApCapStateTest extends TestCase
         $this->setCap(3);
         $withCapOn = $count();
 
-        $this->assertLessThanOrEqual($withCapOff + 1, $withCapOn, 'cap resolved once per request, not per row');
+        // +3, constant per request (measured with 3 and with 6 added rows): the invest-site hint now runs at every CC level and resolves the cap once.
+        $this->assertLessThanOrEqual($withCapOff + 3, $withCapOn, 'cap resolved once per request, not per row');
         $this->assertGreaterThan(0, $before);
     }
 }

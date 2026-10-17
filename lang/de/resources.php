@@ -47,6 +47,15 @@ return [
     'popup_ap_trust_multiplier' => 'Vertrauen-Multiplikator',
     'popup_ap_plague_multiplier' => 'Seuchenausbruch',
 
+    // Per-Sol balance rows in the Regolith/Organika/Werkstoffe popups
+    'popup_flow_net' => 'Bilanz pro Sol',
+    'popup_flow_harvester' => 'Harvester',
+    'popup_flow_geology' => 'Geologie',
+    'popup_flow_agrardom' => 'Agrardom',
+    'popup_flow_agronomy' => 'Agronomie',
+    'popup_flow_colonists' => 'Kolonisten (Verpflegung)',
+    'popup_flow_none' => 'Keine laufende Produktion — nur Import und Handel.',
+
     'popup_rg_title' => 'Regolith',
     'popup_rg_desc' => 'Das Gestein unter den Füßen. Der Harvester bricht es aus dem Boden — die Kolonie verbaut es. Fast alles, was hier gebaut wird, beginnt mit Regolith.',
 

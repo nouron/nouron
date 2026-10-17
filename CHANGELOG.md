@@ -7,6 +7,10 @@
 - Fix: Hinweisleiste: eine offene Baustelle mit freiem AP-Deckel gewinnt auch ab Kontrollzentrum Stufe 2 gegen die "AP übrig"-/Erkunden-Hinweise (vorher nur bis Stufe 1).
 - Fix: Karte zeigt nach einem Fehlalarm keinen orangen Ereignis-Marker/Farbe mehr (`hasActiveEvent` in `colony-hexgrid.js`).
 - Fix: Sol-Übersicht zeigt bei "Kolonisten" belegte von maximalen Plätzen statt nur der Kappe.
+- UI: AP-Balken im Ausbauen-/Kenntnis-Button bricht in Zeilen zu höchstens 10 Segmenten um (1 Segment = 1 AP, ausgeglichene Zeilenbreite), Tageslimit-Marker folgt in die richtige Zeile.
+- UI: Reparieren-Button bleibt bei 100 % Zustand sichtbar, aber gesperrt mit Tooltip-Grund (`colony.repair_full_tooltip`).
+- UI: Ausbauen- und Reparieren-Button zeigen die Regolith-Kosten als Chip neben dem AP-Chip (Ausbau nur beim Start der Stufe, Reparatur 0 bei Kommandozentrale/Harvester; rot, wenn Regolith fehlt); Server liefert `repair_cost` je Gebäudezeile.
+- UI: Ressourcenleiste zeigt für Regolith, Organika und Werkstoffe eine Bilanz pro Sol nach Quellen (neuer `ResourceFlowService`, spiegelt `game:tick`, per Test gegen den echten Tick abgesichert); Reihenfolge der Leiste jetzt Regolith, Organika, Werkstoffe.
 
 ## 2026-10-16
 

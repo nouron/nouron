@@ -12,6 +12,7 @@ use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OvercapService;
 use App\Services\ProjectBonusService;
+use App\Services\ResourceFlowService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
@@ -186,6 +187,7 @@ class AppServiceProvider extends ServiceProvider
                     $view->with('colonyAp', $advisorService->getAvailableActionPoints($colonyId));
 
                     $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
+                    $view->with('resourceFlow', app(ResourceFlowService::class)->perSol($colonyId));
                     $view->with('overcapStatus', app(OvercapService::class)->status($colonyId));
                     $view->with('apBreakdown', $advisorService->getApBreakdown($colonyId));
 

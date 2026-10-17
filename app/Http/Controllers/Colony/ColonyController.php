@@ -197,6 +197,7 @@ class ColonyController extends BaseController
                 // The 0 -> 1 step of a placed site was paid on placement (T9) — 0 then.
                 $b->levelup_cost = $this->buildingCostService->levelupRegolithDue($b);
                 $b->first_level_prepaid = BuildingCostService::firstLevelPrepaid($b);
+                $b->repair_cost = $this->repairRegolithCost((int) $b->building_id);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp((int) $b->building_id, (int) $b->level + 1, (int) $b->ap_for_levelup));
                 $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
                 $b->ap_cap = $this->apCapService->stateFromRow($apCap, $b);
@@ -965,14 +966,11 @@ class ColonyController extends BaseController
             return $this->fail('repair_full');
         }
 
-        // Repair costs 2 Regolith per click (hard gate, no negative balance). CC and
+        // Repair costs Regolith per click (game.repair.regolith_per_click; hard gate, no negative balance). CC and
         // Harvester are exempt (AP-only) so the Regolith source itself stays repairable —
         // this keeps the decay spiral a recoverable setback, never a hard deadlock.
-        $repairRegolith = config('game.repair.regolith_per_click', 2);
-        $repairCostsRegolith = $buildingId !== BuildingId::CommandCenter->value
-            && $buildingId !== BuildingId::Harvester->value
-            && $repairRegolith > 0
-            && ! config('game.bypass.resource_costs');
+        $repairRegolith = $this->repairRegolithCost($buildingId);
+        $repairCostsRegolith = $repairRegolith > 0;
 
         if ($repairCostsRegolith
             && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]], $colony->id)) {
@@ -1564,12 +1562,28 @@ class ColonyController extends BaseController
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->buildingCostService->levelupRegolithDue($row);
         $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
+        $row->repair_cost = $this->repairRegolithCost((int) $row->building_id);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, $this->buildingCostService->levelupAp((int) $row->building_id, (int) $row->level + 1, (int) $row->ap_for_levelup));
         $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
         $row->ap_cap = $this->apCapService->stateFromRow($this->apCapService->capFor($colonyId), $row);
         unset($row->ap_cap_tick, $row->ap_cap_spent);
 
         return $row;
+    }
+
+    /**
+     * Regolith charged per repair click (the number the Reparieren button shows). CC and
+     * Harvester are exempt (AP-only); 0 as well when resource costs are bypassed.
+     */
+    private function repairRegolithCost(int $buildingId): int
+    {
+        if ($buildingId === BuildingId::CommandCenter->value
+            || $buildingId === BuildingId::Harvester->value
+            || config('game.bypass.resource_costs')) {
+            return 0;
+        }
+
+        return max(0, (int) config('game.repair.regolith_per_click', 1));
     }
 
     private static function buildingImageSlug(string $key): string
