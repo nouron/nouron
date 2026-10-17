@@ -173,4 +173,51 @@ class UpgradeSourceTest extends TestCase
 
         $this->assertContains('invest:28:1', $this->keys($bot));
     }
+
+    /** Phase 2, CC Lv3, every Phase-1 building stands, lambda decayed to ~0 by idle AP. */
+    private function idleLambdaBot(int $sciencelabLevel): BotSession
+    {
+        $bot = $this->boot(10);
+        $this->setPhase($bot, 2);
+        $this->setCc($bot, 3);
+        $this->placeAt($bot, 41, 1);
+        $this->placeAt($bot, BuildingId::Hangar->value, 2);
+        $this->placeAt($bot, BuildingId::Sciencelab->value, $sciencelabLevel, apSpend: 1);
+        $bot->lambdaAp = 0.001;
+
+        return $bot;
+    }
+
+    public function test_a_placed_level_0_path_building_is_offered_even_when_lambda_has_decayed(): void
+    {
+        // Measured (hangar seed 2): Sciencelab Lv0 from Sol 26 to 45 with idle AP; advisor_slot(lambda ~ 0) < 0 hid the step.
+        $bot = $this->idleLambdaBot(0);
+
+        $this->assertContains('invest:31:1', $this->keys($bot));
+        $this->assertSame('invest:31:1', $this->pick($bot, 'hangar')?->key);
+    }
+
+    public function test_the_path_unlock_value_does_not_depend_on_lambda(): void
+    {
+        $net = function (float $lambda): float {
+            $bot = $this->idleLambdaBot(0);
+            $bot->lambdaAp = $lambda;
+            $ctx = BotContext::capture($bot, BotProfile::named('default'), withGoal: true);
+            $c = collect((new UpgradeSource(17))->candidates($bot, $ctx))->firstWhere('key', 'invest:31:1');
+
+            return $c->terms['path_open'];
+        };
+
+        $this->assertSame($net(0.001), $net(2.5));
+        $this->assertGreaterThan(0.0, $net(0.001));
+    }
+
+    public function test_a_level_1_path_building_gets_no_unlock_term(): void
+    {
+        $bot = $this->idleLambdaBot(1);
+        $ctx = BotContext::capture($bot, BotProfile::named('default'), withGoal: true);
+        $c = collect((new UpgradeSource(17))->candidates($bot, $ctx))->firstWhere('key', 'invest:31:1');
+
+        $this->assertArrayNotHasKey('path_open', $c?->terms ?? []);
+    }
 }

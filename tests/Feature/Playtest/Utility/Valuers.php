@@ -54,6 +54,7 @@ final class Valuers
             $terms['tier'] = (float) $w['w_tier'];
         }
         if ($isPath && $target === 1) {
+            $terms['path_open'] = (float) $w['w_path_open'];
             $terms['advisor_slot'] = self::advisorSlotValue($ctx);
         }
         if ($id === $ctx->openingBuildingId && $ctx->sol <= (int) $w['opening_bias_until_sol']) {

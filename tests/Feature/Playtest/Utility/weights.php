@@ -24,6 +24,10 @@ return [
         'phase1_urgency_step' => 0.2,
         // Owner 2026-10-12: the bot must want path building levels 2 and 3 (and CC 4/5).
         'w_tier' => 30.0,
+        // Lv0 -> 1 of a path building opens its function (Sciencelab: knowledge research, Hangar: missions/finds,
+        // Cantina: encounters). Lambda-independent on purpose: lambda decays under idle AP, which used to hide the
+        // step (advisor_slot < 0) and grow the idle AP further. Bounded: one-off, equal to a tier step.
+        'w_path_open' => 30.0,
         // Structural steps (CC level, path building placement) count cost-neutral in v1.
         'structural_offset' => 1.0,
         'objective_base' => 150.0,
