@@ -109,6 +109,8 @@ Bei reaktivierten/bestehenden Dateien mit Coverage-Lücke (siehe `bin/phpunit --
 - Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)
 - Owner: Mario (tech.mario@outlook.de)
 - **Balance-Arbeit** (Kosten, AP, Einnahmen, Pacing, Bot-Messungen): zuerst Skill `nouron-balance-pass` und `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md` lesen — messen vor rechnen, eine Änderung pro Messung.
+- **Begriffe:** `GLOSSAR.md` (Spielbegriff ↔ Code-Schlüssel ↔ Bedeutung) zuerst lesen. Berichte an den Owner nennen den **Spielbegriff** (Labor, Baustelle, AP-Deckel), den Code-Schlüssel höchstens einmal in Klammern. Neue Entität oder Mechanik bekommt einen Glossar-Eintrag (eine Zeile, ein Satz, keine Zahlen).
+- **Agenten-Aufträge:** Briefing-Vorlage in `.claude/agents/README.md` verwenden; Browser-Checks mit `tools/uicheck/uicheck` (Wegwerf-DB), nie gegen die Dev-DB.
 
 ### Pre-commit Lint-Hook
 

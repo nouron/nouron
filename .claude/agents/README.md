@@ -56,3 +56,15 @@ docs/
 ROADMAP.md              ← Projekt-Roadmap (project-manager)
 CHANGELOG.md            ← Release-Log pro Session (project-manager)
 ```
+## Briefing-Vorlage für Agenten-Aufträge
+
+Jeder Auftrag an einen Agenten enthält diese Blöcke (kurz, aber vollständig; sie fehlen sonst erfahrungsgemäß):
+
+1. **Ziel und Kontext:** eine Zeile Ziel; gemessene Fakten mit Quelle (Datei/Report), nie nur gerechnete Zahlen.
+2. **Grenzen:** welche Dateien erlaubt sind (z. B. nur `tests/Feature/Playtest/**` und `tools/`); kein Commit/Push; Dev-DB `nouron` und Port 8000 tabu, wenn der Owner spielt; nichts ändern, was der Browser ausliefert, solange der Owner spielt.
+3. **Datenbanken:** PHPUnit nur mit `TEST_TOKEN=9 LARAVEL_PARALLEL_TESTING=1 php bin/phpunit …` (Wegwerf-DB `nouron_test_test_9`); Browser-Checks mit `tools/uicheck/uicheck` (Token 8, Port 8012); Bot-Batches schreiben nach `nouron_playtest`; nur ein Batch gleichzeitig; `--concurrency` bewusst wählen (12, wenn der Owner parallel arbeitet).
+4. **TDD:** Test zuerst, Rot bestätigen, dann Code (`CLAUDE.md`); bei UI-Aufträgen den Test **vor** der Implementierung schreiben.
+5. **Messregeln:** vorab Hypothese mit erwarteten Zahlen; eine Änderung pro Messung; Berichtszahlen als *gemessen* (Quelle) oder *gerechnet* kennzeichnen; eigene Deutungen als *Annahme* (siehe Skill `nouron-balance-pass`). Batches mit Zeitfenster in einen Ordner sortieren und je Zelle die Report-Anzahl prüfen.
+6. **Berichtsformat:** Höchstzeilen nennen, Fakten zuerst, Datei:Zeile für Fundstellen, Überraschungen als eigener Punkt, am Ende Owner-Fragen mit empfohlener Antwort.
+7. **Begriffe:** `GLOSSAR.md` zuerst lesen; im Bericht den **Spielbegriff** verwenden (Labor, Baustelle, AP-Deckel), den Code-Schlüssel nur einmal in Klammern.
+8. **Agenten ohne Shell** (game-designer, content-writer, project-manager) bekommen Auswertungen als fertige Tabelle im Auftrag; sie aggregieren nicht selbst.
