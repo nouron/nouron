@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-18
+
+- Feat: Techtree-Screen als Canvas neu gebaut — 4 Spalten, Voraussetzungen immer oberhalb der abhängigen Boxen, Streifen-Pfeile (gestrichelt = 2. Voraussetzung), Kategorien Gebäude blau / Kenntnisse grün / Schiffe gelb / Berater violett, nur Light Mode. Handy: seitlich wischen rastet auf Spalten ein, Tippen öffnet das Detail-Sheet unten; Desktop: gleiche Ansicht, Detail in der rechten Seitenleiste.
+- Feat: Das Raster kommt aus der Datenbank — `phase` ist das CC-Band (0 = Kommandozentrale), `row`/`column` die Zelle im Band (Spalte 1–4); Pfeile werden aus `required_building_id` (durchgezogen) und `required_building2_id` (gestrichelt) abgeleitet (`App\Support\TechtreeGraph`), Pfeile der Kommandozentrale nur zu Phase-1-Zielen. Seeder-Positionen angepasst, Migration `techtree_grid_layout` parkt die betroffenen Zeilen vor dem Umsetzen (Deploy: erst `migrate`, dann Seeder). Strategist (Berater 93) steht jetzt in Phase 3.
+- Feat: `pageData` enthält Phase 0 (Kommandozentrale), `grid_row`/`grid_col` je Knoten und globale `edges`; `phases_update` liefert `{phases, edges}` statt `lines` je Phase.
+
 ## 2026-10-14
 
 - Docs: Entwürfe Bergung ohne Sol-Deckel, Regolith-Wirtschaft (Inventar + Budget-Modell) mit Owner-Entscheiden; noch keine Config-Änderung.

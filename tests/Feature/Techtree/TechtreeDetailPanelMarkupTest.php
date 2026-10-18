@@ -52,20 +52,16 @@ class TechtreeDetailPanelMarkupTest extends TestCase
         }
     }
 
-    /** The tech card chip of an instanced building: "placed / max_instances". */
-    public function test_card_chip_counts_placed_instances_against_max_instances(): void
+    /** The canvas node chip of an instanced building: "placed / max_instances" (data fed to the canvas). */
+    public function test_node_chip_data_counts_placed_instances_against_max_instances(): void
     {
         $this->placeHousing([1 => [0, 1], 4 => [1, -1]]);
 
-        $html = $this->techtree()->assertOk()->getContent();
+        $housing = $this->buildingItem(28);
 
-        $this->assertSame(1, preg_match(
-            '/id="tech-building-28".*?<span class="tech-status-chip[^"]*">(.*?)<\/span>/s',
-            $html,
-            $match,
-        ));
-        $chip = preg_replace('/\s+/', ' ', trim($match[1]));
-        $this->assertSame('2 / 6', $chip, 'instance cap is max_instances (6), not max_level (3)');
+        $this->assertSame(2, $housing['instance_count']);
+        $this->assertSame(6, $housing['max_instances'], 'instance cap is max_instances (6), not max_level (3)');
+        $this->assertTrue($housing['is_instanced']);
     }
 
     public function test_detail_panel_uses_instance_helpers_instead_of_max_level(): void
