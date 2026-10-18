@@ -46,13 +46,15 @@ final class Valuers
         $isPath = in_array($id, self::PATH_IDS, true);
 
         $terms = ['cost_rg' => -1.0 * $regolith];
-        if ($ctx->phase === 1 && (($target === 2 && $ctx->nonCcLevel2 < 2) || ($target === 1 && $isPath && $ctx->advisors < 3))) {
+        // Phase 1 = Grundaufbau (2026-10-15): the first path building at Lv1 and two advisors.
+        if ($ctx->phase === 1 && $target === 1 && (($isPath && $ctx->advisors < 2) || $id === BuildingId::UplinkStation->value)) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($isPath && $target >= 2) {
             $terms['tier'] = (float) $w['w_tier'];
         }
         if ($isPath && $target === 1) {
+            $terms['path_open'] = (float) $w['w_path_open'];
             $terms['advisor_slot'] = self::advisorSlotValue($ctx);
         }
         if ($id === $ctx->openingBuildingId && $ctx->sol <= (int) $w['opening_bias_until_sol']) {
@@ -87,11 +89,11 @@ final class Valuers
         $level = (int) $cc->level;
         $target = $level + 1;
         $regolith = BotStrategy::levelupRegolith($cc);
-        $cycleAp = BotStrategy::effectiveApForLevelup($b, (int) ($cc->ap_for_levelup ?? 10));
+        $cycleAp = BotStrategy::effectiveApForLevelup($b, app(BuildingCostService::class)->levelupAp(BuildingId::CommandCenter->value, $target, (int) ($cc->ap_for_levelup ?? 10)));
         $ap = max(1, $cycleAp - (int) $cc->ap_spend);
 
         $terms = ['cost_rg' => -1.0 * $regolith, 'structural' => $regolith * (float) $w['structural_offset']];
-        if ($ctx->phase === 1 && $target <= 3) {
+        if ($ctx->phase === 1 && $target <= 2) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($target >= 4) {
@@ -165,12 +167,26 @@ final class Valuers
             'tier' => (float) $w['w_tier'],
             'advisor_slot' => self::advisorSlotValue($ctx),
         ];
-        if ($ctx->phase === 1 && $ctx->advisors < 3) {
+        if ($ctx->phase === 1 && $ctx->advisors < 2) {
             $terms['phase1'] = (float) $w['w_phase1'] * $ctx->phase1Urgency();
         }
         if ($buildingId === $ctx->openingBuildingId && $ctx->sol <= (int) $w['opening_bias_until_sol']) {
             $terms['opening'] = (float) $w['opening_bias'];
         }
+
+        return new Estimate($terms, 1, $regolith);
+    }
+
+    /** Uplink-Station placement: only worth its Phase-1 Grundaufbau requirement (urgent from Sol 15). */
+    public static function uplinkPlacement(BotSession $b, BotContext $ctx): Estimate
+    {
+        $w = $ctx->weights;
+        $regolith = (int) (app(BuildingCostService::class)->placementCost(BuildingId::UplinkStation->value)[3] ?? 0);
+        $terms = [
+            'cost_rg' => -1.0 * $regolith,
+            'structural' => $regolith * (float) $w['structural_offset'],
+            'phase1' => (float) $w['w_phase1'] * $ctx->phase1Urgency(),
+        ];
 
         return new Estimate($terms, 1, $regolith);
     }
@@ -192,7 +208,10 @@ final class Valuers
             ->whereNotNull('cb.tile_x')
             ->where(fn ($q) => $q->whereNull('bld.max_level')->orWhereColumn('cb.level', '<', 'bld.max_level'))
             ->orderBy('cb.building_id')->orderBy('cb.instance_id')
-            ->get()->all();
+            ->get()
+            ->reject(fn (object $row): bool => BotStrategy::ccGated($b, $row))
+            ->reject(fn (object $row): bool => BotStrategy::apCapped($b, (int) $row->building_id, (int) $row->instance_id))
+            ->values()->all();
     }
 
     public static function buildingRow(BotSession $b, int $buildingId, int $instanceId): ?object
@@ -233,7 +252,7 @@ final class Valuers
 
     /**
      * Scanned finds waiting for exactly this hangar level (findAction needs_level /
-     * ship_inactive), worth rg × yield_factor; a large one also needs a freighter.
+     * ship_inactive), worth rg; a large one also needs a freighter.
      */
     private static function waitingFindValue(BotSession $b, BotContext $ctx, int $target): float
     {
@@ -248,7 +267,7 @@ final class Valuers
             if (! in_array($action['reason'], ['needs_level', 'ship_inactive'], true) || (int) ($action['needs_level'] ?? 0) > $target) {
                 continue;
             }
-            $worth = (int) $types[$tile->event_type]['rg'] * (float) config('game.finds.flight.yield_factor');
+            $worth = (int) $types[$tile->event_type]['rg'];
             if ($tile->event_type === 'find_large') {
                 $largeValue += $worth;
             } else {

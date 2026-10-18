@@ -58,7 +58,7 @@ class CommandCenterTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('phaseProgress', function ($phaseProgress) {
-            return $phaseProgress['phase'] === 1 && count($phaseProgress['criteria']) === 3;
+            return $phaseProgress['phase'] === 1 && count($phaseProgress['criteria']) === 7;
         });
     }
 

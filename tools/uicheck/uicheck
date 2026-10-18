@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Browser-Check gegen eine WEGWERF-Datenbank, nie gegen die Dev-DB `nouron` und nie auf Port 8000.
+#
+#   tools/uicheck/uicheck start [fresh|demo]   Wegwerf-DB neu aufsetzen, Server starten
+#   tools/uicheck/uicheck status               zeigt, gegen welche DB der Server laeuft (Marker-Check)
+#   tools/uicheck/uicheck stop                 Server per PID beenden
+#
+# Defaults: DB nouron_test_test_8 (Token 8; PHPUnit auf Wegwerf-DB nutzt Token 9), Port 8012.
+# Ueberschreibbar: UICHECK_TOKEN=7 UICHECK_PORT=8013 tools/uicheck/uicheck start
+# Login: Bart / test123 (TestSeeder). Playwright-Vorlage: tools/uicheck/example.js
+set -euo pipefail
+
+cd "$(dirname "$0")/../.."
+TOKEN="${UICHECK_TOKEN:-8}"
+PORT="${UICHECK_PORT:-8012}"
+DB="nouron_test_test_${TOKEN}"
+PIDFILE="${TMPDIR:-/tmp}/uicheck-${PORT}.pid"
+ROOT="$PWD"
+ROUTER="$ROOT/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"
+
+if [[ "$PORT" == "8000" || "$DB" == "nouron" ]]; then
+    echo "Verweigert: Port 8000 und die Dev-DB 'nouron' gehoeren dem Owner." >&2
+    exit 2
+fi
+
+case "${1:-}" in
+start)
+    scenario="${2:-fresh}"
+    export DB_DATABASE="$DB"
+    # artisan serve reicht DB_DATABASE nicht weiter (siehe Memory), daher php -S mit dem Laravel-Router.
+    php artisan migrate:fresh --seed --seeder='Database\Seeders\TestSeeder' --force --no-interaction >/dev/null
+    if [[ "$scenario" == "demo" ]]; then
+        php artisan colony:seed-demo 1 >/dev/null
+    else
+        php artisan game:reset-player bart --yes --scenario=fresh >/dev/null
+    fi
+    if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "Server laeuft schon (PID $(cat "$PIDFILE"))."
+    else
+        # Der Laravel-Router erwartet public/ als Arbeitsverzeichnis (wie bei artisan serve).
+        (cd public; nohup php -S "127.0.0.1:${PORT}" -t . "$ROUTER" >"${PIDFILE%.pid}.log" 2>&1 </dev/null & echo $! >"$PIDFILE")
+        sleep 1
+    fi
+    echo "Bereit: http://127.0.0.1:${PORT}  (DB ${DB}, Login Bart/test123, Szenario ${scenario}, PID $(cat "$PIDFILE"))"
+    echo "Vor dem ersten Klick: tools/uicheck/uicheck status, die Run-Nummer muss mit der Seite uebereinstimmen."
+    ;;
+status)
+    export DB_DATABASE="$DB"
+    echo "Wegwerf-DB: ${DB}"
+    php artisan tinker --execute="echo 'artisan sieht: '.DB::connection()->getDatabaseName().' | letzter Run: #'.DB::table('runs')->max('id').PHP_EOL;" 2>/dev/null | tail -1
+    if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "Server: PID $(cat "$PIDFILE") auf Port ${PORT}"
+    else
+        echo "Server: aus"
+    fi
+    ;;
+stop)
+    if [[ -f "$PIDFILE" ]]; then
+        kill "$(cat "$PIDFILE")" 2>/dev/null || true
+        rm -f "$PIDFILE" "${PIDFILE%.pid}.log"
+        echo "Server beendet."
+    else
+        echo "Kein Server."
+    fi
+    ;;
+*)
+    sed -n 2,12p "$0" | sed 's/^# \{0,1\}//'
+    exit 1
+    ;;
+esac

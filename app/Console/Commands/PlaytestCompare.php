@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * T30 step 0: paired comparison of PlaytestBot openings by the equivalence
- * criteria K1-K7 (spec 2026-10-05, section 2.1) plus informational utility KPIs K18/K19/K20/K23. Read-only: reads report
+ * criteria K1-K7 (spec 2026-10-05, section 2.1) plus informational utility KPIs K18/K19/K20/K23 and the Regolith-ledger rows (RG). Read-only: reads report
  * JSONs written by game:playtest ({profile}[.{engine}]-{opening}-{seed}-{Ymd_His}.json;
  * the engine part is omitted for legacy), takes the newest report per (profile, engine, opening, seed) and prints KPI
  * medians/ranges, the per-seed deltas to `labor` and the threshold check.
@@ -29,7 +29,7 @@ class PlaytestCompare extends Command
         {--since= : Only reports written at/after this date/time (e.g. 2026-10-06 or "2026-10-06 14:00")}
         {--dir= : Report directory (default: storage/logs/playtest)}';
 
-    protected $description = 'Compare PlaytestBot openings (K1-K7, informational K11/K12/K16/K17/K18/K19/K20/K23, paired by seed) from existing report JSONs';
+    protected $description = 'Compare PlaytestBot openings (K1-K7, informational K11/K12/K16/K17/K18/K19/K20/K23/RG, paired by seed) from existing report JSONs';
 
     /** Table labels for KPIs whose key is not just the upper-cased id. */
     private const KPI_LABELS = [
@@ -52,6 +52,10 @@ class PlaytestCompare extends Command
         'k23' => 'K23 CC-Lv4 Sol',
         'ship_repair_4_12' => 'Reparatur-AP Sol 4-12',
         'ship_repair_25' => 'Reparatur-AP bis Sol 25',
+        'rg_in_1_12' => 'Rg-Zufluss/Sol 1-12',
+        'rg_in_13_25' => 'Rg-Zufluss/Sol 13-25',
+        'rg_harvester_share' => 'Harvester-Anteil Rg % (Sol 13-25)',
+        'rg_resource_limit' => 'Rg-Abweisungen resource_limit',
     ];
 
     public function handle(): int

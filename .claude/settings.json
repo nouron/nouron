@@ -17,8 +17,29 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/pre-merge-check.sh",
-            "statusMessage": "Merge-Checkliste wird gepr\u00fcft..."
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bash .claude/hooks/pre-merge-check.sh",
+            "statusMessage": "Merge-Checkliste wird geprüft..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 .claude/hooks/docs_check.py merge",
+            "statusMessage": "Doku-Check (nur bei gh pr merge)..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 .claude/hooks/docs_check.py stop",
+            "statusMessage": "Doku-Check..."
           }
         ]
       }

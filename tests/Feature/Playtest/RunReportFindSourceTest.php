@@ -9,21 +9,13 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * T30 Pool v1: Regolith credited by a completed salvage (rule invest_find) is
- * its own source 'find' in regolith_sources — not 'harvester', not 'trade'.
+ * T30 Pool v1: Regolith credited by a completed self-salvage (ledger tag find_self)
+ * is its own source 'find' in regolith_sources — not 'harvester', not 'trade';
+ * a salvage flight (find_flight) has its own bucket and counts for Pfad B.
  */
 class RunReportFindSourceTest extends TestCase
 {
     use RefreshDatabase;
-
-    private function pushEntry(BotSession $bot, string $rule, int $before, int $after, bool $ok = true): void
-    {
-        $bot->log[] = [
-            'sol' => $bot->sol, 'rule' => $rule, 'url' => '', 'status' => $ok ? 200 : 422, 'ok' => $ok,
-            'error' => $ok ? null : 'rejected', 'ap_before' => 10, 'ap_after' => 10,
-            'regolith_before' => $before, 'regolith_after' => $after, 'organics_before' => 0, 'organics_after' => 0,
-        ];
-    }
 
     private function sources(BotSession $bot): array
     {
@@ -33,11 +25,10 @@ class RunReportFindSourceTest extends TestCase
         return $report->build($bot)['sols'][0]['regolith_sources'];
     }
 
-    public function test_completed_salvage_delta_counts_as_find(): void
+    public function test_self_salvage_booking_counts_as_find(): void
     {
         $bot = BotSession::boot($this, 1);
-        $this->pushEntry($bot, 'invest_find', 100, 110);
-        $this->pushEntry($bot, 'invest_find', 110, 110);
+        $bot->regolithLedger[$bot->sol]['in'] = ['find_self' => 10];
 
         $sources = $this->sources($bot);
 
@@ -46,10 +37,9 @@ class RunReportFindSourceTest extends TestCase
         $this->assertSame(0, $sources['trade']);
     }
 
-    public function test_find_defaults_to_zero_and_ignores_rejected_entries(): void
+    public function test_find_defaults_to_zero(): void
     {
         $bot = BotSession::boot($this, 1);
-        $this->pushEntry($bot, 'invest_find', 100, 118, ok: false);
 
         $this->assertSame(0, $this->sources($bot)['find']);
     }
@@ -57,7 +47,7 @@ class RunReportFindSourceTest extends TestCase
     public function test_find_does_not_leak_into_the_path_attribution(): void
     {
         $bot = BotSession::boot($this, 1);
-        $this->pushEntry($bot, 'invest_find', 100, 104);
+        $bot->regolithLedger[$bot->sol]['in'] = ['find_self' => 4];
         $report = new RunReport(1);
         $report->snapshot($bot);
 
@@ -67,14 +57,11 @@ class RunReportFindSourceTest extends TestCase
         $this->assertSame(0, array_sum($attr));
     }
 
-    public function test_find_flight_comes_from_the_mission_event_and_leaves_the_harvester_share(): void
+    public function test_find_flight_booking_is_its_own_source_and_counts_for_path_b(): void
     {
         $bot = BotSession::boot($this, 1);
         $bot->sol = 1;
-        DB::table('colony_log')->insert(['user' => $bot->userId, 'tick' => 1, 'event' => 'hangar.mission_completed',
-            'area' => 'colony', 'parameters' => json_encode(['rewards' => ['find_type' => 'find_medium', 'find_regolith' => 15, 'flight_bonus' => 5]]),
-            'is_read' => true, 'created_at' => now()]);
-        $this->pushEntry($bot, 'sol_next', 100, 140);
+        $bot->regolithLedger[1]['in'] = ['find_flight' => 15, 'harvester_base' => 25];
 
         $report = new RunReport(1);
         $report->snapshot($bot);
@@ -122,29 +109,12 @@ class RunReportFindSourceTest extends TestCase
             $report->build($bot)['sols'][0]['find_waits']);
     }
 
-    public function test_a_flight_to_a_vanished_find_pays_nothing_and_leaves_the_delta_to_the_harvester(): void
+    public function test_flight_payout_counts_even_when_the_sol_net_change_is_negative(): void
     {
         $bot = BotSession::boot($this, 1);
         $bot->sol = 1;
-        DB::table('colony_log')->insert(['user' => $bot->userId, 'tick' => 1, 'event' => 'hangar.mission_failed',
-            'area' => 'colony', 'parameters' => json_encode(['mission_key' => 'mission_find_salvage', 'find_missing' => true]),
-            'is_read' => true, 'created_at' => now()]);
-        $this->pushEntry($bot, 'sol_next', 100, 116);
-
-        $sources = $this->sources($bot);
-
-        $this->assertSame(0, $sources['find_flight']);
-        $this->assertSame(16, $sources['harvester']);
-    }
-
-    public function test_flight_payout_counts_even_when_the_sol_net_delta_is_not_positive(): void
-    {
-        $bot = BotSession::boot($this, 1);
-        $bot->sol = 1;
-        DB::table('colony_log')->insert(['user' => $bot->userId, 'tick' => 1, 'event' => 'hangar.mission_completed',
-            'area' => 'colony', 'parameters' => json_encode(['rewards' => ['find_regolith' => 15, 'regolith' => 7]]),
-            'is_read' => true, 'created_at' => now()]);
-        $this->pushEntry($bot, 'sol_next', 100, 95); // payout 22 offset by spend elsewhere in the Sol
+        // Payout 22 offset by spend in the same Sol: inflows stay inflows.
+        $bot->regolithLedger[1] = ['in' => ['find_flight' => 15, 'mission_ore' => 7], 'out' => ['build_place' => 27]];
 
         $sources = $this->sources($bot);
 

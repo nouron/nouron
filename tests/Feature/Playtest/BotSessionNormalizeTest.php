@@ -27,6 +27,7 @@ class BotSessionNormalizeTest extends TestCase
         // as proof the gate is reachable at all. Read from the service rather
         // than hardcoded so this doesn't drift from config('game.ap.base').
         $bot = BotSession::boot($this, seed: 1);
+        config(['game.build.ap_cap_per_sol.base' => null]);   // tests the ap_limit gate, not the per-Sol AP cap
 
         // Agrardom gate (ROADMAP C16): CC Lv1 -> Lv2 requires an Agrardom already
         // placed. Pre-place it so this loop exercises the AP-limit gate in

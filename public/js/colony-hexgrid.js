@@ -89,9 +89,14 @@ const EVENT_TYPE_NAMES = {
 
 function colonyHexView(config) {
     return {
+        // Shared AP-bar helpers (apCapReached, apSegClasses, apCapLimitPos): public/js/ap-bar.js
+        ...window.NouronApBar,
         tiles: config.tiles,
         colony: config.colony,
         ccLevel: config.ccLevel,
+        harvesterSecondCcLevel: config.harvesterSecondCcLevel ?? 3,
+        buildingCcLevelOffset: config.buildingCcLevelOffset ?? 0,
+        ccGateTemplate: config.ccGateTemplate ?? '',
         ccBuildingId: config.ccBuildingId ?? 25,
         buildings: config.buildings ?? [],
         buildingCatalog: config.buildingCatalog ?? {},
@@ -361,24 +366,11 @@ function colonyHexView(config) {
             }
         },
 
-        // Effective salvage AP for one action: per-Sol cap, remaining effort and the
-        // entered value (min 1).
-        salvageMax(find) {
-            if (!find) return 1;
-            return Math.max(1, Math.min(find.ap_cap_per_sol, find.ap_total - find.ap_spent));
-        },
-
-        salvageClamp(find, ap) {
-            const n = Math.floor(Number(ap)) || 1;
-            return Math.min(Math.max(1, n), this.salvageMax(find));
-        },
-
-        async doSalvage(tile, ap) {
+        async doSalvage(tile) {
             const rg = tile.find?.rg ?? 0;
             const res = await this.post(this.routes.salvage, {
                 q: tile.q,
                 r: tile.r,
-                ap: this.salvageClamp(tile.find, ap),
             });
             if (res.ok) {
                 this.updateTile(res.tile);
@@ -485,11 +477,13 @@ function colonyHexView(config) {
         },
 
         async doInvestAp(building) {
+            if (this.apCapReached(building)) return;
             const res = await this.post(this.routes.investBuilding, {
                 building_id: building.building_id,
                 instance_id: building.instance_id ?? 1,
             });
             if (res.ok) {
+                if (res.ap_cap !== undefined && res.building) res.building.ap_cap = res.ap_cap;
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
@@ -520,6 +514,12 @@ function colonyHexView(config) {
                     if (res.leveled_up) this.$nextTick(() => this.redrawGrid());
                 }
             } else {
+                if (res.error === 'building_ap_cap' && building.ap_cap) {
+                    // Server says today's allowance is gone: lock the bar without a reload.
+                    const cap = res.cap ?? building.ap_cap.cap;
+                    this.updateBuilding({ ...building, ap_cap: { cap, spent: cap, remaining: 0 } });
+                    if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+                }
                 let msg = res.message ?? res.error;
                 if (res.error === 'resource_limit' && res.cost?.[3]) {
                     const needed = res.cost[3];
@@ -717,6 +717,50 @@ function colonyHexView(config) {
         // guess made client-side about an entitlement the client cannot observe.
         hasSecondHarvesterInstance() {
             return this.buildings.some((b) => b.building_key === 'building_harvester' && b.instance_id === 2);
+        },
+
+        // The second Harvester button is only offered once its CC gate is met — below it the
+        // server would just answer error_harvester_second_instance_cc_gate (UX trap: the target
+        // tile of a relocation used to offer ONLY this dead-end button).
+        canPlaceSecondHarvester(tile) {
+            return (
+                !!tile &&
+                !this.hasSecondHarvesterInstance() &&
+                this.ccLevel >= this.harvesterSecondCcLevel &&
+                this.isHarvesterTarget(tile)
+            );
+        },
+
+        // The single (first) Harvester can be relocated straight from a valid target tile.
+        movableHarvester() {
+            return (
+                this.buildings.find(
+                    (b) =>
+                        b.building_key === 'building_harvester' &&
+                        (b.instance_id ?? 1) === 1 &&
+                        b.level > 0 &&
+                        b.tile_x !== null &&
+                        !b.in_transit,
+                ) ?? null
+            );
+        },
+
+        canMoveHarvesterHere(tile) {
+            return !!tile && this.movableHarvester() !== null && this.isHarvesterTarget(tile);
+        },
+
+        harvesterMoveCostTo(tile) {
+            const hv = this.movableHarvester();
+            if (!hv || !tile) return 0;
+            return Math.max(1, this.hexDistance(hv.tile_x, hv.tile_y, tile.q, tile.r) * this.relocateApPerHex);
+        },
+
+        async moveHarvesterHere(tile) {
+            const hv = this.movableHarvester();
+            if (!hv) return;
+            this.movingHarvesterInstanceId = hv.instance_id ?? 1;
+            await this.doMoveHarvester(tile);
+            this.movingHarvesterInstanceId = null;
         },
 
         async doPlaceHarvesterInstance2(tile) {
@@ -1027,6 +1071,18 @@ function colonyHexView(config) {
 
         // Levelling up is possible while the building is below its max level
         // (null max_level = unlimited).
+        // CC level gate (mirror of BuildingService::ccLevelTooLow, the server stays the source
+        // of truth): a non-CC level N needs CC level >= N - offset. Returns the reason text
+        // (the server's own error text) or null when the level-up is allowed.
+        ccGateReason(building) {
+            if (!building || building.building_id === this.ccBuildingId) return null;
+            const cc = this.buildings.find((b) => b.building_id === this.ccBuildingId);
+            const ccLevel = cc ? cc.level : this.ccLevel;
+            const required = building.level + 1 - this.buildingCcLevelOffset;
+            if (ccLevel >= required) return null;
+            return this.ccGateTemplate.replace(':level', required);
+        },
+
         buildingCanLevelUp(building) {
             return !!building && (building.max_level === null || building.level < building.max_level);
         },
@@ -1718,7 +1774,7 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     }
 
     // Event indicator dot (top-left, orange — only when deep-scanned)
-    if (tile.is_deep_scanned && tile.event_type) {
+    if (hasActiveEvent(tile)) {
         g.appendChild(svgCircle(cx - size * 0.38, cy - size * 0.38, 4, '#e67e22', '#fff'));
     }
 
@@ -1775,11 +1831,17 @@ function buildFogDefs() {
     return defs;
 }
 
+// Deep-scanned tile with something left to act on. A resolved Fehlalarm (find_false) has
+// no yield, so it must not keep the event marker/colour on the map.
+function hasActiveEvent(tile) {
+    return !!tile.is_deep_scanned && !!tile.event_type && tile.event_type !== 'find_false';
+}
+
 function getTileColor(tile) {
     if (!tile.is_explored && !tile.is_colony_zone) return LOCKED_COLOR; // state 4: exploration-zone fog
     if (!tile.is_explored) return FOG_COLOR; // state 3: colony-zone fog (buildable but undiscovered)
     if (tile.q === 0 && tile.r === 0) return CC_COLOR;
-    if (tile.is_deep_scanned && tile.event_type) return EVENT_COLOR;
+    if (hasActiveEvent(tile)) return EVENT_COLOR;
 
     // Colony-zone terrain_empty is clearly lighter than exploration zone.
     if (tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable') {
@@ -1795,7 +1857,7 @@ function getTileStroke(tile, isCC) {
     if (!tile.is_explored && !tile.is_colony_zone) return [LOCKED_STROKE, '1.5'];
     // State 3 (colony-zone fog): dashed border echoes the "buildable" affordance.
     if (!tile.is_explored) return [FOG_STROKE, '1.5'];
-    if (tile.is_deep_scanned && tile.event_type) return [EVENT_STROKE, '1.5'];
+    if (hasActiveEvent(tile)) return [EVENT_STROKE, '1.5'];
     if (tile.tile_type === 'terrain_impassable') return ['#555', '0'];
 
     // Colony-zone terrain: lighter stroke matching the buildable fill.

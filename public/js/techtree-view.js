@@ -9,6 +9,8 @@ function techtreeView(config) {
     const HINT_TYPE = { 2: 'personell', 4: 'research', 5: 'building' };
 
     return {
+        // Shared AP-bar helpers (apCapReached, apSegClasses, apCapLimitPos): public/js/ap-bar.js
+        ...window.NouronApBar,
         phases: config.phases,
         edges: config.edges ?? [],
         colonyViewUrl: config.colonyViewUrl ?? '/colony/view',

@@ -374,7 +374,6 @@ class ColonyViewTest extends TestCase
 
         $response->assertOk();
         $response->assertSee(route('colony.tile.salvage'), false);
-        $response->assertSee(__('colony.find_effort'), false);
         $response->assertSee(__('colony.find_salvage'), false);
         $response->assertSee(__('colony.find_false_notice'), false);
         // Scan cost comes from config, never hardcoded in the markup.

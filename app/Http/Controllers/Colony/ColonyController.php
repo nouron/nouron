@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\BuildingCostService;
 use App\Services\CharacterCodexService;
 use App\Services\ColonyService;
@@ -56,6 +57,7 @@ class ColonyController extends BaseController
         private readonly BuildingCostService $buildingCostService,
         private readonly HangarService $hangarService,
         private readonly PathBuildingGateService $pathBuildingGate,
+        private readonly BuildingApCapService $apCapService,
     ) {
         parent::__construct($tick);
     }
@@ -158,6 +160,7 @@ class ColonyController extends BaseController
         // single required_building_id (no required_building2_id, unlike researches).
         $buildingNames = DB::table('buildings')->pluck('name', 'id');
 
+        $apCap = $this->apCapService->capFor($colony->id);
         $buildings = DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colony->id)
@@ -170,6 +173,8 @@ class ColonyController extends BaseController
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
                 'colony_buildings.pending_until_tick',
+                'colony_buildings.ap_cap_tick',
+                'colony_buildings.ap_cap_spent',
                 'buildings.name as building_key',
                 'buildings.max_level',
                 'buildings.ap_for_levelup',
@@ -178,7 +183,7 @@ class ColonyController extends BaseController
                 'buildings.required_building_level',
             )
             ->get()
-            ->map(function ($b) use ($globalTick, $colony, $buildingNames) {
+            ->map(function ($b) use ($globalTick, $colony, $buildingNames, $apCap) {
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
                 $b->description = __('buildings.'.preg_replace('/^building_/', '', $b->building_key).'_desc');
@@ -192,8 +197,11 @@ class ColonyController extends BaseController
                 // The 0 -> 1 step of a placed site was paid on placement (T9) — 0 then.
                 $b->levelup_cost = $this->buildingCostService->levelupRegolithDue($b);
                 $b->first_level_prepaid = BuildingCostService::firstLevelPrepaid($b);
-                $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
+                $b->repair_cost = $this->repairRegolithCost((int) $b->building_id);
+                $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp((int) $b->building_id, (int) $b->level + 1, (int) $b->ap_for_levelup));
                 $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
+                $b->ap_cap = $this->apCapService->stateFromRow($apCap, $b);
+                unset($b->ap_cap_tick, $b->ap_cap_spent);
 
                 return $b;
             });
@@ -270,9 +278,9 @@ class ColonyController extends BaseController
 
     public function salvageTile(Request $request): JsonResponse
     {
-        $data = $request->validate(['q' => 'required|integer', 'r' => 'required|integer', 'ap' => 'required|integer']);
+        $data = $request->validate(['q' => 'required|integer', 'r' => 'required|integer']);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
-        $result = $this->tileService->salvageFind($colony->id, (int) $data['q'], (int) $data['r'], (int) $data['ap']);
+        $result = $this->tileService->salvageFind($colony->id, (int) $data['q'], (int) $data['r']);
 
         if ($result['ok']) {
             $this->eventService->createEvent([
@@ -673,7 +681,7 @@ class ColonyController extends BaseController
             foreach ($buildCost as $resourceId => $amount) {
                 $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
             }
-            $this->resourcesService->payCosts($costs, $colony->id);
+            $this->resourcesService->payCosts($costs, $colony->id, 'build_place');
         }
 
         $this->eventService->createEvent([
@@ -750,6 +758,18 @@ class ColonyController extends BaseController
             return $this->fail('max_level_reached');
         }
 
+        // CC level gate (player rule: building level N needs CC level N). Checked before
+        // any AP or Regolith is touched, like the gates around it.
+        if ($this->buildingService->ccLevelTooLow($colony->id, $buildingId, $instanceId)) {
+            $required = (int) $row->level + 1 - (int) config('game.building_cc_level_offset', 0);
+
+            return $this->fail(
+                'building_cc_gate',
+                __('colony.error_building_cc_gate', ['level' => $required]),
+                ['required_cc_level' => $required],
+            );
+        }
+
         // Supply build gate (GDD §6 "Supply als Bau-Gate", A14): the next level must
         // fit into the free cap (cap − workplaces). Unfilled workplaces after an
         // over-capacity departure keep occupying the cap, so the gate stays closed
@@ -762,6 +782,18 @@ class ColonyController extends BaseController
             return $this->fail('supply_limit');
         }
 
+        // Per-building per-Sol AP cap (game.build.ap_cap_per_sol): a time brake on
+        // construction. Checked before any AP or Regolith is touched.
+        if ($this->apCapService->wouldExceed($colony->id, $buildingId, $instanceId)) {
+            $cap = (int) $this->apCapService->capFor($colony->id);
+
+            return $this->fail(
+                'building_ap_cap',
+                __('colony.error_building_ap_cap', ['cap' => $cap]),
+                ['cap' => $cap],
+            );
+        }
+
         // Construction knowledge (plus any active discount voucher) discounts the AP
         // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
         // and-encounters-design.md §2). Level-up Regolith is charged on the click that
@@ -770,7 +802,7 @@ class ColonyController extends BaseController
         // accurate. A shortfall blocks the invest entirely, before any AP is spent.
         // The 0 -> 1 cycle of a placed site was already paid on placement (T9) —
         // levelupRegolithDue() returns 0 for it, whatever its ap_spend reads.
-        $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $building->ap_for_levelup);
+        $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp($buildingId, (int) $row->level + 1, (int) $building->ap_for_levelup));
         $isCycleStart = (int) $row->ap_spend === 0;
         $levelupRegolith = $isCycleStart
             ? $this->buildingCostService->levelupRegolithDue($row)
@@ -794,11 +826,13 @@ class ColonyController extends BaseController
         if (! config('game.bypass.ap_checks')) {
             $this->advisorService->lockActionPoints($colony->id, 1);
         }
+        $this->apCapService->record($colony->id, $buildingId, $instanceId, 1);
 
         if ($isCycleStart && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
             $this->resourcesService->payCosts(
                 [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
-                $colony->id
+                $colony->id,
+                $buildingId === BuildingId::CommandCenter->value ? 'cc_upgrade' : 'build_levelup'
             );
         }
 
@@ -870,6 +904,7 @@ class ColonyController extends BaseController
                 'tiles' => $tiles,
                 'activeHint' => $this->resolveHint($colony->id),
                 'phase_progress' => $this->colonyService->getPhaseProgress($colony),
+                'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
                 ...$this->currentAp($colony->id),
             ]);
         }
@@ -886,6 +921,7 @@ class ColonyController extends BaseController
             'building' => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
             'nav_unlocked' => $navUnlocked,
+            'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
             'activeHint' => $this->resolveHint($colony->id),
             ...($leveledUp ? ['phase_progress' => $this->colonyService->getPhaseProgress($colony)] : []),
             ...$this->currentAp($colony->id),
@@ -930,14 +966,11 @@ class ColonyController extends BaseController
             return $this->fail('repair_full');
         }
 
-        // Repair costs 2 Regolith per click (hard gate, no negative balance). CC and
+        // Repair costs Regolith per click (game.repair.regolith_per_click; hard gate, no negative balance). CC and
         // Harvester are exempt (AP-only) so the Regolith source itself stays repairable —
         // this keeps the decay spiral a recoverable setback, never a hard deadlock.
-        $repairRegolith = config('game.repair.regolith_per_click', 2);
-        $repairCostsRegolith = $buildingId !== BuildingId::CommandCenter->value
-            && $buildingId !== BuildingId::Harvester->value
-            && $repairRegolith > 0
-            && ! config('game.bypass.resource_costs');
+        $repairRegolith = $this->repairRegolithCost($buildingId);
+        $repairCostsRegolith = $repairRegolith > 0;
 
         if ($repairCostsRegolith
             && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]], $colony->id)) {
@@ -957,7 +990,8 @@ class ColonyController extends BaseController
         if ($repairCostsRegolith) {
             $this->resourcesService->payCosts(
                 [['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]],
-                $colony->id
+                $colony->id,
+                'repair'
             );
         }
 
@@ -1504,6 +1538,8 @@ class ColonyController extends BaseController
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
                 'colony_buildings.pending_until_tick',
+                'colony_buildings.ap_cap_tick',
+                'colony_buildings.ap_cap_spent',
                 'buildings.name as building_key',
                 'buildings.max_level',
                 'buildings.max_instances',
@@ -1526,10 +1562,28 @@ class ColonyController extends BaseController
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->buildingCostService->levelupRegolithDue($row);
         $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
-        $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
+        $row->repair_cost = $this->repairRegolithCost((int) $row->building_id);
+        $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, $this->buildingCostService->levelupAp((int) $row->building_id, (int) $row->level + 1, (int) $row->ap_for_levelup));
         $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
+        $row->ap_cap = $this->apCapService->stateFromRow($this->apCapService->capFor($colonyId), $row);
+        unset($row->ap_cap_tick, $row->ap_cap_spent);
 
         return $row;
+    }
+
+    /**
+     * Regolith charged per repair click (the number the Reparieren button shows). CC and
+     * Harvester are exempt (AP-only); 0 as well when resource costs are bypassed.
+     */
+    private function repairRegolithCost(int $buildingId): int
+    {
+        if ($buildingId === BuildingId::CommandCenter->value
+            || $buildingId === BuildingId::Harvester->value
+            || config('game.bypass.resource_costs')) {
+            return 0;
+        }
+
+        return max(0, (int) config('game.repair.regolith_per_click', 1));
     }
 
     private static function buildingImageSlug(string $key): string

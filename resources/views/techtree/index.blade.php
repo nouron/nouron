@@ -36,20 +36,25 @@
         };
     </script>
 
-    <div class="techtree-page" x-ref="page" x-data="techtreeView(window.__techtreeData)" x-cloak
-        :class="{ 'techtree-page--panel': selectedTech }" data-hint-rank="{{ $activeHintRank }}">
+    <div class="techtree-page" x-ref="page" x-data="techtreeView(window.__techtreeData)" x-cloak :class="{ 'techtree-page--panel': selectedTech }"
+        data-hint-rank="{{ $activeHintRank }}">
 
         <div class="techtree-toast" :class="`techtree-toast--${toastType}`" x-show="toastVisible" x-transition
             x-text="toastMessage" aria-live="polite" role="status"></div>
 
         {{-- Legend: colours = kind, stripe style = first / second prerequisite --}}
         <div class="techtree-legend" role="list" aria-label="{{ __("techtree.legend_label") }}">
-            <span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--b"></span>{{ __("techtree.legend_building") }}</span>
-            <span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--k"></span>{{ __("techtree.legend_research") }}</span>
-            <span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--s"></span>{{ __("techtree.legend_ship") }}</span>
-            <span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--a"></span>{{ __("techtree.legend_advisor") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--b"></span>{{ __("techtree.legend_building") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--k"></span>{{ __("techtree.legend_research") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--s"></span>{{ __("techtree.legend_ship") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--a"></span>{{ __("techtree.legend_advisor") }}</span>
             <span class="tt-leg" role="listitem"><span class="tt-st"></span>{{ __("techtree.legend_required") }}</span>
-            <span class="tt-leg" role="listitem"><span class="tt-st tt-st--dash"></span>{{ __("techtree.legend_second") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-st tt-st--dash"></span>{{ __("techtree.legend_second") }}</span>
         </div>
 
         <div class="techtree-stage" x-ref="stage">
@@ -63,7 +68,8 @@
                 <button class="tt-btn" type="button" @click="viewStart()">{{ __("techtree.view_start") }}</button>
                 <button class="tt-btn" type="button" @click="viewOverview()">{{ __("techtree.view_overview") }}</button>
             </div>
-            <div class="techtree-dots" x-ref="dots" hidden role="group" aria-label="{{ __("techtree.columns_label") }}">
+            <div class="techtree-dots" x-ref="dots" hidden role="group"
+                aria-label="{{ __("techtree.columns_label") }}">
             </div>
         </div>
 
@@ -312,21 +318,17 @@
                                 {{-- AP invest bar for knowledge --}}
                                 <template x-if="selectedTech.ap_for_levelup > 0 && selectedTech.status !== 'locked'">
                                     <div class="detail-ap-section">
-                                        <div class="detail-row detail-row--ap">
-                                            <span class="detail-row-label">{{ __("techtree.detail_ap_invest") }}</span>
-                                            <span
-                                                x-text="selectedTech.ap_spend + ' / ' + selectedTech.ap_for_levelup + ' AP'"></span>
-                                        </div>
-                                        <div class="detail-ap-bar">
-                                            <template x-for="n in selectedTech.ap_for_levelup" :key="n">
-                                                <span
-                                                    :class="n <= selectedTech.ap_spend ? 'ap-seg ap-seg--done' : (selectedTech
-                                                        .ap_available > 0 ? 'ap-seg ap-seg--todo' :
-                                                        'ap-seg ap-seg--locked')"
-                                                    @click="n > selectedTech.ap_spend && selectedTech.ap_available > 0 && investAp(selectedTech, 'research', n - selectedTech.ap_spend)">
-                                                </span>
-                                            </template>
-                                        </div>
+                                        @include("partials.ap-upgrade-button", [
+                                            "row" => "selectedTech",
+                                            "click" => "investAp(selectedTech, 'research', 1)",
+                                            "btnLabel" =>
+                                                \Illuminate\Support\Js::from(__("techtree.detail_ap_invest")) .
+                                                " + ' ' + selectedTech.ap_spend + '/' + selectedTech.ap_for_levelup",
+                                            "chip" => "research",
+                                            "blockedExpr" =>
+                                                "selectedTech.ap_available <= 0 || selectedTech.ap_spend >= selectedTech.ap_for_levelup",
+                                            "tipId" => "ap-cap-tip-tech",
+                                        ])
                                         <template
                                             x-if="selectedTech.ap_available <= 0 && selectedTech.ap_spend < selectedTech.ap_for_levelup">
                                             <p class="detail-ap-hint">{{ __("techtree.hint_no_research_ap") }}</p>

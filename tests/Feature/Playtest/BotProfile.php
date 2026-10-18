@@ -36,6 +36,9 @@ final class BotProfile
         public readonly string $opening = 'auto',
         // Which decision engine plays (spec 4): legacy rule list or utility selector.
         public readonly string $engine = 'legacy',
+        // false = the bot explores unconditionally (today's behaviour). true = explore only
+        // while a harvester relocation lacks an explored regolith target (Q19, `lean-explore`).
+        public readonly bool $exploreOnlyWhenNeeded = false,
     ) {
         if (! in_array($opening, self::OPENINGS, true)) {
             throw new \InvalidArgumentException("Unknown bot opening: {$opening}");
@@ -48,12 +51,12 @@ final class BotProfile
     /** NOTE: when adding a new dial to the constructor, copy it here and in withEngine() too. */
     public function withOpening(string $opening): self
     {
-        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $opening, $this->engine);
+        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $opening, $this->engine, $this->exploreOnlyWhenNeeded);
     }
 
     public function withEngine(string $engine): self
     {
-        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $this->opening, $engine);
+        return new self($this->name, $this->savingsAggressiveness, $this->objectiveFocus, $this->opening, $engine, $this->exploreOnlyWhenNeeded);
     }
 
     /**
@@ -88,6 +91,8 @@ final class BotProfile
             // without the credit-reserve brake (like 'default') — plays fast and loose
             // towards the goal instead of hoarding along the way.
             'eager' => new self('eager', savingsAggressiveness: 0.0, objectiveFocus: 1.0),
+            // Q19: 'default' that explores only when a harvester relocation needs it.
+            'lean-explore' => new self('lean-explore', exploreOnlyWhenNeeded: true),
             default => throw new \InvalidArgumentException("Unknown bot profile: {$name}"),
         };
     }

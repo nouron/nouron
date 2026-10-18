@@ -50,10 +50,14 @@ class BotStrategyFoodAndLevel2Test extends TestCase
         $this->assertGreaterThanOrEqual(1, $this->agrardomLevel($bot));
     }
 
-    public function test_a_freshly_placed_agrardom_is_built_to_level_1_on_the_same_sol(): void
+    public function test_a_freshly_placed_agrardom_is_built_to_level_1_within_two_sols(): void
     {
+        // The per-Sol AP cap (game.build.ap_cap_per_sol) stops a 10-AP level from
+        // completing in the very Sol it is placed: it finishes on the next Sol.
         $bot = BotSession::boot($this, seed: 1);
 
+        $this->playOneSol($bot, BotStrategy::default());
+        $bot->nextSol();
         $this->playOneSol($bot, BotStrategy::default());
 
         $this->assertGreaterThanOrEqual(1, $this->agrardomLevel($bot), 'Agrardom must produce before the first food tick');
@@ -183,6 +187,9 @@ class BotStrategyFoodAndLevel2Test extends TestCase
     {
         $bot = BotSession::boot($this, 1);
         $this->placeAt($bot, self::BIO_FACILITY, $level);
+        // Building Lv N needs CC Lv >= N (building_cc_gate): the Lv2 targets need CC Lv2.
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)->update(['level' => max($level + 1, 2)]);
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => $bot->colonyId, 'resource_id' => 3],
             ['amount' => 1000],

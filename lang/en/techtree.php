@@ -161,6 +161,7 @@ return [
     'error_insufficient_supply' => 'Not enough free supply capacity — expand a Residential Habitat first.',
     'error_max_level' => 'Maximum level already reached.',
     'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
+    'error_building_cc_gate' => 'Command Center level too low for this building level — a building level needs at least the same Command Center level.',
     'error_insufficient_ap' => 'Not enough AP available for this investment.',
     'error_use_colony_view' => 'Building, upgrading, repairing and demolishing all happen in the tile panel of the colony view.',
     'error_not_placed' => 'The building is not on the map yet — build it in the colony view first.',

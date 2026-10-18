@@ -138,6 +138,18 @@ php artisan game:playtest-compare --profile=default --openings=labor,hangar,cant
 
 `--until-sol=25` (≥ 21, Reserve für späte Phase-2-Starts). Definitionen und Abweichungen der Kennzahlen K1–K7: Klassen-Docblock von `App\Support\OpeningComparison`.
 
+## Browser-Check gegen eine Wegwerf-DB (`tools/uicheck/uicheck`)
+
+Für echte Browser-Prüfungen (Alpine/JS-UI, Playwright) nie die Dev-DB `nouron` und nie Port 8000 benutzen:
+
+```
+tools/uicheck/uicheck start [fresh|demo]   # Wegwerf-DB nouron_test_test_8 neu aufsetzen (TestSeeder), Server auf 127.0.0.1:8012
+tools/uicheck/uicheck status               # Marker-Check: welche DB/Run-Nummer sieht artisan, läuft der Server?
+tools/uicheck/uicheck stop                 # Server per PID beenden
+```
+
+Login `Bart` / `test123`. `fresh` ist der echte Neustart-Pfad (`game:reset-player --scenario=fresh`, Sol 0), `demo` das Demo-Setup (`colony:seed-demo`). `artisan serve` reicht `DB_DATABASE` nicht weiter, deshalb startet das Skript `php -S` mit dem Laravel-Router aus `public/`. Token und Port lassen sich per `UICHECK_TOKEN`/`UICHECK_PORT` ändern; das Skript verweigert Port 8000 und die DB `nouron`. Playwright-Vorlage: `tools/uicheck/example.js` (`node tools/uicheck/example.js <ausgabeverzeichnis>`). PHPUnit auf Wegwerf-DB: `TEST_TOKEN=9 LARAVEL_PARALLEL_TESTING=1 php bin/phpunit …`.
+
 ## Regel: Tests und Bot nie gegen `nouron`
 
 Tests laufen nur gegen `nouron_test`, der Playtest-Bot nur gegen `nouron_playtest`, nie gegen `nouron`. Sonst wird der Dev-Spielstand überschrieben. Agenten dürfen `migrate:fresh`, `db:seed` und `db:reset` nie gegen `nouron` ausführen; für Experimente `DB_DATABASE=nouron_test` o. ä. vorgeben.

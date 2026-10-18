@@ -108,6 +108,9 @@ Bei reaktivierten/bestehenden Dateien mit Coverage-Lücke (siehe `bin/phpunit --
 
 - Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)
 - Owner: Mario (tech.mario@outlook.de)
+- **Balance-Arbeit** (Kosten, AP, Einnahmen, Pacing, Bot-Messungen): zuerst Skill `nouron-balance-pass` und `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md` lesen — messen vor rechnen, eine Änderung pro Messung.
+- **Begriffe:** `GLOSSAR.md` (Spielbegriff ↔ Code-Schlüssel ↔ Bedeutung) zuerst lesen. Berichte an den Owner nennen den **Spielbegriff** (Labor, Baustelle, AP-Deckel), den Code-Schlüssel höchstens einmal in Klammern. Neue Entität oder Mechanik bekommt einen Glossar-Eintrag (eine Zeile, ein Satz, keine Zahlen).
+- **Agenten-Aufträge:** Briefing-Vorlage in `.claude/agents/README.md` verwenden; Browser-Checks mit `tools/uicheck/uicheck` (Wegwerf-DB), nie gegen die Dev-DB.
 
 ### Pre-commit Lint-Hook
 
@@ -140,6 +143,19 @@ Ende jeder Session mit Code-Arbeit: Eintrag in `CHANGELOG.md` ergänzen.
 
 - Kurze Beschreibung (1–3 Sätze pro Thema, auf Deutsch, prägnant)
 ```
+
+### Doku-Matrix (automatisch geprüft, `.claude/hooks/docs_check.py`)
+
+Gilt für jede Änderung, auch ohne ausdrücklichen Auftrag. Der Hook prüft beim Merge (`mcp__github__merge_pull_request` und `gh pr merge`) und beim Session-Ende.
+
+| Änderung | Pflicht-Doku | Hook |
+|---|---|---|
+| Code, Config, Lang, Views, JS, Datenbank | `CHANGELOG.md` (eine Zeile im Tagesblock) | **blockiert** |
+| `config/{game,buildings,advisors,ships,missions,knowledge}.php` | `docs/game-reference.md` (oder im PR-Text `game-reference: nicht nötig` mit Grund) | **blockiert** |
+| Mechanik, Regel, Owner-Entscheidung (`app/`, `config/`) | GDD (zahlenfrei, ADR 0004) und ROADMAP (Status, neue Punkte) | warnt |
+| Neue Spec oder Entscheidung | ROADMAP-Eintrag mit Verweis auf die Spec | — |
+
+Reine Test-/Tooling-/Doku-PRs lösen die harten Regeln nicht aus.
 
 ### Vor jedem Merge (Pflicht-Checkliste)
 

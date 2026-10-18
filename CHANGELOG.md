@@ -7,6 +7,35 @@
 - Feat: Jede Techtree-Box zeigt klein unten rechts den nötigen Kommandozentralen-Level ("CC 2", auch über Gebäude-Voraussetzungen hindurch ermittelt) — die CC-Box braucht dafür keine Pfeile. Der Strategist (Berater 93) ist bis auf Weiteres aus dem Techtree ausgeblendet (Phase 0).
 - Feat: `pageData` enthält Phase 0 (Kommandozentrale), `grid_row`/`grid_col` je Knoten und globale `edges`; `phases_update` liefert `{phases, edges}` statt `lines` je Phase.
 
+## 2026-10-17
+
+- Fix: Phase-1-Ziele (Sol-Übersicht und Kommandozentrale) zeigen jetzt den echten Grundaufbau (Kontrollzentrum Stufe 2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude, 2 Berater); eine gemeinsame Prüfung (`RunProgressService::phase1Criteria`) speist Abschluss und Anzeige. Titel "Grundaufbau" statt "Stabilisierung".
+- Fix: Berater-Slot-Hinweis nennt nur noch Pfadgebäude, deren Berater noch nicht angestellt ist.
+- Fix: Hinweisleiste: eine offene Baustelle mit freiem AP-Deckel gewinnt auch ab Kontrollzentrum Stufe 2 gegen die "AP übrig"-/Erkunden-Hinweise (vorher nur bis Stufe 1).
+- Fix: Karte zeigt nach einem Fehlalarm keinen orangen Ereignis-Marker/Farbe mehr (`hasActiveEvent` in `colony-hexgrid.js`).
+- Fix: Sol-Übersicht zeigt bei "Kolonisten" belegte von maximalen Plätzen statt nur der Kappe.
+- UI: AP-Balken im Ausbauen-/Kenntnis-Button bricht in Zeilen zu höchstens 10 Segmenten um (1 Segment = 1 AP, ausgeglichene Zeilenbreite), Tageslimit-Marker folgt in die richtige Zeile.
+- UI: Reparieren-Button bleibt bei 100 % Zustand sichtbar, aber gesperrt mit Tooltip-Grund (`colony.repair_full_tooltip`).
+- UI: Ausbauen- und Reparieren-Button zeigen die Regolith-Kosten als Chip neben dem AP-Chip (Ausbau nur beim Start der Stufe, Reparatur 0 bei Kommandozentrale/Harvester; rot, wenn Regolith fehlt); Server liefert `repair_cost` je Gebäudezeile.
+- UI: Ressourcenleiste zeigt für Regolith, Organika und Werkstoffe eine Bilanz pro Sol nach Quellen (neuer `ResourceFlowService`, spiegelt `game:tick`, per Test gegen den echten Tick abgesichert); Reihenfolge der Leiste jetzt Regolith, Organika, Werkstoffe.
+
+## 2026-10-16
+
+- Fix/Tooling: PlaytestBot kauft in Phase 1 erst die Pflichtgebäude (Schranke auf CC Lv2, Stufen, Platzierung; vorher scheiterten 13 von 24 Läufen am Bot), neue Mess-Tabelle `tools/phase1-budget.php`, Economy-Modell mit Phase-1-Kaufliste, Skill `nouron-balance-pass` und Entscheidungsdokument `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`. Keine Config-Änderung.
+- Feat: Pro-Gebäude-AP-Deckel pro Sol (`game.build.ap_cap_per_sol`, Basis 4 + Baumeister-Bonus je Rang, aktiv; Server-Code `building_ap_cap`, Bot weicht aus) als Zeit-Bremse für Phase 1; Bot-Profil `lean-explore` (erkundet nur für Harvester-Umzug), `--profile`-Filter in `tools/phase1-budget.php`. Migration `colony_buildings.ap_cap_tick/ap_cap_spent`. Messung: Phase-1-Ende Sol 12–13, Rg-Puffer 118–158 (Minimum 380 Rg). UI: Deckel im segmentierten Ausbauen-Balken (heute gefüllt / frei / gesperrt, Tagesgrenze als Markierung, Tooltip ohne neuen Text); eine gemeinsame Komponente (`partials/ap-upgrade-button`, `ap-bar.js`, `ap-upgrade-button.css`) rendert den Ausbauen-Button und den Kenntnis-Button (1 AP pro Klick, Kachelreihe entfällt); Listenzeilen offen.
+- Fix: Ausbauen-Button (Bau und Kenntnisse): Deckel-Dekoration im Balken erst ab dem ersten investierten AP; bei unerfülltem CC-Stufen-Gate ausgegraut mit der echten Begründung im Tooltip (statt Fehler-Toast nach dem Klick).
+- Fix: Harvester-Verlegen in Sol 0 — das Zielfeld bot nur "Harvester platzieren" (zweite Instanz, unter CC 3 immer abgelehnt), jetzt erscheint der Button nur ab CC-Level der Zweitinstanz und das Zielfeld hat einen Button "Verlegen" mit echtem AP-Chip (2 AP/Hex statt "1 AP/Feld"); Server-Verlegen war unverändert korrekt.
+- Docs: `GLOSSAR.md` (Spielbegriff ↔ Code-Schlüssel ↔ Bedeutung, Namens-Fallen) mit Berichts-Regel in `CLAUDE.md`.
+- Tooling: `tools/uicheck/uicheck` (Browser-Check gegen Wegwerf-DB, Port 8012), Playwright-Vorlage `tools/uicheck/example.js`, Briefing-Vorlage für Agenten (`.claude/agents/README.md`); Organika-Zielbild als Spec `docs/superpowers/specs/2026-10-17-organika-eine-einheit-ein-kolonist.md` (ROADMAP T36).
+- Tooling: `tools/ap-idle.php` (Idle-AP-Anteil, Sciencelab-/CC-Meilensteine je Eröffnung); Phase-2-Messung (Deckel an/aus) und Befund zu ungenutzten AP bei Hangar/Cantina in `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`.
+
+## 2026-10-15
+
+- Feat: Regolith-Buchungsjournal im PlaytestBot-Report (`regolith_ledger`: Zuflüsse/Abflüsse je Quelle bzw. Senke und Sol, Bilanz-Invariante im Test); `regolith_sources.harvester` ist jetzt der reine Harvester-Ertrag, neue Töpfe Geologie/Import/Recycling/Anliegen, Compare-Zeilen Rg-Zufluss/Sol, Harvester-Anteil, `resource_limit`-Abweisungen, Dashboard mit Senken-Chart. Spielverhalten unverändert.
+- Feat: Bergung ohne Sol-Deckel — Selbstbergung ist eine Sofort-Aktion (klein/mittel/groß 3/4/6 AP, kein Tageslimit, kein Projektlimit); der Bergungsflug kostet pauschal 1 AP + 1 Organika je Sol Entfernung, verschleißt nicht und bringt exakt die Fundmenge (`yield_factor` entfällt). Bot (`invest_find`, `repair_ship_for_flight` entfernt), Fundkarte, Texte, GDD §4a/§8b und `game-reference` angepasst; Spalten `salvage_ap_spent`/`salvage_tick` bleiben ungenutzt im Schema. Rechenmodell `tools/economy-model.php` (Erwartungswerte aus der Config) neu.
+- Feat: Gebäude-Stufen-Gate — eine Ausbaustufe eines Nicht-CC-Gebäudes braucht mindestens gleich hohe Kommandozentrale (Server-Regel `building_cc_gate` in `investBuilding()` und Techtree, `game.building_cc_level_offset` = 0); Bot überspringt gesperrte Stufen. Im Referenzlauf stand das Analytik-Labor ohne Gate schon in Sol 12 auf Lv5, die CC auf Lv3 in Sol 2.
+- Feat: Phase 1 = Grundaufbau — Abschluss mit CC Lv2, Harvester/Wohnhabitat/Agrardom/Uplink-Station und einem Pfadgebäude je Lv1 und zwei Beratern (CC Lv3 eröffnet Phase 2); Zielfenster Sol 12–15, Frist Sol 20 (Warnung Sol 17). CC-Ausbau kostet zusätzlich zum Regolith steigende AP (20/40/60/80, `cc_upgrade_ap_by_level`). GDD §4/§13/§15/§18 angepasst; Bot bewertet das neue Phase-1-Ziel. Balance offen: Phase 1 kann zu früh enden, Gegenhebel im GDD (§13.7).
+
 ## 2026-10-14
 
 - Docs: Entwürfe Bergung ohne Sol-Deckel, Regolith-Wirtschaft (Inventar + Budget-Modell) mit Owner-Entscheiden; noch keine Config-Änderung.

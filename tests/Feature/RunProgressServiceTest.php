@@ -8,10 +8,7 @@ namespace Tests\Feature;
  * Covered scenarios:
  *
  * PHASE-1 COMPLETION
- *   - checkPhase1Completion returns false when CC below level 3
- *   - checkPhase1Completion returns false when fewer than 2 production buildings at level 2
- *   - checkPhase1Completion returns false when fewer than 3 advisors
- *   - checkPhase1Completion returns true when all conditions met
+ *   - Grundaufbau (Owner 2026-10-15): CC Lv2, Agrardom/Harvester/Wohnhabitat/Uplink-Station Lv1, one path building Lv1, 2 advisors
  *
  * DRAW OBJECTIVES
  *   - drawObjectives creates 3 objectives for run
@@ -61,8 +58,10 @@ namespace Tests\Feature;
 
 use App\Events\RunEnded;
 use App\Models\Advisor;
+use App\Models\Colony;
 use App\Models\Run;
 use App\Models\RunObjective;
+use App\Services\ColonyService;
 use App\Services\RunProgressService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -216,78 +215,99 @@ class RunProgressServiceTest extends TestCase
 
     // ── Phase-1 completion ────────────────────────────────────────────────────
 
-    public function test_check_phase1_completion_returns_false_when_cc_below_level_3(): void
+    /** Meets every Phase-1 condition (Owner 2026-10-15: Grundaufbau) — tests then break exactly one. */
+    private function makeGrundaufbau(): void
     {
-        $run = $this->makeRun();
+        $this->setBuildingLevel(25, 2);                 // CC Lv2
+        foreach ([27, 28, 41, 54, 31] as $id) {          // Harvester, Wohnhabitat, Agrardom, Uplink-Station, first path building
+            $this->setBuildingLevel($id, 1);
+        }
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->whereIn('building_id', [44, 52])->update(['level' => 0]);
+        Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
+        Advisor::create(['user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
+    }
 
-        // CC at level 1 — condition 1 must fail
+    public function test_phase1_completes_with_the_grundaufbau_and_needs_no_cc_lv3(): void
+    {
+        $this->makeGrundaufbau();
+
+        $this->assertTrue($this->service->checkPhase1Completion($this->makeRun()));
+    }
+
+    public function test_phase1_needs_cc_lv2(): void
+    {
+        $this->makeGrundaufbau();
         $this->setBuildingLevel(25, 1);
 
-        $result = $this->service->checkPhase1Completion($run);
-
-        $this->assertFalse($result, 'Phase-1 must not complete when CC is below level 3');
+        $this->assertFalse($this->service->checkPhase1Completion($this->makeRun()));
     }
 
-    public function test_check_phase1_completion_returns_false_when_fewer_than_2_production_buildings_at_level_2(): void
+    public function test_phase1_needs_each_basic_building_at_lv1(): void
     {
-        $run = $this->makeRun();
+        foreach ([27, 28, 41, 54] as $missing) {
+            $this->makeGrundaufbau();
+            DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', $missing)->update(['level' => 0]); // all instances
 
-        // CC at level 3 — condition 1 passes
-        $this->setBuildingLevel(25, 3);
-
-        // Drop all non-CC buildings in colony 1 to level 1 so none qualify.
-        // Testdata has buildings 25 (lv3), 28 (lv2), 46 (lv3), 31 (lv2) etc.
-        DB::table('colony_buildings')
-            ->where('colony_id', $this->colonyId)
-            ->where('building_id', '!=', 25)
-            ->update(['level' => 1]);
-
-        // Seed exactly 1 qualifying production building (level >= 2)
-        $this->setBuildingLevel(28, 2);
-
-        $result = $this->service->checkPhase1Completion($run);
-
-        $this->assertFalse($result, 'Phase-1 must not complete when fewer than 2 production buildings are at level >= 2');
+            $this->assertFalse($this->service->checkPhase1Completion($this->makeRun()), "building {$missing} missing");
+        }
     }
 
-    public function test_check_phase1_completion_returns_false_when_fewer_than_3_advisors(): void
+    public function test_phase1_needs_one_path_building(): void
     {
-        $run = $this->makeRun();
+        $this->makeGrundaufbau();
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->whereIn('building_id', [31, 44, 52])->update(['level' => 0]);
 
-        $this->setBuildingLevel(25, 3);
-
-        // Ensure 2 non-CC buildings at level >= 2
-        $this->setBuildingLevel(28, 2);
-        $this->setBuildingLevel(46, 2);
-
-        // Only 2 advisors with distinct personell_ids — condition 3 must fail
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-
-        $result = $this->service->checkPhase1Completion($run);
-
-        $this->assertFalse($result, 'Phase-1 must not complete when fewer than 3 advisors are active');
+        $this->assertFalse($this->service->checkPhase1Completion($this->makeRun()));
     }
 
-    public function test_check_phase1_completion_returns_true_when_all_conditions_met(): void
+    public function test_phase1_accepts_any_of_the_three_path_buildings(): void
     {
+        $this->makeGrundaufbau();
+        $this->setBuildingLevel(31, 0);
+        $this->setBuildingLevel(52, 1);
+
+        $this->assertTrue($this->service->checkPhase1Completion($this->makeRun()));
+    }
+
+    public function test_phase1_needs_two_advisors(): void
+    {
+        $this->makeGrundaufbau();
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', 36)->delete();
+
+        $this->assertFalse($this->service->checkPhase1Completion($this->makeRun()));
+    }
+
+    public function test_phase_progress_lists_exactly_the_grundaufbau_criteria(): void
+    {
+        $this->makeGrundaufbau();
+        $this->makeRun();
+        $colony = Colony::findOrFail($this->colonyId);
+
+        $progress = app(ColonyService::class)->getPhaseProgress($colony);
+
+        $this->assertSame(1, $progress['phase']);
+        $this->assertSame(
+            ['cc_level', 'harvester', 'housing', 'agrardom', 'uplink', 'path_building', 'advisors'],
+            array_column($progress['criteria'], 'key')
+        );
+        $this->assertSame([true], array_values(array_unique(array_column($progress['criteria'], 'done'))));
+    }
+
+    public function test_phase_progress_flags_missing_uplink_and_path_building_and_agrees_with_completion(): void
+    {
+        $this->makeGrundaufbau();
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->whereIn('building_id', [54, 31, 44, 52])->update(['level' => 0]);
         $run = $this->makeRun();
+        $colony = Colony::findOrFail($this->colonyId);
 
-        // Condition 1: CC at level 3
-        $this->setBuildingLevel(25, 3);
+        $criteria = collect(app(ColonyService::class)->getPhaseProgress($colony)['criteria'])->keyBy('key');
 
-        // Condition 2: 2 non-CC production buildings at level >= 2
-        $this->setBuildingLevel(28, 2);
-        $this->setBuildingLevel(46, 2);
-
-        // Condition 3: 3 available advisors with distinct personell_ids
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 89, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-
-        $result = $this->service->checkPhase1Completion($run);
-
-        $this->assertTrue($result, 'Phase-1 must complete when all three conditions are satisfied');
+        $this->assertFalse($criteria['uplink']['done']);
+        $this->assertFalse($criteria['path_building']['done']);
+        $this->assertTrue($criteria['cc_level']['done']);
+        $this->assertSame(2, $criteria['cc_level']['target']);
+        $this->assertSame(2, $criteria['advisors']['target']);
+        $this->assertFalse($this->service->checkPhase1Completion($run));
     }
 
     // ── drawObjectives ────────────────────────────────────────────────────────
@@ -563,7 +583,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_check_fail_states_returns_phase1_deadline_when_phase1_incomplete_at_deadline_sol(): void
     {
-        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 20);
         $run = $this->makeRun(['current_tick' => $deadlineSol, 'phase' => 1]);
 
         $this->setTrust(50); // safe, doesn't trigger trust_collapse first
@@ -575,7 +595,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_check_fail_states_does_not_return_phase1_deadline_before_deadline_sol(): void
     {
-        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 20);
         $run = $this->makeRun(['current_tick' => $deadlineSol - 1, 'phase' => 1]);
 
         $this->setTrust(50);
@@ -587,7 +607,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_check_fail_states_does_not_return_phase1_deadline_when_already_phase2(): void
     {
-        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 20);
         $run = $this->makeRun(['current_tick' => $deadlineSol + 5, 'phase' => 2]);
 
         $this->setTrust(50);
@@ -1269,7 +1289,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_phase1_deadline_warning_fires_at_warning_sol_when_still_phase1(): void
     {
-        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $warningSol = (int) config('game.run.phase1_warning_sol', 17);
         $run = $this->makeRun(['current_tick' => $warningSol, 'phase' => 1, 'started_at' => now()->subHour()]);
 
         $this->service->checkPhase1DeadlineWarnings($run);
@@ -1284,7 +1304,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_phase1_deadline_warning_does_not_fire_before_warning_sol(): void
     {
-        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $warningSol = (int) config('game.run.phase1_warning_sol', 17);
         $run = $this->makeRun(['current_tick' => $warningSol - 1, 'phase' => 1, 'started_at' => now()->subHour()]);
 
         $this->service->checkPhase1DeadlineWarnings($run);
@@ -1299,7 +1319,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_phase1_deadline_warning_does_not_fire_once_phase2(): void
     {
-        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $warningSol = (int) config('game.run.phase1_warning_sol', 17);
         $run = $this->makeRun(['current_tick' => $warningSol + 5, 'phase' => 2, 'started_at' => now()->subHour()]);
 
         $this->service->checkPhase1DeadlineWarnings($run);
@@ -1314,7 +1334,7 @@ class RunProgressServiceTest extends TestCase
 
     public function test_phase1_deadline_warning_fires_only_once(): void
     {
-        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $warningSol = (int) config('game.run.phase1_warning_sol', 17);
         $run = $this->makeRun(['current_tick' => $warningSol, 'phase' => 1, 'started_at' => now()->subHour()]);
 
         $this->service->checkPhase1DeadlineWarnings($run);

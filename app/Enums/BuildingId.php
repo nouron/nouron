@@ -19,6 +19,7 @@ enum BuildingId: int
     case Harvester = 27;
     case Housing = 28;
     case Sciencelab = 31;
+    case BioFacility = 41;   // Agrardom
     case Hangar = 44;
     case Bar = 52;
     case UplinkStation = 54;

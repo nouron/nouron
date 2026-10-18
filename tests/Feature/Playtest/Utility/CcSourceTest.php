@@ -34,13 +34,22 @@ class CcSourceTest extends TestCase
         return $bot;
     }
 
-    public function test_phase_1_cc_level_3_is_a_positive_candidate(): void
+    public function test_phase_1_cc_level_2_is_a_positive_candidate(): void
+    {
+        $candidates = $this->candidates($this->boot(1, 200));
+
+        $this->assertSame(['cc:25:2'], array_map(fn (Candidate $c) => $c->key, $candidates));
+        $this->assertGreaterThan(0.0, $candidates[0]->net);
+        $this->assertSame('invest_cc', $candidates[0]->name);
+    }
+
+    public function test_phase_1_cc_level_3_is_no_longer_a_positive_candidate(): void
     {
         $candidates = $this->candidates($this->boot(2, 200));
 
-        $this->assertSame(['cc:25:3'], array_map(fn (Candidate $c) => $c->key, $candidates));
-        $this->assertGreaterThan(0.0, $candidates[0]->net);
-        $this->assertSame('invest_cc', $candidates[0]->name);
+        foreach ($candidates as $candidate) {
+            $this->assertLessThanOrEqual(0.0, $candidate->net, $candidate->key.' must not be urgent in phase 1');
+        }
     }
 
     public function test_cc_level_2_waits_for_the_agrardom(): void
@@ -64,5 +73,12 @@ class CcSourceTest extends TestCase
 
         $this->assertSame(['cc:25:4'], array_map(fn (Candidate $c) => $c->key, $candidates));
         $this->assertGreaterThan(0.0, $candidates[0]->net);
+    }
+
+    public function test_phase_1_cc_level_3_is_not_offered_while_the_uplink_station_is_missing(): void
+    {
+        $bot = $this->boot(2, 500);
+
+        $this->assertSame([], $this->candidates($bot));
     }
 }

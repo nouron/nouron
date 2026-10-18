@@ -212,6 +212,7 @@ class HarvesterSecondInstanceTest extends TestCase
      */
     public function test_second_instance_produces_only_after_being_leveled_up_via_invest(): void
     {
+        config(['game.build.ap_cap_per_sol.base' => null]);   // tests the build flow, not the per-Sol AP cap
         $this->setCcLevel(3);
         $this->entitlementService()->grantPurchase(self::BART_USER_ID);
         $this->placeSecondInstance()->assertOk()->assertJsonPath('ok', true);

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
-/** T30 §13.3: salvage flight to a scanned find — distance from ring, no roll, yield × 1.5. */
+/** T30 §13.3: salvage flight to a scanned find — distance from ring, no roll, flat 1 AP, no wear, yield = find Rg. */
 class FindFlightTest extends TestCase
 {
     use CreatesForeignColony;
@@ -105,15 +105,12 @@ class FindFlightTest extends TestCase
     {
         $svc = $this->app->make(FindFlightService::class);
         $this->assertSame([1, 2], [$svc->solDistance(2), $svc->solDistance(3)]);
-        $this->assertSame(['base' => 10, 'flight_bonus' => 5, 'total' => 15], $svc->findFlightYield(self::COLONY_ID, 'find_medium'));
-        $this->assertSame(27, $svc->findFlightYield(self::COLONY_ID, 'find_large')['total']);
+        $this->assertSame(['base' => 10, 'total' => 10], $svc->findFlightYield(self::COLONY_ID, 'find_medium'));
+        $this->assertSame(18, $svc->findFlightYield(self::COLONY_ID, 'find_large')['total']);
+        $ring2 = $svc->costs(self::COLONY_ID, 2);
+        $this->assertSame([1, 1, 1, 2], [$ring2['sol_distance'], $ring2['nav_ap'], $ring2['organika'], $ring2['duration']]);
         $ring3 = $svc->costs(self::COLONY_ID, 3);
-        $this->assertSame([2, 4, 6, 4], [$ring3['sol_distance'], $ring3['nav_ap_base'], $ring3['organika'], $ring3['duration']]);
-        // Same Organika formula as every other mission (preview = charge).
-        $this->assertSame(
-            $ring3['organika'],
-            $this->app->make(HangarService::class)->organikaCostFor(self::COLONY_ID, config('missions.catalog.mission_find_salvage'), 2)
-        );
+        $this->assertSame([2, 1, 2, 4], [$ring3['sol_distance'], $ring3['nav_ap'], $ring3['organika'], $ring3['duration']]);
     }
 
     public function test_dispatch_charges_ring_costs_and_stores_distance(): void
@@ -141,8 +138,7 @@ class FindFlightTest extends TestCase
         $this->assertRejected('invalid_target', fn () => $this->fly(0, 2));
         $this->find(2, 2, 'find_large');
         $this->assertRejected('find_too_large', fn () => $this->fly(0, 2));
-        $this->find(2, 2, 'find_small', spent: 4);
-        $this->assertRejected('find_salvage_in_progress', fn () => $this->fly(0, 2));
+        $this->find(2, 2, 'find_small');
         $this->find(2, 2, 'find_small');
         $this->assertRejected('wrong_ship_type', fn () => $this->fly(3, 2)); // corvette carries nothing
     }
@@ -171,7 +167,7 @@ class FindFlightTest extends TestCase
         $this->assertSame('find_small', DB::table('colony_tiles')->where('colony_id', $foreign['colony_id'])->value('event_type'));
     }
 
-    public function test_return_pays_round_rg_times_factor_without_roll_and_frees_the_tile(): void
+    public function test_return_pays_the_find_rg_without_roll_and_frees_the_tile(): void
     {
         config(['game.missions.difficulty.base_chance' => ['easy' => 0.0, 'normal' => 0.0, 'hard' => 0.0]]);
         $this->ship(self::DRONE, 0);
@@ -181,33 +177,29 @@ class FindFlightTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => 1, '--tick' => 102]);
 
-        $this->assertSame($rg + 15, $this->regolith());
+        $this->assertSame($rg + 10, $this->regolith());
         $tile = DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 2)->where('r', 0)->first();
-        $this->assertSame([null, 0, 0], [$tile->event_type, (int) $tile->is_deep_scanned, (int) $tile->salvage_ap_spent]);
+        $this->assertSame([null, 0, 0], [$tile->event_type, (int) $tile->is_deep_scanned, 0]);
         $mission = DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->first();
         $this->assertSame(['completed', 1, 'normal'], [$mission->state, (int) $mission->succeeded, $mission->difficulty]);
         $this->assertContains('normal', app(RunTaskCatalog::class)->countedDifficulties(), 'E9: counts for task_expedition_coverage');
         $rewards = json_decode(DB::table('colony_log')->where('event', 'hangar.mission_completed')->where('tick', 102)->value('parameters'), true)['rewards'];
-        $this->assertSame(['find_type' => 'find_medium', 'find_regolith' => 15, 'flight_bonus' => 5], $rewards);
+        $this->assertSame(['find_type' => 'find_medium', 'find_regolith' => 10], $rewards);
     }
 
-    public function test_worn_drone_is_refused_for_ring_3_and_returns_with_one_sp_after_repair(): void
+    public function test_salvage_flight_does_not_wear_the_ship_and_needs_no_repair(): void
     {
-        $this->ship(self::DRONE, 0, 6.0); // passed the old 25 % floor, aborted in the last tick
+        $this->ship(self::DRONE, 0, 1.0);   // far below any old return guarantee
         $this->find(3, 3, 'find_medium');
-        [$ap, $or] = [$this->ap(), $this->organics()];
-        $this->assertRejected('ship_too_worn', fn () => $this->fly(0, 3));
-        $this->assertSame([$ap, $or], [$this->ap(), $this->organics()]);
-
-        DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->update(['status_points' => 7.0]);
         $rg = $this->regolith();
         $this->fly(0, 3);
-        foreach ([101, 102, 103, 104] as $tick) { // 4 Sols in flight × 1.5 wear
+        foreach ([101, 102, 103, 104] as $tick) {
             Artisan::call('game:tick', ['--run' => 1, '--tick' => $tick]);
         }
 
         $this->assertSame(1.0, (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('status_points'));
-        $this->assertSame($rg + 15, $this->regolith());
+        $this->assertSame('docked', DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('ship_state'));
+        $this->assertSame($rg + 10, $this->regolith());
     }
 
     public function test_flight_still_pays_after_the_hall_was_demolished(): void
@@ -220,7 +212,7 @@ class FindFlightTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => 1, '--tick' => 102]);
 
-        $this->assertSame($rg + 6, $this->regolith());
+        $this->assertSame($rg + 4, $this->regolith());
     }
 
     public function test_flight_to_a_vanished_find_is_not_succeeded(): void
@@ -241,7 +233,7 @@ class FindFlightTest extends TestCase
         $this->assertTrue(json_decode($event->parameters, true)['find_missing'], 'event carries find_missing');
     }
 
-    public function test_recall_and_abort_free_the_target_without_yield(): void
+    public function test_recall_frees_the_target_without_yield(): void
     {
         $this->ship(self::DRONE, 0);
         $this->find(2, 2, 'find_small');
@@ -250,13 +242,6 @@ class FindFlightTest extends TestCase
         $this->app->make(HangarService::class)->recallShip(self::COLONY_ID, 0);
         $this->assertSame($rg, $this->regolith());
         $this->fly(0, 2); // target free again
-
-        DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->update(['status_points' => 1]);
-        Artisan::call('game:tick', ['--run' => 1, '--tick' => 101]);
-
-        $this->assertSame('aborted', DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->orderByDesc('id')->value('state'));
-        $this->assertSame($rg, $this->regolith());
-        $this->assertSame('find_small', DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 2)->value('event_type'));
     }
 
     public function test_catalog_lists_scanned_finds_with_costs_carry_and_yield_and_no_roll(): void
@@ -273,7 +258,7 @@ class FindFlightTest extends TestCase
         $this->assertSame([[2, 0], [3, 0]], array_map(fn ($t) => [$t['q'], $t['r']], $entry['targets']));
         $large = $entry['targets'][1];
         $this->assertSame(['drone' => false, 'freighter' => true], $large['carry']);
-        $this->assertSame(27, $large['yield']['total']);
+        $this->assertSame(18, $large['yield']['total']);
         $this->assertSame(104, $large['return_sol']);
     }
 
@@ -298,32 +283,6 @@ class FindFlightTest extends TestCase
 
         $this->assertSame([1, 2], array_keys($slot['ship']['readiness']));
         $this->assertTrue($slot['ship']['readiness'][2]['ready']);
-    }
-
-    /** Guard and tick agree: accepted at SP = wear + 0.5 → back with 0.5 SP and paid; at SP = wear refused for free. */
-    public function test_guard_and_tick_agree_on_the_return_guarantee(): void
-    {
-        config(['game.missions.difficulty.base_chance' => ['easy' => 0.0, 'normal' => 0.0, 'hard' => 0.0]]);
-        $this->find(3, 3, 'find_large');
-        $wear = HangarBays::flightReadiness(self::FREIGHTER, 20, 2)['wear'];
-        $this->assertSame((float) config('ships.freighter.wear_per_sol') * 4, $wear);
-
-        $this->ship(self::FREIGHTER, 2, $wear);
-        [$ap, $or] = [$this->ap(), $this->organics()];
-        $this->assertRejected('ship_too_worn', fn () => $this->fly(2, 3));
-        $this->assertSame([$ap, $or], [$this->ap(), $this->organics()]);
-        $this->assertSame(0, DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->count());
-
-        DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 2)->update(['status_points' => $wear + 0.5]);
-        $rg = $this->regolith();
-        $this->fly(2, 3);
-        foreach ([101, 102, 103, 104] as $tick) {
-            Artisan::call('game:tick', ['--run' => 1, '--tick' => $tick]);
-        }
-
-        $this->assertSame(0.5, (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 2)->value('status_points'));
-        $this->assertSame('docked', DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 2)->value('ship_state'));
-        $this->assertSame($rg + 27, $this->regolith());
     }
 
     /** Corvette wear in the guard equals the per-Sol wear the tick applies (config/ships.php). */

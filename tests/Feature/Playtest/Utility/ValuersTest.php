@@ -149,7 +149,8 @@ class ValuersTest extends TestCase
     public function test_cc_steps_are_positive_in_phase_1_and_towards_level_4(): void
     {
         $bot = BotSession::boot($this, 1);
-        $this->setCc($bot, 2);
+        // Phase 1 Grundaufbau (2026-10-15): only CC Lv2 is urgent; Lv3 opens Phase 2.
+        $this->setCc($bot, 1);
         $this->assertGreaterThan(0.0, Valuers::cc($bot, $this->ctx($bot), Valuers::ccRow($bot))->net());
 
         $this->setPhase($bot, 2);

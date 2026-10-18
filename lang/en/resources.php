@@ -46,6 +46,15 @@ return [
     'popup_ap_advisor' => 'from advisors',
     'popup_ap_trust_multiplier' => 'Trust multiplier',
 
+    // Per-Sol balance rows in the Regolith/Organika/Werkstoffe popups
+    'popup_flow_net' => 'Net per Sol',
+    'popup_flow_harvester' => 'Harvester',
+    'popup_flow_geology' => 'Geology',
+    'popup_flow_agrardom' => 'Agrarian Dome',
+    'popup_flow_agronomy' => 'Agronomy',
+    'popup_flow_colonists' => 'Colonists (provisions)',
+    'popup_flow_none' => 'No ongoing production — import and trade only.',
+
     'popup_rg_title' => 'Regolith',
     'popup_rg_desc' => 'The rock beneath your feet. The Harvester breaks it out of the ground — the colony builds with it. Almost everything constructed here starts with Regolith.',
 

@@ -4,20 +4,22 @@ namespace Tests\Feature\Playtest;
 
 /**
  * A30/B1c: RunReport::snapshot() must attribute this Sol's Regolith/Organika
- * gains to a source category, using the regolith/organics_before/after each
- * log entry carries (BotSessionResourceTrackingTest) plus the real
- * colony_log 'hangar.mission_completed' event for mission rewards and
- * ResourcesService::foodNeed() for hunger consumption — no new game-code
- * tagging, no re-derivation of production amounts (those come straight from
- * the observed before/after delta).
+ * gains to a source category. Regolith comes from the tagged ledger bookings
+ * (App\Support\RegolithLedger, drained per request into BotSession::$regolithLedger);
+ * Organika still from the regolith/organics_before/after each log entry carries
+ * (BotSessionResourceTrackingTest) plus the real colony_log
+ * 'hangar.mission_completed' event for mission rewards and
+ * ResourcesService::foodNeed() for hunger consumption.
  *
  * Categories (structurally "wie oben" per the plan, but correctly renamed
  * per resource — 'harvester' would be a misnomer for Organika, which the
  * Agrardom produces):
- *   regolith_sources: harvester | mission | trade | event
+ *   regolith_sources: harvester | mission | trade | find | find_flight | event |
+ *                     geology | import | recycling | concern | other
  *   organics_sources: agrardom  | mission | trade | event
  *   organics_consumption: hunger_consumed | mission_dispatch_consumed
  */
+use App\Support\RegolithLedger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -56,12 +58,12 @@ class RunReportResourceSourcesTest extends TestCase
         $this->assertSame(3, $data['sols'][0]['hunger_streak']);
     }
 
-    public function test_trade_source_counted_from_accept_bar_offer_delta(): void
+    public function test_trade_source_comes_from_cantina_guest_and_merchant_bookings(): void
     {
         $bot = BotSession::boot($this, 1);
         $report = new RunReport(1);
 
-        $this->pushEntry($bot, 'accept_bar_offer', ['regolith_before' => 100, 'regolith_after' => 115]);
+        $bot->regolithLedger[$bot->sol]['in'] = ['cantina_guest' => 10, 'merchant_buy' => 5];
 
         $report->snapshot($bot);
         $data = $report->build($bot);
@@ -70,34 +72,19 @@ class RunReportResourceSourcesTest extends TestCase
         $this->assertSame(0, $data['sols'][0]['regolith_sources']['harvester']);
     }
 
-    public function test_harvester_source_is_sol_next_delta_minus_mission_rewards(): void
+    public function test_every_ledger_source_tag_lands_in_its_own_bucket(): void
     {
         $bot = BotSession::boot($this, 2);
         $report = new RunReport(2);
 
-        // Real mission-completion event this tick (tick == bot->sol after nextSol()
-        // increments it — see BotSession::nextSol(), $this->sol++ happens first).
-        $bot->sol = 0; // about to become 1 via nextSol()
-        DB::table('colony_log')->insert([
-            'user' => $bot->userId,
-            'tick' => 1,
-            'event' => 'hangar.mission_completed',
-            'area' => 'colony',
-            'parameters' => json_encode(['rewards' => ['regolith' => 5]]),
-            'is_read' => true,
-            'created_at' => now(),
-        ]);
-
-        // Synthetic sol_next entry: total regolith delta 20, of which 5 came from
-        // the mission above → harvester's own share must be 15.
-        $bot->sol = 1;
-        $this->pushEntry($bot, 'sol_next', ['regolith_before' => 100, 'regolith_after' => 120]);
+        $bot->regolithLedger[$bot->sol]['in'] = ['harvester_base' => 15, 'geology' => 4, 'mission_ore' => 3, 'mission_loot' => 2,
+            'import' => 6, 'recycle' => 1, 'cantina_concern' => 7, 'find_self' => 8, 'find_flight' => 9, 'brand_new_tag' => 2];
 
         $report->snapshot($bot);
-        $data = $report->build($bot);
+        $sources = $report->build($bot)['sols'][0]['regolith_sources'];
 
-        $this->assertSame(15, $data['sols'][0]['regolith_sources']['harvester']);
-        $this->assertSame(5, $data['sols'][0]['regolith_sources']['mission']);
+        $this->assertSame(['harvester' => 15, 'mission' => 5, 'trade' => 0, 'find' => 8, 'find_flight' => 9, 'event' => 0,
+            'geology' => 4, 'import' => 6, 'recycling' => 1, 'concern' => 7, 'other' => 2], $sources);
     }
 
     public function test_mission_dispatch_consumption_tracked_separately_from_hunger(): void
@@ -117,19 +104,54 @@ class RunReportResourceSourcesTest extends TestCase
         $this->assertSame(0, $data['sols'][0]['organics_consumption']['hunger_consumed']);
     }
 
-    public function test_rejected_action_never_counts_as_a_source(): void
+    public function test_outflows_never_count_as_a_source(): void
     {
         $bot = BotSession::boot($this, 4);
         $report = new RunReport(4);
 
-        // A rejected accept_bar_offer must leave the DB untouched (delta 0 here,
-        // simulating that reality), but even a non-zero delta must not count —
-        // ok=false actions are never a real source.
-        $this->pushEntry($bot, 'accept_bar_offer', ['regolith_before' => 100, 'regolith_after' => 100], ok: false);
+        $bot->regolithLedger[$bot->sol]['out'] = ['build_place' => 30, 'cantina_sell' => 10];
 
         $report->snapshot($bot);
         $data = $report->build($bot);
 
-        $this->assertSame(0, $data['sols'][0]['regolith_sources']['trade']);
+        $this->assertSame(0, array_sum($data['sols'][0]['regolith_sources']));
+    }
+
+    public function test_ledger_reports_flows_stock_and_the_unexplained_rest_per_sol(): void
+    {
+        $bot = BotSession::boot($this, 5);
+        $report = new RunReport(5);
+        $start = $bot->regolithStartStock;
+
+        // Sol 0: +20 harvester, −12 placement, stock really rose by 8 → fully explained.
+        $bot->regolithLedger[0] = ['in' => ['harvester_base' => 20], 'out' => ['build_place' => 12]];
+        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 3)->update(['amount' => $start + 8]);
+        $report->snapshot($bot);
+
+        // Sol 1: +5 import booked, but the stock rose by 9 → 4 Rg came from an untagged site.
+        $bot->sol = 1;
+        $bot->regolithLedger[1] = ['in' => ['import' => 5], 'out' => []];
+        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 3)->update(['amount' => $start + 17]);
+        $report->snapshot($bot);
+
+        $ledger = $report->build($bot)['regolith_ledger'];
+
+        $this->assertSame($start, $ledger['start_stock']);
+        $this->assertSame(['harvester_base' => 20, 'import' => 5], $ledger['sources']);
+        $this->assertSame(['build_place' => 12], $ledger['sinks']);
+        $this->assertSame([0, $start + 8, 0], [$ledger['per_sol'][0]['sol'], $ledger['per_sol'][0]['stock'], $ledger['per_sol'][0]['unattributed']]);
+        $this->assertSame([1, $start + 17, 4], [$ledger['per_sol'][1]['sol'], $ledger['per_sol'][1]['stock'], $ledger['per_sol'][1]['unattributed']]);
+    }
+
+    public function test_bot_request_bookings_land_in_the_current_sol(): void
+    {
+        $bot = BotSession::boot($this, 6);
+        $bot->sol = 3;
+
+        RegolithLedger::record($bot->colonyId, 'import', 7);
+        RegolithLedger::record($bot->colonyId, 'repair', -2);
+        $bot->bookRegolith();
+
+        $this->assertSame(['in' => ['import' => 7], 'out' => ['repair' => 2]], $bot->regolithLedger[3]);
     }
 }

@@ -1032,6 +1032,8 @@ Gesamtkosten der Ausbaustufen (Configwerte, Summen von Hand gerechnet):
 
 ### 13.3 Bergungsflug
 
+> **Überholt (2026-10-15):** Ertragsfaktor 1,5, Flugkosten nach Entfernung und Verschleiß der Bergungsflüge gelten nicht mehr. Maßgeblich ist `2026-10-13-bergung-ohne-sol-deckel.md` (Flug 1 AP, kein Verschleiß, Ertrag = Fundmenge; Selbstbergung 3/4/6 AP sofort). §13.5 rechnet noch mit dem Faktor.
+
 #### Config (Vorschlag)
 
 `config/missions.php`, neuer Eintrag (statt `mission_deep_survey` Z. 59–67 und `mission_prospecting_flight` Z. 68–75):

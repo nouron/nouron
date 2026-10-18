@@ -42,6 +42,9 @@ final class UpgradeSource implements CandidateSource
         $open = [];
         $blockedBest = 0.0;
         foreach (Valuers::upgradeRows($b) as $row) {
+            if (! BotStrategy::phase1Allows($b, (int) $row->building_id, (int) $row->level + 1)) {
+                continue;
+            }
             $regolith = BotStrategy::levelupRegolith($row);
             if ($regolith > $ctx->regolith) {
                 continue;

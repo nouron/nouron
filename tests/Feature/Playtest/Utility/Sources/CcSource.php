@@ -28,13 +28,14 @@ final class CcSource implements CandidateSource
     public function candidates(BotSession $b, BotContext $ctx): array
     {
         $cc = Valuers::ccRow($b);
-        if ($cc === null || $ctx->apAvailable < 1) {
+        if ($cc === null || $ctx->apAvailable < 1 || BotStrategy::apCapped($b, BuildingId::CommandCenter->value, 1)) {
             return [];
         }
         $level = (int) $cc->level;
         if (($cc->max_level !== null && $level >= (int) $cc->max_level)
             || ($level === 1 && ! BotStrategy::agrardomPlaced($b))
-            || ($ctx->phase === 1 && $level >= 3)) {
+            || ($ctx->phase === 1 && $level >= 3)
+            || ! BotStrategy::phase1Allows($b, BuildingId::CommandCenter->value, $level + 1)) {
             return [];
         }
         $regolith = BotStrategy::levelupRegolith($cc);

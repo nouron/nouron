@@ -45,7 +45,8 @@ final class HeuristicGoalProvider
         $cc = Valuers::ccRow($b);
         if ($cc !== null && ($cc->max_level === null || (int) $cc->level < (int) $cc->max_level)
             && ((int) $cc->level !== 1 || BotStrategy::agrardomPlaced($b))
-            && ! ($ctx->phase === 1 && (int) $cc->level >= 3)) {
+            && ! ($ctx->phase === 1 && (int) $cc->level >= 3)
+            && BotStrategy::phase1Allows($b, BuildingId::CommandCenter->value, (int) $cc->level + 1)) {
             $rg = BotStrategy::levelupRegolith($cc);
             $key = 'cc:25:'.((int) $cc->level + 1);
             $options[] = new SavingsGoal('cc', $key, $rg, Valuers::cc($b, $ctx, $cc)->net(), $key, $rg <= $ctx->regolith);
@@ -55,14 +56,27 @@ final class HeuristicGoalProvider
         $path = self::nextPathBuilding($b, $ctx);
         // Review S3 I4/M8: a placement without a free zone tile is no goal; a supply-blocked
         // one only while a housing level can lift the block (its chain, spec 2.6).
-        if ($path !== null && BotStrategy::freeZoneTile($b) !== null
+        if ($path !== null && BotStrategy::phase1AllowsPlacement($b, $path) && BotStrategy::freeZoneTile($b) !== null
             && (! self::pathSupplyBlocked($path, $freeSupply) || self::housingStepOpen($b))) {
             $e = Valuers::pathPlacement($b, $ctx, $path);
             $options[] = new SavingsGoal('path', 'place:'.$path, $e->regolithCost, $e->net(), 'place:'.$path, $e->regolithCost <= $ctx->regolith);
         }
 
+        // Phase 1 Grundaufbau (2026-10-15): the Uplink-Station must stand. Without a goal the
+        // bot spent every Rg on level-ups first and never reached its 80 Rg (measurement 3).
+        $uplinkId = BuildingId::UplinkStation->value;
+        if ($ctx->phase === 1 && BotStrategy::ccLevel($b) >= 2 && BotStrategy::agrardomPlaced($b)
+            && ! DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', $uplinkId)->whereNotNull('tile_x')->exists()
+            && BotStrategy::freeZoneTile($b) !== null && ! self::pathSupplyBlocked($uplinkId, $freeSupply)) {
+            $e = Valuers::uplinkPlacement($b, $ctx);
+            $options[] = new SavingsGoal('path', 'place:'.$uplinkId, $e->regolithCost, $e->net(), 'place:'.$uplinkId, $e->regolithCost <= $ctx->regolith);
+        }
+
         foreach (Valuers::upgradeRows($b) as $row) {
             $rg = BotStrategy::levelupRegolith($row);
+            if (! BotStrategy::phase1Allows($b, (int) $row->building_id, (int) $row->level + 1)) {
+                continue;
+            }
             $supplyBlocked = ! ResourcesService::reservesFirstLevel($row) && BotStrategy::supplyGated($row) && $freeSupply < (int) $row->supply_cost;
             if (! $supplyBlocked) {
                 $key = 'invest:'.$row->building_id.':'.$row->instance_id;

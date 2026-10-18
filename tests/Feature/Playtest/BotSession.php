@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\AdvisorService;
 use App\Services\OnboardingService;
 use App\Services\TickService;
+use App\Support\RegolithLedger;
 use Database\Seeders\ReferenceDataSeeder;
 use Tests\TestCase;
 
@@ -66,6 +67,17 @@ class BotSession
      * @var array<int, array<string, int>>
      */
     public array $placeNullReasons = [];
+
+    /**
+     * Regolith ledger (budget spec E.1 M1): tagged bookings per Sol, drained from
+     * RegolithLedger after every request — in/out amounts are positive.
+     *
+     * @var array<int, array{in: array<string, int>, out: array<string, int>}>
+     */
+    public array $regolithLedger = [];
+
+    /** Regolith stock when the ledger started (end of boot()). */
+    public int $regolithStartStock = 0;
 
     /** @var array<string, array{logCount:int, value:mixed}> */
     private array $memo = [];
@@ -141,7 +153,12 @@ class BotSession
         // yield for the whole run). Align it to what a real player's request sees.
         app(TickService::class)->setTickCount((int) $run->fresh()->current_tick);
 
-        return new self($test, $userId, $colonyId, (int) $run->id);
+        $bot = new self($test, $userId, $colonyId, (int) $run->id);
+        // Observation only: from here on every Regolith booking is tagged and drained per request.
+        RegolithLedger::start();
+        $bot->regolithStartStock = BotStrategy::regolith($bot);
+
+        return $bot;
     }
 
     /**
@@ -198,6 +215,7 @@ class BotSession
         $apAfter = app(AdvisorService::class)->getAvailableActionPoints($this->colonyId);
         $regolithAfter = BotStrategy::regolith($this);
         $organicsAfter = BotStrategy::organics($this);
+        $this->bookRegolith();
 
         $this->log[] = [
             'sol' => $this->sol,
@@ -218,6 +236,15 @@ class BotSession
         ];
 
         return $norm;
+    }
+
+    /** Moves this colony's pending RegolithLedger entries into the current Sol's in/out buckets. */
+    public function bookRegolith(): void
+    {
+        foreach (RegolithLedger::drain($this->colonyId) as $entry) {
+            $side = $entry['delta'] > 0 ? 'in' : 'out';
+            $this->regolithLedger[$this->sol][$side][$entry['tag']] = ($this->regolithLedger[$this->sol][$side][$entry['tag']] ?? 0) + abs($entry['delta']);
+        }
     }
 
     /**

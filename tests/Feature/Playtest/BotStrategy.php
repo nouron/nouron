@@ -5,13 +5,15 @@ namespace Tests\Feature\Playtest;
 use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\BuildingCostService;
 use App\Services\ColonyTileService;
-use App\Services\FindFlightService;
 use App\Services\HangarService;
+use App\Services\PathBuildingGateService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunTaskCatalog;
+use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use App\Services\TrustService;
@@ -22,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * Ordered rule list — not an AI. Per Sol, rules are tried top to bottom;
  * the first one whose `when` matches fires via `do`, and the loop restarts
  * from rule 1. Rules 1-6 cover the Phase-1 core (checkPhase1Completion:
- * CC Lv3 + 2 production buildings Lv2 + 3 advisors).
+ * CC Lv2 + Harvester/Housing/Agrardom/Uplink + one path building Lv1 + 2 advisors).
  */
 class BotStrategy
 {
@@ -187,6 +189,7 @@ class BotStrategy
                 // collecting an agrardom_required rejection.
                 'when' => fn (BotSession $b) => self::ccLevel($b) < (self::runPhase($b) >= 2 ? 5 : 3)
                     && self::availableAp($b) >= 1
+                    && ! self::apCapped($b, BuildingId::CommandCenter->value, 1)
                     && (self::ccLevel($b) !== 1 || self::agrardomPlaced($b)),
                 'do' => fn (BotSession $b) => $b->act('invest_cc', 'POST', '/colony/building/invest', [
                     'building_id' => BuildingId::CommandCenter->value,
@@ -226,17 +229,6 @@ class BotStrategy
                     'difficulty' => 'easy',
                     'target' => ['q' => $candidate['tile']->q, 'r' => $candidate['tile']->r],
                 ]),
-            ],
-            [
-                'name' => 'repair_ship_for_flight',
-                // T30 §13.x/11: ships wear only in flight; a find that waits only because its
-                // ship misses the return guarantee (findAction reason ship_worn) gets one repair
-                // click per rule pass until the ship is ready. Without this a worn gift drone
-                // would leave every find on the map (K16 no_ship_ready = bot bug, not balance).
-                'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.ship_repair.ap_per_click', 1)
-                    ? self::repairForFlightCandidate($b)
-                    : null,
-                'do' => fn (BotSession $b, array $c) => $b->act('repair_ship_for_flight', 'POST', "/colony/hangar/{$c['bay']}/repair"),
             ],
             [
                 'name' => 'dispatch_find_flight',
@@ -297,7 +289,7 @@ class BotStrategy
             ],
             [
                 'name' => 'explore_tile',
-                'when' => fn (BotSession $b) => self::exploreCandidate($b),
+                'when' => fn (BotSession $b) => self::exploreCandidate($b, $profile->exploreOnlyWhenNeeded),
                 'do' => fn (BotSession $b, object $tile) => $b->act('explore_tile', 'POST', '/colony/tile/explore', [
                     'q' => $tile->q,
                     'r' => $tile->r,
@@ -438,18 +430,15 @@ class BotStrategy
             ],
             [
                 'name' => 'invest_find',
-                // T30 Pool v1: deposit leftover AP into salvage projects on deep-scanned
-                // find tiles. Deliberately LAST (after build/research/explore/hire/ship
-                // rules; sol_next lives outside this list, in the Sol loop) so it only
-                // absorbs AP nothing else wanted — the pool should bind idle AP, not
-                // displace buildings. A rejected deposit blocks the rule for the Sol
-                // (PlaysSolLoop), and investFindCandidate() skips tiles already paid this
-                // tick, so it cannot spin within one Sol.
+                // Self-salvage (no hangar): one instant action per deep-scanned find, flat AP.
+                // Deliberately LAST (after build/research/explore/hire/ship rules; sol_next
+                // lives outside this list, in the Sol loop) so it only absorbs AP nothing
+                // else wanted — the pool should bind idle AP, not displace buildings.
+                // A rejected salvage blocks the rule for the Sol (PlaysSolLoop).
                 'when' => fn (BotSession $b) => self::investFindCandidate($b),
                 'do' => fn (BotSession $b, object $c) => $b->act('invest_find', 'POST', '/colony/tile/salvage', [
                     'q' => $c->q,
                     'r' => $c->r,
-                    'ap' => $c->ap,
                 ]),
             ],
         ];
@@ -601,6 +590,8 @@ class BotStrategy
             ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.ap_for_levelup')
             ->get()
             ->reject(fn (object $row): bool => self::supplyGated($row) && $freeSupply < (int) $row->supply_cost)
+            ->reject(fn (object $row): bool => self::ccGated($b, $row))
+            ->reject(fn (object $row): bool => self::apCapped($b, (int) $row->building_id, (int) $row->instance_id))
             ->filter(function (object $row) use ($b, $ccReserve, $regolith): bool {
                 $cost = self::levelupRegolith($row);
 
@@ -735,6 +726,77 @@ class BotStrategy
     public static function runPhase(BotSession $b): int
     {
         return (int) (DB::table('runs')->where('id', $b->runId)->value('phase') ?? 1);
+    }
+
+    /**
+     * Phase 1 and a building requirement of RunProgressService::checkPhase1Completion() is still
+     * missing: CC Lv2, Harvester / Wohnhabitat / Agrardom / Uplink-Station Lv1, one path building Lv1.
+     * The advisor requirement is not a Regolith matter and is left out.
+     */
+    public static function phase1BuildingsOpen(BotSession $b): bool
+    {
+        if (self::runPhase($b) !== 1) {
+            return false;
+        }
+        $levels = DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('level', '>=', 1)->pluck('level', 'building_id');
+        $basics = [BuildingId::Harvester->value, BuildingId::Housing->value, self::BIO_FACILITY, BuildingId::UplinkStation->value];
+
+        return (int) $levels->get(BuildingId::CommandCenter->value, 0) < 2
+            || ! collect($basics)->every(fn (int $id): bool => $levels->has($id))
+            || ! collect(PathBuildingGateService::PATH_BUILDING_IDS)->contains(fn (int $id): bool => $levels->has($id));
+    }
+
+    /**
+     * Whether a Regolith step ($targetLevel of $buildingId) may be taken while Phase 1 still lacks a
+     * building requirement (bot assumption: Regolith is the bottleneck, so nothing beyond the
+     * requirements is bought before they stand). Always true outside Phase 1 or once all stand.
+     * Exception: Wohnhabitat levels while the supply cap blocks a missing Uplink-Station / first path building.
+     */
+    public static function phase1Allows(BotSession $b, int $buildingId, int $targetLevel): bool
+    {
+        if (! self::phase1BuildingsOpen($b)) {
+            return true;
+        }
+        if ($buildingId === BuildingId::CommandCenter->value) {
+            return $targetLevel <= 2;
+        }
+        $required = [BuildingId::Harvester->value, BuildingId::Housing->value, self::BIO_FACILITY, BuildingId::UplinkStation->value, ...PathBuildingGateService::PATH_BUILDING_IDS];
+        if (in_array($buildingId, $required, true) && $targetLevel <= 1) {
+            return true;
+        }
+
+        return $buildingId === BuildingId::Housing->value && self::phase1SupplyBlocked($b);
+    }
+
+    /** Phase 1: placing a not yet placed building is a requirement (one path building only). */
+    public static function phase1AllowsPlacement(BotSession $b, int $buildingId): bool
+    {
+        if (! self::phase1BuildingsOpen($b)) {
+            return true;
+        }
+        if (in_array($buildingId, PathBuildingGateService::PATH_BUILDING_IDS, true)) {
+            return ! DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+                ->whereIn('building_id', PathBuildingGateService::PATH_BUILDING_IDS)->whereNotNull('tile_x')->exists();
+        }
+
+        return in_array($buildingId, [BuildingId::Housing->value, self::BIO_FACILITY, BuildingId::UplinkStation->value], true);
+    }
+
+    /** A missing Phase-1 placement (Uplink-Station, or the first path building) needs more supply than is free. */
+    private static function phase1SupplyBlocked(BotSession $b): bool
+    {
+        $free = app(ResourcesService::class)->getFreeSupply($b->colonyId);
+        $placed = fn (array $ids): bool => DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+            ->whereIn('building_id', $ids)->whereNotNull('tile_x')->exists();
+        $missing = [];
+        if (! $placed([BuildingId::UplinkStation->value])) {
+            $missing[] = BuildingId::UplinkStation->value;
+        }
+        if (! $placed(PathBuildingGateService::PATH_BUILDING_IDS)) {
+            $missing = [...$missing, ...PathBuildingGateService::PATH_BUILDING_IDS];
+        }
+
+        return $missing !== [] && (int) DB::table('buildings')->whereIn('id', $missing)->min('supply_cost') > $free;
     }
 
     /**
@@ -953,8 +1015,33 @@ class BotStrategy
             ->first();
     }
 
-    private static function exploreCandidate(BotSession $b): ?object
+    private static function exploreCandidate(BotSession $b, bool $onlyWhenNeeded = false): ?object
     {
+        // Profile `lean-explore` (Q19): the only exploration the server demands in Phase 1 is
+        // an explored regolith target for a harvester relocation (ColonyController::placeBuilding(),
+        // 'not_explored'); regular buildings may sit on fogged zone tiles. So explore only while a
+        // relocation is wanted and no explored free regolith tile exists, cheapest ring first and
+        // without peeking at fogged tile types or preferring zone tiles.
+        if ($onlyWhenNeeded) {
+            if (self::harvesterSitsOnGoodTile($b) || self::freeExploredRegolithTile($b) !== null) {
+                return null;
+            }
+
+            $tile = DB::table('colony_tiles')
+                ->where('colony_id', $b->colonyId)
+                ->where('is_explored', 0)
+                ->orderBy('ring')
+                ->orderBy('q')
+                ->orderBy('r')
+                ->first();
+            if ($tile === null) {
+                return null;
+            }
+            $cost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+
+            return self::availableAp($b) < $cost ? null : $tile;
+        }
+
         // No ring cap: harvesterRelocateCandidate() only ever offers already-explored
         // regolith tiles, so once ring<=2 regolith is exhausted the bot must be able
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
@@ -1101,6 +1188,11 @@ class BotStrategy
                 if (in_array($id, $pathIds, true) && ($placedCounts[$id] ?? 0) === 0) {
                     return $id === $nextPathId ? 1 : 2;
                 }
+                // Phase 1 Grundaufbau needs the Uplink-Station at Lv1 (2026-10-15) — it
+                // is placed alongside the remaining path buildings, before generic ones.
+                if ($id === BuildingId::UplinkStation->value && ($placedCounts[$id] ?? 0) === 0) {
+                    return 2;
+                }
                 if (in_array($id, $trustBuildingIds, true)) {
                     return 3;
                 }
@@ -1167,6 +1259,11 @@ class BotStrategy
             // Review S3 I4 (diagnostic only): why the highest-priority building was skipped.
             $reason = $buildings === [] ? 'none_available' : null;
             foreach ($buildings as $building) {
+                if (! self::phase1AllowsPlacement($b, (int) $building['building_id'])) {
+                    $reason ??= 'phase1_extra';
+
+                    continue;
+                }
                 if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
                     $reason ??= 'path_buffer';
 
@@ -1255,6 +1352,13 @@ class BotStrategy
         $ccReserve = self::regolithReserve($b);
         $rows = $rows->filter(fn (object $row): bool => self::fitsAboveCcReserve($b, $ccReserve, self::levelupRegolith($row)))->values();
 
+        // Building level needs CC level (ColonyController::investBuilding() 'building_cc_gate').
+        $rows = $rows->reject(fn (object $row): bool => self::ccGated($b, $row))->values();
+
+        // Per-Sol construction AP cap (game.build.ap_cap_per_sol): a building whose cap
+        // is used up for this Sol is not offered — the AP spreads to the next one.
+        $rows = $rows->reject(fn (object $row): bool => self::apCapped($b, (int) $row->building_id, (int) $row->instance_id))->values();
+
         // A14 supply build gate (ColonyController::levelUpBlockedBySupply()): the
         // server rejects a level-up with supply_limit while free supply is below the
         // building's supply_cost; CC and housing are exempt, and so is the 0 -> 1
@@ -1285,6 +1389,10 @@ class BotStrategy
         ])->values();
 
         $first = $rows->first();
+        if ($housing !== null && self::apCapped($b, (int) $housing->building_id, (int) $housing->instance_id)) {
+            $housing = null;
+        }
+
         if ($first !== null && $blocked($first)
             && $housing !== null
             && (! $buffered || self::levelupRegolith($housing) === 0)
@@ -1300,6 +1408,22 @@ class BotStrategy
     private static function pathFirst(object $row, array $pathIds): int
     {
         return in_array((int) $row->building_id, $pathIds, true) && (int) $row->level === 0 ? 0 : 1;
+    }
+
+    /** Server gate 'building_cc_gate': the next building level needs a CC of at least that level. */
+    public static function ccGated(BotSession $b, object $row): bool
+    {
+        return app(BuildingService::class)->ccLevelTooLow($b->colonyId, (int) $row->building_id, (int) $row->instance_id);
+    }
+
+    /**
+     * Server rule 'building_ap_cap' (BuildingApCapService): this building row has used
+     * up its per-Sol construction AP cap, so another invest click would be rejected.
+     * Always false while the cap is off.
+     */
+    public static function apCapped(BotSession $b, int $buildingId, int $instanceId = 1): bool
+    {
+        return app(BuildingApCapService::class)->wouldExceed($b->colonyId, $buildingId, $instanceId);
     }
 
     /** CC and housing are exempt from the A14 supply build gate (ColonyController::levelUpBlockedBySupply()). */
@@ -1399,7 +1523,7 @@ class BotStrategy
             ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.max_level')
             ->first();
 
-        if ($row === null) {
+        if ($row === null || self::apCapped($b, (int) $row->building_id, (int) $row->instance_id)) {
             return null;
         }
         if ((int) $row->level === 0) {
@@ -1656,33 +1780,6 @@ class BotStrategy
 
         return $best === null ? null
             : ['bay' => (int) $best['action']['bay'], 'q' => (int) $best['tile']->q, 'r' => (int) $best['tile']->r];
-    }
-
-    /** @return array{bay:int}|null the bay findAction() names for the largest find waiting on a worn ship */
-    private static function repairForFlightCandidate(BotSession $b): ?array
-    {
-        $tiles = app(ColonyTileService::class);
-        $flights = app(FindFlightService::class);
-        $types = config('game.finds.types');
-        $foodNeed = app(ResourcesService::class)->foodNeed($b->colonyId);
-        $worn = DB::table('colony_tiles')
-            ->where('colony_id', $b->colonyId)->where('is_deep_scanned', 1)
-            ->whereIn('event_type', ColonyTileService::FIND_TYPES)
-            ->orderBy('ring')->orderBy('q')->orderBy('r')->get()
-            ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
-            ->filter(fn ($c) => $c['action']['reason'] === 'ship_worn')
-            // Repair only when the flight that follows is payable (Organika + repair AP + Nav-AP),
-            // otherwise the repair AP leak and a recon could take the drone meanwhile.
-            ->filter(function ($c) use ($b, $flights, $foodNeed) {
-                $costs = $flights->costs($b->colonyId, (int) $c['tile']->ring);
-
-                return self::organics($b) - $costs['organika'] >= $foodNeed
-                    && (int) $c['action']['repair_ap'] + $costs['nav_ap'] <= self::availableAp($b);
-            })
-            ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
-            ->first();
-
-        return $worn === null ? null : ['bay' => (int) $worn['action']['bay']];
     }
 
     /**
@@ -2101,59 +2198,29 @@ class BotStrategy
     }
 
     /**
-     * T30 Pool v1: next salvage deposit — a deep-scanned, not yet resolved find
-     * (small/medium/large; find_false never pays) ranked by Regolith per total AP,
-     * started projects first on a tie. Skips tiles already paid this tick (one
-     * deposit per tile and Sol) and does not open a new project once
-     * max_open_projects are running. `ap` = min(cap per Sol, remaining AP of the
-     * project, available AP); 0 -> null. With a hangar only grandfathered
-     * projects (T30 §13.4).
+     * Next self-salvage: a deep-scanned find the colony may dig itself (no hangar; find_false
+     * never pays), best Regolith per AP first, payable with the available AP.
      *
-     * @return object{q:int, r:int, ap:int}|null
+     * @return object{q:int, r:int}|null
      */
     private static function investFindCandidate(BotSession $b): ?object
     {
         $available = self::availableAp($b);
-        if ($available < 1) {
-            return null;
-        }
-
         $types = config('game.finds.types');
-        $tick = app(TickService::class)->getTickCount();
         $service = app(ColonyTileService::class);
-        $tiles = DB::table('colony_tiles')
+
+        $best = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)
             ->where('is_deep_scanned', 1)
             ->whereIn('event_type', ColonyTileService::FIND_TYPES)
             ->orderBy('ring')->orderBy('q')->orderBy('r')
             ->get()
-            // T30 §13.4: with a hangar only grandfathered projects continue; without, as in Pool v1.
-            ->filter(fn ($t) => in_array($service->findAction($b->colonyId, $t)['action'], ['self_salvage', 'continue_salvage'], true))
-            ->values();
-
-        $open = $tiles->filter(fn ($t) => (int) $t->salvage_ap_spent > 0)->count();
-        $canOpen = $open < (int) config('game.finds.max_open_projects');
-
-        $best = $tiles
-            ->filter(fn ($t) => ($t->salvage_tick === null || (int) $t->salvage_tick !== $tick)
-                && ((int) $t->salvage_ap_spent > 0 || $canOpen)
-                && (int) ($types[$t->event_type]['ap'] ?? 0) > (int) $t->salvage_ap_spent)
-            ->sortBy([
-                fn ($x, $y) => ($types[$y->event_type]['rg'] / $types[$y->event_type]['ap']) <=> ($types[$x->event_type]['rg'] / $types[$x->event_type]['ap']),
-                fn ($x, $y) => (int) $y->salvage_ap_spent <=> (int) $x->salvage_ap_spent,
-            ])
+            ->filter(fn ($t) => $service->findAction($b->colonyId, $t)['action'] === 'self_salvage'
+                && (int) $types[$t->event_type]['ap'] <= $available)
+            ->sortByDesc(fn ($t) => $types[$t->event_type]['rg'] / $types[$t->event_type]['ap'])
             ->first();
-        if ($best === null) {
-            return null;
-        }
 
-        $ap = min(
-            (int) config('game.finds.salvage_cap_per_sol'),
-            (int) $types[$best->event_type]['ap'] - (int) $best->salvage_ap_spent,
-            $available,
-        );
-
-        return $ap < 1 ? null : (object) ['q' => (int) $best->q, 'r' => (int) $best->r, 'ap' => $ap];
+        return $best === null ? null : (object) ['q' => (int) $best->q, 'r' => (int) $best->r];
     }
 
     /**
@@ -2260,40 +2327,11 @@ class BotStrategy
             return null;
         }
 
-        // Check if currently on a valid regolith tile with substantial resources remaining (>50)
-        if ($harvester->tile_x !== null && $harvester->tile_y !== null) {
-            $currentTile = DB::table('colony_tiles')
-                ->where('colony_id', $b->colonyId)
-                ->where('q', $harvester->tile_x)
-                ->where('r', $harvester->tile_y)
-                ->first();
-
-            if ($currentTile && str_starts_with($currentTile->tile_type, 'regolith_') && ($currentTile->resource_amount ?? 0) > 50) {
-                return null;
-            }
+        if (self::harvesterSitsOnGoodTile($b)) {
+            return null;
         }
 
-        // Find an explored, unbuilt regolith tile with available resources (qa-tester
-        // review PR #244: same missing-occupied-check bug as harvesterInstance2Candidate
-        // had — orderByDesc('resource_amount') often picked an already-built tile,
-        // e.g. the harvester's own current one, wasting several Sols of tile_occupied
-        // rejections before landing on a free one by chance).
-        $targetTile = DB::table('colony_tiles as ct')
-            ->where('ct.colony_id', $b->colonyId)
-            ->where('ct.is_explored', 1)
-            ->where('ct.tile_type', 'like', 'regolith_%')
-            ->where('ct.resource_amount', '>', 0)
-            ->whereNotExists(function ($query) use ($b) {
-                $query->select(DB::raw(1))
-                    ->from('colony_buildings as cb')
-                    ->where('cb.colony_id', $b->colonyId)
-                    ->whereColumn('cb.tile_x', 'ct.q')
-                    ->whereColumn('cb.tile_y', 'ct.r');
-            })
-            ->orderByDesc('ct.resource_amount')
-            ->orderBy('ct.q')
-            ->orderBy('ct.r')
-            ->first();
+        $targetTile = self::freeExploredRegolithTile($b);
 
         if (! $targetTile) {
             return null;
@@ -2311,6 +2349,52 @@ class BotStrategy
         }
 
         return $targetTile;
+    }
+
+    /** True when harvester instance 1 stands on a regolith tile with substantial (>50) resources left. */
+    private static function harvesterSitsOnGoodTile(BotSession $b): bool
+    {
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('instance_id', 1)
+            ->first();
+
+        if (! $harvester || $harvester->tile_x === null || $harvester->tile_y === null) {
+            return false;
+        }
+
+        $currentTile = DB::table('colony_tiles')
+            ->where('colony_id', $b->colonyId)
+            ->where('q', $harvester->tile_x)
+            ->where('r', $harvester->tile_y)
+            ->first();
+
+        return $currentTile && str_starts_with($currentTile->tile_type, 'regolith_') && ($currentTile->resource_amount ?? 0) > 50;
+    }
+
+    /**
+     * Explored, unbuilt regolith tile with resources left (qa-tester review PR #244: the
+     * occupied check is needed, else the harvester's own tile gets picked).
+     */
+    private static function freeExploredRegolithTile(BotSession $b): ?object
+    {
+        return DB::table('colony_tiles as ct')
+            ->where('ct.colony_id', $b->colonyId)
+            ->where('ct.is_explored', 1)
+            ->where('ct.tile_type', 'like', 'regolith_%')
+            ->where('ct.resource_amount', '>', 0)
+            ->whereNotExists(function ($query) use ($b) {
+                $query->select(DB::raw(1))
+                    ->from('colony_buildings as cb')
+                    ->where('cb.colony_id', $b->colonyId)
+                    ->whereColumn('cb.tile_x', 'ct.q')
+                    ->whereColumn('cb.tile_y', 'ct.r');
+            })
+            ->orderByDesc('ct.resource_amount')
+            ->orderBy('ct.q')
+            ->orderBy('ct.r')
+            ->first();
     }
 
     private static function hasAnyShip(BotSession $b): bool

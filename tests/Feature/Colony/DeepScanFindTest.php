@@ -53,7 +53,7 @@ class DeepScanFindTest extends TestCase
         $find = $res['tile']['find'];
         unset($find['action']);
         $this->assertSame(
-            ['type' => 'find_medium', 'rg' => 10, 'ap_total' => 16, 'ap_spent' => 0, 'ap_cap_per_sol' => 4, 'false' => false],
+            ['type' => 'find_medium', 'rg' => 10, 'ap_total' => 4, 'false' => false],
             $find
         );
         $this->assertArrayHasKey('action', $res['tile']['find']);

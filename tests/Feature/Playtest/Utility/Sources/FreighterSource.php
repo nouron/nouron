@@ -52,7 +52,7 @@ final class FreighterSource implements CandidateSource
             ->whereIn('event_type', ColonyTileService::FIND_TYPES)->orderBy('ring')->orderBy('q')->orderBy('r')->get();
         foreach ($tiles as $tile) {
             if ($service->findAction($b->colonyId, $tile)['reason'] === 'needs_freighter') {
-                $value += (int) $types[$tile->event_type]['rg'] * (float) config('game.finds.flight.yield_factor');
+                $value += (int) $types[$tile->event_type]['rg'];
             }
         }
         if ($value <= 0.0) {

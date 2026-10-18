@@ -31,49 +31,62 @@ class RunProgressService
     /**
      * Check whether all Phase-1 completion conditions are met.
      *
-     * Conditions (GDD §15):
-     *  1. Command Center (building_id = 25) at level >= 3.
-     *  2. At least 2 non-CC buildings (building_id != 25, any type, not just
-     *     production) at level >= 2. Confirmed intentional (Owner-Frage F7,
-     *     ROADMAP 2026-09-08) — the looser "any building" condition is correct,
-     *     not a bug.
-     *  3. At least 3 active advisors (colony assigned, not on cooldown).
+     * Conditions (GDD §15, Owner 2026-10-15 "Phase 1 = Grundaufbau"):
+     *  1. Command Center at level >= 2.
+     *  2. Harvester, Housing, Agrardom and Uplink-Station each at level >= 1.
+     *  3. At least one path building (Sciencelab, Hangar or Cantina) at level >= 1.
+     *  4. At least 2 active advisors (colony assigned, not on cooldown).
      */
     public function checkPhase1Completion(Run $run): bool
     {
-        $ccId = BuildingId::CommandCenter->value;
+        return collect($this->phase1Criteria((int) $run->colony_id, (int) $run->current_tick))
+            ->every(fn (array $c): bool => $c['done']);
+    }
 
-        // Condition 1 — CC level >= 3
-        $ccReady = DB::table('colony_buildings')
-            ->where('colony_id', $run->colony_id)
-            ->where('building_id', $ccId)
-            ->where('level', '>=', 3)
-            ->exists();
+    /**
+     * Phase-1 (Grundaufbau) criteria with progress — single source of truth for both
+     * checkPhase1Completion() and the progress screens (ColonyService::getPhaseProgress).
+     *
+     * @return list<array{key: string, current: int, target: int, done: bool}>
+     */
+    public function phase1Criteria(int $colonyId, int $currentTick): array
+    {
+        $levels = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('level', '>=', 1)
+            ->pluck('level', 'building_id');
+        $standing = fn (int $id): bool => $levels->has($id);
 
-        if (! $ccReady) {
-            return false;
+        $criteria = [];
+        $criteria[] = $this->criterion('cc_level', min((int) $levels->get(BuildingId::CommandCenter->value, 0), 2), 2);
+
+        $basics = [
+            'harvester' => BuildingId::Harvester,
+            'housing' => BuildingId::Housing,
+            'agrardom' => BuildingId::BioFacility,
+            'uplink' => BuildingId::UplinkStation,
+        ];
+        foreach ($basics as $key => $id) {
+            $criteria[] = $this->criterion($key, $standing($id->value) ? 1 : 0, 1);
         }
 
-        // Condition 2 — at least 2 non-CC production buildings at level >= 2
-        $productionCount = DB::table('colony_buildings')
-            ->where('colony_id', $run->colony_id)
-            ->where('building_id', '!=', $ccId)
-            ->where('level', '>=', 2)
-            ->count();
+        $criteria[] = $this->criterion('path_building', collect(PathBuildingGateService::PATH_BUILDING_IDS)->contains($standing) ? 1 : 0, 1);
 
-        if ($productionCount < 2) {
-            return false;
-        }
-
-        // Condition 3 — at least 3 active advisors on this colony
-        $activeAdvisors = Advisor::where('colony_id', $run->colony_id)
-            ->where(function ($q) use ($run): void {
+        $activeAdvisors = Advisor::where('colony_id', $colonyId)
+            ->where(function ($q) use ($currentTick): void {
                 $q->whereNull('unavailable_until_tick')
-                    ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+                    ->orWhere('unavailable_until_tick', '<', $currentTick);
             })
             ->count();
+        $criteria[] = $this->criterion('advisors', min($activeAdvisors, 2), 2);
 
-        return $activeAdvisors >= 3;
+        return $criteria;
+    }
+
+    /** @return array{key: string, current: int, target: int, done: bool} */
+    private function criterion(string $key, int $current, int $target): array
+    {
+        return ['key' => $key, 'current' => $current, 'target' => $target, 'done' => $current >= $target];
     }
 
     // ── Phase transition ─────────────────────────────────────────────────────
@@ -541,7 +554,7 @@ class RunProgressService
             return;
         }
 
-        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $warningSol = (int) config('game.run.phase1_warning_sol', 17);
         if ($run->current_tick < $warningSol) {
             return;
         }
@@ -634,7 +647,7 @@ class RunProgressService
             return 'nexus_debt';
         }
 
-        if ($run->phase === 1 && $run->current_tick >= (int) config('game.run.phase1_deadline_sol', 30)) {
+        if ($run->phase === 1 && $run->current_tick >= (int) config('game.run.phase1_deadline_sol', 20)) {
             return 'phase1_deadline';
         }
 

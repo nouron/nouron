@@ -234,4 +234,18 @@ class PlaytestCompareTest extends TestCase
         $this->assertStringContainsString('K23 CC-Lv4 Sol', $out);
         $this->assertMatchesRegularExpression('/K19\s*\|\s*info\s*\|/', $out);
     }
+
+    public function test_prints_regolith_ledger_rows(): void
+    {
+        $this->writeBatch();
+
+        Artisan::call('game:playtest-compare', ['--dir' => $this->dir]);
+        $out = Artisan::output();
+
+        $this->assertStringContainsString('Rg-Zufluss/Sol 1-12', $out);
+        $this->assertStringContainsString('Rg-Zufluss/Sol 13-25', $out);
+        $this->assertStringContainsString('Harvester-Anteil Rg %', $out);
+        $this->assertStringContainsString('Rg-Abweisungen resource_limit', $out);
+        $this->assertMatchesRegularExpression('/RG\s*\|\s*info\s*\|/', $out);
+    }
 }

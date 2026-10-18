@@ -28,6 +28,9 @@
             tiles: @json($tiles),
             colony: @json(["id" => $colony->id, "name" => $colony->name]),
             ccLevel: {{ (int) $ccLevel }},
+            harvesterSecondCcLevel: {{ (int) config("game.harvester.second_instance_cc_level", 3) }},
+            buildingCcLevelOffset: {{ (int) config("game.building_cc_level_offset", 0) }},
+            ccGateTemplate: @json(__("colony.error_building_cc_gate", ["level" => ":level"])),
             ccBuildingId: {{ \App\Enums\BuildingId::CommandCenter->value }},
             buildings: @json($buildings),
             buildingCatalog: @json($buildingChipData->map(fn($chip) => ["label" => $chip["label"]])),
@@ -255,20 +258,41 @@
                              footer strip inside the button. Local hover flag drives the
                              desktop-only +1 SP ghost segment; CSS gates the ghost to
                              (hover: hover) so it never sticks on touch. A fully repaired
-                             building has no Reparieren button and shows no bar (intended). --}}
-                            <template x-if="canRepair(selectedBuilding)">
+                             building keeps the button, but disabled (aria-disabled, no
+                             bar) with a tooltip giving the reason. Construction sites
+                             (level 0) are not repairable and show no button. --}}
+                            <template x-if="selectedBuilding && selectedBuilding.level >= 1">
                                 <button class="tile-action-btn tile-action-btn--barred" x-data="{ hover: false }"
+                                    :class="{
+                                        'tile-action-btn--secondary': !canRepair(selectedBuilding),
+                                        'tile-action-btn--hascap tile-action-btn--capped': !canRepair(selectedBuilding),
+                                    }"
+                                    :aria-disabled="canRepair(selectedBuilding) ? null : 'true'"
+                                    :aria-describedby="canRepair(selectedBuilding) ? null : 'repair-full-tip'"
                                     @mouseenter="hover = true" @mouseleave="hover = false"
-                                    @click="doRepair(selectedBuilding)">
+                                    @click="if (canRepair(selectedBuilding)) doRepair(selectedBuilding)">
                                     <span class="tile-action-btn__body">
                                         <span class="tile-action-btn__main"
                                             x-text="`{{ __("colony.repair") }} +${repairStepPct(selectedBuilding)} %`"></span>
                                     </span>
-                                    @include("partials.ap-cost-chip", [
-                                        "amount" => 1,
-                                        "type" => "build",
-                                    ])
-                                    @include("colony.partials.condition-bar", ["hoverExpr" => "hover"])
+                                    <span class="tile-action-btn__costs">
+                                        @include("partials.rg-cost-chip", [
+                                            "amountExpr" =>
+                                                "canRepair(selectedBuilding) ? (selectedBuilding.repair_cost ?? 0) : 0",
+                                        ])
+                                        @include("partials.ap-cost-chip", [
+                                            "amount" => 1,
+                                            "type" => "build",
+                                        ])
+                                    </span>
+                                    <template x-if="canRepair(selectedBuilding)">
+                                        @include("colony.partials.condition-bar", [
+                                            "hoverExpr" => "hover",
+                                        ])
+                                    </template>
+                                    <span id="repair-full-tip" class="tile-action-btn__tip" role="tooltip">
+                                        {{ __("colony.repair_full_tooltip") }}
+                                    </span>
                                 </button>
                             </template>
 
@@ -276,22 +300,19 @@
                              footer strip inside the button, shown whenever a level-up is
                              possible. --}}
                             <template x-if="buildingCanLevelUp(selectedBuilding)">
-                                <button class="tile-action-btn tile-action-btn--barred"
-                                    :class="canRepair(selectedBuilding) ? 'tile-action-btn--secondary' : ''"
-                                    x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
-                                    @click="doInvestAp(selectedBuilding)">
-                                    <span class="tile-action-btn__body">
-                                        <span class="tile-action-btn__main"
-                                            x-text="selectedBuilding.ap_spend === 0
-                                                ? `Stufe ${selectedBuilding.level + 1} starten (0/${selectedBuilding.ap_for_levelup})`
-                                                : `{{ __("colony.invest_ap") }} ${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup}`"></span>
-                                    </span>
-                                    @include("partials.ap-cost-chip", [
-                                        "amount" => 1,
-                                        "type" => "build",
-                                    ])
-                                    @include("colony.partials.ap-bar", ["hoverExpr" => "hover"])
-                                </button>
+                                @include("partials.ap-upgrade-button", [
+                                    "row" => "selectedBuilding",
+                                    "click" => "doInvestAp(selectedBuilding)",
+                                    "btnLabel" =>
+                                        "selectedBuilding.ap_spend === 0 ? 'Stufe ' + (selectedBuilding.level + 1) + ' starten (0/' + selectedBuilding.ap_for_levelup + ')' : " .
+                                        \Illuminate\Support\Js::from(__("colony.invest_ap")) .
+                                        " + ' ' + selectedBuilding.ap_spend + '/' + selectedBuilding.ap_for_levelup",
+                                    "classExpr" => "'tile-action-btn--secondary': canRepair(selectedBuilding),",
+                                    "gateReasonExpr" => "ccGateReason(selectedBuilding)",
+                                    "rgExpr" =>
+                                        "selectedBuilding.ap_spend === 0 ? (selectedBuilding.levelup_cost ?? 0) : 0",
+                                    "tipId" => "ap-cap-tip",
+                                ])
                             </template>
                             <template
                                 x-if="selectedBuilding?.building_key === 'building_harvester' && selectedBuilding?.level > 0 && !selectedBuilding?.in_transit">
@@ -300,7 +321,9 @@
                                     <span class="tile-action-btn__body">{{ __("colony.harvester_move") }}</span>
                                     @include("partials.ap-cost-chip", [
                                         "type" => "build",
-                                        "label" => __("colony.ap_per_tile"),
+                                        "label" => __("colony.ap_per_tile", [
+                                            "n" => (int) config("game.harvester.relocate_ap_per_hex"),
+                                        ]),
                                     ])
                                 </button>
                             </template>
@@ -314,6 +337,16 @@
                                     <span class="tile-action-btn__body">{{ __("colony.build") }}</span>
                                 </button>
                             </template>
+                            {{-- Relocate the single Harvester straight from a valid target tile
+                             (the move is otherwise only reachable via the Harvester tile). --}}
+                            <template x-if="!selectedBuilding && canMoveHarvesterHere(selectedTile)">
+                                <button class="tile-action-btn tile-action-btn--secondary"
+                                    @click="moveHarvesterHere(selectedTile)">
+                                    <span class="tile-action-btn__body">{{ __("colony.harvester_move") }}</span>
+                                    <span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true"
+                                        x-text="harvesterMoveCostTo(selectedTile) + ' AP'"></span>
+                                </button>
+                            </template>
                             {{-- Second Harvester instance (GDD §4c "Harvester-Zweitinstanz:
                              Bezugsquelle") — placement, not the build menu (Harvester is
                              excluded from getBuildableBuildings(), see
@@ -324,8 +357,7 @@
                              mission), so a rejected attempt surfaces the real reason
                              (error_harvester_second_instance_locked / _cc_gate) instead of
                              the button silently disappearing. --}}
-                            <template
-                                x-if="!selectedBuilding && isHarvesterTarget(selectedTile) && !hasSecondHarvesterInstance()">
+                            <template x-if="!selectedBuilding && canPlaceSecondHarvester(selectedTile)">
                                 <button class="tile-action-btn tile-action-btn--secondary"
                                     @click="doPlaceHarvesterInstance2(selectedTile)">
                                     <span class="tile-action-btn__body">{{ __("colony.harvester_place_second") }}</span>

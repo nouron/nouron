@@ -50,21 +50,21 @@ return [
     'finds' => [
         'start_pool' => ['find_large' => 1, 'find_medium' => 1, 'find_small' => 3, 'find_false' => 2],
         'types' => [
-            'find_small' => ['rg' => 4, 'ap' => 12],
-            'find_medium' => ['rg' => 10, 'ap' => 16],
-            'find_large' => ['rg' => 18, 'ap' => 22],
+            'find_small' => ['rg' => 4, 'ap' => 3],
+            'find_medium' => ['rg' => 10, 'ap' => 4],
+            'find_large' => ['rg' => 18, 'ap' => 6],
             'find_false' => ['rg' => 0, 'ap' => 0],
         ],
         'scan_ap' => 2,
         'scan_ap_uplink' => 1, // Uplink-Station Lv2+
-        'salvage_cap_per_sol' => 4,
-        'max_open_projects' => 2,
-        // T30 §13.3: salvage flight (mission_find_salvage). yield = round(rg × yield_factor).
+        // T30 §13.3: salvage flight (mission_find_salvage). Yield = the find's Rg (no factor);
+        // flat nav_ap per flight, Organika per Sol of distance, no ship wear (Owner 2026-10-13).
         // min_hangar_level = lowest hall level whose ship class carries the find (drone 1,
         // freighter 2) — shown as the lock reason on the find card; must match
         // ships.*.find_carry (tests/Unit/FindFlightConfigTest).
         'flight' => [
-            'yield_factor' => 1.5,
+            'nav_ap' => 1,
+            'organika_per_sol' => 1,
             'min_hangar_level' => ['find_small' => 1, 'find_medium' => 1, 'find_large' => 2],
         ],
     ],
@@ -292,6 +292,18 @@ return [
         // cost on placement (Owner rule 2026-09-25, T9) — see BuildingCostService.
         // CC scales separately (config/buildings.php cc_upgrade_regolith_per_level).
         'levelup_regolith_flat' => 25,
+
+        // Per-building per-Sol cap on construction AP invested toward a level-up
+        // (Owner decision 2026-10-16): a time brake for Phase 1 that leaves Regolith
+        // income alone and stops a building (CC included) from finishing, or gaining
+        // several levels, in a single Sol. Cap = base + engineer bonus for the
+        // advisor's rank (an unavailable engineer adds nothing). base = null switches
+        // the rule off. Repair and placement are not capped.
+        // See App\Services\BuildingApCapService.
+        'ap_cap_per_sol' => [
+            'base' => 4,
+            'engineer_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],
+        ],
     ],
 
     // Path-building build gate (GDD §16 "Slot-System", Gate-Logik; server rule since
@@ -299,6 +311,13 @@ return [
     // placed path buildings < CC level − cc_level_offset. With 1: CC Lv2 → one, Lv3 →
     // two, Lv4 → all three. Already placed path buildings are never affected.
     // See App\Services\PathBuildingGateService.
+    // Building level gate (player rule, 2026-10-15): a non-CC building level needs a
+    // Command Center of at least the same level. Offset lowers the requirement
+    // (0 = same level, 1 = one level below). Enforced in
+    // BuildingService::ccLevelTooLow() via ColonyController::investBuilding() and the
+    // techtree levelup path.
+    'building_cc_level_offset' => 0,
+
     'path_building_gate' => [
         'cc_level_offset' => 1,
     ],
@@ -849,8 +868,8 @@ return [
             'nexus_warning' => -18,
         ],
         'nexus_debt_fail_threshold' => 12000,  // instant fail when nexus_debt exceeds this value
-        'phase1_deadline_sol' => 30,    // hard fail if Phase 1 isn't complete by this Sol (checkFailStates)
-        'phase1_warning_sol' => 22,     // escalating Nexus warning if Phase 1 still incomplete by this Sol
+        'phase1_deadline_sol' => 20,    // hard fail if Phase 1 isn't complete by this Sol (checkFailStates)
+        'phase1_warning_sol' => 17,     // escalating Nexus warning if Phase 1 still incomplete by this Sol
         // Invariant: phase1_warning_sol must stay below phase1_deadline_sol, or the warning
         // and the hard fail would land on the same tick.
         'task_pool' => [       // all available Phase-2 task keys (each needs an entry in `tasks`)

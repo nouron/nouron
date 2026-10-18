@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Models\Advisor;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,6 +24,7 @@ class OnboardingHintService
         private readonly TickService $tickService,
         private readonly BuildingCostService $buildingCostService,
         private readonly PathBuildingGateService $pathBuildingGate,
+        private readonly BuildingApCapService $apCapService,
     ) {}
 
     /**
@@ -597,6 +599,9 @@ class OnboardingHintService
     /** Path buildings that unlock advisor slots 2-4, mapped to their slot2-hint lang suffix. */
     private const ADVISOR_SLOT2_PATH_BUILDING_SUFFIXES = [31 => 'analytik', 44 => 'hangar', 52 => 'cantina'];
 
+    /** Advisor type (config/advisors.php key) each path building unlocks. */
+    private const ADVISOR_SLOT2_PATH_BUILDING_ADVISORS = [31 => 'scientist', 44 => 'pilot', 52 => 'trader'];
+
     /**
      * Resolves the slot2-hint text key naming the actual path building the player
      * built (playtest feedback: the generic "Berater-Slot 2 offen" text didn't say
@@ -635,6 +640,15 @@ class OnboardingHintService
             $rows = $rows->reject(fn ($row) => (int) $row->building_id === 44);
         }
 
+        // Only a path building whose matching advisor is not yet hired is worth announcing
+        // (Owner handtest 2026-10-17: "hire an Analytiker" with the scientist already employed).
+        $hiredPersonellIds = Advisor::where('colony_id', $colonyId)->pluck('personell_id')->map(fn ($id) => (int) $id)->all();
+        $rows = $rows->reject(fn ($row) => in_array(
+            (int) config('advisors.'.self::ADVISOR_SLOT2_PATH_BUILDING_ADVISORS[(int) $row->building_id].'.id'),
+            $hiredPersonellIds,
+            true
+        ));
+
         if ($rows->isEmpty()) {
             return null;
         }
@@ -661,9 +675,10 @@ class OnboardingHintService
      * hard-coding a sequence (replaces the former CC-fixated hint_cc_invest,
      * playtest review 2026-07-14).
      *
-     * Retires once the CC reaches level 2 — from there the ramp is done and the
-     * player has learned the invest mechanic. Self-clears within a Sol as soon as
-     * the Bau-AP pool is spent; never persisted to dismissed_hints.
+     * No CC-level retirement (Owner handtest 2026-10-17): as long as an open site can
+     * still absorb AP this Sol, the generic "AP left" / navigation hints must not
+     * win over it. Self-clears within a Sol as soon as the AP pool is spent or every
+     * site hit its per-Sol cap; never persisted to dismissed_hints.
      */
     private function checkHintInvestSite(int $colonyId): bool
     {
@@ -674,25 +689,24 @@ class OnboardingHintService
             return false;
         }
 
-        $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', BuildingId::CommandCenter->value)
-            ->value('level');
-        if ($ccLevel >= 2) {
-            return false;
-        }
-
         // A "site" is a placed level-0 building (construction site) or any started
         // level-up (ap_spend > 0) — the latter without a tile condition, because the
         // CC is anchored (tile_x NULL) rather than placed.
-        $hasSite = DB::table('colony_buildings')
+        $sites = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where(function ($q) {
                 $q->where(function ($site) {
                     $site->whereNotNull('tile_x')->where('level', 0);
                 })->orWhere('ap_spend', '>', 0);
             })
-            ->exists();
+            ->get(['ap_cap_tick', 'ap_cap_spent']);
+
+        // A site that already took its per-Sol AP cap cannot absorb more AP today, so it
+        // must not trigger "invest into the running site" (the button would be disabled).
+        $cap = $this->apCapService->capFor($colonyId);
+        $hasSite = $sites->contains(
+            fn ($row) => ($this->apCapService->stateFromRow($cap, $row)['remaining'] ?? 1) > 0
+        );
         if (! $hasSite) {
             return false;
         }

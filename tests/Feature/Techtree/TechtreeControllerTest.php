@@ -119,7 +119,7 @@ class TechtreeControllerTest extends TestCase
         $codes = [
             'requires_building', 'requires_research', 'insufficient_resources',
             'insufficient_ap_invested', 'insufficient_supply', 'max_level',
-            'knowledge_cc_gate', 'insufficient_ap', 'entity_not_found',
+            'knowledge_cc_gate', 'building_cc_gate', 'insufficient_ap', 'entity_not_found',
             'invalid_mode', 'unknown_type', 'unknown_order', 'order_failed',
         ];
 
@@ -381,6 +381,7 @@ class TechtreeControllerTest extends TestCase
             'max_status_points' => $maxSp,
             'q' => 1,
             'r' => -1,
+            'ap_cap' => ['cap' => 8, 'spent' => 0, 'remaining' => 8],
         ], $housing['instances'][1]);
 
         $sciencelab = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 31);

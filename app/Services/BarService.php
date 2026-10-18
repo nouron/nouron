@@ -256,9 +256,11 @@ class BarService
         }
 
         // Execute trade atomically — partial transfer must not persist
-        DB::transaction(function () use ($offer, $colonyId, $apCost, $giveAmount, $getAmount): void {
-            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $giveAmount);
-            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $getAmount);
+        // Regolith-ledger tags: Corvan's lots (visit_id set) vs. Cantina guests.
+        $isMerchant = $offer->visit_id !== null;
+        DB::transaction(function () use ($offer, $colonyId, $apCost, $giveAmount, $getAmount, $isMerchant): void {
+            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $giveAmount, $isMerchant ? 'merchant_sell' : 'cantina_sell');
+            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $getAmount, tag: $isMerchant ? 'merchant_buy' : 'cantina_guest');
             $offer->is_accepted = true;
             $offer->save();
             if ($apCost > 0) {
@@ -677,7 +679,7 @@ class BarService
             }
 
             if ($encounter->give_resource_id !== null) {
-                $this->resourcesService->decreaseAmount($colonyId, $encounter->give_resource_id, $encounter->give_amount);
+                $this->resourcesService->decreaseAmount($colonyId, $encounter->give_resource_id, $encounter->give_amount, $encounter->type === 'wager' ? 'wager' : 'cantina_'.$encounter->type);
             }
 
             return match ($encounter->type) {
@@ -1036,7 +1038,7 @@ class BarService
         }
 
         $amount = $this->pseudoRand($seed * 2 + $currentTick * 3, (int) ($cfg['regolith_min'] ?? 0), (int) ($cfg['regolith_max'] ?? 0));
-        $this->resourcesService->increaseAmount($colonyId, self::RES_REGOLITH, $amount);
+        $this->resourcesService->increaseAmount($colonyId, self::RES_REGOLITH, $amount, tag: 'cantina_concern');
 
         return ['reward' => 'regolith', 'amount' => $amount];
     }

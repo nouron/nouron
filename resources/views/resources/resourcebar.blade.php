@@ -22,7 +22,8 @@
         }
 
         ksort($primary);
-        ksort($secondary);
+        // Display order of the colony materials: Regolith, Organika, Werkstoffe.
+        uksort($secondary, fn($a, $b) => array_search($a, [3, 5, 4]) <=> array_search($b, [3, 5, 4]));
 
         $solDisplay = $currentSol ?? null;
         $crResource = $primary[1] ?? null;
@@ -174,12 +175,52 @@
                     : "");
         };
 
-        // Popup extra for CR chip (NX info row)
-        $crPopupExtra = $hasNexus
-            ? '<div class="res-popup-nx-row ' .
-                $nexusChipMod .
-                '">' .
-                '<span class="res-popup-label">' .
+        // Per-Sol balance popups for Regolith / Organika / Werkstoffe: sources and the
+        // colonists' consumption, then the net — see ResourceFlowService::perSol(), which
+// mirrors what the next tick books.
+$signed = fn(int $n) => ($n > 0 ? "+" : ($n < 0 ? "−" : "")) . abs($n);
+$flowRows = function (array $rows, int $net) use ($breakdownRows, $signed) {
+    $lines = [];
+    foreach ($rows as $label => $value) {
+        if ($value !== 0) {
+            $lines[$label] = $signed($value);
+        }
+    }
+
+    return ($lines ? $breakdownRows($lines) . '<div class="res-popup-extra"></div>' : "") .
+        $breakdownRows([__("resources.popup_flow_net") => "<strong>" . $signed($net) . "</strong>"]);
+};
+$flowPopupExtra = [];
+if (isset($resourceFlow)) {
+    $rgFlow = $resourceFlow["regolith"];
+    $flowPopupExtra[3] = $flowRows(
+        [
+            __("resources.popup_flow_harvester") => $rgFlow["sources"]["harvester"],
+            __("resources.popup_flow_geology") => $rgFlow["sources"]["geology"],
+        ],
+        $rgFlow["net"],
+    );
+    $orFlow = $resourceFlow["organika"];
+    $flowPopupExtra[5] = $flowRows(
+        [
+            __("resources.popup_flow_agrardom") => $orFlow["sources"]["agrardom"],
+            __("resources.popup_flow_agronomy") => $orFlow["sources"]["agronomy"],
+            __("resources.popup_flow_colonists") => -$orFlow["consumption"],
+        ],
+        $orFlow["net"],
+    );
+    $flowPopupExtra[4] =
+        '<div class="res-popup-row"><span class="res-popup-label">' .
+        __("resources.popup_flow_none") .
+        "</span></div>";
+}
+
+// Popup extra for CR chip (NX info row)
+$crPopupExtra = $hasNexus
+    ? '<div class="res-popup-nx-row ' .
+        $nexusChipMod .
+        '">' .
+        '<span class="res-popup-label">' .
                 __("resources.popup_nx_title") .
                 "</span>" .
                 "<span>" .
@@ -299,6 +340,7 @@
                         "popup_key" => $chipKey,
                         "popup_title" => __("resources." . $langKey . "_title"),
                         "popup_desc" => __("resources." . $langKey . "_desc"),
+                        "popup_extra" => $flowPopupExtra[$resId] ?? null,
                     ])
                 </span>
             @endforeach

@@ -65,7 +65,6 @@ return [
     'error_find_not_scanned' => 'The signal has not been scanned yet — scan it first.',
     'error_find_too_large' => 'This find is too heavy for the ship.',
     'error_find_in_flight' => 'A ship is already on its way to this find.',
-    'error_find_salvage_in_progress' => 'The salvage crew is already digging here — the find is finished on foot.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 
@@ -94,9 +93,9 @@ return [
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',
     'reward_label' => 'Yield',
-    'target_find_yield' => 'Find :base Rg + flight :bonus Rg = :total Rg',
+    'error_find_self_salvage' => 'Without a hangar the colony salvages finds itself.',
+    'target_find_yield' => 'Find :total Rg',
     'target_too_large' => 'too large for this ship',
-    'target_cartography' => 'Cartography −:ap AP',
     'wear_line' => 'Wear −:wear · condition :from → :to',
     'too_worn_line' => 'Condition :current is not enough for wear :wear – repair first (:ap AP)',
 ];

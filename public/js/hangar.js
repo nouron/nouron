@@ -263,14 +263,7 @@ function hangarCarousel(config) {
             if (mission.target_type === 'find_tile') {
                 // Per-target costs: each find has its own distance, so its own AP/Organika/duration.
                 const carry = target.carry?.[this.missionModal.shipKey] ? '' : ' — ' + this.i18n.targetTooLarge;
-                const carto =
-                    target.nav_ap < target.nav_ap_base
-                        ? ' · ' + this.i18n.targetCartography.replace(':ap', target.nav_ap_base - target.nav_ap)
-                        : '';
-                const yieldLine = this.i18n.targetFindYield
-                    .replace(':base', target.yield.base)
-                    .replace(':bonus', target.yield.flight_bonus)
-                    .replace(':total', target.yield.total);
+                const yieldLine = this.i18n.targetFindYield.replace(':total', target.yield.total);
                 return (
                     '(' +
                     target.q +
@@ -283,13 +276,10 @@ function hangarCarousel(config) {
                     ' · ' +
                     target.nav_ap +
                     ' AP' +
-                    carto +
                     ' · Or ' +
                     target.organika +
                     ' · ' +
                     this.i18n.missionReturnLabel.replace(':sol', target.return_sol) +
-                    ' · ' +
-                    this.readinessLine(target.sol_distance) +
                     carry
                 );
             }
@@ -298,10 +288,7 @@ function hangarCarousel(config) {
 
         /** Find targets the docked ship cannot carry or would not come back from stay visible but unselectable. */
         targetDisabled(mission, target) {
-            return (
-                mission.target_type === 'find_tile' &&
-                (!target.carry?.[this.missionModal.shipKey] || this.readinessFor(target.sol_distance)?.ready === false)
-            );
+            return mission.target_type === 'find_tile' && !target.carry?.[this.missionModal.shipKey];
         },
 
         /** The server-computed return guarantee (slot.ship.readiness) of the dialog's ship. */

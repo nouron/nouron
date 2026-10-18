@@ -3,6 +3,7 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\TickService;
@@ -647,6 +648,37 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('colony.onboarding_hint_advisor_slot2_analytik', $hint['text_key']);
     }
 
+    public function test_advisor_slot2_hint_does_not_credit_a_path_building_whose_advisor_is_already_hired(): void
+    {
+        // Owner handtest 2026-10-17: Analytik-Labor built and the scientist already hired,
+        // then the Hangar went up -> the hint still said "now hire an Analytiker".
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', 25)->update(['level' => 3]);
+        $this->placeAgrardome();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 31,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 7, 'tile_y' => 5, 'placed_at_tick' => 1,
+        ]);
+        DB::table('advisors')->insertOrIgnore([
+            'user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId,
+            'rank' => 1, 'active_ticks' => 0,
+        ]);
+
+        // Only the Sciencelab stands and its scientist is hired -> nothing to announce.
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertNotSame('hint_advisor_slot2', $hint['key'] ?? null);
+
+        // A Hangar with a docked ship arrives -> the hint names the Hangar (pilot), not the lab.
+        $this->placeHangarOnly();
+        $this->addShip('docked');
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_advisor_slot2', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_advisor_slot2_hangar', $hint['text_key']);
+    }
+
     public function test_advisor_slot2_hint_silent_when_cc_below_level2(): void
     {
         $this->placeEngineer();
@@ -741,6 +773,48 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('hint_invest_site', $hint['key']);
     }
 
+    public function test_invest_site_hint_is_silent_when_every_site_hit_this_sols_ap_cap(): void
+    {
+        // The per-Sol AP cap blocks further AP into the only open site: advising "invest AP
+        // into the running site" would send the player into a disabled button.
+        config(['game.build.ap_cap_per_sol.base' => 3]);
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $cap = app(BuildingApCapService::class)->capFor($this->colonyId);
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 41)
+            ->update([
+                'level' => 0, 'ap_spend' => $cap, 'status_points' => 4,
+                'ap_cap_tick' => app(TickService::class)->getTickCount(), 'ap_cap_spent' => $cap,
+            ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_invest_site', $hint['key'] ?? null);
+    }
+
+    public function test_invest_site_hint_still_fires_while_a_site_has_cap_left_this_sol(): void
+    {
+        config(['game.build.ap_cap_per_sol.base' => 3]);
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $cap = app(BuildingApCapService::class)->capFor($this->colonyId);
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 41)
+            ->update([
+                'level' => 0, 'ap_spend' => 2, 'status_points' => 4,
+                'ap_cap_tick' => app(TickService::class)->getTickCount(), 'ap_cap_spent' => $cap - 1,
+            ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_invest_site', $hint['key']);
+    }
+
     public function test_invest_site_hint_silent_without_active_site(): void
     {
         // Everything placed and finished, nothing mid-levelup → no site, no hint;
@@ -755,10 +829,12 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('hint_explore', $hint['key']);
     }
 
-    public function test_invest_site_hint_retires_once_cc_level_2(): void
+    public function test_open_site_with_cap_left_beats_the_navigation_spend_hint_even_at_cc_level_2(): void
     {
-        // CC at level 2 → the build ramp is done; even with an open site the hint
-        // stays retired.
+        // Owner handtest 2026-10-17 (Sol 5, full AP): Sciencelab placed the Sol before and still
+        // a construction site, CC already Lv2 -> the bar said "AP left, unexplored terrain out
+        // there" although the site could still absorb AP. An open site with cap left owns the
+        // guidance; neither the navigation nor any "AP left" hint may fire.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -767,7 +843,28 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', 31)
-            ->update(['level' => 0, 'ap_spend' => 1]);
+            ->update(['level' => 0, 'ap_spend' => 1, 'ap_cap_tick' => null, 'ap_cap_spent' => 0]);
+        $this->setRunTick(5); // past the Sol-1 explore window
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_invest_site', $hint['key'] ?? null);
+    }
+
+    public function test_cc_level_2_with_every_site_capped_falls_back_to_the_spend_hint(): void
+    {
+        config(['game.build.ap_cap_per_sol.base' => 3]);
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        $cap = app(BuildingApCapService::class)->capFor($this->colonyId);
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 31)
+            ->update(['level' => 0, 'ap_spend' => 1, 'ap_cap_tick' => app(TickService::class)->getTickCount(), 'ap_cap_spent' => $cap]);
+        $this->setRunTick(5);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -1028,7 +1125,7 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->whereIn('building_id', [31, 52])
-            ->update(['level' => 0]);
+            ->update(['level' => 0, 'tile_x' => null, 'tile_y' => null]); // not placed at all (a placed site would own the hint)
         $this->setRunTick(1); // Sol 2 — explore hint (Sol-1-only) is gone
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
@@ -1083,7 +1180,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->placeSecondAdvisor();
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)->where('building_id', 31)
-            ->update(['level' => 0]); // sciencelab unbuilt → research unusable
+            ->update(['level' => 0, 'tile_x' => null, 'tile_y' => null]); // sciencelab not placed → research unusable
         $this->clearFog(); // navigation unusable
         $this->setRunTick(3);
 

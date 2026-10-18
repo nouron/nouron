@@ -3,6 +3,8 @@
 namespace App\Services\Techtree;
 
 use App\Enums\BuildingId;
+use App\Services\BuildingApCapService;
+use App\Services\BuildingCostService;
 use App\Services\ResourcesService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +76,7 @@ class BuildingService extends AbstractTechnologyService
      * ordered by instance_id — a row counts as placed under the same rule as
      * isPlaced(): the anchored Command Center always, any other row only with a tile.
      *
-     * @return array<int, list<array{instance_id: int, level: int, max_level: int|null, status_points: int, max_status_points: int, q: int|null, r: int|null}>>
+     * @return array<int, list<array{instance_id: int, level: int, max_level: int|null, status_points: int, max_status_points: int, q: int|null, r: int|null, ap_cap: array{cap: int, spent: int, remaining: int}|null}>>
      */
     public function placedInstances(int $colonyId): array
     {
@@ -93,11 +95,15 @@ class BuildingService extends AbstractTechnologyService
                 'colony_buildings.status_points',
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
+                'colony_buildings.ap_cap_tick',
+                'colony_buildings.ap_cap_spent',
                 'buildings.max_level',
                 'buildings.max_status_points',
             )
             ->get();
 
+        $capService = app(BuildingApCapService::class);
+        $cap = $capService->capFor($colonyId);
         $instances = [];
         foreach ($rows as $row) {
             $instances[(int) $row->building_id][] = [
@@ -108,6 +114,7 @@ class BuildingService extends AbstractTechnologyService
                 'max_status_points' => (int) $row->max_status_points,
                 'q' => $row->tile_x !== null ? (int) $row->tile_x : null,
                 'r' => $row->tile_y !== null ? (int) $row->tile_y : null,
+                'ap_cap' => $capService->stateFromRow($cap, $row),
             ];
         }
 
@@ -138,7 +145,42 @@ class BuildingService extends AbstractTechnologyService
             return 'not_placed';
         }
 
+        if ($this->ccLevelTooLow($colonyId, $entityId, $instanceId)) {
+            return 'building_cc_gate';
+        }
+
         return parent::levelupBlocker($colonyId, $entityId, $instanceId);
+    }
+
+    /**
+     * Player rule: a building level needs a Command Center of at least the same level
+     * (game.building_cc_level_offset lowers the requirement; 0 = same level). The CC
+     * itself is exempt.
+     */
+    public function ccLevelTooLow(int $colonyId, int $buildingId, ?int $instanceId): bool
+    {
+        if ($buildingId === BuildingId::CommandCenter->value) {
+            return false;
+        }
+
+        $targetLevel = (int) ($this->getColonyEntity($colonyId, $buildingId, $instanceId)->level) + 1;
+        $ccLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->value('level') ?? 0);
+
+        return $ccLevel < $targetLevel - (int) config('game.building_cc_level_offset', 0);
+    }
+
+    /**
+     * The Command Center follows the rising AP curve (BuildingCostService::levelupAp()).
+     */
+    protected function resolveApForLevelup(int $colonyId, int $entityId, object $entity): int
+    {
+        $base = parent::resolveApForLevelup($colonyId, $entityId, $entity);
+        $level = (int) ($this->getColonyEntity($colonyId, $entityId)->level ?? 0);
+
+        return app(BuildingCostService::class)->levelupAp($entityId, $level + 1, $base);
     }
 
     /**
@@ -154,6 +196,13 @@ class BuildingService extends AbstractTechnologyService
             && DB::table($this->masterTable())->find($entityId)
             && ! $this->isPlaced($colonyId, $entityId, $instanceId)) {
             return 'not_placed';
+        }
+
+        // Per-building per-Sol construction AP cap (game.build.ap_cap_per_sol): only the
+        // level-up investment ('add') is capped, never repair/remove.
+        if ($action === 'add' && ! $bypassPoolCheck
+            && app(BuildingApCapService::class)->wouldExceed($colonyId, $entityId, $instanceId ?? 1, abs($points))) {
+            return 'building_ap_cap';
         }
 
         return parent::investBlocker($colonyId, $entityId, $action, $points, $bypassPoolCheck, $instanceId);
@@ -307,6 +356,11 @@ class BuildingService extends AbstractTechnologyService
      */
     public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1, ?int $instanceId = null): bool
     {
-        return $this->_invest($colonyId, $entityId, $action, $points, instanceId: $instanceId);
+        $ok = $this->_invest($colonyId, $entityId, $action, $points, instanceId: $instanceId);
+        if ($ok && $action === 'add') {
+            app(BuildingApCapService::class)->record($colonyId, $entityId, $instanceId ?? 1, abs($points));
+        }
+
+        return $ok;
     }
 }

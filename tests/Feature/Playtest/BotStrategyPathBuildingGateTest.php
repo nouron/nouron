@@ -47,6 +47,7 @@ class BotStrategyPathBuildingGateTest extends TestCase
     public function test_place_building_takes_the_second_path_building_at_cc3(): void
     {
         $bot = $this->boot(ccLevel: 3);
+        DB::table('runs')->where('id', $bot->runId)->update(['phase' => 2]);   // a second path building is a Phase-2 matter
         $this->placePath($bot, 31);
 
         $this->assertSame(44, (int) $this->placeCandidate($bot)[0]['building_id']);

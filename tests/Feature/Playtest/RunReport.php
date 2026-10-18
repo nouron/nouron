@@ -22,6 +22,11 @@ class RunReport
 
     private ?int $phase2StartSol = null;
 
+    /** @var list<array{sol: int, in: array<string, int>, out: array<string, int>, stock: int, unattributed: int}> */
+    private array $ledgerRows = [];
+
+    private ?int $ledgerStartStock = null;
+
     /**
      * A30/B1a: maps a BotSession::act() rule name to its AP-spend category.
      * Unmapped rules (hire_advisor, accept_bar_offer, buy_corporate_harvester_offer,
@@ -107,47 +112,39 @@ class RunReport
     }
 
     /**
-     * A30/B1c: this Sol's Regolith gains by source. 'accept_bar_offer' deltas
-     * are 'trade'; 'invest_find' deltas are 'find' (T30 salvage); the 'sol_next' delta is split into 'mission' and 'find_flight' (read from the
-     * real 'hangar.mission_completed' colony_log event for this tick — no
-     * re-derivation, the game already computed and logged the exact reward)
-     * and 'harvester' (the remainder — Regolith has no other tick-driven
-     * source). 'event' stays 0: encounters affect production/AP, not a direct
-     * Regolith credit, per GDD §9 — kept as a key for forward compatibility.
-     * Only ok=true entries and positive deltas count (a rejected action or a
-     * net-negative delta is not a "source"); the sol_next payouts are read from the
-     * log and do not need a positive net delta.
+     * Ledger source tag => regolith_sources bucket. harvester is the pure
+     * Harvester yield since the ledger (no longer the remainder of the sol_next
+     * delta); geology, import, recycling and concern are their own buckets now.
+     * Tags not listed land in 'other'. 'event' stays 0 (GDD §9 encounters do not
+     * credit Regolith), kept for backward compatibility.
      */
-    private function regolithSources(BotSession $bot): array
+    private const SOURCE_BUCKETS = [
+        'harvester_base' => 'harvester',
+        'geology' => 'geology',
+        'mission_ore' => 'mission',
+        'mission_loot' => 'mission',
+        'cantina_guest' => 'trade',
+        'merchant_buy' => 'trade',
+        'find_self' => 'find',
+        'find_flight' => 'find_flight',
+        'import' => 'import',
+        'recycle' => 'recycling',
+        'cantina_concern' => 'concern',
+    ];
+
+    /**
+     * This Sol's Regolith inflows by bucket, from the tagged ledger bookings
+     * (BotSession::$regolithLedger) — the buckets add up to the ledger inflow.
+     *
+     * @param  array<string, int>  $inflows  ledger tag => amount
+     * @return array<string, int>
+     */
+    private static function regolithSources(array $inflows): array
     {
-        $sources = ['harvester' => 0, 'mission' => 0, 'trade' => 0, 'find' => 0, 'find_flight' => 0, 'event' => 0];
-
-        foreach ($bot->log as $entry) {
-            if ($entry['sol'] !== $bot->sol || ! $entry['ok']) {
-                continue;
-            }
-
-            $delta = $entry['regolith_after'] - $entry['regolith_before'];
-            // The Sol-end payout comes from the logged mission rewards, so it counts even
-            // when other spend made the net delta <= 0; every other rule needs a gain.
-            if ($delta <= 0 && $entry['rule'] !== 'sol_next') {
-                continue;
-            }
-
-            if ($entry['rule'] === 'accept_bar_offer') {
-                $sources['trade'] += $delta;
-            } elseif ($entry['rule'] === 'invest_find') {
-                // T30 Pool v1: the completed salvage's credit; the endpoint's `regolith`
-                // field is the stock, so the observed delta is the only honest amount.
-                $sources['find'] += $delta;
-            } elseif ($entry['rule'] === 'sol_next') {
-                $missionAmount = $this->missionRewardAmount($bot, 'regolith');
-                // T30 §13.3: salvage flights log their Regolith as rewards.find_regolith.
-                $flightAmount = $this->missionRewardAmount($bot, 'find_regolith');
-                $sources['mission'] += $missionAmount;
-                $sources['find_flight'] += $flightAmount;
-                $sources['harvester'] += max(0, $delta - $missionAmount - $flightAmount);
-            }
+        $sources = ['harvester' => 0, 'mission' => 0, 'trade' => 0, 'find' => 0, 'find_flight' => 0, 'event' => 0,
+            'geology' => 0, 'import' => 0, 'recycling' => 0, 'concern' => 0, 'other' => 0];
+        foreach ($inflows as $tag => $amount) {
+            $sources[self::SOURCE_BUCKETS[$tag] ?? 'other'] += $amount;
         }
 
         return $sources;
@@ -263,6 +260,57 @@ class RunReport
     }
 
     /**
+     * Records and returns this Sol's ledger row (budget spec E.1 M1). unattributed =
+     * stock change since the previous snapshot minus (in − out): 0 when every
+     * Regolith booking was tagged, anything else names a booking site the
+     * recorder misses (RegolithLedgerInvariantTest).
+     *
+     * @return array{sol: int, in: array<string, int>, out: array<string, int>, stock: int, unattributed: int}
+     */
+    private function ledgerRow(BotSession $bot): array
+    {
+        $this->ledgerStartStock ??= $bot->regolithStartStock;
+        $previous = $this->ledgerRows === [] ? $this->ledgerStartStock : end($this->ledgerRows)['stock'];
+        $in = $bot->regolithLedger[$bot->sol]['in'] ?? [];
+        $out = $bot->regolithLedger[$bot->sol]['out'] ?? [];
+        ksort($in);
+        ksort($out);
+        $stock = BotStrategy::regolith($bot);
+
+        return $this->ledgerRows[] = [
+            'sol' => $bot->sol,
+            'in' => $in,
+            'out' => $out,
+            'stock' => $stock,
+            'unattributed' => ($stock - $previous) - (array_sum($in) - array_sum($out)),
+        ];
+    }
+
+    /** @return array{start_stock: int, sources: array<string, int>, sinks: array<string, int>, per_sol: list<array>} */
+    private function ledgerSummary(): array
+    {
+        $sources = [];
+        $sinks = [];
+        foreach ($this->ledgerRows as $row) {
+            foreach ($row['in'] as $tag => $amount) {
+                $sources[$tag] = ($sources[$tag] ?? 0) + $amount;
+            }
+            foreach ($row['out'] as $tag => $amount) {
+                $sinks[$tag] = ($sinks[$tag] ?? 0) + $amount;
+            }
+        }
+        arsort($sources);
+        arsort($sinks);
+
+        return [
+            'start_stock' => (int) $this->ledgerStartStock,
+            'sources' => $sources,
+            'sinks' => $sinks,
+            'per_sol' => $this->ledgerRows,
+        ];
+    }
+
+    /**
      * Capture one Sol's state — call once per Sol, after the strategy has
      * acted but BEFORE nextSol() (locked_actionpoints still reflect that Sol).
      */
@@ -280,7 +328,7 @@ class RunReport
         // 'total'/'ap_unspent' for backward compat with existing consumers).
         $apInflow = app(AdvisorService::class)->getApBreakdown($colonyId)['total'];
         $apSpent = $this->apSpendByCategory($bot);
-        $regolithSources = $this->regolithSources($bot);
+        $regolithSources = self::regolithSources($this->ledgerRow($bot)['in']);
         $organics = $this->organicsSourcesAndConsumption($bot);
 
         // B1d: Reuses ResourcesService::getSupplyBreakdown() — the same canonical
@@ -531,16 +579,14 @@ class RunReport
         // A31/B2b: Metrik 9, per-run sum of regolithSources()'s per-Sol
         // buckets. Mapping follows the real GDD path lettering, not the
         // swapped one in the old plan text: Pfad A = Analytik-Labor/Geologie
-        // (the 'harvester' bucket), Pfad B = Hangar (Frachter-Mission plus
-        // Bergungsflug: the 'mission' + 'find_flight' buckets), Pfad C = Cantina/Corvan (the 'trade' bucket).
-        // Known limitation (inherited from B1c, not solved here): the
-        // 'harvester' bucket still mixes the base Harvester yield with the
-        // Geologie-Kenntnis bonus — separating those would need an
-        // additional per-Sol Geologie-level snapshot, out of this task's
-        // scope.
+        // (the 'harvester' + 'geology' buckets — what the old remainder bucket
+        // meant, minus import/recycling it wrongly contained), Pfad B = Hangar
+        // (Frachter-Mission plus Bergungsflug: the 'mission' + 'find_flight'
+        // buckets), Pfad C = Cantina/Corvan (the 'trade' bucket). The switch to the
+        // new ledger keys (spec E.1 M5) is a later step.
         $regolithPathAttribution = ['pfad_a_geologie' => 0, 'pfad_b_frachter' => 0, 'pfad_c_cantina' => 0];
         foreach ($this->sols as $sol) {
-            $regolithPathAttribution['pfad_a_geologie'] += $sol['regolith_sources']['harvester'];
+            $regolithPathAttribution['pfad_a_geologie'] += $sol['regolith_sources']['harvester'] + ($sol['regolith_sources']['geology'] ?? 0);
             $regolithPathAttribution['pfad_b_frachter'] += $sol['regolith_sources']['mission'] + ($sol['regolith_sources']['find_flight'] ?? 0);
             $regolithPathAttribution['pfad_c_cantina'] += $sol['regolith_sources']['trade'];
         }
@@ -592,6 +638,8 @@ class RunReport
             'place_null_reasons' => $bot->placeNullReasons,
             'project_metrics' => $this->projectMetrics(),
             'regolith_path_attribution' => $regolithPathAttribution,
+            // Budget spec E.1 M1: tagged Regolith in-/outflows per Sol and per run.
+            'regolith_ledger' => $this->ledgerSummary(),
             'zero_ap_sols' => [
                 'count' => count($zeroApSols),
                 'sols' => $zeroApSols,

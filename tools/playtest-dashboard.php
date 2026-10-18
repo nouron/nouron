@@ -45,6 +45,7 @@ if (is_dir($reportDir)) {
             'sols' => $data['sols'] ?? [],
             'log' => $data['log'] ?? [],
             'project_metrics' => $data['project_metrics'] ?? ['project_durations' => [], 'last_completion_sol' => null],
+            'regolith_ledger' => $data['regolith_ledger'] ?? null, // absent in reports from before the Regolith ledger
         ];
     }
 }
@@ -103,7 +104,8 @@ if (is_dir($reportDir)) {
         <div class="pd-chart-stack pd-chart-stack--single-run">
             <h2 class="pd-section-title">Detail-Charts (A30/A31-Metriken) — <span id="pd-detail-run-label">–</span></h2>
             <div class="pd-chart-card"><h3>AP-Bilanz (Repair / Projekt / Handlung / Rest)</h3><canvas id="chart-ap-breakdown"></canvas></div>
-            <div class="pd-chart-card"><h3>Regolith-Quellen (Harvester / Mission / Handel / Ereignis)</h3><canvas id="chart-regolith-sources"></canvas></div>
+            <div class="pd-chart-card"><h3>Regolith-Quellen je Sol (Ledger-Töpfe)</h3><canvas id="chart-regolith-sources"></canvas></div>
+            <div class="pd-chart-card"><h3>Regolith-Senken je Sol (Ledger) <span id="pd-rg-sinks-note"></span></h3><canvas id="chart-regolith-sinks"></canvas></div>
             <div class="pd-chart-card"><h3>Supply-Auslastung</h3><canvas id="chart-supply-utilization"></canvas></div>
             <div class="pd-chart-card"><h3>Pfadgebäude-Stufen (Labor / Hangar / Cantina) + CC</h3><canvas id="chart-path-levels"></canvas></div>
         </div>
@@ -418,12 +420,32 @@ function apUnspentPct(run) {
     return `${Math.round((totalUnspent / totalInflow) * 100)}%`;
 }
 
+// regolith_sources buckets (RunReport::regolithSources()). Reports before the
+// Regolith ledger only carry the first six; the rest then stays 0 and
+// 'harvester' is the old remainder bucket (incl. import/recycling/geology).
+const RG_SOURCE_KEYS = ['harvester', 'geology', 'mission', 'find', 'find_flight', 'trade', 'concern', 'import', 'recycling', 'event', 'other'];
+const RG_SOURCE_LABELS = {
+    harvester: 'Harvester', geology: 'Geologie', mission: 'Mission', find: 'Fund (selbst)', find_flight: 'Bergungsflug',
+    trade: 'Handel', concern: 'Anliegen', import: 'Import', recycling: 'Recycling', event: 'Ereignis', other: 'Sonstige',
+};
+const RG_SOURCE_COLORS = ['#b0ff7f', '#6fcf4f', '#7fbbff', '#c99bff', '#7fffe0', '#ffe07f', '#ffb07f', '#ff7fa0', '#bbbbbb', '#ff5050', '#666'];
+// Ledger sink tags (regolith_ledger.per_sol[].out); unlisted tags are summed as 'other'.
+const RG_SINK_KEYS = ['build_place', 'build_levelup', 'cc_upgrade', 'repair', 'research_levelup', 'cantina_sell', 'merchant_sell', 'wager', 'other'];
+const RG_SINK_LABELS = ['Platzieren', 'Stufe', 'CC-Ausbau', 'Reparatur', 'Forschung', 'Cantina-Verkauf', 'Händler-Verkauf', 'Wette', 'Sonstige'];
+const RG_SINK_COLORS = ['#ff7f7f', '#ffb07f', '#ffffff', '#ffe07f', '#7fbbff', '#c99bff', '#7fffe0', '#ff7fa0', '#666'];
+
+function regolithSinkValue(row, key) {
+    const out = row.out ?? {};
+    if (key !== 'other') return out[key] ?? 0;
+    return Object.entries(out).filter(([tag]) => !RG_SINK_KEYS.includes(tag)).reduce((sum, [, v]) => sum + v, 0);
+}
+
 function regolithTopSource(run) {
-    const totals = { harvester: 0, mission: 0, trade: 0, find: 0, find_flight: 0, event: 0 };
+    const totals = Object.fromEntries(RG_SOURCE_KEYS.map(k => [k, 0]));
     (run.sols ?? []).forEach(s => {
         Object.keys(totals).forEach(k => { totals[k] += s.regolith_sources?.[k] ?? 0; });
     });
-    const labels = { harvester: 'Harvester', mission: 'Mission', trade: 'Handel', find: 'Fund (selbst)', find_flight: 'Bergungsflug', event: 'Ereignis' };
+    const labels = RG_SOURCE_LABELS;
     const [topKey, topValue] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
     return topValue > 0 ? `${labels[topKey]} (${topValue})` : '—';
 }
@@ -494,10 +516,11 @@ detailCharts.apBreakdown = makeStackedAreaChart(
 );
 detailCharts.regolithSources = makeStackedAreaChart(
     'chart-regolith-sources',
-    ['harvester', 'mission', 'trade', 'find', 'find_flight', 'event'],
-    ['Harvester', 'Mission', 'Handel', 'Fund (selbst)', 'Bergungsflug', 'Ereignis'],
-    ['#b0ff7f', '#7fbbff', '#ffe07f', '#c99bff', '#7fffe0', '#ff7fa0']
+    RG_SOURCE_KEYS,
+    RG_SOURCE_KEYS.map(k => RG_SOURCE_LABELS[k]),
+    RG_SOURCE_COLORS
 );
+detailCharts.regolithSinks = makeStackedAreaChart('chart-regolith-sinks', RG_SINK_KEYS, RG_SINK_LABELS, RG_SINK_COLORS);
 
 const supplyCanvas = document.getElementById('chart-supply-utilization');
 if (supplyCanvas) {
@@ -577,10 +600,19 @@ function renderDetailCharts(run) {
     }
     if (detailCharts.regolithSources) {
         detailCharts.regolithSources.data.datasets.forEach(ds => {
-            const key = ['harvester', 'mission', 'trade', 'find', 'find_flight', 'event'][detailCharts.regolithSources.data.datasets.indexOf(ds)];
+            const key = RG_SOURCE_KEYS[detailCharts.regolithSources.data.datasets.indexOf(ds)];
             ds.data = sols.map(s => ({ x: s.sol, y: s.regolith_sources?.[key] ?? 0 }));
         });
         detailCharts.regolithSources.update();
+    }
+    if (detailCharts.regolithSinks) {
+        const rows = run?.regolith_ledger?.per_sol ?? [];
+        const note = document.getElementById('pd-rg-sinks-note');
+        if (note) note.textContent = run && rows.length === 0 ? '— Lauf ohne Ledger (alter Report)' : '';
+        detailCharts.regolithSinks.data.datasets.forEach((ds, i) => {
+            ds.data = rows.map(r => ({ x: r.sol, y: regolithSinkValue(r, RG_SINK_KEYS[i]) }));
+        });
+        detailCharts.regolithSinks.update();
     }
     if (detailCharts.pathLevels) {
         const ds = detailCharts.pathLevels.data.datasets;

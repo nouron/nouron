@@ -103,6 +103,8 @@ class BotStrategyFocusProfileTest extends TestCase
         $bot = BotSession::boot($this, 1);
         $this->drawObjective($bot, 'task_engineering_output');
         $this->placeBuilding($bot, BuildingId::Housing->value, level: 2);
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)->update(['level' => 3]);   // Lv3 step needs CC Lv3
         $this->setResource($bot, 3, 500);
 
         $candidate = $this->rule('focus_engineering_levelup')['when']($bot);
