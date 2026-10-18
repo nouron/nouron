@@ -53,6 +53,7 @@ function techtreeView(config) {
                     describe: (item) => ({
                         label: item.ref.name,
                         sub: this.statusLabel(item.ref),
+                        tag: item.ref.req_cc ? (this.i18n.ccTag ?? 'CC :level').replace(':level', item.ref.req_cc) : '',
                         status: item.ref.status,
                         pulse: item.ref.pulse,
                     }),

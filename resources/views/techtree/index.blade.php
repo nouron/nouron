@@ -29,6 +29,7 @@
             advisorLocked: @json(__("techtree.advisor_locked")),
             advisorPlaced: @json(__("techtree.advisor_placed")),
             advisorNotPlaced: @json(__("techtree.advisor_not_placed")),
+            ccTag: @json(__("techtree.cc_tag")),
             bandStart: @json(__("techtree.band_start")),
             bandCc: @json(__("techtree.band_cc")),
             columnN: @json(__("techtree.column_n")),

@@ -85,7 +85,7 @@
             dotsEl = opts.dots || null,
             rootEl = opts.root || stage;
         var labels = opts.labels || {};
-        // describe(item) -> { label, sub, status, pulse }, re-read on refresh().
+        // describe(item) -> { label, sub, tag, status, pulse }, re-read on refresh().
         var describe = opts.describe;
         var onSelect = opts.onSelect || function () {};
 
@@ -124,6 +124,7 @@
                     item: it,
                     label: '',
                     sub: '',
+                    tag: '',
                     isRoot: it.band === 0,
                 };
                 IDS.push(it.key);
@@ -189,6 +190,7 @@
                     d = describe(n.item);
                 n.label = d.label;
                 n.sub = d.sub;
+                n.tag = d.tag || '';
                 n.status = d.status;
                 n.pulse = !!d.pulse;
             });
@@ -538,6 +540,14 @@
             ctx.fillStyle = locked ? P.text2 : c.fg;
             fitText(n.sub, 400, 12.5, NW * 2 - 24);
             ctx.fillText(n.sub, n.x, n.y + 16);
+            // Small, quiet Command Center requirement in the lower-right corner.
+            if (n.tag) {
+                ctx.textAlign = 'right';
+                ctx.fillStyle = P.text2;
+                ctx.font = '600 11px ' + FONT;
+                ctx.fillText(n.tag, x1 - 8, y1 - 6);
+                ctx.textAlign = 'center';
+            }
             ctx.globalAlpha = 1;
         }
 

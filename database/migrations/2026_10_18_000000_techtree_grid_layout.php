@@ -38,7 +38,7 @@ return new class extends Migration
         'personell' => [
             35 => [1, 1, 3],
             89 => [2, 3, 1], 36 => [2, 3, 3], 92 => [2, 3, 4],
-            93 => [3, 1, 3],
+            93 => [0, 0, 0], // strategist: removed from the techtree until further notice
         ],
     ];
 

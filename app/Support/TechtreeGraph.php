@@ -26,7 +26,7 @@ final class TechtreeGraph
     /**
      * Placed nodes (phase > 0, plus the Command Center as band 0) with their global grid cell.
      *
-     * @return array<string, array{key: string, type: string, id: int, band: int, gridRow: int, gridCol: int}>
+     * @return array<string, array{key: string, type: string, id: int, band: int, gridRow: int, gridCol: int, ccLevel: int|null}>
      */
     public static function nodes(array $techtree): array
     {
@@ -73,6 +73,7 @@ final class TechtreeGraph
                 'band' => $n['band'],
                 'gridRow' => $offset[$n['band']] + $n['row'] - $minRow[$n['band']],
                 'gridCol' => $n['col'] - 1,
+                'ccLevel' => self::ccLevel($techtree, $n['type'], $n['id']),
             ];
         }
 
@@ -120,5 +121,40 @@ final class TechtreeGraph
         }
 
         return $edges;
+    }
+
+    /**
+     * Lowest Command Center level this entry needs, following the building prerequisites
+     * transitively (null for the Command Center itself and for entries without a CC requirement).
+     * Shown as a small tag on the node, so the dependency is visible without an arrow.
+     */
+    private static function ccLevel(array $techtree, string $type, int $id, array $seen = []): ?int
+    {
+        if ($type === 'building' && $id === self::COMMAND_CENTER_ID) {
+            return null;
+        }
+        $key = self::key($type, $id);
+        if (isset($seen[$key])) {
+            return null;
+        }
+        $seen[$key] = true;
+        $tech = $techtree[$type][$id] ?? [];
+        $level = null;
+        foreach (['', '2'] as $suffix) {
+            $reqId = (int) ($tech["required_building{$suffix}_id"] ?? 0);
+            if ($reqId < 1) {
+                continue;
+            }
+            if ($reqId === self::COMMAND_CENTER_ID) {
+                $candidate = (int) ($tech["required_building{$suffix}_level"] ?? 1);
+            } else {
+                $candidate = self::ccLevel($techtree, 'building', $reqId, $seen);
+            }
+            if ($candidate !== null) {
+                $level = max($level ?? 0, $candidate);
+            }
+        }
+
+        return $level;
     }
 }

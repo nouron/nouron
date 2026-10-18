@@ -183,6 +183,7 @@ return [
     'legend_required' => 'Required',
     'legend_second' => '2nd prerequisite',
     'band_start' => 'Start',
+    'cc_tag' => 'CC :level',
     'band_cc' => 'CC Lv :level',
     'zoom_in' => 'Zoom in',
     'zoom_out' => 'Zoom out',

@@ -147,6 +147,8 @@ class TechtreeController extends BaseController
                     'col' => (int) ($tech['column'] ?? 0),
                     'grid_row' => $graphNode['gridRow'],
                     'grid_col' => $graphNode['gridCol'],
+                    // Effective Command Center level needed (small tag on the canvas node).
+                    'req_cc' => $graphNode['ccLevel'],
                     'status' => $this->computeStatus($tech, $techtree),
                     'required_desc' => $this->computeRequiredDesc($tech, $techtree),
                     // Same prerequisites as required_desc, as separate parts for a

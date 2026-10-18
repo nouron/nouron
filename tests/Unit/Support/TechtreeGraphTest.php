@@ -47,7 +47,8 @@ class TechtreeGraphTest extends TestCase
             $this->assertArrayNotHasKey($cell, $cells, "grid cell $cell used twice");
             $cells[$cell] = true;
         }
-        $this->assertCount(28, $nodes);
+        $this->assertCount(27, $nodes);
+        $this->assertArrayNotHasKey('personell-93', $nodes, 'strategist is hidden (phase 0) until further notice');
     }
 
     public function test_grid_has_four_columns_and_command_center_on_top(): void
@@ -111,5 +112,17 @@ class TechtreeGraphTest extends TestCase
         $techtree['building'][44]['level'] = 0;
         $e = $this->edge(TechtreeGraph::edges($techtree), 'building-44', 'research-91');
         $this->assertFalse($e['met']);
+    }
+
+    public function test_nodes_carry_the_effective_command_center_level(): void
+    {
+        $nodes = TechtreeGraph::nodes($this->seedTechtree());
+        $this->assertNull($nodes['building-25']['ccLevel'], 'the Command Center has no CC requirement');
+        $this->assertSame(1, $nodes['building-27']['ccLevel']);   // harvester: CC Lv1 direct
+        $this->assertSame(1, $nodes['building-41']['ccLevel']);   // bioFacility via harvester
+        $this->assertSame(2, $nodes['building-31']['ccLevel']);   // sciencelab: CC Lv2 direct
+        $this->assertSame(2, $nodes['research-90']['ccLevel']);   // construction via sciencelab
+        $this->assertSame(2, $nodes['ship-85']['ccLevel']);       // drone via hangar
+        $this->assertSame(5, $nodes['building-50']['ccLevel']);   // monument: CC Lv5 direct
     }
 }

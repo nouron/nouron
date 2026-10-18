@@ -191,6 +191,7 @@ return [
     'legend_required' => 'Pflicht',
     'legend_second' => '2. Voraussetzung',
     'band_start' => 'Start',
+    'cc_tag' => 'CC :level',
     'band_cc' => 'CC Lv :level',
     'zoom_in' => 'Vergrößern',
     'zoom_out' => 'Verkleinern',

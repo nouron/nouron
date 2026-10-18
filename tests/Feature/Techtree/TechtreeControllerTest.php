@@ -220,6 +220,7 @@ class TechtreeControllerTest extends TestCase
                 $this->assertArrayHasKey('col', $tech);
                 $this->assertArrayHasKey('grid_row', $tech);
                 $this->assertArrayHasKey('grid_col', $tech);
+                $this->assertArrayHasKey('req_cc', $tech);
                 $this->assertArrayHasKey('status', $tech);
                 $this->assertContains($tech['status'], ['built', 'available', 'locked'],
                     "Invalid status '{$tech['status']}' for {$tech['type']}/{$tech['id']} in phase {$phaseNum}");
