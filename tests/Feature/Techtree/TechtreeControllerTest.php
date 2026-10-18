@@ -195,14 +195,16 @@ class TechtreeControllerTest extends TestCase
 
         $pageData = $response->viewData('pageData');
         $this->assertArrayHasKey('phases', $pageData);
-        $this->assertCount(5, $pageData['phases']);
+        // Band 0 is the Command Center itself, bands 1-5 are the CC levels.
+        $this->assertCount(6, $pageData['phases']);
+        $this->assertArrayHasKey('edges', $pageData);
 
-        foreach (range(1, 5) as $n) {
+        foreach (range(0, 5) as $n) {
             $this->assertArrayHasKey($n, $pageData['phases'], "Phase $n missing");
             $this->assertArrayHasKey('cc_level', $pageData['phases'][$n]);
             $this->assertArrayHasKey('items', $pageData['phases'][$n]);
-            $this->assertArrayHasKey('lines', $pageData['phases'][$n]);
         }
+        $this->assertSame([25], array_column($pageData['phases'][0]['items'], 'id'));
     }
 
     public function test_index_phase_items_have_required_fields(): void
@@ -216,6 +218,9 @@ class TechtreeControllerTest extends TestCase
                 $this->assertArrayHasKey('type', $tech);
                 $this->assertArrayHasKey('row', $tech);
                 $this->assertArrayHasKey('col', $tech);
+                $this->assertArrayHasKey('grid_row', $tech);
+                $this->assertArrayHasKey('grid_col', $tech);
+                $this->assertArrayHasKey('req_cc', $tech);
                 $this->assertArrayHasKey('status', $tech);
                 $this->assertContains($tech['status'], ['built', 'available', 'locked'],
                     "Invalid status '{$tech['status']}' for {$tech['type']}/{$tech['id']} in phase {$phaseNum}");
@@ -520,26 +525,42 @@ class TechtreeControllerTest extends TestCase
             'bullet parts must not repeat the "Benötigt" prefix already implied by the heading');
     }
 
-    public function test_knowledge_cartography_is_in_phase3(): void
+    public function test_knowledge_cartography_is_in_phase2(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        $found = collect($pageData['phases'][3]['items'])
+        $found = collect($pageData['phases'][2]['items'])
             ->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
 
-        $this->assertNotNull($found, 'knowledge_cartography (ID 91) must be in phase 3');
+        $this->assertNotNull($found, 'knowledge_cartography (ID 91) must be in phase 2');
     }
 
-    public function test_phase3_lines_include_hangar_arrow(): void
+    public function test_edges_include_hangar_arrow_and_mark_second_prerequisite_dashed(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        $lines = $pageData['phases'][3]['lines'];
-        $hangarLines = array_filter($lines, fn ($l) => $l['from'] === 'tech-building-44');
+        $hangarEdges = array_values(array_filter($pageData['edges'], fn ($e) => $e['from'] === 'building-44' && $e['to'] === 'research-91'));
 
-        $this->assertNotEmpty($hangarLines, 'Phase 3 must have arrows originating from hangar (ID 44)');
+        $this->assertCount(1, $hangarEdges, 'hangar (ID 44) must gate cartography (ID 91)');
+        $this->assertTrue($hangarEdges[0]['dashed'], 'the second prerequisite is drawn dashed');
+    }
+
+    public function test_every_edge_points_downwards_in_the_grid(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $rows = [];
+        foreach ($pageData['phases'] as $phase) {
+            foreach ($phase['items'] as $t) {
+                $rows[$t['type'].'-'.$t['id']] = $t['grid_row'];
+            }
+        }
+        foreach ($pageData['edges'] as $e) {
+            $this->assertLessThan($rows[$e['to']], $rows[$e['from']], "{$e['from']} must sit above {$e['to']}");
+        }
     }
 
     /**
@@ -553,15 +574,15 @@ class TechtreeControllerTest extends TestCase
         $this->assertStringNotContainsString('colony', $route);
     }
 
-    public function test_infirmary_is_in_phase2(): void
+    public function test_infirmary_is_in_phase3(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        $found = collect($pageData['phases'][2]['items'])
+        $found = collect($pageData['phases'][3]['items'])
             ->first(fn ($t) => $t['id'] === 46 && $t['type'] === 'building');
 
-        $this->assertNotNull($found, 'infirmary (building ID 46) must be in phase 2');
+        $this->assertNotNull($found, 'infirmary (building ID 46) must be in phase 3');
     }
 
     public function test_bar_is_in_phase2(): void
@@ -575,19 +596,17 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotNull($found, 'bar/cantina (building ID 52) must be in phase 2');
     }
 
-    public function test_knowledge_geology_is_in_phase2(): void
+    public function test_knowledge_geology_is_in_phase3(): void
     {
-        // Owner-Playtest-Fund 2026-09-05: geology was shown in the Phase 3 (CC Lv3)
-        // column even though its real gate — sciencelab Lv2 + harvester Lv1 — has no
-        // CC-Lv3 requirement at all, misleading players into deferring the science
-        // path. Moved to phase 2 alongside its actual prerequisite (sciencelab).
+        // Canvas techtree (2026-10-18): a band is a layout row group below the Command Center,
+        // not a gate — geology sits below its prerequisite sciencelab (band 2) in band 3.
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        $found = collect($pageData['phases'][2]['items'])
+        $found = collect($pageData['phases'][3]['items'])
             ->first(fn ($t) => $t['id'] === 92 && $t['type'] === 'research');
 
-        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 2 (matches its real gate: sciencelab Lv2 + harvester Lv1, no CC-Lv3 requirement)');
+        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3, below its prerequisite sciencelab');
     }
 
     // ── order('add'): auto-levelup in the same request (no page reload) ───────
@@ -667,12 +686,13 @@ class TechtreeControllerTest extends TestCase
 
         $phasesUpdate = $response->json('phases_update');
         $this->assertIsArray($phasesUpdate, 'response must carry a phases_update payload');
-        $this->assertCount(5, $phasesUpdate);
+        $this->assertCount(6, $phasesUpdate['phases']);
+        $this->assertIsArray($phasesUpdate['edges']);
+        $this->assertArrayHasKey('met', $phasesUpdate['edges'][0]);
 
         $geology = null;
-        foreach ($phasesUpdate as $phase) {
+        foreach ($phasesUpdate['phases'] as $phase) {
             $this->assertArrayHasKey('items', $phase);
-            $this->assertArrayHasKey('lines', $phase);
             $geology ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
         }
 

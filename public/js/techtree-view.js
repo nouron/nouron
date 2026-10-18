@@ -1,27 +1,110 @@
+// Techtree screen: Alpine component around the canvas renderer (public/js/techtree-canvas.js).
+// The canvas draws the graph; this component owns the detail panel (desktop sidebar / phone bottom
+// sheet), the AP investment and the status refresh after an order.
 function techtreeView(config) {
+    // Kept outside Alpine's reactive data: the renderer is a plain object with its own state.
+    let tree = null;
+
+    const CAT = { building: 'b', research: 'k', ship: 's', personell: 'a' };
+    const HINT_TYPE = { 2: 'personell', 4: 'research', 5: 'building' };
+
     return {
         // Shared AP-bar helpers (apCapReached, apSegClasses, apCapLimitPos): public/js/ap-bar.js
         ...window.NouronApBar,
         phases: config.phases,
+        edges: config.edges ?? [],
         colonyViewUrl: config.colonyViewUrl ?? '/colony/view',
         i18n: config.i18n ?? {},
+        hintRank: config.hintRank ?? 0,
         selectedTech: null,
-        activePhase: 1,
-        isMobile: false,
-        touchStartX: 0,
-        hoveredTechId: null,
+        sheetMode: false,
 
         init() {
             this.checkBreakpoint();
-            window.addEventListener('resize', () => {
+            this.fit();
+            this._onResize = () => {
                 this.checkBreakpoint();
-                this.$nextTick(() => this.drawAllLines());
+                this.fit();
+            };
+            window.addEventListener('resize', this._onResize);
+            // The header grows and shrinks (hint bar, encounter notice): keep the stage flush below it.
+            const header = document.querySelector('.colony-header');
+            if (header && window.ResizeObserver) new ResizeObserver(() => this.fit()).observe(header);
+
+            this.flatItems().forEach((it) => {
+                it.pulse = this.hintRank > 0 && it.type === HINT_TYPE[this.hintRank];
             });
-            this.$nextTick(() => this.drawAllLines());
+
+            this.$nextTick(() => {
+                tree = window.TechtreeCanvas.create({
+                    root: this.$refs.page,
+                    stage: this.$refs.stage,
+                    canvas: this.$refs.canvas,
+                    dots: this.$refs.dots,
+                    items: this.flatItems().map((it) => ({
+                        key: this.keyOf(it),
+                        cat: CAT[it.type],
+                        band: it.band,
+                        col: it.grid_col,
+                        row: it.grid_row,
+                        ref: it,
+                    })),
+                    edges: this.edges,
+                    bandLabels: this.bandLabels(),
+                    labels: { columnN: this.i18n.columnN },
+                    describe: (item) => ({
+                        label: item.ref.name,
+                        sub: this.statusLabel(item.ref),
+                        tag: item.ref.req_cc ? (this.i18n.ccTag ?? 'CC :level').replace(':level', item.ref.req_cc) : '',
+                        status: item.ref.status,
+                        pulse: item.ref.pulse,
+                    }),
+                    onSelect: (key) => this.selectByKey(key),
+                });
+            });
         },
 
         checkBreakpoint() {
-            this.isMobile = window.innerWidth < 600;
+            this.sheetMode = window.innerWidth < 600;
+        },
+
+        // Size the stage to the viewport below the sticky header; the side panel starts at the same line.
+        fit() {
+            const page = this.$refs.page;
+            const stage = this.$refs.stage;
+            if (!page || !stage) return;
+            const top = stage.getBoundingClientRect().top;
+            page.style.setProperty('--tt-top', `${Math.max(0, top)}px`);
+            stage.style.height = `${Math.max(320, Math.round(window.innerHeight - Math.max(0, top)))}px`;
+        },
+
+        flatItems() {
+            return Object.keys(this.phases)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .flatMap((n) => this.phases[n].items.map((it) => Object.assign(it, { band: n })));
+        },
+
+        keyOf(tech) {
+            return `${tech.type}-${tech.id}`;
+        },
+
+        bandLabels() {
+            const labels = {};
+            Object.keys(this.phases).forEach((n) => {
+                labels[n] = Number(n) === 0 ? this.i18n.bandStart : (this.i18n.bandCc ?? '').replace(':level', n);
+            });
+            return labels;
+        },
+
+        // A node was tapped/clicked on the canvas (null = background).
+        selectByKey(key) {
+            if (!key) {
+                this.closeDetail(false);
+                return;
+            }
+            const tech = this.flatItems().find((it) => this.keyOf(it) === key);
+            if (tech) this.openDetail(tech, false);
         },
 
         // Fallback for building types without artwork under public/img/buildings/
@@ -31,259 +114,70 @@ function techtreeView(config) {
             return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
         },
 
-        prevPhase() {
-            if (this.activePhase > 1) {
-                this.activePhase--;
-                this.$nextTick(() => this.drawAllLines());
-            }
+        zoomIn() {
+            tree?.zoom(1.3);
+        },
+        zoomOut() {
+            tree?.zoom(1 / 1.3);
+        },
+        viewStart() {
+            tree?.start();
+        },
+        viewOverview() {
+            tree?.overview();
         },
 
-        nextPhase() {
-            if (this.activePhase < 5) {
-                this.activePhase++;
-                this.$nextTick(() => this.drawAllLines());
-            }
-        },
-
-        goToPhase(n) {
-            this.activePhase = n;
-            this.$nextTick(() => this.drawAllLines());
-        },
-
-        onTouchStart(e) {
-            this.touchStartX = e.touches[0].clientX;
-        },
-
-        onTouchEnd(e) {
-            if (!this.isMobile) return;
-            const dx = e.changedTouches[0].clientX - this.touchStartX;
-            if (Math.abs(dx) > 40) {
-                dx < 0 ? this.nextPhase() : this.prevPhase();
-            }
-        },
-
-        // ── Hover focus ────────────────────────────────────────────
-
-        onCardEnter(tech) {
-            this.hoveredTechId = 'tech-' + tech.type + '-' + tech.id;
-            this.applyHoverFocus();
-        },
-
-        onCardLeave() {
-            this.hoveredTechId = null;
-            this.clearHoverFocus();
-        },
-
-        applyHoverFocus() {
-            const focusedId = this.hoveredTechId;
-            if (!focusedId) return;
-
-            // Collect all lines from all phases
-            const allLines = [];
-            for (const phaseNum of Object.keys(this.phases)) {
-                const phase = this.phases[phaseNum];
-                if (phase.lines) allLines.push(...phase.lines);
-            }
-
-            // Find prerequisite source ids for the hovered card
-            const prereqFromIds = new Set(allLines.filter((l) => l.to === focusedId).map((l) => l.from));
-
-            // Dim / highlight cards (el.id matches full element id, e.g. "tech-building-25")
-            document.querySelectorAll('.tech-card').forEach((el) => {
-                const isRelevant = el.id === focusedId || prereqFromIds.has(el.id);
-                el.classList.remove('hover-dim', 'hover-highlight');
-                el.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
-            });
-
-            // Dim / highlight SVG paths and label chips (rect + text share data-to/data-from)
-            const svgEl = this.$refs.globalSvg;
-            if (svgEl) {
-                svgEl.querySelectorAll('[data-to]').forEach((el) => {
-                    const isRelevant = el.dataset.to === focusedId;
-                    el.classList.remove('hover-dim', 'hover-highlight');
-                    el.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
-                });
-            }
-        },
-
-        clearHoverFocus() {
-            document.querySelectorAll('.tech-card').forEach((el) => {
-                el.classList.remove('hover-dim', 'hover-highlight');
-            });
-            const svgEl = this.$refs.globalSvg;
-            if (svgEl) {
-                svgEl.querySelectorAll('[data-to]').forEach((el) => {
-                    el.classList.remove('hover-dim', 'hover-highlight');
-                });
-            }
-        },
-
-        // ── Arrow drawing ──────────────────────────────────────────
-
-        drawAllLines() {
-            const svgEl = this.$refs.globalSvg;
-            const wrapperEl = this.$refs.sectionsWrapper;
-            if (!svgEl || !wrapperEl) return;
-
-            while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
-
-            // Collect all lines from all phases
-            const allLines = [];
-            for (const phaseNum of Object.keys(this.phases)) {
-                const phase = this.phases[phaseNum];
-                if (phase.lines) allLines.push(...phase.lines);
-            }
-
-            const wRect = wrapperEl.getBoundingClientRect();
-
-            // Arrow markers — smaller, compact arrowheads
-            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-            const makeMarker = (id, color) => {
-                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-                marker.setAttribute('id', id);
-                marker.setAttribute('markerWidth', '6');
-                marker.setAttribute('markerHeight', '6');
-                marker.setAttribute('refX', '5');
-                marker.setAttribute('refY', '3');
-                marker.setAttribute('orient', 'auto');
-                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                poly.setAttribute('points', '0 0, 6 3, 0 6');
-                poly.setAttribute('fill', color);
-                marker.appendChild(poly);
-                return marker;
-            };
-            defs.appendChild(makeMarker('arr-met', '#555'));
-            defs.appendChild(makeMarker('arr-unmet', '#bbb'));
-            svgEl.appendChild(defs);
-
-            // Gather only visible lines (skip hidden x-show elements)
-            const visibleLines = [];
-            for (const line of allLines) {
-                const fromEl = document.getElementById(line.from);
-                const toEl = document.getElementById(line.to);
-                if (!fromEl || !toEl) continue;
-                if (!fromEl.offsetParent || !toEl.offsetParent) continue;
-                visibleLines.push({ ...line, fromEl, toEl });
-            }
-
-            if (visibleLines.length === 0) return;
-
-            // Group by source/target for parallel offset
-            const fromGroups = {};
-            const toGroups = {};
-            for (const line of visibleLines) {
-                (fromGroups[line.from] ??= []).push(line);
-                (toGroups[line.to] ??= []).push(line);
-            }
-
-            const SPREAD = 12; // px between parallel lines at same node
-
-            for (const line of visibleLines) {
-                const fR = line.fromEl.getBoundingClientRect();
-                const tR = line.toEl.getBoundingClientRect();
-
-                const fromList = fromGroups[line.from];
-                const fromIdx = fromList.indexOf(line);
-                const fromN = fromList.length;
-
-                const toList = toGroups[line.to];
-                const toIdx = toList.indexOf(line);
-                const toN = toList.length;
-
-                const cxFrom = fR.left + fR.width / 2 - wRect.left;
-                const cxTo = tR.left + tR.width / 2 - wRect.left;
-
-                const x1 = cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD;
-                const y1 = fR.bottom - wRect.top;
-
-                const x2 = cxTo + (toIdx - (toN - 1) / 2) * SPREAD;
-                const y2 = tR.top - wRect.top;
-
-                // Staggered midY: lines from the same source bend at different heights (0.25–0.75)
-                const midFraction = fromN === 1 ? 0.5 : 0.25 + (fromIdx / (fromN - 1)) * 0.5;
-                const midY = y1 + (y2 - y1) * midFraction;
-
-                const color = line.met ? '#555' : '#bbb';
-                const markerId = line.met ? 'url(#arr-met)' : 'url(#arr-unmet)';
-
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`);
-                path.setAttribute('fill', 'none');
-                path.setAttribute('stroke', color);
-                path.setAttribute('stroke-width', '1.5');
-                path.setAttribute('marker-end', markerId);
-                path.setAttribute('data-from', line.from);
-                path.setAttribute('data-to', line.to);
-                if (!line.met) path.setAttribute('stroke-dasharray', '5 3');
-                svgEl.appendChild(path);
-
-                if (line.label) {
-                    const midX = (x1 + x2) / 2;
-                    const labelW = line.label.length * 6 + 10;
-                    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    bgRect.setAttribute('x', String(midX - labelW / 2));
-                    bgRect.setAttribute('y', String(midY - 8));
-                    bgRect.setAttribute('width', String(labelW));
-                    bgRect.setAttribute('height', '13');
-                    bgRect.setAttribute('rx', '3');
-                    bgRect.setAttribute('fill', '#fff');
-                    bgRect.setAttribute('stroke', color);
-                    bgRect.setAttribute('stroke-width', '1');
-                    bgRect.setAttribute('data-from', line.from);
-                    bgRect.setAttribute('data-to', line.to);
-                    svgEl.appendChild(bgRect);
-
-                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    text.setAttribute('x', String(midX));
-                    text.setAttribute('y', String(midY + 1));
-                    text.setAttribute('text-anchor', 'middle');
-                    text.setAttribute('dominant-baseline', 'middle');
-                    text.setAttribute('font-size', '9');
-                    text.setAttribute('font-weight', '700');
-                    text.setAttribute('font-family', 'sans-serif');
-                    text.setAttribute('fill', color);
-                    text.setAttribute('data-from', line.from);
-                    text.setAttribute('data-to', line.to);
-                    text.textContent = line.label;
-                    svgEl.appendChild(text);
-                }
-            }
-
-            const h = wrapperEl.scrollHeight;
-            const w = wrapperEl.scrollWidth;
-            svgEl.setAttribute('width', String(w));
-            svgEl.setAttribute('height', String(h));
-            svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
-        },
-
-        openDetail(tech) {
+        // fromCanvas=false: the canvas already knows (tap on a node); true: opened from outside (list).
+        openDetail(tech, syncCanvas = true) {
             this.selectedTech = tech;
+            const key = this.keyOf(tech);
+            if (syncCanvas) tree?.select(key);
+            // Let the panel render, then pan the node into the part of the stage the panel leaves free.
+            this.$nextTick(() => {
+                const panel = document.querySelector('.tech-panel');
+                tree?.resize();
+                tree?.focusNode(key, { bottom: this.sheetMode && panel ? panel.offsetHeight : 0 });
+            });
         },
 
-        closeDetail() {
+        closeDetail(syncCanvas = true) {
             this.selectedTech = null;
+            if (syncCanvas) tree?.clearSelection();
+            this.$nextTick(() => tree?.resize());
         },
 
         statusLabel(tech) {
+            const t = (key, fallback) => this.i18n[key] ?? fallback;
+            const gate = {
+                available: t('statusAvailable', 'Verfügbar'),
+                locked: t('statusLocked', 'Gesperrt'),
+            };
             if (tech.type === 'personell') {
-                return { built: 'Eingestellt', available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
+                return (
+                    {
+                        built: t('advisorHired', 'Eingestellt'),
+                        available: t('advisorAvailable', 'Verfügbar'),
+                        locked: t('advisorLocked', 'Gesperrt'),
+                    }[tech.status] ?? tech.status
+                );
             }
             if (tech.type === 'ship') {
                 if (tech.status === 'built') return tech.level + (tech.hangar_cap ? ' / ' + tech.hangar_cap : '');
-                return { available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
+                return gate[tech.status] ?? tech.status;
             }
             if (tech.is_instanced) {
-                if (tech.status !== 'built')
-                    return { available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
-                if (tech.max_level === 1) return tech.instances.length > 0 ? 'Platziert' : 'Nicht gebaut';
+                if (tech.status !== 'built') return gate[tech.status] ?? tech.status;
+                if (tech.max_level === 1)
+                    return tech.instances.length > 0
+                        ? t('advisorPlaced', 'Platziert')
+                        : t('advisorNotPlaced', 'Nicht gebaut');
                 return this.instanceCountLabel(tech);
             }
-            const labels = {
-                built: tech.level > 0 ? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}` : 'Gebaut',
-                available: 'Verfügbar',
-                locked: 'Gesperrt',
-            };
-            return labels[tech.status] ?? tech.status;
+            if (tech.status === 'built')
+                return tech.level > 0
+                    ? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}`
+                    : t('statusBuilt', 'Gebaut');
+            return gate[tech.status] ?? tech.status;
         },
 
         // Placed instances vs. the instance cap (max_instances, GDD §4c) — only the
@@ -385,6 +279,7 @@ function techtreeView(config) {
             }
 
             if (json.phases_update) this.applyPhasesUpdate(json.phases_update);
+            tree?.refresh();
 
             if (json.leveled_up) {
                 this.showToast(`${tech.name ?? this.typeLabel(type)}: Level ${tech.level} erreicht!`, 'info');
@@ -394,7 +289,7 @@ function techtreeView(config) {
         },
 
         // Owner-Playtest-Fund 2026-09-04: a levelup can flip a DIFFERENT (dependent)
-        // tech's locked/available status and its dependency-arrow 'met' flags —
+        // tech's locked/available status and the edges' 'met' flags —
         // investAp() above only patched the one invested tech, so the rest of the
         // graph stayed stale until a full page reload. TechtreeController::order()
         // now re-derives the same gate logic server-side and ships it as
@@ -402,22 +297,19 @@ function techtreeView(config) {
         // item objects in place (not a wholesale replace) so Alpine reactivity picks
         // it up and the open detail panel (selectedTech, same object reference)
         // updates too.
-        applyPhasesUpdate(phasesUpdate) {
-            for (const [phaseNum, phaseUpdate] of Object.entries(phasesUpdate)) {
+        applyPhasesUpdate(update) {
+            for (const [phaseNum, phaseUpdate] of Object.entries(update.phases ?? {})) {
                 const phase = this.phases[phaseNum];
-                if (!phase) continue;
+                if (!phase || !phaseUpdate.items) continue;
 
-                if (phaseUpdate.lines) phase.lines = phaseUpdate.lines;
-
-                if (phaseUpdate.items) {
-                    for (const itemUpdate of phaseUpdate.items) {
-                        const item = phase.items.find((i) => i.id === itemUpdate.id && i.type === itemUpdate.type);
-                        if (item) Object.assign(item, itemUpdate);
-                    }
+                for (const itemUpdate of phaseUpdate.items) {
+                    const item = phase.items.find((i) => i.id === itemUpdate.id && i.type === itemUpdate.type);
+                    if (item) Object.assign(item, itemUpdate);
                 }
             }
 
-            this.$nextTick(() => this.drawAllLines());
+            if (update.edges) this.edges = update.edges;
+            tree?.refresh(null, update.edges);
         },
 
         // The AP chip lives in the resource bar (layout header), outside this Alpine

@@ -182,4 +182,23 @@ return [
     'error_unknown_type' => 'Unbekannter Techtree-Typ.',
     'error_unknown_order' => 'Unbekannte Order.',
     'error_order_failed' => 'Die Order konnte nicht ausgeführt werden.',
+
+    // ── Canvas techtree (2026-10-18) ─────────────────────────────────────────
+    'canvas_label' => 'Techtree: Kommandozentrale oben, Voraussetzungen jeweils über den davon abhängigen Gebäuden, Kenntnissen, Schiffen und Beratern.',
+    'legend_label' => 'Legende',
+    'legend_building' => 'Gebäude',
+    'legend_research' => 'Kenntnisse',
+    'legend_ship' => 'Schiffe',
+    'legend_advisor' => 'Berater',
+    'legend_required' => 'Pflicht',
+    'legend_second' => '2. Voraussetzung',
+    'band_start' => 'Start',
+    'cc_tag' => 'CC :level',
+    'band_cc' => 'CC Lv :level',
+    'zoom_in' => 'Vergrößern',
+    'zoom_out' => 'Verkleinern',
+    'view_start' => 'Start',
+    'view_overview' => 'Übersicht',
+    'column_n' => 'Spalte :n von :total',
+    'columns_label' => 'Spalten',
 ];

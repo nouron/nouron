@@ -7,111 +7,83 @@
 @endpush
 
 @push("scripts")
-    <script src="{{ asset("js/techtree-view.js") }}"></script>
+    <script src="{{ asset("js/techtree-canvas.js") }}?v={{ filemtime(public_path("js/techtree-canvas.js")) }}"></script>
+    <script src="{{ asset("js/techtree-view.js") }}?v={{ filemtime(public_path("js/techtree-view.js")) }}"></script>
 @endpush
 
 @section("content")
     <script>
         window.__techtreeData = @json($pageData);
         window.__techtreeData.colonyViewUrl = @json(route("colony.view"));
+        window.__techtreeData.hintRank = @json((int) $activeHintRank);
         window.__techtreeData.i18n = {
             instanceLevel: @json(__("techtree.detail_instance_level")),
             instanceLevelUncapped: @json(__("techtree.detail_instance_level_uncapped")),
             instanceConstruction: @json(__("techtree.detail_instance_construction")),
             instanceCondition: @json(__("techtree.detail_instance_condition")),
+            statusAvailable: @json(__("techtree.status_available")),
+            statusLocked: @json(__("techtree.status_locked")),
+            statusBuilt: @json(__("techtree.status_built")),
+            advisorHired: @json(__("techtree.advisor_hired")),
+            advisorAvailable: @json(__("techtree.advisor_available")),
+            advisorLocked: @json(__("techtree.advisor_locked")),
+            advisorPlaced: @json(__("techtree.advisor_placed")),
+            advisorNotPlaced: @json(__("techtree.advisor_not_placed")),
+            ccTag: @json(__("techtree.cc_tag")),
+            bandStart: @json(__("techtree.band_start")),
+            bandCc: @json(__("techtree.band_cc")),
+            columnN: @json(__("techtree.column_n")),
         };
     </script>
 
-    <div class="techtree-page" x-data="techtreeView(window.__techtreeData)" x-cloak data-hint-rank="{{ $activeHintRank }}"
-        @touchstart.passive="onTouchStart($event)" @touchend.passive="onTouchEnd($event)">
+    <div class="techtree-page" x-ref="page" x-data="techtreeView(window.__techtreeData)" x-cloak :class="{ 'techtree-page--panel': selectedTech }"
+        data-hint-rank="{{ $activeHintRank }}">
 
         <div class="techtree-toast" :class="`techtree-toast--${toastType}`" x-show="toastVisible" x-transition
             x-text="toastMessage" aria-live="polite" role="status"></div>
 
-        <div class="techtree-sections" x-ref="sectionsWrapper">
-            <svg class="techtree-global-svg" x-ref="globalSvg" aria-hidden="true"></svg>
-
-            @foreach ($pageData["phases"] as $phaseNum => $phase)
-                <section class="techtree-phase" id="phase-{{ $phaseNum }}"
-                    x-show="!isMobile || activePhase === {{ $phaseNum }}">
-                    <h2 class="phase-header">
-                        <span class="phase-label">Phase {{ $phaseNum }}</span>
-                        <span class="phase-cc">Kommandozentrale Lv{{ $phase["cc_level"] }}</span>
-                    </h2>
-                    <div class="tech-grid">
-
-                        @foreach ($phase["items"] as $tech)
-                            <div class="tech-card tech-{{ $tech["type"] }} status-{{ $tech["status"] }}"
-                                id="tech-{{ $tech["type"] }}-{{ $tech["id"] }}"
-                                style="grid-column:{{ $tech["col"] }};grid-row:{{ $tech["row"] }}"
-                                @click="openDetail({{ json_encode($tech) }})"
-                                @mouseenter="onCardEnter({{ json_encode($tech) }})" @mouseleave="onCardLeave()">
-                                <span class="tech-name">{{ $tech["name"] }}</span>
-                                <span class="tech-status-chip chip-{{ $tech["status"] }}">
-                                    @if ($tech["type"] === "personell")
-                                        @if ($tech["status"] === "built")
-                                            {{ __("techtree.advisor_hired") }}
-                                        @elseif($tech["status"] === "available")
-                                            {{ __("techtree.advisor_available") }}
-                                            @else{{ __("techtree.advisor_locked") }}
-                                        @endif
-                                    @elseif($tech["type"] === "ship")
-                                        @if ($tech["status"] === "built")
-                                            {{ $tech["level"] }}{{ $tech["hangar_cap"] ? " / " . $tech["hangar_cap"] : "" }}
-                                        @elseif($tech["status"] === "available")
-                                            {{ __("techtree.status_available") }}
-                                            @else{{ __("techtree.status_locked") }}
-                                        @endif
-                                    @elseif($tech["is_instanced"] ?? false)
-                                        @if ($tech["max_level"] === 1)
-                                            @if ($tech["instance_count"] > 0)
-                                                {{ __("techtree.advisor_placed") }}
-                                                @else{{ __("techtree.advisor_not_placed") }}
-                                            @endif
-                                        @elseif($tech["status"] === "built")
-                                            {{ count($tech["instances"]) }}@if ($tech["max_instances"])
-                                                / {{ $tech["max_instances"] }}
-                                            @endif
-                                        @elseif($tech["status"] === "available")
-                                            {{ __("techtree.status_available") }}
-                                            @else{{ __("techtree.status_locked") }}
-                                        @endif
-                                    @else
-                                        @if ($tech["status"] === "built")
-                                            Lv
-                                            {{ $tech["level"] }}{{ $tech["max_level"] ? "/" . $tech["max_level"] : "" }}
-                                        @elseif($tech["status"] === "available")
-                                            {{ __("techtree.status_available") }}
-                                            @else{{ __("techtree.status_locked") }}
-                                        @endif
-                                    @endif
-                                </span>
-                                @if ($tech["status"] === "locked" && $tech["required_desc"])
-                                    <span class="tech-sub">&#128274; {{ $tech["required_desc"] }}</span>
-                                @endif
-                            </div>
-                        @endforeach
-
-                    </div>
-                </section>
-            @endforeach
-
-        </div>{{-- .techtree-sections --}}
-
-        {{-- Mobile phase navigation (sticky bottom bar) --}}
-        <div class="phase-nav" x-show="isMobile">
-            <button class="phase-nav-arrow" @click="prevPhase()" :disabled="activePhase <= 1">&#8249;</button>
-            <div class="phase-dots">
-                @foreach ($pageData["phases"] as $n => $unused)
-                    <button class="phase-dot" :class="{ active: activePhase === {{ $n }} }"
-                        @click="goToPhase({{ $n }})"></button>
-                @endforeach
-            </div>
-            <button class="phase-nav-arrow" @click="nextPhase()" :disabled="activePhase >= 5">&#8250;</button>
+        {{-- Legend: colours = kind, stripe style = first / second prerequisite --}}
+        <div class="techtree-legend" role="list" aria-label="{{ __("techtree.legend_label") }}">
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--b"></span>{{ __("techtree.legend_building") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--k"></span>{{ __("techtree.legend_research") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--s"></span>{{ __("techtree.legend_ship") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-sw tt-sw--a"></span>{{ __("techtree.legend_advisor") }}</span>
+            <span class="tt-leg" role="listitem"><span class="tt-st"></span>{{ __("techtree.legend_required") }}</span>
+            <span class="tt-leg" role="listitem"><span
+                    class="tt-st tt-st--dash"></span>{{ __("techtree.legend_second") }}</span>
         </div>
 
+        <div class="techtree-stage" x-ref="stage">
+            <canvas class="techtree-canvas" x-ref="canvas" tabindex="0" role="img"
+                aria-label="{{ __("techtree.canvas_label") }}"></canvas>
+            <div class="techtree-controls">
+                <button class="tt-btn tt-btn--sq" type="button" @click="zoomIn()"
+                    aria-label="{{ __("techtree.zoom_in") }}">+</button>
+                <button class="tt-btn tt-btn--sq" type="button" @click="zoomOut()"
+                    aria-label="{{ __("techtree.zoom_out") }}">&minus;</button>
+                <button class="tt-btn" type="button" @click="viewStart()">{{ __("techtree.view_start") }}</button>
+                <button class="tt-btn" type="button" @click="viewOverview()">{{ __("techtree.view_overview") }}</button>
+            </div>
+            <div class="techtree-dots" x-ref="dots" hidden role="group"
+                aria-label="{{ __("techtree.columns_label") }}">
+            </div>
+        </div>
+
+        {{-- Text alternative to the canvas: also the keyboard / screen-reader way to open a node --}}
+        <ul class="tt-sr">
+            <template x-for="tech in flatItems()" :key="keyOf(tech)">
+                <li>
+                    <button type="button" @click="openDetail(tech)"
+                        x-text="tech.name + ' (' + typeLabel(tech.type) + ', ' + statusLabel(tech) + ')' + (tech.required_desc ? ' — ' + tech.required_desc : '')"></button>
+                </li>
+            </template>
+        </ul>
+
         {{-- Tech detail panel (sidebar on desktop, bottom sheet on mobile) --}}
-        <div class="tech-panel-backdrop" x-show="selectedTech" @click="closeDetail()" x-cloak></div>
         <aside class="tech-panel" x-show="selectedTech" x-cloak x-transition:enter-start="tech-panel-hidden"
             x-transition:enter-end="tech-panel-visible" x-transition:leave-start="tech-panel-visible"
             x-transition:leave-end="tech-panel-hidden">
@@ -364,35 +336,28 @@
                                     </div>
                                 </template>
                             </div>
-                            <template
-                                x-if="selectedTech.ap_available <= 0 && selectedTech.ap_spend < selectedTech.ap_for_levelup">
-                                <p class="detail-ap-hint">{{ __("techtree.hint_no_research_ap") }}</p>
-                            </template>
-                    </div>
-            </template>
-    </div>
-    </template>
+                        </template>
 
-    {{-- SHIP --}}
-    <template x-if="selectedTech.type === 'ship'">
-        <div>
-            <template x-if="selectedTech.level > 0">
-                <div class="detail-row">
-                    <span class="detail-row-label">{{ __("techtree.detail_count") }}</span>
-                    <span
-                        x-text="selectedTech.level + (selectedTech.hangar_cap ? ' / ' + selectedTech.hangar_cap : '')"></span>
+                        {{-- SHIP --}}
+                        <template x-if="selectedTech.type === 'ship'">
+                            <div>
+                                <template x-if="selectedTech.level > 0">
+                                    <div class="detail-row">
+                                        <span class="detail-row-label">{{ __("techtree.detail_count") }}</span>
+                                        <span
+                                            x-text="selectedTech.level + (selectedTech.hangar_cap ? ' / ' + selectedTech.hangar_cap : '')"></span>
+                                    </div>
+                                </template>
+                                @include("partials.required-list-chips", ["expr" => "selectedTech"])
+                            </div>
+                        </template>
+
+                    </div>
+
+                    <button class="detail-close" @click="closeDetail()">{{ __("techtree.detail_close") }}</button>
                 </div>
             </template>
-            @include("partials.required-list-chips", ["expr" => "selectedTech"])
-        </div>
-    </template>
-
-    </div>
-
-    <button class="detail-close" @click="closeDetail()">{{ __("techtree.detail_close") }}</button>
-    </div>
-    </template>
-    </aside>
+        </aside>
 
     </div>{{-- .techtree-page --}}
 

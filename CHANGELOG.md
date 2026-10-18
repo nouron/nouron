@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-18
+
+- Feat: Techtree-Screen als Canvas neu gebaut — 4 Spalten, Voraussetzungen immer oberhalb der abhängigen Boxen, Streifen-Pfeile (gestrichelt = 2. Voraussetzung), Kategorien Gebäude blau / Kenntnisse grün / Schiffe gelb / Berater violett, nur Light Mode. Handy: seitlich wischen rastet auf Spalten ein, Tippen öffnet das Detail-Sheet unten; Desktop: gleiche Ansicht, Detail in der rechten Seitenleiste.
+- Feat: Das Raster kommt aus der Datenbank — `phase` ist das CC-Band (0 = Kommandozentrale), `row`/`column` die Zelle im Band (Spalte 1–4); Pfeile werden aus `required_building_id` (durchgezogen) und `required_building2_id` (gestrichelt) abgeleitet (`App\Support\TechtreeGraph`), Pfeile der Kommandozentrale nur zu Phase-1-Zielen. Seeder-Positionen angepasst, Migration `techtree_grid_layout` parkt die betroffenen Zeilen vor dem Umsetzen (Deploy: erst `migrate`, dann Seeder).
+- Feat: Jede Techtree-Box zeigt klein unten rechts den nötigen Kommandozentralen-Level ("CC 2", auch über Gebäude-Voraussetzungen hindurch ermittelt) — die CC-Box braucht dafür keine Pfeile. Der Strategist (Berater 93) ist bis auf Weiteres aus dem Techtree ausgeblendet (Phase 0).
+- Feat: `pageData` enthält Phase 0 (Kommandozentrale), `grid_row`/`grid_col` je Knoten und globale `edges`; `phases_update` liefert `{phases, edges}` statt `lines` je Phase.
+
 ## 2026-10-17
 
 - Fix: Phase-1-Ziele (Sol-Übersicht und Kommandozentrale) zeigen jetzt den echten Grundaufbau (Kontrollzentrum Stufe 2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude, 2 Berater); eine gemeinsame Prüfung (`RunProgressService::phase1Criteria`) speist Abschluss und Anzeige. Titel "Grundaufbau" statt "Stabilisierung".

@@ -173,4 +173,23 @@ return [
     'error_unknown_type' => 'Unknown techtree type.',
     'error_unknown_order' => 'Unknown order.',
     'error_order_failed' => 'The order could not be carried out.',
+
+    // ── Canvas techtree (2026-10-18) ─────────────────────────────────────────
+    'canvas_label' => 'Techtree: Command Center on top, every prerequisite above the buildings, knowledge, ships and advisors that depend on it.',
+    'legend_label' => 'Legend',
+    'legend_building' => 'Buildings',
+    'legend_research' => 'Knowledge',
+    'legend_ship' => 'Ships',
+    'legend_advisor' => 'Advisors',
+    'legend_required' => 'Required',
+    'legend_second' => '2nd prerequisite',
+    'band_start' => 'Start',
+    'cc_tag' => 'CC :level',
+    'band_cc' => 'CC Lv :level',
+    'zoom_in' => 'Zoom in',
+    'zoom_out' => 'Zoom out',
+    'view_start' => 'Start',
+    'view_overview' => 'Overview',
+    'column_n' => 'Column :n of :total',
+    'columns_label' => 'Columns',
 ];
