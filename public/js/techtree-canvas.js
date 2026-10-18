@@ -135,7 +135,15 @@
             EDGES = [];
             edges.forEach(function (e, i) {
                 if (!N[e.from] || !N[e.to]) return;
-                EDGES.push({ i: i, f: e.from, t: e.to, dashed: !!e.dashed, met: e.met !== false, z: N[e.to].cat, pts: null });
+                EDGES.push({
+                    i: i,
+                    f: e.from,
+                    t: e.to,
+                    dashed: !!e.dashed,
+                    met: e.met !== false,
+                    z: N[e.to].cat,
+                    pts: null,
+                });
             });
             parents = {};
             kids = {};
@@ -368,7 +376,11 @@
                 for (var dx = -6; dx <= 6; dx++) for (var dy = -2; dy <= 2; dy++) blocked[(gy + dy) * GW + gx + dx] = 1;
             });
             var order = EDGES.slice().sort(function (a, b) {
-                return N[a.t].r - N[a.f].r - (N[b.t].r - N[b.f].r) || Math.abs(N[a.t].x - N[a.f].x) - Math.abs(N[b.t].x - N[b.f].x) || a.i - b.i;
+                return (
+                    N[a.t].r - N[a.f].r - (N[b.t].r - N[b.f].r) ||
+                    Math.abs(N[a.t].x - N[a.f].x) - Math.abs(N[b.t].x - N[b.f].x) ||
+                    a.i - b.i
+                );
             });
             order.forEach(function (e) {
                 var f = N[e.f],
@@ -645,7 +657,10 @@
             XS.forEach(function (x, i) {
                 var b = document.createElement('button');
                 b.type = 'button';
-                b.setAttribute('aria-label', (labels.columnN || 'Column :n of :total').replace(':n', i + 1).replace(':total', XS.length));
+                b.setAttribute(
+                    'aria-label',
+                    (labels.columnN || 'Column :n of :total').replace(':n', i + 1).replace(':total', XS.length),
+                );
                 b.addEventListener('click', function () {
                     goToCol(i);
                 });

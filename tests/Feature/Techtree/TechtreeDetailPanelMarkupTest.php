@@ -59,7 +59,7 @@ class TechtreeDetailPanelMarkupTest extends TestCase
 
         $housing = $this->buildingItem(28);
 
-        $this->assertSame(2, $housing['instance_count']);
+        $this->assertCount(2, $housing['instances'], 'the chip counts placed instances (instances.length), not all rows');
         $this->assertSame(6, $housing['max_instances'], 'instance cap is max_instances (6), not max_level (3)');
         $this->assertTrue($housing['is_instanced']);
     }

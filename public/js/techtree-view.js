@@ -166,11 +166,15 @@ function techtreeView(config) {
             if (tech.is_instanced) {
                 if (tech.status !== 'built') return gate[tech.status] ?? tech.status;
                 if (tech.max_level === 1)
-                    return tech.instances.length > 0 ? t('advisorPlaced', 'Platziert') : t('advisorNotPlaced', 'Nicht gebaut');
+                    return tech.instances.length > 0
+                        ? t('advisorPlaced', 'Platziert')
+                        : t('advisorNotPlaced', 'Nicht gebaut');
                 return this.instanceCountLabel(tech);
             }
             if (tech.status === 'built')
-                return tech.level > 0 ? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}` : t('statusBuilt', 'Gebaut');
+                return tech.level > 0
+                    ? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}`
+                    : t('statusBuilt', 'Gebaut');
             return gate[tech.status] ?? tech.status;
         },
 
