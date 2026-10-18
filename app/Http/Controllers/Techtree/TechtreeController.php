@@ -14,6 +14,7 @@ use App\Services\Techtree\KnowledgeEffectDescriptionService;
 use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
+use App\Support\TechtreeGraph;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,10 +43,11 @@ class TechtreeController extends BaseController
     /**
      * Display the full techtree overview for the active colony.
      *
-     * Builds $pageData with 'phases' (1-5, keyed by CC level) consumed by
-     * the Alpine.js techtree view. Each phase has a 3-column grid of tech cards
-     * and within-phase dependency arrows. CC arrows are omitted — the phase
-     * header communicates the CC requirement.
+     * Builds $pageData with 'phases' (0-5; band 0 is the Command Center itself,
+     * 1-5 are keyed by CC level) and the global 'edges' list consumed by the canvas
+     * techtree view. Every item carries its grid cell (grid_row/grid_col) derived
+     * from the reference data; edges come from required_building_id (solid) and
+     * required_building2_id (dashed) — see App\Support\TechtreeGraph.
      */
     public function index(): View|RedirectResponse
     {
@@ -61,14 +63,14 @@ class TechtreeController extends BaseController
                 ->with('info', __('colony.nav_techtree_locked'));
         }
 
-        $phases = $this->buildPhases($colonyId);
+        ['phases' => $phases, 'edges' => $edges] = $this->buildPhases($colonyId);
 
         // Onboarding pulse: ranks 2 (personell), 4 (research), 5 (buildings) highlight techtree cards.
         $userId = Auth::id();
         $hint = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
         $activeHintRank = ($hint && in_array($hint['rank'], [2, 4, 5])) ? $hint['rank'] : 0;
 
-        $pageData = ['phases' => $phases];
+        $pageData = ['phases' => $phases, 'edges' => $edges];
 
         $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
 
@@ -76,7 +78,7 @@ class TechtreeController extends BaseController
     }
 
     /**
-     * Build the full phases datastructure (items + within-phase dependency arrows)
+     * Build the full phases datastructure (items per band + global dependency edges)
      * consumed by the Alpine.js techtree view, both for the initial page render
      * (index()) and for a post-order refresh (order()) — a single AP investment
      * can flip an unrelated dependent tech's status from 'locked' to 'available'
@@ -90,20 +92,12 @@ class TechtreeController extends BaseController
     {
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
-        // Map element DOM id → phase number for same-phase arrow filtering
-        $elementPhase = [];
-        foreach (['building', 'research', 'ship', 'personell'] as $type) {
-            foreach ($techtree[$type] as $id => $tech) {
-                $phase = (int) ($tech['phase'] ?? 0);
-                if ($phase > 0) {
-                    $elementPhase["tech-{$type}-{$id}"] = $phase;
-                }
-            }
-        }
+        // Grid cell of every placed node (phase > 0 plus the Command Center as band 0).
+        $graphNodes = TechtreeGraph::nodes($techtree);
 
         $phases = [];
-        for ($n = 1; $n <= 5; $n++) {
-            $phases[$n] = ['cc_level' => $n, 'items' => [], 'lines' => []];
+        for ($n = 0; $n <= 5; $n++) {
+            $phases[$n] = ['cc_level' => $n, 'items' => []];
         }
 
         // Instance counts per building_id for this colony
@@ -130,8 +124,12 @@ class TechtreeController extends BaseController
 
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
             foreach ($techtree[$type] as $id => $tech) {
-                $phaseNum = (int) ($tech['phase'] ?? 0);
-                if ($phaseNum < 1 || $phaseNum > 5) {
+                $graphNode = $graphNodes[TechtreeGraph::key($type, (int) $id)] ?? null;
+                if ($graphNode === null) {
+                    continue;
+                }
+                $phaseNum = $graphNode['band'];
+                if ($phaseNum > 5) {
                     continue;
                 }
 
@@ -147,6 +145,10 @@ class TechtreeController extends BaseController
                     'level' => (int) ($tech['level'] ?? 0),
                     'row' => (int) ($tech['row'] ?? 0),
                     'col' => (int) ($tech['column'] ?? 0),
+                    'grid_row' => $graphNode['gridRow'],
+                    'grid_col' => $graphNode['gridCol'],
+                    // Effective Command Center level needed (small tag on the canvas node).
+                    'req_cc' => $graphNode['ccLevel'],
                     'status' => $this->computeStatus($tech, $techtree),
                     'required_desc' => $this->computeRequiredDesc($tech, $techtree),
                     // Same prerequisites as required_desc, as separate parts for a
@@ -221,60 +223,6 @@ class TechtreeController extends BaseController
                         : (int) ($tech['ap_for_levelup'] ?? 0),
                     'ap_available' => in_array($type, ['building', 'research'], true) ? $colonyAp : 0,
                 ];
-
-                // Generate within-phase arrow for this item.
-                // Research: prefer secondary prereq building if it's in the same phase,
-                //           else fall back to primary (sciencelab acts as phase-2 gatekeeper).
-                // Other:    use primary prereq if it's in the same phase.
-                if ($type === 'research') {
-                    $fromId = null;
-                    $fromLevel = 1;
-
-                    if (! empty($tech['required_building2_id'])) {
-                        $secId = (int) $tech['required_building2_id'];
-                        $secPhase = (int) ($techtree['building'][$secId]['phase'] ?? 0);
-                        if ($secPhase === $phaseNum && isset($techtree['building'][$secId])) {
-                            $fromId = $secId;
-                            $fromLevel = (int) ($tech['required_building2_level'] ?? 1);
-                        }
-                    }
-
-                    if ($fromId === null && ! empty($tech['required_building_id'])) {
-                        $priId = (int) $tech['required_building_id'];
-                        $priPhase = (int) ($techtree['building'][$priId]['phase'] ?? 0);
-                        if ($priPhase === $phaseNum && isset($techtree['building'][$priId])) {
-                            $fromId = $priId;
-                            $fromLevel = (int) ($tech['required_building_level'] ?? 1);
-                        }
-                    }
-
-                    if ($fromId !== null) {
-                        $fromBuilding = $techtree['building'][$fromId];
-                        $met = (int) ($fromBuilding['level'] ?? 0) >= $fromLevel;
-                        $phases[$phaseNum]['lines'][] = [
-                            'from' => "tech-building-{$fromId}",
-                            'to' => "tech-research-{$id}",
-                            'met' => $met,
-                            'label' => "Lv{$fromLevel}",
-                        ];
-                    }
-                } else {
-                    if (! empty($tech['required_building_id'])) {
-                        $reqId = (int) $tech['required_building_id'];
-                        $reqPhase = (int) ($techtree['building'][$reqId]['phase'] ?? 0);
-                        if ($reqPhase === $phaseNum && isset($techtree['building'][$reqId])) {
-                            $reqBuilding = $techtree['building'][$reqId];
-                            $reqLevel = (int) ($tech['required_building_level'] ?? 1);
-                            $met = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
-                            $phases[$phaseNum]['lines'][] = [
-                                'from' => "tech-building-{$reqId}",
-                                'to' => "tech-{$type}-{$id}",
-                                'met' => $met,
-                                'label' => "Lv{$reqLevel}",
-                            ];
-                        }
-                    }
-                }
             }
         }
 
@@ -284,33 +232,33 @@ class TechtreeController extends BaseController
         }
         unset($phase);
 
-        return $phases;
+        return ['phases' => $phases, 'edges' => TechtreeGraph::edges($techtree)];
     }
 
     /**
      * Lightweight cross-node update payload derived from buildPhases() — only the
      * fields that can change for OTHER (non-invested) techs as a side effect of one
-     * order: gate status (locked/available/built) and dependency-arrow 'met' flags.
+     * order: gate status (locked/available/built) and the edges' 'met' flags.
      * Sent alongside order()'s existing single-tech 'tech' field so the client can
      * patch every dependent node in place without a full page reload or re-sending
      * the whole (translation-heavy) phases structure.
      *
-     * @return array<int, array{items: list<array{id: int, type: string, status: string}>, lines: list<array>}>
+     * @param  array{phases: array, edges: list<array>}  $built
+     * @return array{phases: array<int, array{items: list<array{id: int, type: string, status: string}>}>, edges: list<array>}
      */
-    private function phasesUpdatePayload(array $phases): array
+    private function phasesUpdatePayload(array $built): array
     {
-        $update = [];
-        foreach ($phases as $phaseNum => $phase) {
-            $update[$phaseNum] = [
+        $phases = [];
+        foreach ($built['phases'] as $phaseNum => $phase) {
+            $phases[$phaseNum] = [
                 'items' => array_map(
                     fn (array $item) => ['id' => $item['id'], 'type' => $item['type'], 'status' => $item['status']],
                     $phase['items']
                 ),
-                'lines' => $phase['lines'],
             ];
         }
 
-        return $update;
+        return ['phases' => $phases, 'edges' => $built['edges']];
     }
 
     private static function buildingImageSlug(string $key): string
