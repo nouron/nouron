@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Database;
 
+use Database\Seeders\ReferenceDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -16,7 +17,7 @@ class TechtreeGridLayoutMigrationTest extends TestCase
 
     public function test_it_moves_rows_from_the_old_layout_even_when_cells_collide(): void
     {
-        $this->seed(\Database\Seeders\ReferenceDataSeeder::class);
+        $this->seed(ReferenceDataSeeder::class);
 
         // Old layout: hangar at phase 3 (3,1,2), sciencelab at (2,1,2) -> hangar's NEW cell is (2,1,2).
         DB::table('buildings')->where('id', 44)->update(['phase' => 3, 'row' => 1, 'column' => 2]);
