@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-19
+
+- Doku: ADR 0006 (Vorschlag) — Frontend-Umstellung auf SvelteKit-PWA mit Laravel als JSON-API (Sanctum-SPA, ein Deploy, gestufter Offline-Ansatz, Migrationsplan Screen für Screen, Pilot Techtree); ROADMAP-Punkt F1.
+
 ## 2026-10-18
 
 - Feat: Techtree-Screen als Canvas neu gebaut — 4 Spalten, Voraussetzungen immer oberhalb der abhängigen Boxen, Streifen-Pfeile (gestrichelt = 2. Voraussetzung), Kategorien Gebäude blau / Kenntnisse grün / Schiffe gelb / Berater violett, nur Light Mode. Handy: seitlich wischen rastet auf Spalten ein, Tippen öffnet das Detail-Sheet unten; Desktop: gleiche Ansicht, Detail in der rechten Seitenleiste.

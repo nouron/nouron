@@ -198,6 +198,10 @@ Befund 2026-09-26: Sieg im Median bei Sol 31 statt im Korridor Sol 85–95; 3 Zi
 
 Owner-Entscheidung 2026-09-30: Diese Punkte sind für die Closed Beta nicht nötig und werden erst danach wieder aufgenommen — Balance-/Ratenmodell-Themen lassen sich mit echtem Beta-Feedback ohnehin besser kalibrieren. IDs bleiben unverändert.
 
+### F — Frontend-Umstellung auf SvelteKit-PWA (ADR 0006, Vorschlag 2026-10-19)
+
+- [ ] **F1 Spike + Pilot Techtree** — SvelteKit (`adapter-static`) + Sanctum-SPA + PWA-Manifest, Techtree als Pilot-Screen; danach Entscheidung über die weiteren Stufen (Migrationsplan in `docs/adr/0006-frontend-svelte-pwa.md`). Frühestens nach Beta-Start. — Groß
+
 ### Zurückgestellte A/T-Punkte
 
 - [ ] **R21 Neues Pool-Ziel „Nexus-Vorschuss tilgen"** (Owner 2026-09-30) — zusätzliches Ziel neben `credit_reserve`, nicht als Ersatz. Setzt eine Tilgungsmechanik für `nexus_debt` voraus (bisher tilgt der Code nie, Schuld endet in jedem Run bei 3000). Zuerst game-designer: Mechanik (manuelle Tilgung über Nexus-Funk?), Zielgröße, Kategorie (economy → Kombo-Blacklist beachten). — Mittel
