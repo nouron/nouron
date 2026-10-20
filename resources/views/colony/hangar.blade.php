@@ -60,6 +60,7 @@
                 consulApTitle: @json(__("colony.hangar_consul_ap_title")),
                 deliveryPending: @json(__("colony.hangar_delivery_pending")),
                 pendingSection: @json(__("colony.hangar_pending_section")),
+                requestOrdered: @json(__("colony.hangar_request_ordered")),
                 assignHangar: @json(__("colony.hangar_assign_hangar")),
                 assignSelect: @json(__("colony.hangar_assign_select")),
                 pendingExpires: @json(__("colony.hangar_pending_expires")),
@@ -362,10 +363,12 @@
                 </template>
             </div>
 
+            <p class="hangar-notice" role="status" x-show="requestNotice" x-cloak x-text="requestNotice"></p>
+
             {{-- ── Pending ships section (ships without hangar assignment) ─────────── --}}
             <template x-if="pendingShips.length > 0">
                 <section class="hangar-pending-section">
-                    <details>
+                    <details :open="pendingOpen" @toggle="pendingOpen = $event.target.open">
                         <summary class="hangar-pending-summary">
                             <span x-text="i18n.pendingSection + ' (' + pendingShips.length + ')'"></span>
                         </summary>
@@ -376,7 +379,8 @@
                                     <div class="hangar-pending-card-info">
                                         <span class="hangar-pending-name" x-text="shipLabel(ship.name)"></span>
                                         <span class="hangar-pending-expires"
-                                            x-text="i18n.pendingExpires.replace(':tick', ship.expires_at_tick)">
+                                            x-show="ship.expires_at_tick || ship.pending_until_tick"
+                                            x-text="i18n.pendingExpires.replace(':tick', ship.expires_at_tick || ship.pending_until_tick)">
                                         </span>
                                     </div>
 

@@ -7,8 +7,10 @@ return [
     'explore' => 'Erkunden',
     'deep_scan' => 'Sondieren',
     'invest_ap' => 'Ausbauen',
+    'tile_colonists' => 'Kolonisten im Einsatz',
     'levelup_cost_label' => 'Kosten:',
     'levelup_cost_suffix' => 'bei Baubeginn',
+    'levelup_cost_already_paid' => 'bei Baubeginn (bereits bezahlt)',
     // T9 (Owner-Regel 2026-09-25): Platzieren bezahlt Errichtung + Stufe 1 in einem.
     'build_cost_erect' => 'Bau',
     'build_cost_first_level' => 'Stufe 1',
@@ -163,6 +165,8 @@ return [
     'ap_cap_chip' => 'heute :spent/:cap',
     'ap_cap_tooltip' => 'Mehr Arbeit nimmt dieses Gebäude pro Sol nicht auf. Ein Baumeister erweitert die Grenze mit jedem Rang.',
     'error_building_cc_gate' => 'Diese Ausbaustufe braucht Kommandozentrale Lv:level — erst die Kommandozentrale ausbauen.',
+    'build_mode_hint_tile' => 'Gebäude für dieses Feld wählen.',
+    'build_locked_cc' => 'Braucht Kommandozentrale Lv:level',
     'path_building_locked' => 'Weiteres Pfad-Gebäude ab CC Lv:level',
     'error_agrardom_required' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für alle Pfad-Gebäude.',
     'error_tile_not_found' => 'Tile nicht gefunden.',
@@ -614,6 +618,7 @@ return [
     'hangar_delivery_pending' => 'Lieferung ausstehend',
     'hangar_arrival' => 'Ankunft: Sol :tick',
     'hangar_pending_section' => 'Nicht zugewiesen',
+    'hangar_request_ordered' => 'Lieferung bestellt – siehe „Nicht zugewiesen“.',
     'hangar_pending_expires' => 'Verfällt: Sol :tick',
     'hangar_assign_hangar' => 'Hangar zuweisen',
     'hangar_assign_select' => 'Bucht auswählen…',
@@ -640,6 +645,9 @@ return [
     // Ereignisse
     'sol_report_event_merchant' => 'Reisender Händler im System',
     'sol_report_passive_credits' => 'Nexus-Subvention & Relaisvergütung',
+    'sol_report_subsidy' => 'Nexus-Subvention',
+    'sol_report_relay' => 'Relaisvergütung (Uplink-Station)',
+    'sol_report_upkeep' => 'Berater-Unterhalt',
     'sol_report_advisor_hired' => 'Berater eingestellt',
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Kolonisten-Zulage',
@@ -660,7 +668,7 @@ return [
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
-    'sol_report_supply_used' => ':used von :cap belegt',
+    'sol_report_supply_used' => ':used von :cap Plätzen durch Gebäude belegt',
     'sol_report_food' => 'Verpflegung',
     'sol_report_food_ok' => ':amount Organika in die Küchen geflossen — die Kolonie ist versorgt',
     'sol_report_overcap' => 'Unterkunft',

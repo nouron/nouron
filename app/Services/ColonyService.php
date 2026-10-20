@@ -125,10 +125,16 @@ class ColonyService
 
         $colonyId = $colony->id;
         if ((int) $run->phase === 1) {
-            $criteria = array_map(
+            // Harvester, Wohnhabitat and Agrardom still gate the phase end
+            // (phase1Criteria) but are not listed — they are the obvious first builds.
+            $hidden = ['harvester', 'housing', 'agrardom'];
+            $criteria = array_values(array_map(
                 fn (array $c): array => $c + ['label' => __('colony.sol_report_phase1_'.$c['key'])],
-                app(RunProgressService::class)->phase1Criteria($colonyId, (int) $run->current_tick)
-            );
+                array_filter(
+                    app(RunProgressService::class)->phase1Criteria($colonyId, (int) $run->current_tick),
+                    fn (array $c): bool => ! in_array($c['key'], $hidden, true)
+                )
+            ));
 
             return ['phase' => 1, 'criteria' => $criteria];
         }

@@ -1445,6 +1445,30 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_analytik', $hint['key'] ?? null);
     }
 
+    // ── Hint 4: "assign AP to a Kenntnis" only once the Techtree is usable ─────
+
+    public function test_hint4_stays_silent_while_the_techtree_is_locked(): void
+    {
+        DB::table('colony_researches')->where('colony_id', $this->colonyId)->delete();
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', 31)->update(['level' => 0]);
+
+        $this->assertFalse($this->callCheckHint4(9), 'no Sciencelab -> Techtree locked -> no hint');
+
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'building_id' => 31, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0]
+        );
+
+        $this->assertTrue($this->callCheckHint4(9), 'Sciencelab built -> hint fires');
+    }
+
+    private function callCheckHint4(int $tick): bool
+    {
+        $m = new \ReflectionMethod($this->service, 'checkHint4');
+
+        return $m->invoke($this->service, $this->colonyId, $tick);
+    }
+
     // ── Hint build_priority: 2+ of Cantina/Agrardom/Analytik eligible at once ─
 
     public function test_build_priority_hint_fires_when_two_buildings_eligible(): void

@@ -137,6 +137,8 @@ class HangarController extends BaseController
             'ok' => true,
             'slots' => $this->hangarService->getHangarSlots($colony->id),
             'pending' => $this->hangarService->getPendingShips($colony->id),
+            'credits' => (int) (DB::table('user_resources')->where('user_id', Auth::id())->value('credits') ?? 0),
+            ...$this->currentHangarResources($colony->id),
         ]);
     }
 

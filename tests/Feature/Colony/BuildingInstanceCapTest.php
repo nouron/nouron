@@ -74,6 +74,15 @@ class BuildingInstanceCapTest extends TestCase
         return collect($response->json('buildings'))->pluck('building_id')->all();
     }
 
+    /** Menu entries the player can place right now (listed AND not locked). */
+    private function unlockedBuildingIds(): array
+    {
+        $response = $this->actingAs($this->bart())->getJson(route('colony.buildings.available'));
+        $response->assertOk();
+
+        return collect($response->json('buildings'))->reject(fn ($b) => $b['locked'])->pluck('building_id')->all();
+    }
+
     public function test_housing_complex_listed_when_max_instances_above_reached_count_even_if_max_level_would_exclude(): void
     {
         // Diverge the two axes: max_level=3 (would exclude at count=3 under the old
@@ -144,18 +153,18 @@ class BuildingInstanceCapTest extends TestCase
             ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 5, 'tile_y' => 0]
         );
 
-        $availableAtLv1 = $this->availableBuildingIds();
-        $this->assertNotContains(31, $availableAtLv1, 'sciencelab must not be available at CC Lv1');
-        $this->assertNotContains(44, $availableAtLv1, 'hangar must not be available at CC Lv1');
-        $this->assertNotContains(52, $availableAtLv1, 'bar/Cantina must not be available at CC Lv1 either — same gate as its two path-building siblings');
+        $availableAtLv1 = $this->unlockedBuildingIds();
+        $this->assertNotContains(31, $availableAtLv1, 'sciencelab must be locked at CC Lv1');
+        $this->assertNotContains(44, $availableAtLv1, 'hangar must be locked at CC Lv1');
+        $this->assertNotContains(52, $availableAtLv1, 'bar/Cantina must be locked at CC Lv1 either — same gate as its two path-building siblings');
 
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', 25)
             ->update(['level' => 2]);
 
-        $availableAtLv2 = $this->availableBuildingIds();
-        $this->assertContains(31, $availableAtLv2, 'sciencelab must be available at CC Lv2');
-        $this->assertContains(44, $availableAtLv2, 'hangar must be available at CC Lv2');
-        $this->assertContains(52, $availableAtLv2, 'bar/Cantina must be available at CC Lv2, matching its siblings');
+        $availableAtLv2 = $this->unlockedBuildingIds();
+        $this->assertContains(31, $availableAtLv2, 'sciencelab must be unlocked at CC Lv2');
+        $this->assertContains(44, $availableAtLv2, 'hangar must be unlocked at CC Lv2');
+        $this->assertContains(52, $availableAtLv2, 'bar/Cantina must be unlocked at CC Lv2, matching its siblings');
     }
 }

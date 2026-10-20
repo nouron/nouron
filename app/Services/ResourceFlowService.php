@@ -59,6 +59,34 @@ class ResourceFlowService
                 'net' => $agrardom + $agronomy - $consumption,
             ],
             'werkstoffe' => ['net' => 0],
+            'credits' => $this->creditsFlow($colonyId),
+        ];
+    }
+
+    /**
+     * Credits per Sol, mirroring GameTick::generatePassiveCredits() (Nexus subsidy +
+     * Uplink relay, only with a running CC) and deductAdvisorUpkeep(). The upkeep
+     * clamp at an empty purse is ignored here — the shortfall goes to the Nexus debt.
+     *
+     * @return array{sources: array{subsidy: int, relay: int}, upkeep: int, net: int}
+     */
+    public function creditsFlow(int $colonyId): array
+    {
+        $level = fn (BuildingId $b) => (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)->where('building_id', $b->value)->value('level');
+
+        $ccRunning = $level(BuildingId::CommandCenter) > 0;
+        $subsidy = $ccRunning ? (int) config('game.credits.nexus_subsidy', 30) : 0;
+        $relay = $ccRunning ? $level(BuildingId::UplinkStation) * (int) config('game.credits.relay_bonus_per_uplink_level', 20) : 0;
+
+        $perRank = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
+        $upkeep = (int) DB::table('advisors')->where('colony_id', $colonyId)->pluck('rank')
+            ->sum(fn ($rank) => (int) ($perRank[$rank] ?? 10));
+
+        return [
+            'sources' => ['subsidy' => $subsidy, 'relay' => $relay],
+            'upkeep' => $upkeep,
+            'net' => $subsidy + $relay - $upkeep,
         ];
     }
 

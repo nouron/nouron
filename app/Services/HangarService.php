@@ -151,6 +151,7 @@ class HangarService
                 'ship_state' => $row->ship_state,
                 'deliver_at_tick' => $row->deliver_at_tick !== null ? (int) $row->deliver_at_tick : null,
                 'pending_until_tick' => $row->pending_until_tick !== null ? (int) $row->pending_until_tick : null,
+                'expires_at_tick' => $row->pending_until_tick !== null ? (int) $row->pending_until_tick : null,
             ])
             ->all();
     }

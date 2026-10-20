@@ -763,6 +763,19 @@
     text-decoration: underline;
 }
 
+/* ── Hangar notice ─────────────────────────────────────────────────────────── */
+
+.hangar-notice {
+    margin: 1.5rem 0.5rem 0;
+    padding: 0.65rem 1rem;
+    border: 1px solid #cce5d6;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #1e5e3a;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 /* ── Pending ships section ─────────────────────────────────────────────────── */
 
 .hangar-pending-section {

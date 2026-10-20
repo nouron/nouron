@@ -299,6 +299,41 @@ class HangarControllerTest extends TestCase
         }
     }
 
+    public function test_request_ship_response_carries_remaining_credits_for_resourcebar_sync(): void
+    {
+        $this->insertHangar(1);
+        DB::table('user_resources')->where('user_id', self::USER_ID_BART)->update(['credits' => 10000]);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), ['ship_id' => 47, 'use_nexus_credit' => 0])
+            ->assertOk();
+
+        $this->assertSame(
+            (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits'),
+            $response->json('credits'),
+        );
+        $this->assertLessThan(10000, $response->json('credits'));
+        $this->assertArrayHasKey('apAvailable', $response->json());
+    }
+
+    public function test_pending_ships_carries_expires_at_tick_when_bays_are_occupied(): void
+    {
+        $this->insertHangar(1, level: 2);
+        DB::table('colony_ships')->where('colony_id', self::COLONY_ID_BART)->delete();
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->assignShip(2, self::SHIP_CORVETTE, 'docked');
+        DB::table('user_resources')->where('user_id', self::USER_ID_BART)->update(['credits' => 10000]);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), ['ship_id' => self::SHIP_FREIGHTER, 'use_nexus_credit' => 0])
+            ->assertOk();
+
+        $pending = $response->json('pending');
+        $this->assertNotEmpty($pending);
+        $this->assertNotNull($pending[0]['expires_at_tick'] ?? null);
+        $this->assertSame($pending[0]['pending_until_tick'], $pending[0]['expires_at_tick']);
+    }
+
     public function test_request_ship_with_negotiation_ap_but_no_konsul_returns_422(): void
     {
         $this->insertHangar(1);

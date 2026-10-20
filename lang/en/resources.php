@@ -20,7 +20,7 @@ return [
     'popup_nx_desc' => 'What the Nexus has lent, it wants back. Exceed the debt limit and it revokes the concession — without mercy, without notice.',
 
     'popup_sup_title' => 'Colonists',
-    'popup_sup_desc' => 'Colonists at work / capacity of the settlement. Every building and every research ties up people per level — a building from the moment it is placed. Once the capacity is exhausted, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, colonists are left without shelter: Trust falls, and after a short grace period they move away.',
+    'popup_sup_desc' => 'Colonists at work / housing capacity of the settlement. The left number is the colonists tied up by buildings and research (workplaces), not the whole population — so it jumps as soon as a building is placed, because it ties up its people from the start. Once the capacity is exhausted, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, colonists are left without shelter: Trust falls, and after a short grace period they move away.',
     'popup_sup_source_cc' => 'Command Center',
     'popup_sup_source_housing' => 'Residential Habitat',
     'popup_sup_source_knowledge' => 'Knowledge',
@@ -53,6 +53,9 @@ return [
     'popup_flow_agrardom' => 'Agrarian Dome',
     'popup_flow_agronomy' => 'Agronomy',
     'popup_flow_colonists' => 'Colonists (provisions)',
+    'popup_flow_subsidy' => 'Nexus subsidy',
+    'popup_flow_relay' => 'Relay compensation (Uplink)',
+    'popup_flow_upkeep' => 'Advisor upkeep',
     'popup_flow_none' => 'No ongoing production — import and trade only.',
 
     'popup_rg_title' => 'Regolith',

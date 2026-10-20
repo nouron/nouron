@@ -7,8 +7,10 @@ return [
     'explore' => 'Explore',
     'deep_scan' => 'Probe',
     'invest_ap' => 'Invest AP',
+    'tile_colonists' => 'Colonists employed',
     'levelup_cost_label' => 'Cost:',
     'levelup_cost_suffix' => 'at construction start',
+    'levelup_cost_already_paid' => 'at construction start (already paid)',
     'build_cost_erect' => 'build',
     'build_cost_first_level' => 'level 1',
     'first_level_prepaid' => 'Level 1 was paid on placement — completing it only costs AP.',
@@ -148,6 +150,8 @@ return [
 
     'error_path_building_gate' => 'Another path building requires Command Center Lv:level.',
     'error_building_cc_gate' => 'This level needs Command Center Lv:level — upgrade the Command Center first.',
+    'build_mode_hint_tile' => 'Choose a building for this tile.',
+    'build_locked_cc' => 'Needs Command Center Lv:level',
     'path_building_locked' => 'Another path building from CC Lv:level',
     'error_agrardom_required' => 'Build the Agrarian Dome first — mandatory prerequisite for all path buildings.',
     'error_tile_not_found' => 'Tile not found.',
@@ -333,6 +337,7 @@ return [
     'hangar_delivery_pending' => 'Delivery pending',
     'hangar_arrival' => 'Arrival: Sol :tick',
     'hangar_pending_section' => 'Unassigned',
+    'hangar_request_ordered' => 'Delivery ordered – see “Unassigned”.',
     'hangar_pending_expires' => 'Expires: Sol :tick',
     'hangar_assign_hangar' => 'Assign hangar',
     'hangar_assign_select' => 'Select bay…',
@@ -359,6 +364,9 @@ return [
     // Events
     'sol_report_event_merchant' => 'Travelling Merchant in system',
     'sol_report_passive_credits' => 'Nexus Subsidy & Relay Fee',
+    'sol_report_subsidy' => 'Nexus subsidy',
+    'sol_report_relay' => 'Relay fee (Uplink Station)',
+    'sol_report_upkeep' => 'Advisor upkeep',
     'sol_report_advisor_hired' => 'Advisor hired',
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Colonist Stipend',
@@ -372,7 +380,7 @@ return [
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
-    'sol_report_supply_used' => ':used of :cap occupied',
+    'sol_report_supply_used' => ':used of :cap places taken by buildings',
     'sol_report_food' => 'Provisions',
     'sol_report_food_ok' => ':amount Organics distributed to the kitchens — the colony is fed',
     'sol_report_overcap' => 'Shelter',

@@ -305,6 +305,23 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         $this->assertFalse($building['first_level_prepaid']);
     }
 
+    public function test_building_rows_report_their_colonist_workplaces(): void
+    {
+        $this->ensureBuildableTile(1, 0);
+        $this->place(self::INFIRMARY, 1, 0)->assertOk();
+        $cost = (int) DB::table('buildings')->where('id', self::INFIRMARY)->value('supply_cost');
+        $this->assertGreaterThan(0, $cost);
+
+        $find = fn () => collect($this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->viewData('buildings'))
+            ->first(fn ($b) => (int) $b->building_id === self::INFIRMARY);
+
+        $this->assertSame($cost, $find()->workplaces, 'level-0 site reserves one level');
+
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::INFIRMARY)
+            ->update(['level' => 2]);
+        $this->assertSame(2 * $cost, $find()->workplaces);
+    }
+
     public function test_hexview_sidebar_data_marks_level_zero_site_as_prepaid(): void
     {
         $this->ensureBuildableTile(1, 0);

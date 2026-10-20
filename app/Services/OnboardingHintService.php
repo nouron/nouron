@@ -795,7 +795,8 @@ class OnboardingHintService
     {
         $threshold = (int) config('game.onboarding.hint_no_knowledge_after_tick', 8);
 
-        if ($currentTick < $threshold) {
+        // The Techtree stays locked until the Sciencelab stands — don't send the player there.
+        if ($currentTick < $threshold || ! $this->hasBuiltBuilding($colonyId, 31)) {
             return false;
         }
 
