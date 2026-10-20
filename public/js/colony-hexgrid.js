@@ -139,6 +139,8 @@ function colonyHexView(config) {
         toastType: 'error', // 'error' | 'info'
         _toastTimer: null,
         levelupNotice: null, // set to label string when a building levels up
+        completionPopup: null, // { title, text } tutorial popup for milestone buildings (B4)
+        _reloadAfterPopup: false,
         _lvlTimer: null,
         _apFlashTimers: {}, // per-chip flash timers (resbar AP chips)
         harvesterMoveMode: false,
@@ -500,7 +502,11 @@ function colonyHexView(config) {
                 if (res.leveled_up) {
                     this.showLevelupNotice(res.building.label);
                     if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
-                    if (res.nav_unlocked) {
+                    if (res.completion_popup) {
+                        // Nav reload (if any) waits until the player has read the popup.
+                        this.completionPopup = res.completion_popup;
+                        this._reloadAfterPopup = !!res.nav_unlocked;
+                    } else if (res.nav_unlocked) {
                         setTimeout(() => window.location.reload(), 600);
                     }
                 }
@@ -1035,6 +1041,11 @@ function colonyHexView(config) {
             this._toastTimer = setTimeout(() => {
                 this.toastVisible = false;
             }, 3500);
+        },
+
+        closeCompletionPopup() {
+            this.completionPopup = null;
+            if (this._reloadAfterPopup) window.location.reload();
         },
 
         showLevelupNotice(label) {

@@ -91,11 +91,53 @@ class OnboardingHintService
      */
     public function checkFirstVisit(string $screenKey, int $userId): bool
     {
-        $dismissed = $this->parseDismissed(
-            DB::table('user_preferences')->where('user_id', $userId)->value('dismissed_hints')
-        );
+        $prefs = DB::table('user_preferences')->where('user_id', $userId)->first();
+
+        if ($prefs && ! $prefs->onboarding_hints) {
+            return false;
+        }
+
+        $dismissed = $this->parseDismissed($prefs === null ? null : $prefs->dismissed_hints);
 
         return ! in_array("visit_{$screenKey}", $dismissed, true);
+    }
+
+    /** Milestone buildings that explain themselves when finished: id => lang key stem. */
+    private const COMPLETION_POPUPS = [
+        31 => 'sciencelab',
+        44 => 'hangar',
+        52 => 'bar',
+        54 => 'uplink',
+    ];
+
+    /**
+     * Tutorial popup for the first completion of a milestone building (Labor, Hangar,
+     * Cantina, Uplink-Station): what is possible now. Null for other buildings, when
+     * the player switched hints off, or after it was shown once — the popup is marked
+     * as seen here (dismissed_hints key `built_{stem}`), so no extra dismiss route.
+     *
+     * @return array{title: string, text: string}|null
+     */
+    public function completionPopup(int $userId, int $buildingId): ?array
+    {
+        $stem = self::COMPLETION_POPUPS[$buildingId] ?? null;
+        $prefs = DB::table('user_preferences')->where('user_id', $userId)->first();
+
+        if ($stem === null || ($prefs && ! $prefs->onboarding_hints)) {
+            return null;
+        }
+
+        $key = "built_{$stem}";
+        if (in_array($key, $this->parseDismissed($prefs === null ? null : $prefs->dismissed_hints), true)) {
+            return null;
+        }
+
+        $this->dismissHint($userId, $key);
+
+        return [
+            'title' => __("colony.built_popup_{$stem}_title"),
+            'text' => __("colony.built_popup_{$stem}_text"),
+        ];
     }
 
     /** Convenience wrapper for acknowledging a first-visit popup (see checkFirstVisit()). */

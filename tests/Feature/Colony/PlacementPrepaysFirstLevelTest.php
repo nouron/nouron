@@ -4,6 +4,7 @@ namespace Tests\Feature\Colony;
 
 use App\Models\User;
 use App\Services\HarvesterEntitlementService;
+use App\Services\OnboardingHintService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -303,6 +304,24 @@ class PlacementPrepaysFirstLevelTest extends TestCase
 
         $this->assertSame(self::FIRST_LEVEL_REGOLITH, $building['levelup_cost']);
         $this->assertFalse($building['first_level_prepaid']);
+    }
+
+    public function test_finishing_a_milestone_building_returns_a_tutorial_popup_once(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::HANGAR)->delete();
+        $this->ensureBuildableTile(1, 0);
+        $this->place(self::HANGAR, 1, 0)->assertOk();
+        $need = (int) DB::table('buildings')->where('id', self::HANGAR)->value('ap_for_levelup');
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::HANGAR)
+            ->update(['ap_spend' => $need - 1]);
+
+        $res = $this->invest(self::HANGAR)->assertOk();
+
+        $this->assertTrue($res->json('leveled_up'));
+        $this->assertSame(__('colony.built_popup_hangar_title'), $res->json('completion_popup.title'));
+
+        // Shown once: the service has already marked it as seen.
+        $this->assertNull(app(OnboardingHintService::class)->completionPopup(self::BART_USER_ID, self::HANGAR));
     }
 
     public function test_building_rows_report_their_colonist_workplaces(): void

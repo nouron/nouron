@@ -926,6 +926,9 @@ class ColonyController extends BaseController
             'building' => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
             'nav_unlocked' => $navUnlocked,
+            'completion_popup' => $leveledUp && $row->level === 0
+                ? $this->hintService->completionPopup(Auth::id(), $buildingId)
+                : null,
             'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
             'activeHint' => $this->resolveHint($colony->id),
             ...($leveledUp ? ['phase_progress' => $this->colonyService->getPhaseProgress($colony)] : []),

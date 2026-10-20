@@ -1469,6 +1469,37 @@ class OnboardingHintServiceTest extends TestCase
         return $m->invoke($this->service, $this->colonyId, $tick);
     }
 
+    // ── Completion popup (B4) + first-visit respects the hints switch ──────────
+
+    public function test_completion_popup_is_offered_once_per_milestone_building(): void
+    {
+        foreach ([31, 44, 52, 54] as $buildingId) {
+            $popup = $this->service->completionPopup($this->userId, $buildingId);
+            $this->assertNotNull($popup, "building {$buildingId}");
+            $this->assertNotSame('', $popup['title']);
+            $this->assertNotSame('', $popup['text']);
+            $this->assertNull($this->service->completionPopup($this->userId, $buildingId), 'only once');
+        }
+    }
+
+    public function test_completion_popup_skips_other_buildings_and_disabled_hints(): void
+    {
+        $this->assertNull($this->service->completionPopup($this->userId, 27));
+
+        DB::table('user_preferences')->updateOrInsert(['user_id' => $this->userId], ['onboarding_hints' => 0]);
+
+        $this->assertNull($this->service->completionPopup($this->userId, 44));
+    }
+
+    public function test_first_visit_popup_respects_the_disabled_hints_switch(): void
+    {
+        $this->assertTrue($this->service->checkFirstVisit('hangar', $this->userId));
+
+        DB::table('user_preferences')->updateOrInsert(['user_id' => $this->userId], ['onboarding_hints' => 0]);
+
+        $this->assertFalse($this->service->checkFirstVisit('hangar', $this->userId));
+    }
+
     // ── Hint build_priority: 2+ of Cantina/Agrardom/Analytik eligible at once ─
 
     public function test_build_priority_hint_fires_when_two_buildings_eligible(): void

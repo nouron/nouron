@@ -71,4 +71,5 @@ Quelle: Owner-Handtest auf master `d7506293`, Eröffnung **Hangar-First**, Phase
 - **Erledigt (Teil 2):** A5 (nur Texte: Popup/Sol-Bericht erklären Belegung statt Bevölkerung; Annahme: kein neues Bevölkerungs-Feld), A10 (Annahme: nur Anzeige, Abschlusskriterien unverändert).
 - **Erledigt (Teil 3):** B5-Sofortfix (`checkHint4` braucht Analytik-Labor Lv1; Designfrage rudimentärer Techtree bleibt offen).
 - **Erledigt (Teil 4):** B2 + B3 + A7 (Browser-Check mit uicheck: Menü öffnet per Tile-Klick, gesperrte Einträge mit Grund, A6-Badge/A8-Kürzel sichtbar, keine JS-Fehler; Colony-Tests 364 grün). Kleinigkeit: Kolonisten-Punkt überlappt leicht die Badge-Ecke.
-- **Offen:** A1-Browser-Repro, B1+B6 (Bot-Messung, Dauer mit Owner klären), B2, B3, B4, B5-Design, Paket C. Browser-Check (uicheck) für alle JS/Blade-Änderungen dieser Branch steht aus.
+- **Erledigt (Teil 5):** B4 (Popup bei Fertigstellung, Schalter respektiert; Texte `colony.built_popup_*` sind Entwurf, content-writer). PR #389 offen.
+- **Offen:** A1-Browser-Repro, B1+B6 (Bot-Messung, Dauer mit Owner klären), B5-Design, Paket C. Browser-Check (uicheck) für alle JS/Blade-Änderungen dieser Branch steht aus.
