@@ -320,6 +320,11 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         $this->assertTrue($res->json('leveled_up'));
         $this->assertSame(__('colony.built_popup_hangar_title'), $res->json('completion_popup.title'));
 
+        $this->assertTrue(
+            DB::table('trust_events')->where('colony_id', self::COLONY_ID)->where('event_type', 'building_level_up')->exists(),
+            'finishing a building level fires the trust event'
+        );
+
         // Shown once: the service has already marked it as seen.
         $this->assertNull(app(OnboardingHintService::class)->completionPopup(self::BART_USER_ID, self::HANGAR));
     }

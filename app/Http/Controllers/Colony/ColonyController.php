@@ -853,6 +853,7 @@ class ColonyController extends BaseController
                     'status_points' => $building->max_status_points ?? 20,
                 ]);
             $leveledUp = true;
+            $this->trustService->fireEvent($colony->id, 'building_level_up');
             // T30 §13.2: reaching hangar level 1 lands the gift drone (idempotent).
             if ($buildingId === BuildingId::Hangar->value) {
                 $this->hangarService->ensureGiftDrone($colony->id);

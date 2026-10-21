@@ -22,6 +22,11 @@ use Illuminate\Support\Facades\DB;
  */
 class BuildingService extends AbstractTechnologyService
 {
+    protected function levelupTrustEvent(): ?string
+    {
+        return 'building_level_up';
+    }
+
     protected function masterTable(): string
     {
         return 'buildings';

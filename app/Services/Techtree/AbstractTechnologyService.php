@@ -7,6 +7,7 @@ use App\Services\AdvisorService;
 use App\Services\Concerns\ValidatesId;
 use App\Services\ResourcesService;
 use App\Services\TickService;
+use App\Services\TrustService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -491,7 +492,17 @@ abstract class AbstractTechnologyService
             DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
 
+        if ($trustEvent = $this->levelupTrustEvent()) {
+            app(TrustService::class)->fireEvent($colonyId, $trustEvent);
+        }
+
         return true;
+    }
+
+    /** Trust event (game.trust.events) a finished level-up of this entity type fires, or null. */
+    protected function levelupTrustEvent(): ?string
+    {
+        return null;
     }
 
     /**

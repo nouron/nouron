@@ -124,12 +124,12 @@ return [
             ],
             'nexus_phase1_warning' => [
                 'title' => 'Nexus-Warnung — Phase 1',
-                'body' => 'Nexus-Protokoll §4.2: Die Stabilisierungsphase ist noch nicht abgeschlossen. Beschleunigen Sie den Fortschritt — bei Fristbruch wird die Konzession beendet.',
+                'body' => 'Nexus-Protokoll §4.2: Der Grundaufbau (Phase 1) ist noch nicht abgeschlossen. Beschleunigen Sie den Fortschritt — bei Fristbruch wird die Konzession beendet.',
                 'badge' => 'Warnung',
             ],
             'run_failed_phase1_deadline' => [
                 'title' => 'Mission gescheitert — Fristbruch Phase 1',
-                'body' => 'Nexus-Protokoll §4.3: Die Stabilisierungsphase wurde nicht innerhalb der Frist abgeschlossen. Die Konzession wird zwangsbeendet.',
+                'body' => 'Nexus-Protokoll §4.3: Der Grundaufbau (Phase 1) wurde nicht innerhalb der Frist abgeschlossen. Die Konzession wird zwangsbeendet.',
                 'badge' => 'Gescheitert',
             ],
         ],

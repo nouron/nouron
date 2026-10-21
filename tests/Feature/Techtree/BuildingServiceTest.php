@@ -113,6 +113,17 @@ class BuildingServiceTest extends TestCase
         $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyWithPartialInfirmary(), 46));
     }
 
+    public function test_levelup_fires_the_building_trust_event(): void
+    {
+        DB::table('buildings')->where('id', $this->entityId)->update(['max_level' => null]);
+
+        $this->assertTrue($this->service->levelup($this->colonyId, $this->entityId));
+
+        $this->assertTrue(
+            DB::table('trust_events')->where('colony_id', $this->colonyId)->where('event_type', 'building_level_up')->exists()
+        );
+    }
+
     public function test_levelup(): void
     {
         // infirmary.max_level is now capped at 3 (2026-08-25, Ausbaustufen-Umstellung)

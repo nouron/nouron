@@ -120,6 +120,17 @@ class KnowledgeServiceTest extends TestCase
         $this->assertEquals(1, $level);
     }
 
+    public function test_levelup_fires_the_research_trust_event(): void
+    {
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 20);
+
+        $this->assertTrue($this->service->levelup($this->colonyId, $this->knowledgeId));
+
+        $this->assertTrue(
+            DB::table('trust_events')->where('colony_id', $this->colonyId)->where('event_type', 'research_level_up')->exists()
+        );
+    }
+
     /**
      * Characterization (R5b/3): repairing a Kenntnis charges AP only. Researches have
      * no resource cost rows, so repair must succeed without touching colony resources.

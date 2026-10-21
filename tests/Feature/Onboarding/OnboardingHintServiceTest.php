@@ -1445,6 +1445,68 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_analytik', $hint['key'] ?? null);
     }
 
+    // ── V0: the remaining-AP hint tells the truth when construction is blocked ──
+
+    /** Everything built, fog cleared, Sciencelab/Cantina/Hangar unusable: only the construction fallback is left. */
+    private function constructionOnlyColony(int $regolith): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        $this->clearFog();
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)
+            ->whereIn('building_id', [31, 44, 52])->update(['level' => 0, 'tile_x' => null, 'tile_y' => null]);
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->update(['ap_spend' => 0]);
+        DB::table('colony_resources')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'resource_id' => 3],
+            ['amount' => $regolith]
+        );
+        // Higher-ranked hints about the unplaced choice buildings would outrank the spend hint.
+        foreach (['hint_invest_site', 'hint_6', 'hint_analytik', 'hint_hangar_path', 'hint_build_priority', 'hint_agrardome'] as $key) {
+            $this->service->dismissHint($this->userId, $key);
+        }
+        $this->setRunTick(1);
+    }
+
+    private function spendHintTextKey(): ?string
+    {
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        return $hint['key'] === 'hint_spend_remaining_ap' ? $hint['text_key'] : 'other:'.$hint['key'];
+    }
+
+    public function test_spend_hint_keeps_construction_while_regolith_covers_a_levelup(): void
+    {
+        $this->constructionOnlyColony(9999);
+
+        $this->assertSame('colony.onboarding_hint_spend_ap_construction', $this->spendHintTextKey());
+    }
+
+    public function test_spend_hint_says_so_when_regolith_blocks_every_levelup(): void
+    {
+        $this->constructionOnlyColony(0);
+
+        $this->assertSame('colony.onboarding_hint_spend_ap_blocked', $this->spendHintTextKey());
+    }
+
+    public function test_spend_hint_points_to_the_hangar_when_construction_is_blocked_and_it_stands(): void
+    {
+        $this->constructionOnlyColony(0);
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', 44)->update(['level' => 1]);
+
+        $this->assertSame('colony.onboarding_hint_spend_ap_hangar', $this->spendHintTextKey());
+    }
+
+    public function test_spend_hint_counts_a_paid_cycle_in_progress_as_construction_without_regolith(): void
+    {
+        $this->constructionOnlyColony(0);
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', 41)->update(['ap_spend' => 2]);
+
+        $this->assertSame('colony.onboarding_hint_spend_ap_construction', $this->spendHintTextKey());
+    }
+
     // ── Hint 4: "assign AP to a Kenntnis" only once the Techtree is usable ─────
 
     public function test_hint4_stays_silent_while_the_techtree_is_locked(): void

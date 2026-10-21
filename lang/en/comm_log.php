@@ -112,12 +112,12 @@ return [
             ],
             'nexus_phase1_warning' => [
                 'title' => 'Nexus Warning — Phase 1',
-                'body' => 'Nexus Protocol §4.2: The stabilization phase is not yet complete. Accelerate progress — a deadline breach terminates the concession.',
+                'body' => 'Nexus Protocol §4.2: The foundation phase (Phase 1) is not yet complete. Accelerate progress — a deadline breach terminates the concession.',
                 'badge' => 'Warning',
             ],
             'run_failed_phase1_deadline' => [
                 'title' => 'Mission failed — Phase 1 deadline breach',
-                'body' => 'Nexus Protocol §4.3: The stabilization phase was not completed within the deadline. The concession is forcibly terminated.',
+                'body' => 'Nexus Protocol §4.3: The foundation phase (Phase 1) was not completed within the deadline. The concession is forcibly terminated.',
                 'badge' => 'Failed',
             ],
         ],
