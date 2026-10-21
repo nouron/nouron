@@ -102,4 +102,24 @@ class ResourceFlowServiceTest extends TestCase
 
         $this->assertSame(0, $flow['regolith']['net']);
     }
+
+    public function test_credits_flow_lists_subsidy_relay_and_upkeep_and_equals_the_booked_delta(): void
+    {
+        $userId = (int) DB::table('glx_colonies')->where('id', self::COLONY_ID)->value('user_id');
+        DB::table('user_resources')->where('user_id', $userId)->update(['credits' => 1000]);
+
+        $flow = app(ResourceFlowService::class)->perSol(self::COLONY_ID)['credits'];
+
+        $this->assertSame((int) config('game.credits.nexus_subsidy'), $flow['sources']['subsidy']);
+        $this->assertGreaterThan(0, $flow['upkeep'], 'fixture colony employs advisors');
+        $this->assertSame(array_sum($flow['sources']) - $flow['upkeep'], $flow['net']);
+
+        Artisan::call('game:tick', ['--tick' => self::TICK]);
+
+        $this->assertSame(
+            $flow['net'],
+            (int) DB::table('user_resources')->where('user_id', $userId)->value('credits') - 1000,
+            'Credits net = booked delta'
+        );
+    }
 }

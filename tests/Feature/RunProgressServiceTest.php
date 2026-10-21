@@ -277,7 +277,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertFalse($this->service->checkPhase1Completion($this->makeRun()));
     }
 
-    public function test_phase_progress_lists_exactly_the_grundaufbau_criteria(): void
+    public function test_phase_progress_lists_the_grundaufbau_criteria_without_the_obvious_basics(): void
     {
         $this->makeGrundaufbau();
         $this->makeRun();
@@ -287,7 +287,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->assertSame(1, $progress['phase']);
         $this->assertSame(
-            ['cc_level', 'harvester', 'housing', 'agrardom', 'uplink', 'path_building', 'advisors'],
+            ['cc_level', 'uplink', 'path_building', 'advisors'],
             array_column($progress['criteria'], 'key')
         );
         $this->assertSame([true], array_values(array_unique(array_column($progress['criteria'], 'done'))));

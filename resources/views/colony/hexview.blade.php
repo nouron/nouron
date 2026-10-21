@@ -398,7 +398,15 @@
                     {{-- Build mode: building list --}}
                     <template x-if="!harvesterMoveMode && buildMode">
                         <div>
-                            <p class="build-mode-hint">{{ __("colony.build_mode_hint") }}</p>
+                            <template x-if="buildTargetTile && selectedTile">
+                                <div class="build-target-tile">
+                                    <p class="tile-panel-title__name" x-text="tileHeading(buildTargetTile)"></p>
+                                    @include("colony.partials.tile-terrain", ["built" => false])
+                                </div>
+                            </template>
+                            <p class="build-mode-hint"
+                                x-text="buildTargetTile ? @js(__("colony.build_mode_hint_tile")) : @js(__("colony.build_mode_hint"))">
+                            </p>
 
                             <template x-if="pendingBuilding">
                                 <p class="build-mode-selected">
@@ -524,6 +532,9 @@
                                         "expr" => "selectedBuilding",
                                     ])
 
+                                    <p class="tile-building-colonists" x-show="(selectedBuilding.workplaces ?? 0) > 0"
+                                        x-text="@js(__("colony.tile_colonists")) + ': ' + selectedBuilding.workplaces"></p>
+
                                     <template
                                         x-if="buildingCanLevelUp(selectedBuilding) && (selectedBuilding.levelup_cost ?? 0) > 0">
                                         <p class="tile-building-levelup-cost">
@@ -532,7 +543,8 @@
                                                 <span class="res-abbr">RG</span>
                                                 <span class="res-amount" x-text="selectedBuilding.levelup_cost"></span>
                                             </span>
-                                            <span>{{ __("colony.levelup_cost_suffix") }}</span>
+                                            <span
+                                                x-text="selectedBuilding.ap_spend > 0 ? @js(__("colony.levelup_cost_already_paid")) : @js(__("colony.levelup_cost_suffix"))"></span>
                                         </p>
                                     </template>
 
@@ -726,6 +738,20 @@
             <span class="levelup-icon">✓</span>
             <span>{{ __("colony.levelup_built") }}</span>
             <strong x-text="levelupNotice"></strong>
+        </div>
+
+        {{-- Tutorial popup when a milestone building is finished (B4); styled like the first-visit popup. --}}
+        <div class="first-visit-popup" x-show="completionPopup" x-cloak @keydown.escape.window="closeCompletionPopup()">
+            <div class="first-visit-popup__card" role="dialog" aria-modal="true">
+                <div class="first-visit-popup__icon" aria-hidden="true">ℹ</div>
+                <div class="first-visit-popup__body">
+                    <p class="first-visit-popup__title" x-text="completionPopup?.title"></p>
+                    <p class="first-visit-popup__text" x-text="completionPopup?.text"></p>
+                </div>
+                <button class="first-visit-popup__dismiss" type="button" @click="closeCompletionPopup()">
+                    {{ __("colony.first_visit_dismiss") }}
+                </button>
+            </div>
         </div>
 
     </div>

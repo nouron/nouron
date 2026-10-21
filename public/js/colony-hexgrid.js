@@ -75,6 +75,8 @@ const BUILDING_ABBR = {
     building_monument: 'KD',
     building_bar: 'CA',
     building_securityHub: 'HUB',
+    building_uplinkStation: 'UP',
+    building_tradingPost: 'HP',
 };
 
 // ── Event-type display names (discovery popup) ────────────────────────────────
@@ -137,6 +139,8 @@ function colonyHexView(config) {
         toastType: 'error', // 'error' | 'info'
         _toastTimer: null,
         levelupNotice: null, // set to label string when a building levels up
+        completionPopup: null, // { title, text } tutorial popup for milestone buildings (B4)
+        _reloadAfterPopup: false,
         _lvlTimer: null,
         _apFlashTimers: {}, // per-chip flash timers (resbar AP chips)
         harvesterMoveMode: false,
@@ -250,6 +254,14 @@ function colonyHexView(config) {
                 this.$nextTick(() => this.redrawGrid());
             }
             this.selectTile(tile);
+            // Free, buildable tile: open the build menu straight away (saves a click).
+            // Terrain info stays visible inside the menu (selectedTile is kept).
+            if (isBuildableTile(tile) && !this.buildingForTile(tile)) {
+                this.startBuildForTile(tile);
+            } else if (this.buildMode) {
+                this.cancelBuildMode();
+                this.selectTile(tile);
+            }
         },
 
         selectTile(tile) {
@@ -330,7 +342,7 @@ function colonyHexView(config) {
             this.availableBuildings = data.buildings ?? [];
             this.buildTargetTile = tile;
             this.buildMode = true;
-            this.selectedTile = null;
+            this.selectedTile = tile;
             this.$nextTick(() => this.redrawGrid());
         },
 
@@ -490,7 +502,11 @@ function colonyHexView(config) {
                 if (res.leveled_up) {
                     this.showLevelupNotice(res.building.label);
                     if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
-                    if (res.nav_unlocked) {
+                    if (res.completion_popup) {
+                        // Nav reload (if any) waits until the player has read the popup.
+                        this.completionPopup = res.completion_popup;
+                        this._reloadAfterPopup = !!res.nav_unlocked;
+                    } else if (res.nav_unlocked) {
                         setTimeout(() => window.location.reload(), 600);
                     }
                 }
@@ -1025,6 +1041,11 @@ function colonyHexView(config) {
             this._toastTimer = setTimeout(() => {
                 this.toastVisible = false;
             }, 3500);
+        },
+
+        closeCompletionPopup() {
+            this.completionPopup = null;
+            if (this._reloadAfterPopup) window.location.reload();
         },
 
         showLevelupNotice(label) {
@@ -1763,6 +1784,18 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         const labelColor = isBuilt ? conditionLabelColor(building, opts) : '#fff';
         g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, badgeText, 8, labelColor, 700));
 
+        // Colonists the building occupies (bottom-left): number in a grey dot.
+        if ((building.workplaces ?? 0) > 0) {
+            const kx = cx - size * 0.38;
+            const ky = cy + size * 0.38;
+            const kol = svgCircle(kx, ky, 5, '#64748b', '#fff');
+            const kolTitle = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            kolTitle.textContent = `Kolonisten: ${building.workplaces}`;
+            kol.appendChild(kolTitle);
+            g.appendChild(kol);
+            g.appendChild(svgText(kx, ky, String(building.workplaces), 7, '#fff', 700));
+        }
+
         // Red warning dot (top-right of badge) when condition < 10%
         if (isBuilt) {
             const maxSp = building.max_status_points ?? 20;
@@ -1775,7 +1808,9 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     // Event indicator dot (top-left, orange — only when deep-scanned)
     if (hasActiveEvent(tile)) {
-        g.appendChild(svgCircle(cx - size * 0.38, cy - size * 0.38, 4, '#e67e22', '#fff'));
+        // Radius encodes the find size (small / medium / large) so they differ at a glance.
+        const findRadius = { find_small: 3, find_medium: 4.5, find_large: 6 }[tile.event_type] ?? 4;
+        g.appendChild(svgCircle(cx - size * 0.38, cy - size * 0.38, findRadius, '#e67e22', '#fff'));
     }
 
     // Signal indicator (center-top, pulsing yellow — explored tile with hidden event)

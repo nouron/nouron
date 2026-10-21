@@ -7,8 +7,10 @@ return [
     'explore' => 'Erkunden',
     'deep_scan' => 'Sondieren',
     'invest_ap' => 'Ausbauen',
+    'tile_colonists' => 'Kolonisten im Einsatz',
     'levelup_cost_label' => 'Kosten:',
-    'levelup_cost_suffix' => 'bei Baubeginn',
+    'levelup_cost_suffix' => 'fällig mit dem ersten AP',
+    'levelup_cost_already_paid' => 'bereits bezahlt',
     // T9 (Owner-Regel 2026-09-25): Platzieren bezahlt Errichtung + Stufe 1 in einem.
     'build_cost_erect' => 'Bau',
     'build_cost_first_level' => 'Stufe 1',
@@ -16,11 +18,7 @@ return [
     'repair' => 'Reparieren',
     'repair_full_tooltip' => 'Der Zustand liegt bereits bei 100 %, hier gibt es nichts zu reparieren.',
     'ap_per_tile' => ':n AP/Feld',
-    // Owner-Fund 2026-09-05: sichtbare Zustandsanzeige über dem Reparieren-Button.
-    // Wert "Zustand" bereits an anderer Stelle exakt für dasselbe Konzept etabliert
-    // (onboarding_hint_encounter, run.task_engineering_output, comm_log.building_repaired)
-    // — hier direkt wiederverwendet statt TODO-Platzhalter, content-writer bitte
-    // gegenprüfen falls ein anderer Begriff gewünscht ist.
+    // Zustandsanzeige über dem Reparieren-Button; "Zustand" ist der durchgängige Begriff.
     'condition_label' => 'Zustand',
 
     // ── Repair errors ─────────────────────────────────────────────────────────
@@ -83,7 +81,7 @@ return [
     // ── Build mode ────────────────────────────────────────────────────────────
 
     'build_mode_title' => 'Gebäude bauen',
-    'build_mode_hint' => 'Gebäude wählen, dann Terrain-Tile anklicken.',
+    'build_mode_hint' => 'Gebäude wählen, dann ein Feld auf der Karte anklicken.',
     'building_info_label' => 'Gebäude-Info anzeigen',
     'no_buildings' => 'Keine Gebäude verfügbar.',
     'inprogress_label' => 'Im Bau',
@@ -124,6 +122,8 @@ return [
     'onboarding_hint_spend_ap_research' => 'Es sind noch AP übrig — im Techtree einer Kenntnis zuweisen, bevor der Sol endet.',
     'onboarding_hint_spend_ap_navigation' => 'Es sind noch AP übrig — da draußen liegt noch unentdecktes Gelände. Ein Feld kostet 1 AP.',
     'onboarding_hint_spend_ap_economy' => 'Es sind noch AP übrig — in der Cantina nachsehen, ob ein Gast ein Angebot bereit hat.',
+    'onboarding_hint_spend_ap_hangar' => 'Für Neubau reicht das Regolith gerade nicht — im Hangar warten Fundflüge, Missionen und die Wartung der Schiffe.',
+    'onboarding_hint_spend_ap_blocked' => 'Gerade lässt sich nichts Sinnvolles bauen: Es fehlt Regolith, oder der AP-Deckel der Gebäude ist für heute erreicht. Sol beenden — das Regolith kommt von selbst.',
     'nav_techtree_locked' => 'Analytiklabor erforderlich.',
     'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 erforderlich.',
 
@@ -157,12 +157,21 @@ return [
 
     // ── Error messages ────────────────────────────────────────────────────────
 
-    // TODO(content-writer): placeholder wording, path-building build gate (2026-10-14).
     'error_path_building_gate' => 'Weiteres Pfad-Gebäude erst ab Kommandozentrale Lv:level.',
     'error_building_ap_cap' => 'Mehr als :cap AP schafft die Baucrew an diesem Gebäude nicht pro Sol. Morgen geht es weiter — oder an einem anderen Gebäude.',
     'ap_cap_chip' => 'heute :spent/:cap',
     'ap_cap_tooltip' => 'Mehr Arbeit nimmt dieses Gebäude pro Sol nicht auf. Ein Baumeister erweitert die Grenze mit jedem Rang.',
     'error_building_cc_gate' => 'Diese Ausbaustufe braucht Kommandozentrale Lv:level — erst die Kommandozentrale ausbauen.',
+    'build_mode_hint_tile' => 'Gebäude für dieses Feld wählen.',
+    'built_popup_sciencelab_title' => 'Analytik-Labor fertig',
+    'built_popup_sciencelab_text' => 'Der Techtree ist jetzt offen: Weise Kenntnissen AP zu, damit sie Sol für Sol reifen. Im Berater-Screen kannst du außerdem einen Analytiker anheuern.',
+    'built_popup_hangar_title' => 'Hangar fertig',
+    'built_popup_hangar_text' => 'Deine erste Drohne steht bereit. Schick sie auf Erkundungs- und Bergungsflüge, um Funde zu holen — jeder Flug kostet etwas Organika. Frachter gibt es ab Hangar-Stufe 2.',
+    'built_popup_bar_title' => 'Cantina fertig',
+    'built_popup_bar_text' => 'Ab jetzt kehren Besucher ein: Begegnungen, Handelsangebote und ein Konsul, den du anheuern kannst. Schau regelmäßig vorbei.',
+    'built_popup_uplink_title' => 'Uplink-Station fertig',
+    'built_popup_uplink_text' => 'Die Station bringt jeden Sol Relaisvergütung in Credits und schaltet den Nexus-Import frei — Werkstoffe, Regolith und Organika gegen Credits.',
+    'build_locked_cc' => 'Braucht Kommandozentrale Lv:level',
     'path_building_locked' => 'Weiteres Pfad-Gebäude ab CC Lv:level',
     'error_agrardom_required' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für alle Pfad-Gebäude.',
     'error_tile_not_found' => 'Tile nicht gefunden.',
@@ -614,6 +623,7 @@ return [
     'hangar_delivery_pending' => 'Lieferung ausstehend',
     'hangar_arrival' => 'Ankunft: Sol :tick',
     'hangar_pending_section' => 'Nicht zugewiesen',
+    'hangar_request_ordered' => 'Lieferung bestellt – siehe „Nicht zugewiesen“.',
     'hangar_pending_expires' => 'Verfällt: Sol :tick',
     'hangar_assign_hangar' => 'Hangar zuweisen',
     'hangar_assign_select' => 'Bucht auswählen…',
@@ -640,6 +650,9 @@ return [
     // Ereignisse
     'sol_report_event_merchant' => 'Reisender Händler im System',
     'sol_report_passive_credits' => 'Nexus-Subvention & Relaisvergütung',
+    'sol_report_subsidy' => 'Nexus-Subvention',
+    'sol_report_relay' => 'Relaisvergütung (Uplink-Station)',
+    'sol_report_upkeep' => 'Berater-Unterhalt',
     'sol_report_advisor_hired' => 'Berater eingestellt',
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Kolonisten-Zulage',
@@ -660,7 +673,7 @@ return [
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
-    'sol_report_supply_used' => ':used von :cap belegt',
+    'sol_report_supply_used' => ':used von :cap Kolonisten durch Gebäude gebunden',
     'sol_report_food' => 'Verpflegung',
     'sol_report_food_ok' => ':amount Organika in die Küchen geflossen — die Kolonie ist versorgt',
     'sol_report_overcap' => 'Unterkunft',

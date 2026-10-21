@@ -7,8 +7,10 @@ return [
     'explore' => 'Explore',
     'deep_scan' => 'Probe',
     'invest_ap' => 'Invest AP',
+    'tile_colonists' => 'Colonists employed',
     'levelup_cost_label' => 'Cost:',
-    'levelup_cost_suffix' => 'at construction start',
+    'levelup_cost_suffix' => 'due with the first AP',
+    'levelup_cost_already_paid' => 'already paid',
     'build_cost_erect' => 'build',
     'build_cost_first_level' => 'level 1',
     'first_level_prepaid' => 'Level 1 was paid on placement — completing it only costs AP.',
@@ -74,7 +76,7 @@ return [
     // ── Build mode ────────────────────────────────────────────────────────────
 
     'build_mode_title' => 'Build Structure',
-    'build_mode_hint' => 'Select a building, then click a terrain tile.',
+    'build_mode_hint' => 'Select a building, then click a tile on the map.',
     'building_info_label' => 'Show building info',
     'no_buildings' => 'No buildings available.',
     'inprogress_label' => 'Under Construction',
@@ -113,6 +115,8 @@ return [
     'onboarding_hint_spend_ap_research' => 'Research AP remaining — assign it to a knowledge field in the tech tree before the Sol ends.',
     'onboarding_hint_spend_ap_navigation' => 'Navigation AP remaining — there is still unexplored terrain out there. One tile costs 1 AP.',
     'onboarding_hint_spend_ap_economy' => 'Economy AP remaining — check the Cantina to see if a guest has an offer ready.',
+    'onboarding_hint_spend_ap_hangar' => 'There is not enough Regolith for new construction right now — the Hangar has find flights, missions and ship maintenance waiting.',
+    'onboarding_hint_spend_ap_blocked' => 'Nothing sensible to build right now: Regolith is short or the AP cap of the buildings is reached for today. End the Sol — the Regolith keeps coming.',
     'nav_techtree_locked' => 'Analytics Lab required.',
     'nav_cantina_locked' => 'Cantina not built — Residential Habitat lv1 required.',
 
@@ -148,6 +152,16 @@ return [
 
     'error_path_building_gate' => 'Another path building requires Command Center Lv:level.',
     'error_building_cc_gate' => 'This level needs Command Center Lv:level — upgrade the Command Center first.',
+    'build_mode_hint_tile' => 'Choose a building for this tile.',
+    'built_popup_sciencelab_title' => 'Analytics Lab complete',
+    'built_popup_sciencelab_text' => 'The Techtree is open: assign AP to Knowledge so it matures Sol by Sol. You can also hire an Analyst in the Advisors screen.',
+    'built_popup_hangar_title' => 'Hangar complete',
+    'built_popup_hangar_text' => 'Your first drone is ready. Send it on exploration and salvage flights to bring in finds — each flight costs some Organics. Freighters unlock at hangar level 2.',
+    'built_popup_bar_title' => 'Cantina complete',
+    'built_popup_bar_text' => 'Visitors now drop by: encounters, trade offers and a Consul you can hire. Check in regularly.',
+    'built_popup_uplink_title' => 'Uplink Station complete',
+    'built_popup_uplink_text' => 'The station earns relay compensation in Credits every Sol and unlocks the Nexus import — Compounds, Regolith and Organics for Credits.',
+    'build_locked_cc' => 'Needs Command Center Lv:level',
     'path_building_locked' => 'Another path building from CC Lv:level',
     'error_agrardom_required' => 'Build the Agrarian Dome first — mandatory prerequisite for all path buildings.',
     'error_tile_not_found' => 'Tile not found.',
@@ -255,7 +269,6 @@ return [
     'merchant_buy_error' => 'Purchase failed.',
 
     // ── Orin (corporate_rep) — Harvester second-instance Weg A (GDD §4c) ───────
-    // TODO(content-writer): placeholder, mirrors lang/de/colony.php.
     'corporate_contact_banner_hint' => 'An offer is waiting.',
     'corporate_contact_dialog_intro' => 'Orin has a Harvester module for sale — origin unclear, price due on the spot.',
     'corporate_contact_price_label' => 'Price',
@@ -333,6 +346,7 @@ return [
     'hangar_delivery_pending' => 'Delivery pending',
     'hangar_arrival' => 'Arrival: Sol :tick',
     'hangar_pending_section' => 'Unassigned',
+    'hangar_request_ordered' => 'Delivery ordered – see “Unassigned”.',
     'hangar_pending_expires' => 'Expires: Sol :tick',
     'hangar_assign_hangar' => 'Assign hangar',
     'hangar_assign_select' => 'Select bay…',
@@ -359,6 +373,9 @@ return [
     // Events
     'sol_report_event_merchant' => 'Travelling Merchant in system',
     'sol_report_passive_credits' => 'Nexus Subsidy & Relay Fee',
+    'sol_report_subsidy' => 'Nexus subsidy',
+    'sol_report_relay' => 'Relay fee (Uplink Station)',
+    'sol_report_upkeep' => 'Advisor upkeep',
     'sol_report_advisor_hired' => 'Advisor hired',
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Colonist Stipend',
@@ -372,7 +389,7 @@ return [
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
-    'sol_report_supply_used' => ':used of :cap occupied',
+    'sol_report_supply_used' => ':used of :cap colonists tied up by buildings',
     'sol_report_food' => 'Provisions',
     'sol_report_food_ok' => ':amount Organics distributed to the kitchens — the colony is fed',
     'sol_report_overcap' => 'Shelter',
@@ -463,10 +480,10 @@ return [
     'find_reason_no_ship' => 'Waiting: no ship that can carry the find.',
     'find_salvaged' => ':rg Rg salvaged',
     'find_header' => 'Finds: :signals signals, :scanned scanned, :open Rg open',
-    'find_help' => 'There are :total signals in this run; some are false alarms. A deep scan shows whether and how much there is to salvage. Without a hangar the colony salvages itself: one click, a few AP, the Regolith is in the stores at once. Once the hangar stands, ships fetch the finds: hardly any AP, but flight time and Organika. Large finds are too heavy for the drone and wait for a freighter.',
+    'find_help' => 'There are :total signals in this run; some are false alarms. A deep scan shows whether and how much there is to salvage. Without a hangar the colony salvages itself: one click, a few AP, the Regolith is in the stores at once. Once the hangar stands, ships fetch the finds: hardly any AP, but flight time and Organics. Large finds are too heavy for the drone and wait for a freighter.',
     'find_flight' => 'Salvage flight',
-    'hangar_build_notice' => 'Afterwards only ships fetch the finds: a flight costs 1 AP and some Organika, the Regolith arrives after the flight time. Large finds need hangar level 2 and a freighter.',
-    'onboarding_hint_find_flight' => 'From now on ships fetch the finds: hardly any AP, but flight time and Organika. Large finds need a freighter.',
+    'hangar_build_notice' => 'Afterwards only ships fetch the finds: a flight costs 1 AP and some Organics, the Regolith arrives after the flight time. Large finds need hangar level 2 and a freighter.',
+    'onboarding_hint_find_flight' => 'From now on ships fetch the finds: hardly any AP, but flight time and Organics. Large finds need a freighter.',
     'find_small' => 'Small find',
     'find_medium' => 'Medium find',
     'find_large' => 'Large find',

@@ -38,6 +38,8 @@ function hangarCarousel(config) {
         hasAktivierterKonsul: config.hasAktivierterKonsul ?? false,
         verfuegbareVerhandlungsAP: config.verfuegbareVerhandlungsAP ?? 0,
         pendingShips: config.pendingShips ?? [],
+        pendingOpen: false,
+        requestNotice: null,
         missionCatalog: config.missionCatalog ?? [],
         hangarMaxLevel: config.hangarMaxLevel ?? 0,
         maxStatus: config.maxStatus,
@@ -470,7 +472,12 @@ function hangarCarousel(config) {
                 });
                 if (res.ok) {
                     this.pendingShips = res.pending;
+                    this.pendingOpen = true;
+                    if (res.credits !== undefined) this.syncResbarChip('.res-Cr', res.credits);
+                    this.syncHangarResources(res);
                     this.closeRequestModal();
+                    this.requestNotice = this.i18n.requestOrdered;
+                    setTimeout(() => (this.requestNotice = null), 5000);
                 } else {
                     this.requestModal.error = res.message ?? res.error ?? 'Error.';
                 }

@@ -26,6 +26,11 @@ class ResearchService extends AbstractTechnologyService
         parent::__construct($tickService, $resourcesService, $advisorService);
     }
 
+    protected function levelupTrustEvent(): ?string
+    {
+        return 'research_level_up';
+    }
+
     protected function masterTable(): string
     {
         return 'researches';

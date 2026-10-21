@@ -56,6 +56,7 @@ class SolReportService
         private readonly ColonyService $colonyService,
         private readonly OvercapService $overcapService,
         private readonly ResourcesService $resourcesService,
+        private readonly ResourceFlowService $resourceFlowService,
     ) {}
 
     /**
@@ -530,14 +531,25 @@ class SolReportService
             'to' => $creditsAfter,
         ];
 
-        // Passive Nexus income breakdown (Galaktischer Rat subsidy +
-        // Relaisvergütung per Uplink-Station-Level, GDD §3) — otherwise the
-        // Credits delta above has no visible source.
+        // Credits sources and sink behind the net line above: Nexus subsidy and
+        // Uplink relay fee (GDD §3), advisor upkeep.
         foreach ($events['colony.passive_credits'] ?? [] as $params) {
+            foreach (['subsidy' => 'sol_report_subsidy', 'relay_bonus' => 'sol_report_relay'] as $key => $langKey) {
+                if ((int) ($params[$key] ?? 0) > 0) {
+                    $lines[] = [
+                        'label' => __('colony.'.$langKey),
+                        'detail' => '+'.(int) $params[$key].' Cr',
+                        'tone' => 'good',
+                    ];
+                }
+            }
+        }
+        $upkeep = $this->resourceFlowService->creditsFlow($colonyId)['upkeep'];
+        if ($upkeep > 0) {
             $lines[] = [
-                'label' => __('colony.sol_report_passive_credits'),
-                'detail' => '+'.(int) ($params['total'] ?? 0).' Cr',
-                'tone' => 'good',
+                'label' => __('colony.sol_report_upkeep'),
+                'detail' => '−'.$upkeep.' Cr',
+                'tone' => 'danger',
             ];
         }
 

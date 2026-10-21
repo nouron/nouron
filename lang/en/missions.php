@@ -36,10 +36,11 @@ return [
     'mission_escort_convoy_name' => 'Convoy Escort',
     'mission_escort_convoy_desc' => 'The corvette shadows a convoy through rough country — most days nothing happens, and that is exactly the point.',
 
-    // TODO(content-writer): placeholder text, ROADMAP A18 — Perimeter Patrol
-    // (GDD §8b), requires Defense Lv1. May need polishing.
+    'mission_harvester_salvage_name' => 'Salvage Job: Extraction Rig',
+    'mission_harvester_salvage_desc' => 'A previous expedition left its extraction rig in the ruin, wrecked and half-buried in dust. The crew salvages what can be saved — once repaired, it produces again.',
+
     'mission_perimeter_patrol_name' => 'Perimeter Patrol',
-    'mission_perimeter_patrol_desc' => 'The corvette runs quiet loops around the colony — nothing in sight, but preparedness pays off when the next incident hits.',
+    'mission_perimeter_patrol_desc' => 'The corvette runs quiet loops around the colony. Mostly it stays quiet — but the colonists sleep better knowing the ship is overhead.',
 
     // ── Dispatch dialog ──────────────────────────────────────────────────────
 

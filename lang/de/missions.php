@@ -33,19 +33,14 @@ return [
     'mission_ruin_expedition_name' => 'Ruinen-Expedition',
     'mission_ruin_expedition_desc' => 'Wer die Ruine hinterlassen hat, ist lange fort — aber was zwischen ihren Wänden liegt, ist eine Expedition wert.',
 
-    // TODO(content-writer): Platzhalter, GDD §4c "Harvester-Zweitinstanz: Bezugsquelle"
-    // Weg B (freigegeben 2026-08-05) — narrative Rahmung folgt (havarierte Förderanlage
-    // einer früheren Expedition, siehe GDD-Abschnitt für Details).
     'mission_harvester_salvage_name' => 'Bergungsauftrag: Förderanlage',
-    'mission_harvester_salvage_desc' => 'In der Ruine liegt eine ausgeschlachtete Förderanlage — beschädigt, aber vielleicht noch zu retten.',
+    'mission_harvester_salvage_desc' => 'Eine frühere Expedition hat ihre Förderanlage in der Ruine zurückgelassen, havariert und halb im Staub versunken. Die Crew birgt, was sich retten lässt — nach der Reparatur fördert sie wieder.',
 
     'mission_escort_convoy_name' => 'Konvoi-Begleitung',
     'mission_escort_convoy_desc' => 'Die Korvette begleitet einen fremden Konvoi durch unwegsames Gelände — meist reicht schon ihre Silhouette am Himmel, damit nichts passiert.',
 
-    // TODO(content-writer): Platzhalter-Text, ROADMAP A18 — Umkreis-Patrouille
-    // (GDD §8b), erfordert Verteidigung Lv1. Ggf. verfeinern.
     'mission_perimeter_patrol_name' => 'Umkreis-Patrouille',
-    'mission_perimeter_patrol_desc' => 'Die Korvette zieht ruhige Runden um die Kolonie — kein Angriff in Sicht, aber wer vorbereitet ist, übersteht den nächsten Zwischenfall besser.',
+    'mission_perimeter_patrol_desc' => 'Die Korvette zieht ruhige Runden um die Kolonie. Meist bleibt es still — aber die Kolonisten schlafen besser, wenn sie das Schiff am Himmel wissen.',
 
     // ── Dispatch dialog ──────────────────────────────────────────────────────
 

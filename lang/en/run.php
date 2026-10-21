@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'phase1_complete' => 'Phase 1 complete — the stabilisation phase is reached. Nexus activates the next set of directives.',
+    'phase1_complete' => 'Phase 1 complete — the foundation phase is complete. Nexus activates the next set of directives.',
     'run_completed' => 'Mission accomplished — the expedition is concluded. The colony endures, despite everything.',
     'run_failed_trust' => 'Recalled — the colonists\' trust has crumbled. Command is relieved.',
     'run_failed_time' => 'Time expired — the concession period has lapsed. The Nexus withdraws the Director.',
@@ -25,7 +25,7 @@ return [
     'result_title_failed' => 'Mission failed',
     'result_fail_trust' => 'The colonists have lost faith in their leadership. Trust has fallen too far.',
     'result_fail_time' => 'The concession period has lapsed without the objective being reached.',
-    'result_fail_phase1_deadline' => 'The stabilization phase was not completed in time. The Nexus pulled the plug.',
+    'result_fail_phase1_deadline' => 'The foundation phase was not completed in time. The Nexus pulled the plug.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Reached in Sol :current of :limit',
     'result_objective_fulfilled' => 'Fulfilled',

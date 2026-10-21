@@ -4,6 +4,7 @@ namespace Tests\Feature\Colony;
 
 use App\Models\User;
 use App\Services\HarvesterEntitlementService;
+use App\Services\OnboardingHintService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -303,6 +304,46 @@ class PlacementPrepaysFirstLevelTest extends TestCase
 
         $this->assertSame(self::FIRST_LEVEL_REGOLITH, $building['levelup_cost']);
         $this->assertFalse($building['first_level_prepaid']);
+    }
+
+    public function test_finishing_a_milestone_building_returns_a_tutorial_popup_once(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::HANGAR)->delete();
+        $this->ensureBuildableTile(1, 0);
+        $this->place(self::HANGAR, 1, 0)->assertOk();
+        $need = (int) DB::table('buildings')->where('id', self::HANGAR)->value('ap_for_levelup');
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::HANGAR)
+            ->update(['ap_spend' => $need - 1]);
+
+        $res = $this->invest(self::HANGAR)->assertOk();
+
+        $this->assertTrue($res->json('leveled_up'));
+        $this->assertSame(__('colony.built_popup_hangar_title'), $res->json('completion_popup.title'));
+
+        $this->assertTrue(
+            DB::table('trust_events')->where('colony_id', self::COLONY_ID)->where('event_type', 'building_level_up')->exists(),
+            'finishing a building level fires the trust event'
+        );
+
+        // Shown once: the service has already marked it as seen.
+        $this->assertNull(app(OnboardingHintService::class)->completionPopup(self::BART_USER_ID, self::HANGAR));
+    }
+
+    public function test_building_rows_report_their_colonist_workplaces(): void
+    {
+        $this->ensureBuildableTile(1, 0);
+        $this->place(self::INFIRMARY, 1, 0)->assertOk();
+        $cost = (int) DB::table('buildings')->where('id', self::INFIRMARY)->value('supply_cost');
+        $this->assertGreaterThan(0, $cost);
+
+        $find = fn () => collect($this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->viewData('buildings'))
+            ->first(fn ($b) => (int) $b->building_id === self::INFIRMARY);
+
+        $this->assertSame($cost, $find()->workplaces, 'level-0 site reserves one level');
+
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::INFIRMARY)
+            ->update(['level' => 2]);
+        $this->assertSame(2 * $cost, $find()->workplaces);
     }
 
     public function test_hexview_sidebar_data_marks_level_zero_site_as_prepaid(): void

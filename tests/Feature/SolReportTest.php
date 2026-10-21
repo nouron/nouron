@@ -25,6 +25,7 @@ namespace Tests\Feature;
 
 use App\Models\Run;
 use App\Models\User;
+use App\Services\ResourceFlowService;
 use App\Services\ResourcesService;
 use App\Services\SolReportService;
 use Database\Seeders\TestSeeder;
@@ -753,10 +754,30 @@ class SolReportTest extends TestCase
         $report = $this->service()->buildReport($run, $before);
         $colony = $this->groupByKey($report, 'colony');
 
-        $line = collect($colony['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_passive_credits'));
-        $this->assertNotNull($line, 'Expected a passive-credits breakdown line in the colony group');
-        $this->assertSame('+70 Cr', $line['detail']);
-        $this->assertSame('good', $line['tone']);
+        $lines = collect($colony['lines']);
+        $subsidy = $lines->first(fn ($l) => $l['label'] === __('colony.sol_report_subsidy'));
+        $relay = $lines->first(fn ($l) => $l['label'] === __('colony.sol_report_relay'));
+        $this->assertNotNull($subsidy, 'Expected a subsidy line');
+        $this->assertSame('+30 Cr', $subsidy['detail']);
+        $this->assertSame('good', $subsidy['tone']);
+        $this->assertNotNull($relay, 'Expected a relay line');
+        $this->assertSame('+40 Cr', $relay['detail']);
+    }
+
+    public function test_advisor_upkeep_is_listed_as_credits_sink(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+        $upkeep = app(ResourceFlowService::class)->creditsFlow(self::COLONY_ID)['upkeep'];
+        $this->assertGreaterThan(0, $upkeep, 'fixture colony employs advisors');
+
+        $report = $this->service()->buildReport($run, $before);
+        $line = collect($this->groupByKey($report, 'colony')['lines'])
+            ->first(fn ($l) => $l['label'] === __('colony.sol_report_upkeep'));
+
+        $this->assertNotNull($line);
+        $this->assertSame('−'.$upkeep.' Cr', $line['detail']);
+        $this->assertSame('danger', $line['tone']);
     }
 
     public function test_finale_on_completed_run_replaces_run_group(): void

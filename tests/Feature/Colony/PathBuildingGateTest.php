@@ -272,4 +272,38 @@ class PathBuildingGateTest extends TestCase
         $this->assertNull($menu[self::HANGAR]['locked_reason']);
         $this->assertFalse($menu[self::BAR]['locked']);
     }
+
+    public function test_menu_lists_buildings_above_the_cc_level_as_locked_with_the_needed_level(): void
+    {
+        $this->setCcLevel(1);
+
+        $menu = $this->menu();
+
+        $this->assertArrayHasKey(self::SCIENCELAB, $menu);
+        $this->assertTrue($menu[self::SCIENCELAB]['locked']);
+        $this->assertSame(__('colony.build_locked_cc', ['level' => 2]), $menu[self::SCIENCELAB]['locked_reason']);
+    }
+
+    public function test_menu_locks_path_buildings_without_agrardom_and_says_why(): void
+    {
+        $this->setCcLevel(3);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 41)->delete();
+
+        $menu = $this->menu();
+
+        $this->assertTrue($menu[self::HANGAR]['locked']);
+        $this->assertSame(__('colony.error_agrardom_required'), $menu[self::HANGAR]['locked_reason']);
+    }
+
+    public function test_placing_above_the_cc_level_is_refused_server_side(): void
+    {
+        $this->setCcLevel(1);
+        $rgBefore = $this->regolith();
+
+        $res = $this->place(46); // infirmary: needs CC Lv3, not a path building
+
+        $this->assertSame(422, $res->status());
+        $this->assertSame('build_cc_required', $res->json('error'));
+        $this->assertSame($rgBefore, $this->regolith());
+    }
 }

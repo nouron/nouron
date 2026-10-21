@@ -209,6 +209,15 @@ if (isset($resourceFlow)) {
         ],
         $orFlow["net"],
     );
+    $crFlow = $resourceFlow["credits"];
+    $crFlowExtra = $flowRows(
+        [
+            __("resources.popup_flow_subsidy") => $crFlow["sources"]["subsidy"],
+            __("resources.popup_flow_relay") => $crFlow["sources"]["relay"],
+            __("resources.popup_flow_upkeep") => -$crFlow["upkeep"],
+        ],
+        $crFlow["net"],
+    );
     $flowPopupExtra[4] =
         '<div class="res-popup-row"><span class="res-popup-label">' .
         __("resources.popup_flow_none") .
@@ -230,6 +239,7 @@ $crPopupExtra = $hasNexus
                 " Cr</span>" .
                 "</div>"
             : null;
+        $crPopupExtra = ($crFlowExtra ?? "") . ($crPopupExtra ?? "") ?: null;
     @endphp
     <div class="res-bar-wrap resource-bar" x-data="{ openChip: null }">
 

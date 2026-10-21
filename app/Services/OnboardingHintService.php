@@ -91,11 +91,53 @@ class OnboardingHintService
      */
     public function checkFirstVisit(string $screenKey, int $userId): bool
     {
-        $dismissed = $this->parseDismissed(
-            DB::table('user_preferences')->where('user_id', $userId)->value('dismissed_hints')
-        );
+        $prefs = DB::table('user_preferences')->where('user_id', $userId)->first();
+
+        if ($prefs && ! $prefs->onboarding_hints) {
+            return false;
+        }
+
+        $dismissed = $this->parseDismissed($prefs === null ? null : $prefs->dismissed_hints);
 
         return ! in_array("visit_{$screenKey}", $dismissed, true);
+    }
+
+    /** Milestone buildings that explain themselves when finished: id => lang key stem. */
+    private const COMPLETION_POPUPS = [
+        31 => 'sciencelab',
+        44 => 'hangar',
+        52 => 'bar',
+        54 => 'uplink',
+    ];
+
+    /**
+     * Tutorial popup for the first completion of a milestone building (Labor, Hangar,
+     * Cantina, Uplink-Station): what is possible now. Null for other buildings, when
+     * the player switched hints off, or after it was shown once — the popup is marked
+     * as seen here (dismissed_hints key `built_{stem}`), so no extra dismiss route.
+     *
+     * @return array{title: string, text: string}|null
+     */
+    public function completionPopup(int $userId, int $buildingId): ?array
+    {
+        $stem = self::COMPLETION_POPUPS[$buildingId] ?? null;
+        $prefs = DB::table('user_preferences')->where('user_id', $userId)->first();
+
+        if ($stem === null || ($prefs && ! $prefs->onboarding_hints)) {
+            return null;
+        }
+
+        $key = "built_{$stem}";
+        if (in_array($key, $this->parseDismissed($prefs === null ? null : $prefs->dismissed_hints), true)) {
+            return null;
+        }
+
+        $this->dismissHint($userId, $key);
+
+        return [
+            'title' => __("colony.built_popup_{$stem}_title"),
+            'text' => __("colony.built_popup_{$stem}_text"),
+        ];
     }
 
     /** Convenience wrapper for acknowledging a first-visit popup (see checkFirstVisit()). */
@@ -401,7 +443,11 @@ class OnboardingHintService
      * would never fire. Returns null once the pool itself is empty (the real
      * "nothing left" state that lets hint_end_sol fire).
      *
-     * @return 'construction'|'research'|'navigation'|'economy'|null
+     * Construction only counts while a building can actually take the AP
+     * (constructionAvailable()); otherwise the hint points to the Hangar if it
+     * stands, or says honestly that construction is blocked ('blocked').
+     *
+     * @return 'construction'|'research'|'navigation'|'economy'|'hangar'|'blocked'|null
      */
     private function bestRemainingApPool(int $colonyId): ?string
     {
@@ -419,8 +465,48 @@ class OnboardingHintService
         if ($this->hasBuiltBuilding($colonyId, 52)) { // cantina gates trade offers
             return 'economy';
         }
+        if ($this->constructionAvailable($colonyId)) {
+            return 'construction';
+        }
 
-        return 'construction';
+        return $this->hasBuiltBuilding($colonyId, 44) ? 'hangar' : 'blocked';
+    }
+
+    /**
+     * True when at least one placed building below its max level can take construction
+     * AP right now: its AP cap for this Sol is not reached, the CC level allows the next
+     * level, and either its cycle is already paid (ap_spend > 0) or the colony holds the
+     * Regolith the cycle start costs. New placements are not counted here — a missing
+     * choice building has its own, higher-ranked hint.
+     */
+    private function constructionAvailable(int $colonyId): bool
+    {
+        $regolith = (int) DB::table('colony_resources')
+            ->where('colony_id', $colonyId)->where('resource_id', BuildingCostService::RES_REGOLITH)->value('amount');
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)->where('building_id', BuildingId::CommandCenter->value)->value('level');
+        $offset = (int) config('game.building_cc_level_offset', 0);
+
+        $rows = DB::table('colony_buildings as cb')
+            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $colonyId)
+            ->where(fn ($q) => $q->whereNotNull('cb.tile_x')->orWhere('cb.building_id', BuildingId::CommandCenter->value))
+            ->where(fn ($q) => $q->whereNull('b.max_level')->orWhereColumn('cb.level', '<', 'b.max_level'))
+            ->get(['cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x']);
+
+        foreach ($rows as $row) {
+            if ($this->apCapService->wouldExceed($colonyId, (int) $row->building_id, (int) $row->instance_id)) {
+                continue;
+            }
+            if ((int) $row->building_id !== BuildingId::CommandCenter->value && $ccLevel < (int) $row->level + 1 - $offset) {
+                continue;
+            }
+            if ((int) $row->ap_spend > 0 || $this->buildingCostService->levelupRegolithDue($row) <= $regolith) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** True when the colony has the given building finished (level >= 1). */
@@ -456,6 +542,8 @@ class OnboardingHintService
             'research' => 'colony.onboarding_hint_spend_ap_research',
             'navigation' => 'colony.onboarding_hint_spend_ap_navigation',
             'economy' => 'colony.onboarding_hint_spend_ap_economy',
+            'hangar' => 'colony.onboarding_hint_spend_ap_hangar',
+            'blocked' => 'colony.onboarding_hint_spend_ap_blocked',
             default => 'colony.onboarding_hint_spend_ap_construction',
         };
     }
@@ -465,6 +553,7 @@ class OnboardingHintService
         return match ($this->bestRemainingApPool($colonyId)) {
             'research' => '/techtree',
             'economy' => '/colony/bar',
+            'hangar' => '/colony/hangar',
             default => '/colony/view',
         };
     }
@@ -795,7 +884,8 @@ class OnboardingHintService
     {
         $threshold = (int) config('game.onboarding.hint_no_knowledge_after_tick', 8);
 
-        if ($currentTick < $threshold) {
+        // The Techtree stays locked until the Sciencelab stands — don't send the player there.
+        if ($currentTick < $threshold || ! $this->hasBuiltBuilding($colonyId, 31)) {
             return false;
         }
 

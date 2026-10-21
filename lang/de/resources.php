@@ -20,7 +20,7 @@ return [
     'popup_nx_desc' => 'Was der Nexus geliehen hat, will er zurück. Überschreitest du das Schuldenlimit, entzieht er die Konzession — ohne Gnade, ohne Vorlaufzeit.',
 
     'popup_sup_title' => 'Kolonisten',
-    'popup_sup_desc' => 'Kolonisten im Einsatz / Kapazität der Siedlung. Jedes Gebäude und jede Forschung bindet pro Stufe Leute — ein Gebäude schon ab dem Moment, in dem es platziert wird. Ist die Kapazität erschöpft, ruhen Neubau und Ausbau, bis Wohnhabitat oder Kommandozentrale wachsen. Geht Wohnraum verloren, stehen Kolonisten ohne Unterkunft da: Das Vertrauen sinkt, und nach kurzer Frist ziehen sie fort.',
+    'popup_sup_desc' => 'Kolonisten im Einsatz / Wohnkapazität der Siedlung. Die linke Zahl sind die Kolonisten, die Gebäude und Forschung binden (Arbeitsplätze), nicht die gesamte Bevölkerung — sie springt deshalb, sobald ein Gebäude platziert wird, denn es bindet seine Leute von Anfang an. Ist die Kapazität erschöpft, ruhen Neubau und Ausbau, bis Wohnhabitat oder Kommandozentrale wachsen. Geht Wohnraum verloren, stehen Kolonisten ohne Unterkunft da: Das Vertrauen sinkt, und nach kurzer Frist ziehen sie fort.',
     'popup_sup_source_cc' => 'Kommandozentrale',
     'popup_sup_source_housing' => 'Wohnhabitat',
     'popup_sup_source_knowledge' => 'Kenntnisse',
@@ -54,6 +54,9 @@ return [
     'popup_flow_agrardom' => 'Agrardom',
     'popup_flow_agronomy' => 'Agronomie',
     'popup_flow_colonists' => 'Kolonisten (Verpflegung)',
+    'popup_flow_subsidy' => 'Nexus-Subvention',
+    'popup_flow_relay' => 'Relaisvergütung (Uplink)',
+    'popup_flow_upkeep' => 'Berater-Unterhalt',
     'popup_flow_none' => 'Keine laufende Produktion — nur Import und Handel.',
 
     'popup_rg_title' => 'Regolith',

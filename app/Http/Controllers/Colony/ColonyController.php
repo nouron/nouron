@@ -177,6 +177,7 @@ class ColonyController extends BaseController
                 'colony_buildings.ap_cap_spent',
                 'buildings.name as building_key',
                 'buildings.max_level',
+                'buildings.supply_cost',
                 'buildings.ap_for_levelup',
                 'buildings.max_status_points',
                 'buildings.required_building_id',
@@ -193,6 +194,7 @@ class ColonyController extends BaseController
                     $b->required_building_level !== null ? (int) $b->required_building_level : null,
                     $buildingNames
                 );
+                $b->workplaces = $this->workplacesOf($b);
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
                 // The 0 -> 1 step of a placed site was paid on placement (T9) — 0 then.
                 $b->levelup_cost = $this->buildingCostService->levelupRegolithDue($b);
@@ -324,7 +326,7 @@ class ColonyController extends BaseController
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level', 'max_instances',
                 'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
-            ->filter(function ($b) use ($ccLevel, $placedCounts, $agrardomPlaced) {
+            ->filter(function ($b) use ($placedCounts) {
                 // CC already exists; Harvester is placed from a regolith tile.
                 if (! BuildingId::isBuildMenuBuilding((int) $b->id)) {
                     return false;
@@ -339,17 +341,11 @@ class ColonyController extends BaseController
                         return false;
                     }
                 }
-                if ($b->required_building_id === BuildingId::CommandCenter->value && $ccLevel < (int) ($b->required_building_level ?? 1)) {
-                    return false;
-                }
-                if (PathBuildingGateService::isPathBuilding((int) $b->id) && ! $agrardomPlaced) {
-                    return false;
-                }
 
                 return true;
             })
             ->map(fn ($b) => [
-                ...$this->pathGateLock((int) $b->id, $pathGateLocked, $pathGateLevel),
+                ...$this->buildLock($b, $ccLevel, $agrardomPlaced, $pathGateLocked, $pathGateLevel),
                 'building_id' => $b->id,
                 'key' => $b->name,
                 'label' => __('techtree.'.$b->name),
@@ -506,6 +502,15 @@ class ColonyController extends BaseController
             // never be downgraded by an also-earned salvage entitlement.
             $secondInstanceIsSalvageSourced = $this->harvesterEntitlementService->isSalvageSourced(Auth::id())
                 && ! $this->harvesterEntitlementService->hasPurchaseEntitlement(Auth::id());
+        }
+
+        // CC level gate for placement (the build menu lists such buildings locked, so the
+        // server must refuse them itself). Path buildings answer to path_building_gate below.
+        $neededCc = $this->requiredCcLevelToPlace($building);
+        $ccLevelNow = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', BuildingId::CommandCenter->value)->value('level');
+        if ($ccLevelNow < $neededCc && ! PathBuildingGateService::isPathBuilding((int) $data['building_id'])) {
+            return $this->fail('build_cc_required', __('colony.build_locked_cc', ['level' => $neededCc]), ['required_cc_level' => $neededCc]);
         }
 
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.
@@ -848,6 +853,7 @@ class ColonyController extends BaseController
                     'status_points' => $building->max_status_points ?? 20,
                 ]);
             $leveledUp = true;
+            $this->trustService->fireEvent($colony->id, 'building_level_up');
             // T30 §13.2: reaching hangar level 1 lands the gift drone (idempotent).
             if ($buildingId === BuildingId::Hangar->value) {
                 $this->hangarService->ensureGiftDrone($colony->id);
@@ -921,6 +927,9 @@ class ColonyController extends BaseController
             'building' => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
             'nav_unlocked' => $navUnlocked,
+            'completion_popup' => $leveledUp && $row->level === 0
+                ? $this->hintService->completionPopup(Auth::id(), $buildingId)
+                : null,
             'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
             'activeHint' => $this->resolveHint($colony->id),
             ...($leveledUp ? ['phase_progress' => $this->colonyService->getPhaseProgress($colony)] : []),
@@ -1409,6 +1418,31 @@ class ColonyController extends BaseController
      *
      * @return array{locked: bool, locked_reason: string|null}
      */
+    /**
+     * Why a build-menu entry cannot be placed yet (shown greyed out with the reason):
+     * CC level too low, missing Agrardom for path buildings, or the path-building gate.
+     * First reason wins; mirrored by the placeBuilding() checks.
+     */
+    private function buildLock(object $b, int $ccLevel, bool $agrardomPlaced, bool $pathGateLocked, int $pathGateLevel): array
+    {
+        $neededCc = $this->requiredCcLevelToPlace($b);
+        $reason = match (true) {
+            $ccLevel < $neededCc => __('colony.build_locked_cc', ['level' => $neededCc]),
+            PathBuildingGateService::isPathBuilding((int) $b->id) && ! $agrardomPlaced => __('colony.error_agrardom_required'),
+            default => $this->pathGateLock((int) $b->id, $pathGateLocked, $pathGateLevel)['locked_reason'],
+        };
+
+        return ['locked' => $reason !== null, 'locked_reason' => $reason];
+    }
+
+    /** CC level a building's placement needs (0 when it hangs off another building). */
+    private function requiredCcLevelToPlace(object $b): int
+    {
+        return (int) $b->required_building_id === BuildingId::CommandCenter->value
+            ? (int) ($b->required_building_level ?? 1)
+            : 0;
+    }
+
     private function pathGateLock(int $buildingId, bool $pathGateLocked, int $pathGateLevel): array
     {
         $locked = $pathGateLocked && PathBuildingGateService::isPathBuilding($buildingId);
@@ -1522,6 +1556,14 @@ class ColonyController extends BaseController
         return __("techtree.tier_{$key}_{$level}");
     }
 
+    /** Colonists this building occupies — same rule as ResourcesService::buildingWorkplaces(). */
+    private function workplacesOf(object $row): int
+    {
+        $levels = ResourcesService::reservesFirstLevel($row) ? 1 : (int) $row->level;
+
+        return $levels * (int) ($row->supply_cost ?? 0);
+    }
+
     private function fetchBuildingRow(int $colonyId, int $buildingId, int $instanceId = 1): object
     {
         $row = DB::table('colony_buildings')
@@ -1542,6 +1584,7 @@ class ColonyController extends BaseController
                 'colony_buildings.ap_cap_spent',
                 'buildings.name as building_key',
                 'buildings.max_level',
+                'buildings.supply_cost',
                 'buildings.max_instances',
                 'buildings.ap_for_levelup',
                 'buildings.max_status_points',
@@ -1559,6 +1602,7 @@ class ColonyController extends BaseController
             $row->required_building_level !== null ? (int) $row->required_building_level : null,
             DB::table('buildings')->pluck('name', 'id')
         );
+        $row->workplaces = $this->workplacesOf($row);
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->buildingCostService->levelupRegolithDue($row);
         $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
