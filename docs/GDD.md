@@ -3143,6 +3143,22 @@ Vollständige Liste: `docs/audit-implementierungsstand-2026-09-06.md` (A6–A8).
 
 ---
 
+## 19. Nexus-DB (Enzyklopädie)
+
+Die Nexus-DB ist die In-Game-Nachschlageseite des Spiels (Nav-Eintrag „Nexus-DB", Route `/nexus-db`). Sie ist erreichbar, sobald ein Run läuft, und erklärt in kurzen, aufklappbaren Einträgen die Spielbegriffe und ihr Zusammenspiel: Kolonisten-Kapazität, Vertrauen, Sol, Aktionspunkte, Verfall, Reparatur, Nexus und Kolonisten.
+
+**Prinzipien:**
+
+- Reine Erklärseite: Sie kennt keinen Spielstand (kein Lagerbestand, kein Forschungsfortschritt) und ist weder Tutorial noch Tooltip-Ersatz. Sie soll informierte Entscheidungen ermöglichen, ohne dass der Spieler das GDD oder externe Dokumente lesen muss.
+- Die Texte erklären Begriffe und Zusammenhänge. Konkrete Spielwerte stehen in `config/*.php` (canonical source of truth), nicht in den Seitentexten; die Seite darf deshalb nicht als Wertetabelle gelesen werden.
+- Ein Erstbesuch-Popup erklärt der Seite beim ersten Öffnen ihren Zweck (First-Visit-Mechanik, §16).
+
+**Abgrenzung:** „Nexus-DB" (Enzyklopädie) und „Nexus" (die Fraktion hinter Subvention, Kredit und Schulden) sind verschiedene Dinge, siehe `GLOSSAR.md`.
+
+**Offen:** Ob die Almanach-Artikel aus §17.3 künftig in der Nexus-DB erscheinen, ist nicht entschieden.
+
+---
+
 ## Siehe auch
 
 - **[GDD Balance & TODO Index](gdd-balance-checklist.md)** — Blockierende Tasks, Folgearbeiten, Playtest-Kalibrierung, offene Designfragen, Instrumentierung

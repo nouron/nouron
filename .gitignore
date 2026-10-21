@@ -38,3 +38,16 @@ public/img/_*/
 
 # Image generation prompts — not part of the codebase
 .prompts/
+
+# Coverage output (bin/phpunit --coverage-html)
+.coverage/
+
+# Local tool state (Aider, Antigravity) — not part of the codebase
+.aider*
+.antigravity-plugin/
+
+# Python bytecode (hook scripts under .claude/hooks/)
+__pycache__/
+
+# Local scratch notes
+scratch_log.txt
