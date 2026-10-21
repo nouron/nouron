@@ -73,3 +73,16 @@ Quelle: Owner-Handtest auf master `d7506293`, Eröffnung **Hangar-First**, Phase
 - **Erledigt (Teil 4):** B2 + B3 + A7 (Browser-Check mit uicheck: Menü öffnet per Tile-Klick, gesperrte Einträge mit Grund, A6-Badge/A8-Kürzel sichtbar, keine JS-Fehler; Colony-Tests 364 grün). Kleinigkeit: Kolonisten-Punkt überlappt leicht die Badge-Ecke.
 - **Erledigt (Teil 5):** B4 (Popup bei Fertigstellung, Schalter respektiert; Texte `colony.built_popup_*` sind Entwurf, content-writer). PR #389 offen.
 - **Offen:** A1-Browser-Repro, B1+B6 (Bot-Messung, Dauer mit Owner klären), B5-Design, Paket C. Browser-Check (uicheck) für alle JS/Blade-Änderungen dieser Branch steht aus.
+
+### Session 2 Ende (2026-10-20)
+- PR #389 offen (Branch `feat/handtest2-fixes`, zuletzt `b3acd8c1`): Paket A (außer A1), B2/B3/A7, B4, B5-Sofortfix, Baseline-Messung.
+- **A1 und B1:** Owner kann beides aktuell nicht reproduzieren — beim nächsten manuellen Playtest darauf achten (welches Gebäude/Stufe, erster Klick auf den Zyklus?). Kein Handlungsbedarf bis dahin.
+- **B6:** Spec vom game-designer: `docs/superpowers/specs/2026-10-20-b6-leerlauf-ap-hangar-cantina.md` (V0 Rest-AP-Hinweis ehrlich machen, V2 Hangar-Forschungs-Äquivalent, V1 = B5-Idee als Rückfall). Owner-Entscheidung steht aus (morgen).
+- **Offen für morgen:** B6-Entscheidung (V0 umsetzen?), B5-Design, Paket C, Pacing-Doc/ROADMAP-Verweis auf die B6-Spec.
+
+### Session 3 (2026-10-21, uncommittet auf `feat/handtest2-fixes`)
+- **B6/V0 erledigt:** `bestRemainingApPool` kennt jetzt 'hangar' und 'blocked' (`constructionAvailable`: AP-Deckel, CC-Gate, Rg-Bestand vs. Zyklusstart-Kosten; laufender bezahlter Zyklus zählt). Texte `onboarding_hint_spend_ap_hangar/_blocked` (Entwurf, content-writer prüfen). Neue Platzierungen zählen bewusst nicht (eigene Hinweise).
+- **B6/V2:** Owner findet "Ausbildung/Training" für Hangar gut — Design noch offen (game-designer, nach V0-Handtest).
+- **C1 erledigt:** Vertrauens-Ereignisse `building_level_up`/`research_level_up` verdrahtet (`AbstractTechnologyService::levelup` über Hook `levelupTrustEvent`, `ColonyController::investBuilding`). `treaty_signed`, `trade_success`, `trade_blocked` feuern weiterhin nie — Owner-Entscheidung offen.
+- **Event-System:** Nur Laravel-Event-Grundgerüst (`RunStarted/RunEnded/SolAdvanced`, keine Listener); Spielereignisse sind Journal (`EventService::createEvent`). Owner: Spiel bleibt rundenbasiert; Achievements sollen sofort bei Auslösung feuern. Vorschlag Stufe 1: `createEvent`/`fireEvent` dispatchen zusätzlich ein Laravel-Event (eigene Aufgabe + ADR).
+- **Regel:** Vor jedem Bot-Batch beim Owner nachfragen (Dauer, Läufe).

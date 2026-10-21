@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-21
+
+- Feat: Handtest-2 B6/V0: Der Rest-AP-Hinweis behauptet nicht mehr "AP in ein Gebäude investieren", wenn Regolith fehlt oder der Tages-Deckel erreicht ist. Er sagt das offen oder verweist auf den Hangar (Fundflüge, Missionen, Wartung). Spec: `docs/superpowers/specs/2026-10-20-b6-leerlauf-ap-hangar-cantina.md` (V2 "Ausbildung/Training" vom Owner gewünscht, Design folgt).
+- Fix: Handtest-2 C1: Die Vertrauens-Ereignisse `building_level_up` (+1) und `research_level_up` (+2) feuern jetzt, wenn eine Gebäude- bzw. Kenntnis-Stufe fertig wird (vorher konfiguriert, nie ausgelöst). Kontroll-Messung (24 Läufe): Phase-1-Ende unverändert.
+
 ## 2026-10-18
 
 - Fix: Handtest-2-Paket A (A2/A3): Fracht-Bestellung im Hangar aktualisiert Credits/AP in der Resourcebar, klappt "Nicht zugewiesen" auf und zeigt eine Meldung; das Credits-Popup zeigt Nexus-Subvention, Relaisvergütung und Berater-Unterhalt samt Netto (`ResourceFlowService`). Stand/Rest: `docs/superpowers/plans/2026-10-18-handtest2-handoff.md`.
