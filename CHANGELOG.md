@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-22
+
+- Doku: `lang/en` aufgeholt — 245 fehlende Schlüssel aus `lang/de` plus 12 verschachtelte im Protokoll (`comm_log`) ins Englische übertragen (Cantina, Kodex, Handel, Sol-Bericht, Hinweise, Sturm/Seuche); Platzhalter je Schlüssel gegen `lang/de` geprüft.
+
 ## 2026-10-21
 
 - Feat: Handtest-2 B6/V0: Der Rest-AP-Hinweis behauptet nicht mehr "AP in ein Gebäude investieren", wenn Regolith fehlt oder der Tages-Deckel erreicht ist. Er sagt das offen oder verweist auf den Hangar (Fundflüge, Missionen, Wartung). Spec: `docs/superpowers/specs/2026-10-20-b6-leerlauf-ap-hangar-cantina.md` (V2 "Ausbildung/Training" vom Owner gewünscht, Design folgt).

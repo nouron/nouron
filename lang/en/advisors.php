@@ -32,12 +32,16 @@ return [
     // Flash / JSON response messages
     'hired' => 'Advisor hired.',
     'fired' => 'Advisor dismissed.',
+    'promoted' => 'Advisor promoted.',
     'error_duplicate' => 'An advisor of this type is already active on this colony.',
     'error_slot_full' => 'No free advisor slot. Upgrade the Command Center level.',
     'error_insufficient_credits' => 'Not enough Credits to hire this advisor.',
     'error_dismissed_this_tick' => 'This advisor was just dismissed and cannot be rehired until the next Sol.',
     'error_generic' => 'Advisor could not be hired.',
     'error_path_building_missing' => 'The associated path building must be built and placed first.',
+    'error_promotion_not_eligible' => 'This advisor has not yet gained the experience needed for a promotion.',
+    'error_promotion_max_rank' => 'This advisor has already reached the highest rank.',
+    'error_promotion_insufficient_credits' => 'Not enough Credits for this promotion.',
     'desc_path_open' => 'No path building built — construct the Analytics Lab, Hangar, or Cantina first to unlock this slot.',
 
     // Path choice descriptions shown in the advisor carousel for path_open slots

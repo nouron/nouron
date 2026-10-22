@@ -48,6 +48,15 @@ return [
         ],
         'encounter_won' => 'Encounter resolved',
         'encounter_lost' => 'Encounter lost',
+        'encounter' => [
+            'storm_warning' => 'Storm warning',
+            'storm_resolved' => 'Storm — outcome decided',
+            'storm_abgewehrt' => 'Storm withstood',
+            'storm_beschaedigt' => 'Storm damage',
+            'storm_kritisch' => 'Storm — critical damage',
+            'instability_triggered' => 'Geological instability',
+            'plague_triggered' => 'Outbreak of disease',
+        ],
     ],
 
     // Nexus messages — nested (comm_log.nexus_events.onboarding.nexus_briefing.title)
@@ -156,6 +165,10 @@ return [
         'tile_salvaged' => 'Salvage work on a find advanced.',
         'tile_salvaged_done' => 'Find fully salvaged.',
         'colony_renamed' => 'Colony renamed.',
+        'instability_triggered' => 'Geological instability: harvester output disrupted for :sols Sols.',
+        'plague_triggered' => 'Outbreak of disease: the colony is at risk, action points temporarily reduced.',
+        'storm_warning_colony' => 'Storm warning: a storm is gathering over the colony. Well-maintained facilities will withstand it, neglected ones will not.',
+        'storm_resolved' => 'Storm over: the maintenance state of the facilities decided the outcome — :abgewehrt withstood, :beschaedigt damaged, :kritisch critical.',
     ],
 
     // Area icons (Bootstrap Icons class) — flat, keys are simple strings (no dots)
@@ -165,6 +178,7 @@ return [
         'trade' => 'bi-shop',
         'galaxy' => 'bi-stars',
         'run' => 'bi-flag',
+        'encounter' => 'bi-exclamation-triangle',
         'nexus' => 'bi-broadcast-pin',
         'merchant' => 'bi-bag',
         'default' => 'bi-journal-text',
