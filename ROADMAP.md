@@ -226,10 +226,9 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 **Ziel:** Strukturelle Erweiterungen auf Basis von echtem Spieler-Feedback aus dem Betrieb.
 
-**Voraussetzung:** Phase-5-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 6 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
+**Voraussetzung:** Phase-5-Betrieb mit echter Spielerbasis. Phase 6 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments. (Das Einzelkolonie-Konzept steht nicht mehr zur Debatte: eine Kolonie pro Spieler bleibt Grundprinzip.)
 
 - [ ] **Neue Schiffstypen** — über Drohne/Frachter/Korvette hinaus (die Sonde ist als Drohne, ID 85, bereits im Spiel); Schiffe kosten kein Supply. Kein Combat-System mehr — Voraussetzung ist ein erweiterter Missionskatalog, nicht Combat-Balancing
-- [ ] **Galaktische Politik** — über bilaterale Diplomatie hinaus: galaktische Institutionen, Abstimmungen, Fraktionspolitik; nur auf Basis von echtem Spielerverhalten definierbar
 
 ---
 

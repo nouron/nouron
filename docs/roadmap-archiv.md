@@ -575,3 +575,7 @@ Aus dem ROADMAP-Ideenpool genommen, weil sie auf entfernte Funktionen verweisen.
   - *Grund:* INNN-Messaging entfernt; das Journal läuft über `colony_log` (Kolonieprotokoll). Die Idee lebt in T38 (Event-System für Achievements) weiter.
 - [ ] **Außenposten** — `home_colony_id` pro Flotte (GDD §12); ob Außenposten kommen, hängt davon ab ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird; minimal halten (kein vollständiges Kolonie-System)
   - *Grund:* Flotten wurden am 2026-06-20 entfernt (`home_colony_id` pro Flotte existiert nicht mehr); eine Kolonie pro Spieler bleibt Grundprinzip.
+- [ ] **Galaktische Politik** — über bilaterale Diplomatie hinaus: galaktische Institutionen, Abstimmungen, Fraktionspolitik; nur auf Basis von echtem Spielerverhalten definierbar
+  - *Grund:* Galaxie-/Systemkarte und Fraktionen wurden entfernt, das Spiel bleibt Singleplayer.
+- *Phase 6, Voraussetzung (alter Wortlaut):* „Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll.“
+  - *Grund:* Eine Kolonie pro Spieler bleibt Grundprinzip; Außenposten sind gestrichen.
