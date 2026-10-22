@@ -66,6 +66,8 @@ return [
     'error_find_not_scanned' => 'The signal has not been scanned yet — scan it first.',
     'error_find_too_large' => 'This find is too heavy for the ship.',
     'error_find_in_flight' => 'A ship is already on its way to this find.',
+    'error_harvester_instance_full' => 'The colony already has the maximum number of Harvesters — a salvage would yield nothing.',
+    'error_invalid_difficulty' => 'This difficulty level is not available for this mission.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 

@@ -113,6 +113,12 @@ return [
     'detail_status' => 'Status',
     'detail_level' => 'Level',
     'detail_required' => 'Requires',
+    'detail_unlocks_next_level' => 'Unlocked from next level',
+    // Split of detail_unlocks_next_level into "current" vs "next" (techtree
+    // sidebar only) — detail_unlocks_next_level above stays untouched, it is
+    // still used by the colony sidebar (hexview.blade.php).
+    'detail_effects_current_level' => 'Effects of the current level',
+    'detail_effects_next_level' => 'Effects of the next level',
     'detail_close' => 'Close',
 
     // ── UI ────────────────────────────────────────────────────────────────────
@@ -161,6 +167,7 @@ return [
     'error_insufficient_supply' => 'Not enough free supply capacity — expand a Residential Habitat first.',
     'error_max_level' => 'Maximum level already reached.',
     'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
+    'error_building_ap_cap' => 'The construction crew cannot do more at this building today. It continues tomorrow — or at another building.',
     'error_building_cc_gate' => 'Command Center level too low for this building level — a building level needs at least the same Command Center level.',
     'error_insufficient_ap' => 'Not enough AP available for this investment.',
     'error_use_colony_view' => 'Building, upgrading, repairing and demolishing all happen in the tile panel of the colony view.',
