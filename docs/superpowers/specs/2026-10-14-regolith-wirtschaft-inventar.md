@@ -194,7 +194,7 @@ CC-Gates nach Seeder (`database/seeders/data/buildings.php:4-16`); `game-referen
 | Schiffe | nur AP (1 AP = +2 SP), kein Rg | `game.ship_repair` (`config/game.php:342-346`) | impl. |
 | Händler-Reparaturkit | +30 SP für 400 Cr (spart ca. 30 Rg + 30 AP) | `game.merchant.items.repair_kit` (`config/game.php:996`) | impl. |
 | Levelskalierte Reparatur `1 + floor((level−1)/3)` AP je SP | — | GDD §13.5 Nachrüstoption | **Idee** |
-| Wartungsplan (Leitstelle: ausgewählte Gebäude verfallen 1 Sol nicht) | spart Reparatur-Rg | Handoff `2026-09-27-a44-t9-handoff.md:23` | **Idee/geplant** (nicht begonnen) |
+| Wartungsplan (Leitstelle: ausgewählte Gebäude verfallen 1 Sol nicht) | spart Reparatur-Rg | ROADMAP Ideenpool „Wartungsplan (Leitstelle)“ | **Idee/geplant** (nicht begonnen) |
 
 ### 2.4 Cantina, Handel und sonstige Rg-Ausgaben
 
