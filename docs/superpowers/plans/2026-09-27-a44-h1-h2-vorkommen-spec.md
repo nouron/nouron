@@ -1,6 +1,6 @@
 # A44 Schritt H1+H2: Regolith-Vorkommen-Redesign — Design-Spec
 
-Stand 2026-09-27. Vorstufe für `game-developer` (TDD-Implementierung). Bezug: ROADMAP.md „A44 Mehr Variation der Startkarte" (Owner-Entscheidungen 2026-09-25), `docs/superpowers/plans/2026-09-27-a44-t9-handoff.md`. Schritt „RNG-Fix" (`App\Support\SeededRandom`) ist bereits gemergt und Voraussetzung für alles Folgende.
+Stand 2026-09-27. Vorstufe für `game-developer` (TDD-Implementierung). Bezug: ROADMAP.md „A44 Mehr Variation der Startkarte" (Owner-Entscheidungen 2026-09-25). Schritt „RNG-Fix" (`App\Support\SeededRandom`) ist bereits gemergt und Voraussetzung für alles Folgende.
 
 Diese Spec ändert **keinen Code**. Sie ist die Entscheidungsgrundlage, aus der `game-developer` TDD-Testfälle ableitet.
 
