@@ -558,3 +558,20 @@ Erledigte Punkte (`- [x]`) samt Unterpunkten, unverändert aus `ROADMAP.md` übe
 ### Nachträglich als erledigt erkannt (2026-10-22)
 
 - [x] ✅ (geprüft 2026-10-22: `race_id` kommt im Repo nirgends mehr vor, Schema ist die Baseline-Migration) **DB-Cleanup: `race_id` entfernen** — Rassen wurden konzeptuell abgekündigt (GDD §3, zusammen mit ENrg/LNrg/ANrg). `race_id` auf `users`-Tabelle ist historisches Schema ohne Auswertung → Migration zum Entfernen der Spalte.
+
+### Gestrichene und umgeschriebene Ideen (Owner-Entscheidung 2026-10-22)
+
+Aus dem ROADMAP-Ideenpool genommen, weil sie auf entfernte Funktionen verweisen. Wortlaut unverändert, Begründung darunter.
+
+- [ ] **NPC-Vereinbarungen** — `innn_message_types.relationship_effect` für Nexus-Beziehungsstufen auswerten; `treaty_signed`-Moral-Event für Handels-/Schutzabkommen mit NPC-Fraktionen (Händler, Schmuggler) aktivieren; kein Krieg/Allianz-System (inkompatibel mit Singleplayer-Roguelike-Konzept, GDD §1.1). `war_declared` als Moral-Event-Key deprecaten.
+  - *Stattdessen:* ROADMAP-Ideenpool „Cantina-Vereinbarungen“ (umgeschrieben).
+- [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
+  - *Grund:* Mehrspieler-Handel/Gruppen sind Singleplayer-Scope-fremd (kein Schema, kein Bedarf).
+- [ ] **Moral-Erweiterung** — Bevölkerungszufriedenheit als eigener Wert, Revolutionsrisiko, fraktionsspezifische Moralmodifikatoren (GDD §13)
+  - *Stattdessen:* ROADMAP-Ideenpool „Vertrauens-Erweiterung“ (umbenannt, Inhalt bereinigt).
+- [ ] **Handelsbeschränkungen vollständig durchsetzen** — `restriction`-Feld Werte 1/2/3 korrekt auswerten (aktuell ignoriert)
+  - *Grund:* Das alte Handelssystem mit `restriction`-Feld wurde durch Cantina/Nexus-Fallback ersetzt.
+- [ ] **Aktionslog** — kein persistentes, spieler-aktions-bezogenes Audit-Log (Gebäude gebaut, Handel abgeschlossen etc.); ursprünglich als „Bekannte Lücke" Ende Phase 2 identifiziert (`docs/roadmap-archiv.md`), seither nicht aktiv verfolgt. Das Kolonieprotokoll (`/comm-log`, Phase 3j) deckt einen Teil ab (chronologisches Ereignis-Log), aber kein dediziertes Aktions-Audit. Bei der Roadmap-Restrukturierung 2026-09-22 hierher übernommen, damit der Punkt nicht in Vergessenheit gerät.
+  - *Grund:* INNN-Messaging entfernt; das Journal läuft über `colony_log` (Kolonieprotokoll). Die Idee lebt in T38 (Event-System für Achievements) weiter.
+- [ ] **Außenposten** — `home_colony_id` pro Flotte (GDD §12); ob Außenposten kommen, hängt davon ab ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird; minimal halten (kein vollständiges Kolonie-System)
+  - *Grund:* Flotten wurden am 2026-06-20 entfernt (`home_colony_id` pro Flotte existiert nicht mehr); eine Kolonie pro Spieler bleibt Grundprinzip.
