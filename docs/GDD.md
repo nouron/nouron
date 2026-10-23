@@ -333,6 +333,10 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 > **Verlege-Vorschau mit Ertragsvergleich (Playtest-Review 2026-07-11):** Der Vorschaupfeil zeigt neben den AP-Kosten auch den Ertragsvergleich aktuelles vs. Ziel-Tile (z. B. „3 AP · 10→15 Rg"). Grund: Der Onboarding-Hint lehrt die Mechanik korrekt, gab dem Spieler aber keine Entscheidungsgrundlage — er jagte ergiebigeren Tiles hinterher und verbrannte Bau-AP. Statt einer paternalistischen Warnung informiert die Vorschau die Abwägung (Catan-Designlinie: Entscheidungen ohne Optimalpfad). Ergänzend nennt der First-Click-Tooltip die Opportunitätskosten („lohnt nur, wenn das Ziel spürbar ergiebiger ist").
 
+### Baumenü: gesperrte Gebäude
+
+Das Baumenü zeigt auch Gebäude, die der Spieler noch nicht platzieren darf, und nennt den Grund: Pfadgebäude über dem Bau-Gate (§13 „Slot-System") und Gebäude, die eine höhere Kommandozentrale-Stufe verlangen. Der Server lehnt ein solches Platzieren weiterhin ab; die Sperre im Menü verhindert nur den Klick auf etwas, das ohnehin abgelehnt würde. Ein Klick auf ein freies Feld der Karte öffnet das Baumenü mit diesem Feld als Bauplatz.
+
 ### Bauregeln: Zone-Trennung
 
 **Kernregel:** Ressource-Tiles und Terrain-Tiles sind strikt getrennt — kein Gebäude darf auf einem falschen Tile-Typ platziert werden.
@@ -1849,6 +1853,7 @@ Mindestumfang:
 | **Überkapazitäts-Warnung**, solange Kolonisten obdachlos sind (Anzahl, verbleibende Sole bis zur Abwanderung), danach **Unterbesetzung** (unbesetzte Arbeitsplätze, Produktionsabschlag) | Macht Frist und Folgen des Wohnraumverlusts sichtbar und planbar (§6) |
 | Konzessions-Prognose („bei aktuellem Kurs in 12 Solen unterschritten") | Macht den Fail-State aus §18.2 vorhersehbar statt überraschend |
 | Fortschritt der Run-Aufgaben | Verbindet Tagesentscheidung mit Run-Ziel (§15) |
+| **Rest-AP-Hinweis**: welcher AP-Pool noch Reserve hat und wofür er nutzbar ist | Der Hinweis nennt nur Verwendungen, die gerade möglich sind: kein „in ein Gebäude investieren“, wenn Regolith fehlt oder der Tages-Deckel erreicht ist; stattdessen der ehrliche Grund oder der Verweis auf den Hangar (§16.2) |
 
 **Zum Restertrag — er trägt den Kipppunkt, nicht die Kosten.** Der Late-Game-Kipppunkt aus 13.2 entsteht nicht dadurch, dass Projekte spät teurer werden, sondern dadurch, dass sich ihr Ertrag nicht mehr amortisiert: Ein hochstufiges Produktionsgebäude, das spät fertig wird, liefert nur noch kleine Restertrag-Mengen — das ist der Grund, es sein zu lassen. Wenn das Dashboard neben der verbleibenden Bauzeit auch den geschätzten Restertrag zeigt, entsteht der Phasenwechsel **ohne jede Zahlenänderung**. Ohne die Anzeige müsste man ihn über Kosten erzwingen, was das Fortschrittsgefühl aus 13.3 beschädigen würde.
 
@@ -2557,7 +2562,7 @@ Die Hunger-Spirale wird eskalierend bestraft — ein anhaltender Hunger führt z
 
 Events können Vertrauen temporär verändern. Die Wirkung hält genau **1 Sol** an (danach wirken nur noch Dauereffekte). Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Sol-Berechnung addiert und am Ende des Sols verworfen.
 
-Datenmodell: `innn_events` kann über das `data`-Feld bereits Vertrauen-Deltas tragen. Kein Schemabedarf.
+Datenmodell: Ereignisse stehen in `trust_events` (Kolonie, Sol, Typ). Beim Speichern meldet das Spiel sie zusätzlich als Laravel-Event, damit Beobachter (z. B. Achievements) sofort reagieren können (ADR 0007); die Berechnung bleibt rundenbasiert.
 
 **Geplante Event-Kategorien:**
 
@@ -2570,7 +2575,8 @@ Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Fehlschläge und Zwisc
 > **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** dämpft `encounter_lost` und `colony_threatened` um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
 
 **Rationale für neue Events:**
-- `trade_blocked` macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
+- `trade_blocked` und `treaty_signed` sind angelegt, werden aber derzeit von keiner Spielregel ausgelöst (Handelsbeschränkungen sind gestrichen; Verträge kommen frühestens mit den Cantina-Vereinbarungen, ROADMAP Ideenpool).
+- `building_level_up` und `research_level_up` werden ausgelöst, sobald eine Gebäude- bzw. Kenntnis-Stufe fertig wird (Wirkung ab dem nächsten Sol, wie jedes Ereignis).
 
 > ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich einen kleinen, aber stetigen Bonus, der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
 
