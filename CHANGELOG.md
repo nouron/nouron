@@ -2,6 +2,7 @@
 
 ## 2026-10-23
 
+- Feat: T40 Vertrauens-Nachwirkung — Ereignisse können über mehrere Sole ausklingen (Profil je Ereignis-Typ, optionaler Deckel; `TrustService::eventLines()` als eine Quelle für Berechnung und Anzeige). Standard bleibt der Ein-Sol-Effekt, das 5-Sol-Profil `fade5` ist vorbereitet, aber nicht zugewiesen. Die Kommandozentrale zeigt Verlauf und Summe der wirkenden Ereignisse.
 - Doku/Texte: T39 abgearbeitet — „Kommandozentrale“ statt „Kontrollzentrum“ im Sol-Bericht, Lenns Geschlecht im Kodex vereinheitlicht, veraltete `lang/en`-Texte an `lang/de` angeglichen. ROADMAP: T23/T24 (Bot) ins Archiv, Branch-Entscheidung vermerkt.
 - Doku: Entwurf der Tester-Anleitung für die Closed Beta (`docs/beta/tester-anleitung.md`, R17) mit Platzhaltern für Link, Code und Kanal.
 - Feat: T38 Stufe 1 — Journal-Zeilen (`createEvent`) und Vertrauens-Ereignisse (`fireEvent`) melden sich beim Speichern zusätzlich als Laravel-Event (`JournalEventRecorded`, `TrustEventFired`); Grundlage für Achievements, die sofort reagieren. ADR 0007. Keine Listener, keine Änderung am Spielablauf.

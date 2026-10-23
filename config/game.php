@@ -786,8 +786,20 @@ return [
             ['min' => -60, 'max' => -21, 'factor' => 0.90],
             ['min' => -100, 'max' => -61, 'factor' => 0.80],
         ],
-        // Event trust effects (one-shot, active for exactly 1 tick).
-        // Multiple events of the same key in one tick do NOT stack — strongest wins.
+        // Aftereffect profiles (T40): share of an event's delta per Sol of age (index 0 = the Sol it
+        // takes effect). 'instant' = one Sol only (the original behaviour). 'fade5' is prepared for
+        // the measurement step and not assigned to any event yet.
+        'event_profiles' => [
+            'instant' => [100],
+            'fade5' => [100, 80, 60, 40, 20],
+        ],
+        // Profile per event type; types not listed use 'instant'.
+        'event_profile' => [],
+        // Cap on the summed event part of trust (± value); null = no cap. Height pending measurement.
+        'event_cap' => null,
+        // Event trust effects (one-shot; the profile above decides how many Sols they last).
+        // Multiple events of the same key fired in one tick do NOT stack — strongest wins;
+        // the same key fired in different Sols adds up while their aftereffects overlap.
         'events' => [
             'building_level_up' => 1,
             'research_level_up' => 2,

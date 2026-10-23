@@ -9,6 +9,7 @@ use App\Services\ColonyService;
 use App\Services\NexusImportService;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
+use App\Services\TrustService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ class CommandCenterController extends BaseController
         private readonly AdvisorService $advisorService,
         private readonly NexusImportService $nexusImportService,
         private readonly TradeAdvantagePresenter $tradeAdvantagePresenter,
+        private readonly TrustService $trustService,
     ) {
         parent::__construct($tick);
     }
@@ -110,18 +112,21 @@ class CommandCenterController extends BaseController
             })
             ->values();
 
-        $trustEvents = DB::table('trust_events')
-            ->where('colony_id', $colony->id)
-            ->orderByDesc('tick')
-            ->orderByDesc('id')
-            ->limit(5)
-            ->get(['tick', 'event_type'])
-            ->map(fn ($row) => [
-                'tick' => (int) $row->tick,
-                'description' => __('trust.event_'.$row->event_type),
-                'delta' => (int) config('game.trust.events.'.$row->event_type, 0),
+        // Trust events that act on the next Sol (T40): same lines calculateTrust() sums, so the
+        // shown numbers are the acting numbers. 'following' = values still to come.
+        $trustLines = collect($this->trustService->eventLines($colony->id, $this->getTick() + 1))
+            ->map(fn (array $line) => [
+                'tick' => $line['tick'],
+                'description' => __('trust.event_'.$line['type']),
+                'delta' => $line['value'],
+                'following' => $line['following'],
             ])
+            ->filter(fn (array $line) => $line['delta'] !== 0 || $line['following'] !== [])
+            ->sortByDesc('tick')
             ->values();
+        $trustEventsSum = $trustLines->sum('delta');
+        $trustEventCap = config('game.trust.event_cap');
+        $trustEvents = $trustLines;
 
         // Nexus-Import widget (GDD §3) — gated by Uplink-Station Lv1, checked server-side
         // in ColonyController::nexusImportCompounds() too; here only for the disabled UI state.
@@ -149,6 +154,8 @@ class CommandCenterController extends BaseController
             'lastSolDeltas',
             'advisors',
             'trustEvents',
+            'trustEventsSum',
+            'trustEventCap',
             'uplinkLevel',
             'nexusImport',
         ));

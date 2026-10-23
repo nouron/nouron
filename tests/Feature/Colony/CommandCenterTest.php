@@ -3,6 +3,7 @@
 namespace Tests\Feature\Colony;
 
 use App\Models\User;
+use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -148,18 +149,37 @@ class CommandCenterTest extends TestCase
         $response->assertSee($advisorName);
     }
 
-    public function test_trust_events_widget_shows_recent_events(): void
+    public function test_trust_events_widget_shows_events_acting_next_sol(): void
     {
+        $next = app(TickService::class)->getTickCount() + 1;
         DB::table('trust_events')->insert([
-            ['colony_id' => self::COLONY_ID, 'tick' => 5, 'event_type' => 'stipend_small'],
-            ['colony_id' => self::COLONY_ID, 'tick' => 4, 'event_type' => 'well_fed'],
+            ['colony_id' => self::COLONY_ID, 'tick' => $next, 'event_type' => 'stipend_small'],
+            ['colony_id' => self::COLONY_ID, 'tick' => $next - 1, 'event_type' => 'well_fed'], // 1-Sol profile: already over
         ]);
 
         $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
 
-        $response->assertViewHas('trustEvents', function ($events) {
-            return $events->count() === 2 && $events->first()['tick'] === 5;
-        });
+        $response->assertViewHas('trustEvents', fn ($events) => $events->count() === 1 && $events->first()['tick'] === $next);
+        $response->assertViewHas('trustEventsSum', (int) config('game.trust.events.stipend_small'));
+    }
+
+    public function test_trust_events_widget_shows_fading_aftereffect_and_following_values(): void
+    {
+        config([
+            'game.trust.event_profiles.test' => [100, 50, 25],
+            'game.trust.event_profile.research_level_up' => 'test', // delta +2
+        ]);
+        $next = app(TickService::class)->getTickCount() + 1;
+        DB::table('trust_events')->insert([
+            ['colony_id' => self::COLONY_ID, 'tick' => $next - 1, 'event_type' => 'research_level_up'],
+        ]);
+
+        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+
+        $response->assertViewHas('trustEvents', fn ($events) => $events->count() === 1
+            && $events->first()['delta'] === 1
+            && $events->first()['following'] === [1]);
+        $response->assertViewHas('trustEventsSum', 1);
     }
 
     public function test_run_progress_widget_shows_sol_and_nexus_debt(): void

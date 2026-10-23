@@ -37,4 +37,7 @@ return [
     'widget_trust_events_title' => 'Trust Events',
     'widget_trust_events_none' => 'No events yet.',
     'widget_trust_events_sol' => 'Sol :sol',
+    'widget_trust_events_following' => 'then: :values',
+    'widget_trust_events_sum' => 'Events total',
+    'widget_trust_events_capped' => 'capped at ±:cap',
 ];
