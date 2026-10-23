@@ -372,6 +372,9 @@ Bau-Gate: Platzieren und Ausbau n → n+1 (n ≥ 1) erfordern `freies Supply ≥
 | `game.trust.events.colonists_left` | −3 | einmalig je Abwanderung |
 | `game.trust.events.colonists_dismissed` | −2 | einmalig je Wegschicken |
 | `game.trust.events.treaty_signed` | +3 | reserviert (Cantina-Vereinbarungen), feuert noch nirgends; `trade_blocked` entfiel 2026-10-23 |
+| `game.trust.event_profiles` | `instant` [100]; `fade5` [100, 80, 60, 40, 20] | Nachwirkung: Prozent des Ereigniswerts je Sol seit Auslösung (T40) |
+| `game.trust.event_profile` | leer (alle `instant`) | Zuordnung Ereignis-Typ → Profil; `fade5` ist vorbereitet, aber noch nicht zugewiesen (Messschritt offen) |
+| `game.trust.event_cap` | aus (`null`) | Deckel auf den Gesamt-Ereignisanteil (±), Höhe nach Messung |
 
 ```
 Arbeitsplätze = siehe Abschnitt 10 (inkl. Reserve)

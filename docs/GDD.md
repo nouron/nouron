@@ -2533,7 +2533,7 @@ Aktive Aktion des Direktors: Ein Teil der Kolonie-Credits kann jederzeit direkt 
 
 **Staffelung:** drei Stufen (Klein, Mittel, Groß), jeweils mit eigenem Event-Key (`stipend_small`, `stipend_medium`, `stipend_large`) — Kosten und Vertrauens-Bonus steigen mit der Stufe. Exakte Beträge: `docs/game-reference.md` Abschnitt 12–13 / `config/game.php → trust.events` und `stipend.tiers`.
 
-Die Wirkung folgt der Standard-Event-Logik (siehe "Einflussfaktoren: Ereignisse" unten): genau **1 Sol**, danach verworfen.
+Die Wirkung folgt der Standard-Event-Logik (siehe "Einflussfaktoren: Ereignisse" unten): sie wirkt im ersten Sol voll und klingt danach je nach Nachwirkungsprofil aus (Standard: nur dieser eine Sol).
 
 **Nur eine Zulage pro Sol.** Die drei Stufen sind unterschiedliche Event-Keys (nicht Varianten desselben Keys) — das bestehende Dedup in `TrustService::eventContribution` fasst nur *gleiche* Keys zusammen und summiert *unterschiedliche* Keys auf. Ohne zusätzliche Sperre könnten z. B. "Klein" und "Groß" im selben Sol zu einem kombinierten Vertrauens-Bonus addiert werden. Das ist **nicht gewollt** und muss bei der Implementierung als eigene Regel ergänzt werden: pro Kolonie und Sol ist höchstens eine Zulagen-Stufe auslösbar (Fire-Time-Guard im Service, nicht im bestehenden Event-Dedup). Dieser Punkt ist ein expliziter Implementierungs-Hinweis, kein bereits vorhandenes Verhalten.
 
@@ -2560,7 +2560,16 @@ Die Hunger-Spirale wird eskalierend bestraft — ein anhaltender Hunger führt z
 
 ### Einflussfaktoren: Ereignisse (Events)
 
-Events können Vertrauen temporär verändern. Die Wirkung hält genau **1 Sol** an (danach wirken nur noch Dauereffekte). Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Sol-Berechnung addiert und am Ende des Sols verworfen.
+Events können Vertrauen temporär verändern. Die Wirkung beginnt im ersten Sol voll und **klingt über mehrere Sole aus** (Nachwirkung, Owner-Entscheidung 2026-10-23, Spec `docs/superpowers/specs/2026-10-23-vertrauens-nachwirkung.md`). Wie lange und wie stark, legt ein Profil je Ereignis-Typ fest: der Anteil des Ereigniswertes pro Sol seit Auslösung. Ereignisse ohne Profil (derzeit alle) wirken wie bisher nur einen Sol; die Nachwirkung wird erst nach einer Messung scharf geschaltet. Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Sol-Berechnung aus den Ereigniszeilen neu berechnet.
+
+**Regeln der Nachwirkung:**
+- Gleicher Typ im selben Auslöse-Sol zählt nur einmal (der stärkste). Gleicher Typ aus verschiedenen Solen **addiert sich**, solange sich die Nachwirkungen überlappen.
+- Die Spitze bleibt erhalten, die Nachwirkung kommt zusätzlich; die Mehrwirkung wird gemessen.
+- Jede Ereigniszeile wird einzeln gerundet (von der Null weg), damit angezeigte Zeilen und Summe übereinstimmen.
+- Ein optionaler Deckel begrenzt den Gesamt-Ereignisanteil nach oben und unten (Sicherheitsnetz gegen Rückschlag-Ketten); seine Höhe wird gemessen.
+- Der Leitstellen-Abschlag wirkt auf den Ereigniswert vor dem Profil, also auf die ganze Nachwirkung.
+- `well_fed` bleibt beim Ein-Sol-Profil (täglich wiederholt, sonst ein versteckter Dauerbonus). Das Stipend wirkt im ersten Sol voll; die Nachwirkung kommt obendrauf, die Preis-Leistung wird nach der Messung geprüft.
+- Die Kommandozentrale zeigt die wirkenden Ereigniszeilen mit Verlauf („danach +1, +1“) und der Summe.
 
 Datenmodell: Ereignisse stehen in `trust_events` (Kolonie, Sol, Typ). Beim Speichern meldet das Spiel sie zusätzlich als Laravel-Event, damit Beobachter (z. B. Achievements) sofort reagieren können (ADR 0007); die Berechnung bleibt rundenbasiert.
 

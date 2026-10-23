@@ -301,48 +301,93 @@ class TrustService
     }
 
     /**
-     * Sum event contributions for the tick.
-     * Multiple events of the same type do NOT stack — only the strongest (by absolute value) counts.
+     * Sum of the event part of trust for the tick: the shown lines, optionally capped.
      */
     private function eventContribution(int $colonyId, int $tick): int
     {
-        $cfg = config('game.trust.events', []);
-        if (empty($cfg)) {
-            return 0;
+        $sum = array_sum(array_column($this->eventLines($colonyId, $tick), 'value'));
+
+        $cap = config('game.trust.event_cap');
+        if ($cap !== null) {
+            $sum = max(-(int) $cap, min((int) $cap, $sum));
         }
 
-        $events = DB::table('trust_events')
-            ->where('colony_id', $colonyId)
-            ->where('tick', $tick)
-            ->pluck('event_type');
+        return $sum;
+    }
 
-        // Group by type, keep strongest delta (by abs value)
-        $byType = [];
-        foreach ($events as $type) {
-            $delta = $cfg[$type] ?? 0;
-            if (! isset($byType[$type]) || abs($delta) > abs($byType[$type])) {
-                $byType[$type] = $delta;
+    /**
+     * Event rows that still act at $tick, one line per (type, fired Sol), with the value they
+     * contribute now and the values still to come. Single source for calculateTrust() and the
+     * trust popup (displayed number = acting number). Same type fired in the same Sol: strongest
+     * wins; different Sols add up. Security Hub mitigation applies to the delta before the profile.
+     *
+     * @return list<array{type: string, tick: int, age: int, value: int, following: list<int>}>
+     */
+    public function eventLines(int $colonyId, int $tick): array
+    {
+        $cfg = config('game.trust.events', []);
+        if (empty($cfg)) {
+            return [];
+        }
+
+        $profiles = config('game.trust.event_profiles', ['instant' => [100]]);
+        $assigned = config('game.trust.event_profile', []);
+        $profileOf = fn (string $type): array => $profiles[$assigned[$type] ?? 'instant'] ?? [100];
+
+        $window = max(array_map('count', $profiles) ?: [1]);
+
+        $rows = DB::table('trust_events')
+            ->where('colony_id', $colonyId)
+            ->whereBetween('tick', [$tick - $window + 1, $tick])
+            ->get(['tick', 'event_type']);
+
+        // Group by (type, fired Sol), keep strongest delta (by abs value)
+        $byKey = [];
+        foreach ($rows as $row) {
+            $delta = $cfg[$row->event_type] ?? 0;
+            $key = $row->event_type.'|'.$row->tick;
+            if (! isset($byKey[$key]) || abs($delta) > abs($byKey[$key]['delta'])) {
+                $byKey[$key] = ['type' => $row->event_type, 'tick' => (int) $row->tick, 'delta' => $delta];
             }
         }
 
         // SecurityHub (building_id=53) mitigates negative trust events by 25%.
         $mitigationPct = (float) config('buildings.securityHub.event_mitigation_pct', 0);
-        if ($mitigationPct > 0) {
-            $hubActive = DB::table('colony_buildings')
-                ->where('colony_id', $colonyId)
-                ->where('building_id', 53)
-                ->where('level', '>', 0)
-                ->exists();
-            if ($hubActive) {
-                foreach ($byType as $type => $delta) {
-                    if ($delta < 0) {
-                        $byType[$type] = (int) round($delta * (1 - $mitigationPct));
-                    }
-                }
+        $mitigate = $mitigationPct > 0 && DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 53)
+            ->where('level', '>', 0)
+            ->exists();
+
+        $lines = [];
+        foreach ($byKey as $e) {
+            $delta = $e['delta'];
+            if ($mitigate && $delta < 0) {
+                $delta = (int) round($delta * (1 - $mitigationPct));
             }
+
+            $profile = $profileOf($e['type']);
+            $age = $tick - $e['tick'];
+            if (! isset($profile[$age])) {
+                continue;
+            }
+
+            // Each line is rounded on its own (away from zero) so lines and sum always agree.
+            $valueAt = fn (int $i): int => (int) round($delta * $profile[$i] / 100);
+            $value = $valueAt($age);
+            $following = [];
+            for ($i = $age + 1; $i < count($profile); $i++) {
+                $following[] = $valueAt($i);
+            }
+
+            if ($value === 0 && array_sum($following) === 0) {
+                continue;
+            }
+
+            $lines[] = ['type' => $e['type'], 'tick' => $e['tick'], 'age' => $age, 'value' => $value, 'following' => $following];
         }
 
-        return array_sum($byType);
+        return $lines;
     }
 
     private function lookupMultiplier(int $trust, string $configKey): float

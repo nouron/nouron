@@ -37,4 +37,7 @@ return [
     'widget_trust_events_title' => 'Vertrauens-Ereignisse',
     'widget_trust_events_none' => 'Noch keine Ereignisse.',
     'widget_trust_events_sol' => 'Sol :sol',
+    'widget_trust_events_following' => 'danach: :values',
+    'widget_trust_events_sum' => 'Ereignisse gesamt',
+    'widget_trust_events_capped' => 'begrenzt auf ±:cap',
 ];

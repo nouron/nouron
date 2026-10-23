@@ -220,14 +220,32 @@
                 <ul class="cc-list">
                     @foreach ($trustEvents as $e)
                         <li class="cc-list-item">
-                            <span>{{ __("command_center.widget_trust_events_sol", ["sol" => $e["tick"] + 1]) }}
-                                — {{ $e["description"] }}</span>
+                            <span>
+                                {{ __("command_center.widget_trust_events_sol", ["sol" => $e["tick"] + 1]) }}
+                                — {{ $e["description"] }}
+                                @if ($e["following"])
+                                    <small class="cc-card-hint">
+                                        {{ __("command_center.widget_trust_events_following", ["values" => collect($e["following"])->map(fn($v) => ($v > 0 ? "+" : "") . $v)->implode(", ")]) }}
+                                    </small>
+                                @endif
+                            </span>
                             <span
                                 class="ap-chip {{ $e["delta"] > 0 ? "ap-chip--trust-pos" : ($e["delta"] < 0 ? "ap-chip--trust-neg" : "ap-chip--trust-neu") }}">
                                 {{ $e["delta"] > 0 ? "+" : "" }}{{ $e["delta"] }}
                             </span>
                         </li>
                     @endforeach
+                    <li class="cc-list-item">
+                        <strong>{{ __("command_center.widget_trust_events_sum") }}</strong>
+                        <span>
+                            {{ $trustEventsSum > 0 ? "+" : "" }}{{ $trustEventsSum }}
+                            @if ($trustEventCap !== null && abs($trustEventsSum) >= (int) $trustEventCap)
+                                <small class="cc-card-hint">
+                                    {{ __("command_center.widget_trust_events_capped", ["cap" => (int) $trustEventCap]) }}
+                                </small>
+                            @endif
+                        </span>
+                    </li>
                 </ul>
             @endif
         </article>
