@@ -2,6 +2,7 @@
 
 ## 2026-10-23
 
+- Doku/Texte: T39 abgearbeitet — „Kommandozentrale“ statt „Kontrollzentrum“ im Sol-Bericht, Lenns Geschlecht im Kodex vereinheitlicht, veraltete `lang/en`-Texte an `lang/de` angeglichen. ROADMAP: T23/T24 (Bot) ins Archiv, Branch-Entscheidung vermerkt.
 - Feat: T38 Stufe 1 — Journal-Zeilen (`createEvent`) und Vertrauens-Ereignisse (`fireEvent`) melden sich beim Speichern zusätzlich als Laravel-Event (`JournalEventRecorded`, `TrustEventFired`); Grundlage für Achievements, die sofort reagieren. ADR 0007. Keine Listener, keine Änderung am Spielablauf.
 - Fix: Vertrauens-Ereignis `trade_blocked` gestrichen (nichts löste es aus; Handelsbeschränkungen sind entfernt). Tests nutzen `encounter_lost` als negatives Beispiel. `treaty_signed` bleibt für die Cantina-Vereinbarungen.
 - Doku: GDD zahlenfrei nachgezogen (Baumenü-Sperren, Fertigstellungs-Popups, Rest-AP-Hinweis, ausgelöste Vertrauens-Ereignisse); `trade_blocked`/`treaty_signed` als reserviert markiert (T37).

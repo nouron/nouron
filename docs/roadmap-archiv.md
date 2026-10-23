@@ -579,3 +579,8 @@ Aus dem ROADMAP-Ideenpool genommen, weil sie auf entfernte Funktionen verweisen.
   - *Grund:* Galaxie-/Systemkarte und Fraktionen wurden entfernt, das Spiel bleibt Singleplayer.
 - *Phase 6, Voraussetzung (alter Wortlaut):* „Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll.“
   - *Grund:* Eine Kolonie pro Spieler bleibt Grundprinzip; Außenposten sind gestrichen.
+
+## Erledigt 2026-10-23
+
+- **T23 Bot: `tile_occupied` bei `place_building`** — behoben, `BotStrategy::freeZoneTile()` schließt die Kolonie-Mitte (0,0) und belegte Felder aus.
+- **T24 Bot: `barOfferCandidate` prüft Bezahlbarkeit nicht** — behoben, Test `BotStrategyBarOfferTest`.

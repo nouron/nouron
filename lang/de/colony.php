@@ -448,7 +448,7 @@ return [
     'bar_information_veteran_narrative_1' => 'Deva erzählt beiläufig von einem alten Einsatz — nichts, was dir hier weiterhilft.',
     'bar_information_veteran_narrative_2' => 'Deva nickt dir knapp zu und schweigt den Rest des Gesprächs.',
     'bar_information_ai_researcher_nav_discount' => 'Lenn tippt etwas in ein Datenpad und reicht es dir — die nächste Erkundung ist vorbereitet.',
-    'bar_information_ai_researcher_knowledge_boost' => 'Lenn murmelt etwas über Kartierungsalgorithmen und schiebt dir ihre Notizen zu.',
+    'bar_information_ai_researcher_knowledge_boost' => 'Lenn murmelt etwas über Kartierungsalgorithmen und schiebt dir seine Notizen zu.',
     'bar_information_ai_researcher_narrative_1' => 'Lenn verliert sich in einer Theorie, der du nicht ganz folgen kannst.',
     'bar_information_ai_researcher_narrative_2' => 'Lenn wirkt abgelenkt und wechselt schnell das Thema.',
 
@@ -705,7 +705,7 @@ return [
     'sol_report_screen2_title' => 'Fortschritt der Phase',
     'sol_report_phase1_title' => 'Phase 1 — Grundaufbau',
     'sol_report_phase2_title' => 'Phase 2 — Nexus-Direktiven',
-    'sol_report_phase1_cc_level' => 'Kontrollzentrum auf Stufe 2',
+    'sol_report_phase1_cc_level' => 'Kommandozentrale auf Stufe 2',
     'sol_report_phase1_harvester' => 'Harvester gebaut',
     'sol_report_phase1_housing' => 'Wohnhabitat gebaut',
     'sol_report_phase1_agrardom' => 'Agrardom gebaut',
