@@ -12,6 +12,8 @@ Abgeschlossene Arbeit liegt in den Archiv-Dateien:
 
 ## Aktuelle Prioritäten (Vorschlag, Stand 2026-10-22 — Owner passt die Reihenfolge an)
 
+Hinweis: Neu ist T41 (Pfad-Vertiefung, Spec fertig, P1–P6 offen) unter „Aktive Arbeit“; die Einordnung in diese Tabelle entscheidet der Owner.
+
 | # | Thema | Nächster Schritt | Entscheidet |
 |---|---|---|---|
 | 1 | Handtest-2-Nachlauf (T37) | Manueller Playtest: A1/B1 (Rg-Anzeige beim Ausbau) beobachten, Rest-AP-Hinweis und Fertigstellungs-Popups prüfen | Owner |
@@ -61,6 +63,16 @@ Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und geh
 - [ ] **T38 Event-System für Achievements** (Owner-Idee 2026-10-21; **Stufe 1 umgesetzt 2026-10-23**: `JournalEventRecorded` und `TrustEventFired`, ADR 0007, Stufe 2 offen) — Ist: Laravel-Events nur als Grundgerüst (`RunStarted`/`RunEnded`/`SolAdvanced`, keine Listener, ADR 0003); Spielereignisse sind Journal-Zeilen (`EventService::createEvent`, ca. 30 Schlüssel). Das Spiel bleibt dauerhaft rundenbasiert (auch bei Mehrspieler); Achievements sollen **sofort bei Auslösung** feuern, nicht erst in der Rundenberechnung; Listener nur beobachtend/speichernd, damit die Rundenberechnung deterministisch bleibt. Stufe 1: `createEvent`/`fireEvent` dispatchen zusätzlich ein Laravel-Event, dazu kurze ADR; Stufe 2: wichtige Spielmomente als echte Domain-Events; Umbau von `GameTick` wird nicht empfohlen. — Klein (Stufe 1)
 - [ ] **T39 Texte: Restpunkte** (Befunde content-writer 2026-10-22, #392; 2026-10-23 abgearbeitet: Kommandozentrale-Text, Lenns Geschlecht, `lang/en` angeglichen) — Bestehende `lang/en`-Texte sind gegenüber `lang/de` veraltet (alte AP-Typen „Navigation/Construction/Research/Economy AP“, „hire a Trader“, `onboarding_hint_build_priority`/`_6`/`_analytik`/`_agrardome`, „Scientist“ vs. „Analyst“); Lenns Geschlecht ist im Kodex von `lang/de` uneinheitlich; `sol_report_phase1_cc_level` sagt „Kontrollzentrum“ statt „Kommandozentrale“. — Klein
 - [ ] **T40 Vertrauens-Nachwirkung** (Owner-Wunsch 2026-10-23; **Mechanik umgesetzt 2026-10-23**, Profil `fade5` vorbereitet aber nicht zugewiesen — offen: Messung mit Bot-Batch, dann Zuweisung, Deckelhöhe, Stipend-Preisprüfung, Sol-Bericht) — Vertrauens-Ereignisse wirken nicht nur 1 Sol, sondern träge über mehrere Sole und laufen aus. Spec des game-designers: `docs/superpowers/specs/2026-10-23-vertrauens-nachwirkung.md` (Stufenprofil pro Ereignis, Deckel, Popup-Block „Laufende Nachwirkungen“). Owner-Entscheidungen stehen am Ende der Spec; Umsetzung hinter Standardprofil (verhaltensgleich), danach ein Messschritt (Bot-Batch nur nach Rückfrage). — Mittel
+- [ ] **T41 Pfad-Vertiefung (Vertrautheit/Routine)** (Owner-Skizze 2026-10-23; Spec `docs/superpowers/specs/2026-10-23-pfad-vertiefung.md`, PR #403; GDD §4b fertig) — Jedes Pfadgebäude bekommt dieselbe Struktur aus fünf Stufen je Ding: Labor Kenntnisse (AP-Investition), Cantina Vertrautheit je Figur und Hangar Routine je Missionsfamilie (beide durch Nutzung, pro Lauf; Kodex bleibt dauerhaft und getrennt). Version 1: Balken mit Schwellen, Gebäudestufe als Deckel, keine freiwillige AP-Investition. Jede Umsetzung TDD (Test zuerst). Bot-Batch nur nach Rückfrage und Dauerschätzung. — Mittel–Groß
+  - [x] **P0** ✅ 2026-10-23: Owner hat F1–F7 beantwortet, GDD nachgezogen (Owner, game-designer) — Klein
+  - [ ] **P1** Datenmodell: Zähler pro Lauf für Figur und Missionstyp, Schwellen in Config (db-migration-agent, game-developer) — Mittel
+  - [ ] **P2** Hangar: Missionsfamilien-Zuordnung in `config/missions.php`, Routine zählt beim Abschluss (game-developer) — Klein
+  - [ ] **P3** Cantina: Vertrautheit zählt an den bestehenden Kodex-Auslösern (game-developer) — Mittel
+  - [ ] **P4** UI: Vertrautheitsbalken an der Figur, Routine-Balken am Missionstyp, jeweils mit nächster Schwelle (ui-specialist) — Mittel
+  - [ ] **P5** Texte, Glossar, `docs/game-reference.md`, Sol-Bericht-Zeile (content-writer) — Klein
+  - [ ] **P6** Version 2: Stufen-Wirkung Hangar, Figur-Wirkungen Cantina (eigener Design-Schritt), ggf. freiwillige Übung (game-designer, danach Umsetzung) — Groß
+  - Vermerk: **Berater-Außendienst und Berater-Burnout** sind als Features zurückgestellt und aus dem GDD genommen (beide standen nur im GDD, nie im Code); Originaltext in `docs/gdd/archiv-berater-aussendienst-burnout.md`. `unavailable_until_tick` bleibt (Nexus-Sanktion).
+  - **Bezüge (Annahmen des Projektmanagers, keine Owner-Entscheidung):** (a) T37/B6/V2 „Ausbildung/Training“: Die Routine ist laut Spec die allgemeinere Antwort auf die Hangar-Frage, löst die Leerlauf-AP von Hangar-First aber nicht von selbst, weil der Aufstieg nur kostet, was die Mission ohnehin kostet. (b) T40: berührt sich nur über die Cantina-Begegnungen (gleiche Auslöser), keine inhaltliche Abhängigkeit erkannt. **Frage an den Owner:** Läuft V2 weiter als eigener Schritt neben T41, oder wird V2 in P6 aufgenommen? Und: Reihenfolge von T41 gegenüber V2 und T40-Messung?
 
 ### Closed Beta — Vorbereitung (Priorität, Owner-Entscheidung 2026-09-30)
 
