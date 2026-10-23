@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\JournalEventRecorded;
 use App\Models\ColonyLog;
 use App\Services\Concerns\ValidatesId;
 use Illuminate\Support\Collection;
@@ -74,6 +75,15 @@ class EventService
             'is_read' => ! $isNexus,
             'created_at' => now(),
         ]);
+
+        JournalEventRecorded::dispatch(
+            $entry->id,
+            (int) $entry->user,
+            (int) $entry->tick,
+            (string) $entry->event,
+            (string) $entry->area,
+            (string) $entry->parameters,
+        );
 
         return $entry->id;
     }

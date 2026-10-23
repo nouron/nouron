@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\TrustEventFired;
 use App\Models\Colony;
 use Illuminate\Support\Facades\DB;
 
@@ -209,6 +210,8 @@ class TrustService
             'tick' => $tick,
             'event_type' => $eventType,
         ]);
+
+        TrustEventFired::dispatch($colonyId, $eventType, $tick);
     }
 
     /**
