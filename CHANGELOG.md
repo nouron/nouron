@@ -3,6 +3,7 @@
 ## 2026-10-23
 
 - Feat: T38 Stufe 1 — Journal-Zeilen (`createEvent`) und Vertrauens-Ereignisse (`fireEvent`) melden sich beim Speichern zusätzlich als Laravel-Event (`JournalEventRecorded`, `TrustEventFired`); Grundlage für Achievements, die sofort reagieren. ADR 0007. Keine Listener, keine Änderung am Spielablauf.
+- Doku: Spec zur Vertrauens-Nachwirkung (game-designer, Ereignisse wirken über mehrere Sole; Messstart 5 Sole) und ROADMAP T40; Ideenpool: Kommandozentrale-Detailgrad nach Beratern.
 - Fix: Vertrauens-Ereignis `trade_blocked` gestrichen (nichts löste es aus; Handelsbeschränkungen sind entfernt). Tests nutzen `encounter_lost` als negatives Beispiel. `treaty_signed` bleibt für die Cantina-Vereinbarungen.
 - Doku: GDD zahlenfrei nachgezogen (Baumenü-Sperren, Fertigstellungs-Popups, Rest-AP-Hinweis, ausgelöste Vertrauens-Ereignisse); `trade_blocked`/`treaty_signed` als reserviert markiert (T37).
 
