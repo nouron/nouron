@@ -1673,7 +1673,7 @@ Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gi
    - **Erfolg:** Das Angebot wird als verhandelt markiert; seine Konditionen sind jetzt Basisangebot plus Handelsvorteil plus Verhandlungs-Aufschlag (`negotiate_bonus`, s.o.) — als eigene Zeile im Dialog, nicht in die Mengen des Angebots eingefroren. Der Handel selbst führt sich **noch nicht** aus — der Verhandeln-Button wird gesperrt, der Annehmen-Button bleibt aktiv und zeigt jetzt 0 AP (die Kosten wurden bereits mit der Verhandlung bezahlt). Erst ein Klick auf Annehmen überträgt die Ressourcen.
    - **Fehlschlag:** Kein Handel — die Give-Ressourcen bleiben beim Spieler. Das Angebot ist **sofort und vollständig verloren** (gelöscht/verfallen) — kein zweiter Versuch, auch kein nachträgliches "Annehmen" zu den alten Konditionen. Die AP sind verbraucht. Verloren geht damit der Handelsvorteil *und* die Ware, die man haben wollte.
    - **Nicht verhandelbar:** Verkaufslose mit Credits-Erlös (Festpreis, s.o.).
-4. **Kein Trust-Malus.** `trade_blocked` (§13/§14) bleibt für einen anderen Fall reserviert (blockierter Handel, nicht gescheiterte Verhandlung) — eine fehlgeschlagene Verhandlung soll bestraft, aber nicht zusätzlich über Vertrauen abgestraft werden, sonst wird der Button nie benutzt.
+4. **Kein Trust-Malus.** Auch ein anderes Handels-Ereignis (`trade_blocked`) gibt es nicht mehr (2026-10-23 gestrichen) — eine fehlgeschlagene Verhandlung soll bestraft, aber nicht zusätzlich über Vertrauen abgestraft werden, sonst wird der Button nie benutzt.
 
 **Wann sich Verhandeln lohnt — und wann nicht (Designziel A13):** Verhandeln soll eine echte Entscheidung sein, kein Dauer-Klick und kein toter Button. Weil beide Wege gleich viele AP kosten, gibt es nichts zu verrechnen; verglichen werden nur die Ausgänge: sicher den Handelsvorteil, oder mit einer Chance den größeren Vorteil und sonst gar nichts. Ob das im Schnitt besser ist, hängt an drei Dingen:
 
@@ -2575,7 +2575,7 @@ Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Fehlschläge und Zwisc
 > **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** dämpft `encounter_lost` und `colony_threatened` um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
 
 **Rationale für neue Events:**
-- `trade_blocked` und `treaty_signed` sind angelegt, werden aber derzeit von keiner Spielregel ausgelöst (Handelsbeschränkungen sind gestrichen; Verträge kommen frühestens mit den Cantina-Vereinbarungen, ROADMAP Ideenpool).
+- `trade_blocked` wurde gestrichen (Handelsbeschränkungen gibt es nicht mehr). `treaty_signed` ist angelegt, wird aber derzeit von keiner Spielregel ausgelöst (Verträge kommen frühestens mit den Cantina-Vereinbarungen, ROADMAP Ideenpool).
 - `building_level_up` und `research_level_up` werden ausgelöst, sobald eine Gebäude- bzw. Kenntnis-Stufe fertig wird (Wirkung ab dem nächsten Sol, wie jedes Ereignis).
 
 > ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich einen kleinen, aber stetigen Bonus, der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
