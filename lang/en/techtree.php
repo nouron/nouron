@@ -73,7 +73,7 @@ return [
 
     // ── Personnel (advisor type keys) ─────────────────────────────────────────
     'techs_engineer' => 'Engineer',
-    'techs_scientist' => 'Scientist',
+    'techs_scientist' => 'Analyst',
     'techs_pilot' => 'Pilot',
     'techs_trader' => 'Consul',
     'techs_strategist' => 'Strategist',
@@ -129,8 +129,8 @@ return [
     'costs and requirements' => 'Costs and requirements',
 
     // ── AP hints (when no AP available) ──────────────────────────────────────
-    'hint_no_research_ap' => 'No Research AP available — hire a Scientist advisor.',
-    'hint_no_construction_ap' => 'No Construction AP available — hire an Engineer advisor.',
+    'hint_no_research_ap' => 'No AP left.',
+    'hint_no_construction_ap' => 'No AP left.',
 
     // ── Advisor chip in techtree ──────────────────────────────────────────────
     'advisor_hired' => 'Hired',

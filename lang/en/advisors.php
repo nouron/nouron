@@ -6,9 +6,9 @@ return [
     'engineer_plural' => 'Engineers',
     'engineer_desc' => 'He knows every bolt in this installation. Without an Engineer, construction stalls — with one, buildings go up and stay in shape.',
 
-    'scientist' => 'Scientist',
-    'scientist_plural' => 'Scientists',
-    'scientist_desc' => 'She thinks in models, measurements, and questions nobody has asked yet. The Scientist drives the research lab forward — without her, knowledge stays at yesterday\'s level.',
+    'scientist' => 'Analyst',
+    'scientist_plural' => 'Analysts',
+    'scientist_desc' => 'She thinks in models, measurements, and questions nobody has asked yet. The Analyst drives the research lab forward — without her, knowledge stays at yesterday\'s level.',
 
     'pilot' => 'Pilot',
     'pilot_plural' => 'Pilots',
@@ -45,15 +45,15 @@ return [
     'desc_path_open' => 'No path building built — construct the Analytics Lab, Hangar, or Cantina first to unlock this slot.',
 
     // Path choice descriptions shown in the advisor carousel for path_open slots
-    'path_label_scientist' => 'Scientist path',
+    'path_label_scientist' => 'Analyst path',
     'path_label_pilot' => 'Pilot path',
     'path_label_trader' => 'Consul path',
-    'path_choice_scientist' => 'Build the Analytics Lab, then hire a Scientist — opens the tech tree and grants Research AP. The first foundation for scientific progress.',
-    'path_choice_pilot' => 'Build the Hangar, then hire a Pilot — opens exploration missions and Navigation AP. The first step outside the colony zone.',
-    'path_choice_trader' => 'Build the Cantina, then hire a Consul — opens trade offers and Economy AP. The fastest route to Compounds and extra income.',
-    'path_unlock_scientist' => 'Tech tree + knowledge research + knowledge AP',
-    'path_unlock_pilot' => 'Missions + hangar events + Navigation AP',
-    'path_unlock_trader' => 'Trade + cantina events + Economy AP',
+    'path_choice_scientist' => 'Build the Analytics Lab, then hire an Analyst — opens the tech tree and grants AP. The first foundation for scientific progress.',
+    'path_choice_pilot' => 'Build the Hangar, then hire a Pilot — opens exploration missions and AP for exploration. The first step outside the colony zone.',
+    'path_choice_trader' => 'Build the Cantina, then hire a Consul — opens trade offers and AP. The fastest route to Compounds and extra income.',
+    'path_unlock_scientist' => 'Tech tree + knowledge research + AP',
+    'path_unlock_pilot' => 'Missions + hangar events + AP',
+    'path_unlock_trader' => 'Trade + cantina events + AP',
 
     // Hire/fire confirmation dialogs
     'dialog_hire_title' => 'Hire advisor',
@@ -69,7 +69,7 @@ return [
     'dialog_cancel' => 'Cancel',
 
     // Hire-time warnings: AP-type has no consuming building yet
-    'warning_no_sciencelab' => 'You don\'t have an Analytics Lab yet — Research AP will go unused for now.',
-    'warning_no_hangar' => 'You don\'t have a Hangar yet — Navigation AP will only be used for exploration for now.',
+    'warning_no_sciencelab' => 'You don\'t have an Analytics Lab yet — AP for knowledge will go unused for now.',
+    'warning_no_hangar' => 'You don\'t have a Hangar yet — AP will only be used for exploration for now.',
     'error_not_found' => 'Advisor not found.',
 ];
