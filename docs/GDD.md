@@ -651,7 +651,7 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 | Bezahlt mit | AP im Voraus | AP + Organika + Verschleiß, laufend | Credits, laufend |
 | Risiko | langsamer Start, Ertrag kommt spät | Logistikaufwand jeden Sol, Schiffe verschleißen | Angebotslage ist nicht vollständig planbar |
 
-**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihre Wirkung liegt in den Kenntnis-Effekten (§10); der frühere Supply-Cap-Bonus entfällt seit 2026-10-15, mehr Ausbautiefe kommt allein aus Wohnraum (§6). Der Analytiker liefert zusätzlich den stärksten Außenmissions-Bonus des Spiels (eine Kenntnis steigt gratis um ein Level, §13). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
+**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihre Wirkung liegt in den Kenntnis-Effekten (§10); der frühere Supply-Cap-Bonus entfällt seit 2026-10-15, mehr Ausbautiefe kommt allein aus Wohnraum (§6). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
 
 **Pfad B — Hangar.** Der Pfad der aktiven Versorgung. Schiffe erschließen den Missionskatalog (§8b) und damit die breiteste Ressourcenbasis im Spiel — Regolith, Organika, Credits, Almanach-Funde und Tile-Aufklärung kommen alle über Missionen. Der Preis ist dauerhafter Aufwand: jede Mission kostet AP und Proviant, Schiffe verschleißen und wollen repariert werden. Wer diesen Pfad zuerst geht, hat früh viele Hebel, muss sie aber jeden Sol bedienen.
 
@@ -659,7 +659,38 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 
 > ⚠️ **Konsul-Credits-Hebel gestrichen, Cantina-Credits-Hebel neu geplant (Owner-Entscheidung F3, präzisiert 2026-09-09):** Der frühere „Handelsvertrag" (garantierte Dauer-Sol-Einnahme sobald Konsul + Cantina Lv1 stehen) wurde ersatzlos gestrichen — er war bedingungslos und ohne weiteres Zutun stärker als die Hebel von Analytiker und Raumfahrer und verletzte damit die Paritäts-Anforderung unten. Wichtig: Die Paritäts-Anforderung gilt für **Pfad C**, nicht für den Konsul selbst — der Berater hat bereits eigenständigen Wert (`trader_discount`, Werkstoffe-Bias, §13). Der Ersatz-Hebel hängt deshalb bewusst an der **Cantina als Gebäude/Pfad-Identität**, nicht am Konsul-Rang: der **Cantina-Begegnungspool** (§12, Kanal 1). Details dort; diese Tabelle und die folgenden Absätze sind entsprechend aktualisiert.
 
-### Paritäts-Anforderung: jeder Pfad muss die Grundbedürfnisse decken
+### Vertiefung: dieselbe Struktur in allen drei Pfadgebäuden
+
+> **Status: Entwurf (Owner-Skizze 2026-10-23).** Noch nicht implementiert. Umsetzungsplan und offene Fragen: `docs/superpowers/specs/2026-10-23-pfad-vertiefung.md`.
+
+Jedes Pfadgebäude bietet mehrere **Dinge**, und jedes Ding lässt sich in fünf Stufen vertiefen. Im Labor ist das längst so: sieben Kenntnisse, jede in Stufen erforschbar (§10). Cantina und Hangar bekommen dieselbe Bauart:
+
+| | **Labor** | **Cantina** | **Hangar** |
+|---|---|---|---|
+| Das Ding | Kenntnis | Figur | Missionstyp |
+| Fortschritts-Begriff | Kenntnis-Level | **Vertrautheit** | **Routine** |
+| Wie man aufsteigt | AP investieren (planbar) | Gespräche und Anliegen mit der Figur | Missionen dieses Typs fliegen |
+| Was eine Stufe bringt | Kenntnis-Effekt (§10) | Zugang zu mehr von der Figur (Dialog, Kodex, später Anliegen mit besserer Belohnung) Missionsvarianten mit lukrativerem Ertrag, aber mit eigenem Preis |
+
+**Das ist ein Strukturmodell, kein Bildschirm.** Der Spieler sieht nirgends ein gemeinsames Raster. Jede Oberfläche zeigt den Fortschritt in ihrer eigenen Form: das Labor im Techtree, die Cantina als Balken an der Figur, der Hangar als Balken am Missionstyp. Nur die Bauart ist gleich, damit der Spieler das Prinzip einmal lernt.
+
+**Warum das gut ist.**
+- *Parität (§4b):* Jedes Pfadgebäude bekommt eine eigene, dauerhafte Fortschrittsspur und damit eine eigene Antwort auf „Wohin investiere ich?“. Das bedient die Idee gleichwertiger Eröffnungen, ohne Labor-Forschung in Hangar oder Cantina zu kopieren.
+- *Breite gegen Tiefe* bleibt die Entscheidung überall: wenige Dinge tief oder viele flach.
+- *Verständlichkeit:* angezeigte Stufe = wirkende Stufe, die nächste Schwelle ist sichtbar.
+
+**Begriffe.** „Vertrauen“ bleibt allein die Kolonie-Stimmung (§14). Die Bindung an eine Figur heißt **Vertrautheit**, die Übung mit einem Missionstyp **Routine** — sonst würde ein vierter „Level“ oder ein zweites „Vertrauen“ den Spieler verwirren. Der Balken an der Figur ist ein Vertrautheitsbalken.
+
+**Cantina.** Alle Figuren (`config('characters')`) behalten ihre Vielfalt und können eine Vertrautheit aufbauen. Die Vertrautheit wächst über dieselben Begegnungen, die heute den Kodex-Fortschritt auslösen (§12, Kodex-Trigger je `game_role`). Der Barkeeper ist die Figur ohne Zufallsspawn und bildet seine vier Bonus-Stufen schon heute aus wiederholtem Austausch — er ist der Prototyp dieses Prinzips. Was jede einzelne Figur auf höheren Stufen mechanisch bringt, wird separat entworfen und gehört nicht in die erste Version; die erste Version macht den Fortschritt nur sichtbar.
+
+**Hangar.** Der Missionskatalog (§8b) wird zu fünf **Missionstypen** (Familien: Erkundung, Bergung, Versorgung, Handel und Kurier, Schutz) gebündelt, damit nicht jede Einzelmission eine eigene Fortschrittsspur braucht. Höhere Stufen schalten für die Missionen der Familie eine **Variante mit lukrativerem Ertrag** frei, die die bisherige ersetzt — Fortschritt wie bei den Kenntnissen, keine Wahl zwischen Varianten. Die Entscheidung liegt in Breite gegen Tiefe über die Familien. Der Missionsdialog zeigt die Variante mit ihren echten Zahlen; ein leicht wachsender Proviantbedarf hält den Organika-Hebel intakt. Die Ertragssteigerung bleibt klein (Credits-Inflation, §4b) und liefert keinen Regolith. Die Routine eines Typs wächst mit abgeschlossenen Missionen dieses Typs; Erfolge zählen mehr als Fehlschläge. Sie ist das Gegenstück zum Flugprogramm-Vorschlag aus der B6-Spec (V2).
+
+**Grenzen (Absicht).**
+- **Kein zweiter Prozentbonus-Stapel.** Raumfahrer-Rang und Kenntnis-Level wirken schon auf Erfolgschance und Proviant (§8b). Eine Stufe darf das nicht ein drittes Mal geben. Sie schaltet bevorzugt *Neues* frei (Varianten, Dialoge, Zugang), statt vorhandene Werte zu erhöhen.
+- **Nutzung statt Zufall.** Der Spieler muss die Vertrautheit steuern können (er sucht die Figur auf, nimmt das Anliegen an). Reine Glücks-Begegnungen wären kein Fortschritt.
+- **Ein Lauf, eine Spur.** Die Stufen gelten pro Lauf. Dauerhaft bleibt nur, was schon dauerhaft ist (Kodex).
+- **Gebäudestufe als Deckel.** Cantina und Hangar haben weniger Ausbaustufen als die Vertiefung hat Stufen; die Zuordnung steht in der Spec (Frage F5).
+
 
 **Dies ist die zentrale Designregel der Pfadwahl.** Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob*. Eine Kolonie braucht unabhängig vom gewählten Pfad Regolith, Credits, Organika und Vertrauen. Hat ein Pfad auf eines dieser Grundbedürfnisse keine Antwort, wird der Pfad, der sie hat, faktisch zur Pflicht — und die Pfadwahl zur Scheinentscheidung.
 
@@ -988,7 +1019,6 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 |---------|-------------|----------|---------------|
 | Gebäude | Passiver Decay (`decay_rate` SP/Sol) | Zeitablauf | Repair-AP investieren |
 | Schiffe | Verschleiß (`wear_per_sol` aus config/ships.php) | Aktiver Einsatz (Außenmissionen) | Reparatur (nur AP, pro Klick) |
-| Berater | Burnout-Wahrscheinlichkeit (steigt mit `active_ticks`) | Kumulierte Aktivität | Erholungsphase, Rang-Aufstieg dämpft Risiko |
 | Kenntnisse | **kein Decay** — permanentes Wissen | — | — |
 
 ### Konfiguration
@@ -1020,7 +1050,6 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Arbeitspl�
 | AP | Arbeitsleistung pro Sol | täglich | mehr/bessere Berater, Kostenboni (§13.3) |
 | Gebäude-Decay | Stand von Gebäuden; skaliert mit der **Anzahl Gebäudetypen**, nicht mit deren Level | täglich | Reparatur (AP + Regolith pro SP, siehe §4) |
 | Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Sol auf Außenmission | Reparatur (1 AP/Klick) |
-| Berater-Burnout | AP-Kapazität bei Überbelastung | probabilistisch | Erholungsphase abwarten |
 
 Die Mechanismen sind bewusst unabhängig voneinander — mit einer Ausnahme, die **keine** ist: Decay und Bauplatz greifen beide an der Breite an (siehe „Die drei Begrenzungsachsen" oben). Das ist gewollt: Breite kostet einmalig Bauplatz und dauerhaft Instandhaltung, Tiefe kostet einmalig AP und dauerhaft nichts, dafür permanent Supply-Cap.
 
@@ -1090,7 +1119,7 @@ Weitere Umsetzungsentscheidungen (Owner-bestätigt 2026-09-24):
 
 ## 7. Verfall & Entropie
 
-Entropie ist ein übergreifendes Designprinzip: Ohne aktive Pflege degradiert die Kolonie schrittweise. Die drei Entropie-Vektoren sind **Gebäude-Decay**, **Schiffs-Verschleiß** und **Berater-Burnout**. Kenntnisse verfallen nicht — einmal erarbeitetes Wissen bleibt permanent (kein SP-System auf Kenntnissen).
+Entropie ist ein übergreifendes Designprinzip: Ohne aktive Pflege degradiert die Kolonie schrittweise. Die zwei Entropie-Vektoren sind **Gebäude-Decay** und **Schiffs-Verschleiß** (Berater-Burnout ist zurückgestellt, siehe unten). Kenntnisse verfallen nicht — einmal erarbeitetes Wissen bleibt permanent (kein SP-System auf Kenntnissen).
 
 ### Gebäude-Decay
 
@@ -1204,33 +1233,9 @@ Jeder Schiffstyp hat eine unterschiedliche Verschleiß-Rate pro Sol im Einsatz. 
 
 ---
 
-### Berater-Burnout
+### Berater-Burnout — zurückgestellt
 
-Berater können nicht dauerhaft auf Hochtouren laufen. Nach langer Aktivität steigt die Wahrscheinlichkeit, dass ein Berater für eine begrenzte Zeit ausfällt — **Burnout**. Der Ausfall ist nicht garantiert, aber wahrscheinlicher, je länger der Berater ununterbrochen aktiv ist.
-
-**Mechanik (probabilistisch):**
-
-```
-burnout_chance(tick) = base_chance × growth_factor^(active_ticks / threshold) × rank_dampener(rank)
-```
-
-Die Formel benutzt vier Parameter: eine Basis-Burnout-Chance (niedrig bei Spielstart), einen exponentiellen Steigerungs-Faktor (über Arbeitsdauer), einen Schwellwert (wann die Chancen signifikant ansteigen) und einen Rang-Dämpfer (erfahrenere Berater sind robuster).
-
-Konkrete Parameterwerte: `config/game.php → advisors.burnout.*`.
-
-**Was passiert bei Burnout:**
-- `unavailable_until_tick = current_tick + recovery_ticks` (Länge abhängig von Rang: Junior länger, Experte kürzer)
-- `active_ticks` wird **zurückgesetzt** (der Berater startet frisch nach der Erholung)
-- Der gemeinsame AP-Pool (§13.1) sinkt für die Dauer um den AP-Beitrag dieses Beraters; sein Domänen-Effizienzbonus (§13.3) entfällt ebenfalls
-- Protokoll-Ereignis: „[Name] benötigt eine Auszeit — Kolonie-Kapazität vorübergehend reduziert."
-
-Erfahrenere Berater erholen sich schneller — und haben schon durch den Rang-Dämpfer eine geringere Burnout-Chance. Exakte Erholungszeiten pro Rang: `config/game.php → advisors.burnout.*`.
-
-**`active_ticks`-Reset:** Nach dem Burnout startet der Zähler bei 0. Das bedeutet: Ein Berater der gerade erholt hat, ist für eine Weile sicher. Burnout-Risiko baut sich langsam wieder auf. Kein "ständiger Burnout" ist möglich.
-
-> **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Sol".
-
-> **Implementierungsstand:** Die Burnout-Wahrscheinlichkeits-Formel ist noch nicht implementiert. `unavailable_until_tick` existiert in der DB und wird gecheckt; die probabilistische Prüfung folgt nach dem ersten Playtest (Phase 4+). Ein `config/game.php → advisors.burnout`-Block existiert bewusst noch nicht — die Richtwerte oben (`base_chance`, `growth_factor`, `threshold`, `rank_dampener`, `recovery_ticks`) sind das Design für die spätere Config, kein fehlender Verweis.
+> **Zurückgestellt (Owner-Entscheidung 2026-10-23):** Berater-Burnout ist nicht Teil des Spiels und war nie im Code. Der frühere Entwurf (Wahrscheinlichkeitsformel, Erholungsphase, AP-Ausfall) steht unverändert im [Archiv](gdd/archiv-berater-aussendienst-burnout.md). Ein Berater kann derzeit nur durch die **Nexus-Sanktion** zeitweise gesperrt sein (§15 „Sanktionen“); das Feld `unavailable_until_tick` dient allein diesem Zweck.
 
 ---
 
@@ -1362,7 +1367,7 @@ Navigation-AP skalieren nie (die AP-Staffel ist das Raumfahrer-Progressionsgate,
 
 - **Rückkehr:** `return_tick = dispatch_tick + 2 × sol_distance`. Die Auflösung läuft im Tick im selben Schritt wie der Schiffs-Verschleiß (§7), **nach** dessen Anwendung — der SP-0-Abbruch (`state = aborted`, kein Ertrag) hat Vorrang. Bei Rückkehr: `state = completed`, Schiff `docked`, Belohnung wird gutgeschrieben, Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report.
 - **Recall:** Keine anteilige Belohnung, keine Rückerstattung — auch nicht bei sofortigem Abbruch im selben Sol wie der Dispatch (Nav-AP und Organika werden beim Dispatch instant fällig, unabhängig von der tatsächlich zurückgelegten Zeit). Keine Mindestwartezeit vor dem Recall — der Spieler kann jederzeit zurückrufen, verliert dabei aber immer die vollen Dispatch-Kosten. Der Wert des Rückrufs ist gesparter Verschleiß (§7 „Schonungs-Entscheidung") — anteilige Erträge würden systematisches Halbstrecken-Abbrechen zum Optimalpfad machen.
-- **Kein Ausgangs-Roll:** Anders als Berater-Außenmissionen (§13) gibt es kein Erfolg/Teilerfolg/Misserfolg-Würfeln — Schiffe haben kein Rang-Analogon, und die Risiko-Achse existiert bereits über Verschleiß + Abbruch. Zufall beschränkt sich auf die Belohnungshöhe der Fernexpedition, deterministisch aus dem Run-`rng_seed` (ADR 0003). Der Bergungsflug hat weder Wurf noch Streuung und verschleißt das Schiff nicht (Funde liegen im Nahbereich); nur die Tragkraft des Schiffs entscheidet vorab, ob er möglich ist. Die Versorgungsfahrt liefert nur Organika, kein Regolith mehr.
+- **Kein Ausgangs-Roll:** Schiffs-Außenmissionen würfeln keinen festen Erfolg/Teilerfolg/Misserfolg-Ausgang aus, die Risiko-Achse liegt über Verschleiß + Abbruch (die Erfolgschance je Schwierigkeit steht oben). Zufall beschränkt sich auf die Belohnungshöhe der Fernexpedition, deterministisch aus dem Run-`rng_seed` (ADR 0003). Der Bergungsflug hat weder Wurf noch Streuung und verschleißt das Schiff nicht (Funde liegen im Nahbereich); nur die Tragkraft des Schiffs entscheidet vorab, ob er möglich ist. Die Versorgungsfahrt liefert nur Organika, kein Regolith mehr.
 
 > **Geprüft und verworfen (2026-07-04):** Ein zustandsbasierter Missionsausgang (Rückkehr-SP bestimmt Ertragsstufe, analog §9). Da Verschleiß deterministisch ist, wäre der Ausgang beim Dispatch bereits bekannt — kein Risiko, sondern eine Doppelbestrafung langer Missionen (die Fernexpedition kehrt selbst mit vollen Start-SP bei 25% zurück und würde immer „fehlschlagen") plus Vollreparatur-Zwang vor jedem Start. Ein reiner Würfel-Fail wiederum verletzt „Opportunitätskosten statt Strafe" (§1.1): Schiffs-Missionen kosten harte Ressourcen im Voraus — ein Fehlschlag vernichtet Bezahltes. Fehlt im Playtest Spannung, ist der Hebel die Spanne der Fund-Missionen (Loot-Tabellen verbreitern), nicht ein Fehlschlag-Layer.
 
@@ -1561,7 +1566,7 @@ Die Bar ist ab CC Lv2 verfügbar. Sie ist der Ort des Handels — verkörpert du
 
 **Konsul-Rang-Skalierung:** Corvans Besuchsrhythmus ist vom Konsul unabhängig — ein häufigerer Corvan wäre ein passiver Einkommens-Hebel und würde den Fehler des gestrichenen Handelsvertrags wiederholen (A22). Der Konsul wirkt stattdessen auf die *Qualität* der Geschäfte (bessere Kaufkonditionen über den Handelskonditionen-Pool, s.u.) und auf den *Planungsvorsprung* (Marktbericht, s.u.). Die genaue Losanzahl pro Besuch ist ein Playtest-Kandidat, bis eine Credits-Bilanz über den Run eine Zielgröße liefert (§4b).
 
-**Marktbericht (Konsul, A13):** Der Konsul kündigt Corvans nächsten Besuch vorab an — je höher der Rang, desto früher. Auf dem höchsten Rang zeigt der Bericht zusätzlich, welche Sonderinventar-Kategorien (AP-Paket, Information, Einmal-Item — Schiffe erscheinen dort erst, sobald der Item-Pool welche enthält) Corvan mitbringt, nicht aber die konkreten Lose des Alltagsgeschäfts. Der Spieler kann damit Credits für ein absehbar teures Sonderangebot zurückhalten oder Organika für die Verkaufslose aufsparen. Es ist reine Planungsinformation: kein Einkommen, keine Wirkung auf Häufigkeit oder Preise, und ohne zugewiesenen, verfügbaren Konsul (nicht auf Außenmission) entfällt die Ankündigung — Corvan kommt trotzdem, nur ohne Vorwarnung. Der Marktbericht ist die spielwirksame Ausprägung des Konsul-Motivs „pflegt die Kontakte"; er ergänzt die kontextuelle Händler-Einschätzung aus §13 („Berater als Informationsebene").
+**Marktbericht (Konsul, A13):** Der Konsul kündigt Corvans nächsten Besuch vorab an — je höher der Rang, desto früher. Auf dem höchsten Rang zeigt der Bericht zusätzlich, welche Sonderinventar-Kategorien (AP-Paket, Information, Einmal-Item — Schiffe erscheinen dort erst, sobald der Item-Pool welche enthält) Corvan mitbringt, nicht aber die konkreten Lose des Alltagsgeschäfts. Der Spieler kann damit Credits für ein absehbar teures Sonderangebot zurückhalten oder Organika für die Verkaufslose aufsparen. Es ist reine Planungsinformation: kein Einkommen, keine Wirkung auf Häufigkeit oder Preise, und ohne zugewiesenen, verfügbaren Konsul (nicht gesperrt) entfällt die Ankündigung — Corvan kommt trotzdem, nur ohne Vorwarnung. Der Marktbericht ist die spielwirksame Ausprägung des Konsul-Motivs „pflegt die Kontakte"; er ergänzt die kontextuelle Händler-Einschätzung aus §13 („Berater als Informationsebene").
 
 **Orin ist nicht Teil dieses Kanals.** Orin (`corporate_rep`) ist ausschließlich an den Harvester-Zweitinstanz-Deal gebunden (§4c Weg A), mit eigenem Spawn-Check außerhalb von `BarService`/`MerchantService`.
 
@@ -1661,7 +1666,7 @@ Leitgedanke ist **Verständlichkeit**: Der Spieler muss im Angebotsdialog nachvo
 
 **Cantina-Verhandlung (Risiko-Handel):**
 
-Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — ob sich der Klick lohnt, hängt an der Rechnung unten.
+Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, `ap_cost_accept`) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht gesperrt, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — ob sich der Klick lohnt, hängt an der Rechnung unten.
 
 > **Nicht zu verwechseln** mit der "Konsul-Verhandlung" beim Schiffskauf (§8b, Hangar-Screen): dort ist der niedrigere Preis garantiert, hier nicht. Diese Mechanik heißt bewusst anders.
 
@@ -1981,7 +1986,7 @@ advisors
 ├── colony_id               ← nullable: aktiv auf dieser Kolonie
 ├── rank                    ← 1 = Junior | 2 = Senior | 3 = Experte
 ├── active_ticks            ← kumulierter Zähler für Rang-Aufstieg
-└── unavailable_until_tick  ← Erholungsphase nach Burnout (NULL = verfügbar)
+└── unavailable_until_tick  ← Sperre durch Nexus-Sanktion (NULL = verfügbar)
 ```
 
 > Berater sind colony-scoped — sie verlassen die Kolonie nicht. Ein Flottenkommandanten-Modell (`fleet_id`, `is_commander`) ist nicht vorgesehen.
@@ -2011,97 +2016,11 @@ advisors
 > **Was das konkret heißt:** Berater-Slot 5 entfällt; es gibt maximal **vier** gleichzeitig zugewiesene Berater. Die **Leitstelle bleibt als Gebäude bestehen** — sie behält ihre drei eigenständigen Effekte (Vertrauens-Bonus, Event-Dämpfung, Recycling, §4), verliert aber ihre Funktion als Slot-Gate. Die vom Strategen getragenen Informationsleistungen (Gefahren-Vorwarnung mit Prognose, Ziel-Erreichbarkeits-Prognose) wandern in das Kommandozentrale-Dashboard (13.4), wo sie ohnehin besser aufgehoben sind.
 >
 
-Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
+Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Berater-Außendienst ist zurückgestellt (siehe unten).
 
-### Außenmissionen (Berater-Außendienst)
+### Berater-Außendienst — zurückgestellt
 
-> **Phase 4** — Vollständig ausgearbeitet, Implementierung ab Phase 4 geplant.
-
-Drei Beratertypen (Baumeister, Analytiker, Konsul) können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr. Der Raumfahrer erscheint nicht in der Missions-Auswahl — eine spezifische Außendienst-Mechanik für ihn wird nach Playtest evaluiert (Phase 4+, noch kein konkreter Pfad definiert).
-
----
-
-#### Grundprinzip
-
-- Der Berater verlässt die Kolonie für die Missionsdauer vollständig.
-- Während der Mission generiert er **keine AP** für seinen Pool.
-- Bei Rückkehr erhält die Kolonie einen Bonus — abhängig vom Missionstyp und Rang.
-- Der Spieler initiiert die Mission manuell; sie kann nicht vorzeitig abgebrochen werden.
-- Maximal **2 Berater gleichzeitig auf Außenmission** (kolonieweites Limit).
-
----
-
-#### Missionen nach Beratertyp
-
-| Beratertyp | Missionsname | Dauer (Sole) | Bonus bei Erfolg |
-|------------|--------------|--------------|-----------------|
-| Baumeister | Nexus-Notfall-Wartung | 3–5 | Ein beliebiges Koloniegebäude erhält sofort volle `status_points` |
-| Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne AP-Kosten, CC-Gates bleiben aktiv) |
-| Konsul | Handelsreise | 3–4 | Exklusives Bar-Angebot bei Rückkehr (2 Sole gültig, erscheint als zusätzlicher Slot neben normalen Bar-Angeboten) |
-| Raumfahrer | — | — | Kein Berater-Außenmissions-Pfad — sein "Außendienst" läuft indirekt über den Schiffs-Dispatch (§8b); eine eigene Mechanik wird nach Playtest evaluiert |
-
-> **⚠️ Balance:** Der Analytiker-Bonus (Kenntnis +1 Level kostenlos) ist der stärkste Effekt. CC-Gates bleiben aktiv — ein Kenntnislevel das CC Lv5 voraussetzt, kann durch eine Außenmission nicht übersprungen werden. Dennoch muss nach Playtest geprüft werden, ob ein Free-Level-Upgrade bei Lv4→Lv5 zu mächtig ist. Ggf. Einschränkung: Bonus gilt nur für Lv1→Lv2 oder Lv2→Lv3.
-
-> **Entfallen (2026-08-02):** Die Strategen-Außenmission „Sicherheitsanalyse" (detaillierte Gefahren-Prognose) ist mit der Zurückstellung des Strategen weggefallen. Die Gefahren-Vorwarnung mit prognostiziertem Ausgang wandert als Dauerfunktion in das Kommandozentrale-Dashboard (§13.4) — sie war als seltener, an einen Berater gekoppelter Einmaleffekt ohnehin schwer planbar.
-
----
-
-#### Risiko-Mechanik: Drei Ausgänge
-
-Jede Außenmission hat drei mögliche Ausgänge. Der Rang des Beraters bestimmt die Wahrscheinlichkeitsverteilung.
-
-| Ausgang | Beschreibung |
-|---------|-------------|
-| **Erfolg** | Voller Bonus bei Rückkehr |
-| **Teilerfolg** | Halber Bonus (gerundet nach unten) |
-| **Misserfolg** | Kein Bonus — AP haben dennoch für die Missionsdauer gefehlt |
-
-**Wahrscheinlichkeiten nach Rang:**
-
-Erfolgs-, Teilerfolgs- und Misserfolgsraten gestaffelt nach Berater-Rang. Junior-Ränge haben merklich höheres Misserfolgsrisiko als erfahrene; Experten sind zuverlässig. Exakte Werte siehe `config/advisors.php`.
-
-**Kein permanenter Verlust:** Bei Misserfolg kehrt der Berater unbeschadet zurück. Der einzige Schaden ist der Opportunitätsverlust — die AP haben während der Missionsdauer gefehlt. Ein Rang-Abzug oder permanenter Malus findet nicht statt.
-
-> **⚠️ Balance:** Junior-Berater haben höheres Misserfolgsrisiko — das motiviert, wichtige Missionen mit erfahrenen Beratern zu starten, oder bewusst das Risiko einzugehen. Eine Junior-Mission bleibt attraktiv wenn die Opportunitätskosten niedrig sind (kurze Missionsdauer, AP-Pool nicht ausgelastet).
-
----
-
-#### Constraints und Interaktionen
-
-| Regel | Beschreibung |
-|-------|-------------|
-| **Burnout-Sperre** | Ein Berater mit gesetztem `unavailable_until_tick` (Burnout) kann keine Mission starten. |
-| **Missions-Immunität** | Ein Berater auf Außenmission kann während dieser Zeit keinen Burnout erleiden. Der Burnout-Timer pausiert für die Missionsdauer. |
-| **Concurrent-Limit** | Maximal 2 Berater gleichzeitig auf Mission (kolonieweites Limit). Ein dritter kann erst starten, wenn einer zurückgekehrt ist. |
-| **Missionsdauer-Transparenz** | Das Missions-UI zeigt die verbleibenden Sole bis Rückkehr neben der aktuellen Sol-Nummer an. |
-| **AP-Nutzungsrate** | Run-Aufgabe "Effizienzsprung" (hohe AP-Auslastung über mehrere Sole, §15) und Außenmissionen schließen sich nicht aus — der Spieler muss aktiv abwägen ob er einen AP-Produzenten für die Missionsdauer opfert. Schwellenwert siehe `config/game.php` → `objectives`. |
-| **Raumfahrer ausgenommen** | Der Raumfahrer erscheint in der Missions-Auswahl nicht — Außendienst-Mechanik für den Raumfahrer wird nach Playtest evaluiert (Phase 4+, noch kein konkreter Pfad definiert). |
-
----
-
-#### Technische Implementierungshinweise
-
-**Schema-Erweiterung (`advisors`-Tabelle):**
-
-```
-advisors
-├── on_mission_until_tick  ← nullable int: gesetzt während Außenmission aktiv
-└── mission_type           ← nullable string: z.B. 'nexus_maintenance', 'data_exchange', 'trade_trip', 'security_analysis'
-```
-
-`on_mission_until_tick` und `unavailable_until_tick` sind semantisch getrennt — ersteres ist freiwillige Abwesenheit, letzteres unfreiwillige Erholungsphase. Sie dürfen nicht gleichzeitig gesetzt sein (Constraint auf Service-Ebene).
-
-**AP-Berechnung:**
-
-`getTotalActionPoints()` (bzw. `PersonellService`) muss `on_mission_until_tick` analog zu `unavailable_until_tick` behandeln: Wenn `current_tick <= on_mission_until_tick`, liefert der Berater **0 AP-Bonus** (Grundwert bleibt aktiv).
-
-**Bonus-Dispatch:**
-
-Der Missions-Abschluss wird in `AdvisorMissionService` verarbeitet. Empfehlung: Strategy-Pattern oder typ-spezifische `resolve*Mission()`-Methoden je `mission_type`. Der Zufallsausgang (Erfolg/Teilerfolg/Misserfolg) wird im Tick-Schritt 7 gewürfelt, sobald `current_tick > on_mission_until_tick`.
-
-**Tick-Integration:**
-
-Missions-Auflösung läuft in **Tick-Schritt 12** (Advisor Ticks), nach AP-Berechnung und Burnout-Prüfung. Reihenfolge innerhalb dieses Schritts: erst AP-Update, dann Burnout-Check, dann Missions-Auflösung.
+> **Zurückgestellt (Owner-Entscheidung 2026-10-23):** Berater können nicht auf Außenmission entsandt werden. Das Feature stand nur im GDD und war nie im Code. Der frühere Entwurf (Missionen je Beratertyp, drei Ausgänge, Schema, Tick-Integration) steht unverändert im [Archiv](gdd/archiv-berater-aussendienst-burnout.md). Nicht zu verwechseln mit den **Hangar-Außenmissionen** der Schiffe (§8b), die bleiben.
 
 ---
 
@@ -2146,7 +2065,6 @@ Der Raumfahrer ist ein colony-scoped AP-Produzent für den `navigation`-Pool. Er
 
 - **Colony-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für Tile-Erkundung und Außenmissions-Dispatch).
 - **AP-Verbrauch:** Navigation-AP, die der Raumfahrer generiert, werden verbraucht wenn der Spieler Tiles erkundet oder Schiffe entsendet — der Raumfahrer selbst "geht" dabei nicht mit.
-- **Burnout:** Bei Burnout ist der Raumfahrer für N Sole nicht verfügbar (`unavailable_until_tick` gesetzt), der Navigation-AP-Pool fällt auf den Grundwert.
 
 ---
 
@@ -2180,20 +2098,6 @@ Der Grundwert des gemeinsamen Pools steht in `config/game.php → ap.base` (Owne
 - `app/Services/ColonyTileService.php`, `app/Services/HangarService.php`, `app/Services/BarService.php` — Handlungs-AP für Erkundung, Dispatch und Handel
 - Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_type, spend_ap)` — `personell_type` ist seit der Zusammenlegung nur noch Auswertungsmerkmal („wofür wurde investiert"), keine Pool-Trennung.
 
-### Berater-Burnout (Auswirkung auf AP)
-
-Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details in §7), fällt sein AP-Beitrag für die Dauer der Erholung auf null zurück. Der gemeinsame Pool sinkt um genau diesen Beitrag; zusätzlich entfällt sein Effizienzbonus in seiner Domäne (13.3).
-
-**Beispiel:** Ein Senior-Analytiker (rank=2) trägt normalerweise 20 AP/Sol zum Pool bei. Bei Burnout fehlen diese 20 AP/Sol — die Kolonie arbeitet insgesamt langsamer, aber kein Bereich fällt vollständig aus. Das ist die gewünschte Abschwächung gegenüber dem alten Modell, in dem ein Burnout eine ganze Domäne auf den Grundwert zurückwarf.
-
-**Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Sole — Richtwerte, noch nicht in Config abgebildet; siehe „Implementierungsstand" in §7).
-
-**Sichtbarkeit:** Die Berater-Übersicht zeigt einen "Pause"-Zustand mit Countdown bis zur Rückkehr. Protokoll-Ereignis informiert beim Einsetzen.
-
-**`active_ticks`-Reset:** Der Berater beginnt nach dem Burnout bei 0 aktiven Ticks — Burnout "entlastet" also auch zukünftig, weil die Wahrscheinlichkeit eines weiteren Burnouts wieder sinkt.
-
-**Kein manueller Eingriff nötig:** Der Berater kehrt automatisch auf den Slot zurück wenn `current_tick > unavailable_until_tick`. Der Slot bleibt "reserviert" — ein anderer Berater kann nicht eingestellt werden während der Slot im Erholungs-Zustand ist.
-
 ### Dev-Mode
 
 Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP-Kosten übersprungen. Das AP-System selbst bleibt aktiv für Tests.
@@ -2204,7 +2108,7 @@ Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP
 
 Jeder Berater erweitert nicht nur den AP-Pool seines Typs — er erweitert auch den **Informationsraum** des Spielers in seinem zugehörigen Screen. Ohne Berater ist der Screen voll funktionstüchtig; mit Berater erscheinen zusätzliche Metriken, Prognosen und Hinweise.
 
-Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exploration, aber auf Spieler-Entscheidungsqualität bezogen. Wer einen Berater verliert (Burnout, Abwesenheit, Außenmission), spielt dasselbe Spiel mit weniger Kontext. Das erzeugt spürbare Konsequenz ohne harten Progress-Block.
+Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exploration, aber auf Spieler-Entscheidungsqualität bezogen. Wer einen Berater verliert (Entlassung, Nexus-Sanktion), spielt dasselbe Spiel mit weniger Kontext. Das erzeugt spürbare Konsequenz ohne harten Progress-Block.
 
 **Designprinzipien:**
 

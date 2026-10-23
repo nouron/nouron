@@ -21,6 +21,9 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Handelsposten | `tradingPost` | Handelskonditionen (spätere Phase). |
 | Religiöse Stätte / Kolonialdenkmal | `temple` / `monument` | Späte Gebäude. |
 | **Pfadgebäude** | – | Eines der drei Gebäude Labor, Hangar, Cantina. Das erste kommt in Phase 1, das zweite und dritte ab CC Lv3 bzw. Lv4 (Pfadwahl-Gate). |
+| **Vertiefung** | – | Gemeinsame Bauart der Pfadgebäude: mehrere Dinge (Kenntnis, Figur, Missionstyp), jedes in fünf Stufen vertiefbar; nur ein Strukturmodell, nirgends als Raster zu sehen *(Entwurf)*. |
+| **Vertrautheit** | – | Bindung an eine Cantina-Figur; steigt durch Gespräche und Anliegen. Nicht zu verwechseln mit Vertrauen (Kolonie-Stimmung) *(Entwurf)*. |
+| **Routine** | – | Übung der Kolonie mit einem Missionstyp; steigt mit abgeschlossenen Missionen dieses Typs *(Entwurf)*. |
 | **Pflichtgebäude (Phase 1)** | – | Was Phase 1 abschließt: CC Lv2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude (je Lv1) und zwei Berater. |
 
 ## Ressourcen und Action Points
