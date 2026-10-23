@@ -371,6 +371,7 @@ Bau-Gate: Platzieren und Ausbau n → n+1 (n ≥ 1) erfordern `freies Supply ≥
 | `game.overcap.dismiss_ap_cost` | 8 AP | Kosten „Wegschicken" |
 | `game.trust.events.colonists_left` | −3 | einmalig je Abwanderung |
 | `game.trust.events.colonists_dismissed` | −2 | einmalig je Wegschicken |
+| `game.trust.events.treaty_signed` | +3 | reserviert (Cantina-Vereinbarungen), feuert noch nirgends; `trade_blocked` entfiel 2026-10-23 |
 
 ```
 Arbeitsplätze = siehe Abschnitt 10 (inkl. Reserve)

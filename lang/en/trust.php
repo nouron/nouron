@@ -12,7 +12,6 @@ return [
     'event_building_level_up' => 'A building was upgraded — the population is pleased.',
     'event_research_level_up' => 'A research breakthrough lifts morale.',
     'event_trade_success' => 'A trade deal was successfully concluded.',
-    'event_trade_blocked' => 'A trade route was blocked.',
     'event_encounter_won' => 'An incident was successfully handled — morale is up.',
     'event_encounter_lost' => 'Own ships were damaged in an incident — colonists are concerned.',
     'event_colony_threatened' => 'The colony was directly threatened — residents are unsettled.',

@@ -367,7 +367,7 @@ class OnboardingTriggersTest extends TestCase
      * When trust (resource_id=12) transitions from >= 0 (before tick) to < 0 (after
      * TrustService recalculates), the trigger must emit an onboarding_trust INNN event.
      *
-     * We drive trust negative by inserting a 'trade_blocked' trust event (value = -3)
+     * We drive trust negative by inserting a 'encounter_lost' trust event (value = -4)
      * into the trust_events table at the pinned tick (500) for this colony.
      * After the tick, TrustService will store trust = -5 in colony_resources, which
      * satisfies the onboarding_trust trigger condition (trustBefore=0 >= 0, trustAfter=-5 < 0).
@@ -377,11 +377,11 @@ class OnboardingTriggersTest extends TestCase
         // Trust starts at 0 (set in setUp); trigger not yet fired.
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_trust'));
 
-        // Insert a negative trust event at the pinned tick so TrustService produces -3.
+        // Insert a negative trust event at the pinned tick so TrustService produces -4.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500, // matches the tick pinned in setUp
-            'event_type' => 'trade_blocked',
+            'event_type' => 'encounter_lost',
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -391,7 +391,7 @@ class OnboardingTriggersTest extends TestCase
             ->where('resource_id', 12)
             ->value('amount');
 
-        $this->assertLessThan(0, $trustAfter, 'Trust must be negative after trade_blocked trust event');
+        $this->assertLessThan(0, $trustAfter, 'Trust must be negative after encounter_lost trust event');
 
         $event = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
@@ -419,11 +419,11 @@ class OnboardingTriggersTest extends TestCase
     {
         $this->triggerService->markFired($this->userId, 'onboarding_trust');
 
-        // Force trust to go negative via trade_blocked event.
+        // Force trust to go negative via encounter_lost event.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
-            'event_type' => 'trade_blocked',
+            'event_type' => 'encounter_lost',
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -455,7 +455,7 @@ class OnboardingTriggersTest extends TestCase
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
-            'event_type' => 'trade_blocked',
+            'event_type' => 'encounter_lost',
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -493,7 +493,7 @@ class OnboardingTriggersTest extends TestCase
         DB::table('trust_events')->insert([
             'colony_id' => 9999,
             'tick' => 500,
-            'event_type' => 'trade_blocked',
+            'event_type' => 'encounter_lost',
         ]);
 
         // Pre-fire the trigger for all real players so their trust changes don't pollute the count.

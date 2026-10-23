@@ -792,7 +792,6 @@ return [
             'building_level_up' => 1,
             'research_level_up' => 2,
             'trade_success' => 2,
-            'trade_blocked' => -3,
             'treaty_signed' => 3,
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
             'well_fed' => 2,       // colony's Organika stock covered the food need this Sol; 1→2 (2026-09-14, A37-Folge task_colony_prosperity — the only daily-repeatable positive event, deliberately weighted heavier)

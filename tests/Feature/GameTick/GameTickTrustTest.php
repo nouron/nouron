@@ -152,20 +152,20 @@ class GameTickTrustTest extends TestCase
     }
 
     /**
-     * A 'trade_blocked' trust event contributes a negative delta to trust.
+     * A 'encounter_lost' trust event contributes a negative delta to trust.
      * setUp has already zeroed building and ship trust contributions.
      */
     public function test_negative_trust_event_decreases_trust(): void
     {
-        $eventEffect = (int) config('game.trust.events.trade_blocked', -3);
+        $eventEffect = (int) config('game.trust.events.encounter_lost', -4);
 
-        $this->insertTrustEvent('trade_blocked', 11302);
+        $this->insertTrustEvent('encounter_lost', 11302);
 
         Artisan::call('game:tick', ['--tick' => 11302]);
 
         $trust = $this->getTrust();
         $this->assertEquals($eventEffect, $trust,
-            "Trust after 'trade_blocked' event must equal the configured effect ({$eventEffect})");
+            "Trust after 'encounter_lost' event must equal the configured effect ({$eventEffect})");
     }
 
     /**
@@ -270,19 +270,19 @@ class GameTickTrustTest extends TestCase
 
     /**
      * Two events of the same type in one tick do NOT stack — only the strongest counts.
-     * 'trade_blocked' = -3; two of them → still -3 (not -6).
+     * 'encounter_lost' = -4; two of them → still -4 (not -8).
      * setUp has already zeroed building and ship trust contributions for isolation.
      */
     public function test_duplicate_trust_events_same_type_do_not_stack(): void
     {
         // Insert the same event type twice for the same tick
-        $this->insertTrustEvent('trade_blocked', 11330);
-        $this->insertTrustEvent('trade_blocked', 11330);
+        $this->insertTrustEvent('encounter_lost', 11330);
+        $this->insertTrustEvent('encounter_lost', 11330);
 
         Artisan::call('game:tick', ['--tick' => 11330]);
 
         $trust = $this->getTrust();
-        $singleEffect = (int) config('game.trust.events.trade_blocked', -3);
+        $singleEffect = (int) config('game.trust.events.encounter_lost', -4);
 
         // Must be exactly the single effect, not doubled (not stacked)
         $this->assertEquals($singleEffect, $trust,
