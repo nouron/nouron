@@ -2,6 +2,7 @@
 
 ## 2026-10-23
 
+- Doku: Entwurf der Tester-Anleitung für die Closed Beta (`docs/beta/tester-anleitung.md`, R17) mit Platzhaltern für Link, Code und Kanal.
 - Feat: T38 Stufe 1 — Journal-Zeilen (`createEvent`) und Vertrauens-Ereignisse (`fireEvent`) melden sich beim Speichern zusätzlich als Laravel-Event (`JournalEventRecorded`, `TrustEventFired`); Grundlage für Achievements, die sofort reagieren. ADR 0007. Keine Listener, keine Änderung am Spielablauf.
 - Doku: Spec zur Vertrauens-Nachwirkung (game-designer, Ereignisse wirken über mehrere Sole; Messstart 5 Sole) und ROADMAP T40; Ideenpool: Kommandozentrale-Detailgrad nach Beratern.
 - Fix: Vertrauens-Ereignis `trade_blocked` gestrichen (nichts löste es aus; Handelsbeschränkungen sind entfernt). Tests nutzen `encounter_lost` als negatives Beispiel. `treaty_signed` bleibt für die Cantina-Vereinbarungen.
