@@ -102,6 +102,10 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 16 | `hint_spend_remaining_ap` | Mindestens ein **nutzbarer** AP-Pool ungenutzt (Forschung zählt nur mit gebautem Sciencelab, Wirtschaft nur mit gebauter Cantina, Navigation nur mit bezahlbarem Fog-Tile) — Pool mit den meisten Rest-AP gewinnt | "Noch AP übrig — investieren." | poolabhängig | — |
 | 17 | `hint_end_sol` | Fallback — greift nur wenn **kein nutzbarer AP-Pool** mehr übrig ist (Playtest-Fix 2026-07-14: feuerte vorher trotz nutzbarer Nav-AP) | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
 
+> **Rest-AP-Hinweis ehrlich (Handtest 2):** `hint_spend_remaining_ap` empfiehlt „in ein Gebäude investieren“ nur, wenn das auch geht (Tages-Deckel nicht erreicht, Regolith für den nächsten Zyklus vorhanden oder schon bezahlt, Kommandozentrale-Stufe reicht). Sonst sagt er offen, was fehlt, oder verweist auf den Hangar-Pool. Ein Pool ohne irgendeine Verwendung gilt als blockiert und löst den Fallback `hint_end_sol` aus.
+>
+> **Fertigstellungs-Popup:** Wird erstmals ein Labor, Hangar, Cantina oder die Uplink-Station fertig, erscheint einmalig ein kurzes Popup, das erklärt, was das Gebäude jetzt freischaltet. Einmaligkeit läuft über die bestehende Liste der abgehakten Hints.
+
 > **Bau-Gate-Hinweis (wichtig für Implementierung):** Sobald der Spieler eines der drei Pfad-Gebäude gebaut hat, dürfen `hint_6`/`hint_analytik`/`hint_hangar_path` für die jeweils noch nicht erreichte CC-Stufe nicht feuern — sie greifen erst wieder, wenn `Anzahl gebauter Pfad-Gebäude < CC-Level − 1` zutrifft (siehe §13). Beispiel: Bei CC Lv2 und bereits 1 gebautem Pfad-Gebäude zeigen die beiden übrigen Hints (für die anderen zwei Pfad-Gebäude) **nicht mehr** "jetzt bauen", weil das Bau-Gate sie blockiert — stattdessen sollte ein neuer, noch zu definierender Hint-Text "Bei CC Lv3 verfügbar" angezeigt werden (kein Aktions-Link, reine Information), damit der Spieler nicht auf ein Gebäude klickt, das der Server ablehnt.
 
 **Ergänzende Hinweise zur Tabelle:**

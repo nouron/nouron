@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-23
+
+- Feat: T38 Stufe 1 — Journal-Zeilen (`createEvent`) und Vertrauens-Ereignisse (`fireEvent`) melden sich beim Speichern zusätzlich als Laravel-Event (`JournalEventRecorded`, `TrustEventFired`); Grundlage für Achievements, die sofort reagieren. ADR 0007. Keine Listener, keine Änderung am Spielablauf.
+- Doku: GDD zahlenfrei nachgezogen (Baumenü-Sperren, Fertigstellungs-Popups, Rest-AP-Hinweis, ausgelöste Vertrauens-Ereignisse); `trade_blocked`/`treaty_signed` als reserviert markiert (T37).
+
 ## 2026-10-22
 
 - Doku: `lang/en` aufgeholt — 245 fehlende Schlüssel aus `lang/de` plus 12 verschachtelte im Protokoll (`comm_log`) ins Englische übertragen (Cantina, Kodex, Handel, Sol-Bericht, Hinweise, Sturm/Seuche); Platzhalter je Schlüssel gegen `lang/de` geprüft.
