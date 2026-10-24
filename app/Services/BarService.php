@@ -43,6 +43,7 @@ class BarService
         private readonly CharacterCodexService $characterCodexService,
         private readonly TradeAdvantageService $tradeAdvantageService,
         private readonly ProjectBonusService $projectBonusService,
+        private readonly PathDepthService $pathDepthService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -282,6 +283,9 @@ class BarService
         // line). Every other game_role has its own trigger elsewhere.
         if ($characterSlug !== null && (config("characters.{$characterSlug}.game_role") === 'bar_trade')) {
             $this->characterCodexService->recordProgress($userId, $characterSlug);
+        }
+        if ($characterSlug !== null) {
+            $this->pathDepthService->markMet($colonyId, $characterSlug);
         }
 
         return [
@@ -719,6 +723,7 @@ class BarService
 
         // Charakter-Kodex (A42) — Zara's (gambler) dedicated mechanic.
         $this->characterCodexService->recordProgress($userId, 'gambler');
+        $this->pathDepthService->markMet($colonyId, 'gambler');
 
         return [
             'ok' => true,
@@ -749,6 +754,7 @@ class BarService
 
         // Charakter-Kodex (A42) — Voss's (scrap_dealer) dedicated mechanic.
         $this->characterCodexService->recordProgress($userId, 'scrap_dealer');
+        $this->pathDepthService->markMet($colonyId, 'scrap_dealer');
 
         return [
             'ok' => true,
@@ -942,6 +948,8 @@ class BarService
             if (in_array($slug, ['founder', 'preacher', 'stranger'], true)) {
                 $this->characterCodexService->recordProgress($userId, $slug);
             }
+            // Path depth: every concern giver (also the bar_trade ones) counts as met.
+            $this->pathDepthService->markMet($colonyId, $slug);
 
             Log::info('bar_concern_resolved', [
                 'colony_id' => $colonyId,
@@ -1253,6 +1261,7 @@ class BarService
             // Charakter-Kodex (A42): every resolved encounter from this pool
             // counts, mechanical or narrative alike.
             $this->characterCodexService->recordProgress($userId, $encounter->character_slug);
+            $this->pathDepthService->markMet($colonyId, $encounter->character_slug);
 
             Log::info('bar_information_resolved', [
                 'colony_id' => $colonyId,

@@ -24,7 +24,7 @@ class BaselineSchemaTest extends TestCase
         $schema = DB::connection()->getDatabaseName();
         $tables = collect(Schema::getTables($schema))->pluck('name')->reject(fn ($n) => $n === 'migrations');
 
-        $this->assertCount(37, $tables);
+        $this->assertCount(38, $tables);
         foreach ($tables as $table) {
             $this->assertSame(0, DB::table($table)->count(), "baseline must not insert data into $table");
         }

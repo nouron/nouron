@@ -28,6 +28,7 @@ class CorporateContactService
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly TradeAdvantageService $tradeAdvantageService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly PathDepthService $pathDepthService,
     ) {}
 
     /**
@@ -95,6 +96,7 @@ class CorporateContactService
 
         // Charakter-Kodex (A42) — Orin's (corporate_rep) dedicated mechanic.
         $this->characterCodexService->recordProgress($userId, 'corporate_rep');
+        $this->pathDepthService->markMet($colonyId, 'corporate_rep');
 
         return ['ok' => true, 'price' => $offer['price']];
     }

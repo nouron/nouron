@@ -120,6 +120,23 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 ---
 
+## 6b. Pfad-Vertiefung (T41, vorläufig)
+
+Alle Werte Platzhalter (Owner 2026-10-24), nicht per Bot gemessen. Quelle: `config/path_depth.php`. Stufe pro Lauf, Tabelle `colony_path_levels`.
+
+| Art | AP für Stufe 1/2/3/4/5 | Σ AP | Deckel-Gebäude |
+|---|---|---|---|
+| Missionsfamilie (Hangar „Training“) | 6/9/12/16/20 | 63 | Hangar |
+| Figur (Cantina „Beziehung pflegen“) | 4/6/8/10/12 | 40 | Cantina (Bar) |
+
+- **Gebäude-Deckel:** Stufe 1–2 ab Gebäudestufe 1, Stufe 3–4 ab 2, Stufe 5 ab 3.
+- **Hangar-Ertrag:** Faktor 1 + 0,05 × Familienstufe auf skalierbare Belohnungstypen.
+- **Familien:** exploration, salvage, supply, trade, protection (Zuordnung in `config/path_depth.php`).
+- **Cantina:** Investition erst, wenn die Figur im Lauf getroffen wurde (Tomas immer).
+- Nur AP aus dem gemeinsamen Pool; Ausführung von Mission/Gespräch kostet unverändert.
+
+---
+
 ## 7. Schiffe
 
 | Schiff | Supply-Kosten | Max SP | Verschleiß (`wear_per_sol`) | Hangar-Gate | Trägt Funde (`find_carry`) | Stärkewert |
@@ -653,6 +670,7 @@ Nachrichten:   innn_messages, innn_events, innn_news
 
 ### Inventar der Kolonie-Tile System
 ```
+colony_path_levels — Stufen je Missionsfamilie/Figur pro Lauf (T41)
 colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude, Erkundet)
 ```
 

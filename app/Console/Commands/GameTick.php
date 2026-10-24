@@ -21,6 +21,7 @@ use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
 use App\Services\OvercapService;
+use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunProgressService;
@@ -95,6 +96,7 @@ class GameTick extends Command
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly PathDepthService $pathDepthService,
         private readonly OvercapService $overcapService,
     ) {
         parent::__construct();
@@ -459,7 +461,8 @@ class GameTick extends Command
                         $missionSeed,
                         $tick,
                         $rewardMultiplier,
-                        (int) $mission->ship_id
+                        (int) $mission->ship_id,
+                        app(PathDepthService::class)->yieldFactor((int) $mission->colony_id, (string) $mission->destination)
                     );
                     // A salvage flight whose find vanished pays nothing: not a success, so it
                     // does not count for task_expedition_coverage (E9).
@@ -521,7 +524,8 @@ class GameTick extends Command
         int $seed,
         int $tick,
         float $rewardMultiplier = 1.0,
-        int $shipId = 0
+        int $shipId = 0,
+        float $yieldFactor = 1.0
     ): array {
         // loot_table: seeded pick of one entry, then resolve that entry's rewards.
         // Regolith ledger: a direct Regolith reward is ore, a loot-table pick is loot.
@@ -543,7 +547,7 @@ class GameTick extends Command
             }
 
             if (in_array($type, $scalableTypes, true)) {
-                $value = (int) round((int) $value * $rewardMultiplier);
+                $value = (int) round((int) $value * $rewardMultiplier * $yieldFactor);
             }
 
             if ($type === 'credits') {
@@ -1921,6 +1925,7 @@ class GameTick extends Command
                 $userId = (int) (DB::table('glx_colonies')->where('id', $colonyId)->value('user_id') ?? 0);
                 if ($userId > 0) {
                     $this->characterCodexService->recordProgress($userId, $storySlug);
+                    $this->pathDepthService->markMet((int) $colonyId, $storySlug);
                 }
             }
         }

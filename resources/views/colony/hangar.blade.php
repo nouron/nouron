@@ -27,8 +27,13 @@
             missionCatalog: @json($missionCatalog ?? []),
             hangarMaxLevel: @json($hangarMaxLevel ?? 0),
             maxStatus: @json($maxShipStatus),
+            trainingFamilies: @json($trainingFamilies ?? []),
+            trainingMaxLevel: @json(config("path_depth.max_level")),
+            trainingBuildingGate: @json(config("path_depth.building_gate")),
 
             routes: {
+                trainingLocked: @json(__("pathdepth.ui_locked_building", ["building" => __("buildings.hangar"), "level" => ":level"])),
+                trainingInvest: @json(route("colony.pathdepth.invest", ["kind" => "mission_family", "key" => "__KEY__"])),
                 dispatch: @json(route("colony.hangar.dispatch", ["bay" => "__ID__"])),
                 recall: @json(route("colony.hangar.recall", ["bay" => "__ID__"])),
                 repair: @json(route("colony.hangar.repair", ["bay" => "__ID__"])),
@@ -90,6 +95,11 @@
                 targetTooLarge: @json(__("missions.target_too_large")),
                 missionWearLine: @json(__("missions.wear_line")),
                 missionTooWorn: @json(__("missions.too_worn_line")),
+                trainingLevel: @json(__("pathdepth.ui_level", ["level" => ":level", "max" => ":max"])),
+                trainingProgress: @json(__("pathdepth.ui_invest_progress", ["spent" => ":spent", "needed" => ":needed"])),
+                trainingMax: @json(__("pathdepth.ui_level_max")),
+                trainingLocked: @json(__("pathdepth.ui_locked_building", ["building" => __("buildings.hangar"), "level" => ":level"])),
+                trainingInvest: @json(__("pathdepth.ui_invest")),
             },
         };
     </script>
@@ -409,6 +419,38 @@
                     </details>
                 </section>
             </template>
+
+            {{-- ── Training: path depth of mission families (T41) ───────────────── --}}
+            <section class="hangar-training">
+                <h3 class="hangar-training-title">{{ __("pathdepth.ui_training_title") }}</h3>
+                <p class="hangar-training-hint">{{ __("pathdepth.ui_experience_label") }}</p>
+                <div class="hangar-training-grid">
+                    <template x-for="fam in trainingFamilies" :key="fam.key">
+                        <article class="hangar-training-card">
+                            <header class="hangar-training-head">
+                                <strong x-text="fam.name"></strong>
+                                <span class="hangar-training-level"
+                                    x-text="i18n.trainingLevel.replace(':level', fam.level).replace(':max', trainingMaxLevel)"></span>
+                            </header>
+                            <p class="hangar-training-progress"
+                                x-text="fam.ap_for_levelup > 0 ? i18n.trainingProgress.replace(':spent', fam.ap_spend).replace(':needed', fam.ap_for_levelup) : i18n.trainingMax">
+                            </p>
+                            <template x-if="fam.ap_for_levelup > 0">
+                                @include("partials.ap-upgrade-button", [
+                                    "row" => "fam",
+                                    "click" => "investTraining(fam)",
+                                    "btnLabel" => "i18n.trainingInvest",
+                                    "chip" => "build",
+                                    "blockedExpr" => "trainingLoading[fam.key]",
+                                    "gateReasonExpr" => "fam.lock_reason",
+                                    "tipId" => "training-tip",
+                                ])
+                            </template>
+                            <p class="hangar-error" x-show="trainingError[fam.key]" x-text="trainingError[fam.key]"></p>
+                        </article>
+                    </template>
+                </div>
+            </section>
         @endif {{-- hangar slots exist --}}
 
         {{-- ── Nexus-Request modal (native <dialog>, shared for all slots) ────── --}}
