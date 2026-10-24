@@ -96,6 +96,7 @@ class GameTick extends Command
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly PathDepthService $pathDepthService,
         private readonly OvercapService $overcapService,
     ) {
         parent::__construct();
@@ -1924,6 +1925,7 @@ class GameTick extends Command
                 $userId = (int) (DB::table('glx_colonies')->where('id', $colonyId)->value('user_id') ?? 0);
                 if ($userId > 0) {
                     $this->characterCodexService->recordProgress($userId, $storySlug);
+                    $this->pathDepthService->markMet((int) $colonyId, $storySlug);
                 }
             }
         }

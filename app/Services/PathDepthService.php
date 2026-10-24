@@ -111,6 +111,10 @@ class PathDepthService
     /** Mark a cantina character as met in this run (idempotent). */
     public function markMet(int $colonyId, string $characterSlug): void
     {
+        if (config("characters.{$characterSlug}") === null) {
+            return;
+        }
+
         DB::table('colony_path_levels')->insertOrIgnore([
             'colony_id' => $colonyId,
             'kind' => self::KIND_CHARACTER,

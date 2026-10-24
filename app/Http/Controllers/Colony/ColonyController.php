@@ -19,6 +19,7 @@ use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
 use App\Services\OvercapService;
 use App\Services\PathBuildingGateService;
+use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
@@ -51,6 +52,7 @@ class ColonyController extends BaseController
         private readonly ProjectBonusService $projectBonusService,
         private readonly BuildingUnlockService $buildingUnlockService,
         private readonly CharacterCodexService $characterCodexService,
+        private readonly PathDepthService $pathDepthService,
         private readonly NexusImportService $nexusImportService,
         private readonly OvercapService $overcapService,
         private readonly BuildingService $buildingService,
@@ -870,6 +872,7 @@ class ColonyController extends BaseController
             // level 5 -> entry 5, via recordProgress()'s next-sequential slot).
             if ($buildingId === (int) config('buildings.bar.id', 52)) {
                 $this->characterCodexService->recordProgress(Auth::id(), 'bartender');
+                $this->pathDepthService->markMet($colony->id, 'bartender');
             }
         }
 
