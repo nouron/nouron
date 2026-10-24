@@ -669,7 +669,7 @@ return [
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
-    'sol_report_supply_used' => ':used of :cap colonists tied up by buildings',
+    'sol_report_supply_used' => ':cap colonists, :used of them employed',
     'sol_report_food' => 'Provisions',
     'sol_report_food_ok' => ':amount Organics distributed to the kitchens — the colony is fed',
     'sol_report_overcap' => 'Shelter',
