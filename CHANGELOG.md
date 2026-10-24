@@ -3,6 +3,7 @@
 ## 2026-10-24
 
 - Doku: Pfad-Vertiefung auf AP-Investition umgestellt (Kenntnisse, Missionserfahrung, Vertrautheit); B6/V2 geht in T41 auf. Spec, GDD §4b, Glossar, ROADMAP angepasst.
+- Feat: T41 Pfad-Vertiefung — Hangar-Missionsfamilien („Training“) und Cantina-Figuren („Beziehung pflegen“) steigen per AP-Investition (5 Stufen, Gebäudestufe als Deckel, pro Lauf); Hangar-Ertrag +5 % je Familienstufe. Alle Werte Platzhalter (`config/path_depth.php`), nicht gemessen.
 
 ## 2026-10-23
 - Pfad-Vertiefung (Vertrautheit/Routine) als Entwurf in GDD §4b und Spec aufgenommen; Berater-Außendienst und -Burnout zurückgestellt und ins Archiv verschoben (nie im Code).
