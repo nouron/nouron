@@ -21,9 +21,9 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Handelsposten | `tradingPost` | Handelskonditionen (spätere Phase). |
 | Religiöse Stätte / Kolonialdenkmal | `temple` / `monument` | Späte Gebäude. |
 | **Pfadgebäude** | – | Eines der drei Gebäude Labor, Hangar, Cantina. Das erste kommt in Phase 1, das zweite und dritte ab CC Lv3 bzw. Lv4 (Pfadwahl-Gate). |
-| **Vertiefung** | – | Gemeinsame Bauart der Pfadgebäude: mehrere Dinge (Kenntnis, Figur, Missionstyp), jedes in fünf Stufen vertiefbar; nur ein Strukturmodell, nirgends als Raster zu sehen *(Entwurf)*. |
-| **Vertrautheit** | – | Bindung an eine Cantina-Figur; steigt durch Gespräche und Anliegen. Nicht zu verwechseln mit Vertrauen (Kolonie-Stimmung) *(Entwurf)*. |
-| **Routine** | – | Übung der Kolonie mit einem Missionstyp; steigt mit abgeschlossenen Missionen dieses Typs *(Entwurf)*. |
+| **Vertiefung** | – | Gemeinsame Bauart der Pfadgebäude: mehrere Dinge (Kenntnis, Figur, Missionstyp), jedes in fünf Stufen allein mit AP aus dem gemeinsamen Pool ausbaubar (Ausbau), unabhängig von der Ausführung; nur ein Strukturmodell, nirgends als Raster zu sehen *(Entwurf)*. |
+| **Vertrautheit** | – | Bindung an eine Cantina-Figur (Gesprächslevel); steigt per AP-Investition (Beziehung pflegen), erst nach dem ersten Treffen der Figur im Lauf. Nicht zu verwechseln mit Vertrauen (Kolonie-Stimmung) *(Entwurf)*. |
+| **Missionserfahrung** | – | Stufe der Kolonie in einer Missionsfamilie; steigt per AP-Investition als Training im Simulator, ohne Einsatz (Vorschlag für das Label, Alternative „Training“; ersetzt den früheren Arbeitsbegriff „Routine“) *(Entwurf)*. |
 | **Pflichtgebäude (Phase 1)** | – | Was Phase 1 abschließt: CC Lv2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude (je Lv1) und zwei Berater. |
 
 ## Ressourcen und Action Points
@@ -37,14 +37,13 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Organika (Or) | `organics`/`organika` | Nahrung der Kolonisten; Proviant für Missionen. Zielbild: 1 Einheit ernährt 1 Kolonisten pro Sol (ROADMAP T36). |
 | Vertrauen | `trust` (früher `moral`) | Stimmung der Kolonie; Hunger senkt sie, ebenso Unterbesetzung *(Entwurf, nicht geprüft)*. |
 | Action Points (AP) | `ap` | Ein gemeinsamer Pool für die ganze Kolonie (Grundwert plus Berater). |
-| Bau-/Forschungs-/Navigations-/Wirtschafts-AP | `ap_type` | Nur die **Kategorie**, wofür die AP ausgegeben werden, kein getrennter Topf. |
 | **Idle-AP** | – | AP, die am Sol-Ende ungenutzt verfallen. Messgröße, kein Spielbegriff. |
 
 ## Berater (`advisor`)
 
 | Spielbegriff | Code-Schlüssel | Bedeutung |
 |---|---|---|
-| Baumeister | `engineer` | Fester erster Berater. Bau-AP; sein Rang hebt den AP-Deckel. |
+| Baumeister | `engineer` | Fester erster Berater. Zahlt AP ein; sein Rang hebt den AP-Deckel. |
 | Analytiker | `scientist` | Forschung; kommt mit dem Labor. |
 | Raumfahrer | `pilot` | Erkundung und Flüge; kommt mit dem Hangar. |
 | Konsul | `trader` | Handel; kommt mit der Cantina. |
@@ -91,4 +90,4 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 - **Level ↔ Ausbaustufe**, **Supply ↔ Kolonisten**, **tick ↔ Sol**, **moral ↔ Vertrauen**, **advisor ↔ Berater**.
 - **Labor ↔ Sciencelab ↔ Analytik-Labor** sind dasselbe Gebäude.
 - **Nexus-DB** (Enzyklopädie) ↔ **Nexus** (Schulden/Subvention).
-- **Forschungs-AP** ist eine Kategorie des gemeinsamen Pools, kein eigener Topf.
+- Es gibt **keine AP-Arten**: AP ist immer der eine gemeinsame Pool.

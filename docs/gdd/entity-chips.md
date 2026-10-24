@@ -196,7 +196,7 @@ Das Alpine-Komponenten-Muster (`entityChip()`) wird vom UI-Spezialisten definier
 
 **Tooltip-Inhalt**
 - Beratertypname (fett)
-- AP-Typ (z.B. "Bau-AP")
+- Aufgabenfeld (z.B. "Baumeister: Gebäudeausbau")
 - Anzahl aktiver Berater dieses Typs
 - Aktueller Rang (Junior / Senior / etc.)
 
@@ -204,7 +204,7 @@ Das Alpine-Komponenten-Muster (`entityChip()`) wird vom UI-Spezialisten definier
 - Berater-Screen (`/advisors`)
 
 **Datenquelle**
-- Typname und AP-Typ: statisch aus `config/advisors.php`
+- Typname und Aufgabenfeld: statisch aus `config/advisors.php`
 - Anzahl und Rang: dynamisch aus `personell`-Tabelle — muss vorgeladen werden
 
 ---
@@ -263,7 +263,7 @@ Diese Daten werden als Arrays durch den `decorate()`-Aufruf gereicht und beim Ch
 | `data-chip-link` | Ziel-URL (leer = kein Link) | Gebäude: Kolonieansicht mit Gebäude- und Instanz-Parameter |
 | `data-chip-meta` | Optionale Zusatzinfo (JSON-String) | `{"ap_type":"construction"}` |
 
-`data-chip-meta` ist ein Escape-Hatch für typ-spezifische Zusatzdaten (z.B. Berater-AP-Typ, Ressourcen-Handelsbarkeit) die nicht in das flache Schema passen. Der Tooltip-Renderer liest ihn per `JSON.parse`.
+`data-chip-meta` ist ein Escape-Hatch für typ-spezifische Zusatzdaten (z.B. Berater-Aufgabenfeld, Ressourcen-Handelsbarkeit) die nicht in das flache Schema passen. Der Tooltip-Renderer liest ihn per `JSON.parse`.
 
 ---
 
