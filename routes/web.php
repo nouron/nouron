@@ -9,6 +9,7 @@ use App\Http\Controllers\Colony\CommandCenterController;
 use App\Http\Controllers\Colony\CorporateContactController;
 use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\Colony\MerchantController;
+use App\Http\Controllers\Colony\PathDepthController;
 use App\Http\Controllers\CommLog\CommLogController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LobbyController;
@@ -133,6 +134,9 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::post('/hangar/{bay}/dispatch', [HangarController::class, 'dispatch'])->name('hangar.dispatch')->whereNumber('bay');
     Route::post('/hangar/{bay}/recall', [HangarController::class, 'recall'])->name('hangar.recall')->whereNumber('bay');
     Route::post('/hangar/{bay}/repair', [HangarController::class, 'repair'])->name('hangar.repair')->whereNumber('bay');
+
+    // Path depth (T41)
+    Route::post('/path-depth/{kind}/{key}/invest', [PathDepthController::class, 'invest'])->name('pathdepth.invest');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────
