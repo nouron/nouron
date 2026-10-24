@@ -82,6 +82,7 @@ class OnboardingService
                 'trust_events' => ['id'],
                 'merchant_visits' => ['id'],
                 'colony_hangar_missions' => ['id'],
+                'colony_path_levels' => ['colony_id', 'kind', 'entity_key'],
             ];
             foreach ($colonyScoped as $table => $key) {
                 self::deleteByKey($table, $key, DB::table($table)->where('colony_id', $colonyId));
