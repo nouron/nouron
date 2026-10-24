@@ -22,6 +22,8 @@ const HANGAR_SHIP_ID_TO_REQUIRED_LEVEL = { 85: 1, 47: 2, 37: 3 };
 function hangarCarousel(config) {
     return {
         ...carouselMixin(config.slots.length),
+        // Shared AP-bar helpers (apCapReached, apBarLayout, apSegClasses, ...): public/js/ap-bar.js
+        ...window.NouronApBar,
 
         slots: config.slots,
         shipTypes: config.shipTypes,
@@ -38,6 +40,13 @@ function hangarCarousel(config) {
         hasAktivierterKonsul: config.hasAktivierterKonsul ?? false,
         verfuegbareVerhandlungsAP: config.verfuegbareVerhandlungsAP ?? 0,
         pendingShips: config.pendingShips ?? [],
+
+        // Training panel (path depth of mission families, T41)
+        trainingFamilies: config.trainingFamilies ?? [],
+        trainingMaxLevel: config.trainingMaxLevel ?? 5,
+        trainingBuildingGate: config.trainingBuildingGate ?? {},
+        trainingLoading: {},
+        trainingError: {},
         pendingOpen: false,
         requestNotice: null,
         missionCatalog: config.missionCatalog ?? [],
@@ -602,6 +611,37 @@ function hangarCarousel(config) {
             const idx = this.slots.findIndex((s) => s.bay === bay);
             if (idx !== -1) {
                 this.slots[idx] = updatedSlot;
+            }
+        },
+
+        /**
+         * Invests 1 AP in a mission family's next level (POST colony.pathdepth.invest).
+         * @param {object} fam - Row from trainingFamilies
+         */
+        async investTraining(fam) {
+            if (this.trainingLoading[fam.key]) return;
+            this.trainingLoading[fam.key] = true;
+            this.trainingError[fam.key] = '';
+            try {
+                const res = await this._post(this.routes.trainingInvest.replace('__KEY__', fam.key), { ap: 1 });
+                if (res.ok) {
+                    fam.level = res.level;
+                    fam.ap_spend = res.ap_spend;
+                    fam.ap_for_levelup = res.ap_for_levelup;
+                    fam.level_cap = res.level_cap;
+                    this.syncHangarResources(res);
+                    const required = this.trainingBuildingGate[fam.level + 1];
+                    fam.lock_reason =
+                        required !== undefined && fam.level >= fam.level_cap
+                            ? this.i18n.trainingLocked.replace(':level', required)
+                            : null;
+                } else {
+                    this.trainingError[fam.key] = res.message || res.error || '';
+                }
+            } catch (e) {
+                this.trainingError[fam.key] = String(e);
+            } finally {
+                this.trainingLoading[fam.key] = false;
             }
         },
 

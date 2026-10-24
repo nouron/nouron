@@ -10,6 +10,7 @@ use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
+use App\Services\PathDepthService;
 use App\Services\TickService;
 use App\Support\HangarBays;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +29,7 @@ class HangarController extends BaseController
         private readonly AdvisorService $advisorService,
         private readonly OnboardingHintService $onboardingHintService,
         private readonly ColonyTileService $colonyTileService,
+        private readonly PathDepthService $pathDepthService,
     ) {
         parent::__construct($tick);
     }
@@ -90,7 +92,10 @@ class HangarController extends BaseController
         $hangarMaxLevel = $this->hangarService->hangarMaxLevel($colony->id);
         $maxShipStatus = HangarBays::maxStatus();
 
+        $trainingFamilies = $this->trainingFamilies($colony->id);
+
         return view('colony.hangar', compact(
+            'trainingFamilies',
             'slots',
             'pendingShips',
             'shipTypes',
@@ -106,6 +111,30 @@ class HangarController extends BaseController
             'hangarMaxLevel',
             'maxShipStatus',
         ));
+    }
+
+    /**
+     * Per-family path-depth state for the Training panel (T41).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function trainingFamilies(int $colonyId): array
+    {
+        $gate = config('path_depth.building_gate');
+        $families = [];
+        foreach (array_keys(config('path_depth.families')) as $key) {
+            $state = $this->pathDepthService->state($colonyId, PathDepthService::KIND_FAMILY, $key);
+            $nextRequired = $gate[$state['level'] + 1] ?? null;
+            $families[] = $state + [
+                'key' => $key,
+                'name' => __("pathdepth.family_{$key}"),
+                'lock_reason' => $nextRequired !== null && $state['level'] >= $state['level_cap']
+                    ? __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => $nextRequired])
+                    : null,
+            ];
+        }
+
+        return $families;
     }
 
     /**

@@ -13,6 +13,7 @@ return [
     'ui_experience_label' => 'Mission experience',
     'ui_level' => 'Level :level/:max',
     'ui_invest_progress' => ':spent/:needed AP',
+    'ui_invest' => 'Invest', // TODO content-writer: confirm wording
     'ui_level_max' => 'Highest level',
     'ui_locked_building' => 'Locked: :building needs level :level.',
 

@@ -1104,3 +1104,58 @@ details[open] .hangar-pending-summary::before {
         padding: 0;
     }
 }
+
+/* ── Training panel (path depth of mission families, T41) ─────────────── */
+.hangar-training {
+    margin: var(--space-4, 1rem) 0;
+}
+
+.hangar-training-title {
+    margin-bottom: 0;
+}
+
+.hangar-training-hint {
+    margin: 0 0 var(--space-3, 0.75rem);
+    color: var(--color-text-muted, #666);
+    font-size: 0.875rem;
+}
+
+.hangar-training-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-3, 0.75rem);
+}
+
+.hangar-training-card {
+    margin: 0;
+    padding: var(--space-3, 0.75rem);
+}
+
+.hangar-training-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.hangar-training-level,
+.hangar-training-progress {
+    font-size: 0.875rem;
+    color: var(--color-text-muted, #666);
+}
+
+.hangar-training-progress {
+    margin: 0.25rem 0 0.5rem;
+}
+
+.hangar-training-head strong {
+    font-size: 1rem;
+}
+
+.hangar-training-level {
+    white-space: nowrap;
+}
+
+.hangar-training-title {
+    font-size: 1.125rem;
+}
