@@ -20,6 +20,8 @@ return [
     // ── Cantina: nurture relationship
     'ui_relationship_title' => 'Nurture relationship',
     'ui_not_met' => 'Not met yet',
+    'ui_relationship_run_hint' => 'Familiarity only counts for this run. What you learn about a character stays in the codex across all runs.',
+    'ui_relationship_met_only' => 'Only characters you have met in this run appear here.',
 
     // ── Mission families
     'family_exploration' => 'Exploration',

@@ -119,6 +119,19 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
             "negotiateFailedTemplate" => __("colony.bar_offer_negotiate_failed"),
             // Offers negotiated earlier (is_negotiated in the DB) start flagged in the dialog.
             "negotiatedOffers" => (object) $negotiatedOffers,
+            "relationshipInvestRoute" => route("colony.pathdepth.invest", ["kind" => "character", "key" => "__KEY__"]),
+            "relationshipGate" => config("path_depth.building_gate"),
+            "relationshipMaxLevel" => config("path_depth.max_level"),
+            "relationshipI18n" => [
+                "invest" => __("pathdepth.ui_invest"),
+                "level" => __("pathdepth.ui_level", ["level" => ":level", "max" => ":max"]),
+                "progress" => __("pathdepth.ui_invest_progress", ["spent" => ":spent", "needed" => ":needed"]),
+                "maxed" => __("pathdepth.ui_level_max"),
+                "locked" => __("pathdepth.ui_locked_building", [
+                    "building" => __("buildings.bar"),
+                    "level" => ":level",
+                ]),
+            ],
         ];
     @endphp
 
@@ -993,6 +1006,38 @@ $offerFlavorKey =
                     </div>
                 @endif
             </div>
+
+            {{-- ── Beziehung pflegen: path depth of met characters (T41) ─────────── --}}
+            <section class="bar-relationships">
+                <h3 class="bar-relationships-title">{{ __("pathdepth.ui_relationship_title") }}</h3>
+                <p class="bar-relationships-hint">{{ __("pathdepth.ui_relationship_run_hint") }}</p>
+                <p class="bar-relationships-hint">{{ __("pathdepth.ui_relationship_met_only") }}</p>
+                <div class="bar-relationships-grid">
+                    @foreach ($relationships as $rel)
+                        <article class="bar-relationship-card" data-character="{{ $rel["key"] }}"
+                            x-data='{ rel: @json($rel) }'>
+                            <header class="bar-relationship-head">
+                                <strong>{{ $rel["name"] }}</strong>
+                                <span class="bar-relationship-level" x-text="relationLevelText(rel)"></span>
+                            </header>
+                            <p class="bar-relationship-progress" x-text="relationProgressText(rel)"></p>
+                            <template x-if="rel.ap_for_levelup > 0">
+                                @include("partials.ap-upgrade-button", [
+                                    "row" => "rel",
+                                    "click" => "investRelation(rel)",
+                                    "btnLabel" => "relationI18n.invest",
+                                    "chip" => "build",
+                                    "blockedExpr" => "relationLoading[rel.key]",
+                                    "gateReasonExpr" => "rel.lock_reason",
+                                    "tipId" => "relation-tip-" . $rel["key"],
+                                ])
+                            </template>
+                            <p class="bar-relationship-error" x-show="relationError[rel.key]"
+                                x-text="relationError[rel.key]"></p>
+                        </article>
+                    @endforeach
+                </div>
+            </section>
         @endif
 
     </div>
@@ -1013,6 +1058,65 @@ $offerFlavorKey =
             return {
                 // Inherit swipe carousel properties & methods from swipe.js
                 ...swipeCarousel(panelCount, 0),
+                // Shared AP-bar helpers (apCapReached, apBarLayout, apSegClasses, ...): public/js/ap-bar.js
+                ...window.NouronApBar,
+
+                // Relationship panel (path depth of met characters, T41)
+                relationLoading: {},
+                relationError: {},
+                relationI18n: extra.relationshipI18n ?? {},
+
+                relationLevelText(rel) {
+                    return this.relationI18n.level
+                        .replace(':level', rel.level)
+                        .replace(':max', extra.relationshipMaxLevel ?? 5);
+                },
+
+                relationProgressText(rel) {
+                    if (rel.ap_for_levelup <= 0) return this.relationI18n.maxed;
+                    return this.relationI18n.progress
+                        .replace(':spent', rel.ap_spend)
+                        .replace(':needed', rel.ap_for_levelup);
+                },
+
+                // Invests 1 AP in a character's next level (POST colony.pathdepth.invest).
+                async investRelation(rel) {
+                    if (this.relationLoading[rel.key]) return;
+                    this.relationLoading[rel.key] = true;
+                    this.relationError[rel.key] = '';
+                    try {
+                        const res = await fetch(extra.relationshipInvestRoute.replace('__KEY__', rel.key), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                ap: 1
+                            }),
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            rel.level = data.level;
+                            rel.ap_spend = data.ap_spend;
+                            rel.ap_for_levelup = data.ap_for_levelup;
+                            rel.level_cap = data.level_cap;
+                            this.syncAp(data.apAvailable);
+                            const required = (extra.relationshipGate ?? {})[rel.level + 1];
+                            rel.lock_reason =
+                                required !== undefined && rel.level >= rel.level_cap ?
+                                this.relationI18n.locked.replace(':level', required) :
+                                null;
+                        } else {
+                            this.relationError[rel.key] = data.message || data.error || '';
+                        }
+                    } catch (e) {
+                        this.relationError[rel.key] = String(e);
+                    } finally {
+                        this.relationLoading[rel.key] = false;
+                    }
+                },
 
                 // Offers state
                 accepted: {},

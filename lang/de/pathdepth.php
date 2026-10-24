@@ -20,6 +20,8 @@ return [
     // ── Cantina: Beziehung pflegen
     'ui_relationship_title' => 'Beziehung pflegen',
     'ui_not_met' => 'Noch nicht getroffen',
+    'ui_relationship_run_hint' => 'Vertrautheit gilt nur für diesen Lauf. Was du über eine Figur erfährst, bleibt dagegen insgesamt im Kodex erhalten.',
+    'ui_relationship_met_only' => 'Hier erscheinen nur Figuren, die du in diesem Lauf getroffen hast.',
 
     // ── Missionsfamilien
     'family_exploration' => 'Erkundung',

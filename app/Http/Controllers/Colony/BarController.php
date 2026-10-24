@@ -11,6 +11,7 @@ use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
+use App\Services\PathDepthService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
@@ -37,6 +38,7 @@ class BarController extends BaseController
         private readonly ResourcesService $resourcesService,
         private readonly BarOfferDialogPresenter $offerDialogPresenter,
         private readonly TradeAdvantagePresenter $advantagePresenter,
+        private readonly PathDepthService $pathDepthService,
     ) {
         parent::__construct($tick);
     }
@@ -157,13 +159,45 @@ class BarController extends BaseController
             fn ($opt) => in_array($opt['key'], $devaKnowledgeChoiceKeys, true),
         ));
 
+        $relationships = $barLevel > 0 ? $this->relationships($colony->id, $characters) : [];
+
         return view('colony.bar', compact(
+            'relationships',
             'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
             'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
         ));
+    }
+
+    /**
+     * Path-depth state of every character met in this run (Tomas always), for the
+     * "Beziehung pflegen" panel (T41). Unmet characters are not listed.
+     *
+     * @param  array<string, array<string, mixed>>  $characters
+     * @return list<array<string, mixed>>
+     */
+    private function relationships(int $colonyId, array $characters): array
+    {
+        $gate = config('path_depth.building_gate');
+        $rows = [];
+        foreach ($characters as $slug => $char) {
+            $state = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, $slug);
+            if (! $state['met']) {
+                continue;
+            }
+            $nextRequired = $gate[$state['level'] + 1] ?? null;
+            $rows[] = $state + [
+                'key' => $slug,
+                'name' => $char['name'] ?? $char['role'],
+                'lock_reason' => $nextRequired !== null && $state['level'] >= $state['level_cap']
+                    ? __('pathdepth.ui_locked_building', ['building' => __('buildings.bar'), 'level' => $nextRequired])
+                    : null,
+            ];
+        }
+
+        return $rows;
     }
 
     public function accept(Request $request, int $offerId): JsonResponse

@@ -3439,3 +3439,57 @@ dialog[x-ref="discoveryDialog"] {
 .tile-action-btn--barred .tile-action-btn__main {
     white-space: nowrap;
 }
+
+/* Cantina: relationship panel (path depth, T41) */
+.bar-relationships {
+    margin: var(--space-4, 1rem) 0;
+}
+
+.bar-relationships-title {
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.bar-relationships-hint {
+    margin: 0 0 var(--space-2, 0.5rem);
+    color: var(--color-text-muted, #666);
+    font-size: 0.875rem;
+}
+
+.bar-relationships-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-3, 0.75rem);
+}
+
+.bar-relationship-card {
+    margin: 0;
+    padding: var(--space-3, 0.75rem);
+}
+
+.bar-relationship-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.bar-relationship-level,
+.bar-relationship-progress {
+    font-size: 0.875rem;
+    color: var(--color-text-muted, #666);
+}
+
+.bar-relationship-level {
+    white-space: nowrap;
+}
+
+.bar-relationship-progress {
+    margin: 0.25rem 0 0.5rem;
+}
+
+.bar-relationship-error {
+    margin: 0.25rem 0 0;
+    color: var(--pico-del-color);
+    font-size: 0.85rem;
+}
