@@ -964,7 +964,7 @@ class HangarService
                 'key' => $key,
                 'name' => __("missions.{$key}_name"),
                 'desc' => __("missions.{$key}_desc"),
-                'reward_label' => MissionReward::label($mission['reward']),
+                'reward_label' => MissionReward::label($mission['reward'], app(PathDepthService::class)->yieldFactor($colonyId, $key)),
                 'ships' => $mission['ships'],
                 'sol_distance' => $dist,
                 'duration' => 2 * $dist,

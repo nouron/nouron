@@ -26,10 +26,10 @@ final class MissionReward
     ];
 
     /** @param array<string, mixed> $reward one reward definition from config/missions.php */
-    public static function label(array $reward): string
+    public static function label(array $reward, float $factor = 1.0): string
     {
         if (isset($reward['loot_table'])) {
-            $options = array_map(fn (array $option) => self::label($option), $reward['loot_table']);
+            $options = array_map(fn (array $option) => self::label($option, $factor), $reward['loot_table']);
 
             return __('missions.reward_loot_table', ['options' => implode(' / ', $options)]);
         }
@@ -37,7 +37,7 @@ final class MissionReward
         $parts = [];
         foreach (self::AMOUNT_PARTS as $key => $langKey) {
             if (array_key_exists($key, $reward)) {
-                $parts[] = __("missions.{$langKey}", ['amount' => self::amount($reward[$key])]);
+                $parts[] = __("missions.{$langKey}", ['amount' => self::amount($reward[$key], $factor)]);
             }
         }
         foreach (self::FIXED_PARTS as $key => $langKey) {
@@ -52,9 +52,14 @@ final class MissionReward
         return implode(' + ', $parts);
     }
 
-    /** @param int|array{0: int, 1: int} $amount fixed amount or [min, max] */
-    private static function amount(int|array $amount): string
+    /**
+     * @param  int|array{0: int, 1: int}  $amount  fixed amount or [min, max]
+     * @param  float  $factor  path-depth yield factor, rounded like the payout (GameTick::payMissionRewards)
+     */
+    private static function amount(int|array $amount, float $factor): string
     {
-        return is_array($amount) ? $amount[0].'–'.$amount[1] : (string) $amount;
+        $scale = fn (int $value): int => (int) round($value * $factor);
+
+        return is_array($amount) ? $scale($amount[0]).'–'.$scale($amount[1]) : (string) $scale($amount);
     }
 }
