@@ -76,6 +76,36 @@ Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und geh
   - Vermerk: **Berater-Außendienst und Berater-Burnout** sind als Features zurückgestellt und aus dem GDD genommen (beide standen nur im GDD, nie im Code); Originaltext in `docs/gdd/archiv-berater-aussendienst-burnout.md`. `unavailable_until_tick` bleibt (Nexus-Sanktion).
   - **Bezüge (Annahmen des Projektmanagers, keine Owner-Entscheidung):** (a) **Entschieden 2026-10-24:** T37/B6/V2 „Ausbildung/Training“ ist in T41 aufgegangen (Hangar-Training per AP-Investition). (b) T40: berührt sich nur über die Cantina-Begegnungen (gleiche Auslöser), keine inhaltliche Abhängigkeit erkannt. **Offene Frage an den Owner:** Reihenfolge von T41 gegenüber der T40-Messung? Annahme-Vorschlag (keine Owner-Entscheidung): erst Handtest-Nachlauf, dann T40-Messung, dann T41 ab P1.
 - [ ] **T42 AP-Arten-Reste im Code entfernen** (Owner 2026-10-24: AP-Arten gibt es seit 2026-08-02 nicht mehr, nur ein gemeinsamer Pool) — Überbleibsel: `ap_type` in `config/advisors.php` und den Controllern, „Nav-AP“ in `lang/de/missions.php`, `config/missions.php`, `HangarService`, Kommentare in `config/game.php`, Views/JS (`advisors.js`, `hangar.js`), Services (`OnboardingHintService`, `MerchantService`, `BarService`), Tests, `CLAUDE.md`. Erst klären, ob `ap_type` noch etwas bewirkt oder nur Etikett ist; TDD. — Mittel
+- [ ] **T43 Playtest 2026-10-24 (Pfad-Vertiefung, Sol 1–14)** (Owner-Handtest Bart; Rohnotizen: 25 nummerierte Punkte, Verweise unten als „Pkt n“) — Arbeitspakete aus dem Feedback, gruppiert A–F. **Reihenfolge für morgen (Annahme des Projektmanagers, keine Owner-Entscheidung):** erst die Bugs/Prüfpunkte (A), parallel dazu die Designer-Fragen (B), danach die UI-Pakete (C) und das Protokoll (D); Texte (E) nebenbei. Die Prioritätentabelle bleibt unverändert. Bestätigt gut (kein Paket): Rest-AP-Hinweis feuert korrekt (Pkt 5), Freischaltungen in der Sidebar gut sichtbar (Pkt 7, Sidebar-Design insgesamt siehe C), Wahl „Training oder Erkundung“ gefällt (Pkt 15), Erkundung Stufe 3 korrekt an Hangar Stufe 2 gekoppelt (Pkt 19). Jede Code-Änderung TDD; Bot-Batch nur nach Rückfrage und Dauerschätzung.
+  - **A) Bugs und Prüfpunkte**
+  - [ ] **T43-A1** Hexmap rutscht nach unten, wenn bei gewähltem Agrardom ein freies Feld daneben angeklickt wird (Seite lädt neu) — reproduzieren, Ursache klären, beheben (Pkt 4; ui-specialist) — Klein
+  - [ ] **T43-A2** Wohnhabitat Stufe 2 liefert die zusätzlichen Kolonisten erst nach Sol-Ende: prüfen, ob Fehler oder gewollt; **Designfrage:** soll ein Ausbau weniger Kolonisten geben als ein Neubau (Pkt 23; erst game-designer, dann game-developer) — Klein
+  - [ ] **T43-A3** Küchen-/Organika-Rechnung im Sol-Bericht unklar („1 Organika in die Küchen geflossen“ bei 4 von 18 Beschäftigten): Ist-Regel ist 1 Organika je 4 Kolonisten (`game.food.supply_per_eater`), der Owner erwartete 1 je Kolonist. Design-Entscheidung nötig, hängt an T36 (Zielbild „eine Einheit = ein Kolonist“, Spec `2026-10-17-organika-eine-einheit-ein-kolonist.md`); bis dahin Anzeige so erklären, dass Rechnung nachvollziehbar ist (Pkt 2; game-designer, danach game-developer/ui-specialist) — Klein–Mittel
+  - **B) Designer-Fragen (game-designer, vor Umsetzung; untereinander parallel)**
+  - [ ] **T43-B1** Hangar-Training: Freischaltung nach Schiffstyp statt alles von Anfang an (Pkt 11) — Klein
+  - [ ] **T43-B2** Hangar-Training: Sol-Limit bzw. AP-Deckel, damit nicht alle AP eines Sols nur ins Training fließen (Pkt 12; berührt T35-AP-Deckel) — Klein
+  - [ ] **T43-B3** Hangar-Training: Bindung an Schiff oder Schiffstyp, solange es läuft (Pkt 13) — Klein
+  - [ ] **T43-B4** Cantina: 1–2 Gesprächsoptionen statt „Investieren“-Button; evtl. +3 AP je Gespräch statt +1-AP-Schritten (Pkt 25; hängt an T41 P7) — Mittel
+  - [ ] **T43-B5** Übergang Phase 1→2: Erfolgs-Feedback und mindestens ein sofort aufgedecktes Phase-2-Ziel, die übrigen per Fortschritt aufdecken (Pkt 16; Umsetzungsstand der Aufdeck-Logik vorher prüfen) — Klein–Mittel
+  - [ ] **T43-B6** Pacing: Phase 2 schon in Sol 9 erreicht, zu früh; Skill `nouron-balance-pass` und `2026-10-16-phase1-pacing-entscheidungen.md` zuerst lesen, messen vor rechnen (Pkt 17; Bot-Batch nur nach Rückfrage) — Mittel
+  - **C) UI (ui-specialist)**
+  - [ ] **T43-C1** Hangar-Screen aufräumen; Training am Schiff bei Vorfeld und Buchten anzeigen statt als eigenes Panel darunter (Pkt 9, 10) — Mittel
+  - [ ] **T43-C2** Wirkung des Trainings im UI zeigen (was bringt die nächste Stufe) (Pkt 14) — Klein
+  - [ ] **T43-C3** Missionsauswahl („Mission wählen“): Missions-Level bzw. Familienstufe anzeigen (Pkt 20) — Klein
+  - [ ] **T43-C4** Cantina-Layout: Tomas als Barkeeper hinter der Bar statt unter dem Bild (Pkt 25) — Klein
+  - [ ] **T43-C5** Karte: laufende Baustelle optisch erkennbar (kleiner Hinweis am Feld) (Pkt 6) — Klein
+  - [ ] **T43-C6** Sidebar des freien Felds und der Gebäude optisch überarbeiten (Pkt 3, 7; nicht priorisiert) — Mittel
+  - [ ] **T43-C7** Sol-Übersicht aufräumen; Details in der Kommandozentrale einsehbar (ausklappbar o. ä.) (Pkt 8) — Mittel
+  - [ ] **T43-C8** Gesperrte Gebäude: Grund (fehlende Kolonisten oder Regolith) auf den ersten Blick erkennbar, nicht nur Regolith; trifft auch den offenen Rest von T34 („nicht bezahlbar“ getrennt von „gesperrt“) (Pkt 22) — Klein
+  - **D) Protokoll (Nexus-Protokoll)**
+  - [ ] **T43-D1** Doppelte/überflüssige Infos entfernen: Fortschrittsklammer „(done / total AP)“ und „×n“-Zähler bei „AP n in <Gebäude> investiert“ streichen (Pkt 18; ui-specialist/backend-coder) — Klein
+  - [ ] **T43-D2** Hangar-Training-Investitionen ins Protokoll aufnehmen (Pkt 21; game-developer, TDD) — Klein
+  - **E) Texte (content-writer)**
+  - [ ] **T43-E1** Signal-Dialog „Signal entschlüsselt / Kleiner Fund“ wirkt wie Platzhalter, Texte aufhübschen (nicht final, später Bild plus Text) (Pkt 3) — Klein
+  - [ ] **T43-E2** Texte `pathdepth.ui_*` aus T41 prüfen und überarbeiten, ggf. nach den Designer-Entscheidungen in B (Cantina-Gespräche) — Klein
+  - **F) Quickwins am 2026-10-24 erledigt** (Branch `fix/playtest-quickwins-2026-10-24`)
+  - [x] ✅ 2026-10-24 Popups (Toasts) erscheinen mittig unten statt rechts oben und verdecken „Sol beenden“ nicht mehr (Pkt 24)
+  - [x] ✅ 2026-10-24 Sol-Bericht-Text zu Kolonisten lautet jetzt „:cap Kolonisten, davon :used beschäftigt“ (Pkt 1)
 
 ### Closed Beta — Vorbereitung (Priorität, Owner-Entscheidung 2026-09-30)
 

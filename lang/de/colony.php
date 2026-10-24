@@ -673,7 +673,7 @@ return [
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
-    'sol_report_supply_used' => ':used von :cap Kolonisten durch Gebäude gebunden',
+    'sol_report_supply_used' => ':cap Kolonisten, davon :used beschäftigt',
     'sol_report_food' => 'Verpflegung',
     'sol_report_food_ok' => ':amount Organika in die Küchen geflossen — die Kolonie ist versorgt',
     'sol_report_overcap' => 'Unterkunft',
