@@ -39,7 +39,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 > **Rg** = Regolith, **Wk** = Werkstoffe (compounds)
 > **Pfad-Gebäude-Gate** (Analytik-Labor/Hangar/Cantina, Server-Regel seit 2026-10-14, `game.path_building_gate.cc_level_offset` = 1): ein neues Pfad-Gebäude nur solange `platzierte Pfad-Gebäude < CC-Level − 1` — CC Lv2: 1, Lv3: 2, Lv4: alle 3. Gesperrte Einträge bleiben im Baumenü sichtbar (mit Begründung); stehende Pfad-Gebäude bleiben bei CC-Rückbau unberührt.
 > **Gebäude-Stufen-Gate** (Server-Regel seit 2026-10-15, `game.building_cc_level_offset` = 0): jede Ausbaustufe eines Nicht-CC-Gebäudes braucht eine Kommandozentrale mindestens gleicher Stufe (Lv2-Gebäude → CC Lv2, Lv3 → CC Lv3 …); Fehlercode `building_cc_gate`. Die CC selbst ist ausgenommen.
-> **Bau-AP-Deckel pro Gebäude und Sol** (Server-Regel seit 2026-10-16, `game.build.ap_cap_per_sol`, seit 2026-10-16 aktiv: `base` = 4; `null` schaltet aus): Deckel = `base` + Ingenieur-Rangbonus (`engineer_bonus_per_rank`, Annahme 1/2/3 = +2/+3/+4; nicht verfügbarer Ingenieur = nur `base`); gilt für Ausbau-AP inkl. CC, nicht für Reparatur oder Platzieren; Fehlercode `building_ap_cap`. Keine Werte geändert.
+> **AP-Deckel pro Gebäude und Sol** (Server-Regel seit 2026-10-16, `game.build.ap_cap_per_sol`, seit 2026-10-16 aktiv: `base` = 4; `null` schaltet aus): Deckel = `base` + Ingenieur-Rangbonus (`engineer_bonus_per_rank`, Annahme 1/2/3 = +2/+3/+4; nicht verfügbarer Ingenieur = nur `base`); gilt für Ausbau-AP inkl. CC, nicht für Reparatur oder Platzieren; Fehlercode `building_ap_cap`. Keine Werte geändert.
 > Max Level für alle Nicht-CC-Gebäude seit dem Ausbaustufen-System (2026-08-26, `config/buildings.php`). Wohnhabitat: Level 3 **pro Instanz**, 6 Instanzen. Depot/Lagerhalle ist seit 2026-06-22 entfernt.
 
 ---
@@ -107,12 +107,12 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 | Kenntnis | Levelup-AP (Lv1→5) | Σ AP | Trust/Lv | Effekt |
 |---|---|---|---|---|
-| **construction** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%) |
+| **construction** | 20/28/36/44/52 | 180 AP | 0 | AP-Kosten Gebäudebau −2/−4/−4/−3/−2 (Σ−15%) |
 | **cartography** | 20/28/36/44/52 | 180 AP | 0 | Navigation-AP (Tile-Erkundung, Hangar-Missions-Reisekosten) −4/−8/−8/−6/−4% (Σ−30%) |
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
 | **agronomy** | 20/28/36/44/52 | 180 AP | +2 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
 | **health** | 20/28/36/44/52 | 180 AP | +3 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
-| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bar-Slots +0/+1/+1/+0/+0; Handelsvorteil-Preisbonus (alle 3 Kanäle) +2/+3/+3/+2/+2% (Σ12%); Cantina-Verhandlung-Erfolgschance +1/+2/+2/+2/+1%-Punkte (Σ8%-Punkte, nur mit Konsul). Kein Bau-AP-Rabatt mehr (A13, 2026-09-20 — vorher Σ15% additiv mit construction, gestrichen: Handel wirkt auf Preise/Angebote/Verhandlung, nicht auf Bauprojekte). |
+| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bar-Slots +0/+1/+1/+0/+0; Handelsvorteil-Preisbonus (alle 3 Kanäle) +2/+3/+3/+2/+2% (Σ12%); Cantina-Verhandlung-Erfolgschance +1/+2/+2/+2/+1%-Punkte (Σ8%-Punkte, nur mit Konsul). Kein Bau-Rabatt auf AP mehr (A13, 2026-09-20 — vorher Σ15% additiv mit construction, gestrichen: Handel wirkt auf Preise/Angebote/Verhandlung, nicht auf Bauprojekte). |
 | **defense** | 20/28/36/44/52 | 180 AP | +2 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **CC-Level Gate**: Lv4 & Lv5 knowledge erfordern CC Lv4 bzw. Lv5
@@ -150,7 +150,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 
 **Bergungsflug** (`mission_find_salvage`, `FindFlightService`): nur zu gescannten echten Funden, Schiff Drohne oder Frachter, kein Erfolgswurf (`roll` false), Schwierigkeit `normal` (zählt für `task_expedition_coverage`, nicht gegen `finds.max_open_projects`).
 
-| Ring | Sol-Distanz (`sol_distance_by_ring`) | Nav-AP (pauschal, `finds.flight.nav_ap`) | Organika (1 je Sol, `finds.flight.organika_per_sol`) | Dauer (hin und zurück) |
+| Ring | Sol-Distanz (`sol_distance_by_ring`) | AP (pauschal, `finds.flight.nav_ap`) | Organika (1 je Sol, `finds.flight.organika_per_sol`) | Dauer (hin und zurück) |
 |---|---|---|---|---|
 | 2 | 1 | 1 | 1 | 2 Sol |
 | 3 | 2 | 1 | 2 | 4 Sol |
@@ -225,7 +225,7 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 ### Drohne / Frachter
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
-| `mission_find_salvage` (gescannter Fund) | 1 (Ring 2) / 2 (Ring 3) | 3 / 6 Or (+ 2 / 4 Nav-AP) | Fund-Rg × 1,5 (klein 6, mittel 15, groß 27; Frachter für groß), kein Wurf |
+| `mission_find_salvage` (gescannter Fund) | 1 (Ring 2) / 2 (Ring 3) | 3 / 6 Or (+ 2 / 4 AP) | Fund-Rg × 1,5 (klein 6, mittel 15, groß 27; Frachter für groß), kein Wurf |
 
 ### Frachter
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
@@ -304,13 +304,13 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 **Maximum**: 12 + (4 advisors × 4 AP/Rank3) = 28 AP/Tick theoretisch.
 
 ### AP-Kosten (Beispiele)
-| Aktion | AP-Typ | Kosten |
-|---|---|---|
-| Gebäude-Levelup | construction | *Individuell; Rabatt via construction* |
-| Kenntnis-Levelup | research | *20–52 je Ziel-Level* |
-| Feld erkunden | navigation | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3); Rabatt via cartography |
-| Handel annehmen | economy | 2 |
-| Handel verhandeln | economy | 4 (+ risk) |
+| Aktion | Kosten (AP, gemeinsamer Pool) |
+|---|---|
+| Gebäude-Levelup | *Individuell; Rabatt via construction* |
+| Kenntnis-Levelup | *20–52 je Ziel-Level* |
+| Feld erkunden | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3); Rabatt via cartography |
+| Handel annehmen | 2 |
+| Handel verhandeln | 4 (+ risk) |
 
 ---
 
@@ -555,7 +555,7 @@ Pool gesamt: 7 Signale, 40 Rg; der Ertrag ist bei Selbstbergung und Flug gleich 
 | Bergungsflug (`finds.flight`, T30 Schritt 3) | Wert |
 |---|---|
 | Ertrag | Fundmenge (`types.*.rg`), kein Faktor |
-| Navigations-AP je Flug `nav_ap` | 1 (unabhängig von Größe und Ring) |
+| AP je Flug `nav_ap` | 1 (unabhängig von Größe und Ring) |
 | Proviant `organika_per_sol` | 1 Organika je Sol Entfernung (Ring 2: 1, Ring 3: 2) |
 | Verschleiß | keiner (Bergungsflüge verschleißen das Schiff nicht; Rückkehr-Garantie entfällt) |
 | Mindest-Hallenstufe `min_hangar_level` | klein 1, mittel 1, groß 2 (muss zu `ships.*.find_carry` passen) |

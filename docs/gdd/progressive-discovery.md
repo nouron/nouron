@@ -90,7 +90,7 @@ Jeder Dialog hat folgende Felder:
 | `advisor_type` | Welcher Berater-Typ | `construction` |
 | `trigger` | Was löst den Dialog aus | `phase2_start`, `run_event`, `sol_threshold` |
 | `duration_ticks` | Wie viele Sole dauert der Dialog | 1–3 |
-| `ap_cost_type` | AP-Typ der Entscheidungskosten | `construction`, oder `null` |
+| `ap_cost_type` | Veraltet: es gibt nur einen AP-Pool; Feld nur noch Code-Rest | `construction`, oder `null` |
 | `ap_cost_amount` | Wie viele AP kostet Annehmen | 3–8 |
 | `reward_type` | Was liefert der Dialog | `objective_reveal`, `knowledge_hint`, `resource_bonus`, `none` |
 | `is_skippable` | Kann der Spieler ablehnen | `true` / `false` |
@@ -119,9 +119,9 @@ Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer opt
 | Dialog-Key | Berater | Trigger | Kosten | Ergebnis |
 |------------|---------|---------|--------|---------|
 | `engineer_phase2_objective_reveal` | Baumeister | `phase2_start` + 1 Sol | 4 construction-AP | Objective 1 enthüllt |
-| `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | 5 research-AP | Event-Tile Tiefenscan-Kosten um 1 AP reduziert |
+| `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | 5 AP | Event-Tile Tiefenscan-Kosten um 1 AP reduziert |
 | `pilot_patrol_report` | Raumfahrer | 3+ Außenmissionen abgeschlossen | 0 AP | Verschleiß-Prognose des nächsten Dispatch detailliert aufgeschlüsselt (§7) |
-| `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | 6 economy-AP | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
+| `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | 6 AP | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
 | ~~`strategist_threat_assessment`~~ | ~~Stratege~~ | — | — | **Entfallen 2026-08-02** — Stratege zurückgestellt (§13); der prognostizierte Ausgang wird stattdessen dauerhaft im Dashboard gezeigt (§13.4) |
 
 > ⚠️ BALANCE CONCERN: Dialoge mit 0 AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Prognostizierter Gefahren-Ausgang" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Dialoge mit 5+ AP-Kosten müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
@@ -248,7 +248,7 @@ almanac_articles
 ├── unlock_trigger        ← JSON: Trigger-Definition, z.B. {"type": "building_built", "key": "harvester"}
 ├── bonus_type            ← nullable string: 'ap_bonus' | 'resource_bonus' | 'knowledge_hint' | 'encounter_prep' | null
 ├── bonus_value           ← nullable int/JSON: Wert des Bonus
-└── bonus_ap_type         ← nullable string: AP-Typ wenn bonus_type = 'ap_bonus'
+└── bonus_ap_type         ← veraltet (nur ein AP-Pool); bei bonus_type = 'ap_bonus' ohne Wirkung
 ```
 
 **Neue Tabelle `run_almanac_unlocks`** (welche Artikel sind in diesem Run freigeschaltet):
