@@ -98,8 +98,8 @@ Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und geh
   - [ ] **T43-C7** Sol-Übersicht aufräumen; Details in der Kommandozentrale einsehbar (ausklappbar o. ä.) (Pkt 8) — Mittel
   - [ ] **T43-C8** Gesperrte Gebäude: Grund (fehlende Kolonisten oder Regolith) auf den ersten Blick erkennbar, nicht nur Regolith; trifft auch den offenen Rest von T34 („nicht bezahlbar“ getrennt von „gesperrt“) (Pkt 22) — Klein
   - **D) Protokoll (Nexus-Protokoll)**
-  - [ ] **T43-D1** Doppelte/überflüssige Infos entfernen: Fortschrittsklammer „(done / total AP)“ und „×n“-Zähler bei „AP n in <Gebäude> investiert“ streichen (Pkt 18; ui-specialist/backend-coder) — Klein
-  - [ ] **T43-D2** Hangar-Training-Investitionen ins Protokoll aufnehmen (Pkt 21; game-developer, TDD) — Klein
+  - [x] **T43-D1** ✅ 2026-10-25 Doppelte/überflüssige Infos entfernen: Fortschrittsklammer „(done / total AP)“ und „×n“-Zähler bei „AP n in <Gebäude> investiert“ streichen (Pkt 18; ui-specialist/backend-coder) — Klein
+  - [x] **T43-D2** ✅ 2026-10-25 Hangar-Training-Investitionen ins Protokoll aufnehmen (Pkt 21; game-developer, TDD) — Klein
   - **E) Texte (content-writer)**
   - [ ] **T43-E1** Signal-Dialog „Signal entschlüsselt / Kleiner Fund“ wirkt wie Platzhalter, Texte aufhübschen (nicht final, später Bild plus Text) (Pkt 3) — Klein
   - [ ] **T43-E2** Texte `pathdepth.ui_*` aus T41 prüfen und überarbeiten, ggf. nach den Designer-Entscheidungen in B (Cantina-Gespräche) — Klein

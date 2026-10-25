@@ -70,6 +70,34 @@ class PathDepthControllerTest extends TestCase
             ]);
     }
 
+    public function test_invest_writes_log_entry(): void
+    {
+        DB::table('colony_log')->where('user', 3)->delete();
+
+        $this->actingAs($this->bart())
+            ->postJson($this->url('mission_family', 'exploration'), ['ap' => 2])
+            ->assertOk();
+
+        $row = DB::table('colony_log')->where('user', 3)->where('event', 'colony.pathdepth_invested')->first();
+        $this->assertNotNull($row);
+        $params = json_decode($row->parameters, true);
+        $this->assertSame('mission_family', $params['kind']);
+        $this->assertSame('exploration', $params['key']);
+        $this->assertSame(2, $params['ap_spend']);
+        $this->assertFalse($params['leveled_up']);
+    }
+
+    public function test_failed_invest_writes_no_log_entry(): void
+    {
+        DB::table('colony_log')->where('user', 3)->delete();
+
+        $this->actingAs($this->bart())
+            ->postJson($this->url('character', 'smuggler'))
+            ->assertStatus(422);
+
+        $this->assertSame(0, DB::table('colony_log')->where('event', 'colony.pathdepth_invested')->count());
+    }
+
     public function test_ap_defaults_to_one(): void
     {
         $this->actingAs($this->bart())

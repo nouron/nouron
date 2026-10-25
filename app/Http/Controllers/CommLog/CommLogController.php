@@ -126,7 +126,16 @@ class CommLogController extends BaseController
             }
 
             if ($j - $i > 1) {
-                $entry['_collapsed'] = $j - $i;
+                if ($entry['event'] === 'colony.building_invested') {
+                    // Investments merge into one line showing the summed AP — no counter needed.
+                    $entry['params']['ap_spend'] = array_sum(array_map(
+                        fn (array $e) => (int) ($e['params']['ap_spend'] ?? 1),
+                        array_slice($all, $i, $j - $i)
+                    ));
+                    $entry['segments'] = $this->buildDescription($entry['event'], $entry['params']);
+                } else {
+                    $entry['_collapsed'] = $j - $i;
+                }
             }
 
             $result->push($entry);
@@ -191,6 +200,7 @@ class CommLogController extends BaseController
         return match ($event) {
             'colony.building_placed' => $this->descBuildingPlaced($params),
             'colony.building_invested' => $this->descBuildingInvested($params),
+            'colony.pathdepth_invested' => $this->descPathDepthInvested($params),
             'colony.building_repaired' => $this->descBuildingRepaired($params),
             'colony.tile_explored' => [$this->seg(__('comm_log.desc.tile_explored'))],
             'colony.tile_deep_scanned' => $this->descTileDeepScanned($params),
@@ -331,7 +341,6 @@ class CommLogController extends BaseController
         $name = $this->resolveBuildingName($intId, $key);
         $bKey = $key ?? ($intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?');
         $ap = (int) ($params['ap_spend'] ?? 1);
-        $apNeeded = (int) ($params['ap_for_levelup'] ?? 0);
         $levelUp = (bool) ($params['level_up'] ?? false);
         $newLevel = (int) ($params['new_level'] ?? 0);
 
@@ -344,14 +353,30 @@ class CommLogController extends BaseController
             ];
         }
 
-        $done = $apNeeded > 0 ? ($apNeeded - $ap) : '?';
-        $total = $apNeeded ?: '?';
-
         return [
             $this->amountSeg('AP', $ap, 'ap'),
             $this->seg(' in '),
             $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, null)),
-            $this->seg(' investiert ('.$done.' / '.$total.' AP).'),
+            $this->seg(' investiert.'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descPathDepthInvested(array $params): array
+    {
+        $kind = (string) ($params['kind'] ?? '');
+        $key = (string) ($params['key'] ?? '');
+        $suffix = ! empty($params['leveled_up']) ? '_levelup' : '';
+        $name = $kind === 'character'
+            ? (string) config("characters.{$key}.name", $key)
+            : __('pathdepth.family_'.$key);
+
+        return [
+            $this->amountSeg('AP', (int) ($params['ap_spend'] ?? 1), 'ap'),
+            $this->seg(' '.__('comm_log.desc.pathdepth_'.($kind === 'character' ? 'character' : 'family').$suffix, [
+                'name' => $name,
+                'level' => (int) ($params['level'] ?? 0),
+            ])),
         ];
     }
 

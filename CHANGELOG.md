@@ -6,6 +6,7 @@
 - Feat: T43-G5 — Phasenübergang 1→2 zeigt im Sol-Bericht einen Erfolgsbildschirm; das erste gezogene Phase-2-Ziel ist von Anfang an offen, die übrigen bleiben verdeckt bis Fortschritt über null.
 - Fix: T43-A2 — Wohnraum/Supply-Cap gilt sofort beim Abschluss einer Stufe (Wohnhabitat, CC; Neubau und Ausbau), nicht erst nach „Sol beenden“; Resourcebar (KOL) zieht live nach.
 - Feat: T43-G1 — Labor nimmt je Kenntnis und Sol nur begrenzt AP auf (Platzhalter 4, `game.knowledge_ap_cap_per_sol`); gemeinsamer Zähler `DailyApCapService` (Tabelle `colony_daily_ap`) für Labor, später Training und Gespräch; Anzeige im Techtree-Detail.
+- Fix: T43-D1/D2 — Protokoll: Investitionszeilen ohne Fortschrittsklammer und ×n-Zähler (zusammengeführte Einträge zeigen die AP-Summe); Hangar-Training und Cantina-Beziehung erscheinen als Protokolleintrag.
 
 ## 2026-10-24
 

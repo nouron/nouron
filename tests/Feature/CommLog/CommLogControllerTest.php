@@ -165,7 +165,8 @@ class CommLogControllerTest extends TestCase
         $this->assertSame('amount', $segments[0]['type']);
         $this->assertSame('AP', $segments[0]['abbr']);
         $this->assertSame(3, $segments[0]['value']);
-        $this->assertStringContainsString('7 / 10 AP', $segments[3]['value']);
+        $this->assertStringNotContainsString('/', $segments[3]['value'], 'progress parenthesis is redundant');
+        $this->assertStringNotContainsString('(', $segments[3]['value']);
     }
 
     public function test_building_invested_description_with_levelup(): void
@@ -464,9 +465,56 @@ class CommLogControllerTest extends TestCase
 
         $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
 
-        // Collapsed to one representative entry (newest first) with a _collapsed count.
+        // Collapsed to one entry without a counter; the shown AP is the sum (1+2+3).
         $this->assertCount(1, $entries);
-        $this->assertSame(3, $entries->first()['_collapsed']);
+        $this->assertArrayNotHasKey('_collapsed', $entries->first());
+        $this->assertSame(6, $entries->first()['segments'][0]['value']);
+    }
+
+    public function test_collapsed_investments_render_without_counter_badge(): void
+    {
+        $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 1], tick: 5);
+        $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 2], tick: 5);
+
+        $this->actingAs($this->user())->get(route('comm.log'))
+            ->assertDontSee('comm-entry-collapsed', false);
+    }
+
+    public function test_pathdepth_family_investment_description(): void
+    {
+        $this->log('colony.pathdepth_invested', [
+            'kind' => 'mission_family', 'key' => 'salvage', 'ap_spend' => 2, 'level' => 0, 'leveled_up' => false,
+        ]);
+
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first()['segments'];
+
+        $this->assertSame('amount', $segments[0]['type']);
+        $this->assertSame(2, $segments[0]['value']);
+        $this->assertStringContainsString(__('pathdepth.family_salvage'), $segments[1]['value']);
+        $this->assertStringNotContainsString('Stufe', $segments[1]['value']);
+    }
+
+    public function test_pathdepth_levelup_names_new_level(): void
+    {
+        $this->log('colony.pathdepth_invested', [
+            'kind' => 'mission_family', 'key' => 'trade', 'ap_spend' => 3, 'level' => 2, 'leveled_up' => true,
+        ]);
+
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first()['segments'];
+
+        $this->assertStringContainsString('2', $segments[1]['value']);
+        $this->assertStringContainsString(__('pathdepth.family_trade'), $segments[1]['value']);
+    }
+
+    public function test_pathdepth_character_investment_names_character(): void
+    {
+        $this->log('colony.pathdepth_invested', [
+            'kind' => 'character', 'key' => 'bartender', 'ap_spend' => 1, 'level' => 0, 'leveled_up' => false,
+        ]);
+
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first()['segments'];
+
+        $this->assertStringContainsString('Tomas', $segments[1]['value']);
     }
 
     public function test_building_invested_entries_for_different_buildings_do_not_collapse(): void
