@@ -101,9 +101,9 @@ class ResourcebarOvercapPopupTest extends TestCase
             $chip
         );
         $this->assertStringNotContainsString(
-            '<span class="res-popup-label">'.__('resources.popup_sup_understaffed').'</span><span>',
+            '<span class="res-popup-label">'.__('resources.popup_sup_staffing').'</span><span>',
             $chip,
-            'no understaffing row before anyone departed'
+            'no staffing row before anyone departed'
         );
     }
 

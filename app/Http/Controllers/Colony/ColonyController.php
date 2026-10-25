@@ -357,6 +357,8 @@ class ColonyController extends BaseController
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
                 'supply_cost' => (int) $b->supply_cost,
+                // Colonists a finished level makes available at once (Wohnhabitat, T43-G8).
+                'colonists_gain' => (int) $b->id === BuildingId::Housing->value ? (int) config('buildings.housingComplex.supply_cap', 8) : 0,
                 'notice' => (int) $b->id === BuildingId::Hangar->value ? __('colony.hangar_build_notice') : null,
                 // Placing pays erect cost + first-level Regolith in one go (T9):
                 // build_cost/first_level_regolith are the breakdown, placement_cost
@@ -1495,13 +1497,14 @@ class ColonyController extends BaseController
     /**
      * Colonist chip data for the resourcebar live sync (KOL chip).
      *
-     * @return array{present: int, cap: int, homeless: int, departed: int, staffing_pct: int}
+     * @return array{colonists: int, employed: int, free: int, unfilled: int, present: int, cap: int, homeless: int, departed: int, staffing_pct: int}
      */
     private function colonistsPayload(int $colonyId): array
     {
         $status = $this->resourcesService->colonistStatus($colonyId);
 
         return [
+            ...$this->resourcesService->colonistsOverview($colonyId),
             'present' => $status['present'],
             'cap' => $status['cap'],
             'homeless' => $status['homeless'],

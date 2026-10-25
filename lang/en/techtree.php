@@ -164,7 +164,7 @@ return [
     'error_requires_research' => 'The colony lacks the required knowledge.',
     'error_insufficient_resources' => 'Not enough resources for this upgrade.',
     'error_insufficient_ap_invested' => 'Not enough AP invested yet to complete the level.',
-    'error_insufficient_supply' => 'Not enough free supply capacity — expand a Residential Habitat first.',
+    'error_insufficient_supply' => 'Too few free colonists — expand a Residential Habitat first.',
     'error_max_level' => 'Maximum level already reached.',
     'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
     'error_building_ap_cap' => 'The construction crew cannot do more at this building today. It continues tomorrow — or at another building.',

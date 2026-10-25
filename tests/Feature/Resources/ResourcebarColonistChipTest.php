@@ -43,14 +43,13 @@ class ResourcebarColonistChipTest extends TestCase
         return trim($m[1]).'|'.trim(preg_replace('/\s+/', ' ', $m[2]));
     }
 
-    public function test_chip_uses_kol_label_and_shows_used_over_cap(): void
+    public function test_chip_uses_kol_label_and_shows_colonists(): void
     {
         $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
-        $used = $breakdown['cap'] - $breakdown['free'];
 
         $text = $this->chipText($this->chipHtml());
 
-        $this->assertSame('KOL|'.$used.' / '.$breakdown['cap'], $text);
+        $this->assertSame('KOL|'.$breakdown['cap'], $text);
     }
 
     public function test_chip_is_flagged_when_colony_is_over_capacity(): void
@@ -71,7 +70,7 @@ class ResourcebarColonistChipTest extends TestCase
      * A14 "Unterbesetzung": after a departure the chip counts the colonists who are
      * actually there (present / cap) and is marked as a warning, not as over-capacity.
      */
-    public function test_chip_shows_present_colonists_and_warning_when_understaffed(): void
+    public function test_chip_shows_colonists_and_warning_when_understaffed(): void
     {
         $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
         $workplaces = $breakdown['cap'] - $breakdown['free'];
@@ -81,7 +80,7 @@ class ResourcebarColonistChipTest extends TestCase
 
         $html = $this->chipHtml();
 
-        $this->assertSame('KOL|'.$cap.' / '.$cap, $this->chipText($html));
+        $this->assertSame('KOL|'.$cap, $this->chipText($html));
         $this->assertStringNotContainsString('res-chip--over', $html);
         $this->assertMatchesRegularExpression('/class="res-chip res-Sup res-chip--warning"/', $html);
     }

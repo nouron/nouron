@@ -187,6 +187,7 @@ class AppServiceProvider extends ServiceProvider
                     $view->with('colonyAp', $advisorService->getAvailableActionPoints($colonyId));
 
                     $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
+                    $view->with('colonistsOverview', app(ResourcesService::class)->colonistsOverview($colonyId));
                     $view->with('resourceFlow', app(ResourceFlowService::class)->perSol($colonyId));
                     $view->with('overcapStatus', app(OvercapService::class)->status($colonyId));
                     $view->with('apBreakdown', $advisorService->getApBreakdown($colonyId));

@@ -20,13 +20,17 @@ return [
     'popup_nx_desc' => 'What the Nexus has lent, it wants back. Exceed the debt limit and it revokes the concession — without mercy, without notice.',
 
     'popup_sup_title' => 'Colonists',
-    'popup_sup_desc' => 'Colonists at work / housing capacity of the settlement. The left number is the colonists tied up by buildings and research (workplaces), not the whole population — so it jumps as soon as a building is placed, because it ties up its people from the start. Once the capacity is exhausted, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, colonists are left without shelter: Trust falls, and after a short grace period they move away.',
+    'popup_sup_desc' => 'The settlement\'s colonists: as many as the Command Center and Residential Habitats house — fixed, no immigration. Employed colonists fill a workplace in buildings or research; the rest are free and cover the needs of new buildings. If there are not enough free colonists, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, the colonists drop at once.',
     'popup_sup_source_cc' => 'Command Center',
     'popup_sup_source_housing' => 'Residential Habitat',
     'popup_sup_source_knowledge' => 'Knowledge',
     'popup_sup_used_buildings' => 'Buildings',
     'popup_sup_used_researches' => 'Research',
     'popup_sup_used_advisors' => 'Advisors',
+    // TODO content-writer (T43-G8)
+    'popup_sup_colonists' => 'Colonists',
+    'popup_sup_employed' => 'of which employed',
+    'popup_sup_unfilled' => 'Unfilled workplaces',
     'popup_sup_free' => 'Free',
     'popup_sup_overcap_homeless' => 'Without shelter',
     'popup_sup_overcap_trust' => 'Trust',

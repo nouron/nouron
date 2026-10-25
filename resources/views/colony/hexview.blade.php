@@ -492,7 +492,9 @@
                                         </div>
                                         <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"
-                                                x-text="`${b.supply_cost} KOL`"></span>
+                                                x-text="@js(__("colony.building_needs_colonists", ["count" => ":count"])).replace(':count', b.supply_cost)"></span>
+                                            <span class="building-list-supply" x-show="(b.colonists_gain ?? 0) > 0"
+                                                x-text="@js(__("colony.building_gives_colonists", ["count" => ":count"])).replace(':count', b.colonists_gain)"></span>
                                             {{-- Placement pays erect cost + level 1 in one go (T9):
                                              total first, breakdown next to it. --}}
                                             <span class="building-list-cost"

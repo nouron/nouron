@@ -911,11 +911,16 @@ function colonyHexView(config) {
             const amount = chip?.querySelector('.res-amount');
             if (!amount) return;
             const fmt = (n) => Number(n).toLocaleString('de-DE');
-            const text = `${fmt(colonists.present)} / ${fmt(colonists.cap)}`;
+            const text = fmt(colonists.colonists);
             const changed = amount.textContent.replace(/\s+/g, ' ').trim() !== text;
             amount.textContent = text;
             chip.classList.toggle('res-chip--over', colonists.homeless > 0);
             chip.classList.toggle('res-chip--warning', colonists.homeless === 0 && colonists.departed > 0);
+            // Popup rows "Kolonisten / davon beschäftigt / Frei / Unbesetzte Arbeitsplätze" (T43-G8).
+            for (const key of ['colonists', 'employed', 'free', 'unfilled']) {
+                const val = chip.querySelector(`[data-colonists-row="${key}"] span:last-child`);
+                if (val && colonists[key] !== undefined) val.textContent = colonists[key];
+            }
             if (changed) this.flashResChip('.res-Sup');
         },
 

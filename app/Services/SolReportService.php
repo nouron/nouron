@@ -444,13 +444,15 @@ class SolReportService
             $lines[] = $this->staticLine(__('colony.sol_report_no_production'), 'warning');
         }
 
-        // Supply: occupied places out of the cap (the cap alone read as "colonists" although
-        // fewer places are actually taken). Cap is set, not incremented, so no counter animation.
+        // Colonists (= housing) and how many of them are employed (T43-G8). Cap is set, not incremented, so no counter animation.
         $supply = $this->resourcesService->getSupplyBreakdown($colonyId);
         $afterSupply = $supply['cap'];
         $lines[] = [
             'label' => __('resources.res_supply'),
-            'detail' => __('colony.sol_report_supply_used', ['used' => $afterSupply - $supply['free'], 'cap' => $afterSupply]),
+            'detail' => __('colony.sol_report_supply_used', [
+                'used' => $this->resourcesService->colonistsOverview($colonyId)['employed'],
+                'cap' => $afterSupply,
+            ]),
             'tone' => $afterSupply < ($before['supply'] ?? 0) ? 'warning' : 'neutral',
         ];
 

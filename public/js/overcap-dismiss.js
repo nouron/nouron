@@ -66,7 +66,7 @@ document.addEventListener('alpine:init', () => {
             const supAmount = supChip?.querySelector('.res-amount');
             if (supAmount) {
                 const fmt = (n) => Number(n).toLocaleString('de-DE');
-                supAmount.textContent = `${fmt(res.colonists.present)} / ${fmt(res.colonists.cap)}`;
+                supAmount.textContent = fmt(res.colonists.colonists);
                 supChip.classList.toggle('res-chip--over', res.colonists.homeless > 0);
                 supChip.classList.toggle(
                     'res-chip--warning',

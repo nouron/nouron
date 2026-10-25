@@ -281,6 +281,31 @@ class ResourcesService
     }
 
     /**
+     * "N colonists, of which M employed" (T43-G8, Kolonisten-Modell) — the one source
+     * for header bar, Sol report, Kommandozentrale and building sidebar. Deterministic:
+     *   colonists = housing (the stored supply cap: Command Center + Wohnhabitate)
+     *   employed  = min(colonists, workplaces)
+     *   free      = colonists − employed (what the build gate can still hand out)
+     *   unfilled  = max(0, workplaces − colonists) (workplaces nobody staffs)
+     *
+     * @return array{colonists: int, employed: int, free: int, unfilled: int}
+     */
+    public function colonistsOverview(int $colonyId): array
+    {
+        $breakdown = $this->getSupplyBreakdown($colonyId);
+        $colonists = max(0, $breakdown['cap']);
+        $workplaces = max(0, $breakdown['cap'] - $breakdown['free']);
+        $employed = min($colonists, $workplaces);
+
+        return [
+            'colonists' => $colonists,
+            'employed' => $employed,
+            'free' => $colonists - $employed,
+            'unfilled' => max(0, $workplaces - $colonists),
+        ];
+    }
+
+    /**
      * Production factor from unfilled workplaces (GDD §5: produced amount × staffing
      * share). Applies to raw-material production only (Regolith, Organika).
      */

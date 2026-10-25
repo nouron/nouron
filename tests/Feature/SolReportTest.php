@@ -203,13 +203,14 @@ class SolReportTest extends TestCase
         $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
         $used = $breakdown['cap'] - $breakdown['free'];
         $this->assertLessThan($breakdown['cap'], $used, 'precondition: fixture colony has free places');
+        $employed = app(ResourcesService::class)->colonistsOverview(self::COLONY_ID)['employed'];
 
         $report = $this->service()->buildReport($run, $before);
         $line = $this->productionLine($report, 'resources.res_supply');
 
         $this->assertNotNull($line);
-        $this->assertSame(__('colony.sol_report_supply_used', ['used' => $used, 'cap' => $breakdown['cap']]), $line['detail']);
-        $this->assertStringContainsString((string) $used, $line['detail']);
+        $this->assertSame(__('colony.sol_report_supply_used', ['used' => $employed, 'cap' => $breakdown['cap']]), $line['detail']);
+        $this->assertStringContainsString((string) $employed, $line['detail']);
     }
 
     public function test_level_down_event_produces_danger_beat_line(): void

@@ -52,6 +52,29 @@
             return $html;
         };
 
+        // Colonists, employed, free, unfilled workplaces — ResourcesService::colonistsOverview().
+        $colonistRows = "";
+        if (isset($colonistsOverview)) {
+            $colonistRow = fn(
+                string $key,
+                string $label,
+                int $value,
+            ) => '<div class="res-popup-row" data-colonists-row="' .
+                $key .
+                '"><span class="res-popup-label">' .
+                $label .
+                "</span><span>" .
+                $value .
+                "</span></div>";
+            $colonistRows =
+                $colonistRow("colonists", __("resources.popup_sup_colonists"), $colonistsOverview["colonists"]) .
+                $colonistRow("employed", __("resources.popup_sup_employed"), $colonistsOverview["employed"]) .
+                $colonistRow("free", __("resources.popup_sup_free"), $colonistsOverview["free"]) .
+                ($colonistsOverview["unfilled"] > 0
+                    ? $colonistRow("unfilled", __("resources.popup_sup_unfilled"), $colonistsOverview["unfilled"])
+                    : "");
+        }
+
         // Supply chip popup extra: cap composition (CC/Housing/Knowledge) + usage
         // breakdown (Buildings/Researches/Advisors) — see ResourcesService::getSupplyBreakdown().
         $supplyPopupExtra = isset($supplyBreakdown)
@@ -65,13 +88,14 @@
                 '<div class="res-popup-extra"></div>' .
                 $breakdownRows(
                     array_filter([
-                        __("resources.popup_sup_used_buildings") => -$supplyBreakdown["used"]["buildings"],
-                        __("resources.popup_sup_used_researches") => -$supplyBreakdown["used"]["researches"],
-                        __("resources.popup_sup_used_advisors") => -$supplyBreakdown["used"]["advisors"],
+                        __("resources.popup_sup_used_buildings") => $supplyBreakdown["used"]["buildings"],
+                        __("resources.popup_sup_used_researches") => $supplyBreakdown["used"]["researches"],
+                        __("resources.popup_sup_used_advisors") => $supplyBreakdown["used"]["advisors"],
                     ]),
                 ) .
                 '<div class="res-popup-extra"></div>' .
-                $breakdownRows([__("resources.popup_sup_free") => $supplyBreakdown["free"]])
+                // "N Kolonisten, davon M beschäftigt" (T43-G8) — rows carry data-colonists-row for the live sync.
+                $colonistRows
             : null;
 
         // Over-capacity rows (GDD §6 "Überkapazität", A14) — see OvercapService::status().
@@ -275,8 +299,7 @@ $crPopupExtra = $hasNexus
             </span>
         @endif
 
-        {{-- Colonist chip (GDD §6 Kolonisten-Framing, A15) — "present / cap" colonists, e.g. "47 / 60".
-         Present = workplaces minus colonists departed through over-capacity (A14).
+        {{-- Colonist chip (GDD §6, T43-G8) — shows the colonists (= housing); the popup names how many are employed.
          Red while colonists are homeless, warning while workplaces are unfilled. --}}
         @if (isset($primary[2]))
             @php
@@ -284,9 +307,7 @@ $crPopupExtra = $hasNexus
                     ? $overcapStatus["over"]
                     : isset($supplyBreakdown) && $supplyBreakdown["free"] < 0;
                 $supplyUnderstaffed = !$supplyOver && ($overcapStatus["departed"] ?? 0) > 0;
-                $supplyPresent = isset($supplyBreakdown)
-                    ? $supplyBreakdown["cap"] - $supplyBreakdown["free"] - ($overcapStatus["departed"] ?? 0)
-                    : 0;
+                $supplyColonists = $colonistsOverview["colonists"] ?? ($supplyBreakdown["cap"] ?? 0);
             @endphp
             <span
                 class="res-chip res-Sup{{ $supplyOver ? " res-chip--over" : "" }}{{ $supplyUnderstaffed ? " res-chip--warning" : "" }}"
@@ -296,8 +317,7 @@ $crPopupExtra = $hasNexus
                 <span class="res-abbr">KOL</span>
                 <span class="res-amount">
                     @if (isset($supplyBreakdown))
-                        {{ number_format($supplyPresent, 0, ",", ".") }}
-                        / {{ number_format($supplyBreakdown["cap"], 0, ",", ".") }}
+                        {{ number_format($supplyColonists, 0, ",", ".") }}
                     @else
                         {{ number_format($primary[2]["amount"] ?? 0, 0, ",", ".") }}
                     @endif
