@@ -63,6 +63,19 @@ def evaluate(files, pr_body=""):
     return hard, warn
 
 
+def pr_diff(pr):
+    rc, out = run("gh", "pr", "diff", *([str(pr)] if pr else []))
+    return out if rc == 0 else ""
+
+
+def changelog_missing(today, local, diff, files):
+    """True if code changed but neither the local CHANGELOG nor the PR diff has today's block."""
+    if not any(f.startswith(CODE) for f in files):
+        return False
+    heading = f"## {today}"
+    return heading not in local and f"+{heading}" not in diff
+
+
 def merge_mode(data):
     ti = data.get("tool_input", {})
     pr = ti.get("pull_number") or ti.get("pullNumber")
@@ -77,13 +90,17 @@ def merge_mode(data):
         body = json.loads(out).get("body", "")
     hard, warn = evaluate(changed_files(pr), body)
 
-    # Existing rule: an entry for today in the changelog.
+    # Existing rule: an entry for today in the changelog. The local checkout may lag behind the
+    # PR (master has no block for today yet), so the PR's own diff counts too; docs-only PRs
+    # (no code files) need no entry.
     today = datetime.date.today().isoformat()
+    files = changed_files(pr)
     try:
-        if f"## {today}" not in open("CHANGELOG.md", encoding="utf-8").read():
-            hard.append(f"CHANGELOG.md hat keinen Eintrag für heute (## {today})")
+        local = open("CHANGELOG.md", encoding="utf-8").read()
     except OSError:
-        pass
+        local = None
+    if local is not None and changelog_missing(today, local, pr_diff(pr), files):
+        hard.append(f"CHANGELOG.md hat keinen Eintrag für heute (## {today})")
 
     if hard:
         sys.stderr.write("MERGE BLOCKIERT — folgende Punkte fehlen noch:\n" + "".join(f"  • {h}\n" for h in hard))
