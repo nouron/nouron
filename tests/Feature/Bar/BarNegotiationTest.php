@@ -23,6 +23,7 @@ use App\Services\TradeAdvantageService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class BarNegotiationTest extends TestCase
@@ -524,7 +525,7 @@ class BarNegotiationTest extends TestCase
         ];
     }
 
-    /** @dataProvider calibrationScenarios */
+    #[DataProvider('calibrationScenarios')]
     public function test_negotiating_is_neither_always_better_nor_always_worse_than_accepting(int $rank, bool $tradingPost, int $tradeLevel, bool $expectedBetter): void
     {
         $this->assignConsul($rank);
