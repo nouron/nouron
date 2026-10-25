@@ -361,7 +361,10 @@ button.btn-sol:hover,
 .hex-canvas {
     flex: 1;
     display: flex;
-    align-items: center;
+    /* Top-aligned, NOT centered: the wrap stretches to the sidebar height, and the
+     * sidebar grows/shrinks with the selection (build menu is long). Vertical
+     * centering made the whole map jump down when a free tile was selected. */
+    align-items: flex-start;
     justify-content: center;
     padding: 1.5rem;
     /* Ensure the SVG never becomes tiny on very wide screens */
