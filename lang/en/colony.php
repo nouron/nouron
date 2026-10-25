@@ -710,6 +710,10 @@ return [
     'sol_report_phase1_advisors' => '2 active advisors',
     'sol_report_phase2_objective_hidden' => 'Directive not yet known — unlocked during play',
     'sol_report_phase2_objective_done' => 'Fulfilled',
+    // TODO content-writer: Phasenübergang-Erfolgsbildschirm
+    'sol_report_phase_success_title' => 'Phase 1 complete',
+    'sol_report_phase_success_body' => 'The foundation stands. The Phase 2 Nexus directives await.',
+    'sol_report_phase_success_achieved' => 'Achieved',
     'sol_report_next_screen' => 'Continue',
 
     // Screen 3 — SOL N starts

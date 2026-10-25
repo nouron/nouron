@@ -177,6 +177,7 @@ class SolReportService
             'finale' => $finale,
             'groups' => $groups,
             'phase_progress' => $this->phaseProgress($run),
+            'phase_transition' => $this->phaseTransition($run, $events),
         ];
     }
 
@@ -661,6 +662,25 @@ class SolReportService
      * truth for phase criteria/objectives (also used by the Kommandozentrale
      * dashboard). Was a local reimplementation before both screens needed it.
      */
+    /**
+     * Success screen data when Phase 1 was completed in the processed Sol, else null.
+     * Lists the listed Phase-1 criteria so the screen can show what was achieved.
+     *
+     * @param  array<string, array<int, array<string, mixed>>>  $events
+     */
+    private function phaseTransition(Run $run, array $events): ?array
+    {
+        if (empty($events['run.phase1_complete'])) {
+            return null;
+        }
+
+        $criteria = $this->colonyService->getPhase1CriteriaLabeled((int) $run->colony_id, (int) $run->current_tick);
+
+        return [
+            'criteria' => array_column($criteria, 'label'),
+        ];
+    }
+
     private function phaseProgress(Run $run): array
     {
         return $this->colonyService->getPhaseProgress($run->colony);

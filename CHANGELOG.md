@@ -3,6 +3,7 @@
 ## 2026-10-25
 
 - Fix: T43-A1 — Hexmap springt nicht mehr nach unten, wenn ein freies Feld gewählt wird (Karte oben statt vertikal zentriert ausgerichtet).
+- Feat: T43-G5 — Phasenübergang 1→2 zeigt im Sol-Bericht einen Erfolgsbildschirm; das erste gezogene Phase-2-Ziel ist von Anfang an offen, die übrigen bleiben verdeckt bis Fortschritt über null.
 - Fix: T43-A2 — Wohnraum/Supply-Cap gilt sofort beim Abschluss einer Stufe (Wohnhabitat, CC; Neubau und Ausbau), nicht erst nach „Sol beenden“; Resourcebar (KOL) zieht live nach.
 - Feat: T43-G1 — Labor nimmt je Kenntnis und Sol nur begrenzt AP auf (Platzhalter 4, `game.knowledge_ap_cap_per_sol`); gemeinsamer Zähler `DailyApCapService` (Tabelle `colony_daily_ap`) für Labor, später Training und Gespräch; Anzeige im Techtree-Detail.
 

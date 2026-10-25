@@ -425,6 +425,35 @@ class RunObjectivesTest extends TestCase
         $this->assertStringContainsString('33', $objective['label']);
     }
 
+    public function test_first_drawn_objective_is_revealed_from_the_start_the_others_stay_hidden(): void
+    {
+        $run = $this->makeRun(['phase' => 2, 'rng_seed' => 4242]);
+        $this->service->drawObjectives($run);
+
+        $progress = app(ColonyService::class)->getPhaseProgress(Colony::findOrFail(self::COLONY_ID));
+
+        $this->assertSame(2, $progress['phase']);
+        $this->assertCount(3, $progress['objectives']);
+        $this->assertTrue($progress['objectives'][0]['revealed']);
+        $this->assertNotNull($progress['objectives'][0]['label']);
+        $this->assertFalse($progress['objectives'][1]['revealed']);
+        $this->assertFalse($progress['objectives'][2]['revealed']);
+        $this->assertNull($progress['objectives'][1]['label']);
+    }
+
+    public function test_other_objectives_are_revealed_once_progress_is_above_zero(): void
+    {
+        $run = $this->makeRun(['phase' => 2, 'rng_seed' => 4242]);
+        $this->service->drawObjectives($run);
+        $second = RunObjective::where('run_id', $run->id)->orderBy('id')->skip(1)->first();
+        $second->update(['current_value' => 1]);
+
+        $progress = app(ColonyService::class)->getPhaseProgress(Colony::findOrFail(self::COLONY_ID));
+
+        $this->assertTrue($progress['objectives'][1]['revealed']);
+        $this->assertFalse($progress['objectives'][2]['revealed']);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private function makeRun(array $overrides = []): Run
