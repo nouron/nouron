@@ -123,7 +123,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
             "relationshipGate" => config("path_depth.building_gate"),
             "relationshipMaxLevel" => config("path_depth.max_level"),
             "relationshipI18n" => [
-                "invest" => __("pathdepth.ui_invest"),
+                "invest" => __("pathdepth.ui_get_to_know"),
                 "level" => __("pathdepth.ui_level", ["level" => ":level", "max" => ":max"]),
                 "progress" => __("pathdepth.ui_invest_progress", ["spent" => ":spent", "needed" => ":needed"]),
                 "maxed" => __("pathdepth.ui_level_max"),

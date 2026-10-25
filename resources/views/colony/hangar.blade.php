@@ -99,7 +99,7 @@
                 trainingProgress: @json(__("pathdepth.ui_invest_progress", ["spent" => ":spent", "needed" => ":needed"])),
                 trainingMax: @json(__("pathdepth.ui_level_max")),
                 trainingLocked: @json(__("pathdepth.ui_locked_building", ["building" => __("buildings.hangar"), "level" => ":level"])),
-                trainingInvest: @json(__("pathdepth.ui_invest")),
+                trainingInvest: @json(__("pathdepth.ui_train")),
             },
         };
     </script>

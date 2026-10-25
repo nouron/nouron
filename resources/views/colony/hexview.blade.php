@@ -94,6 +94,9 @@
                 findSmall: @json(__("colony.find_small")),
                 findMedium: @json(__("colony.find_medium")),
                 findLarge: @json(__("colony.find_large")),
+                findSmallDesc: @json(__("colony.find_small_desc")),
+                findMediumDesc: @json(__("colony.find_medium_desc")),
+                findLargeDesc: @json(__("colony.find_large_desc")),
                 findFalse: @json(__("colony.find_false")),
                 networkError: @json(__("colony.network_error")),
                 buildLinkUnavailable: @json(__("colony.build_link_unavailable")),
@@ -662,6 +665,8 @@
                 </header>
                 <p class="discovery-event-name" x-text="eventDiscovery ? eventTypeName(eventDiscovery.event_type) : ''">
                 </p>
+                <p class="discovery-event-desc" x-show="eventDiscovery && eventDescription(eventDiscovery.event_type)"
+                    x-text="eventDiscovery ? eventDescription(eventDiscovery.event_type) : ''"></p>
                 <footer>
                     <button @click="dismissEventDiscovery()" x-text="i18n.discoveryDismiss"></button>
                 </footer>

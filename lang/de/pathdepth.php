@@ -13,14 +13,15 @@ return [
     'ui_experience_label' => 'Missionserfahrung',
     'ui_level' => 'Stufe :level/:max',
     'ui_invest_progress' => ':spent/:needed AP',
-    'ui_invest' => 'AP einsetzen',
+    'ui_train' => 'Trainieren',
+    'ui_get_to_know' => 'Kennenlernen',
     'ui_level_max' => 'Höchste Stufe',
     'ui_locked_building' => 'Gesperrt: :building braucht Stufe :level.',
 
     // ── Cantina: Beziehung pflegen
     'ui_relationship_title' => 'Beziehung pflegen',
     'ui_not_met' => 'Noch nicht getroffen',
-    'ui_relationship_run_hint' => 'Vertrautheit wächst nur in diesem Lauf und beginnt beim nächsten Mal von vorn. Was du über eine Figur erfährst, bleibt im Kodex stehen.',
+    'ui_relationship_run_hint' => 'Vertrautheit wächst nur in diesem Lauf. Was du über eine Figur erfährst, bleibt im Kodex stehen.',
     'ui_relationship_met_only' => 'Gelistet sind nur Figuren, mit denen du in diesem Lauf schon gesprochen hast.',
 
     // ── Missionsfamilien

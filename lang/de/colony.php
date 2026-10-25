@@ -799,5 +799,9 @@ return [
     'find_small' => 'Kleiner Fund: verstreute Trümmer',
     'find_medium' => 'Mittlerer Fund: aufgebrochenes Wrack',
     'find_large' => 'Großer Fund: Frachterwrack',
+    // TODO content-writer: Lore klären (provisorische, bewusst neutrale Texte)
+    'find_small_desc' => 'Ein schwaches Signal, das auf ein paar bergbare Reste hindeutet.',
+    'find_medium_desc' => 'Ein deutliches Signal: hier liegt einiges, das sich zu bergen lohnt.',
+    'find_large_desc' => 'Ein starkes Signal: hier liegt viel, aber es ist schwer zu bergen.',
     'find_false' => 'Fehlalarm',
 ];
