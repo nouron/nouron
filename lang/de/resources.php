@@ -32,16 +32,8 @@ return [
     'popup_sup_colonists' => 'Kolonisten',
     'popup_sup_employed' => 'davon beschäftigt',
     'popup_sup_unfilled' => 'Unbesetzte Arbeitsplätze',
-    'popup_sup_overcap_homeless' => 'Ohne Unterkunft',
-    'popup_sup_overcap_trust' => 'Vertrauen',
-    'popup_sup_overcap_departure' => 'Abwanderung',
-    'popup_sup_overcap_departure_value' => 'in :sols Sol',
-    'popup_sup_dismiss' => 'Wegschicken',
-    'popup_sup_dismissed' => 'Weggeschickt',
-    'popup_sup_understaffed' => 'Unbesetzte Arbeitsplätze',
     'popup_sup_staffing' => 'Rohstoffproduktion',
     'popup_sup_staffing_value' => ':pct %',
-    'popup_sup_dismiss_failed' => 'Wegschicken fehlgeschlagen.',
 
     'popup_ap_title' => 'Aktionspunkte',
     'popup_ap_desc' => 'Der gemeinsame Pool deiner Kolonie — Bau, Kenntnisse, Erkundung und Handel teilen sich dieselbe Kapazität.',
@@ -81,6 +73,5 @@ return [
 
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
-    'popup_trust_overcap' => 'Wohnungsnot',
     'popup_trust_hunger' => 'Hunger',
 ];

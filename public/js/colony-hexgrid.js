@@ -665,9 +665,9 @@ function colonyHexView(config) {
         },
 
         // Warning rows in the Rückbau dialog (GDD §11.5): level 0 / Bauabbruch,
-        // forfeited AP and looming over-capacity are highlighted.
-        leveldownWarnsHomeless(p) {
-            return !!p && p.homeless_after > p.homeless_now;
+        // forfeited AP, lost colonists and newly unfilled workplaces are highlighted.
+        leveldownWarnsUnfilled(p) {
+            return !!p && p.unfilled_after > p.unfilled_now;
         },
 
         leveldownText(key, values = {}) {
@@ -904,7 +904,7 @@ function colonyHexView(config) {
             if (res.freeSupply !== undefined) this.freeSupply = res.freeSupply;
         },
 
-        // Colonist chip (KOL) in the resource bar — same patch as overcap-dismiss.js.
+        // Colonist chip (KOL) in the resource bar.
         syncResbarColonists(colonists) {
             if (!colonists) return;
             const chip = document.querySelector('.res-Sup');
@@ -914,13 +914,20 @@ function colonyHexView(config) {
             const text = fmt(colonists.colonists);
             const changed = amount.textContent.replace(/\s+/g, ' ').trim() !== text;
             amount.textContent = text;
-            chip.classList.toggle('res-chip--over', colonists.homeless > 0);
-            chip.classList.toggle('res-chip--warning', colonists.homeless === 0 && colonists.departed > 0);
-            // Popup rows "Kolonisten / davon beschäftigt / Frei / Unbesetzte Arbeitsplätze" (T43-G8).
-            for (const key of ['colonists', 'employed', 'free', 'unfilled']) {
-                const val = chip.querySelector(`[data-colonists-row="${key}"] span:last-child`);
-                if (val && colonists[key] !== undefined) val.textContent = colonists[key];
-            }
+            chip.classList.toggle('res-chip--warning', colonists.unfilled > 0);
+            // Popup rows "Kolonisten / davon beschäftigt / Frei / Unbesetzte Arbeitsplätze / Rohstoffproduktion" (T43-G8/G9).
+            const setRow = (key, text, visible = true) => {
+                const row = chip.querySelector(`[data-colonists-row="${key}"]`);
+                if (!row) return;
+                row.style.display = visible ? '' : 'none';
+                const val = row.querySelector('span:last-child');
+                if (val) val.textContent = text;
+            };
+            setRow('colonists', colonists.colonists);
+            setRow('employed', colonists.employed);
+            setRow('free', colonists.free);
+            setRow('unfilled', colonists.unfilled, colonists.unfilled > 0);
+            setRow('staffing', `${colonists.staffing_pct} %`, colonists.unfilled > 0);
             if (changed) this.flashResChip('.res-Sup');
         },
 

@@ -221,8 +221,9 @@ return [
     'leveldown_new_level' => 'New level: :to (was :from)',
     'leveldown_ap_forfeited' => 'AP already invested are lost: :ap AP',
     'leveldown_freed_workplaces' => 'Colonists freed: :count — available for other buildings right away',
-    'leveldown_capacity_loss' => 'Housing from the next Sol: :count places fewer',
-    'leveldown_homeless' => 'Without shelter from the next Sol: :after colonists (without the teardown: :now). While housing is short, trust drops; once the deadline passes, they leave.',
+    // TODO content-writer (T43-G9)
+    'leveldown_colonists_lost' => ':count colonists fewer at once — the housing is lost.',
+    'leveldown_unfilled' => ':count workplaces unfilled — raw-material production reduced, new buildings and upgrades locked until enough free colonists are back.',
     'leveldown_tile_released' => 'Level 0: the building is taken down and the tile cleared. Rebuilding means a new construction at full cost.',
     'leveldown_construction_cancelled' => 'The construction site is dissolved and the tile cleared. The construction costs are lost.',
     'leveldown_no_refund' => 'No refund: resources and AP put into it are lost. This cannot be undone.',
@@ -231,7 +232,6 @@ return [
     'leveldown_done' => 'Demolition complete.',
     'leveldown_cancelled_done' => 'Construction cancelled.',
     'error_supply_limit' => 'Too few free colonists for the next upgrade level — create housing first: upgrade the Residential Habitat or the Command Center.',
-    'error_no_homeless_colonists' => 'Every colonist has a roof over their head — nobody has to leave.',
     'error_insufficient_resources' => 'Not enough resources to build.',
     'error_repair_no_regolith' => 'No Regolith for repair — repair the Harvester or mine Regolith.',
 
@@ -663,22 +663,14 @@ return [
     'sol_report_event_plague' => 'Outbreak of disease',
     'sol_report_plague_detail_hunger' => 'Food shortage (:streak Sols without supplies) triggered the outbreak — action points temporarily reduced.',
     'sol_report_plague_detail_trust' => 'Critical Trust (:trust) triggered the outbreak — action points temporarily reduced.',
-    'sol_report_event_colonists_left' => 'Colonists departed',
-    'sol_report_colonists_left_detail' => ':count colonists without shelter have packed up and left the settlement. Their workplaces stay empty until new housing brings them back.',
-    'sol_report_event_colonists_dismissed' => 'Colonists sent away',
-    'sol_report_colonists_dismissed_detail' => 'On the director\'s orders, :count colonists without shelter have left the settlement. New housing will bring them back.',
-    'sol_report_event_colonists_returned' => 'Colonists returned',
-    'sol_report_colonists_returned_detail' => ':count colonists have moved into the new housing — their workplaces are staffed again.',
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
     'sol_report_supply_used' => ':cap colonists, :used of them employed',
     'sol_report_food' => 'Provisions',
     'sol_report_food_ok' => ':amount Organics distributed to the kitchens — the colony is fed',
-    'sol_report_overcap' => 'Shelter',
-    'sol_report_overcap_homeless' => ':homeless colonists are sleeping without shelter — Trust −:malus. Without new housing they will leave in :sols Sol.',
     'sol_report_staffing' => 'Personnel',
-    'sol_report_understaffed' => ':departed workplaces unfilled — raw-material production at :pct %. Construction and upgrades stay locked until new housing brings the departed back.',
+    'sol_report_understaffed' => ':count workplaces unfilled — raw-material production at :pct %. Construction and upgrades stay locked until enough free colonists are back.',
     'sol_report_food_shortage' => 'Supplies exhausted — colonists are going hungry. Trust is falling. Build or repair the Agrarian Dome.',
 
     // Colony & Personnel

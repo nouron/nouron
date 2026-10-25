@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Services\OvercapService;
 use App\Services\ResourcesService;
 use App\Services\TrustService;
 use Illuminate\Console\Command;
@@ -23,7 +22,6 @@ class GameTickDryRun extends Command
 
     public function __construct(
         private readonly TrustService $trustService,
-        private readonly OvercapService $overcapService,
         private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct();
@@ -157,8 +155,8 @@ class GameTickDryRun extends Command
         $production = config('game.production_curve', []);
         $trust = $this->trustService->getTrust($cid);
         $trustMultiplier = $this->trustService->getProductionMultiplier($trust);
-        // Staffing share (GDD §5/§6, A14): unfilled workplaces after an over-capacity
-        // departure scale raw-material production, like GameTick::generateResources().
+        // Staffing share (GDD §5/§6, T43-G9): unfilled workplaces scale raw-material
+        // production, like GameTick::generateResources().
         $staffing = $this->resourcesService->staffingShare((int) $cid);
         $multiplier = $trustMultiplier * $staffing;
 
@@ -217,38 +215,24 @@ class GameTickDryRun extends Command
             ));
         }
 
-        $this->renderOvercapPreview((int) $cid);
+        $this->renderUnfilledPreview((int) $cid);
     }
 
     /**
-     * A14 (GDD §6 "Überkapazität"): homeless colonists — next streak, its trust
-     * penalty and the Sols until departure (or the departure itself) — and
-     * understaffing after a departure.
+     * T43-G9 (GDD §6): unfilled workplaces — the colonists no longer cover them,
+     * raw-material production runs at the employed share.
      */
-    private function renderOvercapPreview(int $colonyId): void
+    private function renderUnfilledPreview(int $colonyId): void
     {
-        $status = $this->overcapService->status($colonyId);
-        $deadline = max(1, (int) config('game.overcap.departure_after_sols', 3));
-
-        if ($status['over'] && $status['streak'] >= $deadline) {
-            $this->line(sprintf('  <fg=red>Departure next Sol: %d colonists leave</>', $status['homeless']));
-        } elseif ($status['over']) {
-            $this->line(sprintf(
-                '  <fg=red>Over-capacity: %d homeless, streak %d → %d, trust penalty next Sol: %d, departure in %d Sol</>',
-                $status['homeless'],
-                $status['streak'],
-                $status['streak'] + 1,
-                $this->trustService->overcapPenaltyForStreak($status['streak'] + 1),
-                $status['sols_until_departure']
-            ));
+        $unfilled = $this->resourcesService->colonistsOverview($colonyId)['unfilled'];
+        if ($unfilled <= 0) {
+            return;
         }
 
-        if ($status['departed'] > 0) {
-            $this->line(sprintf(
-                '  <fg=yellow>Understaffed: %d workplaces unfilled, raw-material production at %d%%</>',
-                $status['departed'],
-                $status['staffing_pct']
-            ));
-        }
+        $this->line(sprintf(
+            '  <fg=yellow>Understaffed: %d workplaces unfilled, raw-material production at %d%%</>',
+            $unfilled,
+            (int) round($this->resourcesService->staffingShare($colonyId) * 100)
+        ));
     }
 }

@@ -9,6 +9,7 @@
 - Fix: T43-D1/D2 — Protokoll: Investitionszeilen ohne Fortschrittsklammer und ×n-Zähler (zusammengeführte Einträge zeigen die AP-Summe); Hangar-Training und Cantina-Beziehung erscheinen als Protokolleintrag.
 - Texte: Funde („Kleiner/Mittlerer/Großer Fund“) mit Stimmung, „Trainieren“ (Hangar) / „Kennenlernen“ (Cantina) statt „Investieren“, Hinweise im Cantina-Beziehungspanel überarbeitet, Beschreibungszeile im Signal-Dialog (provisorisch, Lore offen) (content-writer).
 - Feat: T43-G8 — Kolonisten-Anzeige „N Kolonisten, davon M beschäftigt“ aus einer Quelle (`colonistsOverview()`) in Kopfleiste (KOL = Kolonisten, Popup mit beschäftigt/frei/unbesetzt), Sol-Bericht, Kommandozentrale und Gebäude-Seitenleiste; Gate-Text „Zu wenige freie Kolonisten“.
+- Feat: T43-G9 — Wohnraumverlust-Regel A2: Verlust von Wohnraum (Verfall, Sturm, Rückbau) senkt die Kolonisten sofort, unbesetzte Arbeitsplätze mindern die Rohstoffproduktion anteilig, das Bau-Gate sperrt bis zur Erholung, der Rückbau-Dialog warnt vorab; Obdachlosen-Frist, Vertrauens-Malus-Streak, Abwanderung und „Wegschicken“ samt `OvercapService`, Config `game.overcap`, Ereignissen und Spalten `overcap_*` entfernt (Migration).
 
 ## 2026-10-24
 

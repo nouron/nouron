@@ -16,7 +16,7 @@ use Tests\TestCase;
  *
  * Setup: trust 0 (multiplier 1.0), food need disabled, decay off. Supply costs
  * zeroed, then Harvester (27) and Agrardom (41, level 1) carry 10 supply each →
- * 20 workplaces. Stored cap 10 plus 10 departed colonists → staffing 0.5.
+ * 20 workplaces. Stored cap 10 (10 colonists for 20 workplaces) → staffing 0.5.
  * Production runs before the tick recalculates the cap, so it sees exactly this
  * state.
  *
@@ -69,7 +69,6 @@ class StaffingProductionTest extends TestCase
     private function understaff(): void
     {
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 10]);
-        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_departed' => 10]);
     }
 
     private function amount(int $resourceId): int

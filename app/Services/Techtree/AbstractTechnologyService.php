@@ -599,6 +599,9 @@ abstract class AbstractTechnologyService
             DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
 
+        // Lost housing (or cap) lowers the colonists at once (T43-G9, option A2), not at the next Sol.
+        $this->resourcesService->syncSupplyCap($colonyId);
+
         return true;
     }
 

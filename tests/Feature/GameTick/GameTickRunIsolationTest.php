@@ -117,7 +117,7 @@ class GameTickRunIsolationTest extends TestCase
                 ->get(['research_id', 'level', 'status_points'])->toArray(),
             'user_resources' => (array) DB::table('user_resources')->where('user_id', $user)->first(['credits', 'supply']),
             'colony_row' => (array) DB::table('glx_colonies')->where('id', $colony)
-                ->first(['hunger_streak', 'overcap_streak', 'overcap_departed']),
+                ->first(['hunger_streak']),
             'advisor_ticks' => DB::table('advisors')->where('colony_id', $colony)->pluck('active_ticks')->all(),
             'run' => (array) DB::table('runs')->where('id', self::FOREIGN_RUN_ID)->first(['current_tick', 'nexus_debt', 'phase', 'status']),
             'nexus_imports' => DB::table('nexus_imports')->where('colony_id', $colony)->count(),

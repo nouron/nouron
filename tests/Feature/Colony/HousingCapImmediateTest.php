@@ -71,7 +71,7 @@ class HousingCapImmediateTest extends TestCase
 
         $res->assertOk()->assertJsonPath('leveled_up', true);
         $this->assertSame($before + $perLevel, $this->storedCap());
-        $res->assertJsonPath('colonists.cap', $before + $perLevel);
+        $res->assertJsonPath('colonists.colonists', $before + $perLevel);
     }
 
     public function test_housing_new_build_raises_cap_at_once(): void
@@ -84,6 +84,6 @@ class HousingCapImmediateTest extends TestCase
 
         $res->assertOk()->assertJsonPath('leveled_up', true);
         $this->assertSame($before + $perLevel, $this->storedCap());
-        $res->assertJsonPath('colonists.cap', $before + $perLevel);
+        $res->assertJsonPath('colonists.colonists', $before + $perLevel);
     }
 }

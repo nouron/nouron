@@ -52,36 +52,38 @@ class ResourcebarColonistChipTest extends TestCase
         $this->assertSame('KOL|'.$breakdown['cap'], $text);
     }
 
-    public function test_chip_is_flagged_when_colony_is_over_capacity(): void
+    public function test_chip_is_flagged_when_workplaces_are_unfilled(): void
     {
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 1]);
 
-        $this->assertStringContainsString('res-chip--over', $this->chipHtml());
+        $html = $this->chipHtml();
+
+        $this->assertMatchesRegularExpression('/class="res-chip res-Sup res-chip--warning"/', $html);
+        $this->assertStringNotContainsString('res-chip--over', $html);
     }
 
-    public function test_chip_is_not_flagged_when_colony_has_free_capacity(): void
+    public function test_chip_is_not_flagged_when_every_workplace_is_staffed(): void
     {
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 500]);
 
-        $this->assertStringNotContainsString('res-chip--over', $this->chipHtml());
+        $html = $this->chipHtml();
+
+        $this->assertStringNotContainsString('res-chip--warning', $html);
+        $this->assertSame('KOL|500', $this->chipText($html));
     }
 
-    /**
-     * A14 "Unterbesetzung": after a departure the chip counts the colonists who are
-     * actually there (present / cap) and is marked as a warning, not as over-capacity.
-     */
-    public function test_chip_shows_colonists_and_warning_when_understaffed(): void
+    public function test_popup_names_staffing_share_and_has_no_dismiss_action(): void
     {
         $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
         $workplaces = $breakdown['cap'] - $breakdown['free'];
-        $cap = $workplaces - 8;
-        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => $cap]);
-        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_departed' => 8]);
+        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => $workplaces - 8]);
+        $pct = (int) round(app(ResourcesService::class)->staffingShare(self::COLONY_ID) * 100);
 
         $html = $this->chipHtml();
 
-        $this->assertSame('KOL|'.$cap, $this->chipText($html));
-        $this->assertStringNotContainsString('res-chip--over', $html);
-        $this->assertMatchesRegularExpression('/class="res-chip res-Sup res-chip--warning"/', $html);
+        $this->assertMatchesRegularExpression('/data-colonists-row="unfilled">.*?<span>8<\/span>/s', $html);
+        $this->assertStringContainsString(__('resources.popup_sup_staffing_value', ['pct' => $pct]), $html);
+        $this->assertStringNotContainsString('colonists/dismiss', $html);
+        $this->assertStringNotContainsString('overcapDismiss', $html);
     }
 }

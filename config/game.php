@@ -825,8 +825,6 @@ return [
             'stipend_large' => 4,
             'story_concern_resolved' => 3,  // Sorel/preacher Cantina-Anliegen (A41) resolved successfully
             'story_concern_failed' => -2,   // Sorel/preacher Cantina-Anliegen (A41) failed
-            'colonists_left' => -3,         // homeless colonists left after the over-capacity deadline (A14), once per departure
-            'colonists_dismissed' => -2,    // director dismissed the homeless colonists (A14 "Wegschicken"), once per dismissal
         ],
     ],
 
@@ -845,26 +843,11 @@ return [
         // mission dispatch costs moved to config/missions.php (nav_ap_per_sol, organika_per_sol)
     ],
 
-    // Over-capacity consequences (GDD §6 "Überkapazität — Konsequenzen", A14).
-    // Colonists are homeless while more of them are present than the cap houses
-    // (ResourcesService::colonistStatus()). glx_colonies.overcap_streak counts
-    // consecutive Sols with homeless colonists; the escalating, capped trust
-    // penalty (TrustService::overcapPenalty) applies from the first Sol —
-    // independent of the hunger penalty (Owner decision 2026-09-23: no shared cap).
-    // Once the streak has reached departure_after_sols, all homeless colonists
-    // leave at the next Sol (glx_colonies.overcap_departed, trust event
-    // colonists_left, streak → 0): unfilled workplaces lower production and food
-    // need by the staffing share; they return automatically once housing is free.
-    // "Wegschicken" (dismiss_ap_cost AP) triggers the same departure immediately
-    // (trust event colonists_dismissed). Values confirmed by Owner 2026-09-24
-    // (GDD §6, docs/game-reference.md §10a).
-    'overcap' => [
-        'departure_after_sols' => 3,  // Sols with homeless colonists before they leave
-        'trust_base_malus' => 2,      // trust penalty on the first Sol with homeless colonists
-        'trust_step' => 1,            // +1 penalty per further consecutive Sol
-        'trust_cap' => 4,             // max penalty (deliberately below food.hunger_cap)
-        'dismiss_ap_cost' => 8,       // AP cost of "Wegschicken"
-    ],
+    // Housing loss (GDD §6 "Wohnraumverlust — Konsequenzen", T43-G9, option A2): no
+    // config values. Colonists = housing (stored supply cap), employed = min(colonists,
+    // workplaces), unfilled workplaces cut raw-material production by the employed
+    // share (ResourcesService::staffingShare()), the build gate stays closed until
+    // enough free colonists are back. No grace period, no departure, no dismissal.
 
     // CC-Level gate for knowledge research levels 4 and 5.
     // A colony must have CommandCenter (ID 25) at this level before a Kenntnis

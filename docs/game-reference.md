@@ -61,7 +61,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 
 ## 4. Gebäude: Decay-Raten & Status-Points
 
-Decay-Rate = **Status Points pro Tick** verloren. Überkapazität beschleunigt den Verfall nicht (A14, 2026-09-24). Level-Down endet bei Stufe 1 (`GameTick::applyLevelDown()`), ein platziertes Gebäude verfällt nie auf Stufe 0.
+Decay-Rate = **Status Points pro Tick** verloren. Wohnraumverlust beschleunigt den Verfall nicht (A14, 2026-09-24). Level-Down endet bei Stufe 1 (`GameTick::applyLevelDown()`), ein platziertes Gebäude verfällt nie auf Stufe 0.
 
 | Gebäude | Klasse | Decay-Rate | Max SP | Tage bis Level-Down |
 |---|---|---|---|---|
@@ -377,34 +377,28 @@ Bau-Gate: Platzieren und Ausbau n → n+1 (n ≥ 1) erfordern `freies Supply ≥
 
 ---
 
-## 10a. Überkapazität / Unterbesetzung (A14)
+## 10a. Wohnraumverlust / Unterbesetzung (A14, Option A2)
 
-`config/game.php → overcap` und `trust.events`, Logik in `OvercapService` / `ResourcesService::colonistStatus()`.
+Kein eigener Config-Block mehr (`game.overcap` und die Ereignisse `colonists_left` / `colonists_dismissed` entfielen mit T43-G9); Logik in `ResourcesService::colonistsOverview()` und `staffingShare()`. Die Zeilen unten sind weitere Vertrauens-Konfiguration.
 
 | Config-Key | Wert | Bedeutung |
 |---|---|---|
-| `game.overcap.departure_after_sols` | 3 | Sole mit Obdachlosen, bevor sie abwandern (Abwanderung im Sol danach) |
-| `game.overcap.trust_base_malus` | 2 | Vertrauens-Malus am ersten Sol mit Obdachlosen |
-| `game.overcap.trust_step` | 1 | +Malus je weiterem ununterbrochenen Sol |
-| `game.overcap.trust_cap` | 4 | Deckel des Streak-Malus (Verlauf 2 → 3 → 4) |
-| `game.overcap.dismiss_ap_cost` | 8 AP | Kosten „Wegschicken" |
-| `game.trust.events.colonists_left` | −3 | einmalig je Abwanderung |
-| `game.trust.events.colonists_dismissed` | −2 | einmalig je Wegschicken |
 | `game.trust.events.treaty_signed` | +3 | reserviert (Cantina-Vereinbarungen), feuert noch nirgends; `trade_blocked` entfiel 2026-10-23 |
 | `game.trust.event_profiles` | `instant` [100]; `fade5` [100, 80, 60, 40, 20] | Nachwirkung: Prozent des Ereigniswerts je Sol seit Auslösung (T40) |
 | `game.trust.event_profile` | leer (alle `instant`) | Zuordnung Ereignis-Typ → Profil; `fade5` ist vorbereitet, aber noch nicht zugewiesen (Messschritt offen) |
 | `game.trust.event_cap` | aus (`null`) | Deckel auf den Gesamt-Ereignisanteil (±), Höhe nach Messung |
 
 ```
-Arbeitsplätze = siehe Abschnitt 10 (inkl. Reserve)
-abgewandert   = min(glx_colonies.overcap_departed, max(0, Arbeitsplätze − Cap))
-anwesend      = Arbeitsplätze − abgewandert
-obdachlos     = max(0, anwesend − Cap)
-Personalanteil = anwesend / Arbeitsplätze   (1,0 solange niemand abgewandert ist; wirkt nur auf Regolith-/Organika-Produktion)
-food_need     = floor(anwesend / game.food.supply_per_eater)
+Arbeitsplätze  = siehe Abschnitt 10 (inkl. Reserve)
+Kolonisten     = gespeicherter Cap (Kommandozentrale + Wohnhabitate), gilt sofort bei Abschluss und bei Wohnraumverlust
+beschäftigt    = min(Kolonisten, Arbeitsplätze)
+frei           = Kolonisten − beschäftigt
+unbesetzt      = max(0, Arbeitsplätze − Kolonisten)
+Personalanteil = beschäftigt / Arbeitsplätze   (1,0 solange nichts unbesetzt ist; wirkt nur auf Regolith-/Organika-Produktion)
+food_need      = floor(beschäftigt / game.food.supply_per_eater)   (T43-G7 stellt auf alle Kolonisten um)
 ```
 
-DB-Spalten: `glx_colonies.overcap_streak`, `glx_colonies.overcap_departed`. Tick-Reihenfolge: Decay → Produktion → Verpflegung → Begegnungen → `settleLostWorkplaces()` (Stufenverlust nimmt unbesetzte Arbeitsplätze still mit) → Supply-Cap → `advanceStreaks()` (Rückkehr loggen, Streak/Abwanderung) → Vertrauen.
+Kein gespeicherter Zustand (die Spalten `glx_colonies.overcap_streak` / `overcap_departed` sind entfernt), keine Frist, keine Abwanderung, kein „Wegschicken". Wohnraumverlust (Verfall, Sturm, Rückbau) senkt die Kolonisten im selben Moment; das Bau-Gate (freies Supply, Abschnitt 10) bleibt zu, bis wieder genug freie Kolonisten da sind. Tick-Reihenfolge: Decay → Produktion → Verpflegung → Begegnungen → Supply-Cap → Vertrauen.
 
 ---
 

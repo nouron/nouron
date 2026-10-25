@@ -31,17 +31,9 @@ return [
     'popup_sup_colonists' => 'Colonists',
     'popup_sup_employed' => 'of which employed',
     'popup_sup_unfilled' => 'Unfilled workplaces',
-    'popup_sup_free' => 'Free',
-    'popup_sup_overcap_homeless' => 'Without shelter',
-    'popup_sup_overcap_trust' => 'Trust',
-    'popup_sup_overcap_departure' => 'Departure',
-    'popup_sup_overcap_departure_value' => 'in :sols Sol',
-    'popup_sup_dismiss' => 'Send away',
-    'popup_sup_dismissed' => 'Sent away',
-    'popup_sup_understaffed' => 'Unfilled workplaces',
     'popup_sup_staffing' => 'Raw-material production',
     'popup_sup_staffing_value' => ':pct %',
-    'popup_sup_dismiss_failed' => 'Sending away failed.',
+    'popup_sup_free' => 'Free',
 
     'popup_ap_title' => 'Action Points',
     'popup_ap_desc' => 'Your colony\'s shared pool — construction, research, exploration, and trade all draw from the same capacity.',
@@ -81,6 +73,5 @@ return [
 
     'popup_trust_title' => 'Trust',
     'popup_trust_desc' => 'What still holds the colonists together. Let this fall too far and nobody gives their best any more — and eventually nobody listens at all.',
-    'popup_trust_overcap' => 'Housing shortage',
     'popup_trust_hunger' => 'Hunger',
 ];

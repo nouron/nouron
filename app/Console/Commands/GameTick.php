@@ -20,7 +20,6 @@ use App\Services\HangarService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
-use App\Services\OvercapService;
 use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
@@ -50,15 +49,10 @@ use Illuminate\Support\Facades\DB;
  *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
  *  5. Resource generation — produce colony resources per industry building level (trust multiplier × staffing share)
- *  6. Food consumption    — deduct Organics per present colonist; trust penalty on shortfall
+ *  6. Food consumption    — deduct Organics per employed colonist; trust penalty on shortfall
  *  7. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
- *  7b. Lost workplaces   — workplaces lost this Sol drop unfilled ones from overcap_departed (silent)
  *  8. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model); runs after
  *                           every level-down source (decay, encounters) so the cap is current for this Sol
- *  8b. Over-capacity streak — overcap_streak +1 while colonists are homeless, else reset; once the
- *                           streak has reached overcap.departure_after_sols the homeless leave
- *                           (overcap_departed, colonists_left, streak 0); departed colonists
- *                           return once housing is free (GDD §6, A14)
  *  9. Trust calculation   — recalculate colony trust and store in colony_resources (resource_id=12)
  * 10. Passive Credits     — nexus_subsidy (config('game.credits.nexus_subsidy')) + Uplink Station level ×
  *                           relay_bonus_per_uplink_level, added to user Credits
@@ -97,7 +91,6 @@ class GameTick extends Command
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
         private readonly PathDepthService $pathDepthService,
-        private readonly OvercapService $overcapService,
     ) {
         parent::__construct();
     }
@@ -179,19 +172,12 @@ class GameTick extends Command
             $n = $this->processEncounters($tick, RunSeed::reduce((int) ($run->rng_seed ?? 0)), (int) $run->phase);
             $this->line("  Encounters processed:     {$n}");
 
-            // Supply cap runs after the last step that can level a building down
-            // (decay AND encounters) so the stored cap — and the over-capacity
-            // streak derived from it right below — reflects this Sol's state.
-            // Before the cap changes: lost workplaces remove unfilled ones silently,
-            // so advanceStreaks() only logs real returns (A14).
-            $n = $this->overcapService->settleLostWorkplaces($this->colonyId);
-            $this->line("  Vacancies settled:        {$n}");
-
+            // Supply cap (= the colonists) runs after the last step that can level a
+            // building down (decay AND encounters) so the stored cap reflects this
+            // Sol's state. No stored over-capacity state: colonists, employed and
+            // unfilled workplaces are derived from it (ResourcesService::colonistsOverview()).
             $n = $this->calculateSupply();
             $this->line("  Users supply updated:     {$n}");
-
-            $n = $this->overcapService->advanceStreaks($tick, $this->colonyId);
-            $this->line("  Colonies over capacity:   {$n}");
 
             $n = $this->calculateTrust($tick);
             $this->line("  Colonies trust updated:   {$n}");
@@ -979,8 +965,8 @@ class GameTick extends Command
         foreach ($colonies as $colony) {
             // Apply trust production multiplier based on the colony's CURRENT trust
             // (stored from the previous tick's trust calculation — no circular dependency),
-            // times the staffing share: colonists who left through over-capacity leave
-            // workplaces unfilled (GDD §5/§6 "Überkapazität", A14). Every consumer below
+            // times the staffing share: colonists short of workplaces leave
+            // them unfilled (GDD §5/§6 "Wohnraumverlust", T43-G9). Every consumer below
             // produces Regolith or Organika only — AP, Credits and trust are unaffected.
             $trust = $this->trustService->getTrust($colony->id);
             $multiplier = $this->trustService->getProductionMultiplier($trust)
@@ -1173,10 +1159,10 @@ class GameTick extends Command
     // ── 8a. Food consumption (Organika provisioning) ──────────────────────────
 
     /**
-     * Each colony consumes Organika (resource 5) proportional to its present colonists.
+     * Each colony consumes Organika (resource 5) proportional to its employed colonists.
      *
-     * food_need = ResourcesService::foodNeed() = floor(present / supply_per_eater);
-     * colonists departed through over-capacity do not eat (GDD §6). Runs AFTER production (the
+     * food_need = ResourcesService::foodNeed() = floor(employed / supply_per_eater);
+     * free colonists do not eat yet (T43-G7 changes that). Runs AFTER production (the
      * Sol's harvest is on hand) and BEFORE trust (the trust calc reads the resulting
      * hunger_streak via TrustService::hungerPenalty). Stock covers need → well_fed
      * event (+trust), streak reset. Stock short → consume what's left, streak grows
