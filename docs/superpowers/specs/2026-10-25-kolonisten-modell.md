@@ -1,11 +1,21 @@
 # Kolonisten-Modell: Wohnraum, lebende Kolonisten, Beschäftigte
 
-Stand 2026-10-25 · Autor: game-designer · Status: Vorlage, wartet auf Owner-Entscheidung
+Stand 2026-10-25 · Autor: game-designer · Status: entschieden (Richtung), Folgefragen A14 und Verpflegungszahl offen
 Bezug: Owner-Wunsch vom 2026-10-25; berührt `docs/superpowers/specs/2026-10-25-t43-designfragen.md` (A2, A3), GDD §4a „Organika“, §6 „Supply“ und „Überkapazität“, `docs/game-reference.md` §10 und §10a.
 
 Im Text steht **Fakt** für Nachgelesenes (Code, Config), **Annahme** und **Empfehlung** für meine Deutung. Beispielzahlen sind reine Veranschaulichung, keine Balancewerte (ADR 0004).
 
-## Kurzfassung
+## Entschieden (Owner 2026-10-25)
+
+- **Option 3 (wachsende Bewohner mit Zuzug) ist verworfen.** Gründe des Owners: nicht deterministisch, für den Spieler schwer erkennbar, ab wann wie viele Arbeitskräfte da sind, und eine kleine Kolonie soll nicht ständig wachsen.
+- **Gewollt (Richtung von Option 1, deterministisch, passend zur Welt):** Ein gebautes Wohnhabitat macht eine feste Zahl neuer Kolonisten verfügbar (der Owner nannte 8 als Beispiel für den Neubau; die Zahl bleibt Config und Messung), **sofort bei Abschluss** (Neubau und Ausbau, umgesetzt als A2). Die lebenden Kolonisten ergeben sich direkt und vorhersagbar aus den Wohnhabitaten. **Beschäftigt** sind die Kolonisten, die Arbeitsplätze von Gebäuden besetzen; der Rest sind freie, unbeschäftigte Kolonisten. Kein Zuzug, kein Wachstum, kein Schwund durch Zufall.
+- **Klarstellung:** Platz und Kolonisten sind damit **dieselbe Größe**. Es gibt weiter zwei Zahlen, nicht drei: Kolonisten (gleich Wohnraum) und davon beschäftigt (gleich besetzte Arbeitsplätze). Der Rest, „frei“, ist die Differenz.
+- **Korrektur meiner früheren Annahme:** „anwesend gleich beschäftigt“ galt für den alten Code (die Kolonisten wurden aus den Arbeitsplätzen abgeleitet). Ab jetzt gilt: Kolonisten kommen aus dem Wohnraum, beschäftigt ist nur ein Teil davon.
+- **Offen (Abschnitte unten):** Was aus der Obdachlosen-Frist (A14) wird, welche Zahl verpflegt wird, und die Liste der Folgen für Code und Anzeige.
+
+Die folgenden Abschnitte „Kurzfassung“ bis „(c)“ sind der Stand vor der Entscheidung; maßgeblich sind dieser Block und die Abschnitte „Nach der Entscheidung“ am Ende.
+
+## Kurzfassung (Stand vor der Entscheidung)
 
 Der Owner will drei Zahlen getrennt sehen: **Wohnraum** (wie viele Kolonisten haben Platz), **Bewohner** (wie viele Kolonisten leben wirklich in der Kolonie) und **Beschäftigte** (wie viele davon arbeiten an einem Gebäude). Heute gibt es nur zwei echte Größen, Wohnraum und Arbeitsplätze; die „lebenden Kolonisten“ sind keine eigene Größe, sondern werden aus den Arbeitsplätzen abgeleitet. Meine frühere Annahme „anwesend gleich beschäftigt“ stimmt für den Code, trifft aber nicht das, was der Owner sich vorstellt. Ich empfehle, die Bewohner zu einer **eigenen, langsam wachsenden Größe** zu machen (Zuzug bis zum Wohnraum, Beschäftigte sind der kleinere Wert aus Bewohnern und Arbeitsplätzen, alle Bewohner werden verpflegt). Das ist ein mittlerer bis großer Umbau mit Messschritt; die Kurzversion „nur Beschriftung“ löst den Wunsch nicht.
 
@@ -76,11 +86,53 @@ Option 3 mit der kleinsten Regelmenge: Bewohner als gespeicherte Größe, Zuzug 
 **Wenn Ja (Option 3):** Eigener Auftrag für den game-developer (Test zuerst), dann Messschritt Zuzug-Rate, dann Zahlenabgleich der Organika-Produktion (A3). GDD §4a und §6 erst nach der Entscheidung nachziehen.
 **Wenn Nein (Option 1):** Beschriftung Kopfleiste und Sol-Bericht vereinheitlichen; A3-Abgleich auf Arbeitsplätze.
 
+## Nach der Entscheidung
+
+### Das Modell in einem Satz
+
+Kolonisten gleich Wohnraum (feste Zahl aus Kommandozentrale und Wohnhabitaten, sofort bei Abschluss); davon beschäftigt gleich der kleinere Wert aus Kolonisten und Arbeitsplätzen; der Rest ist frei. Alles deterministisch.
+
+### Anzeige: die klarste Form
+
+Empfehlung: überall dieselbe Formulierung **„N Kolonisten, davon M beschäftigt“**. Begründung: Sie nennt nur zwei Zahlen, die der Spieler sofort versteht (wer lebt, wer arbeitet), und der Rest („frei“) folgt als Differenz, ohne dritte Zahl. „Wohnraum“ kommt nicht mehr als eigene Zahl vor, sondern nur als Wirkung des Gebäudes („+n Kolonisten“). Der Sol-Bericht-Text vom Quickwin („:cap Kolonisten, davon :used beschäftigt“) passt damit inhaltlich bereits, solange „:used“ die besetzten Arbeitsplätze meint.
+- **Kopfleiste:** Chip „KOL N“, darunter oder im Popup „M beschäftigt“. Das Popup nennt: Kolonisten (aus Kommandozentrale und Wohnhabitaten), beschäftigt, frei (verfügbar für neue Gebäude), unbesetzte Arbeitsplätze (nur, wenn vorhanden), Verpflegung. Der heutige Chip zeigt „Arbeitsplätze / Wohnraum“; das wird ersetzt.
+- **Sol-Bericht:** „N Kolonisten, davon M beschäftigt“ und die Organika-Zeile mit dem Bedarf.
+- **Kommandozentrale:** Ein Block mit den zwei Zahlen und „frei: N−M“; bei unbesetzten Arbeitsplätzen ein Hinweis mit Ursache.
+- **Gebäude-Seitenleiste:** Pro Gebäude „braucht n Kolonisten“ (Arbeitsplätze), beim Wohnhabitat „+n Kolonisten, sofort“, bei gesperrten Gebäuden der Grund „zu wenige freie Kolonisten“.
+
+### Bau-Gate und A14 (Fakt aus dem Code, dann Folgen)
+
+- **Fakt Bau-Gate:** Platzieren und Ausbau erfordern freien Wohnraum (Wohnraum minus Arbeitsplätze) mindestens in Höhe des Platzbedarfs. Im neuen Modell heißt das schlicht: **genug freie Kolonisten**. Das Gate passt ohne Änderung und wird verständlicher. Ausnahmen (Kommandozentrale, Wohnhabitat, erster Harvester) können Arbeitsplätze über die Kolonisten hinaus erzeugen; dann sind Arbeitsplätze unbesetzt und die Produktion sinkt anteilig (bestehender Besetzungsanteil).
+- **Fakt A14 heute:** „Obdachlos“ heißt: Arbeitsplätze größer als Wohnraum; es entsteht nur, wenn Wohnraum durch Verfall, Sturm oder Rückbau wegfällt. Dann läuft eine Frist mit Vertrauens-Malus, danach wandern die Obdachlosen ab, die Arbeitsplätze bleiben leer, Rückkehr automatisch bei freiem Wohnraum; „Wegschicken“ kostet AP. Gespeichert sind nur die Zahl der Abgewanderten und der Streak.
+- **Folge im neuen Modell:** Wenn Kolonisten gleich Wohnraum sind, gibt es keine „Kolonisten über dem Wohnraum“, also keine Obdachlosen im bisherigen Sinn. Fällt Wohnraum weg, sind die Kolonisten sofort weg, und die Arbeitsplätze sind unbesetzt.
+- **Annahme (Empfehlung, Owner-Entscheidung nötig):** A14 wird vereinfacht: Wohnraumverlust verringert die Kolonisten sofort und deterministisch; die Wirkung ist die schon vorhandene anteilige Produktionsminderung durch unbesetzte Arbeitsplätze, das Bau-Gate sperrt Neubau, bis wieder genug freie Kolonisten da sind, und ein einmaliges Vertrauens-Ereignis markiert den Verlust. Frist, Obdachlosen-Malus, Abwanderung und „Wegschicken“ entfielen. Alternative: Obdachlosen-Frist als Abfederung behalten; dann müssten Kolonisten als eigene gespeicherte Größe geführt werden (Rückschritt zu Option 3 im Kleinen) und der Owner-Wunsch nach „direkt aus den Wohnhabitaten“ wäre verletzt. Bis zur Entscheidung gilt der Code-Stand.
+
+### Welche Zahl wird verpflegt? (Annahme)
+
+Heute: Bedarf aus den besetzten Arbeitsplätzen (abzüglich Abgewanderter). Mit „1 Organika je Kolonist“ gibt es zwei Lesarten.
+- **Alle Kolonisten (gleich Wohnraum).** Annahme und Empfehlung. Vorteil: Passt wörtlich zur Grundregel, ist in einem Satz erklärt („jeder Kolonist isst“), und Wohnraum bekommt einen Preis (mehr Kolonisten, mehr Futter), was „kleine, ressourcenarme Kolonie“ trägt. Nachteil: Der Verbrauch steigt **stark**, weil der Grundstock der Kommandozentrale und jedes Wohnhabitat sofort mitessen, auch wenn noch wenige Gebäude arbeiten. Fakt zur Größenordnung: Die Produktionskurve des Agrardoms liegt in der Config auf deutlich kleineren Werten als der Wohnraum zu Beginn; ohne Messung ist das ein Indiz, kein Beweis (Annahme: Phase 1 wäre mit der heutigen Produktion nicht tragfähig).
+- **Nur beschäftigte Kolonisten.** Vorteil: Verbrauch bleibt nah am heutigen Wert (heute zählen schon die Arbeitsplätze), Organika wächst mit dem Aufbau, freier Wohnraum ist kostenlos. Nachteil: Freie Kolonisten essen nicht — erklärungsbedürftig („warum essen die Arbeitslosen nichts?“), und Hunger lässt sich durch Entlassen nicht, durch Wohnraum nur fehlerhaft lenken.
+- **Folge für die Balance:** In beiden Fällen ein Messschritt nach Skill `nouron-balance-pass`, ein Hebel pro Messung: zuerst Produktion des Agrardoms, nur falls das nicht reicht der Grundstock der Kommandozentrale oder die Zahl je Wohnhabitat. Kein Bot-Batch ohne Rückfrage und Dauerschätzung. Zahlenabgleich offen; im GDD steht nur die Regel.
+
+### Code- und Anzeige-Folgen (Stichpunkte für die ROADMAP, G7/G8)
+
+- Kolonisten-Zahl aus dem Wohnraum ableiten (nicht mehr aus den Arbeitsplätzen); eine zentrale Stelle im Ressourcen-Dienst, die Kolonisten, beschäftigt, frei und unbesetzte Arbeitsplätze liefert.
+- Beschäftigt gleich der kleinere Wert aus Kolonisten und Arbeitsplätzen; Besetzungsanteil für die Produktion daraus.
+- Sofortige Neuberechnung des Wohnraums beim Abschluss eines Wohnhabitats (A2) für alle Anzeigen und das Bau-Gate prüfen.
+- Verpflegung auf die Kolonisten umstellen (Config-Regel 1 je Kolonist, Teiler `supply_per_eater` entfällt oder wird 1); Abrundungsloch entfällt.
+- A14: Entscheidung abwarten; je nach Ausgang Frist, Streak-Spalten, Abwanderung, „Wegschicken“ und zugehörige Texte, Ereignisse und Tests entfernen oder anpassen.
+- Kopfleisten-Chip, Popup, Sol-Bericht-Zeile, Kommandozentrale und Gebäude-Seitenleiste auf „N Kolonisten, davon M beschäftigt“ umstellen; Texte in `lang/de` (Kolonisten, nicht Wohnraum, nicht „Supply“).
+- Config-Kommentare und Schlüssel mit „Supply“ und „Wohnraum“ bereinigen; Prüfpunkt: restlicher Kenntnis-Anteil im „freien Supply“ (laut GDD seit 2026-10-15 nicht mehr vorhanden).
+- Szenarien in `game:reset-player` (Ressourcenwerte, Wohnraum-Herleitung) und `docs/game-reference.md` §10 und §10a nachziehen; Onboarding-Hinweise, die Wohnraum oder Arbeitsplätze nennen, prüfen.
+- Bot (PlaytestBot) liest Wohnraum und Arbeitsplätze; Regeln prüfen, bevor gemessen wird.
+- Glossar: Zeile „Kolonisten (KOL)“ („kein eigenes Bevölkerungssystem“) und „Supply-Kappe“ anpassen, sobald umgesetzt.
+
 ## Entscheidungsübersicht
 
 | Frage | Empfehlung | Owner-Entscheidung |
 |---|---|---|
-| Wie werden Wohnraum, Bewohner und Beschäftigte verankert? | Option 3: Bewohner als eigene, langsam wachsende Größe (Zuzug bis Wohnraum), Beschäftigte gleich Minimum aus Bewohnern und Arbeitsplätzen | |
-| Welche Zahl wird verpflegt? | Alle Bewohner (Annahme), nicht nur Beschäftigte | |
-| Strafe für Arbeitslose in Version 1? | Nein, später als eigener Schritt | |
-| Reihenfolge der Messung | Modellentscheidung zuerst, dann Zuzug-Rate, dann Organika-Zahlenabgleich (A3) | |
+| Wie werden Wohnraum, Kolonisten und Beschäftigte verankert? | Kolonisten gleich Wohnraum, beschäftigt gleich Minimum aus Kolonisten und Arbeitsplätzen, Rest frei; kein Zuzug | Entschieden (Option 3 verworfen) |
+| Anzeige | „N Kolonisten, davon M beschäftigt“ überall | Offen |
+| Welche Zahl wird verpflegt? | Alle Kolonisten (Annahme), Messschritt bestätigt | Offen |
+| A14 (Obdachlosen-Frist) | Vereinfachen: Wohnraumverlust senkt Kolonisten sofort, unbesetzte Arbeitsplätze mindern die Produktion | Offen |
+| Reihenfolge der Messung | Modell umsetzen, dann Organika-Produktion abgleichen (A3), ein Hebel pro Messung | Offen |
