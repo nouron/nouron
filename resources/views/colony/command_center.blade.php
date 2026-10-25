@@ -87,6 +87,20 @@
             </div>
         </article>
 
+        {{-- Widget 2b: Kolonisten (T43-G8) — "N Kolonisten, davon M beschäftigt" --}}
+        <article class="cc-card">
+            <h3 class="cc-card-title">{{ __("command_center.widget_colonists_title") }}</h3>
+            <p class="cc-stat">
+                {{ __("command_center.widget_colonists_line", ["colonists" => $colonists["colonists"], "employed" => $colonists["employed"]]) }}
+            </p>
+            <p class="cc-card-hint">
+                {{ __("command_center.widget_colonists_free", ["free" => $colonists["free"]]) }}
+                @if ($colonists["unfilled"] > 0)
+                    · {{ __("command_center.widget_colonists_unfilled", ["count" => $colonists["unfilled"]]) }}
+                @endif
+            </p>
+        </article>
+
         {{-- Widget 3: Run-Fortschritt / Sol-Countdown --}}
         <article class="cc-card">
             <h3 class="cc-card-title">{{ __("command_center.widget_run_title") }}</h3>

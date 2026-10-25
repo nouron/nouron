@@ -20,24 +20,20 @@ return [
     'popup_nx_desc' => 'What the Nexus has lent, it wants back. Exceed the debt limit and it revokes the concession — without mercy, without notice.',
 
     'popup_sup_title' => 'Colonists',
-    'popup_sup_desc' => 'Colonists at work / housing capacity of the settlement. The left number is the colonists tied up by buildings and research (workplaces), not the whole population — so it jumps as soon as a building is placed, because it ties up its people from the start. Once the capacity is exhausted, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, colonists are left without shelter: Trust falls, and after a short grace period they move away.',
+    'popup_sup_desc' => 'The settlement\'s colonists: as many as the Command Center and Residential Habitats house — fixed, no immigration. Employed colonists fill a workplace in buildings or research; the rest are free and cover the needs of new buildings. If there are not enough free colonists, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, the colonists drop at once.',
     'popup_sup_source_cc' => 'Command Center',
     'popup_sup_source_housing' => 'Residential Habitat',
     'popup_sup_source_knowledge' => 'Knowledge',
     'popup_sup_used_buildings' => 'Buildings',
     'popup_sup_used_researches' => 'Research',
     'popup_sup_used_advisors' => 'Advisors',
-    'popup_sup_free' => 'Free',
-    'popup_sup_overcap_homeless' => 'Without shelter',
-    'popup_sup_overcap_trust' => 'Trust',
-    'popup_sup_overcap_departure' => 'Departure',
-    'popup_sup_overcap_departure_value' => 'in :sols Sol',
-    'popup_sup_dismiss' => 'Send away',
-    'popup_sup_dismissed' => 'Sent away',
-    'popup_sup_understaffed' => 'Unfilled workplaces',
+    // TODO content-writer (T43-G8)
+    'popup_sup_colonists' => 'Colonists',
+    'popup_sup_employed' => 'of which employed',
+    'popup_sup_unfilled' => 'Unfilled workplaces',
     'popup_sup_staffing' => 'Raw-material production',
     'popup_sup_staffing_value' => ':pct %',
-    'popup_sup_dismiss_failed' => 'Sending away failed.',
+    'popup_sup_free' => 'Free',
 
     'popup_ap_title' => 'Action Points',
     'popup_ap_desc' => 'Your colony\'s shared pool — construction, research, exploration, and trade all draw from the same capacity.',
@@ -77,6 +73,5 @@ return [
 
     'popup_trust_title' => 'Trust',
     'popup_trust_desc' => 'What still holds the colonists together. Let this fall too far and nobody gives their best any more — and eventually nobody listens at all.',
-    'popup_trust_overcap' => 'Housing shortage',
     'popup_trust_hunger' => 'Hunger',
 ];

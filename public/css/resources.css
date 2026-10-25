@@ -216,7 +216,7 @@
     border-top: 1px solid var(--color-border, #e8e8ec);
 }
 
-/* Popup with an action button (e.g. "Wegschicken" in the colonist popup, A14):
+/* Popup with an action button (e.g. a button inside a chip popup):
  * accepts pointer events, and an invisible bridge over the 6px gap to the chip
  * keeps the hover alive while the pointer moves from the chip into the popup. */
 .res-popup--interactive {

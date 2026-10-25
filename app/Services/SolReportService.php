@@ -54,7 +54,6 @@ class SolReportService
 
     public function __construct(
         private readonly ColonyService $colonyService,
-        private readonly OvercapService $overcapService,
         private readonly ResourcesService $resourcesService,
         private readonly ResourceFlowService $resourceFlowService,
     ) {}
@@ -370,35 +369,6 @@ class SolReportService
             ];
         }
 
-        // Over-capacity (A14, GDD §6 "Überkapazität"): homeless colonists left after
-        // the deadline, were dismissed by the director, or came back to new housing.
-        foreach ($events['colony.colonists_left'] ?? [] as $params) {
-            $lines[] = [
-                'label' => __('colony.sol_report_event_colonists_left'),
-                'detail' => __('colony.sol_report_colonists_left_detail', ['count' => (int) ($params['count'] ?? 0)]),
-                'tone' => 'danger',
-                'beat' => true,
-            ];
-        }
-
-        foreach ($events['colony.colonists_dismissed'] ?? [] as $params) {
-            $lines[] = [
-                'label' => __('colony.sol_report_event_colonists_dismissed'),
-                'detail' => __('colony.sol_report_colonists_dismissed_detail', ['count' => (int) ($params['count'] ?? 0)]),
-                'tone' => 'warning',
-                'beat' => false,
-            ];
-        }
-
-        foreach ($events['colony.colonists_returned'] ?? [] as $params) {
-            $lines[] = [
-                'label' => __('colony.sol_report_event_colonists_returned'),
-                'detail' => __('colony.sol_report_colonists_returned_detail', ['count' => (int) ($params['count'] ?? 0)]),
-                'tone' => 'good',
-                'beat' => false,
-            ];
-        }
-
         if (empty($lines)) {
             return null;
         }
@@ -444,13 +414,15 @@ class SolReportService
             $lines[] = $this->staticLine(__('colony.sol_report_no_production'), 'warning');
         }
 
-        // Supply: occupied places out of the cap (the cap alone read as "colonists" although
-        // fewer places are actually taken). Cap is set, not incremented, so no counter animation.
+        // Colonists (= housing) and how many of them are employed (T43-G8). Cap is set, not incremented, so no counter animation.
         $supply = $this->resourcesService->getSupplyBreakdown($colonyId);
         $afterSupply = $supply['cap'];
         $lines[] = [
             'label' => __('resources.res_supply'),
-            'detail' => __('colony.sol_report_supply_used', ['used' => $afterSupply - $supply['free'], 'cap' => $afterSupply]),
+            'detail' => __('colony.sol_report_supply_used', [
+                'used' => $this->resourcesService->colonistsOverview($colonyId)['employed'],
+                'cap' => $afterSupply,
+            ]),
             'tone' => $afterSupply < ($before['supply'] ?? 0) ? 'warning' : 'neutral',
         ];
 
@@ -466,26 +438,16 @@ class SolReportService
             ];
         }
 
-        // Over-capacity (A14, GDD §6): state lines like the provisioning line above —
-        // otherwise the trust penalty and the production cut have no on-screen cause.
-        $overcap = $this->overcapService->status($colonyId);
-        if ($overcap['over']) {
-            $lines[] = [
-                'label' => __('colony.sol_report_overcap'),
-                'detail' => __('colony.sol_report_overcap_homeless', [
-                    'homeless' => $overcap['homeless'],
-                    'malus' => -$overcap['trust_penalty'],
-                    'sols' => $overcap['sols_until_departure'],
-                ]),
-                'tone' => 'danger',
-            ];
-        }
-        if ($overcap['departed'] > 0) {
+        // Unfilled workplaces (T43-G9, GDD §6): the colonists no longer cover them —
+        // state line like the provisioning line above, otherwise the production cut
+        // and the closed build gate have no on-screen cause.
+        $unfilled = $this->resourcesService->colonistsOverview($colonyId)['unfilled'];
+        if ($unfilled > 0) {
             $lines[] = [
                 'label' => __('colony.sol_report_staffing'),
                 'detail' => __('colony.sol_report_understaffed', [
-                    'departed' => $overcap['departed'],
-                    'pct' => $overcap['staffing_pct'],
+                    'count' => $unfilled,
+                    'pct' => (int) round($this->resourcesService->staffingShare($colonyId) * 100),
                 ]),
                 'tone' => 'warning',
             ];

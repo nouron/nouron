@@ -65,12 +65,11 @@ class SupplyBuildGateTest extends TestCase
         return User::where('user_id', self::USER_ID)->firstOrFail();
     }
 
-    private function setFree(int $free, int $departed = 0): void
+    private function setFree(int $free): void
     {
         $breakdown = $this->app->make(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
         $workplaces = $breakdown['cap'] - $breakdown['free'];
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => $workplaces + $free]);
-        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_departed' => $departed]);
         $this->assertSame($free, $this->app->make(ResourcesService::class)->getFreeSupply(self::COLONY_ID));
     }
 
@@ -112,9 +111,9 @@ class SupplyBuildGateTest extends TestCase
         $this->assertSame(1, $this->apSpend(self::SCIENCELAB));
     }
 
-    public function test_unfilled_workplaces_keep_the_gate_closed_after_a_departure(): void
+    public function test_unfilled_workplaces_keep_the_gate_closed(): void
     {
-        $this->setFree(-8, 8); // understaffed: nobody homeless, but 8 workplaces unfilled
+        $this->setFree(-8); // 8 workplaces unfilled
 
         $this->invest(self::SCIENCELAB)->assertStatus(422)->assertJsonPath('error', 'supply_limit');
     }

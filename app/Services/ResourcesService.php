@@ -224,8 +224,9 @@ class ResourcesService
     /**
      * Colony's Organika need for the current Sol (GDD §14 Hunger-Mechanik, §4a).
      *
-     * food_need = floor(present_colonists / supply_per_eater) — colonists who left
-     * because of over-capacity do not eat (GDD §6 "Überkapazität — Konsequenzen").
+     * food_need = floor(employed colonists / supply_per_eater) — the same colonist
+     * count the display shows as "davon beschäftigt" (colonistsOverview()). T43-G7
+     * will switch the base to all colonists.
      * Kept as the single source of truth for this formula — GameTick::processFoodConsumption()
      * and any reserve-floor check gated on the food buffer (e.g. Corvan's Organika-Verkauf,
      * GDD §4b/§12) must read it from here rather than re-deriving it.
@@ -234,59 +235,49 @@ class ResourcesService
     {
         $perEater = max(1, (int) config('game.food.supply_per_eater', 4));
 
-        return intdiv($this->colonistStatus($colonyId)['present'], $perEater);
+        return intdiv($this->colonistsOverview($colonyId)['employed'], $perEater);
     }
 
     /**
-     * Colonists, homeless colonists and staffing share (GDD §6 "Überkapazität —
-     * Konsequenzen", A14) — the single place for these numbers.
+     * "N colonists, of which M employed" (T43-G8, Kolonisten-Modell) — the one source
+     * for header bar, Sol report, Kommandozentrale and building sidebar. Deterministic:
+     *   colonists = housing (the stored supply cap: Command Center + Wohnhabitate)
+     *   employed  = min(colonists, workplaces)
+     *   free      = colonists − employed (what the build gate can still hand out)
+     *   unfilled  = max(0, workplaces − colonists) (workplaces nobody staffs)
      *
-     *   workplaces = used supply (every workplace needs one colonist), including
-     *                the level-0 reserve of placed buildings (buildingWorkplaces()) —
-     *                their colonists have already moved in: they need housing and eat
-     *   departed   = min(glx_colonies.overcap_departed, max(0, workplaces − cap))
-     *   present    = workplaces − departed
-     *   homeless   = max(0, present − cap)
-     *   staffing   = present / workplaces (1.0 while nobody has departed)
-     *
-     * The departed count is clamped live: as soon as housing is free again the
-     * colonists count as returned (OvercapService::advanceStreaks() persists the
-     * return and logs it at the next Sol). Free supply for the build gate stays
-     * cap − workplaces — departed colonists leave unfilled workplaces that keep
-     * occupying the cap (getFreeSupply()).
-     *
-     * $capOverride evaluates the same numbers against another cap than the stored
-     * one — e.g. the cap the next Sol will set (calculateSupplyCap()), for a preview.
-     *
-     * @return array{cap: int, workplaces: int, departed: int, present: int, homeless: int, staffing: float}
+     * @return array{colonists: int, employed: int, free: int, unfilled: int}
      */
-    public function colonistStatus(int $colonyId, ?int $capOverride = null): array
+    public function colonistsOverview(int $colonyId): array
     {
         $breakdown = $this->getSupplyBreakdown($colonyId);
+        $colonists = max(0, $breakdown['cap']);
         $workplaces = max(0, $breakdown['cap'] - $breakdown['free']);
-        $cap = $capOverride ?? $breakdown['cap'];
-
-        $stored = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('overcap_departed');
-        $departed = min($stored, max(0, $workplaces - $cap));
-        $present = $workplaces - $departed;
+        $employed = min($colonists, $workplaces);
 
         return [
-            'cap' => $cap,
-            'workplaces' => $workplaces,
-            'departed' => $departed,
-            'present' => $present,
-            'homeless' => max(0, $present - $cap),
-            'staffing' => $workplaces > 0 && $departed > 0 ? $present / $workplaces : 1.0,
+            'colonists' => $colonists,
+            'employed' => $employed,
+            'free' => $colonists - $employed,
+            'unfilled' => max(0, $workplaces - $colonists),
         ];
     }
 
     /**
      * Production factor from unfilled workplaces (GDD §5: produced amount × staffing
-     * share). Applies to raw-material production only (Regolith, Organika).
+     * share, T43-G9): employed colonists / workplaces, 1.0 while every workplace is
+     * staffed. Applies to raw-material production only (Regolith, Organika). Free
+     * colonists never raise it above 1.0.
      */
     public function staffingShare(int $colonyId): float
     {
-        return $this->colonistStatus($colonyId)['staffing'];
+        $breakdown = $this->getSupplyBreakdown($colonyId);
+        $workplaces = max(0, $breakdown['cap'] - $breakdown['free']);
+        if ($workplaces === 0) {
+            return 1.0;
+        }
+
+        return min(1.0, max(0, $breakdown['cap']) / $workplaces);
     }
 
     /**
@@ -447,22 +438,5 @@ class ResourcesService
         $reserved = (int) ($row->reserved ?? 0);
 
         return ['total' => $built + $reserved, 'reserved' => $reserved];
-    }
-
-    /**
-     * Colony IDs with homeless colonists (GDD §6 "Überkapazität"): more colonists
-     * present than the cap houses. A colony whose over-capacity was resolved by
-     * departure (understaffed, nobody homeless) is not included.
-     *
-     * @return int[]
-     */
-    public function getOverCapColonyIds(): array
-    {
-        $colonyIds = DB::table('glx_colonies')->pluck('id');
-
-        return $colonyIds
-            ->filter(fn ($id) => $this->colonistStatus((int) $id)['homeless'] > 0)
-            ->values()
-            ->all();
     }
 }

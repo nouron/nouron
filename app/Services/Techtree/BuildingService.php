@@ -238,17 +238,15 @@ class BuildingService extends AbstractTechnologyService
      * What a Rückbau of this instance would change, for the confirmation dialog —
      * or null when leveldownBlocker() refuses it. Computed by running the real
      * leveldown() inside a transaction that is always rolled back, so every number
-     * is the one the Rückbau actually produces:
-     *   freed_workplaces — free supply gained immediately
-     *   capacity_loss    — supply cap lost when the next Sol recalculates it
-     *                      (ResourcesService::calculateSupplyCap(), housing/CC only)
-     *   homeless_now     — homeless colonists at the next Sol without the Rückbau
-     *   homeless_after   — homeless colonists at the next Sol with the Rückbau
-     * Both use the recalculated cap, not the stored user_resources.supply: the stored
-     * cap lags behind housing changes within a Sol, and mixing the two would make the
-     * comparison show that lag instead of the Rückbau's effect.
+     * is the one the Rückbau actually produces (housing loss applies at once, T43-G9):
+     *   freed_workplaces — workplaces (colonists they bind) given up immediately
+     *   colonists_lost   — colonists lost with the housing, immediately
+     *   unfilled_now     — unfilled workplaces without the Rückbau
+     *   unfilled_after   — unfilled workplaces with the Rückbau (production reduced,
+     *                      build gate closed until enough free colonists are back)
+     * Both unfilled numbers use the freshly recalculated cap, not a stale stored one.
      *
-     * @return array{building_id: int, instance_id: int, current_level: int, new_level: int, construction_cancelled: bool, ap_forfeited: int, freed_workplaces: int, capacity_loss: int, homeless_now: int, homeless_after: int, tile_released: bool, released_tile: array{q: int, r: int}|null}|null
+     * @return array{building_id: int, instance_id: int, current_level: int, new_level: int, construction_cancelled: bool, ap_forfeited: int, freed_workplaces: int, colonists_lost: int, unfilled_now: int, unfilled_after: int, tile_released: bool, released_tile: array{q: int, r: int}|null}|null
      */
     public function leveldownPreview(int $colonyId, int $buildingId, int $instanceId): ?array
     {
@@ -257,17 +255,17 @@ class BuildingService extends AbstractTechnologyService
         }
 
         $before = $this->getColonyEntity($colonyId, $buildingId, $instanceId);
-        $freeBefore = $this->resourcesService->getFreeSupply($colonyId);
-        $capBefore = $this->resourcesService->calculateSupplyCap($colonyId);
-        $homelessNow = $this->resourcesService->colonistStatus($colonyId, $capBefore)['homeless'];
 
         DB::beginTransaction();
         try {
+            $this->resourcesService->syncSupplyCap($colonyId);
+            $workplacesBefore = $this->workplaces($colonyId);
+            $overviewBefore = $this->resourcesService->colonistsOverview($colonyId);
+
             $this->leveldown($colonyId, $buildingId, $instanceId);
             $after = $this->getColonyEntity($colonyId, $buildingId, $instanceId);
-            $freeAfter = $this->resourcesService->getFreeSupply($colonyId);
-            $capAfter = $this->resourcesService->calculateSupplyCap($colonyId);
-            $homelessAfter = $this->resourcesService->colonistStatus($colonyId, $capAfter)['homeless'];
+            $workplacesAfter = $this->workplaces($colonyId);
+            $overviewAfter = $this->resourcesService->colonistsOverview($colonyId);
         } finally {
             DB::rollBack();
         }
@@ -281,13 +279,21 @@ class BuildingService extends AbstractTechnologyService
             'new_level' => (int) $after?->level,
             'construction_cancelled' => (int) $before->level === 0,
             'ap_forfeited' => (int) $before->ap_spend,
-            'freed_workplaces' => $freeAfter - $freeBefore,
-            'capacity_loss' => $capBefore - $capAfter,
-            'homeless_now' => $homelessNow,
-            'homeless_after' => $homelessAfter,
+            'freed_workplaces' => $workplacesBefore - $workplacesAfter,
+            'colonists_lost' => $overviewBefore['colonists'] - $overviewAfter['colonists'],
+            'unfilled_now' => $overviewBefore['unfilled'],
+            'unfilled_after' => $overviewAfter['unfilled'],
             'tile_released' => $tileReleased,
             'released_tile' => $tileReleased ? ['q' => (int) $before->tile_x, 'r' => (int) $before->tile_y] : null,
         ];
+    }
+
+    /** Workplaces of the colony: stored cap minus free supply (the number the build gate works on). */
+    private function workplaces(int $colonyId): int
+    {
+        $breakdown = $this->resourcesService->getSupplyBreakdown($colonyId);
+
+        return $breakdown['cap'] - $breakdown['free'];
     }
 
     /**

@@ -17,7 +17,6 @@ use App\Services\MerchantService;
 use App\Services\NexusImportService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
-use App\Services\OvercapService;
 use App\Services\PathBuildingGateService;
 use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
@@ -54,7 +53,6 @@ class ColonyController extends BaseController
         private readonly CharacterCodexService $characterCodexService,
         private readonly PathDepthService $pathDepthService,
         private readonly NexusImportService $nexusImportService,
-        private readonly OvercapService $overcapService,
         private readonly BuildingService $buildingService,
         private readonly BuildingCostService $buildingCostService,
         private readonly HangarService $hangarService,
@@ -357,6 +355,8 @@ class ColonyController extends BaseController
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
                 'supply_cost' => (int) $b->supply_cost,
+                // Colonists a finished level makes available at once (Wohnhabitat, T43-G8).
+                'colonists_gain' => (int) $b->id === BuildingId::Housing->value ? (int) config('buildings.housingComplex.supply_cap', 8) : 0,
                 'notice' => (int) $b->id === BuildingId::Hangar->value ? __('colony.hangar_build_notice') : null,
                 // Placing pays erect cost + first-level Regolith in one go (T9):
                 // build_cost/first_level_regolith are the breakdown, placement_cost
@@ -1313,51 +1313,6 @@ class ColonyController extends BaseController
         ]);
     }
 
-    /**
-     * "Wegschicken" (GDD §6 "Überkapazität — Konsequenzen", A14): every homeless
-     * colonist of the player's own colony leaves at once for overcap.dismiss_ap_cost
-     * AP from the shared pool — same result as the departure, but the streak ends
-     * now and the milder trust event colonists_dismissed takes effect next Sol.
-     * Only available while colonists are homeless. The colony always comes from
-     * the session, never from the request.
-     */
-    public function dismissColonists(): JsonResponse
-    {
-        $colony = $this->colonyService->getPrimeColony(Auth::id());
-
-        if ($this->resourcesService->colonistStatus($colony->id)['homeless'] <= 0) {
-            return $this->fail('no_homeless_colonists');
-        }
-
-        $apCost = (int) config('game.overcap.dismiss_ap_cost', 8);
-        $available = $this->advisorService->getAvailableActionPoints($colony->id);
-        if (! config('game.bypass.ap_checks') && $available < $apCost) {
-            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
-                'current' => $available,
-                'required' => $apCost,
-            ]);
-        }
-
-        // Trust event + log target the next Sol — the Sol the event takes effect on
-        // and whose Sol report shows it (same convention as purchaseStipend()).
-        $targetTick = $this->getTick() + 1;
-
-        $dismissed = DB::transaction(function () use ($colony, $apCost, $targetTick): int {
-            if (! config('game.bypass.ap_checks')) {
-                $this->advisorService->lockActionPoints($colony->id, $apCost);
-            }
-
-            return $this->overcapService->dismiss($colony->id, (int) Auth::id(), $targetTick);
-        });
-
-        return response()->json([
-            'ok' => true,
-            'dismissed' => $dismissed,
-            ...$this->currentAp($colony->id),
-            'colonists' => $this->colonistsPayload($colony->id),
-        ]);
-    }
-
     public function dismissHint(Request $request): JsonResponse
     {
         $data = $request->validate(['hint_key' => 'required|string|max:20']);
@@ -1495,18 +1450,13 @@ class ColonyController extends BaseController
     /**
      * Colonist chip data for the resourcebar live sync (KOL chip).
      *
-     * @return array{present: int, cap: int, homeless: int, departed: int, staffing_pct: int}
+     * @return array{colonists: int, employed: int, free: int, unfilled: int, staffing_pct: int}
      */
     private function colonistsPayload(int $colonyId): array
     {
-        $status = $this->resourcesService->colonistStatus($colonyId);
-
         return [
-            'present' => $status['present'],
-            'cap' => $status['cap'],
-            'homeless' => $status['homeless'],
-            'departed' => $status['departed'],
-            'staffing_pct' => (int) round($status['staffing'] * 100),
+            ...$this->resourcesService->colonistsOverview($colonyId),
+            'staffing_pct' => (int) round($this->resourcesService->staffingShare($colonyId) * 100),
         ];
     }
 

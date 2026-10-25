@@ -85,8 +85,8 @@ class BuildingLeveldownUiTest extends TestCase
             'leveldown_new_level',
             'leveldown_ap_forfeited',
             'leveldown_freed_workplaces',
-            'leveldown_capacity_loss',
-            'leveldown_homeless',
+            'leveldown_colonists_lost',
+            'leveldown_unfilled',
             'leveldown_tile_released',
             'leveldown_construction_cancelled',
         ] as $key) {

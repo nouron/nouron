@@ -103,8 +103,8 @@
                 leveldownNewLevel: @json(__("colony.leveldown_new_level")),
                 leveldownApForfeited: @json(__("colony.leveldown_ap_forfeited")),
                 leveldownFreedWorkplaces: @json(__("colony.leveldown_freed_workplaces")),
-                leveldownCapacityLoss: @json(__("colony.leveldown_capacity_loss")),
-                leveldownHomeless: @json(__("colony.leveldown_homeless")),
+                leveldownColonistsLost: @json(__("colony.leveldown_colonists_lost")),
+                leveldownUnfilled: @json(__("colony.leveldown_unfilled")),
                 leveldownTileReleased: @json(__("colony.leveldown_tile_released")),
                 leveldownConstructionCancelled: @json(__("colony.leveldown_construction_cancelled")),
                 leveldownDone: @json(__("colony.leveldown_done")),
@@ -492,7 +492,9 @@
                                         </div>
                                         <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"
-                                                x-text="`${b.supply_cost} KOL`"></span>
+                                                x-text="@js(__("colony.building_needs_colonists", ["count" => ":count"])).replace(':count', b.supply_cost)"></span>
+                                            <span class="building-list-supply" x-show="(b.colonists_gain ?? 0) > 0"
+                                                x-text="@js(__("colony.building_gives_colonists", ["count" => ":count"])).replace(':count', b.colonists_gain)"></span>
                                             {{-- Placement pays erect cost + level 1 in one go (T9):
                                              total first, breakdown next to it. --}}
                                             <span class="building-list-cost"
@@ -708,11 +710,11 @@
                             <li x-show="leveldownModal.preview.freed_workplaces > 0"
                                 x-text="leveldownText('leveldownFreedWorkplaces', { count: leveldownModal.preview.freed_workplaces })">
                             </li>
-                            <li x-show="leveldownModal.preview.capacity_loss > 0"
-                                x-text="leveldownText('leveldownCapacityLoss', { count: leveldownModal.preview.capacity_loss })">
+                            <li class="leveldown-dialog__warn" x-show="leveldownModal.preview.colonists_lost > 0"
+                                x-text="leveldownText('leveldownColonistsLost', { count: leveldownModal.preview.colonists_lost })">
                             </li>
-                            <li class="leveldown-dialog__warn" x-show="leveldownWarnsHomeless(leveldownModal.preview)"
-                                x-text="leveldownText('leveldownHomeless', { after: leveldownModal.preview.homeless_after, now: leveldownModal.preview.homeless_now })">
+                            <li class="leveldown-dialog__warn" x-show="leveldownWarnsUnfilled(leveldownModal.preview)"
+                                x-text="leveldownText('leveldownUnfilled', { count: leveldownModal.preview.unfilled_after })">
                             </li>
                         </ul>
                     </template>

@@ -20,24 +20,20 @@ return [
     'popup_nx_desc' => 'Was der Nexus geliehen hat, will er zurück. Überschreitest du das Schuldenlimit, entzieht er die Konzession — ohne Gnade, ohne Vorlaufzeit.',
 
     'popup_sup_title' => 'Kolonisten',
-    'popup_sup_desc' => 'Kolonisten im Einsatz / Wohnkapazität der Siedlung. Die linke Zahl sind die Kolonisten, die Gebäude und Forschung binden (Arbeitsplätze), nicht die gesamte Bevölkerung — sie springt deshalb, sobald ein Gebäude platziert wird, denn es bindet seine Leute von Anfang an. Ist die Kapazität erschöpft, ruhen Neubau und Ausbau, bis Wohnhabitat oder Kommandozentrale wachsen. Geht Wohnraum verloren, stehen Kolonisten ohne Unterkunft da: Das Vertrauen sinkt, und nach kurzer Frist ziehen sie fort.',
+    'popup_sup_desc' => 'Die Kolonisten der Siedlung: so viele, wie Kommandozentrale und Wohnhabitate unterbringen — fest, ohne Zuzug. Davon beschäftigt sind die Kolonisten, die einen Arbeitsplatz in Gebäuden oder Forschung besetzen; der Rest ist frei und deckt den Bedarf neuer Gebäude. Reichen die freien Kolonisten nicht, ruhen Neubau und Ausbau, bis Wohnhabitat oder Kommandozentrale wachsen. Geht Wohnraum verloren, sinken die Kolonisten sofort. Jeder Kolonist braucht Platz, aber nur Beschäftigte arbeiten.',
     'popup_sup_source_cc' => 'Kommandozentrale',
     'popup_sup_source_housing' => 'Wohnhabitat',
     'popup_sup_source_knowledge' => 'Kenntnisse',
-    'popup_sup_used_buildings' => 'Gebäude',
-    'popup_sup_used_researches' => 'Forschung',
+    'popup_sup_used_buildings' => 'Arbeitsplätze: Gebäude',
+    'popup_sup_used_researches' => 'Arbeitsplätze: Forschung',
     'popup_sup_used_advisors' => 'Berater',
     'popup_sup_free' => 'Frei',
-    'popup_sup_overcap_homeless' => 'Ohne Unterkunft',
-    'popup_sup_overcap_trust' => 'Vertrauen',
-    'popup_sup_overcap_departure' => 'Abwanderung',
-    'popup_sup_overcap_departure_value' => 'in :sols Sol',
-    'popup_sup_dismiss' => 'Wegschicken',
-    'popup_sup_dismissed' => 'Weggeschickt',
-    'popup_sup_understaffed' => 'Unbesetzte Arbeitsplätze',
+    // TODO content-writer (T43-G8)
+    'popup_sup_colonists' => 'Kolonisten',
+    'popup_sup_employed' => 'davon beschäftigt',
+    'popup_sup_unfilled' => 'Unbesetzte Arbeitsplätze',
     'popup_sup_staffing' => 'Rohstoffproduktion',
     'popup_sup_staffing_value' => ':pct %',
-    'popup_sup_dismiss_failed' => 'Wegschicken fehlgeschlagen.',
 
     'popup_ap_title' => 'Aktionspunkte',
     'popup_ap_desc' => 'Der gemeinsame Pool deiner Kolonie — Bau, Kenntnisse, Erkundung und Handel teilen sich dieselbe Kapazität.',
@@ -77,6 +73,5 @@ return [
 
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
-    'popup_trust_overcap' => 'Wohnungsnot',
     'popup_trust_hunger' => 'Hunger',
 ];

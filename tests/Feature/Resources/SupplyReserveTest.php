@@ -14,7 +14,7 @@ use Tests\TestCase;
  * 2026-09-24): a building that is placed on the map but still on level 0 already
  * occupies the workplaces of its first level (supply_cost × 1). The reserve is part
  * of the single workplaces number — free supply, the display breakdown, colonists
- * (homeless comparison, food) all see it. A level-0 row without a tile (seeded,
+ * (unfilled comparison, food) all see it. A level-0 row without a tile (seeded,
  * not placed) reserves nothing.
  *
  * Setup: every supply cost zeroed, then the Harvester (27, colony 1 level 1)
@@ -44,6 +44,13 @@ class SupplyReserveTest extends TestCase
         DB::table('buildings')->where('id', self::AGRARDOM)->update(['supply_cost' => 6]);
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 30]);
         config(['game.food.supply_per_eater' => 4, 'game.bypass.supply_checks' => false]);
+    }
+
+    private function workplaces(): int
+    {
+        $b = $this->service()->getSupplyBreakdown(self::COLONY_ID);
+
+        return $b['cap'] - $b['free'];
     }
 
     private function service(): ResourcesService
@@ -84,26 +91,26 @@ class SupplyReserveTest extends TestCase
     public function test_completing_the_first_level_does_not_change_the_workplaces(): void
     {
         $this->agrardom(0, 2);
-        $before = $this->service()->colonistStatus(self::COLONY_ID)['workplaces'];
+        $before = $this->workplaces();
 
         $this->agrardom(1, 2);
 
         $this->assertSame(26, $before);
-        $this->assertSame($before, $this->service()->colonistStatus(self::COLONY_ID)['workplaces']);
+        $this->assertSame($before, $this->workplaces());
         $this->assertSame(0, $this->service()->getSupplyBreakdown(self::COLONY_ID)['used']['reserved']);
     }
 
-    public function test_reserved_colonists_are_present_need_housing_and_eat(): void
+    public function test_reserved_workplaces_count_against_the_housing_and_feed(): void
     {
         $this->agrardom(0, 2);
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 24]);
 
-        $status = $this->service()->colonistStatus(self::COLONY_ID);
+        $overview = $this->service()->colonistsOverview(self::COLONY_ID);
 
-        $this->assertSame(26, $status['workplaces']);
-        $this->assertSame(26, $status['present']);
-        $this->assertSame(2, $status['homeless'], 'reserve counts in the housing comparison');
-        $this->assertSame(6, $this->service()->foodNeed(self::COLONY_ID), 'floor(26 present / 4)');
+        $this->assertSame(26, $this->workplaces());
+        $this->assertSame(24, $overview['employed']);
+        $this->assertSame(2, $overview['unfilled'], 'reserve counts in the housing comparison');
+        $this->assertSame(6, $this->service()->foodNeed(self::COLONY_ID), 'floor(24 employed / 4)');
     }
 
     public function test_techtree_supply_check_skips_the_first_level_of_a_placed_building(): void

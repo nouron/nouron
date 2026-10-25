@@ -7,7 +7,10 @@ return [
     'explore' => 'Erkunden',
     'deep_scan' => 'Sondieren',
     'invest_ap' => 'Ausbauen',
-    'tile_colonists' => 'Kolonisten im Einsatz',
+    'tile_colonists' => 'Braucht Kolonisten',
+    // TODO content-writer (T43-G8)
+    'building_needs_colonists' => 'braucht :count Kolonisten',
+    'building_gives_colonists' => '+:count Kolonisten, sofort',
     'levelup_cost_label' => 'Kosten:',
     'levelup_cost_suffix' => 'fällig mit dem ersten AP',
     'levelup_cost_already_paid' => 'bereits bezahlt',
@@ -220,8 +223,9 @@ return [
     'leveldown_new_level' => 'Neue Stufe: :to (bisher :from)',
     'leveldown_ap_forfeited' => 'Bereits investierte AP verfallen: :ap AP',
     'leveldown_freed_workplaces' => 'Frei werdende Kolonisten: :count — sofort für andere Gebäude verfügbar',
-    'leveldown_capacity_loss' => 'Wohnraum ab dem nächsten Sol: :count Plätze weniger',
-    'leveldown_homeless' => 'Ohne Unterkunft ab dem nächsten Sol: :after Kolonisten (ohne Rückbau: :now). Solange Wohnraum fehlt, sinkt das Vertrauen; nach Ablauf der Frist wandern sie ab.',
+    // TODO content-writer (T43-G9)
+    'leveldown_colonists_lost' => 'Sofort :count Kolonisten weniger — der Wohnraum geht verloren.',
+    'leveldown_unfilled' => ':count Arbeitsplätze unbesetzt — Rohstoffproduktion gemindert, Neubau und Ausbau gesperrt, bis wieder genug freie Kolonisten da sind.',
     'leveldown_tile_released' => 'Stufe 0: Das Gebäude wird abgetragen und das Tile geräumt. Ein Wiederaufbau ist ein Neubau zu vollen Kosten.',
     'leveldown_construction_cancelled' => 'Die Baustelle wird aufgelöst und das Tile geräumt. Die Errichtungskosten sind verloren.',
     'leveldown_no_refund' => 'Keine Rückerstattung: Verbaute Ressourcen und AP sind verloren. Der Schritt lässt sich nicht rückgängig machen.',
@@ -229,8 +233,7 @@ return [
     'leveldown_confirm_cancel_construction' => 'Bau abbrechen',
     'leveldown_done' => 'Rückbau abgeschlossen.',
     'leveldown_cancelled_done' => 'Bau abgebrochen.',
-    'error_supply_limit' => 'Keine freien Kolonisten für die nächste Ausbaustufe — erst Wohnraum schaffen: Wohnhabitat oder Kommandozentrale ausbauen.',
-    'error_no_homeless_colonists' => 'Alle Kolonisten haben ein Dach über dem Kopf — niemand muss gehen.',
+    'error_supply_limit' => 'Zu wenige freie Kolonisten für die nächste Ausbaustufe — erst Wohnraum schaffen: Wohnhabitat oder Kommandozentrale ausbauen.',
     'error_insufficient_resources' => 'Nicht genug Ressourcen für den Bau.',
     'error_repair_no_regolith' => 'Kein Regolith für die Reparatur — Harvester reparieren oder Regolith abbauen.',
 
@@ -664,22 +667,14 @@ return [
     'sol_report_event_plague' => 'Seuchenausbruch',
     'sol_report_plague_detail_hunger' => 'Nahrungsknappheit (:streak Sole ohne Vorräte) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
     'sol_report_plague_detail_trust' => 'Kritisches Vertrauen (:trust) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
-    'sol_report_event_colonists_left' => 'Kolonisten abgewandert',
-    'sol_report_colonists_left_detail' => ':count Kolonisten ohne Unterkunft haben ihre Sachen gepackt und die Siedlung verlassen. Ihre Arbeitsplätze bleiben leer, bis neuer Wohnraum sie zurückholt.',
-    'sol_report_event_colonists_dismissed' => 'Kolonisten weggeschickt',
-    'sol_report_colonists_dismissed_detail' => 'Auf Anweisung des Direktors haben :count Kolonisten ohne Unterkunft die Siedlung verlassen. Neuer Wohnraum holt sie zurück.',
-    'sol_report_event_colonists_returned' => 'Kolonisten zurückgekehrt',
-    'sol_report_colonists_returned_detail' => ':count Kolonisten sind in den neuen Wohnraum eingezogen — ihre Arbeitsplätze sind wieder besetzt.',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
     'sol_report_supply_used' => ':cap Kolonisten, davon :used beschäftigt',
     'sol_report_food' => 'Verpflegung',
     'sol_report_food_ok' => ':amount Organika in die Küchen geflossen — die Kolonie ist versorgt',
-    'sol_report_overcap' => 'Unterkunft',
-    'sol_report_overcap_homeless' => ':homeless Kolonisten schlafen ohne Unterkunft — Vertrauen −:malus. Ohne neuen Wohnraum wandern sie in :sols Sol ab.',
     'sol_report_staffing' => 'Personal',
-    'sol_report_understaffed' => ':departed Arbeitsplätze unbesetzt — Rohstoffproduktion bei :pct %. Neubau und Ausbau bleiben gesperrt, bis neuer Wohnraum die Abgewanderten zurückholt.',
+    'sol_report_understaffed' => ':count Arbeitsplätze unbesetzt — Rohstoffproduktion bei :pct %. Neubau und Ausbau bleiben gesperrt, bis wieder genug freie Kolonisten da sind.',
     'sol_report_food_shortage' => 'Vorräte erschöpft — die Kolonisten hungern. Vertrauen sinkt. Agrardom bauen oder reparieren.',
 
     // Kolonie & Personal

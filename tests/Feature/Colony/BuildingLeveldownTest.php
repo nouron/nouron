@@ -7,7 +7,6 @@ use App\Services\AdvisorService;
 use App\Services\ResourcesService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Tests\Concerns\CreatesForeignColony;
@@ -71,13 +70,12 @@ class BuildingLeveldownTest extends TestCase
 
     /**
      * Stored cap = the cap a Sol calculates, filled exactly by a placed Lv1 Cantina
-     * (its supply cost set to the free rest): nobody homeless, no free supply.
+     * (its supply cost set to the free rest): nobody unfilled, no free supply.
      */
     private function fillCapExactly(): void
     {
         $resources = $this->app->make(ResourcesService::class);
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => $resources->calculateSupplyCap(self::COLONY_ID)]);
-        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['overcap_departed' => 0, 'overcap_streak' => 0]);
         $free = $resources->getFreeSupply(self::COLONY_ID);
         $this->assertGreaterThanOrEqual(0, $free, 'precondition: fixture colony within its cap');
         DB::table('buildings')->where('id', self::BAR)->update(['supply_cost' => $free]);
@@ -191,11 +189,11 @@ class BuildingLeveldownTest extends TestCase
         $response->assertJsonStructure([
             'ok', 'level', 'tile_released', 'released_tile', 'building',
             'apAvailable', 'regolith', 'werkstoffe', 'freeSupply',
-            'colonists' => ['present', 'cap', 'homeless', 'departed', 'staffing_pct'],
+            'colonists' => ['colonists', 'employed', 'free', 'unfilled', 'staffing_pct'],
         ]);
-        $status = $this->app->make(ResourcesService::class)->colonistStatus(self::COLONY_ID);
-        $response->assertJsonPath('colonists.cap', $status['cap']);
-        $response->assertJsonPath('colonists.homeless', $status['homeless']);
+        $overview = $this->app->make(ResourcesService::class)->colonistsOverview(self::COLONY_ID);
+        $response->assertJsonPath('colonists.colonists', $overview['colonists']);
+        $response->assertJsonPath('colonists.unfilled', $overview['unfilled']);
     }
 
     public function test_command_center_cannot_go_below_level_one(): void
@@ -340,7 +338,7 @@ class BuildingLeveldownTest extends TestCase
 
     // ── Preview for the confirmation modal ────────────────────────────────────
 
-    public function test_preview_of_a_housing_leveldown_names_capacity_loss_and_homeless(): void
+    public function test_preview_of_a_housing_leveldown_names_colonists_lost_and_unfilled_workplaces(): void
     {
         $this->place(self::HOUSING, 4, 1, -1);
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::HOUSING)->where('instance_id', 4)->update(['ap_spend' => 2]);
@@ -357,9 +355,9 @@ class BuildingLeveldownTest extends TestCase
                 'construction_cancelled' => false,
                 'ap_forfeited' => 2,
                 'freed_workplaces' => 0,
-                'capacity_loss' => self::HOUSING_CAP_PER_LEVEL,
-                'homeless_now' => 0,
-                'homeless_after' => self::HOUSING_CAP_PER_LEVEL,
+                'colonists_lost' => self::HOUSING_CAP_PER_LEVEL,
+                'unfilled_now' => 0,
+                'unfilled_after' => self::HOUSING_CAP_PER_LEVEL,
                 'tile_released' => false,
                 'released_tile' => null,
             ]);
@@ -377,7 +375,7 @@ class BuildingLeveldownTest extends TestCase
             ->assertJsonPath('construction_cancelled', true)
             ->assertJsonPath('ap_forfeited', 3)
             ->assertJsonPath('freed_workplaces', 6)
-            ->assertJsonPath('capacity_loss', 0)
+            ->assertJsonPath('colonists_lost', 0)
             ->assertJsonPath('tile_released', true)
             ->assertJsonPath('released_tile', ['q' => 2, 'r' => -1]);
     }
@@ -394,13 +392,12 @@ class BuildingLeveldownTest extends TestCase
 
     /**
      * Owner rule "angezeigte Zahl = wirkende Zahl": the previewed freed workplaces
-     * show up in the free supply right after the Rückbau, the previewed capacity
-     * loss in the cap the next Sol recalculates, and the previewed homeless count
-     * is what the colonist status reports with that cap.
+     * show up in the free supply right after the Rückbau, the previewed colonists
+     * lost and unfilled workplaces are what the colony overview reports at once —
+     * housing loss applies immediately (T43-G9), no waiting for the next Sol.
      */
     public function test_preview_matches_the_actual_effect(): void
     {
-        $tick = 11400;
         $resources = $this->app->make(ResourcesService::class);
         $this->place(self::HOUSING, 4, 1, -1);
         $this->place(self::SCIENCELAB, 1, 2, -1);
@@ -415,28 +412,23 @@ class BuildingLeveldownTest extends TestCase
         $this->assertSame($freeBefore + $sciencelab['freed_workplaces'], $resources->getFreeSupply(self::COLONY_ID));
 
         $housing = $this->preview(['building_id' => self::HOUSING, 'instance_id' => 4])->assertOk()->json();
-        $this->assertGreaterThan(0, $housing['homeless_after'], 'precondition: the housing loss leaves colonists homeless');
+        $this->assertGreaterThan(0, $housing['unfilled_after'], 'precondition: the housing loss leaves workplaces unfilled');
         $this->leveldown(['building_id' => self::HOUSING, 'instance_id' => 4])
             ->assertOk()
             ->assertJsonPath('level', $housing['new_level']);
 
-        // A regular Sol recalculates the cap (GameTick::calculateSupply()).
-        Artisan::call('game:tick', ['--tick' => $tick]);
-
-        $this->assertSame($capBefore - $housing['capacity_loss'], (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply'));
-        $this->assertSame($housing['homeless_after'], $resources->colonistStatus(self::COLONY_ID)['homeless']);
+        $this->assertSame($capBefore - $housing['colonists_lost'], (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply'));
+        $this->assertSame($housing['unfilled_after'], $resources->colonistsOverview(self::COLONY_ID)['unfilled']);
     }
 
     /**
-     * The stored cap (user_resources.supply) lags behind within a Sol: a housing
-     * upgrade raises the cap only when the next Sol recalculates it. homeless_now
-     * and homeless_after must both be measured against that recalculated cap, so
-     * the comparison shows the Rückbau's effect alone — and each equals what a real
-     * Sol produces without resp. with the Rückbau.
+     * The stored cap (user_resources.supply) can lag behind the housing within a Sol:
+     * a housing upgrade done directly in the DB is not in it yet. The preview
+     * measures both numbers against the freshly recalculated cap, so the comparison
+     * shows the Rückbau's effect alone.
      */
-    public function test_preview_compares_against_the_next_sol_cap_when_stored_cap_is_stale(): void
+    public function test_preview_compares_against_the_recalculated_cap_when_stored_cap_is_stale(): void
     {
-        $tick = 11400;
         $resources = $this->app->make(ResourcesService::class);
         $this->place(self::HOUSING, 4, 1, -1);
         $this->fillCapExactly();
@@ -445,21 +437,13 @@ class BuildingLeveldownTest extends TestCase
         // the stored cap still predates both.
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::HOUSING)->where('instance_id', 5)->increment('level');
         DB::table('buildings')->where('id', self::BAR)->increment('supply_cost', self::HOUSING_CAP_PER_LEVEL);
-        $this->assertGreaterThan(0, $resources->colonistStatus(self::COLONY_ID)['homeless'], 'precondition: stored cap is stale');
+        $this->assertGreaterThan(0, $resources->colonistsOverview(self::COLONY_ID)['unfilled'], 'precondition: stored cap is stale');
 
         $preview = $this->preview(['building_id' => self::HOUSING, 'instance_id' => 4])->assertOk()->json();
-        $this->assertSame(0, $preview['homeless_now']);
-        $this->assertSame(self::HOUSING_CAP_PER_LEVEL, $preview['homeless_after']);
-        $this->assertSame(self::HOUSING_CAP_PER_LEVEL, $preview['capacity_loss']);
 
-        DB::beginTransaction();
-        Artisan::call('game:tick', ['--tick' => $tick]);
-        $this->assertSame($preview['homeless_now'], $resources->colonistStatus(self::COLONY_ID)['homeless'], 'next Sol without Rückbau');
-        DB::rollBack();
-
-        $this->leveldown(['building_id' => self::HOUSING, 'instance_id' => 4])->assertOk();
-        Artisan::call('game:tick', ['--tick' => $tick]);
-        $this->assertSame($preview['homeless_after'], $resources->colonistStatus(self::COLONY_ID)['homeless'], 'next Sol with Rückbau');
+        $this->assertSame(0, $preview['unfilled_now']);
+        $this->assertSame(self::HOUSING_CAP_PER_LEVEL, $preview['unfilled_after']);
+        $this->assertSame(self::HOUSING_CAP_PER_LEVEL, $preview['colonists_lost']);
     }
 
     public function test_preview_rejects_what_the_leveldown_rejects(): void

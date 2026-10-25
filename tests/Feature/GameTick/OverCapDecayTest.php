@@ -130,39 +130,6 @@ class OverCapDecayTest extends TestCase
         $this->assertNull(config('game.decay.overcap_factor'));
     }
 
-    // ── getOverCapColonyIds ───────────────────────────────────────────────────
-
-    /**
-     * getOverCapColonyIds() returns only the colony IDs with homeless colonists
-     * (free supply negative and nobody departed yet).
-     *
-     * Colony 1: over-cap (oremine at level=5 × supply_cost=2 = 10, cap=0).
-     * Foreign colony (second player, created in the test): only a CC with supply_cost=0
-     * → used=0, cap=0 → free=0, i.e. within cap.
-     */
-    public function test_get_over_cap_colony_ids_returns_correct_colonies(): void
-    {
-        $this->zeroAllSupplyCosts();
-        DB::table('buildings')->where('id', 27)->update(['supply_cost' => 2]);
-
-        // Colony 1 — over-cap
-        DB::table('colony_buildings')
-            ->where('colony_id', 1)->where('building_id', 27)
-            ->update(['level' => 5]);
-        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
-
-        // Foreign colony — within cap (used=0, cap=0 → free=0).
-        $foreign = $this->createForeignColony();
-
-        /** @var ResourcesService $svc */
-        $svc = $this->app->make(ResourcesService::class);
-
-        $ids = $svc->getOverCapColonyIds();
-
-        $this->assertContains(1, $ids, 'Colony 1 must be in over-cap list');
-        $this->assertNotContains($foreign['colony_id'], $ids, 'Within-cap foreign colony must not be in over-cap list');
-    }
-
     // ── Building decay with overcap ───────────────────────────────────────────
 
     /**

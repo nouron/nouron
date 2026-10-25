@@ -7,6 +7,7 @@ use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\ColonyService;
 use App\Services\NexusImportService;
+use App\Services\ResourcesService;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
 use App\Services\TrustService;
@@ -32,6 +33,7 @@ class CommandCenterController extends BaseController
         private readonly NexusImportService $nexusImportService,
         private readonly TradeAdvantagePresenter $tradeAdvantagePresenter,
         private readonly TrustService $trustService,
+        private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct($tick);
     }
@@ -141,7 +143,10 @@ class CommandCenterController extends BaseController
         $nexusImport = $this->nexusImportService->quote($colony->id);
         $nexusImport['advantage_view'] = $this->tradeAdvantagePresenter->present($colony->id, $nexusImport['advantage']);
 
+        $colonists = $this->resourcesService->colonistsOverview($colony->id);
+
         return view('colony.command_center', compact(
+            'colonists',
             'phaseProgress',
             'stipendTiers',
             'solLimit',

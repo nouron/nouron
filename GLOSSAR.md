@@ -32,7 +32,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Spielbegriff | Code-Schlüssel | Bedeutung |
 |---|---|---|
 | Credits (Cr) | `credits` | Geld: Berater, Schiffe, Handel. |
-| Kolonisten (KOL) | `supply` | **Kein eigenes Bevölkerungssystem.** 1 Kolonist = 1 belegter Supply-Platz; die Kappe kommt aus CC und Wohnhabitaten. |
+| Kolonisten (KOL) | `supply` | **Kein Zuzug, kein Wachstum.** Kolonisten = Wohnraum aus CC und Wohnhabitaten (sofort bei Abschluss und bei Verlust); davon beschäftigt = besetzte Arbeitsplätze, der Rest ist frei. Unbesetzte Arbeitsplätze mindern die Rohstoffproduktion. |
 | Regolith (Rg) | `regolith` | Baumaterial; Baukosten werden beim Platzieren voll gezahlt. |
 | Werkstoffe (Co) | `compounds`/`werkstoffe` | Material für spätere Gebäude, per Uplink-Station importierbar. |
 | Organika (Or) | `organics`/`organika` | Nahrung der Kolonisten; Proviant für Missionen. Zielbild: 1 Einheit ernährt 1 Kolonisten pro Sol (ROADMAP T36). |

@@ -10,7 +10,6 @@ use App\Services\EncounterNoticeService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
-use App\Services\OvercapService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourceFlowService;
 use App\Services\ResourcesService;
@@ -187,8 +186,10 @@ class AppServiceProvider extends ServiceProvider
                     $view->with('colonyAp', $advisorService->getAvailableActionPoints($colonyId));
 
                     $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
+                    $view->with('colonistsOverview', app(ResourcesService::class)->colonistsOverview($colonyId));
+                    $view->with('staffingShare', app(ResourcesService::class)->staffingShare($colonyId));
                     $view->with('resourceFlow', app(ResourceFlowService::class)->perSol($colonyId));
-                    $view->with('overcapStatus', app(OvercapService::class)->status($colonyId));
+                    $view->with('hungerPenalty', app(TrustService::class)->hungerPenalty($colonyId));
                     $view->with('apBreakdown', $advisorService->getApBreakdown($colonyId));
 
                     $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());

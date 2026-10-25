@@ -236,6 +236,9 @@ class GameTickResourceGenerationTest extends TestCase
     public function test_harvester_yield_is_independent_of_stored_level_beyond_one(): void
     {
         $this->placeHarvesterOnFreshTile(level: 10);
+        // Level 10 binds many workplaces; ample housing keeps the staffing share at 1.0 (T43-G9),
+        // so the test stays about the yield formula and not about unfilled workplaces.
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 500]);
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_REGOLITH],
             ['amount' => 0]
