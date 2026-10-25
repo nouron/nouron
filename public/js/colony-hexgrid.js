@@ -499,6 +499,7 @@ function colonyHexView(config) {
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
+                this.syncResbarColonists(res.colonists);
                 if (res.leveled_up) {
                     this.showLevelupNotice(res.building.label);
                     if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
