@@ -13,15 +13,15 @@ return [
     'ui_experience_label' => 'Mission experience',
     'ui_level' => 'Level :level/:max',
     'ui_invest_progress' => ':spent/:needed AP',
-    'ui_invest' => 'Invest', // TODO content-writer: confirm wording
+    'ui_invest' => 'Commit AP',
     'ui_level_max' => 'Highest level',
     'ui_locked_building' => 'Locked: :building needs level :level.',
 
     // ── Cantina: nurture relationship
     'ui_relationship_title' => 'Nurture relationship',
     'ui_not_met' => 'Not met yet',
-    'ui_relationship_run_hint' => 'Familiarity only counts for this run. What you learn about a character stays in the codex across all runs.',
-    'ui_relationship_met_only' => 'Only characters you have met in this run appear here.',
+    'ui_relationship_run_hint' => 'Familiarity grows only within this run and starts over next time. What you learn about a character stays in the codex.',
+    'ui_relationship_met_only' => 'Only characters you have already spoken to in this run are listed.',
 
     // ── Mission families
     'family_exploration' => 'Exploration',

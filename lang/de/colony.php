@@ -796,8 +796,8 @@ return [
     'find_flight' => 'Bergungsflug',
     'hangar_build_notice' => 'Danach holen nur noch Schiffe die Funde: ein Flug kostet 1 AP und etwas Organika, das Regolith kommt erst nach der Flugzeit. Große Funde brauchen Hangar-Stufe 2 und einen Frachter.',
     'onboarding_hint_find_flight' => 'Ab jetzt holen Schiffe die Funde: kaum AP, dafür Flugzeit und Organika. Große Funde brauchen einen Frachter.',
-    'find_small' => 'Kleiner Fund',
-    'find_medium' => 'Mittlerer Fund',
-    'find_large' => 'Großer Fund',
+    'find_small' => 'Kleiner Fund: verstreute Trümmer',
+    'find_medium' => 'Mittlerer Fund: aufgebrochenes Wrack',
+    'find_large' => 'Großer Fund: Frachterwrack',
     'find_false' => 'Fehlalarm',
 ];
