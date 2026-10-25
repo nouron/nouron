@@ -306,6 +306,16 @@ return [
         ],
     ],
 
+    // Lab AP cap per knowledge and Sol (T43-G1, Owner decision 2026-10-25: the
+    // "limited AP per Sol" principle also holds in the lab). PLACEHOLDER: base 4 is
+    // an ASSUMPTION copied from build.ap_cap_per_sol.base; the real height is set
+    // after a measurement. base = null switches the rule off. Earmarked bonus AP
+    // (ResearchService::investBonus, e.g. Barkeeper) is exempt (designer assumption).
+    // See App\Services\DailyApCapService.
+    'knowledge_ap_cap_per_sol' => [
+        'base' => 4,
+    ],
+
     // Path-building build gate (GDD §16 "Slot-System", Gate-Logik; server rule since
     // 2026-10-14): a NEW path building (sciencelab/hangar/bar) may only be placed while
     // placed path buildings < CC level − cc_level_offset. With 1: CC Lv2 → one, Lv3 →

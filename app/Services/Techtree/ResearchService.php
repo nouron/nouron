@@ -4,6 +4,7 @@ namespace App\Services\Techtree;
 
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
+use App\Services\DailyApCapService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
@@ -61,7 +62,56 @@ class ResearchService extends AbstractTechnologyService
      */
     public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1): bool
     {
-        return $this->_invest($colonyId, $entityId, $action, $points);
+        if (! $this->isCappedKnowledge($entityId, $action)) {
+            return $this->_invest($colonyId, $entityId, $action, $points);
+        }
+
+        // Book what actually landed in ap_spend (invest clamps at the level threshold).
+        return DB::transaction(function () use ($colonyId, $entityId, $points): bool {
+            $before = (int) ($this->getColonyEntity($colonyId, $entityId)->ap_spend ?? 0);
+            if (! $this->_invest($colonyId, $entityId, 'add', $points)) {
+                return false;
+            }
+            $after = (int) ($this->getColonyEntity($colonyId, $entityId)->ap_spend ?? 0);
+            app(DailyApCapService::class)->record($colonyId, self::capKey($entityId), $after - $before);
+
+            return true;
+        });
+    }
+
+    public static function capKey(int $entityId): string
+    {
+        return 'knowledge:'.$entityId;
+    }
+
+    /** Per-Sol AP cap per knowledge (game.knowledge_ap_cap_per_sol.base), null = rule off. */
+    public function apCap(): ?int
+    {
+        $base = config('game.knowledge_ap_cap_per_sol.base');
+
+        return $base === null ? null : (int) $base;
+    }
+
+    /** @return array{cap: int, spent: int, remaining: int}|null */
+    public function apCapState(int $colonyId, int $entityId): ?array
+    {
+        return app(DailyApCapService::class)->state($colonyId, self::capKey($entityId), $this->apCap());
+    }
+
+    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false, ?int $instanceId = null): ?string
+    {
+        if (! $bypassPoolCheck && $this->isCappedKnowledge($entityId, $action)
+            && app(DailyApCapService::class)->wouldExceed($colonyId, self::capKey($entityId), $this->apCap(), abs($points))) {
+            return 'knowledge_ap_cap';
+        }
+
+        return parent::investBlocker($colonyId, $entityId, $action, $points, $bypassPoolCheck, $instanceId);
+    }
+
+    private function isCappedKnowledge(int $entityId, string $action): bool
+    {
+        return $action === 'add'
+            && DB::table($this->masterTable())->where('id', $entityId)->value('purpose') === 'knowledge';
     }
 
     /**

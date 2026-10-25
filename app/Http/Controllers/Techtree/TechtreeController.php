@@ -222,6 +222,8 @@ class TechtreeController extends BaseController
                         ? $this->researchService->knowledgeLevelupCost($colonyId, (int) $id, (int) ($tech['ap_for_levelup'] ?? 0))
                         : (int) ($tech['ap_for_levelup'] ?? 0),
                     'ap_available' => in_array($type, ['building', 'research'], true) ? $colonyAp : 0,
+                    // Per-Sol lab cap for this knowledge (T43-G1); null = rule off / not a knowledge.
+                    'ap_cap' => $type === 'research' ? $this->researchService->apCapState($colonyId, (int) $id) : null,
                 ];
             }
         }
@@ -426,7 +428,7 @@ class TechtreeController extends BaseController
                 'leveldown' => $service->leveldownBlocker($colonyId, $id),
             };
 
-            return $this->orderFailed($code ?? 'order_failed', $order);
+            return $this->orderFailed($code ?? 'order_failed', $order, $code === 'knowledge_ap_cap' ? ['cap' => (int) $service->apCap()] : []);
         }
 
         $leveledUp = false;
@@ -490,17 +492,19 @@ class TechtreeController extends BaseController
             'level' => (int) ($tech['level'] ?? 0),
             'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
             'ap_for_levelup' => $apForLevelup,
+            'ap_cap' => $type === 'research' ? $this->researchService->apCapState($colonyId, $id) : null,
             'status' => $this->computeStatus($tech, $techtree),
         ];
     }
 
-    private function orderFailed(string $code, string $order): JsonResponse
+    /** @param  array<string, int|string>  $replace  placeholders of the error text */
+    private function orderFailed(string $code, string $order, array $replace = []): JsonResponse
     {
         return response()->json([
             'success' => false,
             'order' => $order,
             'error' => $code,
-            'message' => __("techtree.error_{$code}"),
+            'message' => __("techtree.error_{$code}", $replace),
         ], 422);
     }
 }
