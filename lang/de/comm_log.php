@@ -14,6 +14,7 @@ return [
             'building_placed' => 'Gebäude platziert',
             'building_invested' => 'Gebäude ausgebaut',
             'building_repaired' => 'Gebäude repariert',
+            'pathdepth_invested' => 'Training / Beziehung vertieft',
             'renamed' => 'Kolonie umbenannt',
             'tile_explored' => 'Sektor erkundet',
             'tile_deep_scanned' => 'Tiefen-Scan durchgeführt',
@@ -138,8 +139,13 @@ return [
     // Rich descriptions for Protokoll entries (with :param placeholders)
     'desc' => [
         'building_placed' => ':name platziert.',
-        'building_invested' => ':ap AP in :name investiert (:done / :total AP).',
+        'building_invested' => ':ap AP in :name investiert.',
         'building_repaired' => ':name repariert (:current / :max Zustand).',
+        // TODO content-writer: confirm wording (Hangar-Training / Cantina-Beziehung)
+        'pathdepth_family' => 'in Training :name investiert.',
+        'pathdepth_family_levelup' => 'in Training :name investiert. Stufe :level erreicht.',
+        'pathdepth_character' => 'in Beziehung zu :name investiert.',
+        'pathdepth_character_levelup' => 'in Beziehung zu :name investiert. Stufe :level erreicht.',
         'building_leveled_up' => ':ap AP in :name investiert. Bau abgeschlossen — Level :level erreicht.',
         'level_up' => 'Forschung :name abgeschlossen.',
         'level_up_level' => 'Forschung :name auf Level :level gestiegen.',

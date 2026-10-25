@@ -13,6 +13,7 @@ return [
         'colony' => [
             'building_placed' => 'Building placed',
             'building_invested' => 'Building upgraded',
+            'pathdepth_invested' => 'Training / relationship deepened',
             'building_repaired' => 'Building repaired',
             'renamed' => 'Colony renamed',
             'tile_explored' => 'Sector explored',
@@ -139,8 +140,13 @@ return [
         'colonists_dismissed' => 'The director sent away :count colonists without shelter. Their workplaces stay empty until new housing brings them back.',
         'colonists_returned' => ':count colonists have moved into the new housing — their workplaces are staffed again.',
         'building_placed' => ':name placed.',
-        'building_invested' => ':ap AP invested in :name (:done / :total AP).',
+        'building_invested' => ':ap AP invested in :name.',
         'building_repaired' => ':name repaired (:current / :max condition).',
+        // TODO content-writer: confirm wording (Hangar-Training / Cantina-Beziehung)
+        'pathdepth_family' => 'invested in training :name.',
+        'pathdepth_family_levelup' => 'invested in training :name. Level :level reached.',
+        'pathdepth_character' => 'invested in the relationship with :name.',
+        'pathdepth_character_levelup' => 'invested in the relationship with :name. Level :level reached.',
         'building_leveled_up' => ':ap AP invested in :name. Construction complete — Level :level reached.',
         'level_up' => 'Research :name completed.',
         'level_up_level' => 'Research :name advanced to Level :level.',

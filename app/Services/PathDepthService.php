@@ -61,7 +61,7 @@ class PathDepthService
     }
 
     /**
-     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, leveled_up:bool}
+     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, leveled_up:bool, points:int}
      *
      * @throws GameRuleException unknown_entity|not_met|max_level|building_level_cap|insufficient_ap
      */
@@ -104,7 +104,7 @@ class PathDepthService
                 ['level' => $level, 'ap_spend' => $apSpend]
             );
 
-            return $this->state($colonyId, $kind, $key) + ['leveled_up' => $leveledUp];
+            return $this->state($colonyId, $kind, $key) + ['leveled_up' => $leveledUp, 'points' => $points];
         });
     }
 
