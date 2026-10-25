@@ -492,6 +492,9 @@ abstract class AbstractTechnologyService
             DB::table($this->colonyTable())->updateOrInsert($rowKeys, $updateData);
         });
 
+        // A finished level may raise the supply cap (housing, CC, knowledge): apply at once.
+        $this->resourcesService->syncSupplyCap($colonyId);
+
         if ($trustEvent = $this->levelupTrustEvent()) {
             app(TrustService::class)->fireEvent($colonyId, $trustEvent);
         }

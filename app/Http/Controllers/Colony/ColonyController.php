@@ -855,6 +855,8 @@ class ColonyController extends BaseController
                     'status_points' => $building->max_status_points ?? 20,
                 ]);
             $leveledUp = true;
+            // Finished level may raise the supply cap (Wohnhabitat, CC): apply at once, not at the next Sol.
+            $this->resourcesService->syncSupplyCap($colony->id);
             $this->trustService->fireEvent($colony->id, 'building_level_up');
             // T30 §13.2: reaching hangar level 1 lands the gift drone (idempotent).
             if ($buildingId === BuildingId::Hangar->value) {
@@ -915,6 +917,7 @@ class ColonyController extends BaseController
                 'phase_progress' => $this->colonyService->getPhaseProgress($colony),
                 'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
                 ...$this->currentAp($colony->id),
+                'colonists' => $this->colonistsPayload($colony->id),
             ]);
         }
 
@@ -935,7 +938,7 @@ class ColonyController extends BaseController
                 : null,
             'ap_cap' => $this->apCapService->state($colony->id, $buildingId, $instanceId),
             'activeHint' => $this->resolveHint($colony->id),
-            ...($leveledUp ? ['phase_progress' => $this->colonyService->getPhaseProgress($colony)] : []),
+            ...($leveledUp ? ['phase_progress' => $this->colonyService->getPhaseProgress($colony), 'colonists' => $this->colonistsPayload($colony->id)] : []),
             ...$this->currentAp($colony->id),
         ]);
     }
