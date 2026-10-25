@@ -38,7 +38,7 @@ class OnboardingTest extends TestCase
         // Starting user resources
         $userRes = DB::table('user_resources')->where('user_id', $user->user_id)->first();
         $this->assertEquals(3000, $userRes->credits);
-        $this->assertEquals(15, $userRes->supply);
+        $this->assertEquals(18, $userRes->supply); // CC 10 + Wohnhabitat Lv1 8
 
         // Starting colony resources
         $res = DB::table('colony_resources')

@@ -172,6 +172,8 @@ class OnboardingService
 
         $this->seedResources($userId, $colonyId);
         $this->seedStartingBuilding($colonyId);
+        // Start colonists = housing of the placed start buildings (CC + Wohnhabitat), not a fixed number.
+        app(ResourcesService::class)->syncSupplyCap($colonyId);
         $this->seedStartingTiles($colonyId, $rngSeed);
         $this->eventService->createNexusBriefing($userId, 0, $colonyId);
 
@@ -200,7 +202,7 @@ class OnboardingService
         // User-level resources (credits + supply)
         DB::table('user_resources')->updateOrInsert(
             ['user_id' => $userId],
-            ['credits' => 3000, 'supply' => 15]  // supply = CC level 1 flat cap
+            ['credits' => 3000, 'supply' => 0]  // supply is set from the start buildings in seedSol1State()
         );
 
         // Colony-level resources.

@@ -1,6 +1,6 @@
 # Techtree
 
-> Ausgelagert aus [`docs/GDD.md`](../GDD.md) am 2026-08-02. Rolle des Techtrees (Übersicht + Forschung), Entitäten-Übersicht, Abhängigkeitsregeln, Grid-Layout, Detailpanel und Gebäude-Aktionen im Tile-Panel inkl. Rückbau.
+> Ausgelagert aus [`docs/GDD.md`](../GDD.md). Rolle des Techtrees (Übersicht + Forschung), Entitäten-Übersicht, Abhängigkeitsregeln, Grid-Layout, Detailpanel und Gebäude-Aktionen im Tile-Panel inkl. Rückbau.
 >
 > Kapitelnummerierung und `§`-Verweise beziehen sich weiterhin auf das GDD.
 
@@ -10,14 +10,14 @@
 
 Der Techtree ist die **Freischalt- und Abhängigkeitsübersicht** aller Entitäten einer Kolonie: Gebäude, Kenntnisse, Schiffe und Berater. Er ist kein linearer Forschungsbaum, sondern ein **überschaubares Abhängigkeitsgitter** — die Kommandozentrale (CC) ist das einzige globale Gate, das den Fortschritt reguliert.
 
-Der Techtree hat genau zwei Aufgaben (Owner-Entscheidung A43, 2026-09-24):
+Der Techtree hat genau zwei Aufgaben:
 
 1. **Übersicht:** Was gibt es, was ist freigeschaltet, was fehlt noch, und wie hängt alles zusammen?
 2. **Forschung:** Er ist der einzige Ort, an dem Kenntnisse erforscht werden (AP investieren, Stufe abschließen).
 
 Er ist **keine Verwaltungsansicht für Gebäude**. Jede Gebäude-Aktion — Errichten, Ausbauen, Reparieren, Rückbau — findet ausschließlich im Tile-Panel der Kolonieansicht statt (§11.4). Für Schiffe und Berater gilt dasselbe Prinzip: Der Techtree zeigt Voraussetzungen und Stand, gehandelt wird im Hangar-Screen (§8b) bzw. im Berater-Screen (§13).
 
-**Warum eine Stelle je Aktion:** Solange Gebäude an zwei Orten ausbaubar waren, liefen zwei Codepfade mit eigener Rechnung für Supply-Gate, Rabatte und Rundung nebeneinander, und der Spieler musste lernen, dass dieselbe Aktion an zwei Orten verschieden aussehen kann. Ein Gebäude ist ein Ort auf der Karte. Also passiert alles, was diesen Ort verändert, auch auf der Karte. Der Techtree beantwortet die Planungsfrage („Was kommt als Nächstes, und was brauche ich dafür?"), die Kolonieansicht die Handlungsfrage („Was tue ich jetzt mit diesem Tile?").
+**Warum eine Stelle je Aktion:** Zwei Orte für dieselbe Aktion würden zwei Rechenwege für Supply-Gate, Rabatte und Rundung erzwingen, und der Spieler müsste lernen, dass dieselbe Aktion an zwei Orten verschieden aussehen kann. Ein Gebäude ist ein Ort auf der Karte. Also passiert alles, was diesen Ort verändert, auch auf der Karte. Der Techtree beantwortet die Planungsfrage („Was kommt als Nächstes, und was brauche ich dafür?"), die Kolonieansicht die Handlungsfrage („Was tue ich jetzt mit diesem Tile?").
 
 Das Designziel: Ein Spieler soll in 30 Sekunden verstehen, was er bauen kann und warum etwas noch gesperrt ist. Kein Micromanagement, keine Forschungsketten die Monate dauern.
 
@@ -88,7 +88,7 @@ Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungs
 | `pilot` | Raumfahrer | navigation | Hangar Lv 1 | 2–4 (generisch) |
 | `trader` | Konsul | economy | Bar Lv 1 | 2–4 (generisch) |
 
-> Es gibt keinen `strategist`-Berater im Techtree (Stratege zurückgestellt, §13 „Die vier Berater-Typen"). Die Spalte „AP-Typ" bezeichnet seit der AP-Zusammenlegung (§13.1) die **Domäne** des Beraters, nicht mehr einen eigenen Pool.
+> Es gibt keinen `strategist`-Berater im Techtree (Stratege zurückgestellt, §13 „Die vier Berater-Typen"). Die Spalte „AP-Typ" bezeichnet die **Domäne** des Beraters, keinen eigenen Pool (§13.1).
 
 ---
 
@@ -183,11 +183,11 @@ Der Techtree ist in **5 Phasen** aufgeteilt, jede entspricht einem CC-Level-Meil
 
 > Die `row`/`col`-Werte sind kanonisch — sie werden 1:1 in die DB-Tabellen geschrieben. Das Grid-CSS liest sie als `grid-row: row + 1; grid-column: col + 1`.
 
-> ⚠️ BALANCE CONCERN: Die Phase-2-Grid-Koordinaten für `hangar` (2,2), `pilot` (3,2), `trader` (3,1) sind vorläufige Werte nach der Umstrukturierung (Hangar von Phase 3 auf Phase 2, 2026-06-28). Phase 2 hat nun 11 Einträge statt 9 — visuelle Kollisionen und Pfeil-Überschneidungen müssen nach Implementierung im Techtree-Screen geprüft und ggf. korrigiert werden. Gleiches gilt für Phase 3 (securityHub/strategist neu, alte Positionen von hangar/pilot frei).
+> ⚠️ BALANCE CONCERN: Die Phase-2-Grid-Koordinaten für `hangar` (2,2), `pilot` (3,2), `trader` (3,1) sind vorläufige Werte. Phase 2 ist dicht belegt — visuelle Kollisionen und Pfeil-Überschneidungen müssen im Techtree-Screen geprüft und ggf. korrigiert werden. Gleiches gilt für Phase 3.
 
 **Implementierungshinweise (Blade/JS):**
 
-Die bisherigen 4 getrennten `<section>`-Blöcke mit je eigenem `<div class="tech-grid">` werden zu einem einzigen gemeinsamen `<div class="tech-grid">` zusammengeführt. Kategorie-Toggle-Buttons steuern `display: none` auf den einzelnen Tech-Cards (per CSS-Klasse oder `x-show` auf Card-Ebene), nicht auf Grid-Container-Ebene. Section-Titel (Gebäude / Kenntnisse / Schiffe / Berater) bleiben als positionierte Label-Elemente im Grid erhalten.
+Alle vier Kategorien liegen in einem einzigen gemeinsamen `<div class="tech-grid">`. Kategorie-Toggle-Buttons steuern `display: none` auf den einzelnen Tech-Cards (per CSS-Klasse oder `x-show` auf Card-Ebene), nicht auf Grid-Container-Ebene. Section-Titel (Gebäude / Kenntnisse / Schiffe / Berater) bleiben als positionierte Label-Elemente im Grid erhalten.
 
 > ⚠️ BALANCE CONCERN: Die Kenntnisse `cartography` (row 7) und `defense` (row 8) liegen visuell weit unter ihrem sekundären Prereq Hangar (row 3). Das ist unvermeidbar bei 7 Kenntnissen in einer Spalte ohne Kollisionen. Falls die Pfeil-Länge als störend empfunden wird, kann `cartography` auf col 5 row 4 verschoben werden (neben drone, dem anderen Hangar-Lv1-Kind) — das würde die Kenntnisse-Spalte jedoch aufreißen und die visuelle Gruppierung schwächen.
 
@@ -230,21 +230,21 @@ Die Kosten zeigt das Tile-Panel wie jede AP-Aktion als Chip am Button. Die angez
 
 #### Rückbau (Spieleraktion)
 
-Der Direktor kann jede Instanz eines Gebäudes bewusst um eine Stufe zurückbauen (Owner-Entscheidung A14/A43, 2026-09-24). Der Rückbau ist das Gegenstück zum Verfall: Verfall nimmt Stufen durch Vernachlässigung (§7), Rückbau nimmt sie durch Entscheidung.
+Der Direktor kann jede Instanz eines Gebäudes bewusst um eine Stufe zurückbauen. Der Rückbau ist das Gegenstück zum Verfall: Verfall nimmt Stufen durch Vernachlässigung (§7), Rückbau nimmt sie durch Entscheidung.
 
 **Regeln:**
 
 - **Eine Stufe je Aktion, je Instanz.** Der Rückbau senkt die Stufe der gewählten Instanz um genau eins. Andere Instanzen desselben Gebäudes bleiben unberührt.
 - **Kostenlos und ohne Voraussetzungen.** Keine AP, keine Ressourcen, kein Supply-Gate, keine Levelup-Voraussetzungen. Es gibt auch keine Rückerstattung. Das Material ist verbaut, der Rückbau gibt nichts zurück.
 - **Die Kommandozentrale fällt nie unter Stufe 1.** Sie ist der Anker der Kolonie und kann nicht geräumt werden.
-- **Rückbau auf Stufe 0 räumt das Tile.** Das Gebäude ist danach nicht mehr platziert: Das Tile ist frei, und die Arbeitsplatz-Reserve der ersten Stufe entfällt (§6 „Supply als Bau-Gate"). Wer es wieder haben will, muss es neu errichten, mit vollen Kosten.
+- **Rückbau auf Stufe 0 räumt das Tile.** Das Gebäude ist danach nicht mehr platziert: Das Tile ist frei, und die Arbeitsplatz-Reserve der ersten Stufe fällt weg (§6 „Supply als Bau-Gate"). Wer es wieder haben will, muss es neu errichten, mit vollen Kosten.
 - **Bauabbruch.** Der Rückbau gilt auch für eine platzierte Baustelle auf Stufe 0. Das Tile und die Arbeitsplatz-Reserve werden frei. Es gibt keine Rückerstattung der Errichtungskosten, und bereits investierte AP verfallen. Einen eigenen Begriff oder eine eigene Aktion braucht das nicht: Es ist dieselbe Regel wie beim Rückbau auf Stufe 0. (Im Code noch umzusetzen, dort verlangt der Rückbau derzeit eine Stufe größer 0.)
 - **Investierte AP eines laufenden Ausbaus verfallen.** Steckt in der Instanz bereits AP für die nächste Stufe, sind diese AP mit dem Rückbau weg.
 - **Zustand:** Die verbleibende Stufe steht danach mit vollem Zustand da, genauso wie nach einem Stufenverlust durch Verfall (§7).
 - **Arbeitsplätze sinken mit der Stufe.** Weniger Stufen binden weniger Kolonisten. Freies Supply entsteht sofort (§6 „Supply als Bau-Gate"). Sind Arbeitsplätze unbesetzt, verschwinden sie still mit, nach denselben Regeln wie beim Stufenverlust durch Verfall (§6 „Wohnraumverlust — Konsequenzen").
 - **Wohnraum:** Der Rückbau eines Wohnhabitats senkt die Kolonisten-Kapazität. Die Kolonisten sinken sofort; sind danach Arbeitsplätze unbesetzt, sinkt die Rohstoffproduktion anteilig, und Neubau und Ausbau bleiben gesperrt, bis wieder genug freie Kolonisten da sind (§6 „Wohnraumverlust — Konsequenzen"). Es gibt keine Frist und keine Abwanderung. Damit ist der Rückbau neben Verfall und Sturm der dritte Weg, Wohnraum zu verlieren, und der einzige, den der Spieler selbst wählt.
 - **Effekte skalieren mit der neuen Stufe**, wie nach jedem Stufenverlust. Vertrauensbeiträge, Produktion, Rabatte und Supply-Cap-Beiträge sinken automatisch mit.
-- **Kein Vertrauens-Ereignis.** Der Rückbau ist eine bewusste Verwaltungsentscheidung des Direktors, keine Vernachlässigung, und löst kein eigenes Vertrauens-Ereignis aus. Die Folgen stecken schon im System: Vertrauensgebäude verlieren ihren Stufenbeitrag, und ein Wohnhabitat-Rückbau mindert über unbesetzte Arbeitsplätze die Produktion (§6). Dasselbe gilt für den Stufenverlust durch Verfall: Auch er hat keine eigene Vertrauensfolge (Owner-Entscheidung T13, 2026-09-25).
+- **Kein Vertrauens-Ereignis.** Der Rückbau ist eine bewusste Verwaltungsentscheidung des Direktors, keine Vernachlässigung, und löst kein eigenes Vertrauens-Ereignis aus. Die Folgen stecken schon im System: Vertrauensgebäude verlieren ihren Stufenbeitrag, und ein Wohnhabitat-Rückbau mindert über unbesetzte Arbeitsplätze die Produktion (§6). Dasselbe gilt für den Stufenverlust durch Verfall: Auch er hat keine eigene Vertrauensfolge.
 - **Bestandsschutz.** Unterschreitet ein Rückbau eine Voraussetzung, auf der schon etwas steht, bleibt das Bestehende erhalten: Gebäude, angestellte Berater, Schiffe und erreichte Kenntnis-Stufen. Nur neue Aktionen werden gegen die neue Stufe geprüft. Beispiele sind eine zurückgebaute CC trotz bebauter Kolonie-Zone oder belegter Berater-Slots, ein Pfadgebäude auf Stufe 0 bei angestelltem Berater und ein Analytik-Labor unter der Voraussetzung erforschter Kenntnisse. **Einzige Ausnahme:** Ein Hangar unter der Stufe seines Schiffs macht das Schiff inaktiv (§7 „Hangar unter Schiffsstufe“). Das Schiff kann dann keine neue Mission starten. Eine laufende Mission läuft weiter, und nach dem Wiederausbau ist das Schiff automatisch wieder einsatzbereit. Der Bestandsschutz gilt hier nicht, weil die Hangar-Stufe die Schiffsklasse selbst ist und keine bloße Bau-Voraussetzung.
 - **Bestätigung per Modal-Dialog.** Der Rückbau kostet nichts, ist aber nicht umkehrbar. Ein Fehlklick kostet eine Stufe, also AP und Regolith für den Wiederaufbau. Deshalb bestätigt der Spieler jeden Rückbau in einem Modal-Dialog. Der Dialog ist kein bloßes „Sicher?", er zeigt die konkreten Folgen:
   - die neue Stufe,
