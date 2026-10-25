@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-25
+
+- Fix: T43-A1 — Hexmap springt nicht mehr nach unten, wenn ein freies Feld gewählt wird (Karte oben statt vertikal zentriert ausgerichtet).
+
 ## 2026-10-24
 
 - Doku: Pfad-Vertiefung auf AP-Investition umgestellt (Kenntnisse, Missionserfahrung, Vertrautheit); B6/V2 geht in T41 auf. Spec, GDD §4b, Glossar, ROADMAP angepasst.
