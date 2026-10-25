@@ -20,7 +20,7 @@ Verantwortlich für den Daten-Layer von Nouron: Laravel 12 + MySQL 8. Schemas en
 - Schema-Änderung benötigt neuen Lang-Key → flaggen, Text für content-writer lassen.
 
 ## Tech Stack
-- MySQL 8 (dev, Tests, Playtest-Bot, Produktion), nativ in WSL, siehe `docs/dev-setup-mysql.md`
+- MySQL 8 (dev, Tests, Playtest-Bot, Produktion), lokal MySQL 8.0 (Installationsweg frei), siehe `docs/dev-setup-mysql.md`
 - Laravel 12 Migrations (`database/migrations/`, Artisan)
 - Eloquent ORM
 - Tests: Datenbank `nouron_test` (MySQL) via `RefreshDatabase`-Trait, befüllt durch `TestSeeder`

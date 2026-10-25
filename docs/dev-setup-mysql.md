@@ -1,15 +1,27 @@
-# Lokale MySQL-Umgebung (nativ, ohne Docker)
+# Lokale Entwicklungsumgebung (MySQL)
 
-Seit R5b (ADR 0005) läuft Nouron überall gegen MySQL 8: lokal, in CI und in Produktion. Diese Anleitung richtet die lokale Entwicklungsumgebung unter Ubuntu/WSL2 ein.
+Seit R5b (ADR 0005) läuft Nouron überall gegen MySQL 8: lokal, in CI und in Produktion.
 
-## Installation
+## Voraussetzungen (verbindlich)
+
+| Komponente | Version |
+|---|---|
+| PHP | 8.2 oder neuer (CI testet 8.4), mit `pdo_mysql` |
+| MySQL | 8.0 (wie CI: `mysql:8.0`) — nicht MariaDB |
+| Composer, Node.js/npm | aktuell (npm für den Pre-commit-Hook) |
+
+Betriebssystem und Installationsweg sind frei: MySQL nativ, im Docker-Container, über Homebrew o. ä. Erwartet wird nur eine MySQL-Instanz, die unter den Werten der `.env` erreichbar ist (Vorgabe `127.0.0.1:3306`), mit den Datenbanken und dem User aus dem Abschnitt [Datenbanken und User](#datenbanken-und-user).
+
+## Beispiel: Ubuntu unter WSL2 (Windows 11)
+
+So ist die Umgebung des Owners eingerichtet; andere Systeme analog.
 
 ```bash
 sudo apt update && sudo apt install -y mysql-server php8.2-mysql
 sudo service mysql start
 ```
 
-Lokal läuft PHP 8.2, CI nutzt 8.4. Prüfen: `php -m | grep pdo_mysql` muss `pdo_mysql` zeigen.
+Prüfen: `php -m | grep pdo_mysql` muss `pdo_mysql` zeigen.
 
 WSL startet Dienste nicht automatisch: nach jedem WSL-Neustart `sudo service mysql start`.
 
@@ -22,6 +34,8 @@ Drei getrennte Datenbanken, ein User `nouron` (Passwort `nouron`, nur lokal):
 | `nouron` | Entwicklungsdatenbank (Spielstand im Browser) |
 | `nouron_test` | PHPUnit-Tests (bei paratest zusätzlich `nouron_test_test_N`) |
 | `nouron_playtest` | Playtest-Bot (`game:playtest`) |
+
+Beispiel mit lokalem Root-Zugang (`sudo mysql`; je nach System `mysql -u root -p` oder `docker exec -i <container> mysql -uroot -p`):
 
 ```bash
 sudo mysql <<'SQL'
@@ -38,6 +52,8 @@ SQL
 ```
 
 Der Grant auf `` `nouron\_test%` `` ist nötig, weil `artisan test --parallel` (paratest) pro Worker eine eigene Datenbank `nouron_test_test_N` anlegt; ohne das Muster fehlen dem User dort die Rechte. Der Backslash escaped den Unterstrich (sonst Wildcard).
+
+Läuft MySQL in einem Container, kommen Verbindungen vom Host nicht als `localhost` an: User und Grants dann für `'nouron'@'%'` statt `'nouron'@'localhost'` anlegen.
 
 ## `.env` auf MySQL umstellen
 
@@ -98,7 +114,7 @@ Messung 2026-10-05 (mit Tuning, `--processes=8`): CPU-gebunden, nicht plattengeb
 
 ## Performance-Tuning (nur lokal)
 
-Auf dem Entwicklungsrechner ist die Durability der MySQL-Instanz abgeschaltet, in `/etc/mysql/mysql.conf.d/zz-nouron-tests.cnf`:
+Optional, beschleunigt die Tests deutlich. Auf dem Entwicklungsrechner des Owners ist die Durability der MySQL-Instanz abgeschaltet, unter Ubuntu in `/etc/mysql/mysql.conf.d/zz-nouron-tests.cnf` (auf anderen Systemen in der jeweiligen MySQL-Konfiguration bzw. als Startparameter des Containers, z. B. `--innodb-flush-log-at-trx-commit=0`):
 
 ```ini
 [mysqld]
@@ -110,7 +126,7 @@ innodb_buffer_pool_size = 1G
 max_connections = 200
 ```
 
-Danach `sudo service mysql restart`. **Warnung:** Nur für eine lokale Test-/Dev-Instanz. Ein Absturz oder Stromausfall kann die letzte Sekunde Schreibvorgänge verlieren oder Seiten beschädigen (Doublewrite aus), und ohne Binlog gibt es keine Wiederherstellung. Nie auf eine Instanz mit Daten übertragen, die man behalten muss. `max_connections = 200` ist für parallele Bot-Läufe und paratest-Worker nötig.
+Danach MySQL neu starten (Ubuntu: `sudo service mysql restart`). **Warnung:** Nur für eine lokale Test-/Dev-Instanz. Ein Absturz oder Stromausfall kann die letzte Sekunde Schreibvorgänge verlieren oder Seiten beschädigen (Doublewrite aus), und ohne Binlog gibt es keine Wiederherstellung. Nie auf eine Instanz mit Daten übertragen, die man behalten muss. `max_connections = 200` ist für parallele Bot-Läufe und paratest-Worker nötig.
 
 ## Playtest-Bot (`game:playtest`)
 
@@ -156,8 +172,8 @@ Tests laufen nur gegen `nouron_test`, der Playtest-Bot nur gegen `nouron_playtes
 
 ## Fehlerbilder
 
-- `SQLSTATE[HY000] [2002] Connection refused`: Dienst läuft nicht. Unter WSL `sudo service mysql start` (ein Neustart von WSL beendet den Dienst); Status mit `sudo service mysql status`.
-- `could not find driver`: `php8.2-mysql` fehlt, siehe Installation.
+- `SQLSTATE[HY000] [2002] Connection refused`: MySQL läuft nicht oder ist unter Host/Port der `.env` nicht erreichbar. Unter WSL z. B. `sudo service mysql start` (ein Neustart von WSL beendet den Dienst).
+- `could not find driver`: PHP-Extension `pdo_mysql` fehlt oder ist nicht aktiviert (Ubuntu: Paket `php8.2-mysql`).
 - `Access denied` bei paratest-Worker-DBs: Grant `` `nouron\_test%` `` fehlt.
 - `Too many connections`: `max_connections` zu niedrig (parallele Bots/Worker), siehe Performance-Tuning.
 - `Lock wait timeout exceeded` oder `Deadlock found` (SQLSTATE 40001, Code 1213): Beim Onboarding fängt `App\Support\DeadlockRetry` Deadlocks ab und wiederholt die Transaktion; jeder Retry steht mit Versuch, SQLSTATE und Fehlercode in `storage/logs/laravel.log`. Taucht der Fehler trotzdem auf, zuerst dort nachsehen und prüfen, ob noch ein Test, Bot oder `artisan`-Lauf gegen dieselbe Datenbank läuft.

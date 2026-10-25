@@ -65,7 +65,7 @@ Owner-Entscheidungen:
 - **Datenbank:** Laravel MySQL. Postgres (Option C) und VPS mit SQLite (Option A) sind **verworfen**. Grund für den Verzicht auf den VPS: Der Owner will so wenig wie möglich selbst administrieren.
 - **Ein Dialekt:** Zwei Dialekte (SQLite lokal, MySQL Prod) sind nicht gewünscht. Lokal, CI und Produktion laufen alle auf MySQL.
 - **Tests, CI und Playtest-Bot (2026-10-03):** Die Test-Suite läuft gegen MySQL, nicht gegen SQLite-in-memory (Best Practice: dieselbe Engine wie Produktion; sonst kehrt der zweite Dialekt durch die Hintertür zurück). MySQL hat keinen echten In-Memory-Modus; bei Bedarf wird erst gemessen, dann das Datenverzeichnis auf tmpfs gelegt und die Durability abgeschaltet.
-- **Kein Docker lokal (YAGNI):** MySQL wird nativ in WSL installiert (eine Instanz, drei Datenbanken `nouron`, `nouron_test`, `nouron_playtest`). In CI genügt der MySQL-Service von GitHub Actions.
+- **Kein Docker lokal (YAGNI):** _(Nachtrag 2026-10-25: aufgehoben, siehe unten)_ MySQL wird nativ in WSL installiert (eine Instanz, drei Datenbanken `nouron`, `nouron_test`, `nouron_playtest`). In CI genügt der MySQL-Service von GitHub Actions.
 - **Playtest-Bot wie echte Spieler:** Die Bots laufen parallel in **einer gemeinsamen** Datenbank (`nouron_playtest`), jeder Lauf legt einen eigenen User samt Kolonie an — dasselbe Mehrspieler-Modell wie in Produktion (Voraussetzung: R18/R19, Tick und Zugriffe pro Run). Das ersetzt die frühere Isolation über `:memory:` pro Prozess und ist zugleich ein Mehrspieler-Lasttest.
 - **Datensicherheit:** Bis zu 24 h Datenverlust sind akzeptabel (tägliche Snapshots genügen, kein PITR nötig).
 - **Budget:** 20 € pro Monat; Scale-to-Zero (App und DB) ist erlaubt.
@@ -134,3 +134,7 @@ Begründung:
 - SQLite-Support (ephemer, nicht empfohlen): https://laravel.com/cloud/docs/knowledge-base/sqlite
 - Nightwatch: https://nightwatch.laravel.com/
 - Laravel Cloud Überblick/Ressourcen: https://laravel.com/cloud/app-resources
+
+## Nachtrag 2026-10-25: Lokale Umgebung frei
+
+Die lokale Umgebung ist nicht mehr auf WSL und natives MySQL festgelegt (mehrere Entwicklungsrechner, künftig weitere Entwickler). Verbindlich sind nur PHP ≥ 8.2 (CI 8.4) und MySQL 8.0 sowie Datenbanken, User und Regeln aus `docs/dev-setup-mysql.md`; ob MySQL nativ oder im Container läuft, entscheidet jeder selbst.

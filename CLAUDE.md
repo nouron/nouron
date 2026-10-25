@@ -12,7 +12,7 @@
 ## Wichtige Korrekturen
 
 - **Datenbank ist MySQL 8** (NICHT SQLite — SQLite gibt es als Dialekt nicht mehr, ADR 0005)
-  - Lokal nativ in WSL (kein Docker), User `nouron`: `nouron` (Entwicklungsdatenbank), `nouron_test` (PHPUnit, plus paratest-Worker `nouron_test_test_N`), `nouron_playtest` (PlaytestBot). Einrichtung: `docs/dev-setup-mysql.md`
+  - Lokal: MySQL 8.0, Installationsweg frei (nativ, Docker, …), User `nouron`: `nouron` (Entwicklungsdatenbank), `nouron_test` (PHPUnit, plus paratest-Worker `nouron_test_test_N`), `nouron_playtest` (PlaytestBot). Einrichtung: `docs/dev-setup-mysql.md`
   - Produktion: Laravel Cloud + Laravel MySQL (`docs/adr/0005-produktions-datenbank-und-hosting.md`, Deploy-Ablauf `docs/deployment-db.md`)
   - Schema: eine Baseline-Migration `database/migrations/0001_01_01_000000_baseline.php`; Test-Fixtures (nur Spielerseite): `data/sql/testdata.sql`
 - `Routen.txt` und `code/nouron_(pre_zend)/` veraltet — nur GitHub-Repo relevant
@@ -106,7 +106,7 @@ Bei reaktivierten/bestehenden Dateien mit Coverage-Lücke (siehe `bin/phpunit --
 
 ## Workflow-Hinweise
 
-- Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)
+- Entwicklungsumgebung: System frei wählbar (Owner nutzt u. a. Ubuntu unter WSL2 und Arch Linux). Verbindlich: PHP ≥ 8.2 (CI 8.4), MySQL 8.0 — siehe `docs/dev-setup-mysql.md`. Keine Befehle oder Pfade eines bestimmten Systems als gegeben annehmen.
 - Owner: Mario (tech.mario@outlook.de)
 - **Balance-Arbeit** (Kosten, AP, Einnahmen, Pacing, Bot-Messungen): zuerst Skill `nouron-balance-pass` und `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md` lesen — messen vor rechnen, eine Änderung pro Messung.
 - **Begriffe:** `GLOSSAR.md` (Spielbegriff ↔ Code-Schlüssel ↔ Bedeutung) zuerst lesen. Berichte an den Owner nennen den **Spielbegriff** (Labor, Baustelle, AP-Deckel), den Code-Schlüssel höchstens einmal in Klammern. Neue Entität oder Mechanik bekommt einen Glossar-Eintrag (eine Zeile, ein Satz, keine Zahlen).
