@@ -1,11 +1,18 @@
 # Arbeiter-Modell: Gebäude ohne Kolonisten bauen, Arbeiter getrennt zuweisen?
 
-Stand 2026-10-25 · Autor: game-designer · Status: Vorlage, wartet auf Owner-Entscheidung
-Bezug: Owner-Frage vom 2026-10-25; ersetzt die ausgesetzte A14-Empfehlung in `docs/superpowers/specs/2026-10-25-kolonisten-modell.md`. Berührt GDD §6 („Supply als Bau-Gate“, „Überkapazität — Konsequenzen“), §11.5 (Rückbau), §13 (Berater/Slots), `docs/game-reference.md` §10 und §10a.
+Stand 2026-10-25 · Autor: game-designer · Status: entschieden (Option A2)
+Bezug: Owner-Frage vom 2026-10-25; Ergebnis bestätigt die A14-Empfehlung in `docs/superpowers/specs/2026-10-25-kolonisten-modell.md`. Berührt GDD §6 („Supply als Bau-Gate“, „Überkapazität — Konsequenzen“), §11.5 (Rückbau), §13 (Berater/Slots), `docs/game-reference.md` §10 und §10a.
 
 Im Text steht **Fakt** für Nachgelesenes (Code, GDD, Config), **Annahme** und **Empfehlung** für meine Deutung. Es stehen keine Balancewerte darin (ADR 0004).
 
-## Kurzfassung
+## Entschieden (Owner 2026-10-25)
+
+- **Option A2 wird übernommen, wie empfohlen.** Wohnraumverlust (zum Beispiel ein Wohnhabitat sinkt, Rückbau) senkt die Kolonisten sofort. Unbesetzte Arbeitsplätze mindern die Rohstoffproduktion anteilig. Das Bau-Gate heißt künftig „genug freie Kolonisten“ und sperrt Neubau und Ausbau bis zur Erholung. Der Rückbau-Dialog warnt vorab. Obdachlosen-Frist, Vertrauens-Malus-Streak, Abwanderung und „Wegschicken“ entfallen.
+- **Das Wort „Arbeiter“ wird nicht eingeführt.** Es bleibt bei „Kolonisten“.
+- **Das Arbeiter-Modell (Option B und C) wird nicht verfolgt.** Nach der Closed Beta neu prüfen, falls Spieler an der Sperre selbst scheitern und nicht an ihrer Anzeige.
+- Die Folgen für Code und Anzeige stehen als Liste am Ende dieser Datei.
+
+## Kurzfassung (Stand vor der Entscheidung)
 
 Der Gedanke ist sinnvoll, weil er das Problem „Wohnraum geht verloren, aber die Gebäude sind schon gezählt“ von der Wurzel her löst. Er verkompliziert das Spiel aber insgesamt: Eine harte, leicht erklärbare Regel („bauen geht nur, wenn genug freie Kolonisten da sind“) würde durch eine weiche Regel mit vielen Folgen ersetzt („bauen geht immer, die Wirkung folgt der Besetzung“), und für jedes Gebäude müsste neu festgelegt werden, was „aktiv“ heißt. Ich empfehle, in Version 1 beim heutigen Modell zu bleiben und nur die **Regel für Wohnraumverlust klar zu machen**. Das Arbeiter-Modell bleibt eine gute Idee für nach der Closed Beta, falls der Playtest zeigt, dass das Bau-Gate selbst frustriert und nicht nur seine Anzeige.
 
@@ -61,7 +68,24 @@ Wie B, aber der Spieler verteilt die Kolonisten selbst (Regler oder Klick je Geb
 
 | Frage | Empfehlung | Owner-Entscheidung |
 |---|---|---|
-| Arbeiter-Modell (Gebäude ohne Kolonisten bauen, Arbeiter zuweisen) einführen? | Nein für Version 1; später prüfen, falls das Gate selbst frustriert | |
-| Regel bei Wohnraumverlust | A2: Kolonisten sofort weniger, unbesetzte Arbeitsplätze mindern Rohstoffproduktion, Gate sperrt bis zur Erholung, Rückbau-Dialog warnt; Frist und Abwanderung entfallen | |
-| Begriff „Arbeiter“ im Spiel | Nicht einführen (Verwechslung mit Beratern/Personal), bei „Kolonisten“ bleiben | |
-| Messung | Für A2 keine eigene; Organika-Produktion bleibt der offene Messschritt | |
+| Arbeiter-Modell (Gebäude ohne Kolonisten bauen, Arbeiter zuweisen) einführen? | Nein für Version 1; später prüfen, falls das Gate selbst frustriert | Entschieden: nein, nach der Beta ggf. neu prüfen (2026-10-25) |
+| Regel bei Wohnraumverlust | A2: Kolonisten sofort weniger, unbesetzte Arbeitsplätze mindern Rohstoffproduktion, Gate sperrt bis zur Erholung, Rückbau-Dialog warnt; Frist und Abwanderung entfallen | Entschieden: A2 (2026-10-25) |
+| Begriff „Arbeiter“ im Spiel | Nicht einführen (Verwechslung mit Beratern/Personal), bei „Kolonisten“ bleiben | Entschieden: nicht einführen (2026-10-25) |
+| Messung | Für A2 keine eigene; Organika-Produktion bleibt der offene Messschritt | Wie empfohlen (2026-10-25) |
+
+## Code- und Anzeige-Folgen von A2 (Stichpunkte für die ROADMAP)
+
+Stand der Code-Suche (Fakt, `grep` im Arbeitsordner 2026-10-25); Umsetzung durch game-developer, Test zuerst (TDD).
+
+- **Kernlogik:** `app/Services/OvercapService.php` (Streak, Abwanderung, Rückkehr, Wegschicken) wird ersetzt durch die Regel „Kolonisten = Wohnraum, beschäftigt = min(Kolonisten, Arbeitsplätze)“ ohne gespeicherten Zustand. Aufrufer anpassen: `app/Console/Commands/GameTick.php`, `GameTickDryRun.php`, `app/Services/ResourcesService.php`, `app/Services/SolReportService.php`, `app/Services/TrustService.php`, `app/Http/Controllers/Colony/ColonyController.php` (Wegschicken-Route und Gate), `app/Http/Controllers/CommLog/CommLogController.php`.
+- **Besetzungsanteil:** Produktionsminderung läuft weiter über den Personalanteil; er wird künftig aus Kolonisten und Arbeitsplätzen abgeleitet statt aus „Abgewanderte“. Verpflegung rechnet auf alle Kolonisten (siehe Kolonisten-Modell).
+- **Config entfernen (`config/game.php`):** Block `overcap` (`departure_after_sols`, `trust_base_malus`, `trust_step`, `trust_cap`, `dismiss_ap_cost`) und die Vertrauens-Ereignisse `trust.events.colonists_left` und `colonists_dismissed`. Entscheiden, ob ein einmaliges Ereignis für „Wohnraum verloren“ neu angelegt wird (Entwurf der Vorlage: ja, einmalig); Folge: Werte nur über Messung.
+- **Datenbank:** Spalten `glx_colonies.overcap_departed` und `glx_colonies.overcap_streak` (Baseline-Migration `0001_01_01_000000_baseline.php`) entfernen; laut Projektregel eine Migration oder Anpassung der Baseline durch db-migration-agent, kein `migrate:fresh` gegen die Dev-DB.
+- **Wegschicken:** Route, Controller-Aktion, AP-Kosten und Button entfernen (`ColonyController`, Views, JS).
+- **Rückbau-Dialog (GDD §11.5):** Warnung vorab ändern von „drohende Obdachlose“ auf „n Kolonisten weniger, n Arbeitsplätze unbesetzt, Produktion gemindert, Neubau gesperrt bis zur Erholung“. Betrifft auch das Tile-Panel und die Texte in `lang/de/colony.php` (und `lang/en`).
+- **Gate-Text:** Sperrgrund in Baumenü, Techtree und Gebäude-Seitenleiste auf „zu wenige freie Kolonisten“; Ausnahmen (Kommandozentrale, Wohnhabitat, erster Harvester) und die Sperre trotz unbesetzter Arbeitsplätze bleiben.
+- **Anzeige:** Kopfleiste (`resources/views/resources/resourcebar.blade.php`) ohne Obdachlosen-Warnung und Fristzähler, dafür „n Arbeitsplätze unbesetzt, Produktion gemindert“; Sol-Bericht (`SolReportService`), Kolonieprotokoll (`lang/de/comm_log.php`, Einträge „abgewandert/zurückgekehrt/weggeschickt“), Dashboard-Hinweis; Vertrauens-Texte in `lang/de/trust.php` und `lang/en`.
+- **Tests anpassen oder entfernen:** `tests/Feature/GameTick/OvercapDepartureTest.php`, `OvercapStreakTest.php`, `tests/Feature/Colony/OvercapDismissTest.php`, `tests/Feature/Trust/OvercapTrustPenaltyTest.php`, `tests/Feature/Resources/ResourcebarOvercapPopupTest.php`; prüfen und anpassen: `StaffingProductionTest.php`, `SolReportTest.php`, `CommLogControllerTest.php`, `ColonistStatusTest.php`, `ResourcebarColonistChipTest.php`, `GameTickDryRunTest.php`, `GameTickRunIsolationTest.php`, `BuildingLeveldownTest.php`, `SupplyBuildGateTest.php`. Neue Tests zuerst: Stufenverlust Wohnhabitat senkt Kolonisten im selben Sol, Produktion mindert sich anteilig, Gate sperrt bis zur Erholung und gibt frei, Rückbau-Dialog nennt die Folgen.
+- **Doku:** `docs/game-reference.md` §10 und §10a (Überkapazität/Unterbesetzung) neu fassen, `docs/gdd/techtree.md` §11.5 (Rückbau-Dialog-Text) angleichen, `GLOSSAR.md` (Überkapazität, Obdachlos, Wegschicken streichen), Config-Kommentare, `game:reset-player`-Szenarien prüfen.
+- **Bot (PlaytestBot):** liest Überkapazität/Abwanderung; Regeln prüfen, bevor gemessen wird. Kein Bot-Batch ohne Rückfrage und Dauerschätzung.
+- **Balance-Hinweis (Annahme):** Ohne Frist fehlt die Abfederung bei Verfall von Wohnhabitaten; das Kaskadenrisiko im GDD bleibt als Concern stehen und gehört in den ersten Playtest.
