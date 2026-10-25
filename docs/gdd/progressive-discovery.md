@@ -1,6 +1,6 @@
 # Progressive Discovery System
 
-> Ausgelagert aus [`docs/GDD.md`](../GDD.md) am 2026-08-02. Objective Discovery, Berater-Dialoge und Almanach.
+> Ausgelagert aus [`docs/GDD.md`](../GDD.md). Objective Discovery, Berater-Dialoge und Almanach.
 >
 > Kapitelnummerierung und `§`-Verweise beziehen sich weiterhin auf das GDD.
 
@@ -76,7 +76,7 @@ Pro Run sind nicht nur die Objectives selbst variabel (§15), sondern auch die E
 
 #### Konzept
 
-Berater sind bisher passive AP-Produzenten mit Rang-Progression. Dialoge machen sie zu **aktiven Akteuren**: Sie sprechen den Direktoren gezielt an, bieten Informationen an, formulieren Bitten und können Aktionen anstoßen.
+Berater sind zunächst passive AP-Produzenten mit Rang-Progression. Dialoge machen sie zu **aktiven Akteuren**: Sie sprechen den Direktoren gezielt an, bieten Informationen an, formulieren Bitten und können Aktionen anstoßen.
 
 Ein Advisor Dialog ist ein strukturierter Informationsaustausch über **1–3 Sole**. Er erscheint als INNN-Ereignis mit Absender `[Berater-Typ]:[Berater-Name]`. Der Spieler kann den Dialog annehmen, verzögern oder ablehnen. Annehmen kann AP kosten.
 
@@ -122,7 +122,6 @@ Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer opt
 | `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | 5 AP | Event-Tile Tiefenscan-Kosten um 1 AP reduziert |
 | `pilot_patrol_report` | Raumfahrer | 3+ Außenmissionen abgeschlossen | 0 AP | Verschleiß-Prognose des nächsten Dispatch detailliert aufgeschlüsselt (§7) |
 | `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | 6 AP | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
-| ~~`strategist_threat_assessment`~~ | ~~Stratege~~ | — | — | **Entfallen 2026-08-02** — Stratege zurückgestellt (§13); der prognostizierte Ausgang wird stattdessen dauerhaft im Dashboard gezeigt (§13.4) |
 
 > ⚠️ BALANCE CONCERN: Dialoge mit 0 AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Prognostizierter Gefahren-Ausgang" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Dialoge mit 5+ AP-Kosten müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
 
@@ -138,7 +137,7 @@ Lehnt der Spieler einen Dialog explizit ab (`is_skippable = true`, Spieler wähl
 
 #### Konzept
 
-Der Almanach (bisher als "Ingame-Nachschlagewerk" in der ROADMAP erwähnt) ist die In-Game-Dokumentation von Spielmechaniken, Gebäuden, Forschungen und Lore. Er ist ein wichtiges Onboarding-Werkzeug — aber er ist mehr als ein Handbuch: **Almanach-Artikel können einmalige Spielboni tragen**.
+Der Almanach ist die In-Game-Dokumentation von Spielmechaniken, Gebäuden, Forschungen und Lore. Er ist ein wichtiges Onboarding-Werkzeug — aber er ist mehr als ein Handbuch: **Almanach-Artikel können einmalige Spielboni tragen**.
 
 Das Lesen eines Artikels wird zu einer echten Spielentscheidung wenn es einen Bonus gibt. Statt "ich lese das irgendwann wenn ich Fragen habe" wird es zu: "Ich sollte jetzt den Geology-Artikel lesen bevor ich den Harvester verlagere — der Bonus hilft mir."
 
