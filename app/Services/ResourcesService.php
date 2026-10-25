@@ -401,6 +401,21 @@ class ResourcesService
     }
 
     /**
+     * Persist the current supply cap (calculateSupplyCap()) on the owning user row —
+     * the same value GameTick stores each Sol. Called when a level-up completes so
+     * housing/cap gains apply at once instead of at the next Sol.
+     */
+    public function syncSupplyCap(int $colonyId): void
+    {
+        $userId = DB::table('glx_colonies')->where('id', $colonyId)->value('user_id');
+        if ($userId === null) {
+            return;
+        }
+
+        DB::table('user_resources')->where('user_id', $userId)->update(['supply' => $this->calculateSupplyCap($colonyId)]);
+    }
+
+    /**
      * Whether a colony_buildings row is placed on the map but still on level 0 —
      * it then already reserves the workplaces of its first level (GDD §6 "Supply
      * als Bau-Gate", A14 Owner decision 2026-09-24). A level-0 row without a tile

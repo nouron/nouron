@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-25
+
+- Fix: T43-A1 — Hexmap springt nicht mehr nach unten, wenn ein freies Feld gewählt wird (Karte oben statt vertikal zentriert ausgerichtet).
+- Fix: T43-A2 — Wohnraum/Supply-Cap gilt sofort beim Abschluss einer Stufe (Wohnhabitat, CC; Neubau und Ausbau), nicht erst nach „Sol beenden“; Resourcebar (KOL) zieht live nach.
+
 ## 2026-10-24
 
 - Doku: Pfad-Vertiefung auf AP-Investition umgestellt (Kenntnisse, Missionserfahrung, Vertrautheit); B6/V2 geht in T41 auf. Spec, GDD §4b, Glossar, ROADMAP angepasst.
