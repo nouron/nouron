@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 /**
  * User profile and settings controller.
@@ -49,6 +50,8 @@ class UserController extends BaseController
         return view('user.settings', [
             'user' => Auth::user(),
             'onboarding_hints' => $prefs ? (bool) $prefs->onboarding_hints : true,
+            'locale' => app()->getLocale(),
+            'supported_locales' => config('app.supported_locales'),
         ]);
     }
 
@@ -61,6 +64,22 @@ class UserController extends BaseController
         Auth::user()->update(['display_name' => $data['display_name']]);
 
         return redirect()->route('user.settings')->with('success', 'Anzeigename gespeichert.');
+    }
+
+    public function updateLocale(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'locale' => ['required', 'string', Rule::in(config('app.supported_locales'))],
+        ]);
+
+        DB::table('user_preferences')
+            ->updateOrInsert(
+                ['user_id' => Auth::id()],
+                ['locale' => $data['locale'], 'updated_at' => now()]
+            );
+
+        return redirect()->route('user.settings')
+            ->with('success', __('settings.saved', [], $data['locale']));
     }
 
     public function updateOnboardingHints(Request $request): RedirectResponse

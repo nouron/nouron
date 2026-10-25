@@ -69,6 +69,7 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::patch('/settings/name', [UserController::class, 'updateDisplayName'])->name('update.displayname');
     Route::patch('/settings/password', [UserController::class, 'updatePassword'])->name('update.password');
     Route::patch('/settings/onboarding', [UserController::class, 'updateOnboardingHints'])->name('update.onboarding');
+    Route::patch('/settings/locale', [UserController::class, 'updateLocale'])->name('update.locale');
     Route::get('/codex', [UserController::class, 'codex'])->name('codex');
 });
 
