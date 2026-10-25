@@ -23,6 +23,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | **Pfadgebäude** | – | Eines der drei Gebäude Labor, Hangar, Cantina. Das erste kommt in Phase 1, das zweite und dritte ab CC Lv3 bzw. Lv4 (Pfadwahl-Gate). |
 | **Vertiefung** | – | Gemeinsame Bauart der Pfadgebäude: mehrere Dinge (Kenntnis, Figur, Missionstyp), jedes in fünf Stufen allein mit AP aus dem gemeinsamen Pool ausbaubar (Ausbau), unabhängig von der Ausführung; nur ein Strukturmodell, nirgends als Raster zu sehen *(Entwurf)*. |
 | **Vertrautheit** | – | Bindung an eine Cantina-Figur (Gesprächslevel); steigt per AP-Investition (Beziehung pflegen), erst nach dem ersten Treffen der Figur im Lauf. Nicht zu verwechseln mit Vertrauen (Kolonie-Stimmung) *(Entwurf)*. |
+| **Gespräch** | – | Cantina-Investition als festes AP-Paket je Figur; reine AP-Investition in die Vertrautheit, ohne Zusatzertrag *(Entwurf)*. |
 | **Missionserfahrung** | – | Stufe der Kolonie in einer Missionsfamilie; steigt per AP-Investition als Training im Simulator, ohne Einsatz (Vorschlag für das Label, Alternative „Training“; ersetzt den früheren Arbeitsbegriff „Routine“) *(Entwurf)*. |
 | **Pflichtgebäude (Phase 1)** | – | Was Phase 1 abschließt: CC Lv2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude (je Lv1) und zwei Berater. |
 
