@@ -2,6 +2,7 @@
 
 ## 2026-10-25
 
+- Feat: T44 — Spracheinstellung in den Einstellungen (Deutsch/Englisch), gespeichert pro Spieler in `user_preferences.locale` (neue Migration); ohne Auswahl gilt `APP_LOCALE`. `<html lang>` folgt der gewählten Sprache.
 - Chore: Sicherheitsupdate der Composer-Abhängigkeiten innerhalb der bestehenden Versionsgrenzen (Laravel 12.55 → 12.70, Symfony 7.4.x, Guzzle, CommonMark u. a.); `composer audit` ohne Befund. Lokale Entwicklungsumgebung in der Doku systemneutral (nur PHP ≥ 8.2 und MySQL 8.0 verbindlich), Composer-Plattform auf PHP 8.2 gepinnt.
 - Fix: T43-A1 — Hexmap springt nicht mehr nach unten, wenn ein freies Feld gewählt wird (Karte oben statt vertikal zentriert ausgerichtet).
 - Feat: T43-G5 — Phasenübergang 1→2 zeigt im Sol-Bericht einen Erfolgsbildschirm; das erste gezogene Phase-2-Ziel ist von Anfang an offen, die übrigen bleiben verdeckt bis Fortschritt über null.

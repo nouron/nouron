@@ -82,6 +82,9 @@ return [
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
+    // Languages a user can pick in the settings (T44); needs lang/<code>/.
+    'supported_locales' => ['de', 'en'],
+
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
     /*

@@ -82,6 +82,69 @@ class UserControllerTest extends TestCase
             ->where('user_id', self::USER_ID)->value('onboarding_hints'));
     }
 
+    public function test_update_locale_stores_preference(): void
+    {
+        $response = $this->actingAs($this->user())
+            ->patch(route('user.update.locale'), ['locale' => 'en']);
+
+        $response->assertRedirect(route('user.settings'));
+        $this->assertSame('en', DB::table('user_preferences')
+            ->where('user_id', self::USER_ID)->value('locale'));
+    }
+
+    public function test_update_locale_creates_prefs_row_if_missing(): void
+    {
+        DB::table('user_preferences')->where('user_id', self::USER_ID)->delete();
+
+        $this->actingAs($this->user())
+            ->patch(route('user.update.locale'), ['locale' => 'de']);
+
+        $this->assertSame('de', DB::table('user_preferences')
+            ->where('user_id', self::USER_ID)->value('locale'));
+    }
+
+    public function test_update_locale_rejects_unsupported_locale(): void
+    {
+        $response = $this->actingAs($this->user())
+            ->patch(route('user.update.locale'), ['locale' => 'fr']);
+
+        $response->assertSessionHasErrors('locale');
+    }
+
+    public function test_locale_preference_is_applied_to_requests(): void
+    {
+        config(['app.locale' => 'de']);
+        DB::table('user_preferences')->updateOrInsert(['user_id' => self::USER_ID], ['locale' => 'en']);
+
+        $response = $this->actingAs($this->user())->get(route('user.settings'));
+
+        $response->assertOk();
+        $this->assertSame('en', app()->getLocale());
+        $response->assertSee('<html lang="en"', false);
+    }
+
+    public function test_default_locale_is_used_without_preference(): void
+    {
+        config(['app.locale' => 'de']);
+        DB::table('user_preferences')->where('user_id', self::USER_ID)->delete();
+
+        $response = $this->actingAs($this->user())->get(route('user.settings'));
+
+        $response->assertOk();
+        $this->assertSame('de', app()->getLocale());
+        $response->assertSee('<html lang="de"', false);
+    }
+
+    public function test_settings_shows_language_selection(): void
+    {
+        config(['app.locale' => 'de']);
+
+        $response = $this->actingAs($this->user())->get(route('user.settings'));
+
+        $response->assertSee('name="locale"', false);
+        $response->assertSee(__('settings.language'));
+    }
+
     public function test_update_password_with_wrong_current_password_fails(): void
     {
         $response = $this->actingAs($this->user())
