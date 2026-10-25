@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class TradeAdvantageServiceTest extends TestCase
@@ -131,9 +132,7 @@ class TradeAdvantageServiceTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider sourceTable
-     */
+    #[DataProvider('sourceTable')]
     public function test_sources_and_total_per_channel(string $channel, int $rank, int $tier, int $tradeLevel, array $expectedSources, int $expectedTotalPercent): void
     {
         $this->setConsulRank($rank);
@@ -273,9 +272,7 @@ class TradeAdvantageServiceTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider amountTable
-     */
+    #[DataProvider('amountTable')]
     public function test_apply_to_amount_rounds_half_up(int $base, int $percent, int $expected): void
     {
         $this->assertSame($expected, $this->service->applyToAmount($base, $this->fakeAdvantage($percent)));
@@ -309,9 +306,7 @@ class TradeAdvantageServiceTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider priceTable
-     */
+    #[DataProvider('priceTable')]
     public function test_apply_to_price_rounds_to_nearest_and_never_below_one(int $base, int $percent, int $expected): void
     {
         $this->assertSame($expected, $this->service->applyToPrice($base, $this->fakeAdvantage($percent)));
