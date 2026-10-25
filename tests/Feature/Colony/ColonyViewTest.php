@@ -379,4 +379,19 @@ class ColonyViewTest extends TestCase
         // Scan cost comes from config, never hardcoded in the markup.
         $response->assertSee('deepScanAp: '.(int) config('game.finds.scan_ap'), false);
     }
+
+    public function test_signal_dialog_has_description_text_per_find_size(): void
+    {
+        $html = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'))->assertOk()->getContent();
+
+        foreach (['small', 'medium', 'large'] as $size) {
+            $this->assertNotSame("colony.find_{$size}_desc", __("colony.find_{$size}_desc"));
+            $this->assertStringContainsString(
+                substr(json_encode(__("colony.find_{$size}_desc"), 15), 1, -1),
+                $html
+            );
+        }
+        $this->assertStringContainsString('discovery-event-desc', $html);
+    }
 }

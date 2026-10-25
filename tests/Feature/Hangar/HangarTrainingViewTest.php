@@ -86,4 +86,12 @@ class HangarTrainingViewTest extends TestCase
         $this->assertStringContainsString(trans('pathdepth.ui_experience_label', [], 'en'), $en);
         $this->assertStringNotContainsString(trans('pathdepth.ui_experience_label', [], 'de'), $en);
     }
+
+    public function test_button_label_is_train(): void
+    {
+        $html = $this->page();
+
+        $this->assertSame('Trainieren', trans('pathdepth.ui_train', [], 'de'));
+        $this->assertStringContainsString(substr(json_encode(__('pathdepth.ui_train'), 15), 1, -1), $html);
+    }
 }

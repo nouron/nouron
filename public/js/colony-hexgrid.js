@@ -1028,6 +1028,16 @@ function colonyHexView(config) {
             return EVENT_TYPE_NAMES[type] ?? 'Unbekanntes Phänomen';
         },
 
+        eventDescription(type) {
+            return (
+                {
+                    find_small: this.i18n.findSmallDesc,
+                    find_medium: this.i18n.findMediumDesc,
+                    find_large: this.i18n.findLargeDesc,
+                }[type] ?? ''
+            );
+        },
+
         dismissEventDiscovery() {
             this.eventDiscovery = null;
         },

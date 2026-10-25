@@ -797,8 +797,12 @@ return [
     'find_flight' => 'Salvage flight',
     'hangar_build_notice' => 'Afterwards only ships fetch the finds: a flight costs 1 AP and some Organics, the Regolith arrives after the flight time. Large finds need hangar level 2 and a freighter.',
     'onboarding_hint_find_flight' => 'From now on ships fetch the finds: hardly any AP, but flight time and Organics. Large finds need a freighter.',
-    'find_small' => 'Small find',
-    'find_medium' => 'Medium find',
-    'find_large' => 'Large find',
+    'find_small' => 'Small find: scattered debris',
+    'find_medium' => 'Medium find: broken-open wreck',
+    'find_large' => 'Large find: freighter wreck',
+    // TODO content-writer: clarify lore (provisional, deliberately neutral texts)
+    'find_small_desc' => 'A faint signal pointing to a few salvageable remains.',
+    'find_medium_desc' => 'A clear signal: there is something here worth salvaging.',
+    'find_large_desc' => 'A strong signal: plenty lies here, but it is heavy to recover.',
     'find_false' => 'False alarm',
 ];

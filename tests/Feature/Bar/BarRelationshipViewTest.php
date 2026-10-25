@@ -112,4 +112,14 @@ class BarRelationshipViewTest extends TestCase
         $this->assertStringContainsString(trans('pathdepth.ui_relationship_title', [], 'en'), $en);
         $this->assertStringNotContainsString(trans('pathdepth.ui_relationship_title', [], 'de'), $en);
     }
+
+    public function test_button_label_is_get_to_know_and_hint_has_no_restart_clause(): void
+    {
+        $html = $this->page();
+
+        $this->assertStringContainsString($this->jsonText(__('pathdepth.ui_get_to_know')), $html);
+        $this->assertSame('Kennenlernen', trans('pathdepth.ui_get_to_know', [], 'de'));
+        $this->assertStringNotContainsString('von vorn', __('pathdepth.ui_relationship_run_hint'));
+        $this->assertStringNotContainsString('starts over', trans('pathdepth.ui_relationship_run_hint', [], 'en'));
+    }
 }
