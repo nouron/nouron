@@ -18,7 +18,7 @@
                        button (aria-disabled, tooltip stays reachable).
       Cap decoration (states, marker) only shows once ap_spend > 0; at a level
                        start the bar is plain. Reached-state/tooltip are independent of that.
-      Knowledge rows carry no ap_cap yet; the states appear automatically once they do.
+      Knowledge rows carry ap_cap too (lab cap per Sol, T43-G1); pass capTip for their tooltip.
 
     Params:
       row          — Alpine expression of the row, e.g. "selectedBuilding".
@@ -37,6 +37,8 @@
                      (capped, or the day-limit marker is visible).
       rgExpr       — optional Alpine expression yielding the Regolith this click charges
                      (rg-cost-chip next to the AP chip; hidden at 0, red when unaffordable).
+      capTip       — optional tooltip text of the day cap (default colony.ap_cap_tooltip, the
+                     Engineer text for buildings).
       tipId        — unique id of the tooltip element (aria-describedby).
 --}}
 @php
@@ -81,5 +83,5 @@
             }"></span>
     </span>
     <span id="{{ $tipId }}" class="tile-action-btn__tip" role="tooltip"
-        x-text="{{ $gate }} || {{ \Illuminate\Support\Js::from(__("colony.ap_cap_tooltip")) }}"></span>
+        x-text="{{ $gate }} || {{ \Illuminate\Support\Js::from($capTip ?? __("colony.ap_cap_tooltip")) }}"></span>
 </button>

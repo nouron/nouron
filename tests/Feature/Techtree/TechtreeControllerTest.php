@@ -30,6 +30,8 @@ class TechtreeControllerTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        // These tests bulk-invest; the per-Sol lab cap has its own tests (KnowledgeApCapTest).
+        config(['game.knowledge_ap_cap_per_sol.base' => null]);
 
         // Provide a construction advisor for colony 1 so techtree invest actions have AP.
         DB::table('advisors')->where('colony_id', $this->colonyIdBart)->delete();

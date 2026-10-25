@@ -328,7 +328,14 @@
                                             "blockedExpr" =>
                                                 "selectedTech.ap_available <= 0 || selectedTech.ap_spend >= selectedTech.ap_for_levelup",
                                             "tipId" => "ap-cap-tip-tech",
+                                            "capTip" => __("techtree.knowledge_ap_cap_tooltip"),
                                         ])
+                                        <template
+                                            x-if="selectedTech.ap_cap && selectedTech.ap_spend < selectedTech.ap_for_levelup">
+                                            <p class="detail-ap-hint"
+                                                x-text="@js(__("techtree.knowledge_ap_cap_today")).replace(':spent', selectedTech.ap_cap.spent).replace(':cap', selectedTech.ap_cap.cap)">
+                                            </p>
+                                        </template>
                                         <template
                                             x-if="selectedTech.ap_available <= 0 && selectedTech.ap_spend < selectedTech.ap_for_levelup">
                                             <p class="detail-ap-hint">{{ __("techtree.hint_no_research_ap") }}</p>

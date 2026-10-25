@@ -219,6 +219,7 @@ class ResetPlayer extends Command
                 DB::table('merchant_visits')->where('colony_id', $cid)->delete();
                 DB::table('colony_hangar_missions')->where('colony_id', $cid)->delete();
                 DB::table('colony_path_levels')->where('colony_id', $cid)->delete();
+                DB::table('colony_daily_ap')->where('colony_id', $cid)->delete();
             }
 
             // run_objectives is keyed by run_id, not colony_id.

@@ -19,7 +19,7 @@ class OnboardingResetIsolationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_TABLES = ['colony_resources', 'colony_buildings', 'colony_tiles', 'colony_path_levels'];
+    private const COLONY_TABLES = ['colony_resources', 'colony_buildings', 'colony_tiles', 'colony_path_levels', 'colony_daily_ap'];
 
     protected function setUp(): void
     {
@@ -69,6 +69,7 @@ class OnboardingResetIsolationTest extends TestCase
         DB::table('trust_events')->insert(['colony_id' => $colonyA, 'tick' => 3, 'event_type' => 'test']);
         DB::table('colony_path_levels')->insert(['colony_id' => $colonyA, 'kind' => 'mission_family', 'entity_key' => 'salvage', 'level' => 2, 'ap_spend' => 3]);
         DB::table('colony_path_levels')->insert(['colony_id' => $colonyB, 'kind' => 'mission_family', 'entity_key' => 'salvage', 'level' => 1, 'ap_spend' => 0]);
+        DB::table('colony_daily_ap')->insert(['colony_id' => $colonyA, 'cap_key' => 'knowledge:94', 'tick' => 1, 'spent' => 2]);
         $before = $this->counts($colonyB);
 
         app(OnboardingService::class)->resetColonyToSol1($userA, $colonyA, rngSeed: 42);
@@ -78,6 +79,7 @@ class OnboardingResetIsolationTest extends TestCase
         $this->assertSame(0, DB::table('colony_ships')->where('colony_id', $colonyA)->count());
         $this->assertSame(0, DB::table('trust_events')->where('colony_id', $colonyA)->count());
         $this->assertSame(0, DB::table('colony_path_levels')->where('colony_id', $colonyA)->count());
+        $this->assertSame(0, DB::table('colony_daily_ap')->where('colony_id', $colonyA)->count());
         $this->assertSame(1, DB::table('runs')->where('user_id', $userA)->where('status', 'active')->count());
 
         $this->assertSame($before, $this->counts($colonyB), 'Another player\'s colony must stay untouched');
