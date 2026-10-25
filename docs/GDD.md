@@ -190,9 +190,9 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 |-------|-------------|
 | 1. Hangar | Hangar-Lieferungen abwickeln (Schiff-Bau → docked; abgelaufene Anforderungen) |
 | 2. Decay | Gebäude- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
-| 3. Supply & Ressourcen | Rohstoffproduktion (Vertrauens-Multiplikator und Personalanteil angewendet); nach den Begegnungen Supply-Cap neu berechnen und Überkapazität fortschreiben — Streak, Abwanderung, Rückkehr (§6) |
+| 3. Supply & Ressourcen | Rohstoffproduktion (Vertrauens-Multiplikator und Besetzungsanteil angewendet); nach den Begegnungen Wohnraum neu berechnen; Kolonisten, Besetzungsanteil und Gate folgen sofort daraus (§6) |
 | 3a. Verpflegung | Kolonie verbraucht je anwesendem Kolonisten eine Einheit Organika (Grundregel „1 Organika versorgt 1 Kolonisten“); Vorrat reicht → `well_fed`, sonst Hunger-Streak + eskalierender Vertrauens-Malus (§3, §14) |
-| 4. Vertrauen | Vertrauenswert neu berechnen (inkl. Hunger- und Überkapazitäts-Malus), `colony_resources` aktualisieren (§14) |
+| 4. Vertrauen | Vertrauenswert neu berechnen (inkl. Hunger-Malus), `colony_resources` aktualisieren (§14) |
 | 5. Beratung & Events | Advisor-Ticks, Bar-Angebote, Händler-Spawn, Run-Checks (Phasen, Objectives, Fail State) |
 
 > **Phase ≠ Schritt:** Die Nummerierung 1–5 (3a) in dieser Tabelle ist eine grobe, spielerorientierte Gruppierung — kein 1:1-Bezug zu den feingranularen Schritt-Nummern in `GameTick.php` (die z.B. bei Supply-Cap „Schritt 7" heißen, §6). Die genaue Schritt-Reihenfolge innerhalb jeder Phase ist in `app/Console/Commands/GameTick.php` (Docblock) kanonisch festgehalten — dort steht auch die maßgebliche Nummer, falls ein anderer GDD-Abschnitt einen konkreten Schritt referenziert.
@@ -873,7 +873,7 @@ Einmal pro Sol produziert jedes aktive Produktionsgebäude in jeder Kolonie Rohs
 produzierte Menge = Σ curve[1..aktuelles Level] × personalanteil
 ```
 
-Der Personalanteil ist 1, solange keine Kolonisten abgewandert sind; nach einer Abwanderung wegen Überkapazität sinkt er anteilig zu den unbesetzten Arbeitsplätzen (§6, „Überkapazität — Konsequenzen").
+Der Besetzungsanteil ist 1, solange alle Arbeitsplätze besetzt sind; nach einem Wohnraumverlust sinkt er anteilig zu den unbesetzten Arbeitsplätzen (§6, „Wohnraumverlust — Konsequenzen").
 
 ### Produktionsgebäude (Phase 3)
 
@@ -969,7 +969,7 @@ Ein Gebäude kann nur platziert oder um eine weitere Ausbaustufe erweitert werde
 
 **Kenntnisse sind keine Cap-Quelle** (Owner-Entscheidung 2026-10-15, Variante B). Wohnhabitate sind damit die einzige Wachstumsquelle des Caps; Wohnbau wird zu einer echten AP- und Regolith-Ausgabe, die der Spieler neben Produktion und Pfadgebäuden einplanen muss. Begründung: Im Playtest ersetzte der Kenntnis-Cap den Wohnbau — der Cap-Anteil der Kenntnisse machte bei Sol 39 über die Hälfte des Gesamt-Caps aus, während vom Wohnhabitat nur ein kleiner Teil der möglichen Stufen genutzt wurde. Das passt nicht zu „AP bremst" und ist lore-technisch schwer zu begründen.
 
-> ⚠️ BALANCE CONCERN: Die Formel oben und Config-Kommentare (`buildings.commandCenter.supply_cap`, `game.supply.cap_commandcenter`) beschreiben den CC-Beitrag als „pro Level", der Code (`GameTick::calculateSupply()`, `ResourcesService::getSupplyBreakdown()`) rechnet ihn flach. Folge für A14: Ein Stufenverlust der Kommandozentrale senkt den Cap nicht — Überkapazität entsteht faktisch nur über Wohnhabitate. Owner-Entscheidung offen, welche Variante gilt; bis dahin beschreibt dieser Abschnitt den Code-Stand.
+> ⚠️ BALANCE CONCERN: Die Formel oben und Config-Kommentare (`buildings.commandCenter.supply_cap`, `game.supply.cap_commandcenter`) beschreiben den CC-Beitrag als „pro Level", der Code (`GameTick::calculateSupply()`, `ResourcesService::getSupplyBreakdown()`) rechnet ihn flach. Folge für A14: Ein Stufenverlust der Kommandozentrale senkt den Wohnraum nicht — Wohnraumverlust entsteht faktisch nur über Wohnhabitate. Owner-Entscheidung offen, welche Variante gilt; bis dahin beschreibt dieser Abschnitt den Code-Stand.
 
 **Startsituation:** CC Lv1 liefert einen Basis-Cap, ohne Wohnhabitate. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap erhöht sich. Genaue Werte: `config/game.php` / `docs/game-reference.md` Abschnitt 10.
 **Hard-Cap:** ein absolutes Supply-Maximum, siehe `config/game.php → supply.cap_max`.
@@ -1011,11 +1011,11 @@ Jedes Gebäude hat einen individuellen Supply-Kosten-Wert (geringe für Produkti
 
 > Supply-Kosten sind **sol-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
 
-> **Supply als Bau-Gate:** Ein Gebäude kann nur **platziert** oder um eine **weitere Ausbaustufe** erweitert werden, wenn die freie Supply-Cap (`Cap − belegt`) seinen `supply_cost` deckt. Es wird **nichts abgezogen** — Supply ist ein Cap, kein Lager. Das ist die „Supply-Kosten"-Achse aus der Verwendungsmatrix (§3): Gebäude kosten Regolith (Abzug) **und** Supply (Cap-Belegung + Gate).
+> **Supply als Bau-Gate („genug freie Kolonisten“):** Im Spiel heißt die Sperre „zu wenige freie Kolonisten“; frei sind Kolonisten (Wohnraum) abzüglich der Arbeitsplätze. Ein Gebäude kann nur **platziert** oder um eine **weitere Ausbaustufe** erweitert werden, wenn die freie Supply-Cap (`Cap − belegt`) seinen `supply_cost` deckt. Es wird **nichts abgezogen** — Supply ist ein Cap, kein Lager. Das ist die „Supply-Kosten"-Achse aus der Verwendungsmatrix (§3): Gebäude kosten Regolith (Abzug) **und** Supply (Cap-Belegung + Gate).
 >
 > **Reserve beim Platzieren (Owner-Entscheidung 2026-09-24):** Die Prüfung für die erste Ausbaustufe findet beim **Platzieren** statt, nicht bei der Fertigstellung. Ab dem Platzieren belegt das Gebäude auf Stufe 0 bereits die Arbeitsplätze seiner ersten Stufe. Die Fertigstellung (Stufe 0 → 1) wird deshalb nie gegen Supply geprüft — was beim Platzieren gepasst hat, kann nicht nachträglich an Supply scheitern; jede weitere Stufe (n → n+1) wird normal geprüft. Die Kolonisten für diese Reserve gelten als **anwesend**: Sie sind schon eingezogen, um den Bau zu übernehmen, brauchen also Wohnraum und essen mit (§4a). Für den Spieler heißt das: Platzieren ist die eigentliche Personalentscheidung, nicht erst der letzte Bauklick. Ein Gebäude, das nur auf dem Plan steht (ohne Platz auf der Karte), reserviert nichts.
 >
-> **Ausnahmen:** Kommandozentrale und Wohnhabitat belegen kein Supply und sind nie gesperrt — sie schaffen den Wohnraum, auch aus einer Überkapazität heraus. Der **erste Harvester** ist als Starthilfe ohne Prüfung platzierbar, damit die Regolith-Quelle immer erreichbar bleibt; er reserviert seine Arbeitsplätze trotzdem. Ein zweiter Harvester wird normal geprüft. Weil das Gate damit jeden anderen Zuwachs der Last abdeckt, kann Überkapazität — vom Sonderfall des ungeprüften ersten Harvesters abgesehen — nur noch durch den Verlust von Wohnraum entstehen (siehe „Überkapazität — Konsequenzen" unten).
+> **Ausnahmen:** Kommandozentrale und Wohnhabitat belegen kein Supply und sind nie gesperrt — sie schaffen den Wohnraum, auch aus einer Überkapazität heraus. Der **erste Harvester** ist als Starthilfe ohne Prüfung platzierbar, damit die Regolith-Quelle immer erreichbar bleibt; er reserviert seine Arbeitsplätze trotzdem. Ein zweiter Harvester wird normal geprüft. Weil das Gate damit jeden anderen Zuwachs der Last abdeckt, können Arbeitsplätze — vom Sonderfall des ungeprüften ersten Harvesters abgesehen — nur noch durch den Verlust von Wohnraum unbesetzt werden (siehe „Wohnraumverlust — Konsequenzen" unten).
 
 ### Kenntnisse und Supply
 
@@ -1065,69 +1065,42 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Arbeitspl�
 
 Die Mechanismen sind bewusst unabhängig voneinander — mit einer Ausnahme, die **keine** ist: Decay und Bauplatz greifen beide an der Breite an (siehe „Die drei Begrenzungsachsen" oben). Das ist gewollt: Breite kostet einmalig Bauplatz und dauerhaft Instandhaltung, Tiefe kostet einmalig AP und dauerhaft nichts, dafür permanent Supply-Cap.
 
-### Überkapazität — Konsequenzen (A14)
+### Wohnraumverlust — Konsequenzen (A14)
 
-> **Hinweis (Owner 2026-10-25): Mit dem Kolonisten-Modell (§6 „Supply-Cap-Quellen“) sind Kolonisten und Wohnraum dieselbe Größe; ob die Obdachlosen-Frist mit Vertrauens-Malus und Abwanderung bestehen bleibt oder durch sofort unbesetzte Arbeitsplätze ersetzt wird, ist offen (Vorlage `docs/superpowers/specs/2026-10-25-kolonisten-modell.md`). Der Text unten beschreibt bis zur Entscheidung den Code-Stand.**
->
-> **Status: Konzept entschieden 2026-09-24, umgesetzt (Branch `feat/a14-ueberkapazitaet`).** Dieser Abschnitt beschreibt, was mit Kolonisten geschieht, für die kein Wohnraum mehr da ist (anwesende Kolonisten > `supply_cap`): Frist mit Vertrauens-Malus, danach Abwanderung als Unterbesetzung.
+> **Entschieden (Owner 2026-10-25, Option A2; Herleitung in `docs/superpowers/specs/2026-10-25-arbeiter-modell.md` und `2026-10-25-kolonisten-modell.md`).** Kolonisten und Wohnraum sind dieselbe Größe (§6 „Supply-Cap-Quellen“). Geht Wohnraum verloren, sinken die Kolonisten im selben Moment. Eine Obdachlosen-Frist, einen Vertrauens-Malus-Streak, eine Abwanderung und „Wegschicken“ gibt es nicht mehr. Der Code zieht nach (ROADMAP); bis dahin weicht er von diesem Text ab.
 
-**Wie Überkapazität entsteht.** Weil Platzieren **und** jeder weitere Ausbau freies Supply voraussetzen (siehe „Supply als Bau-Gate" oben), kann der Spieler die Kolonie nicht selbst über ihren Cap bauen. Überkapazität entsteht nur noch, wenn **Wohnraum verloren geht**: Ein Wohnhabitat verliert durch Verfall (§7), ein Sturm-Ereignis (§9) oder einen Rückbau durch den Direktor (§11.5) eine Ausbaustufe, der Cap sinkt unter die bestehende Last. (Die Kommandozentrale zählt im aktuellen Code flach, ihr Stufenverlust senkt den Cap nicht — siehe Balance-Hinweis bei „Supply-Cap-Quellen".) Die überzähligen Kolonisten sind dann **obdachlos** — ihre Arbeitsplätze existieren weiter, sie selbst haben keine Unterkunft. Überkapazität ist damit immer die Folge eines Schadens oder eines bewussten Rückbaus, nie ein Baufehler: Die Frage an den Spieler lautet nicht „Warum hast du zu viel gebaut?", sondern „Wie reagierst du auf den Verlust?". Beim Rückbau kündigt der Bestätigungsdialog die drohenden Obdachlosen vorher an (§11.5).
+**Wie Wohnraumverlust entsteht.** Weil Platzieren **und** jeder weitere Ausbau freies Supply voraussetzen (siehe „Supply als Bau-Gate" oben), kann der Spieler die Kolonie nicht selbst über ihren Wohnraum hinaus bauen. Arbeitsplätze ohne Kolonisten entstehen nur noch, wenn **Wohnraum verloren geht**: Ein Wohnhabitat verliert durch Verfall (§7), ein Sturm-Ereignis (§9) oder einen Rückbau durch den Direktor (§11.5) eine Ausbaustufe, und die Zahl der Kolonisten sinkt **sofort** um den Wohnraum dieser Stufe. (Die Kommandozentrale zählt im aktuellen Code flach, ihr Stufenverlust senkt den Wohnraum nicht — siehe Balance-Hinweis bei „Supply-Cap-Quellen".) Die Gebäude bleiben stehen; ein Teil ihrer Arbeitsplätze ist jetzt **unbesetzt**. Das ist immer die Folge eines Schadens oder eines bewussten Rückbaus, nie ein Baufehler: Die Frage an den Spieler lautet nicht „Warum hast du zu viel gebaut?", sondern „Wie reagierst du auf den Verlust?". Beim Rückbau nennt der Bestätigungsdialog die Folgen vorher (§11.5).
 
-**Frist — obdachlose Kolonisten.** Ab dem ersten Sol mit obdachlosen Kolonisten läuft ein Überkapazitäts-Streak. Er ist sichtbar in Ressourcenleiste, Dashboard (§13.4) und Kolonieprotokoll — mit der Zahl der Obdachlosen und den verbleibenden Solen bis zur Abwanderung. **Ab dem ersten Sol** wirkt ein eskalierender Vertrauens-Malus nach demselben Muster wie der Hunger-Malus (§14, „Einflussfaktoren: Verpflegung"): Basis-Malus, dann ein Schritt mehr je weiterem ununterbrochenen Sol, gedeckelt. Es gibt keine Schonfrist — der Schaden ist bereits eingetreten, die Kolonisten spüren ihn sofort. Dafür ist die Frist kurz: Nach wenigen Solen wandern die Obdachlosen ab, und der Streak endet. Innerhalb der Frist hat der Spieler drei Wege:
+**Folgen — sofort und ohne Frist.** Gebäude verlieren dabei **keine** Ausbaustufe; es fehlt nur das Personal. Das wirkt auf drei Arten:
 
-- **Wohnraum zurückholen** — Wohnhabitat wieder ausbauen bzw. ein weiteres errichten oder eine Cap-Kenntnis abschließen. Die Obdachlosen finden sofort wieder Unterkunft, der Streak endet, es bleibt keine weitere Folge.
-- **Wegschicken** (siehe unten) — die Abwanderung sofort auslösen und die restlichen Malus-Sole sparen.
-- **Abwarten** — die Frist läuft ab, die Obdachlosen wandern ab.
-
-**Abwanderung → Unterbesetzung.** Läuft die Frist ab, verlassen **alle** Obdachlosen die Kolonie auf einmal. Das löst einmalig das Vertrauens-Ereignis `colonists_left` aus; da danach niemand mehr obdachlos ist, endet der Streak und mit ihm der laufende Malus. Die Zahl der Abgewanderten wird gespeichert — sie entspricht den **unbesetzten Arbeitsplätzen**. Gebäude verlieren durch Abwanderung **keine** Ausbaustufe: Die Gebäude bleiben stehen, es fehlt nur das Personal. Das wirkt auf vier Arten:
-
-- **Rohstoffproduktion sinkt anteilig.** Die Erträge der Produktionsgebäude werden mit dem Personalanteil (anwesende Kolonisten / Arbeitsplätze) multipliziert — gleichmäßig über alle Produktionsgebäude, ohne Gebäudewahl.
-- **Nahrungsbedarf sinkt anteilig.** Die Verpflegung (§4a) rechnet mit den anwesenden Kolonisten statt mit der vollen Last. Weniger Esser, aber auch weniger Ertrag — ein echter Zielkonflikt statt einer reinen Strafe.
-- **Neubau und Ausbau bleiben gesperrt, solange Arbeitsplätze unbesetzt sind.** Das folgt direkt aus dem Bau-Gate: Unbesetzte Arbeitsplätze belegen den Cap weiter, freies Supply entsteht erst, wenn alle Abgewanderten zurück sind. Ausgenommen sind die Wohnraum-Gebäude (Kommandozentrale, Wohnhabitat) — sie binden keine Kolonisten und sind der Weg heraus. Reparatur ist nie gesperrt.
-- **Rückkehr läuft automatisch.** Sobald wieder Wohnraum frei ist, ziehen Kolonisten von selbst nach — höchstens so viele, wie abgewandert sind, und nur so viele, wie Platz ist. Die Produktion steigt im selben Maß wieder an. Einen Rückkehrpreis gibt es nicht; der Preis war der Wiederaufbau des Wohnraums.
+- **Rohstoffproduktion sinkt anteilig.** Die Erträge der Produktionsgebäude werden mit dem Besetzungsanteil (beschäftigte Kolonisten / Arbeitsplätze) multipliziert — gleichmäßig über alle Produktionsgebäude, ohne Gebäudewahl. Andere Gebäudewirkungen (Labor, Hangar, Cantina, Krankenstation und so weiter) bleiben unberührt.
+- **Neubau und Ausbau sind gesperrt, bis genug freie Kolonisten da sind.** Das Bau-Gate heißt „genug freie Kolonisten“ (freie Kolonisten = Wohnraum minus Arbeitsplätze); solange Arbeitsplätze unbesetzt sind, gibt es keine. Ausgenommen sind die Wohnraum-Gebäude (Kommandozentrale, Wohnhabitat) — sie binden keine Kolonisten und sind der Weg heraus. Reparatur ist nie gesperrt. Der Sperrgrund ist im Baumenü sichtbar (§4).
+- **Erholung ist deterministisch.** Wird Wohnraum zurückgeholt (Wohnhabitat wieder ausbauen, ein weiteres errichten), steigen die Kolonisten sofort, die Arbeitsplätze sind wieder besetzt, die Produktion steigt im selben Maß und das Gate öffnet sich. Es gibt keinen Rückkehrpreis und keinen Zufall; der Preis war der Wiederaufbau des Wohnraums.
 
 ```
-anwesend        = laufende_last − abgewandert
-obdachlos       = max(0, anwesend − supply_cap)
-rückkehr je Sol = min(abgewandert, max(0, supply_cap − anwesend))
-personalanteil  = anwesend / laufende_last        (1, solange niemand abgewandert ist)
+kolonisten      = wohnraum
+beschäftigt     = min(kolonisten, laufende_last)
+unbesetzt       = max(0, laufende_last − kolonisten)
+besetzungsanteil = beschäftigt / laufende_last        (1, solange nichts unbesetzt ist)
 ```
 
-`laufende_last` enthält hier wie überall die Reserve platzierter Stufe-0-Gebäude — deren Kolonisten sind schon eingezogen und können ebenso obdachlos werden oder abwandern wie alle anderen.
+`laufende_last` enthält hier wie überall die Reserve platzierter Stufe-0-Gebäude (§6, „Supply als Bau-Gate").
 
-Sinkt der Cap erneut, während schon Kolonisten abgewandert sind, entstehen neue Obdachlose mit einer eigenen Frist; eine weitere Abwanderung erhöht die gespeicherte Zahl.
+**Abgang von Arbeitsplätzen.** Verliert ein Gebäude eine Ausbaustufe (Verfall, Sturm, Rückbau), verschwinden die Arbeitsplätze dieser Stufe mit; unbesetzte Arbeitsplätze werden dadurch automatisch weniger, ohne eigenen Zustand und ohne Sonderbuchung.
 
-**Abgang von Arbeitsplätzen.** Verliert ein Gebäude eine Ausbaustufe (Verfall, Sturm), während Arbeitsplätze unbesetzt sind, verschwinden unbesetzte Arbeitsplätze **still** mit — höchstens so viele, wie die verlorene Stufe gebunden hatte. Die gespeicherte Zahl der Abgewanderten sinkt entsprechend, ohne Protokolleintrag und ohne Vertrauensfolge: Niemand ist zurückgekommen, die Stelle gibt es schlicht nicht mehr. „Zurückgekehrt" meldet das Kolonieprotokoll nur für Kolonisten, die tatsächlich wieder einziehen, weil Wohnraum frei geworden ist. Technisch wird der Abgang in jedem Sol verbucht, bevor der Cap neu berechnet wird; so kann ein Stufenverlust nie als Rückkehr erscheinen.
+**Vertrauen.** Wohnraumverlust löst keinen eigenen Vertrauens-Malus aus (kein Streak, keine Eskalation); der Stufenverlust hat wie bisher kein eigenes Ereignis (§14). Der Druck kommt über die geminderte Produktion und die gesperrten Bauaktionen. Ob ein einmaliges Ereignis den Verlust zusätzlich markieren soll, ist offen und gehört in den ersten Playtest.
 
-Vertrauen normalisiert sich über das bestehende System: Der Streak-Malus endet mit dem Streak, `colonists_left` wirkt einmalig — einen eigenen Rückbuchungsmechanismus bei Rückkehr gibt es nicht.
+**Warnung vor dem Rückbau.** Der Bestätigungsdialog nennt vorab, wie viele Kolonisten wegfallen, wie viele Arbeitsplätze danach unbesetzt wären, dass die Produktion sinkt und dass Neubau und Ausbau bis zur Erholung gesperrt sind (§11.5). Verfall und Sturm sind über Zustandspunkte und Meldungen vorhersehbar; die Kolonieansicht zeigt unbesetzte Arbeitsplätze mit Ursache.
 
-**Wegschicken (Spieleraktion, Owner-Entscheidung 2026-09-24).** Solange es obdachlose Kolonisten gibt, kann der Direktor sie sofort wegschicken, statt die Frist abzuwarten. Die Aktion kostet spürbar AP und hat **dasselbe Ergebnis** wie die Abwanderung — dieselbe Unterbesetzung, dieselbe automatische Rückkehr —, beendet aber den Streak sofort (spart die restlichen Malus-Sole) und löst statt `colonists_left` das mildere Ereignis `colonists_dismissed` aus: eine geordnete, vom Direktor verantwortete Maßnahme statt eines Kontrollverlusts. Es gibt keine Gebäudewahl, betroffen sind nur die Obdachlosen. Ohne Obdachlose ist die Aktion nicht verfügbar. Die Abwägung: AP heute gegen Vertrauen über die nächsten Sole. Lohnend ist sie, wenn der Wohnraum absehbar nicht innerhalb der Frist zurückkommt und Vertrauen gerade knapp ist; wer innerhalb der Frist wieder ausbauen kann, wartet und verliert niemanden.
+> ⚠️ BALANCE CONCERN: Ohne Frist fehlt die Abfederung. Fällt ein Wohnhabitat durch Verfall, wirkt der Schaden im selben Sol auf Produktion und Gate; verfallen mehrere Wohnhabitate hintereinander, droht eine Kaskade (Produktion fällt, Reparatur-Regolith wird knapper, weitere Stufen fallen). Im ersten Playtest prüfen, ob das real vorkommt; Hebel wären der Verfall der Wohnhabitate oder ihre Reparaturpriorität, nicht eine neue Frist.
 
-> ⚠️ BALANCE CONCERN: Wegschicken ändert nur Zeitpunkt und Vertrauenskosten, nicht das Ergebnis. Weil Vertrauen jeden Sol frisch aus den aktiven Faktoren berechnet wird (§14), ist die Ersparnis vor allem nahe der Fail-Schwelle (§18.2) wertvoll, sonst eher gering. Ist der AP-Preis zu hoch, wird die Aktion nie genutzt; ist er zu niedrig, wird sie zum Pflicht-Klick nach jedem Sturm. Nach dem ersten Playtest die Nutzungsrate prüfen.
+> **Warum keine Frist mehr (Owner-Entscheidung 2026-10-25):** Mit „Kolonisten gleich Wohnraum“ gibt es keine Kolonisten über dem Wohnraum. Eine Frist hätte einen gespeicherten Zusatzzustand und eine Anzeige „Obdachlose“ verlangt, die dem Kolonisten-Begriff widerspricht. Die schlichte Regel „angezeigte Zahl gleich wirkende Zahl“ schlägt die Abfederung. Das ältere Modell (Obdachlosen-Frist mit eskalierendem Vertrauens-Malus, Abwanderung als Unterbesetzung, automatische Rückkehr, Aktion „Wegschicken“) ist damit ersetzt. Das Arbeiter-Modell (Gebäude ohne Kolonisten bauen, Arbeiter getrennt zuweisen) wurde geprüft und nicht verfolgt; es wird nach der Closed Beta neu bewertet, falls Spieler an der Sperre selbst scheitern. Das Wort „Arbeiter“ wird im Spiel nicht eingeführt.
 
-> **Warum kein gemeinsamer Deckel mit dem Hunger-Malus (Owner-Entscheidung 2026-09-23):** Hunger- und Überkapazitäts-Streak wirken unabhängig und addieren sich im ungünstigsten Fall im selben Sol — Vertrauen wird **nicht kumulativ über Sole**, sondern jeden Sol frisch aus der Summe aller aktiven Faktoren berechnet (§14, „Berechnung"), der Fail State prüft instant gegen diese Tagessumme (§18.2). Ein einzelner, extrem schlechter Sol (langer Hunger-Streak + langer Überkapazitäts-Streak + ein oder zwei negative Zufallsereignisse gleichzeitig) kann die Fail-Schwelle dadurch theoretisch erreichen, ohne dass eine einzelne Ursache für sich genommen ausreichen würde. Das ist ein **bewusst akzeptiertes Risiko**, kein blinder Fleck: Der Überkapazitäts-Streak ist durch die Frist hart begrenzt — spätestens mit der Abwanderung endet er, er kann also nie länger als die Frist andauern, und sein Maximum liegt nur auf den letzten Solen davor. Ein gleichzeitiges Maximum beider Streaks setzt damit ein enges zeitliches Zusammentreffen voraus, keinen dauerhaften Doppel-Zustand. Die Alternative (ein gemeinsamer Deckel über Hunger- und Überkapazitäts-Malus) wurde geprüft und verworfen — sie würde zwei mechanisch und thematisch unabhängige Vernachlässigungs-Signale (Nahrung vs. Wohnraum) an einer Stelle künstlich verknüpfen, die inhaltlich nichts miteinander zu tun haben. Der gewählte Hebel gegen das Restrisiko ist stattdessen ein niedrig angesetzter Überkapazitäts-Deckel (`overcap.trust_cap`, siehe unten) — er hält den Beitrag der neuen Ursache klein genug, dass sie das bestehende Verhältnis zwischen Hunger-Malus und Fail-Schwelle nicht grundlegend verschiebt.
+**Kein beschleunigter Verfall bei Wohnraumverlust (Owner-Entscheidung 2026-09-24).** Der frühere Decay-Multiplikator bei Überkapazität (`decay.overcap_factor`) ist gestrichen. Beschleunigter Verfall hätte genau die Kaskade befeuert, die den Verlust ausgelöst hat: Wohnraum verloren → alles verfällt schneller → noch mehr Wohnraum verloren. Der Druck kommt stattdessen gezielt über Unterbesetzung (Produktion) und das Gate — beides heilt, sobald der Wohnraum zurück ist.
 
-> ⚠️ BALANCE CONCERN: Die Kombination aus Hunger-Streak, Überkapazitäts-Streak und zwei negativen Ereignissen im selben Sol ist rechnerisch möglich und läge nahe an oder über der Fail-Schwelle (§18.2). Nach erstem Playtest prüfen, ob dieser Fall real vorkommt (nicht nur rechnerisch) und ob die Fail-Schwelle selbst, nicht die einzelnen Malus-Werte, der richtige Hebel wäre, falls er zu oft auftritt.
+**Konfiguration.** Der frühere Block `config/game.php → overcap` und die Vertrauens-Ereignisse `colonists_left` und `colonists_dismissed` entfallen mit der Umsetzung. Aktuelle Werte: `docs/game-reference.md` Abschnitt 10a; die Anpassung dort folgt mit der Umsetzung.
 
-**Kein beschleunigter Verfall bei Überkapazität (Owner-Entscheidung 2026-09-24).** Der frühere Decay-Multiplikator bei Überkapazität (`decay.overcap_factor`) ist gestrichen. Da Überkapazität jetzt nur noch aus dem Verlust von Wohnraum entsteht, hätte beschleunigter Verfall genau die Kaskade befeuert, die er ausgelöst hat: Wohnraum verloren → alles verfällt schneller → noch mehr Wohnraum verloren. Der Druck kommt stattdessen gezielt über Vertrauen (Frist) und Unterbesetzung (Produktion) — beides endet bzw. heilt, sobald der Wohnraum zurück ist.
-
-**Konfiguration** (`config/game.php → overcap` sowie `trust.events`). Vom game-designer vorgeschlagen, vom Owner am 2026-09-24 bestätigt; Feinjustierung über Playtest. Aktuelle Werte: `docs/game-reference.md` Abschnitt 10a (Überkapazität / Unterbesetzung).
-
-| Key | Bedeutung | Design-Absicht |
-|---|---|---|
-| `overcap.departure_after_sols` | Länge der Frist: Sole mit obdachlosen Kolonisten bis zur Abwanderung | kurz — Malus wirkt ab dem ersten Sol, dafür endet er bald |
-| `overcap.trust_base_malus` | Vertrauens-Malus am ersten Sol mit Obdachlosen | gleich dem Hunger-Basismalus (`food.hunger_base_malus`) |
-| `overcap.trust_step` | zusätzlicher Malus je weiterem ununterbrochenen Sol | gleich dem Hunger-Schritt (`food.hunger_step`) |
-| `overcap.trust_cap` | Deckel des Streak-Malus | deutlich unter dem Hunger-Deckel; wird genau am letzten Sol vor der Abwanderung erreicht |
-| `overcap.dismiss_ap_cost` | AP-Kosten für „Wegschicken" | spürbar, Owner-Rahmen „nicht zu klein" |
-| `trust.events.colonists_left` | einmaliges Vertrauens-Ereignis je Abwanderung (nicht je Kolonist oder Stufe) | negativ |
-| `trust.events.colonists_dismissed` | einmaliges Vertrauens-Ereignis je Wegschicken | negativ, milder als `colonists_left` |
-
-Weitere Umsetzungsentscheidungen (Owner-bestätigt 2026-09-24):
-
-- Der Personalanteil wirkt **nur auf die Rohstoffproduktion** der Produktionsgebäude, nicht auf AP, Credits, Vertrauensbeiträge oder Supply-Cap-Beiträge.
-- DB-Spalten: `glx_colonies.overcap_departed` (Zahl der Abgewanderten = unbesetzte Arbeitsplätze) und `glx_colonies.overcap_streak`.
-- Entfallen: der Decay-Multiplikator bei Überkapazität, die frühere Schonfrist sowie die gesamte verworfene Stufenverlust-Variante samt Keys und DB-Spalten.
+Weitere Festlegung (Owner-bestätigt 2026-09-24, weiterhin gültig): Der Besetzungsanteil wirkt **nur auf die Rohstoffproduktion** der Produktionsgebäude, nicht auf AP, Credits, Vertrauensbeiträge oder Wohnraum-Beiträge.
 
 ---
 
@@ -1155,7 +1128,7 @@ max_status_points=5, decay_rate=0.5
 **Konsequenz bei SP ≤ 0 — einheitlich, keine Zerstörung (Owner-Entscheidung F2):** Ein Gebäude oder eine Instanz wird durch Decay **nie gelöscht** und fällt nie unter Level 1 — ein einmal errichtetes Gebäude verschwindet nie vollständig durch Verfall. Erreichen die `status_points` 0, levelt das Exemplar sofort um 1 herunter (Untergrenze Level 1), die `status_points` werden dabei sofort auf `max_status_points` zurückgesetzt, ein Protokoll-Ereignis wird geschrieben. Das gilt gleichermaßen für Level-Gebäude und für Instanzen (Wohnhabitat, Hangar).
 *(Kenntnis — kein Decay; Kenntnisse haben kein SP-System, siehe §10)*
 
-> **Effekte skalieren mit dem aktuellen Level, kein separater Effekt-Schalter (Owner-Entscheidung F2, revidiert 2026-09-08):** Eine zwischenzeitlich erwogene Hysterese — Effekt fällt bei SP 0 komplett aus und kehrt erst ab einem größeren Reparaturanteil zurück — wurde verworfen. Weil ein Exemplar bei SP 0 sofort auf die niedrigere, aber wieder volle Stufe herunterklappt (siehe oben), hängt es nie über mehrere Sole in einem funktionslosen Zwischenzustand; sein Effekt (z. B. der Supply-Beitrag des Wohnhabitats) skaliert einfach automatisch mit dem neuen, niedrigeren Level. Die Konsequenz bleibt real: das verlorene Level zurückzuholen kostet normale Level-Up-Kosten (AP + Ressourcen), kein billiger Reparatur-Klick. Grund für die Revision: Die Hysterese hätte ein eigenes Kaskaden-/Softlock-Risiko erzeugt (kaputtes Wohnhabitat → gesamter Supply-Cap-Beitrag sofort weg statt nur einer Stufe → große Überkapazität mit allen Folgen aus §6), das der bestehende Level-Down-Mechanismus samt Level-1-Untergrenze nicht hat.
+> **Effekte skalieren mit dem aktuellen Level, kein separater Effekt-Schalter (Owner-Entscheidung F2, revidiert 2026-09-08):** Eine zwischenzeitlich erwogene Hysterese — Effekt fällt bei SP 0 komplett aus und kehrt erst ab einem größeren Reparaturanteil zurück — wurde verworfen. Weil ein Exemplar bei SP 0 sofort auf die niedrigere, aber wieder volle Stufe herunterklappt (siehe oben), hängt es nie über mehrere Sole in einem funktionslosen Zwischenzustand; sein Effekt (z. B. der Supply-Beitrag des Wohnhabitats) skaliert einfach automatisch mit dem neuen, niedrigeren Level. Die Konsequenz bleibt real: das verlorene Level zurückzuholen kostet normale Level-Up-Kosten (AP + Ressourcen), kein billiger Reparatur-Klick. Grund für die Revision: Die Hysterese hätte ein eigenes Kaskaden-/Softlock-Risiko erzeugt (kaputtes Wohnhabitat → gesamter Supply-Cap-Beitrag sofort weg statt nur einer Stufe → große Zahl unbesetzter Arbeitsplätze mit allen Folgen aus §6), das der bestehende Level-Down-Mechanismus samt Level-1-Untergrenze nicht hat.
 >
 > **Ausnahme Hangar-Schiffe:** Schiffe bleiben ein bewusster binärer Sonderfall — ein Schiff ist entweder einsatzbereit oder inaktiv (abhängig von der Stufe seines Hangars, siehe „Hangar unter Schiffsstufe" unten), es gibt keinen Teil-Zustand.
 >
@@ -1213,7 +1186,7 @@ Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genut
 
 Decay erzwingt regelmäßige AP-Investitionen in Wartung. Inaktive Spieler verlieren schrittweise Infrastruktur und Flotte. Die Kombination aus kleiner decay_rate und fraktionaler Akkumulation bedeutet: nichts bricht sofort — aber vernachlässigte Entitäten degradieren stetig.
 
-> **Überkapazität beschleunigt den Verfall nicht (Owner-Entscheidung 2026-09-24, A14).** Der frühere Decay-Multiplikator bei Überkapazität (`decay.overcap_factor`) ist gestrichen. Verfall läuft unabhängig davon, ob die Kolonie über ihrem Cap liegt. Grund: Überkapazität entsteht nur noch durch den Verlust von Wohnraum — also meist durch Verfall selbst. Ein Multiplikator hätte daraus eine Kaskade gemacht (Wohnhabitat verfällt → Überkapazität → alles verfällt schneller, auch die übrigen Wohnhabitate → noch mehr Überkapazität). Die Folgen der Überkapazität tragen jetzt allein Vertrauen und Unterbesetzung (§6, „Überkapazität — Konsequenzen"); beide enden bzw. heilen, sobald der Wohnraum zurück ist, und verstärken den Verfall nicht.
+> **Überkapazität beschleunigt den Verfall nicht (Owner-Entscheidung 2026-09-24, A14).** Der frühere Decay-Multiplikator bei Überkapazität (`decay.overcap_factor`) ist gestrichen. Verfall läuft unabhängig davon, ob Arbeitsplätze unbesetzt sind. Grund: Unbesetzte Arbeitsplätze entstehen nur noch durch den Verlust von Wohnraum — also meist durch Verfall selbst. Ein Multiplikator hätte daraus eine Kaskade gemacht (Wohnhabitat verfällt → Arbeitsplätze unbesetzt → alles verfällt schneller, auch die übrigen Wohnhabitate). Die Folgen tragen allein Unterbesetzung und Gate (§6, „Wohnraumverlust — Konsequenzen"); beide heilen, sobald der Wohnraum zurück ist, und verstärken den Verfall nicht.
 
 ---
 
@@ -1796,7 +1769,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 | Kein Regolith → Reparatur gesperrt → Harvester verfällt → noch weniger Regolith | Nein | CC und Harvester sind regolithfrei reparierbar (AP-only, Bootstrap-Ausnahme §4). Die Regolith-Quelle bleibt immer erreichbar. |
 | AP in ein Gebäude investiert, dessen Regolith fehlt | Nein | Regolith wird erst beim Abschluss abgezogen (§4). Investierte AP bleiben auf `ap_spend` liegen und werden gültig, sobald Regolith da ist — kein Verlust. |
 | Credits auf 0, kein Berater bezahlbar | Nein | Upkeep wird auf ≥ 0 geklemmt, der Verlust läuft über `nexus_debt`. Langsames Ausbluten über viele Sole, kein Lock. |
-| Über Supply-Cap → beschleunigter Decay → Leveldown-Spirale | Nein | Überkapazität beschleunigt den Verfall nicht (§7), Abwanderung kostet keine Ausbaustufen, nur Personal (§6). Wohnraum-Gebäude sind vom Bau-Gate ausgenommen — der Weg heraus bleibt offen. Siehe unten. |
+| Über Supply-Cap → beschleunigter Decay → Leveldown-Spirale | Nein | Unbesetzte Arbeitsplätze beschleunigen den Verfall nicht (§7), Wohnraumverlust kostet keine weiteren Ausbaustufen, nur Besetzung (§6). Wohnraum-Gebäude sind vom Bau-Gate ausgenommen — der Weg heraus bleibt offen. Siehe unten. |
 
 Hinzu kommt: die **Einstiegskosten jeder Domäne sind winzig** (1 AP erkunden, 1 AP in eine Baustelle, 2 AP ein Angebot annehmen). Es gibt keine Domäne, in die man nicht mit einem einzigen Restpunkt zurückfindet.
 
@@ -1804,7 +1777,7 @@ Eine Untergrenze würde genau den Allokationsschmerz entfernen, der der Zweck de
 
 > **Die reale Gefahr ist die fehlende Obergrenze, nicht die fehlende Untergrenze.** Ein Spieler, der jeden Sol den ganzen Pool in Reparaturen kippt, verliert den Run langsam, ohne es zu merken. Dagegen hilft keine Bodengarantie — nur die Instandhaltungsanzeige im Dashboard (13.4). Sie ist der Ersatz für die Bodengarantie und darf deshalb nicht als Komfort-Feature wegpriorisiert werden.
 
-> **Überkapazität belastet den AP-Pool nicht mehr (A14, Owner-Entscheidung 2026-09-24).** Der frühere Decay-Multiplikator bei Überkapazität war die eigentliche Quelle des „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Falls: Er erhöhte die Instandhaltung aller Gebäude still, ohne erkennbaren Zusammenhang zur Ursache. Er ist gestrichen (§7). Überkapazität wirkt jetzt ausschließlich über einen **sichtbaren Zustand** mit kurzer Frist (obdachlose Kolonisten, Vertrauens-Malus) und danach über Unterbesetzung (anteilig weniger Rohstoffproduktion), siehe §6 „Überkapazität — Konsequenzen". Der Gegenzug ist Wohnraum zurückholen oder — als Abkürzung — „Wegschicken". Keine dieser Folgen bindet dauerhaft AP, der Instandhaltungsanteil im Dashboard (13.4) bleibt von Überkapazität unberührt.
+> **Wohnraumverlust belastet den AP-Pool nicht (A14, Owner-Entscheidung 2026-09-24).** Der frühere Decay-Multiplikator bei Überkapazität war die eigentliche Quelle des „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Falls: Er erhöhte die Instandhaltung aller Gebäude still, ohne erkennbaren Zusammenhang zur Ursache. Er ist gestrichen (§7). Wohnraumverlust wirkt seit der Entscheidung vom 2026-10-25 (A2) ausschließlich über einen **sichtbaren, sofortigen Zustand**: unbesetzte Arbeitsplätze mit anteilig weniger Rohstoffproduktion und gesperrtem Neubau, siehe §6 „Wohnraumverlust — Konsequenzen". Der Gegenzug ist Wohnraum zurückholen. Keine dieser Folgen bindet dauerhaft AP, der Instandhaltungsanteil im Dashboard (13.4) bleibt davon unberührt.
 
 ---
 
@@ -1869,7 +1842,7 @@ Mindestumfang:
 | Instandhaltungsanteil („Reparatur bindet [Anteil] deiner Kapazität") | Macht die wachsende Last aus 13.5 sichtbar, bevor sie drückt |
 | **Restertrag bis Run-Ende** je Projekt („Agrardom Lv5: noch 3 Sole, dann 8 Sole × 7 Organika") | Trägt den Late-Game-Kipppunkt (13.2) — siehe unten |
 | Regolith-Bilanz (Produktion − Reparatur − Levelups) | Die eigentliche Wachstumsgrenze (13.5) |
-| **Überkapazitäts-Warnung**, solange Kolonisten obdachlos sind (Anzahl, verbleibende Sole bis zur Abwanderung), danach **Unterbesetzung** (unbesetzte Arbeitsplätze, Produktionsabschlag) | Macht Frist und Folgen des Wohnraumverlusts sichtbar und planbar (§6) |
+| **Unterbesetzungs-Hinweis**, solange Arbeitsplätze unbesetzt sind (Anzahl, Ursache, Produktionsabschlag, Sperre von Neubau und Ausbau) | Macht die Folgen des Wohnraumverlusts sichtbar und planbar (§6) |
 | Konzessions-Prognose („bei aktuellem Kurs in 12 Solen unterschritten") | Macht den Fail-State aus §18.2 vorhersehbar statt überraschend |
 | Fortschritt der Run-Aufgaben | Verbindet Tagesentscheidung mit Run-Ziel (§15) |
 | **Rest-AP-Hinweis**: welcher AP-Pool noch Reserve hat und wofür er nutzbar ist | Der Hinweis nennt nur Verwendungen, die gerade möglich sind: kein „in ein Gebäude investieren“, wenn Regolith fehlt oder der Tages-Deckel erreicht ist; stattdessen der ehrliche Grund oder der Verweis auf den Hangar (§16.2) |
@@ -2493,7 +2466,7 @@ Datenmodell: Ereignisse stehen in `trust_events` (Kolonie, Sol, Typ). Beim Speic
 
 **Geplante Event-Kategorien:**
 
-Events sind nach Kategorie gruppiert: Bauwesen/Forschung (Gebäude-Stufe oder Kenntnis abgeschlossen; ein Stufenverlust durch Verfall oder Rückbau hat bewusst kein eigenes Vertrauens-Event, seine Folgen laufen über das System: sinkende Produktion, wegfallender Stufenbeitrag von Vertrauensgebäuden, ggf. Überkapazität, §6/§7), Handel (Handelsrouten erfolgreich oder blockiert), Diplomatie (Verträge), Begegnungen (Zwischenfälle gelöst oder eskaliert), Spieleraktionen (freiwillige Kolonisten-Zulagen). 
+Events sind nach Kategorie gruppiert: Bauwesen/Forschung (Gebäude-Stufe oder Kenntnis abgeschlossen; ein Stufenverlust durch Verfall oder Rückbau hat bewusst kein eigenes Vertrauens-Event, seine Folgen laufen über das System: sinkende Produktion, wegfallender Stufenbeitrag von Vertrauensgebäuden, ggf. unbesetzte Arbeitsplätze, §6/§7), Handel (Handelsrouten erfolgreich oder blockiert), Diplomatie (Verträge), Begegnungen (Zwischenfälle gelöst oder eskaliert), Spieleraktionen (freiwillige Kolonisten-Zulagen). 
 
 Alle Effekte wirken exakt 1 Sol (werden nach der Vertrauen-Berechnung verworfen). Mehrere Events desselben Typs im selben Sol summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
 

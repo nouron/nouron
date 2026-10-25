@@ -1,6 +1,6 @@
 # Kolonisten-Modell: Wohnraum, lebende Kolonisten, Beschäftigte
 
-Stand 2026-10-25 · Autor: game-designer · Status: entschieden (Richtung), Folgefragen A14 und Verpflegungszahl offen
+Stand 2026-10-25 · Autor: game-designer · Status: entschieden (Richtung, Verpflegungszahl, A14 = A2); offen nur Anzeigeform und Messung
 Bezug: Owner-Wunsch vom 2026-10-25; berührt `docs/superpowers/specs/2026-10-25-t43-designfragen.md` (A2, A3), GDD §4a „Organika“, §6 „Supply“ und „Überkapazität“, `docs/game-reference.md` §10 und §10a.
 
 Im Text steht **Fakt** für Nachgelesenes (Code, Config), **Annahme** und **Empfehlung** für meine Deutung. Beispielzahlen sind reine Veranschaulichung, keine Balancewerte (ADR 0004).
@@ -12,7 +12,7 @@ Im Text steht **Fakt** für Nachgelesenes (Code, Config), **Annahme** und **Empf
 - **Klarstellung:** Platz und Kolonisten sind damit **dieselbe Größe**. Es gibt weiter zwei Zahlen, nicht drei: Kolonisten (gleich Wohnraum) und davon beschäftigt (gleich besetzte Arbeitsplätze). Der Rest, „frei“, ist die Differenz.
 - **Korrektur meiner früheren Annahme:** „anwesend gleich beschäftigt“ galt für den alten Code (die Kolonisten wurden aus den Arbeitsplätzen abgeleitet). Ab jetzt gilt: Kolonisten kommen aus dem Wohnraum, beschäftigt ist nur ein Teil davon.
 - **Küche entschieden (Owner 2026-10-25):** Alle Kolonisten werden verpflegt, 1 Organika je Kolonist. Die Organika-Produktion wird nach Messung angepasst (Messschritt offen, Bot-Batch nur nach Rückfrage).
-- **A14 ausgesetzt (Owner 2026-10-25):** Meine A14-Empfehlung unten („Wohnraumverlust senkt Kolonisten sofort, Frist entfällt“) ist **überholt/ausgesetzt**: Der Owner übernimmt sie nicht, sondern lässt zuerst ein Grundsatzmodell prüfen (Gebäude ohne Kolonisten bauen, Arbeiter getrennt zuweisen), siehe `docs/superpowers/specs/2026-10-25-arbeiter-modell.md`. Bis dahin gilt der Code-Stand.
+- **A14 entschieden (Owner 2026-10-25, Option A2):** Die A14-Empfehlung unten („Wohnraumverlust senkt Kolonisten sofort, Frist entfällt“) gilt wieder und ist übernommen. Das Arbeiter-Modell wurde geprüft und nicht verfolgt, siehe `docs/superpowers/specs/2026-10-25-arbeiter-modell.md` (Block „Entschieden“ und Liste der Folgen am Ende).
 - **Offen:** Anzeigeform und die Liste der Folgen für Code und Anzeige.
 
 Die folgenden Abschnitte „Kurzfassung“ bis „(c)“ sind der Stand vor der Entscheidung; maßgeblich sind dieser Block und die Abschnitte „Nach der Entscheidung“ am Ende.
@@ -107,7 +107,7 @@ Empfehlung: überall dieselbe Formulierung **„N Kolonisten, davon M beschäfti
 - **Fakt Bau-Gate:** Platzieren und Ausbau erfordern freien Wohnraum (Wohnraum minus Arbeitsplätze) mindestens in Höhe des Platzbedarfs. Im neuen Modell heißt das schlicht: **genug freie Kolonisten**. Das Gate passt ohne Änderung und wird verständlicher. Ausnahmen (Kommandozentrale, Wohnhabitat, erster Harvester) können Arbeitsplätze über die Kolonisten hinaus erzeugen; dann sind Arbeitsplätze unbesetzt und die Produktion sinkt anteilig (bestehender Besetzungsanteil).
 - **Fakt A14 heute:** „Obdachlos“ heißt: Arbeitsplätze größer als Wohnraum; es entsteht nur, wenn Wohnraum durch Verfall, Sturm oder Rückbau wegfällt. Dann läuft eine Frist mit Vertrauens-Malus, danach wandern die Obdachlosen ab, die Arbeitsplätze bleiben leer, Rückkehr automatisch bei freiem Wohnraum; „Wegschicken“ kostet AP. Gespeichert sind nur die Zahl der Abgewanderten und der Streak.
 - **Folge im neuen Modell:** Wenn Kolonisten gleich Wohnraum sind, gibt es keine „Kolonisten über dem Wohnraum“, also keine Obdachlosen im bisherigen Sinn. Fällt Wohnraum weg, sind die Kolonisten sofort weg, und die Arbeitsplätze sind unbesetzt.
-- **[Überholt/ausgesetzt, siehe Arbeiter-Vorlage] Annahme (Empfehlung):** A14 wird vereinfacht: Wohnraumverlust verringert die Kolonisten sofort und deterministisch; die Wirkung ist die schon vorhandene anteilige Produktionsminderung durch unbesetzte Arbeitsplätze, das Bau-Gate sperrt Neubau, bis wieder genug freie Kolonisten da sind, und ein einmaliges Vertrauens-Ereignis markiert den Verlust. Frist, Obdachlosen-Malus, Abwanderung und „Wegschicken“ entfielen. Alternative: Obdachlosen-Frist als Abfederung behalten; dann müssten Kolonisten als eigene gespeicherte Größe geführt werden (Rückschritt zu Option 3 im Kleinen) und der Owner-Wunsch nach „direkt aus den Wohnhabitaten“ wäre verletzt. Bis zur Entscheidung gilt der Code-Stand.
+- **[Entschieden 2026-10-25, Owner, Option A2]** A14 wird vereinfacht: Wohnraumverlust verringert die Kolonisten sofort und deterministisch; die Wirkung ist die schon vorhandene anteilige Produktionsminderung durch unbesetzte Arbeitsplätze, das Bau-Gate sperrt Neubau, bis wieder genug freie Kolonisten da sind, und ein einmaliges Vertrauens-Ereignis markiert den Verlust. Frist, Obdachlosen-Malus, Abwanderung und „Wegschicken“ entfielen. Alternative: Obdachlosen-Frist als Abfederung behalten; dann müssten Kolonisten als eigene gespeicherte Größe geführt werden (Rückschritt zu Option 3 im Kleinen) und der Owner-Wunsch nach „direkt aus den Wohnhabitaten“ wäre verletzt. Bis zur Entscheidung gilt der Code-Stand.
 
 ### Welche Zahl wird verpflegt? (Annahme)
 
@@ -122,7 +122,7 @@ Heute: Bedarf aus den besetzten Arbeitsplätzen (abzüglich Abgewanderter). Mit 
 - Beschäftigt gleich der kleinere Wert aus Kolonisten und Arbeitsplätzen; Besetzungsanteil für die Produktion daraus.
 - Sofortige Neuberechnung des Wohnraums beim Abschluss eines Wohnhabitats (A2) für alle Anzeigen und das Bau-Gate prüfen.
 - Verpflegung auf die Kolonisten umstellen (Config-Regel 1 je Kolonist, Teiler `supply_per_eater` entfällt oder wird 1); Abrundungsloch entfällt.
-- A14: Entscheidung abwarten; je nach Ausgang Frist, Streak-Spalten, Abwanderung, „Wegschicken“ und zugehörige Texte, Ereignisse und Tests entfernen oder anpassen.
+- A14: entschieden (A2); Frist, Streak-Spalten, Abwanderung, „Wegschicken“ und zugehörige Texte, Ereignisse und Tests entfallen, Einzelheiten in der Liste am Ende von `2026-10-25-arbeiter-modell.md`.
 - Kopfleisten-Chip, Popup, Sol-Bericht-Zeile, Kommandozentrale und Gebäude-Seitenleiste auf „N Kolonisten, davon M beschäftigt“ umstellen; Texte in `lang/de` (Kolonisten, nicht Wohnraum, nicht „Supply“).
 - Config-Kommentare und Schlüssel mit „Supply“ und „Wohnraum“ bereinigen; Prüfpunkt: restlicher Kenntnis-Anteil im „freien Supply“ (laut GDD seit 2026-10-15 nicht mehr vorhanden).
 - Szenarien in `game:reset-player` (Ressourcenwerte, Wohnraum-Herleitung) und `docs/game-reference.md` §10 und §10a nachziehen; Onboarding-Hinweise, die Wohnraum oder Arbeitsplätze nennen, prüfen.
@@ -136,5 +136,5 @@ Heute: Bedarf aus den besetzten Arbeitsplätzen (abzüglich Abgewanderter). Mit 
 | Wie werden Wohnraum, Kolonisten und Beschäftigte verankert? | Kolonisten gleich Wohnraum, beschäftigt gleich Minimum aus Kolonisten und Arbeitsplätzen, Rest frei; kein Zuzug | Entschieden (Option 3 verworfen) |
 | Anzeige | „N Kolonisten, davon M beschäftigt“ überall | Offen |
 | Welche Zahl wird verpflegt? | Alle Kolonisten | Entschieden: alle Kolonisten, 1 Organika je Kolonist; Produktion nach Messung |
-| A14 (Obdachlosen-Frist) | (überholt) | Ausgesetzt, Grundsatzfrage in `2026-10-25-arbeiter-modell.md` |
+| A14 (Obdachlosen-Frist) | Sofortige Wirkung (A2), Frist und Abwanderung entfallen | Entschieden: A2 (Owner 2026-10-25), siehe `2026-10-25-arbeiter-modell.md` |
 | Reihenfolge der Messung | Modell umsetzen, dann Organika-Produktion abgleichen (A3), ein Hebel pro Messung | Offen |
