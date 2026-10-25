@@ -714,6 +714,10 @@ return [
     'sol_report_phase1_advisors' => '2 aktive Berater',
     'sol_report_phase2_objective_hidden' => 'Direktive noch unbekannt — im Spielverlauf erspielt',
     'sol_report_phase2_objective_done' => 'Erfüllt',
+    // TODO content-writer: Phasenübergang-Erfolgsbildschirm
+    'sol_report_phase_success_title' => 'Phase 1 abgeschlossen',
+    'sol_report_phase_success_body' => 'Der Grundaufbau steht. Die Nexus-Direktiven der Phase 2 warten.',
+    'sol_report_phase_success_achieved' => 'Erreicht',
     'sol_report_next_screen' => 'Weiter',
 
     // Screen 3 — SOL N startet

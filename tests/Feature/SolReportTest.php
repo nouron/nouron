@@ -139,6 +139,37 @@ class SolReportTest extends TestCase
         $this->assertContains('run', $keys);
     }
 
+    public function test_report_has_no_phase_transition_without_the_phase1_complete_event(): void
+    {
+        $run = $this->setRunTick(3);
+
+        $report = $this->service()->buildReport($run, $this->snapshot($run));
+
+        $this->assertNull($report['phase_transition']);
+    }
+
+    public function test_report_carries_the_phase_transition_in_the_sol_phase1_completed(): void
+    {
+        $run = $this->setRunTick(9);
+        $before = $this->snapshot($run);
+        $run->update(['phase' => 2, 'phase2_start_tick' => 9]);
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 9,
+            'event' => 'run.phase1_complete',
+            'area' => 'run',
+            'parameters' => '[]',
+            'created_at' => now(),
+            'is_read' => 0,
+        ]);
+
+        $report = $this->service()->buildReport($run->refresh(), $before);
+
+        $this->assertIsArray($report['phase_transition']);
+        $this->assertIsArray($report['phase_transition']['criteria']);
+        $this->assertSame(2, $report['phase_progress']['phase']);
+    }
+
     public function test_production_group_shows_resource_growth(): void
     {
         $run = $this->setRunTick(1);

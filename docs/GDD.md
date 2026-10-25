@@ -2808,7 +2808,7 @@ Jeder Run von Nouron hat ein klares, kommunizierbares Ende. Das Ende ist keine �
 
 **Entscheidung: 2 von 3 Phase-2-Objectives abgeschlossen (Kombinations-Modell)**
 
-Das Runziel ist von Anfang an Phase 2 kommunizierbar: "Schließen Sie 2 der folgenden 3 Aufgaben ab." Die Objectives werden beim Phase-2-Übergang gezogen. Das erste gezogene Ziel ist von Anfang an sichtbar; die übrigen bleiben verdeckt, bis ihr Fortschritt über null liegt (Owner 2026-10-25; gestaffelte Enthüllung via §17.1 ab Phase 4). Die Wahlfreiheit über welche zwei Objectives erfüllt werden, ist das zentrale Roguelike-Entscheidungsmoment eines Runs.
+Das Runziel ist von Anfang an Phase 2 kommunizierbar: "Schließen Sie 2 der folgenden 3 Aufgaben ab." Die Objectives werden beim Phase-2-Übergang gezogen. Das erste gezogene Ziel ist von Anfang an sichtbar; die übrigen bleiben verdeckt, bis ihr Fortschritt über null liegt (Owner 2026-10-25; gestaffelte Enthüllung via §17.1 ab Phase 4). Der Übergang selbst zeigt im Sol-Bericht einen eigenen Erfolgsbildschirm („Phase 1 abgeschlossen“, mit den erreichten Grundaufbau-Punkten), danach den Phase-2-Dialog. Die Wahlfreiheit über welche zwei Objectives erfüllt werden, ist das zentrale Roguelike-Entscheidungsmoment eines Runs.
 
 Warum kein Bau- oder Ressourcenmilestone (Optionen b/c) als Siegbedingung:
 - Objectives variieren je Run → variabler Spielverlauf → Roguelike-Charakter

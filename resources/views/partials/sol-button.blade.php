@@ -17,6 +17,9 @@
         phase2Title: @js(__("colony.sol_report_phase2_title")),
         objectiveHidden: @js(__("colony.sol_report_phase2_objective_hidden")),
         nextScreen: @js(__("colony.sol_report_next_screen")),
+        successTitle: @js(__("colony.sol_report_phase_success_title")),
+        successBody: @js(__("colony.sol_report_phase_success_body")),
+        successAchieved: @js(__("colony.sol_report_phase_success_achieved")),
         solStarts: @js(__("colony.sol_report_screen3_starts")),
         solBegin: @js(__("colony.sol_report_screen3_begin")),
     },
@@ -121,6 +124,33 @@
                 <footer class="sol-report__footer">
                     <button type="button" class="sol-btn sol-btn--primary sol-report__continue" x-show="finished"
                         x-cloak @click.stop="goScreen2()" x-text="i18n.nextScreen"></button>
+                </footer>
+            </div>
+        </template>
+
+        {{-- Success screen: shown once between screen 1 and screen 2 when Phase 1 was completed in this Sol --}}
+        <template x-if="report && !report.finale && currentScreen === 'success'">
+            <div class="sol-report sol-report--phase sol-report--success" @click.stop>
+                <header class="sol-report__header">
+                    <h2 class="sol-report__title" x-text="i18n.successTitle"></h2>
+                    <p class="sol-phase__subtitle" x-text="i18n.successBody"></p>
+                </header>
+
+                <div class="sol-report__groups sol-phase__body">
+                    <ul class="sol-phase__list">
+                        <template x-for="(label, i) in report.phase_transition.criteria" :key="i">
+                            <li class="sol-phase__item sol-phase__item--done">
+                                <i class="bi sol-phase__icon bi-check-circle-fill"></i>
+                                <span class="sol-phase__label" x-text="label"></span>
+                                <span class="sol-phase__progress" x-text="i18n.successAchieved"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <footer class="sol-report__footer sol-phase__footer">
+                    <button type="button" class="sol-btn sol-btn--primary sol-report__continue"
+                        @click.stop="currentScreen = 2" x-text="i18n.nextScreen"></button>
                 </footer>
             </div>
         </template>
@@ -423,7 +453,7 @@
 
             goScreen2() {
                 this.clearTimers();
-                this.currentScreen = 2;
+                this.currentScreen = this.report && this.report.phase_transition ? 'success' : 2;
             },
 
             goScreen3() {

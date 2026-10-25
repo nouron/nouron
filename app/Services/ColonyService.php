@@ -125,16 +125,7 @@ class ColonyService
 
         $colonyId = $colony->id;
         if ((int) $run->phase === 1) {
-            // Harvester, Wohnhabitat and Agrardom still gate the phase end
-            // (phase1Criteria) but are not listed — they are the obvious first builds.
-            $hidden = ['harvester', 'housing', 'agrardom'];
-            $criteria = array_values(array_map(
-                fn (array $c): array => $c + ['label' => __('colony.sol_report_phase1_'.$c['key'])],
-                array_filter(
-                    app(RunProgressService::class)->phase1Criteria($colonyId, (int) $run->current_tick),
-                    fn (array $c): bool => ! in_array($c['key'], $hidden, true)
-                )
-            ));
+            $criteria = $this->getPhase1CriteriaLabeled($colonyId, (int) $run->current_tick);
 
             return ['phase' => 1, 'criteria' => $criteria];
         }
@@ -145,8 +136,10 @@ class ColonyService
             ->where('run_id', $run->id)
             ->orderBy('id')
             ->get(['task_key', 'current_value', 'target_value', 'completed_at'])
-            ->map(function ($obj) use ($taskCatalog): array {
-                $revealed = (int) $obj->current_value > 0 || $obj->completed_at !== null;
+            ->map(function ($obj, int $index) use ($taskCatalog): array {
+                // The first drawn objective is open from the start (Owner 2026-10-25, B5);
+                // the others stay hidden until their progress is above zero.
+                $revealed = $index === 0 || (int) $obj->current_value > 0 || $obj->completed_at !== null;
 
                 return [
                     'revealed' => $revealed,
@@ -160,5 +153,26 @@ class ColonyService
             ->all();
 
         return ['phase' => 2, 'objectives' => $objectives];
+    }
+
+    /**
+     * Listed Phase-1 criteria with player-facing labels.
+     *
+     * Harvester, Wohnhabitat and Agrardom still gate the phase end (phase1Criteria)
+     * but are not listed — they are the obvious first builds.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPhase1CriteriaLabeled(int $colonyId, int $currentTick): array
+    {
+        $hidden = ['harvester', 'housing', 'agrardom'];
+
+        return array_values(array_map(
+            fn (array $c): array => $c + ['label' => __('colony.sol_report_phase1_'.$c['key'])],
+            array_filter(
+                app(RunProgressService::class)->phase1Criteria($colonyId, $currentTick),
+                fn (array $c): bool => ! in_array($c['key'], $hidden, true)
+            )
+        ));
     }
 }
