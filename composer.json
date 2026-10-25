@@ -52,6 +52,9 @@
         }
     },
     "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
         "bin-dir": "bin/",
         "optimize-autoloader": true,
         "preferred-install": "dist",

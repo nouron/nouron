@@ -4,9 +4,9 @@ Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, MySQL 8,
 
 ## Quickstart
 
-**Requirements:** PHP 8.2+, Composer
+**Requirements:** PHP 8.2+ (CI uses 8.4) with `pdo_mysql`, MySQL 8.0, Composer, Node.js/npm
 
-> **Windows users:** The project runs under WSL2. Run all commands inside your WSL2 terminal.
+Any operating system works; how you install PHP and MySQL is up to you (native, Docker, Homebrew, …). Database setup and an example environment (Windows 11 with WSL2): `docs/dev-setup-mysql.md`.
 
 ```bash
 # After cloning, install dependencies
