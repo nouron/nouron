@@ -285,6 +285,18 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
                 </div>
 
+                {{-- Tomas (bartender) behind the counter — permanent fixture (A40, GDD §12, T43-C4).
+                 Lives in the viewport (not the swipe-shifted background) so he is always on screen. --}}
+                <button type="button" class="cantina-bartender" data-bartender-counter @click="openBartender()">
+                    <img class="cantina-bartender__portrait" src="{{ asset("img/characters/bartender.webp") }}"
+                        srcset="{{ asset("img/characters/bartender.webp") }} 1x, {{ asset("img/characters/bartender_lg.webp") }} 2x"
+                        alt="{{ config("characters.bartender.name") }}">
+                    <span class="cantina-bartender__counter">
+                        <strong>{{ config("characters.bartender.name") }}</strong>
+                        <span>{{ __("colony.bartender_counter_role") }}</span>
+                    </span>
+                </button>
+
                 {{-- Mobile-only swipe dots indicators --}}
                 <div class="swipe-dots nav-mobile"
                     style="position: absolute; bottom: 0.75rem; left: 0; right: 0; z-index: 20;">
@@ -355,19 +367,6 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         <span class="res-amount" x-text="corporateContactOffer?.price"></span>
                     </span>
                 </span>
-            </div>
-
-            {{-- Tomas (bartender) — permanent Cantina fixture (A40, GDD §12), no
-             random spawn. A fixed banner like Orin's above, not a rotating
-             hotspot — Tomas is always here, so there's no "next slot" logic
-             that applies to him. --}}
-            <div class="corporate-contact-banner" @click="openBartender()">
-                <img class="corporate-contact-banner__portrait" src="{{ asset("img/characters/bartender.webp") }}"
-                    alt="{{ config("characters.bartender.name") }}">
-                <div class="corporate-contact-banner__text">
-                    <strong>{{ config("characters.bartender.name") }}</strong>
-                    <span>{{ __("colony.bartender_talk_button") }}</span>
-                </div>
             </div>
 
             {{-- Backdrop to dim page behind modal --}}

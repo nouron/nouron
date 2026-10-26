@@ -45,6 +45,26 @@ class BarRelationshipViewTest extends TestCase
         return substr(json_encode($s, 15), 1, -1);
     }
 
+    public function test_bartender_stands_behind_the_counter_inside_the_picture_not_below_it(): void
+    {
+        $html = $this->page();
+
+        $viewport = strpos($html, 'class="cantina-viewport"');
+        $counter = strpos($html, 'data-bartender-counter');
+        $panel = strpos($html, '<section class="bar-relationships">');
+
+        $this->assertNotFalse($counter);
+        $this->assertGreaterThan($viewport, $counter);
+        $this->assertLessThan($panel, $counter);
+        // The counter sits before the empty-hint / swipe dots, i.e. still inside the viewport.
+        $this->assertLessThan(strpos($html, 'swipe-dots'), $counter);
+        $this->assertStringContainsString('@click="openBartender()"', $html);
+        $this->assertSame(1, substr_count($html, '@click="openBartender()"'));
+        $this->assertStringContainsString(__('colony.bartender_counter_role'), $html);
+        // His conversation options stay reachable in the relationship panel.
+        $this->assertStringContainsString('data-character="bartender"', $html);
+    }
+
     public function test_only_bartender_listed_when_nobody_met(): void
     {
         $html = $this->page();

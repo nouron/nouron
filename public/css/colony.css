@@ -3533,3 +3533,69 @@ dialog[x-ref="discoveryDialog"] {
     color: var(--pico-del-color);
     font-size: 0.85rem;
 }
+
+/* cantina bar layout */
+.cantina-bartender {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 15;
+    width: 150px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cantina-bartender__portrait {
+    width: 120px;
+    height: 150px;
+    object-fit: cover;
+    object-position: top center;
+    border-radius: 12px 12px 0 0;
+    border: 2px solid var(--color-accent, #8c2030);
+    border-bottom: 0;
+    background: #f7f7f5;
+}
+
+.cantina-bartender__counter {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.35rem 0.5rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid var(--color-accent, #8c2030);
+    border-radius: 6px 6px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    color: #333;
+}
+
+.cantina-bartender:hover .cantina-bartender__counter,
+.cantina-bartender:focus-visible .cantina-bartender__counter {
+    background: #fff;
+}
+
+/* Desktop: static background, so he can stand behind the bar on the left of the picture. */
+@media (min-width: 768px) {
+    .cantina-bartender {
+        left: 14%;
+        bottom: 250px;
+    }
+}
+
+@media (max-width: 767px) {
+    .cantina-bartender {
+        bottom: 1.75rem;
+        width: 120px;
+    }
+    .cantina-bartender__portrait {
+        width: 90px;
+        height: 110px;
+    }
+}

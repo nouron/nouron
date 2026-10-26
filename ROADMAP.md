@@ -92,7 +92,7 @@ Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und geh
   - [ ] **T43-C1** Hangar-Screen aufräumen; Training am Schiff bei Vorfeld und Buchten anzeigen statt als eigenes Panel darunter (Pkt 9, 10) — Mittel
   - [ ] **T43-C2** Wirkung des Trainings im UI zeigen (was bringt die nächste Stufe) (Pkt 14) — Klein
   - [ ] **T43-C3** Missionsauswahl („Mission wählen“): Missions-Level bzw. Familienstufe anzeigen (Pkt 20) — Klein
-  - [ ] **T43-C4** Cantina-Layout: Tomas als Barkeeper hinter der Bar statt unter dem Bild (Pkt 25) — Klein
+  - [x] **T43-C4** Cantina-Layout: Tomas als Barkeeper hinter der Bar statt unter dem Bild (Pkt 25) — Klein
   - [ ] **T43-C5** Karte: laufende Baustelle optisch erkennbar (kleiner Hinweis am Feld) (Pkt 6) — Klein
   - [ ] **T43-C6** Sidebar des freien Felds und der Gebäude optisch überarbeiten (Pkt 3, 7; nicht priorisiert) — Mittel
   - [ ] **T43-C7** Sol-Übersicht aufräumen; Details in der Kommandozentrale einsehbar (ausklappbar o. ä.) (Pkt 8) — Mittel
