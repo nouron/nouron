@@ -24,9 +24,8 @@ return [
     'ui_training_ap_today' => 'Heute schon :spent/:cap AP in dieses Training',
     'ui_training_ap_cap_tooltip' => 'Dieses Training nimmt pro Sol nur begrenzt AP auf. Morgen geht es weiter — oder bei einer anderen Familie.',
     'ui_locked_building' => 'Gesperrt: :building braucht Stufe :level.',
-    // TODO content-writer: effect lines of the Training panel (placeholder wording).
-    'ui_training_effect' => 'Ertrag +:pct % je Stufe auf Mengen-Belohnungen',
-    'ui_training_effect_now' => 'Jetzt +:now %, nächste Stufe +:next %',
+    'ui_training_effect' => 'Je Stufe: +:pct % Ertrag bei Mengen-Belohnungen',
+    'ui_training_effect_now' => 'Jetzt +:now % · nächste Stufe +:next %',
     'ui_training_effect_max' => 'Jetzt +:now % (Höchststufe)',
     'ui_training_missions' => 'Gilt für: :list',
     'ui_training_unlock' => 'Ab Hangar-Stufe :level',
@@ -40,11 +39,11 @@ return [
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'Diese Figur nimmt pro Sol nur begrenzt Zeit für Gespräche. Morgen geht es weiter — oder bei jemand anderem.',
     'ui_conversation_today' => 'Heute :spent/:cap AP',
-    // TODO content-writer: name pools per option size (placeholder proposals); one name is picked per Sol.
+    // Pro Sol wird je Gesprächsgröße ein Name aus dem Pool gewählt (Poolgröße beliebig).
     'conversation_names' => [
-        'short' => ['Kurz grüßen', 'Nur nicken', 'Ein Wort wechseln'],
-        'normal' => ['Bei einem Getränk reden', 'Zuhören', 'Zusammen sitzen'],
-        'long' => ['Den Abend nehmen', 'Tief eintauchen', 'Bis zur Sperrstunde bleiben'],
+        'short' => ['Kurz grüßen', 'Nur nicken', 'Ein Wort wechseln', 'Das Glas heben', 'Am Tisch vorbeischauen', 'Fragen, wie es läuft'],
+        'normal' => ['Bei einem Getränk reden', 'Zuhören', 'Zusammen sitzen', 'Den Tisch teilen', 'Geschichten austauschen', 'Sich alles anhören'],
+        'long' => ['Den Abend nehmen', 'Tief eintauchen', 'Bis zur Sperrstunde bleiben', 'Die halbe Nacht reden', 'Die Schicht hinter sich lassen', 'Noch eine Runde bestellen'],
     ],
 
     // ── Missionsfamilien

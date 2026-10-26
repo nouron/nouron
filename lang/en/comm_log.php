@@ -134,7 +134,6 @@ return [
         'building_placed' => ':name placed.',
         'building_invested' => ':ap AP invested in :name.',
         'building_repaired' => ':name repaired (:current / :max condition).',
-        // TODO content-writer: confirm wording (Hangar-Training / Cantina-Beziehung)
         'pathdepth_family' => 'invested in training :name.',
         'pathdepth_family_levelup' => 'invested in training :name. Level :level reached.',
         'pathdepth_character' => 'invested in the relationship with :name.',

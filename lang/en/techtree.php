@@ -168,7 +168,6 @@ return [
     'error_max_level' => 'Maximum level already reached.',
     'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
     'error_building_ap_cap' => 'The construction crew cannot do more at this building today. It continues tomorrow — or at another building.',
-    // TODO content-writer: wording of the lab AP cap (T43-G1)
     'error_knowledge_ap_cap' => 'No more than :cap AP can go into this knowledge today. It continues tomorrow — or with another knowledge.',
     'knowledge_ap_cap_tooltip' => 'This knowledge takes only a limited amount of AP per Sol. It continues tomorrow — or with another knowledge.',
     'knowledge_ap_cap_today' => 'Today :spent/:cap AP already put into this knowledge',

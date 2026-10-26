@@ -96,7 +96,6 @@ return [
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',
     'reward_label' => 'Yield',
-    // TODO content-writer: family pill and yield hint in the mission dialog (placeholder wording).
     'family_pill' => ':family · Level :level',
     'family_yield_included' => 'Yield incl. family bonus +:pct%',
     'error_find_self_salvage' => 'Without a hangar the colony salvages finds itself.',

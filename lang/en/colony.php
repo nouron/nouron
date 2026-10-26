@@ -8,7 +8,6 @@ return [
     'deep_scan' => 'Probe',
     'invest_ap' => 'Invest AP',
     'tile_colonists' => 'Needs colonists',
-    // TODO content-writer (T43-G8)
     'building_needs_colonists' => 'needs :count colonists',
     'building_gives_colonists' => '+:count colonists, immediately',
     'levelup_cost_label' => 'Cost:',
@@ -221,7 +220,6 @@ return [
     'leveldown_new_level' => 'New level: :to (was :from)',
     'leveldown_ap_forfeited' => 'AP already invested are lost: :ap AP',
     'leveldown_freed_workplaces' => 'Colonists freed: :count — available for other buildings right away',
-    // TODO content-writer (T43-G9)
     'leveldown_colonists_lost' => ':count colonists fewer at once — the housing is lost.',
     'leveldown_unfilled' => ':count workplaces unfilled — raw-material production reduced, new buildings and upgrades locked until enough free colonists are back.',
     'leveldown_tile_released' => 'Level 0: the building is taken down and the tile cleared. Rebuilding means a new construction at full cost.',
@@ -384,7 +382,6 @@ return [
     // "Talk to Tomas" — free interaction, no AP cost check. The 4 tier variants
     // mirror config('game.bartender.ap_bonus_tiers') (0/5/15/30 interactions ->
     // 0/1/2/3 AP) and grow warmer the better Tomas knows the Director.
-    // TODO content-writer
     'bartender_counter_role' => 'Bartender',
     'bartender_talk_button' => 'Talk to Tomas',
     'bartender_dialog_intro' => 'Tomas listens while polishing a glass — no word wasted with him, but every one counts.',
@@ -707,9 +704,8 @@ return [
     'sol_report_phase1_advisors' => '2 active advisors',
     'sol_report_phase2_objective_hidden' => 'Directive not yet known — unlocked during play',
     'sol_report_phase2_objective_done' => 'Fulfilled',
-    // TODO content-writer: Phasenübergang-Erfolgsbildschirm
     'sol_report_phase_success_title' => 'Phase 1 complete',
-    'sol_report_phase_success_body' => 'The foundation stands. The Phase 2 Nexus directives await.',
+    'sol_report_phase_success_body' => 'The foundation stands. The Nexus is transmitting the Phase 2 directives.',
     'sol_report_phase_success_achieved' => 'Achieved',
     'sol_report_next_screen' => 'Continue',
 
@@ -797,12 +793,11 @@ return [
     'find_small' => 'Small find: scattered debris',
     'find_medium' => 'Medium find: broken-open wreck',
     'find_large' => 'Large find: freighter wreck',
-    // TODO content-writer: clarify lore (provisional, deliberately neutral texts)
-    'find_small_desc' => 'A faint signal pointing to a few salvageable remains.',
-    'find_medium_desc' => 'A clear signal: there is something here worth salvaging.',
-    'find_large_desc' => 'A strong signal: plenty lies here, but it is heavy to recover.',
+    // TODO content-writer: clarify lore (find names do not fit the lore; texts deliberately origin-neutral)
+    'find_small_desc' => 'A faint echo in the noise — barely more than a hunch, but something is there.',
+    'find_medium_desc' => 'A clear signal from afar: something lies there that may be worth the trip.',
+    'find_large_desc' => 'A massive signal that overloads the instruments — whatever lies there, it is huge.',
     'find_false' => 'False alarm',
-    // TODO content-writer (T43-C5/C8)
     'site_marker_tooltip' => 'Under construction :spent/:total AP',
     'reason_ap' => 'No free construction AP',
     'reason_colonists' => 'Too few free colonists',

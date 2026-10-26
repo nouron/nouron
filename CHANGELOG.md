@@ -7,6 +7,7 @@
 - Feat: T43-C1/C2/C3 — Hangar-Screen: Training-Panel kompakt (5 Familien nebeneinander, mobil gestapelt) oberhalb von Vorfeld und Buchten, je Familie Wirkungszeile („Ertrag +x % je Stufe“, jetzt/nächste Stufe aus `path_depth.yield_per_level`) und zugeordnete Missionen; Missions-Dialog zeigt je Mission Familie und Stufe samt Hinweis, dass der Ertrag den Familienbonus enthält. Stufenaufstieg lädt die Seite neu, damit Ertragsangaben stimmen.
 - Feat: T43-G4/B4 — Cantina-Gespräche: je Figur drei Gesprächsgrößen (1/2/4 AP, Platzhalter) statt „1 AP je Klick“, Namen aus einem rotierenden Pool, Sol-Deckel je Figur (Platzhalter 6 AP, `conversation:<Figur>` im gemeinsamen `DailyApCapService`, Fehlercode `conversation_ap_cap`).
 - Feat: T43-G2/G3 — Hangar-Training: je Familie und Sol nur begrenzt AP einzahlbar (Platzhalter 4, Anzeige „Heute schon n/4 AP“, gemeinsamer Sol-Deckel-Dienst), und Familien schalten nach Hangarstufe frei (Erkundung/Bergung Stufe 1, Versorgung/Handel 2, Schutz 3); gesperrte Familien sind ausgegraut mit Grund. Siehe `docs/game-reference.md` §6b.
+- Texte: Platzhalter der UI-Gruppe überarbeitet (Hangar-Training, Gespräche mit größerem Namenspool, Phasenübergang, Protokoll); Signal-Dialog-Beschreibungen neutral bis zur Fund-Lore (content-writer).
 
 ## 2026-10-25
 
