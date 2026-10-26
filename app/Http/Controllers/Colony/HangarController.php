@@ -128,9 +128,11 @@ class HangarController extends BaseController
             $families[] = $state + [
                 'key' => $key,
                 'name' => __("pathdepth.family_{$key}"),
-                'lock_reason' => $nextRequired !== null && $state['level'] >= $state['level_cap']
-                    ? __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => $nextRequired])
-                    : null,
+                'lock_reason' => $state['locked_until'] !== null
+                    ? __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => $state['locked_until']])
+                    : ($nextRequired !== null && $state['level'] >= $state['level_cap']
+                        ? __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => $nextRequired])
+                        : null),
             ];
         }
 

@@ -629,6 +629,7 @@ function hangarCarousel(config) {
                     fam.ap_spend = res.ap_spend;
                     fam.ap_for_levelup = res.ap_for_levelup;
                     fam.level_cap = res.level_cap;
+                    fam.ap_cap = res.ap_cap ?? null;
                     this.syncHangarResources(res);
                     const required = this.trainingBuildingGate[fam.level + 1];
                     fam.lock_reason =

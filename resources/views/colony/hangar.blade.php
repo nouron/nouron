@@ -444,8 +444,13 @@
                                     "blockedExpr" => "trainingLoading[fam.key]",
                                     "gateReasonExpr" => "fam.lock_reason",
                                     "tipId" => "training-tip",
+                                    "capTip" => __("pathdepth.ui_training_ap_cap_tooltip"),
                                 ])
                             </template>
+                            <p class="hangar-training-hint"
+                                x-show="fam.ap_cap && !fam.lock_reason && fam.ap_for_levelup > 0"
+                                x-text="@js(__("pathdepth.ui_training_ap_today")).replace(':spent', fam.ap_cap?.spent).replace(':cap', fam.ap_cap?.cap)">
+                            </p>
                             <p class="hangar-error" x-show="trainingError[fam.key]" x-text="trainingError[fam.key]"></p>
                         </article>
                     </template>

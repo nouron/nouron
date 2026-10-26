@@ -6,6 +6,8 @@ return [
     'error_not_met' => 'You have not met this character in this run yet.',
     'error_max_level' => 'The highest level has already been reached.',
     'error_building_level_cap' => 'The next level needs a higher building level.',
+    'error_training_ap_cap' => 'No more than :cap AP can go into this training today. It continues tomorrow — or with another family.',
+    'error_training_locked' => 'This training is still locked. The hangar needs a higher level.',
     'error_insufficient_ap' => 'Not enough AP available.',
 
     'error_conversation_ap_cap' => 'This character will not take more than :cap AP today. The conversation continues tomorrow — or talk to someone else.',
@@ -19,6 +21,8 @@ return [
     'ui_train' => 'Train',
     'ui_get_to_know' => 'Get to know',
     'ui_level_max' => 'Highest level',
+    'ui_training_ap_today' => 'Today :spent/:cap AP already put into this training',
+    'ui_training_ap_cap_tooltip' => 'This training takes only a limited amount of AP per Sol. It continues tomorrow — or with another family.',
     'ui_locked_building' => 'Locked: :building needs level :level.',
 
     // ── Cantina: nurture relationship

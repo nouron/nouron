@@ -3,6 +3,7 @@
 ## 2026-10-26
 
 - Feat: T43-G4/B4 — Cantina-Gespräche: je Figur drei Gesprächsgrößen (1/2/4 AP, Platzhalter) statt „1 AP je Klick“, Namen aus einem rotierenden Pool, Sol-Deckel je Figur (Platzhalter 6 AP, `conversation:<Figur>` im gemeinsamen `DailyApCapService`, Fehlercode `conversation_ap_cap`).
+- Feat: T43-G2/G3 — Hangar-Training: je Familie und Sol nur begrenzt AP einzahlbar (Platzhalter 4, Anzeige „Heute schon n/4 AP“, gemeinsamer Sol-Deckel-Dienst), und Familien schalten nach Hangarstufe frei (Erkundung/Bergung Stufe 1, Versorgung/Handel 2, Schutz 3); gesperrte Familien sind ausgegraut mit Grund. Siehe `docs/game-reference.md` §6b.
 
 ## 2026-10-25
 

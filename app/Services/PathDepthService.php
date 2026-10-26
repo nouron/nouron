@@ -24,12 +24,16 @@ class PathDepthService
     ) {}
 
     /**
-     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool}
+     * ap_cap: per-Sol training limit of a family (null = rule off / not a family);
+     * unlock_level / locked_until: hangar level a family needs / that level while it is still locked.
+     *
+     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, ap_cap:array{cap:int, spent:int, remaining:int}|null, unlock_level:int|null, locked_until:int|null}
      */
     public function state(int $colonyId, string $kind, string $key): array
     {
         $row = $this->row($colonyId, $kind, $key);
         $level = $row !== null ? (int) $row->level : 0;
+        $unlock = $kind === self::KIND_FAMILY ? $this->unlockLevel($key) : null;
 
         return [
             'level' => $level,
@@ -37,6 +41,9 @@ class PathDepthService
             'ap_for_levelup' => $level >= $this->maxLevel() ? 0 : (int) config("path_depth.levelup_ap.{$kind}.".($level + 1)),
             'level_cap' => $this->levelCap($colonyId, $kind),
             'met' => $kind === self::KIND_FAMILY || $key === self::ALWAYS_MET || $row !== null,
+            'ap_cap' => $kind === self::KIND_FAMILY ? $this->dailyApCap->state($colonyId, self::capKey($key), $this->trainingCap()) : null,
+            'unlock_level' => $unlock,
+            'locked_until' => $unlock !== null && $this->hangarLevel($colonyId) < $unlock ? $unlock : null,
         ];
     }
 
@@ -64,9 +71,9 @@ class PathDepthService
     }
 
     /**
-     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, leveled_up:bool, points:int}
+     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, ap_cap:array{cap:int, spent:int, remaining:int}|null, unlock_level:int|null, locked_until:int|null, leveled_up:bool, points:int}
      *
-     * @throws GameRuleException unknown_entity|not_met|max_level|building_level_cap|insufficient_ap|conversation_ap_cap
+     * @throws GameRuleException unknown_entity|not_met|training_locked|max_level|building_level_cap|training_ap_cap|conversation_ap_cap|insufficient_ap
      */
     public function invest(int $colonyId, string $kind, string $key, int $points = 1): array
     {
@@ -76,6 +83,9 @@ class PathDepthService
 
             if (! $state['met']) {
                 throw $this->error('not_met');
+            }
+            if ($state['locked_until'] !== null) {
+                throw $this->error('training_locked');
             }
             if ($state['level'] >= $this->maxLevel()) {
                 throw $this->error('max_level');
@@ -88,6 +98,10 @@ class PathDepthService
             if ($kind === self::KIND_CHARACTER && $points >= 1
                 && $this->dailyApCap->wouldExceed($colonyId, self::conversationCapKey($key), $this->conversationCap(), $points)) {
                 throw $this->error('conversation_ap_cap', ['cap' => $this->conversationCap()]);
+            }
+            if ($kind === self::KIND_FAMILY
+                && $this->dailyApCap->wouldExceed($colonyId, self::capKey($key), $this->trainingCap(), max(1, $points))) {
+                throw new GameRuleException('training_ap_cap', __('pathdepth.error_training_ap_cap', ['cap' => $this->trainingCap()]));
             }
             $bypass = (bool) config('game.bypass.ap_checks');
             if ($points < 1 || (! $bypass && $this->advisorService->getAvailableActionPoints($colonyId) < $points)) {
@@ -108,6 +122,10 @@ class PathDepthService
             if ($leveledUp) {
                 $level++;
                 $apSpend = 0;
+            }
+
+            if ($kind === self::KIND_FAMILY) {
+                $this->dailyApCap->record($colonyId, self::capKey($key), $points);
             }
 
             DB::table('colony_path_levels')->updateOrInsert(
@@ -212,6 +230,35 @@ class PathDepthService
         }
 
         return null;
+    }
+
+    public static function capKey(string $family): string
+    {
+        return 'training:'.$family;
+    }
+
+    /** Per-Sol AP limit per family (path_depth.training_ap_cap_per_sol.base), null = rule off. */
+    public function trainingCap(): ?int
+    {
+        $base = config('path_depth.training_ap_cap_per_sol.base');
+
+        return $base === null ? null : (int) $base;
+    }
+
+    /** Hangar level a family needs before it can be trained; null for unmapped keys. */
+    public function unlockLevel(string $family): ?int
+    {
+        $level = config("path_depth.family_unlock_hangar_level.{$family}");
+
+        return $level === null ? null : (int) $level;
+    }
+
+    private function hangarLevel(int $colonyId): int
+    {
+        return (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', (int) config('path_depth.buildings.'.self::KIND_FAMILY))
+            ->max('level') ?? 0);
     }
 
     private function maxLevel(): int
