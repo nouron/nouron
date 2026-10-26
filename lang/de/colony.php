@@ -801,4 +801,10 @@ return [
     'find_medium_desc' => 'Ein deutliches Signal: hier liegt einiges, das sich zu bergen lohnt.',
     'find_large_desc' => 'Ein starkes Signal: hier liegt viel, aber es ist schwer zu bergen.',
     'find_false' => 'Fehlalarm',
+    // TODO content-writer (T43-C5/C8)
+    'site_marker_tooltip' => 'Im Bau :spent/:total AP',
+    'reason_ap' => 'Kein freier Bau-AP',
+    'reason_colonists' => 'Zu wenige freie Kolonisten',
+    'reason_regolith' => 'Zu wenig Regolith',
+    'reason_werkstoffe' => 'Zu wenig Werkstoffe',
 ];

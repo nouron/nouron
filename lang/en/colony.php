@@ -802,4 +802,10 @@ return [
     'find_medium_desc' => 'A clear signal: there is something here worth salvaging.',
     'find_large_desc' => 'A strong signal: plenty lies here, but it is heavy to recover.',
     'find_false' => 'False alarm',
+    // TODO content-writer (T43-C5/C8)
+    'site_marker_tooltip' => 'Under construction :spent/:total AP',
+    'reason_ap' => 'No free construction AP',
+    'reason_colonists' => 'Too few free colonists',
+    'reason_regolith' => 'Not enough regolith',
+    'reason_werkstoffe' => 'Not enough alloys',
 ];

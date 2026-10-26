@@ -258,7 +258,8 @@ class PathBuildingGateTest extends TestCase
         $this->assertMatchesRegularExpression('/canPlaceBuilding\(b\)\s*\{[^}]*b\.locked[^}]*canAffordBuilding\(b\)/s', $js);
         $this->assertMatchesRegularExpression('/match && !match\.locked/', $js);
         $this->assertStringContainsString('@click="canPlaceBuilding(b) && selectPendingBuilding(b)"', $blade);
-        $this->assertStringContainsString('x-text="b.locked_reason"', $blade);
+        $this->assertStringContainsString('buildMissingReasons(b)', $blade);
+        $this->assertStringContainsString("{ kind: 'locked', text: b.locked_reason }", $js);
     }
 
     public function test_menu_unlocks_the_next_path_building_at_the_next_cc_level(): void

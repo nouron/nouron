@@ -3598,4 +3598,56 @@ dialog[x-ref="discoveryDialog"] {
         width: 90px;
         height: 110px;
     }
+/* map construction + locked reasons */
+
+/* C5: dashed inset outline on tiles with a running construction site. */
+.tile-site-marker {
+    fill: none;
+    stroke: #f59e0b;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    stroke-linejoin: round;
+    opacity: 0.9;
+}
+
+/* C8: a locked build card keeps its reason chips fully readable; only the rest dims. */
+.building-list-item--disabled {
+    opacity: 1;
+}
+
+.building-list-item--disabled .building-list-row:not(.building-list-row--costs) {
+    opacity: 0.5;
+}
+
+.building-list-item--disabled .building-list-row--costs > :not(.building-list-chip--missing) {
+    opacity: 0.55;
+}
+
+.building-list-chip--missing {
+    color: #a32020;
+    background: #fdecec;
+    border-color: #e8a8a8;
+}
+
+.building-list-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.building-list-reason {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #a32020;
+    background: #fdecec;
+    border: 1px solid #e8a8a8;
+    border-radius: 10px;
 }

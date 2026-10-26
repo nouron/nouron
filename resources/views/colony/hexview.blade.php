@@ -79,6 +79,11 @@
                 buildModeHint: '{{ __("colony.build_mode_hint") }}',
                 noBuildings: '{{ __("colony.no_buildings") }}',
                 constructionSite: '{{ __("colony.construction_site") }}',
+                siteMarkerTooltip: @json(__("colony.site_marker_tooltip")),
+                reasonAp: @json(__("colony.reason_ap")),
+                reasonColonists: @json(__("colony.reason_colonists")),
+                reasonRegolith: @json(__("colony.reason_regolith")),
+                reasonWerkstoffe: @json(__("colony.reason_werkstoffe")),
                 discoveryTitle: '{{ __("colony.discovery_title") }}',
                 discoveryDismiss: '{{ __("colony.discovery_dismiss") }}',
                 harvesterMoveTip: @json(__("colony.onboarding_trigger_harvester_move")),
@@ -492,6 +497,7 @@
                                         </div>
                                         <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"
+                                                :class="{ 'building-list-chip--missing': b.supply_cost > freeSupply }"
                                                 x-text="@js(__("colony.building_needs_colonists", ["count" => ":count"])).replace(':count', b.supply_cost)"></span>
                                             <span class="building-list-supply" x-show="(b.colonists_gain ?? 0) > 0"
                                                 x-text="@js(__("colony.building_gives_colonists", ["count" => ":count"])).replace(':count', b.colonists_gain)"></span>
@@ -499,6 +505,10 @@
                                              total first, breakdown next to it. --}}
                                             <span class="building-list-cost"
                                                 x-show="b.placement_cost && b.placement_cost[3]"
+                                                :class="{
+                                                    'building-list-chip--missing': (b.placement_cost?.[3] ?? 0) >
+                                                        regolith
+                                                }"
                                                 x-text="`${b.placement_cost?.[3]} Rg`"></span>
                                             <span class="building-list-cost-breakdown"
                                                 x-show="b.build_cost && b.build_cost[3] && b.first_level_regolith > 0"
@@ -508,8 +518,15 @@
                                                 x-text="`${b.build_cost?.[4]} Wk`"></span>
                                         </div>
                                         <p class="building-list-notice" x-show="b.notice" x-text="b.notice"></p>
-                                        <p class="building-list-notice" x-show="b.locked_reason"
-                                            x-text="b.locked_reason"></p>
+                                        <ul class="building-list-reasons" x-show="buildMissingReasons(b).length">
+                                            <template x-for="r in buildMissingReasons(b)" :key="r.kind">
+                                                <li class="building-list-reason building-list-reason--missing"
+                                                    :class="'building-list-reason--' + r.kind">
+                                                    <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
+                                                    <span x-text="r.text"></span>
+                                                </li>
+                                            </template>
+                                        </ul>
                                     </li>
                                 </template>
                             </ul>

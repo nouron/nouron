@@ -221,6 +221,7 @@ function colonyHexView(config) {
                 criticalThresholdPct: this.criticalThresholdPct,
                 conditionTone: (building) => this.conditionTone(building),
                 relocateApPerHex: this.relocateApPerHex,
+                siteMarkerTooltip: this.i18n.siteMarkerTooltip ?? '',
                 panState: this._panState,
                 regolithFallbackTiles: this.regolithFallbackTiles,
                 regolithFallbackTileHint: this.i18n.regolithFallbackTileHint ?? '',
@@ -528,7 +529,7 @@ function colonyHexView(config) {
                     // No tiles payload (non-CC building), but the tile badge is
                     // level-dependent (construction site vs. built) — redraw so a
                     // finished building shows without a page refresh.
-                    if (res.leveled_up) this.$nextTick(() => this.redrawGrid());
+                    this.$nextTick(() => this.redrawGrid());
                 }
             } else {
                 if (res.error === 'building_ap_cap' && building.ap_cap) {
@@ -941,6 +942,21 @@ function colonyHexView(config) {
         canPlaceBuilding(b) {
             if (b.locked) return false;
             return this.canAffordBuilding(b);
+        },
+
+        // One entry per missing build requirement (T43-C8), so the card shows the real
+        // cause instead of a grey-out. Only shortfalls appear; a sufficient resource
+        // gets no entry. Server gates (CC level, Agrardom, path gate) arrive as locked_reason.
+        buildMissingReasons(b) {
+            const cost = b.placement_cost ?? b.build_cost;
+            const out = [];
+            if (b.locked_reason) out.push({ kind: 'locked', text: b.locked_reason });
+            if (this.apAvailable < 1) out.push({ kind: 'ap', text: this.i18n.reasonAp });
+            if ((b.supply_cost ?? 0) > this.freeSupply)
+                out.push({ kind: 'colonists', text: this.i18n.reasonColonists });
+            if ((cost?.[3] ?? 0) > this.regolith) out.push({ kind: 'regolith', text: this.i18n.reasonRegolith });
+            if ((cost?.[4] ?? 0) > this.werkstoffe) out.push({ kind: 'werkstoffe', text: this.i18n.reasonWerkstoffe });
+            return out;
         },
 
         // Build chip affordability: placing always costs exactly 1 AP
@@ -1829,6 +1845,43 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         }
     }
 
+    // Construction-site marker (T43-C5): dashed inset hex outline + small progress ring
+    // (top-right) with an "n/m AP" tooltip, for a placed level-0 building or a running upgrade.
+    if (building && isConstructionSite(building)) {
+        const inset = hexCorners(cx, cy, size * 0.84);
+        const dash = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        dash.setAttribute('points', inset.join(' '));
+        dash.setAttribute('class', 'tile-site-marker');
+        dash.setAttribute('pointer-events', 'none');
+        g.appendChild(dash);
+
+        const total = Math.max(1, building.ap_for_levelup ?? 1);
+        const spent = Math.min(total, building.ap_spend ?? 0);
+        const rr = 5;
+        const circ = 2 * Math.PI * rr;
+        const rx = cx + size * 0.38;
+        const ry = cy - size * 0.38;
+        const ring = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        ring.setAttribute('class', 'tile-site-marker__ring');
+        const track = svgCircle(rx, ry, rr, '#fff', '#f59e0b');
+        track.setAttribute('stroke-width', '1.5');
+        ring.appendChild(track);
+        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        arc.setAttribute('cx', rx);
+        arc.setAttribute('cy', ry);
+        arc.setAttribute('r', rr);
+        arc.setAttribute('fill', 'none');
+        arc.setAttribute('stroke', '#b45309');
+        arc.setAttribute('stroke-width', '3');
+        arc.setAttribute('stroke-dasharray', `${(circ * spent) / total} ${circ}`);
+        arc.setAttribute('transform', `rotate(-90 ${rx} ${ry})`);
+        ring.appendChild(arc);
+        const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        tip.textContent = (opts.siteMarkerTooltip ?? '').replace(':spent', spent).replace(':total', total);
+        ring.appendChild(tip);
+        g.appendChild(ring);
+    }
+
     // Event indicator dot (top-left, orange — only when deep-scanned)
     if (hasActiveEvent(tile)) {
         // Radius encodes the find size (small / medium / large) so they differ at a glance.
@@ -1891,6 +1944,12 @@ function buildFogDefs() {
 
 // Deep-scanned tile with something left to act on. A resolved Fehlalarm (find_false) has
 // no yield, so it must not keep the event marker/colour on the map.
+// A building counts as a construction site while it is unbuilt (level 0) or an upgrade is
+// underway (AP invested toward the next level) — same rule as the sidebar "Im Bau".
+function isConstructionSite(building) {
+    return building.level === 0 || (building.ap_spend ?? 0) > 0;
+}
+
 function hasActiveEvent(tile) {
     return !!tile.is_deep_scanned && !!tile.event_type && tile.event_type !== 'find_false';
 }
