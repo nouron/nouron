@@ -94,4 +94,35 @@ class HangarTrainingViewTest extends TestCase
         $this->assertSame('Trainieren', trans('pathdepth.ui_train', [], 'de'));
         $this->assertStringContainsString(substr(json_encode(__('pathdepth.ui_train'), 15), 1, -1), $html);
     }
+
+    public function test_panel_sits_above_the_bays(): void
+    {
+        $html = $this->page();
+
+        $this->assertLessThan(strpos($html, 'class="carousel-wrapper"'), strpos($html, 'class="hangar-training"'));
+    }
+
+    public function test_family_rows_carry_effect_numbers_from_config(): void
+    {
+        DB::table('colony_path_levels')->insert([
+            'colony_id' => self::COLONY_ID, 'kind' => 'mission_family', 'entity_key' => 'salvage',
+            'level' => 2, 'ap_spend' => 0,
+        ]);
+        $html = $this->page();
+        $per = (float) config('path_depth.yield_per_level');
+
+        $this->assertStringContainsString('"yield_now_pct":'.round($per * 2 * 100), $html);
+        $this->assertStringContainsString('"yield_next_pct":'.round($per * 3 * 100), $html);
+        $this->assertStringContainsString('"unlock_level":1', $html);
+        $this->assertStringContainsString(json_encode(__('missions.mission_salvage_sweep_name'), JSON_UNESCAPED_UNICODE), $html);
+        $this->assertStringContainsString(substr(json_encode(__('pathdepth.ui_training_effect'), 15), 1, -1), $html);
+    }
+
+    public function test_mission_dialog_shows_family_pill(): void
+    {
+        $html = $this->page();
+
+        $this->assertStringContainsString('hangar-mission-family', $html);
+        $this->assertStringContainsString(substr(json_encode(__('missions.family_pill'), 15), 1, -1), $html);
+    }
 }

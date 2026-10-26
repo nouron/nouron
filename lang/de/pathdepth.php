@@ -24,6 +24,12 @@ return [
     'ui_training_ap_today' => 'Heute schon :spent/:cap AP in dieses Training',
     'ui_training_ap_cap_tooltip' => 'Dieses Training nimmt pro Sol nur begrenzt AP auf. Morgen geht es weiter — oder bei einer anderen Familie.',
     'ui_locked_building' => 'Gesperrt: :building braucht Stufe :level.',
+    // TODO content-writer: effect lines of the Training panel (placeholder wording).
+    'ui_training_effect' => 'Ertrag +:pct % je Stufe auf Mengen-Belohnungen',
+    'ui_training_effect_now' => 'Jetzt +:now %, nächste Stufe +:next %',
+    'ui_training_effect_max' => 'Jetzt +:now % (Höchststufe)',
+    'ui_training_missions' => 'Gilt für: :list',
+    'ui_training_unlock' => 'Ab Hangar-Stufe :level',
 
     // ── Cantina: Beziehung pflegen
     'ui_relationship_title' => 'Beziehung pflegen',

@@ -44,6 +44,7 @@ function hangarCarousel(config) {
         // Training panel (path depth of mission families, T41)
         trainingFamilies: config.trainingFamilies ?? [],
         trainingMaxLevel: config.trainingMaxLevel ?? 5,
+        yieldPerLevelPct: config.yieldPerLevelPct ?? 0,
         trainingBuildingGate: config.trainingBuildingGate ?? {},
         trainingLoading: {},
         trainingError: {},
@@ -630,6 +631,12 @@ function hangarCarousel(config) {
                     fam.ap_for_levelup = res.ap_for_levelup;
                     fam.level_cap = res.level_cap;
                     fam.ap_cap = res.ap_cap ?? null;
+                    if (res.leveled_up) {
+                        // Mission rewards in the catalog are priced with the family level on the server; reload so
+                        // the displayed amounts stay equal to the paid ones.
+                        window.location.reload();
+                        return;
+                    }
                     this.syncHangarResources(res);
                     const required = this.trainingBuildingGate[fam.level + 1];
                     fam.lock_reason =

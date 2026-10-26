@@ -96,6 +96,9 @@ return [
     'reward_trust' => 'Vertrauen',
     'reward_loot_table' => 'Zufallsfund: :options',
     'reward_label' => 'Ertrag',
+    // TODO content-writer: family pill and yield hint in the mission dialog (placeholder wording).
+    'family_pill' => ':family · Stufe :level',
+    'family_yield_included' => 'Ertrag inkl. Familienbonus +:pct %',
     'error_find_self_salvage' => 'Ohne Hangar birgt die Kolonie Funde selbst.',
     'target_find_yield' => 'Fund :total Rg',
     'target_too_large' => 'zu groß für dieses Schiff',

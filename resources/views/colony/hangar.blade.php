@@ -28,6 +28,7 @@
             hangarMaxLevel: @json($hangarMaxLevel ?? 0),
             maxStatus: @json($maxShipStatus),
             trainingFamilies: @json($trainingFamilies ?? []),
+            yieldPerLevelPct: @json(round((float) config("path_depth.yield_per_level") * 100)),
             trainingMaxLevel: @json(config("path_depth.max_level")),
             trainingBuildingGate: @json(config("path_depth.building_gate")),
 
@@ -100,6 +101,13 @@
                 trainingMax: @json(__("pathdepth.ui_level_max")),
                 trainingLocked: @json(__("pathdepth.ui_locked_building", ["building" => __("buildings.hangar"), "level" => ":level"])),
                 trainingInvest: @json(__("pathdepth.ui_train")),
+                trainingEffect: @json(__("pathdepth.ui_training_effect")),
+                trainingEffectNow: @json(__("pathdepth.ui_training_effect_now")),
+                trainingEffectMax: @json(__("pathdepth.ui_training_effect_max")),
+                trainingMissions: @json(__("pathdepth.ui_training_missions")),
+                trainingToday: @json(__("pathdepth.ui_training_ap_today")),
+                familyPill: @json(__("missions.family_pill")),
+                familyYield: @json(__("missions.family_yield_included")),
             },
         };
     </script>
@@ -124,6 +132,65 @@
                 {{ __("colony.hangar_none_built") }}
             </p>
         @else
+            {{-- ── Training: path depth of mission families (T41), above apron and bays ─ --}}
+            <section class="hangar-training">
+                <h3 class="hangar-training-title">{{ __("pathdepth.ui_training_title") }}</h3>
+                <p class="hangar-training-hint">{{ __("pathdepth.ui_experience_label") }}</p>
+                <div class="hangar-training-grid">
+                    <template x-for="fam in trainingFamilies" :key="fam.key">
+                        <article class="hangar-training-card" :class="{ 'hangar-training-card--locked': fam.locked_until }">
+                            <header class="hangar-training-head">
+                                <strong x-text="fam.name"></strong>
+                                <span class="hangar-training-level"
+                                    x-text="i18n.trainingLevel.replace(':level', fam.level).replace(':max', trainingMaxLevel)"></span>
+                            </header>
+                            <div class="hangar-training-levelbar" aria-hidden="true">
+                                <span :style="{ width: (fam.level / trainingMaxLevel * 100) + '%' }"></span>
+                            </div>
+                            <p class="hangar-training-effect"
+                                :title="i18n.trainingMissions.replace(':list', fam.missions.join(', '))">
+                                <span x-text="i18n.trainingEffect.replace(':pct', fam.yield_per_level_pct)"></span>
+                                <span class="hangar-training-effect-now"
+                                    x-text="fam.yield_next_pct !== null ? i18n.trainingEffectNow.replace(':now', fam.yield_now_pct).replace(':next', fam.yield_next_pct) : i18n.trainingEffectMax.replace(':now', fam.yield_now_pct)"></span>
+                            </p>
+                            <p class="hangar-training-missions" x-text="fam.missions.join(' · ')"></p>
+                            <div class="hangar-training-action">
+                                <template x-if="fam.locked_until">
+                                    <p class="hangar-training-lock" x-text="fam.lock_reason"></p>
+                                </template>
+                                <template x-if="!fam.locked_until && fam.ap_for_levelup <= 0">
+                                    <p class="hangar-training-progress" x-text="i18n.trainingMax"></p>
+                                </template>
+                                <template x-if="!fam.locked_until && fam.ap_for_levelup > 0">
+                                    <div class="hangar-training-buy">
+                                        @include("partials.ap-upgrade-button", [
+                                            "row" => "fam",
+                                            "click" => "investTraining(fam)",
+                                            "btnLabel" => "i18n.trainingInvest",
+                                            "chip" => "build",
+                                            "blockedExpr" => "trainingLoading[fam.key]",
+                                            "gateReasonExpr" => "fam.lock_reason",
+                                            "tipId" => "training-tip",
+                                            "capTip" => __("pathdepth.ui_training_ap_cap_tooltip"),
+                                        ])
+                                        <p class="hangar-training-lock" x-show="fam.lock_reason" x-text="fam.lock_reason">
+                                        </p>
+                                        <p class="hangar-training-progress"
+                                            x-text="i18n.trainingProgress.replace(':spent', fam.ap_spend).replace(':needed', fam.ap_for_levelup)">
+                                        </p>
+                                        <p class="hangar-training-progress" x-show="fam.ap_cap"
+                                            x-text="fam.ap_cap ? i18n.trainingToday.replace(':spent', fam.ap_cap.spent).replace(':cap', fam.ap_cap.cap) : ''">
+                                        </p>
+                                    </div>
+                                </template>
+                                <p class="hangar-error" x-show="trainingError[fam.key]" x-text="trainingError[fam.key]">
+                                </p>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+            </section>
+
             {{-- ── Carousel ─────────────────────────────────────────────────────────── --}}
             <div class="carousel-wrapper">
 
@@ -207,8 +274,8 @@
 
                                             {{-- "Nexus anfragen" button — opens native <dialog> modal --}}
                                             <div class="hangar-nexus-request-wrap">
-                                                <button class="btn-hangar-nexus-request" @click="openRequestModal(slot.bay)"
-                                                    :disabled="loading[slot.bay]">
+                                                <button class="btn-hangar-nexus-request"
+                                                    @click="openRequestModal(slot.bay)" :disabled="loading[slot.bay]">
                                                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor"
                                                         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
                                                         aria-hidden="true" class="hangar-nexus-icon">
@@ -217,7 +284,8 @@
                                                     </svg>
                                                     <span x-text="i18n.nexusRequest"></span>
                                                 </button>
-                                                <div class="hangar-error" x-show="error[slot.bay]" x-text="error[slot.bay]">
+                                                <div class="hangar-error" x-show="error[slot.bay]"
+                                                    x-text="error[slot.bay]">
                                                 </div>
                                             </div>
 
@@ -419,43 +487,6 @@
                     </details>
                 </section>
             </template>
-
-            {{-- ── Training: path depth of mission families (T41) ───────────────── --}}
-            <section class="hangar-training">
-                <h3 class="hangar-training-title">{{ __("pathdepth.ui_training_title") }}</h3>
-                <p class="hangar-training-hint">{{ __("pathdepth.ui_experience_label") }}</p>
-                <div class="hangar-training-grid">
-                    <template x-for="fam in trainingFamilies" :key="fam.key">
-                        <article class="hangar-training-card">
-                            <header class="hangar-training-head">
-                                <strong x-text="fam.name"></strong>
-                                <span class="hangar-training-level"
-                                    x-text="i18n.trainingLevel.replace(':level', fam.level).replace(':max', trainingMaxLevel)"></span>
-                            </header>
-                            <p class="hangar-training-progress"
-                                x-text="fam.ap_for_levelup > 0 ? i18n.trainingProgress.replace(':spent', fam.ap_spend).replace(':needed', fam.ap_for_levelup) : i18n.trainingMax">
-                            </p>
-                            <template x-if="fam.ap_for_levelup > 0">
-                                @include("partials.ap-upgrade-button", [
-                                    "row" => "fam",
-                                    "click" => "investTraining(fam)",
-                                    "btnLabel" => "i18n.trainingInvest",
-                                    "chip" => "build",
-                                    "blockedExpr" => "trainingLoading[fam.key]",
-                                    "gateReasonExpr" => "fam.lock_reason",
-                                    "tipId" => "training-tip",
-                                    "capTip" => __("pathdepth.ui_training_ap_cap_tooltip"),
-                                ])
-                            </template>
-                            <p class="hangar-training-hint"
-                                x-show="fam.ap_cap && !fam.lock_reason && fam.ap_for_levelup > 0"
-                                x-text="@js(__("pathdepth.ui_training_ap_today")).replace(':spent', fam.ap_cap?.spent).replace(':cap', fam.ap_cap?.cap)">
-                            </p>
-                            <p class="hangar-error" x-show="trainingError[fam.key]" x-text="trainingError[fam.key]"></p>
-                        </article>
-                    </template>
-                </div>
-            </section>
         @endif {{-- hangar slots exist --}}
 
         {{-- ── Nexus-Request modal (native <dialog>, shared for all slots) ────── --}}
@@ -574,6 +605,8 @@
 
                             <div class="hangar-mission-card-head">
                                 <span class="hangar-mission-name" x-text="mission.name"></span>
+                                <span class="hangar-mission-family" x-show="mission.family"
+                                    x-text="mission.family ? i18n.familyPill.replace(':family', mission.family_name).replace(':level', mission.family_level) : ''"></span>
                             </div>
 
                             <p class="hangar-mission-desc" x-text="mission.desc"></p>
@@ -582,6 +615,9 @@
                             <div class="hangar-mission-yield">
                                 <span class="hangar-mission-yield-label" x-text="i18n.missionYield"></span>
                                 <strong class="hangar-mission-reward" x-text="mission.reward_label"></strong>
+                                <small class="hangar-mission-yield-note"
+                                    x-show="mission.family_scales && mission.family_level > 0"
+                                    x-text="i18n.familyYield.replace(':pct', Math.round(mission.family_level * yieldPerLevelPct))"></small>
                             </div>
 
                             <div class="hangar-mission-chips">

@@ -121,6 +121,8 @@ class HangarController extends BaseController
     private function trainingFamilies(int $colonyId): array
     {
         $gate = config('path_depth.building_gate');
+        $perLevel = (float) config('path_depth.yield_per_level');
+        $maxLevel = (int) config('path_depth.max_level');
         $families = [];
         foreach (array_keys(config('path_depth.families')) as $key) {
             $state = $this->pathDepthService->state($colonyId, PathDepthService::KIND_FAMILY, $key);
@@ -128,6 +130,14 @@ class HangarController extends BaseController
             $families[] = $state + [
                 'key' => $key,
                 'name' => __("pathdepth.family_{$key}"),
+                // Same formula as PathDepthService::yieldFactor (1 + yield_per_level * level), shown as percent.
+                'yield_per_level_pct' => round($perLevel * 100),
+                'yield_now_pct' => round($perLevel * $state['level'] * 100),
+                'yield_next_pct' => $state['level'] < $maxLevel ? round($perLevel * ($state['level'] + 1) * 100) : null,
+                'missions' => array_map(
+                    fn (string $missionKey) => __("missions.{$missionKey}_name"),
+                    config("path_depth.families.{$key}")
+                ),
                 'lock_reason' => $state['locked_until'] !== null
                     ? __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => $state['locked_until']])
                     : ($nextRequired !== null && $state['level'] >= $state['level_cap']
