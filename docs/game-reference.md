@@ -134,6 +134,8 @@ Alle Werte Platzhalter (Owner 2026-10-24), nicht per Bot gemessen. Quelle: `conf
 - **Gebäude-Deckel:** Stufe 1–2 ab Gebäudestufe 1, Stufe 3–4 ab 2, Stufe 5 ab 3.
 - **Hangar-Ertrag:** Faktor 1 + 0,05 × Familienstufe auf skalierbare Belohnungstypen.
 - **Familien:** exploration, salvage, supply, trade, protection (Zuordnung in `config/path_depth.php`).
+- **Training-Sol-Limit** (T43-G2, `path_depth.training_ap_cap_per_sol.base` = 4, **Platzhalter**: Annahme = Labor-Deckel, Höhe nach Messung; `null` schaltet aus): je Familie und Sol, Zählerschlüssel `training:<Familie>` in `colony_daily_ap` (`DailyApCapService`); Fehlercode `training_ap_cap`. Im Hangar gibt es keine zweckgebundenen Bonus-AP, daher keine Ausnahme.
+- **Freischaltung nach Hangarstufe** (T43-G3, `path_depth.family_unlock_hangar_level`, **Platzhalter**, Designer-Annahme vom Owner bestätigt): exploration und salvage ab Stufe 1, supply und trade ab 2, protection ab 3; Fehlercode `training_locked`. Zusätzlich gilt weiter der Gebäude-Deckel je Familienstufe.
 - **Cantina:** Investition erst, wenn die Figur im Lauf getroffen wurde (Tomas immer).
 - Nur AP aus dem gemeinsamen Pool; Ausführung von Mission/Gespräch kostet unverändert.
 - **Cantina-Gespräche** (T43-G4, **Platzhalter**, `path_depth.conversation_options`): kurz/normal/ausführlich = 1/2/4 AP; Fortschritt proportional zu den AP (kein Rabatt, kein Zusatzertrag); eine Option kostet nie mehr als der Rest bis zur nächsten Stufe. Namen je Größe aus einem Pool (`lang/*/pathdepth.php` → `conversation_names`), pro Sol rotierend.

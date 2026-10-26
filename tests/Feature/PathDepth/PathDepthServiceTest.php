@@ -30,7 +30,8 @@ class PathDepthServiceTest extends TestCase
         DB::table('colony_path_levels')->where('colony_id', self::COLONY_ID)->delete();
         $this->setBuilding(44, 3);
         $this->setBuilding(52, 3);
-        config(['game.bypass.ap_checks' => false]);
+        // Training AP limit is off here (covered by TrainingLimitTest).
+        config(['game.bypass.ap_checks' => false, 'path_depth.training_ap_cap_per_sol.base' => null]);
     }
 
     private function setBuilding(int $buildingId, int $level): void
@@ -120,7 +121,8 @@ class PathDepthServiceTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 44)->delete();
 
         $this->assertSame(0, $this->service->levelCap(self::COLONY_ID, 'mission_family'));
-        $this->assertRejected('building_level_cap', fn () => $this->service->invest(self::COLONY_ID, 'mission_family', self::FAMILY, 1));
+        // Without a hangar every family is still locked (T43-G3).
+        $this->assertRejected('training_locked', fn () => $this->service->invest(self::COLONY_ID, 'mission_family', self::FAMILY, 1));
     }
 
     public function test_invest_rejected_at_level_5(): void

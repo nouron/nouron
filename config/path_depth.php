@@ -24,6 +24,25 @@ return [
         'character' => 52,
     ],
 
+    // Training AP limit per mission family and Sol (T43-G2, owner 2026-10-25: "limited
+    // AP per Sol" also holds in the hangar). PLACEHOLDER: base 4 is an ASSUMPTION copied
+    // from game.knowledge_ap_cap_per_sol.base. null switches the rule off. Counter key
+    // "training:<family>" in App\Services\DailyApCapService. The hangar has no earmarked
+    // bonus AP (investBonus is lab-only), so no exemption is needed.
+    'training_ap_cap_per_sol' => [
+        'base' => 4,
+    ],
+
+    // Hangar level a mission family needs before it can be trained (T43-G3; designer
+    // assumption confirmed by the owner 2026-10-25). Placeholder pending balance.
+    'family_unlock_hangar_level' => [
+        'exploration' => 1,
+        'salvage' => 1,
+        'supply' => 2,
+        'trade' => 2,
+        'protection' => 3,
+    ],
+
     // Payout factor = 1 + yield_per_level * family level (scalable reward types only).
     'yield_per_level' => 0.05,
 

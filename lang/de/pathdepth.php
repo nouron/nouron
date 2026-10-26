@@ -7,6 +7,8 @@ return [
     'error_max_level' => 'Die höchste Stufe ist bereits erreicht.',
     'error_building_level_cap' => 'Die nächste Stufe braucht eine höhere Gebäudestufe.',
     'error_insufficient_ap' => 'Nicht genug AP verfügbar.',
+    'error_training_ap_cap' => 'Mehr als :cap AP lassen sich heute nicht in dieses Training stecken. Morgen geht es weiter — oder bei einer anderen Familie.',
+    'error_training_locked' => 'Dieses Training ist noch gesperrt. Der Hangar braucht eine höhere Stufe.',
 
     'error_conversation_ap_cap' => 'Mehr als :cap AP nimmt diese Figur heute nicht an. Morgen geht das Gespräch weiter — oder sprich mit jemand anderem.',
     'error_invalid_option' => 'Diese Gesprächsgröße gibt es nicht.',
@@ -19,6 +21,8 @@ return [
     'ui_train' => 'Trainieren',
     'ui_get_to_know' => 'Kennenlernen',
     'ui_level_max' => 'Höchste Stufe',
+    'ui_training_ap_today' => 'Heute schon :spent/:cap AP in dieses Training',
+    'ui_training_ap_cap_tooltip' => 'Dieses Training nimmt pro Sol nur begrenzt AP auf. Morgen geht es weiter — oder bei einer anderen Familie.',
     'ui_locked_building' => 'Gesperrt: :building braucht Stufe :level.',
 
     // ── Cantina: Beziehung pflegen
