@@ -100,6 +100,7 @@ class ConversationOptionsTest extends TestCase
 
     public function test_family_training_is_not_affected_by_conversation_cap(): void
     {
+        config(['path_depth.training_ap_cap_per_sol' => ['base' => null]]);
         DB::table('colony_buildings')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'building_id' => 44, 'instance_id' => 1],
             ['level' => 3, 'status_points' => 20.0, 'ap_spend' => 0]
