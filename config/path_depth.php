@@ -36,4 +36,13 @@ return [
         'trade' => ['mission_courier_run', 'mission_trade_convoy'],
         'protection' => ['mission_escort_convoy', 'mission_perimeter_patrol'],
     ],
+
+    // ── Cantina conversations (T43-G4). ALL VALUES ARE PLACEHOLDERS pending measurement.
+    // Conversation option key => AP spent (progress is proportional to AP; no bulk discount,
+    // no extra yield). Display names come from a pool in lang pathdepth.conversation_names.<key>.
+    'conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 4],
+
+    // AP one character accepts per Sol (shared counter DailyApCapService, key
+    // "conversation:<character>"). null switches the rule off. Earmarked bonus AP is exempt.
+    'conversation_ap_cap_per_sol' => ['base' => 6],
 ];

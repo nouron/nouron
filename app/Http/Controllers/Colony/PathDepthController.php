@@ -28,10 +28,15 @@ class PathDepthController extends BaseController
     public function invest(Request $request, string $kind, string $key): JsonResponse
     {
         $validated = $request->validate(['ap' => ['sometimes', 'integer', 'min:1']]);
+        $ap = (int) ($validated['ap'] ?? 1);
+        // Conversations are paid in configured option sizes only (client input is not trusted).
+        if ($kind === PathDepthService::KIND_CHARACTER && ! in_array($ap, array_map('intval', (array) config('path_depth.conversation_options')), true)) {
+            return response()->json(['ok' => false, 'error' => 'invalid_option', 'message' => __('pathdepth.error_invalid_option')], 422);
+        }
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
         try {
-            $result = $this->pathDepthService->invest($colony->id, $kind, $key, (int) ($validated['ap'] ?? 1));
+            $result = $this->pathDepthService->invest($colony->id, $kind, $key, $ap);
         } catch (GameRuleException $e) {
             return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()], 422);
         }
@@ -58,6 +63,8 @@ class PathDepthController extends BaseController
             'leveled_up' => $result['leveled_up'],
             'level_cap' => $result['level_cap'],
             'apAvailable' => $this->advisorService->getAvailableActionPoints($colony->id),
-        ]);
+        ] + ($kind === PathDepthService::KIND_CHARACTER
+            ? ['conversation' => $this->pathDepthService->conversation($colony->id, $key)]
+            : []));
     }
 }

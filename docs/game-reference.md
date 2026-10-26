@@ -136,6 +136,8 @@ Alle Werte Platzhalter (Owner 2026-10-24), nicht per Bot gemessen. Quelle: `conf
 - **Familien:** exploration, salvage, supply, trade, protection (Zuordnung in `config/path_depth.php`).
 - **Cantina:** Investition erst, wenn die Figur im Lauf getroffen wurde (Tomas immer).
 - Nur AP aus dem gemeinsamen Pool; Ausführung von Mission/Gespräch kostet unverändert.
+- **Cantina-Gespräche** (T43-G4, **Platzhalter**, `path_depth.conversation_options`): kurz/normal/ausführlich = 1/2/4 AP; Fortschritt proportional zu den AP (kein Rabatt, kein Zusatzertrag); eine Option kostet nie mehr als der Rest bis zur nächsten Stufe. Namen je Größe aus einem Pool (`lang/*/pathdepth.php` → `conversation_names`), pro Sol rotierend.
+- **Gesprächs-Deckel** (`path_depth.conversation_ap_cap_per_sol.base` = 6, **Platzhalter**, `null` = aus): AP je Figur und Sol, Zähler `conversation:<Figur>` in `colony_daily_ap`; Option über dem Rest-Deckel ist ausgegraut (Annahme: statt gekürzter Kosten); Fehlercode `conversation_ap_cap`.
 
 ---
 

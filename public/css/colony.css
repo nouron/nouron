@@ -3492,6 +3492,42 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0.25rem 0 0.5rem;
 }
 
+.bar-conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.bar-conversation-caption {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #666);
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.bar-conversation-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.875rem;
+    text-align: left;
+}
+
+.bar-conversation-btn--blocked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.bar-conversation-btn__name {
+    min-width: 0;
+}
+
 .bar-relationship-error {
     margin: 0.25rem 0 0;
     color: var(--pico-del-color);
