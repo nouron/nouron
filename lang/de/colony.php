@@ -388,6 +388,8 @@ return [
     // Tier-Varianten spiegeln config('game.bartender.ap_bonus_tiers') (0/5/15/30
     // Interaktionen -> 0/1/2/3 AP) und werden wärmer, je vertrauter Tomas den
     // Direktor kennt.
+    // TODO content-writer
+    'bartender_counter_role' => 'Barkeeper',
     'bartender_talk_button' => 'Mit Tomas reden',
     'bartender_dialog_intro' => 'Tomas hört zu, während er ein Glas poliert — bei ihm ist kein Wort verschwendet, aber jedes zählt.',
     'bartender_dialog_tier_0' => '„Erzähl mir, was dich umtreibt." Er nickt knapp und hört zu — mehr nicht, noch kennt er dich nicht gut genug.',

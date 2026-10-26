@@ -384,6 +384,8 @@ return [
     // "Talk to Tomas" — free interaction, no AP cost check. The 4 tier variants
     // mirror config('game.bartender.ap_bonus_tiers') (0/5/15/30 interactions ->
     // 0/1/2/3 AP) and grow warmer the better Tomas knows the Director.
+    // TODO content-writer
+    'bartender_counter_role' => 'Bartender',
     'bartender_talk_button' => 'Talk to Tomas',
     'bartender_dialog_intro' => 'Tomas listens while polishing a glass — no word wasted with him, but every one counts.',
     'bartender_dialog_tier_0' => '"Tell me what\'s weighing on you." He nods curtly and listens — nothing more, he doesn\'t know you well enough yet.',
