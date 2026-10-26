@@ -169,7 +169,6 @@ return [
     'error_max_level' => 'Maximalstufe bereits erreicht.',
     'error_knowledge_cc_gate' => 'Kommandozentrale zu niedrig für diese Kenntnisstufe — erst ausbauen.',
     'error_building_ap_cap' => 'Mehr Arbeit schafft die Baucrew an diesem Gebäude heute nicht. Morgen geht es weiter — oder an einem anderen Gebäude.',
-    // TODO content-writer: wording of the lab AP cap (T43-G1)
     'error_knowledge_ap_cap' => 'Mehr als :cap AP lassen sich heute nicht in diese Kenntnis stecken. Morgen geht es weiter — oder bei einer anderen Kenntnis.',
     'knowledge_ap_cap_tooltip' => 'Diese Kenntnis nimmt pro Sol nur begrenzt AP auf. Morgen geht es weiter — oder bei einer anderen Kenntnis.',
     'knowledge_ap_cap_today' => 'Heute schon :spent/:cap AP in diese Kenntnis',

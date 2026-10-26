@@ -28,7 +28,6 @@ return [
     'popup_sup_used_researches' => 'Arbeitsplätze: Forschung',
     'popup_sup_used_advisors' => 'Berater',
     'popup_sup_free' => 'Frei',
-    // TODO content-writer (T43-G8)
     'popup_sup_colonists' => 'Kolonisten',
     'popup_sup_employed' => 'davon beschäftigt',
     'popup_sup_unfilled' => 'Unbesetzte Arbeitsplätze',

@@ -27,7 +27,6 @@ return [
     'popup_sup_used_buildings' => 'Buildings',
     'popup_sup_used_researches' => 'Research',
     'popup_sup_used_advisors' => 'Advisors',
-    // TODO content-writer (T43-G8)
     'popup_sup_colonists' => 'Colonists',
     'popup_sup_employed' => 'of which employed',
     'popup_sup_unfilled' => 'Unfilled workplaces',

@@ -137,7 +137,6 @@ return [
         'building_placed' => ':name platziert.',
         'building_invested' => ':ap AP in :name investiert.',
         'building_repaired' => ':name repariert (:current / :max Zustand).',
-        // TODO content-writer: confirm wording (Hangar-Training / Cantina-Beziehung)
         'pathdepth_family' => 'in Training :name investiert.',
         'pathdepth_family_levelup' => 'in Training :name investiert. Stufe :level erreicht.',
         'pathdepth_character' => 'in Beziehung zu :name investiert.',

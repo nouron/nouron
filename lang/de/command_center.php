@@ -10,7 +10,7 @@ return [
     // Kolonisten-Zulage (Widget 2) — reuses colony.stipend_* strings (button/dialog
     // text was already defined for the old FAB/dialog, unchanged here).
 
-    // Kolonisten (T43-G8) // TODO content-writer
+    // Kolonisten (T43-G8)
     'widget_colonists_title' => 'Kolonisten',
     'widget_colonists_line' => ':colonists Kolonisten, davon :employed beschäftigt',
     'widget_colonists_free' => 'Frei: :free',
