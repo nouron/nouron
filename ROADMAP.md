@@ -93,10 +93,10 @@ Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und geh
   - [ ] **T43-C2** Wirkung des Trainings im UI zeigen (was bringt die nächste Stufe) (Pkt 14) — Klein
   - [ ] **T43-C3** Missionsauswahl („Mission wählen“): Missions-Level bzw. Familienstufe anzeigen (Pkt 20) — Klein
   - [x] **T43-C4** Cantina-Layout: Tomas als Barkeeper hinter der Bar statt unter dem Bild (Pkt 25) — Klein
-  - [ ] **T43-C5** Karte: laufende Baustelle optisch erkennbar (kleiner Hinweis am Feld) (Pkt 6) — Klein
+  - [x] **T43-C5** Karte: laufende Baustelle optisch erkennbar (kleiner Hinweis am Feld) (Pkt 6) — Klein
   - [ ] **T43-C6** Sidebar des freien Felds und der Gebäude optisch überarbeiten (Pkt 3, 7; nicht priorisiert) — Mittel
   - [ ] **T43-C7** Sol-Übersicht aufräumen; Details in der Kommandozentrale einsehbar (ausklappbar o. ä.) (Pkt 8) — Mittel
-  - [ ] **T43-C8** Gesperrte Gebäude: Grund (fehlende Kolonisten oder Regolith) auf den ersten Blick erkennbar, nicht nur Regolith; trifft auch den offenen Rest von T34 („nicht bezahlbar“ getrennt von „gesperrt“) (Pkt 22) — Klein
+  - [x] **T43-C8** Gesperrte Gebäude: Grund (fehlende Kolonisten oder Regolith) auf den ersten Blick erkennbar, nicht nur Regolith; trifft auch den offenen Rest von T34 („nicht bezahlbar“ getrennt von „gesperrt“) (Pkt 22) — Klein
   - **D) Protokoll (Nexus-Protokoll)**
   - [x] **T43-D1** ✅ 2026-10-25 Doppelte/überflüssige Infos entfernen: Fortschrittsklammer „(done / total AP)“ und „×n“-Zähler bei „AP n in <Gebäude> investiert“ streichen (Pkt 18; ui-specialist/backend-coder) — Klein
   - [x] **T43-D2** ✅ 2026-10-25 Hangar-Training-Investitionen ins Protokoll aufnehmen (Pkt 21; game-developer, TDD) — Klein
