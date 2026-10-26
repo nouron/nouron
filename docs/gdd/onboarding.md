@@ -78,7 +78,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 **Priorisierung: Der jeweils dringendste Zustand gewinnt.** Die Hinweise sind nach Dringlichkeit geordnet; wenn mehrere Bedingungen gleichzeitig zutreffen, gewinnt der Eintrag mit dem höchsten Rang:
 
-> Die Rangfolge folgt der Ziellinie für die Sol-1→4-Rampe: **Sol 1 Agrardom → Sol 2/3 Pfadgebäude → Sol 3/4 CC Lv2 → sofort Berater 2** (Budget-Rechnung in §16.5). Die Tabelle entspricht dem implementierten Stand (`OnboardingHintService::buildHintList`).
+> Die Rangfolge folgt der Ziellinie für die ersten Sole: **Sol 1 Agrardom → CC Lv2 → Pfadgebäude → Berater 2** (Budget-Rechnung in §16.5). Die Tabelle entspricht dem implementierten Stand (`OnboardingHintService::buildHintList`).
 
 | Rang | Key | Bedingung | Hinweistext (Kurzfassung) | Ziel-Link | Sol-Schwelle |
 |------|-----|-----------|---------------------------|-----------|--------------|
@@ -88,27 +88,30 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 4 | `hint_agrardome` | Harvester ≥ Lv1, kein Agrardom platziert, bezahlbar — **erstes Bauprojekt der Kolonie**, Pflicht-Gate für CC Lv2 | "Erstes Bauprojekt: Agrardom — heute platzieren, restliche AP hineinstecken." | `/colony/view?build=41` | **Sol 1** (`hint_no_agrardome_after_tick=0`) |
 | 5 | `hint_repair` | Gebäude (Level ≥ 1) **unter der Sichtbarkeits-Schwelle** (`game.repair.display_threshold`, 70 % der Max-SP) | "Ein Gebäude zeigt deutlichen Verschleiß — reparieren, bevor der Verfall teurer wird." | Colony-Screen | — (zustandsbasiert; greift durch Decay faktisch ab ~Sol 4, siehe §16.5) |
 | 6 | `hint_invest_site` | Aktive Baustelle (platziertes Level-0-Gebäude oder begonnener CC-Ausbau `ap_spend>0`), AP übrig, CC < Lv2 (danach Rente) | "AP nicht verfallen lassen — in die laufende Baustelle investieren." | Colony-Screen | — |
-| 7 | `hint_advisor_slot2` | CC ≥ Lv2, freier Slot **und** Pfadgebäude ≥ Lv1 (sonst liefe der Hire in `path_building_missing`) — bewusst **vor** den Pfad-Hints, damit nach CC Lv2 zuerst "Berater einstellen" kommt | "Berater-Slot 2 ist offen und das Pfadgebäude steht — Berater einstellen." | `/advisors` | — (sofort nach CC2) |
-| 8 | `hint_build_priority` | ≥ 2 von (Sciencelab/Hangar/Cantina) gleichzeitig baubar (Pfadwahl offen, s. u., bezahlbar) | "Mehrere Gebäude bereit — eines auswählen." | Colony-Screen | — |
+| 7 | `hint_advisor_slot2` | CC ≥ Lv2, freier Slot **und** das zugehörige Pfadgebäude steht (der Hangar zählt erst, wenn ein Schiff angekommen ist; sonst liefe der Hire in `path_building_missing`) — bewusst **vor** den Pfad-Hints, damit nach CC Lv2 zuerst "Berater einstellen" kommt | "Berater-Slot 2 ist offen und das dafür nötige Gebäude steht — den passenden Berater einstellen." (Text je Pfad: Analytiker, Raumfahrer oder Konsul) | `/advisors` | — (sofort nach CC2) |
+| 8 | `hint_build_priority` | Noch kein Pfadgebäude platziert und ≥ 2 von (Sciencelab/Hangar/Cantina) gleichzeitig baubar (Pfadwahl offen, s. u., bezahlbar) | "Cantina, Analytik-Labor und Hangar stehen zur Wahl — eines zuerst auswählen." | Colony-Screen | — |
 | 9 | `hint_6` | Pfadwahl offen, Housing ≥ Lv1, keine Cantina, bezahlbar | "Cantina noch nicht gebaut." | `/colony/view?build=52` | **Sol 2** (`hint_no_cantina_after_tick=1`) — gleichrangig mit `hint_analytik` und `hint_hangar_path` |
 | 10 | `hint_analytik` | Pfadwahl offen, kein Analytik-Labor, bezahlbar | "Analytik-Labor noch nicht gebaut." | `/colony/view?build=31` | **Sol 2** (`hint_no_analytik_after_tick=1`) |
 | 11 | `hint_hangar_path` | Pfadwahl offen, kein Hangar, bezahlbar | "Hangar noch nicht gebaut." | `/colony/view?build=44` | **Sol 2** (`hint_no_hangar_after_tick=1`) |
-| 12 | `hint_3` | **Zustandsbasiert:** Agrardom ≥ Lv1 **und** ein Pfadgebäude ≥ Lv1, CC < Lv2, CC-Ausbau noch nicht begonnen (`ap_spend=0` — sonst führt `hint_invest_site`) | "Agrardom und Pfadgebäude stehen — jetzt CC auf Level 2." | Colony-Screen | Sol 3 als Floor (`hint_cc_upgrade_after_tick=2`) |
+| 12 | `hint_3` | **Zustandsbasiert:** Agrardom ≥ Lv1, CC < Lv2, CC-Ausbau noch nicht begonnen (`ap_spend=0` — sonst führt `hint_invest_site`) | "Der Agrardom steht — jetzt die Kommandozentrale auf Level 2 ausbauen." (Text nennt Koloniezone, Beraterslot 2 und die freigeschalteten Pfadgebäude) | Colony-Screen | Sol 3 als Floor (`hint_cc_upgrade_after_tick=2`) |
 | 13 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — AP nutzen." | Colony-Screen | nur Sol 1 |
-| 14 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
+| 14 | `hint_4` | Analytik-Labor gebaut (sonst ist der Techtree gesperrt) und keine Kenntnis auf Level > 0 | "Noch keine Kenntnis auf Level 1 — im Techtree AP einer Kenntnis zuweisen." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
 | 15 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5`) |
 | 16 | `hint_spend_remaining_ap` | Mindestens ein **nutzbarer** AP-Pool ungenutzt (Forschung zählt nur mit gebautem Sciencelab, Wirtschaft nur mit gebauter Cantina, Navigation nur mit bezahlbarem Fog-Tile) — Pool mit den meisten Rest-AP gewinnt | "Noch AP übrig — investieren." | poolabhängig | — |
 | 17 | `hint_end_sol` | Fallback — greift nur wenn **kein nutzbarer AP-Pool** mehr übrig ist | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
+| 18 | `hint_encounter` | Die erste Gefahr (Sturm, Instabilität oder Seuche) ist eingetreten; bleibt aktiv, bis sie geschlossen wird | "Gebäude mit niedrigem Zustand sind anfälliger für Zwischenfälle — regelmäßige Reparatur zahlt sich doppelt aus." | Colony-Screen | — |
+| 19 | `hint_harvester_low_regolith` | Das Vorkommen unter dem Harvester ist unter den Warnanteil (`game.harvester.low_regolith_warning_pct`) gefallen | "Das Regolith-Vorkommen des Harvesters wird knapp — ein Ausweich-Vorkommen ist bereits erkundet, jetzt verlegen." | Colony-Screen | — |
+| 20 | `hint_find_flight` | Hangar-Halle ≥ Lv1 (die Drohne auf dem Vorfeld steht bereit) | "Ab jetzt holen Schiffe die Funde: kaum AP, dafür Flugzeit und Organika. Große Funde brauchen einen Frachter." | `/colony/hangar` | — |
 
 > **Rest-AP-Hinweis ehrlich:** `hint_spend_remaining_ap` empfiehlt „in ein Gebäude investieren“ nur, wenn das auch geht (Tages-Deckel nicht erreicht, Regolith für den nächsten Zyklus vorhanden oder schon bezahlt, Kommandozentrale-Stufe reicht). Sonst sagt er offen, was fehlt, oder verweist auf den Hangar-Pool. Ein Pool ohne irgendeine Verwendung gilt als blockiert und löst den Fallback `hint_end_sol` aus.
 >
 > **Fertigstellungs-Popup:** Wird erstmals ein Labor, Hangar, Cantina oder die Uplink-Station fertig, erscheint einmalig ein kurzes Popup, das erklärt, was das Gebäude jetzt freischaltet. Einmaligkeit läuft über die bestehende Liste der abgehakten Hints.
 
-> **Bau-Gate-Hinweis (wichtig für Implementierung):** Sobald der Spieler eines der drei Pfad-Gebäude gebaut hat, dürfen `hint_6`/`hint_analytik`/`hint_hangar_path` für die jeweils noch nicht erreichte CC-Stufe nicht feuern — sie greifen erst wieder, wenn `Anzahl gebauter Pfad-Gebäude < CC-Level − 1` zutrifft (siehe §13). Beispiel: Bei CC Lv2 und bereits 1 gebautem Pfad-Gebäude zeigen die beiden übrigen Hints (für die anderen zwei Pfad-Gebäude) **nicht mehr** "jetzt bauen", weil das Bau-Gate sie blockiert — stattdessen sollte ein noch zu definierender Hint-Text "Bei CC Lv3 verfügbar" angezeigt werden (kein Aktions-Link, reine Information), damit der Spieler nicht auf ein Gebäude klickt, das der Server ablehnt.
+> **Bau-Gate-Hinweis:** Die Pfad-Hints (`hint_6`/`hint_analytik`/`hint_hangar_path`) feuern nur, solange der Server das nächste Pfadgebäude annimmt: Der Agrardom ist platziert, die Kommandozentrale hat die Stufe, die die Pfadgebäude verlangen, und das Pfad-Gate der aktuellen CC-Stufe (Anzahl gebauter Pfadgebäude gegen CC-Level, siehe §13) ist nicht ausgeschöpft. Der Spieler wird so nie auf ein Gebäude geschickt, das der Server ablehnt.
 
 **Ergänzende Hinweise zur Tabelle:**
-- `hint_advisor_slot2` (Rang 7): Direktes Feedback auf den CC-Lv2-Ausbau — feuert garantiert in einen sofort besetzbaren Slot und **vor** den Pfad-Hints (sonst würde nach CC Lv2 zuerst "zweites Pfadgebäude bauen" genagt statt "Berater einstellen").
-- **"Pfadwahl offen"** (Gate der Ränge 8–11): Agrardom platziert **und** (noch kein Pfadgebäude platziert **oder** CC ≥ Lv2). Die Rampe will genau EIN Pfadgebäude vor CC Lv2 — solange das erste gebaut wird oder der CC-Ausbau aussteht, schweigen die anderen Pfad-Hints. Ab CC Lv2 dürfen sie wieder feuern.
+- `hint_advisor_slot2` (Rang 7): Feedback auf einen frei gewordenen, sofort besetzbaren Slot — feuert **vor** den Pfad-Hints (sonst würde zuerst "weiteres Pfadgebäude bauen" genagt statt "Berater einstellen").
+- **"Pfadwahl offen"** (Gate der Ränge 8–11): Agrardom platziert **und** CC mindestens auf der Stufe, die die Pfadgebäude verlangen (CC Lv2), **und** das Pfad-Gate der aktuellen CC-Stufe nimmt ein weiteres Pfadgebäude an. Solange der CC-Ausbau aussteht, schweigen alle Pfad-Hints; `hint_3` (Rang 12) führt den Spieler dorthin.
 - `hint_invest_site` (Rang 6) und `hint_explore` (Rang 13): lenken verbleibende AP in die aktive Baustelle bzw. in Erkundung, statt sie verfallen zu lassen.
 - `hint_build_priority` (Rang 8): Reine Strategie-Hinweisebene, kein Aktionslink zu einem einzelnen Gebäude — signalisiert nur, dass eine Wahl zwischen mehreren gleichwertig bereiten Gebäuden besteht.
 - `hint_end_sol` (Rang 17): Universeller Fallback, der verhindert, dass die Hint-Leiste je leer bleibt.
@@ -120,14 +123,14 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung zu Rang 5 (Reparieren — Lehr-Hint):** Alle drei Startgebäude starten beschädigt aber funktionsfähig. Dieser Schaden wird **nicht angezeigt**: Schadens-Badge, Statusfärbung und Lehr-Hint greifen erst unterhalb der Sichtbarkeits-Schwelle `game.repair.display_threshold`. Die Startbeschädigung ist damit ein **unsichtbarer Pacing-Timer**: Durch die unterschiedlichen Decay-Raten fällt der Harvester ~Sol 4 unter die Schwelle, das Wohnhabitat ~Sol 6, das CC ~Sol 8 — Repair-Lehrmomente tröpfeln gestaffelt ein, genau nach Abschluss der Sol-1–4-Bau-Rampe, wenn AP-Slack existiert. Ein Hint auf den Startschaden würde nur zum Verbrennen knapper AP einladen. Exakte SP bleiben in der Tile-Sidebar sichtbar — nichts wird versteckt, nur nicht aufgedrängt (§16.4-Transparenzprinzip). Der Hint **verschwindet beim ersten Reparieren-Klick** (dauerhaft dismissed). Der kritische Fall (Leveldown-Gefahr) wird vom separaten, nicht dismissbaren `hint_repair_urgent` (Rang 2) abgedeckt. Ein mechanisches Repair-Gate am Baumeister-Hire gibt es nicht: Es verletzt die Designlinie "Hints sind Hinweise, keine Gates" und würde im Urgent-Fall ohne angestellten Baumeister die einzige Rettungsaktion blockieren.
 
-> **Designentscheidung zu Rang 12 (CC-Lv2-Hint zustandsbasiert):** `hint_3` feuert erst, wenn Agrardom **und** ein Pfadgebäude fertig sind. Grund: CC Lv2 schaltet Beraterslot 2 frei, aber Anheuern in Slot 2–4 braucht ein gebautes Pfadgebäude — wer CC Lv2 vor dem Pfadgebäude baut, sitzt auf einem leeren Slot. Mit dieser Reihenfolge zahlt sich CC Lv2 im selben Sol aus. `hint_cc_upgrade_after_tick` ist nur ein Floor.
+> **Designentscheidung zu Rang 12 (CC-Lv2-Hint zustandsbasiert):** `hint_3` feuert, sobald der Agrardom (harte Voraussetzung für CC Lv2) fertig ist. CC Lv2 schaltet die Pfadgebäude und Beraterslot 2 frei; der Hint führt den Spieler damit in die Pfadwahl. Er wartet nicht auf ein Pfadgebäude, da diese selbst CC Lv2 verlangen. `hint_cc_upgrade_after_tick` ist nur ein Floor.
 
 > **Designentscheidung zu Rang 1 — "Baumeister zuerst" ist gewollt:** `hint_1` hat keine Tick-Schwelle und keine Alternative und verweist ausschließlich auf den Baumeister. Das ist beabsichtigt. Baumeister/AP ist die strukturell einzige Ressource, die in Sol 1 *alles* andere freischaltet — Wohnraum, Harvester-Verlegung, CC-Ausbau, später jedes Gebäude. Ohne AP-Hebel bleibt der Spieler in Sol 1 handlungsarm, unabhängig vom späteren Pfad. Ein Spieler, der bewusst zuerst Konsul oder Analytiker einstellen will, kann das jederzeit tun — `hint_1` ist dismissable (pro Hint-Typ) und blockiert keine Aktion, er ist der dauerhaft höchstrangige *Hinweis*, kein Gate. Eine *nahegelegte* Reihenfolge ist erlaubt, solange sie nicht erzwungen wird. Echte Wahlfreiheit setzt mit der Pfadwahl ab Sol 2 ein; Sol 1 ist ein linearer Bau-/Erkundungs-Einstieg.
 
 > **Designentscheidung — Sol-1-Fokus: Agrardom zuerst, Pfadwahl ab Sol 2.** Sol 1 gehört nicht dem CC, sondern dem Agrardom; sonst versinken die AP im CC und der Beraterslot nach CC Lv2 bleibt leer.
 > - `hint_no_agrardome_after_tick = 0` → der Agrardom ist das **erste Bauprojekt der Kolonie** (Sol 1): platzieren + Rest-AP investieren, fertig Sol 2. Er ist Pflicht-Gate für CC Lv2 und serverseitige Voraussetzung für alle Pfadgebäude.
-> - `hint_no_cantina/analytik/hangar_after_tick = 1` → **Pfadwahl ab Sol 2** (sobald der Agrardom platziert ist). Kein Pfad hat strukturellen Vorlauf.
-> - CC Lv2 folgt **nach** dem ersten Pfadgebäude (zustandsbasiertes `hint_3`, s. o.) — so ist garantiert, dass der frisch freigeschaltete Beraterslot 2 sofort besetzbar ist.
+> - `hint_no_cantina/analytik/hangar_after_tick = 1` → **Pfadwahl ab Sol 2** (sobald der Agrardom platziert ist und CC Lv2 steht). Kein Pfad hat strukturellen Vorlauf.
+> - CC Lv2 folgt auf den Agrardom (zustandsbasiertes `hint_3`, s. o.) und schaltet die Pfadgebäude frei.
 > - `hint_4` (Kenntnis fehlt, Sol 9) und `hint_5` (Vertrauen kritisch, Sol 6) liegen weit dahinter und tangieren die Rampe nicht.
 
 > **Designentscheidung — echte, gleichwertige Wahl zwischen drei Pfaden (Sciencelab, Hangar, Cantina).** Alle drei Pfad-Hints stehen auf derselben Tick-Schwelle. Keiner hat strukturellen Vorlauf — alle drei werden, sobald ihre Prerequisites (Agrardom platziert für alle drei; Cantina zusätzlich Housing≥Lv1) erfüllt sind, gleichzeitig "bereit". Sobald der Spieler eines gebaut hat, verschwindet dessen Hint dauerhaft; `hint_build_priority` (Rang 8) signalisiert die Wahlsituation, solange ≥ 2 gleichzeitig bereit sind.
@@ -152,25 +155,21 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 **Trigger:** Der Pulse-Indikator wird ausschließlich durch denselben Zustandscheck wie das Hint-System gesteuert. Er zeigt auf genau die Kachel oder den Tile, auf den der aktive Hinweis verweist. Kein Pulse ohne zugehörigen Hint.
 
-**Konkrete Darstellung (Phase 3e):**
+**Konkrete Darstellung (Koloniekarte):** Nur diese Hints setzen einen Pulse. Alle übrigen Hints (insbesondere `hint_end_sol` und die Bau-Hints) pulsen nichts; ihr Ziel ist der Aktions-Link der Hint-Leiste.
 
-| Hint-Rang | Pulsierendes Element |
-|-----------|----------------------|
-| 1 (kein Baumeister) | Baumeister-Slot im Berater-Screen |
-| 3 (Harvester in Colony-Zone) | Harvester-Tile auf Koloniekarte + Ziel-Ring-2-Tile (2,0) |
-| 5 (Reparieren, < 70 % SP) | betroffenes Gebäude-Tile (gleiche Schwelle wie die Schadensanzeige, `game.repair.display_threshold`) |
-| 6 (Baustelle investieren) | aktive Baustelle (Level-0-Tile) bzw. CC-Tile bei begonnenem CC-Ausbau |
-| 9 (keine Cantina) | Bau-Einstieg für die Cantina in der Kolonieansicht (Ziel des Hint-Links) |
-| 11 (kein Hangar) | Bau-Einstieg für den Hangar in der Kolonieansicht (Ziel des Hint-Links) |
-| 12 (CC Level < 2) | CC-Tile auf Koloniekarte |
-| 14 (kein Wissen) | Analytik-Labor: Bau-Einstieg in der Kolonieansicht (wenn noch nicht gebaut), sonst erste verfügbare Kenntnis-Kachel im Techtree |
-| 15 (Vertrauen < -20) | Bau-Einstieg des ersten verfügbaren positiven Vertrauensgebäudes in der Kolonieansicht |
+| Hint (Rang) | Pulsierendes Element |
+|-------------|----------------------|
+| `hint_repair_urgent` (2) | das Gebäude-Tile an der Stufenverlust-Grenze (höchstens 15 % der Max-SP) |
+| `hint_2` (3, Harvester in Colony-Zone) | Harvester-Tile auf der Koloniekarte |
+| `hint_repair` (5, Reparieren, < 70 % SP) | betroffenes Gebäude-Tile (gleiche Schwelle wie die Schadensanzeige, `game.repair.display_threshold`) |
+| `hint_invest_site` (6, Baustelle investieren) | aktive Baustelle (Level-0-Tile) bzw. CC-Tile bei begonnenem CC-Ausbau |
+| `hint_3` (12, CC-Ausbau) | CC-Tile auf der Koloniekarte |
 
-> Eine Gebäude-Kachel im Techtree hat keine Bauaktion (§11). Ein Pulse auf eine Gebäude-Kachel würde auf ein Element zeigen, das die empfohlene Aktion gar nicht ausführen kann. Gebäude-Pulse liegen deshalb in der Kolonieansicht. Im Techtree pulsieren nur Kenntnis-Kacheln, weil dort geforscht wird.
+Im Verlegemodus pulst zusätzlich das aktuelle Harvester-Tile, unabhängig vom Hint.
+
+> Eine Gebäude-Kachel im Techtree hat keine Bauaktion (§11). Ein Pulse auf eine Gebäude-Kachel würde auf ein Element zeigen, das die empfohlene Aktion gar nicht ausführen kann. Gebäude-Pulse liegen deshalb in der Kolonieansicht.
 
 **Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
-
-> ⚠️ BALANCE CONCERN / DOKU-DRIFT: Diese Tabelle deckt nur einen Teil der Hint-Ränge ab (siehe § 16.2). Für `hint_repair_urgent`, `hint_advisor_slot2`, `hint_explore`, `hint_build_priority`, `hint_agrardome`, `hint_analytik`, `hint_hangar_path` und `hint_end_sol` ist nicht spezifiziert, welches Element pulsieren soll bzw. ob sie überhaupt einen Pulse erhalten. Muss vor dem nächsten UI-Pass mit `ui-specialist` geklärt werden — insbesondere `hint_end_sol` sollte vermutlich KEINEN Pulse auf eine Kachel legen, sondern (falls überhaupt visuell hervorgehoben) auf den „Sol beenden"-Button.
 
 **Abgrenzung zu bestehenden Indikatoren:** Der Tiefenscan-Pulse auf der Koloniekarte (§ 4a) ist ein anderer Indikator-Typ (orangefarbene Blitz-Animation). Onboarding-Pulse ist blau-weißlich — visuell eindeutig unterscheidbar.
 

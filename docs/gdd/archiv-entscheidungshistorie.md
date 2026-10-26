@@ -24,6 +24,17 @@ Aus dem GDD ausgelagerte Begründungen zu Vorgängerregeln. Das GDD beschreibt n
 - **Verpflegung / Kolonisten (Owner 2026-10-25):** 1 Organika versorgt 1 Kolonisten pro Sol; verpflegt werden alle Kolonisten. Kolonisten-Modell, Training/Gespräche, Labor-Deckel und Phase-2-Übergang am selben Tag.
 - **Weitere Datierungen:** Knappheitsordnung (2026-08-02); Direktimport (F5, 2026-09-08); Harvester konstanter Ertrag statt Rampe (2026-08-10, F4 2026-09-08); Reserve beim Platzieren (2026-09-24); Besetzungsanteil nur auf Rohstoffproduktion (2026-09-24); Kolonistengefahren-Kategorien (2026-09-03); Kenntnisse in jedem Run (F6, 2026-09-08); Regolith-Verkauf (T10, 2026-09-28); Vertrauens-Nachwirkung (2026-10-23).
 
+## GDD-Feinschliff dritter Durchgang (T43-H1, 2026-10-26)
+
+- **Supply-Cap-Quellen:** Der Kenntnis-Cap ersetzte im Playtest den Wohnbau: Sein Anteil machte bei Sol 39 über die Hälfte des Gesamt-Caps aus, während vom Wohnhabitat nur ein kleiner Teil der möglichen Stufen genutzt wurde (passt nicht zu „AP bremst"). Ein Zuzugsmodell für Kolonisten wurde verworfen (nicht deterministisch, schwer erkennbar, passt nicht zu einer kleinen Kolonie). Der Beitrag der Kommandozentrale wurde als „pro Level" dokumentiert, im Code aber immer flach gerechnet; die Doku folgt dem Code (T43-H2).
+- **Schiffe und Supply:** Supply als zweiter Limiter für Schiffe war redundant und thematisch inkonsistent (Schiffe sind räumlich getrennt und durch Hangar-Buchten und Tile-Budget begrenzt).
+- **Kolonisten-Framing:** Wurde mit dem Ratenmodell zusammen vorgezogen (A15); die Level-Multiplikation der Gebäude-Kosten war ohne Framing nicht intuitiv.
+- **Werkstoffe:** Eine Streichung (Credits übernehmen die Rolle) wurde geprüft und nicht umgesetzt, da Werkstoffe fünf eigene Rollen tragen. Abgekündigte Ressourcen: Wasser (ID 3), ENrg (6), LNrg (8), ANrg (10); per DB-Cleanup-Migration im Mai 2026 entfernt, Rassen entfielen.
+- **Berater-Slot 5 / Stratege:** Mit der Zurückstellung des Strategen entfiel Slot 5; die Leitstelle verlor ihre Funktion als Slot-Gate. Die Informationsleistungen des Strategen wanderten ins Kommandozentrale-Dashboard.
+- **Handelsvertrag:** Die passive, bedingungslose Konsul-Einnahme wurde gestrichen; Cantina-Begegnungspool, Kurzzeit-Kontrakt und Konsul-Wirkung sind so gebaut, dass sie diese Kopplung nicht wiederholen. `trade_blocked` und der Kanal „Nexus-Handelsschiffe" wurden gestrichen (Direktimport ist das Sicherheitsnetz).
+- **Phase-1-Startbestand:** Das Bild „mittleres Tile mit Frischwert plus Poor-Tile-Worst-Case" galt vor A44 H1/H2; seitdem wird der Startbestand empirisch am Median kalibriert.
+- **Onboarding-Hints (T43-H3):** `hint_3` (CC-Ausbau) wartete früher auf Agrardom und Pfadgebäude; seit Pfadgebäude CC Lv2 verlangen (T30), feuert er schon nach dem Agrardom. Die Pulse-Tabelle nannte Pulse für Baumeister-, Cantina-, Hangar-, Kenntnis- und Vertrauens-Hints, die der Code nie setzte.
+
 ## Wohnraumverlust (A14 / A2)
 
 - **2026-09-24 (Owner):** Der Decay-Multiplikator bei Überkapazität (`decay.overcap_factor`) wurde gestrichen. Er erhöhte die Instandhaltung aller Gebäude still und war die Quelle des Falls „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen". Zusätzlich hätte er die Kaskade befeuert: Wohnraum verloren, alles verfällt schneller, noch mehr Wohnraum verloren.
