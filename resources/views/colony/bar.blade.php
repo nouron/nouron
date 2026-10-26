@@ -123,7 +123,8 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
             "relationshipGate" => config("path_depth.building_gate"),
             "relationshipMaxLevel" => config("path_depth.max_level"),
             "relationshipI18n" => [
-                "invest" => __("pathdepth.ui_get_to_know"),
+                "capTip" => __("pathdepth.ui_conversation_cap_tooltip"),
+                "today" => __("pathdepth.ui_conversation_today", ["spent" => ":spent", "cap" => ":cap"]),
                 "level" => __("pathdepth.ui_level", ["level" => ":level", "max" => ":max"]),
                 "progress" => __("pathdepth.ui_invest_progress", ["spent" => ":spent", "needed" => ":needed"]),
                 "maxed" => __("pathdepth.ui_level_max"),
@@ -1022,15 +1023,24 @@ $offerFlavorKey =
                             </header>
                             <p class="bar-relationship-progress" x-text="relationProgressText(rel)"></p>
                             <template x-if="rel.ap_for_levelup > 0">
-                                @include("partials.ap-upgrade-button", [
-                                    "row" => "rel",
-                                    "click" => "investRelation(rel)",
-                                    "btnLabel" => "relationI18n.invest",
-                                    "chip" => "build",
-                                    "blockedExpr" => "relationLoading[rel.key]",
-                                    "gateReasonExpr" => "rel.lock_reason",
-                                    "tipId" => "relation-tip-" . $rel["key"],
-                                ])
+                                <div class="bar-conversation">
+                                    <p class="bar-conversation-caption">
+                                        {{ __("pathdepth.ui_get_to_know") }}
+                                        <span x-show="rel.conversation.cap" x-cloak
+                                            x-text="conversationTodayText(rel)"></span>
+                                    </p>
+                                    <template x-for="opt in rel.conversation.options" :key="opt.key">
+                                        <button type="button" class="bar-conversation-btn"
+                                            :class="{ 'bar-conversation-btn--blocked': conversationBlockReason(rel, opt) }"
+                                            :aria-disabled="conversationBlockReason(rel, opt) ? 'true' : null"
+                                            :title="conversationBlockReason(rel, opt)"
+                                            @click="if (!conversationBlockReason(rel, opt)) investRelation(rel, opt)">
+                                            <span class="bar-conversation-btn__name" x-text="opt.name"></span>
+                                            <span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true"
+                                                x-text="opt.ap + ' AP'"></span>
+                                        </button>
+                                    </template>
+                                </div>
                             </template>
                             <p class="bar-relationship-error" x-show="relationError[rel.key]"
                                 x-text="relationError[rel.key]"></p>
@@ -1079,8 +1089,20 @@ $offerFlavorKey =
                         .replace(':needed', rel.ap_for_levelup);
                 },
 
-                // Invests 1 AP in a character's next level (POST colony.pathdepth.invest).
-                async investRelation(rel) {
+                conversationTodayText(rel) {
+                    const cap = rel.conversation.cap;
+                    return cap ? this.relationI18n.today.replace(':spent', cap.spent).replace(':cap', cap.cap) : '';
+                },
+
+                // Why a conversation option cannot be chosen right now (null = free): level gate or day cap.
+                conversationBlockReason(rel, opt) {
+                    if (this.relationLoading[rel.key]) return this.relationI18n.capTip;
+                    if (rel.lock_reason) return rel.lock_reason;
+                    return opt.capped ? this.relationI18n.capTip : null;
+                },
+
+                // Spends the option's AP on a character (POST colony.pathdepth.invest, ap = configured cost).
+                async investRelation(rel, opt) {
                     if (this.relationLoading[rel.key]) return;
                     this.relationLoading[rel.key] = true;
                     this.relationError[rel.key] = '';
@@ -1093,7 +1115,7 @@ $offerFlavorKey =
                                 'Accept': 'application/json',
                             },
                             body: JSON.stringify({
-                                ap: 1
+                                ap: opt.cost
                             }),
                         });
                         const data = await res.json();
@@ -1102,6 +1124,7 @@ $offerFlavorKey =
                             rel.ap_spend = data.ap_spend;
                             rel.ap_for_levelup = data.ap_for_levelup;
                             rel.level_cap = data.level_cap;
+                            if (data.conversation) rel.conversation = data.conversation;
                             this.syncAp(data.apAvailable);
                             const required = (extra.relationshipGate ?? {})[rel.level + 1];
                             rel.lock_reason =

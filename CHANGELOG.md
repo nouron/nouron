@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26
+
+- Feat: T43-G4/B4 — Cantina-Gespräche: je Figur drei Gesprächsgrößen (1/2/4 AP, Platzhalter) statt „1 AP je Klick“, Namen aus einem rotierenden Pool, Sol-Deckel je Figur (Platzhalter 6 AP, `conversation:<Figur>` im gemeinsamen `DailyApCapService`, Fehlercode `conversation_ap_cap`).
+
 ## 2026-10-25
 
 - Feat: T44 — Spracheinstellung in den Einstellungen (Deutsch/Englisch), gespeichert pro Spieler in `user_preferences.locale` (neue Migration); ohne Auswahl gilt `APP_LOCALE`. `<html lang>` folgt der gewählten Sprache.

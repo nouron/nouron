@@ -122,4 +122,32 @@ class BarRelationshipViewTest extends TestCase
         $this->assertStringNotContainsString('von vorn', __('pathdepth.ui_relationship_run_hint'));
         $this->assertStringNotContainsString('starts over', trans('pathdepth.ui_relationship_run_hint', [], 'en'));
     }
+
+    public function test_conversation_options_replace_the_single_invest_button(): void
+    {
+        $this->met('smuggler', 0, 1);
+        $html = $this->page();
+
+        // Options travel with the row (names from the pool, effective AP cost, configured cost to send).
+        $this->assertStringContainsString('"conversation":{"cap":{"cap":'.config('path_depth.conversation_ap_cap_per_sol.base'), $html);
+        foreach (['short', 'normal', 'long'] as $key) {
+            $this->assertStringContainsString('"key":"'.$key.'"', $html);
+        }
+        $this->assertStringContainsString('x-for="opt in rel.conversation.options"', $html);
+        $this->assertStringNotContainsString('investRelation(rel)', $html);
+        $this->assertStringContainsString(
+            $this->jsonText(__('pathdepth.ui_conversation_cap_tooltip')),
+            $html
+        );
+    }
+
+    public function test_option_costs_are_clamped_to_the_rest_of_the_level(): void
+    {
+        config(['path_depth.conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 10]]);
+        $this->met('smuggler', 0, 1);
+        $html = $this->page();
+
+        // level 1 costs 4, 1 spent -> the long option shows 3 AP but still sends cost 10
+        $this->assertStringContainsString('"ap":3,"cost":10,"capped":false', $html);
+    }
 }

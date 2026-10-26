@@ -189,6 +189,7 @@ class BarController extends BaseController
             }
             $nextRequired = $gate[$state['level'] + 1] ?? null;
             $rows[] = $state + [
+                'conversation' => $this->pathDepthService->conversation($colonyId, $slug),
                 'key' => $slug,
                 'name' => $char['name'] ?? $char['role'],
                 'lock_reason' => $nextRequired !== null && $state['level'] >= $state['level_cap']
