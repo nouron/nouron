@@ -869,13 +869,12 @@ class HangarService
         $targetJson = json_encode(['q' => (int) $q, 'r' => (int) $r]);
 
         // Non-repeatable tile missions: each tile can only be claimed once per run.
-        if (($targetType === 'ruin_tile')
-            && DB::table('colony_hangar_missions')
-                ->where('colony_id', $colonyId)
-                ->where('destination', $missionKey)
-                ->whereIn('state', ['active', 'completed'])
-                ->where('target', $targetJson)
-                ->exists()) {
+        if (DB::table('colony_hangar_missions')
+            ->where('colony_id', $colonyId)
+            ->where('destination', $missionKey)
+            ->whereIn('state', ['active', 'completed'])
+            ->where('target', $targetJson)
+            ->exists()) {
             throw $this->ruleError('target_consumed', 'missions.error_target_consumed');
         }
 
@@ -891,6 +890,7 @@ class HangarService
     {
         $navPerSol = (int) config('missions.nav_ap_per_sol', 2);
         $shipsConfig = config('ships');
+        $pathDepth = app(PathDepthService::class);
 
         // Same for every mission this call — compute once, not per catalog entry.
         $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
@@ -960,11 +960,16 @@ class HangarService
                 ];
             }
 
+            $family = $pathDepth->familyOf($key);
             $entries[] = [
                 'key' => $key,
+                'family' => $family,
+                'family_name' => $family !== null ? __("pathdepth.family_{$family}") : null,
+                'family_level' => $family !== null ? $pathDepth->state($colonyId, PathDepthService::KIND_FAMILY, $family)['level'] : 0,
+                'family_scales' => $family !== null && MissionReward::scales($mission['reward']),
                 'name' => __("missions.{$key}_name"),
                 'desc' => __("missions.{$key}_desc"),
-                'reward_label' => MissionReward::label($mission['reward'], app(PathDepthService::class)->yieldFactor($colonyId, $key)),
+                'reward_label' => MissionReward::label($mission['reward'], $pathDepth->yieldFactor($colonyId, $key)),
                 'ships' => $mission['ships'],
                 'sol_distance' => $dist,
                 'duration' => 2 * $dist,

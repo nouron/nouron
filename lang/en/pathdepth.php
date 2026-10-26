@@ -24,6 +24,12 @@ return [
     'ui_training_ap_today' => 'Today :spent/:cap AP already put into this training',
     'ui_training_ap_cap_tooltip' => 'This training takes only a limited amount of AP per Sol. It continues tomorrow — or with another family.',
     'ui_locked_building' => 'Locked: :building needs level :level.',
+    // TODO content-writer: effect lines of the Training panel (placeholder wording).
+    'ui_training_effect' => 'Yield +:pct% per level on amount rewards',
+    'ui_training_effect_now' => 'Now +:now%, next level +:next%',
+    'ui_training_effect_max' => 'Now +:now% (highest level)',
+    'ui_training_missions' => 'Applies to: :list',
+    'ui_training_unlock' => 'From hangar level :level',
 
     // ── Cantina: nurture relationship
     'ui_relationship_title' => 'Nurture relationship',

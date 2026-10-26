@@ -119,6 +119,22 @@ class MissionFamilyYieldTest extends TestCase
         $this->assertSame(__('missions.reward_credits', ['amount' => $rewards['credits']]), $entry['reward_label']);
     }
 
+    public function test_catalog_entry_carries_family_and_level(): void
+    {
+        $this->setFamilyLevel('trade', 2);
+        $catalog = collect($this->app->make(HangarService::class)->getMissionCatalogFor(self::COLONY_ID));
+
+        $trade = $catalog->firstWhere('key', 'mission_courier_run');
+        $this->assertSame('trade', $trade['family']);
+        $this->assertSame(__('pathdepth.family_trade'), $trade['family_name']);
+        $this->assertSame(2, $trade['family_level']);
+        $this->assertTrue($trade['family_scales']);
+
+        // Fixed rewards do not scale: the family is shown, the factor hint is not.
+        $this->assertFalse(MissionReward::scales(['harvester_instance' => true]));
+        $this->assertTrue(MissionReward::scales(['loot_table' => [['credits' => 5]]]));
+    }
+
     public function test_label_scales_amounts_and_ranges_with_factor(): void
     {
         $this->assertSame(__('missions.reward_credits', ['amount' => 198]), MissionReward::label(['credits' => 180], 1.1));

@@ -89,9 +89,9 @@ Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und geh
   - [x] **T43-B5** Übergang Phase 1→2: Erfolgs-Feedback und mindestens ein sofort aufgedecktes Phase-2-Ziel, die übrigen per Fortschritt aufdecken (Pkt 16; Umsetzungsstand der Aufdeck-Logik vorher prüfen) — Klein–Mittel. **Entschieden 2026-10-25:** Erfolgsbildschirm am Übergang, erstes gezogenes Ziel von Anfang an offen, übrige verdeckt bis Fortschritt über null; Umsetzung: T43-G5.
   - [ ] **T43-B6** Pacing: Phase 2 schon in Sol 9 erreicht, zu früh; Skill `nouron-balance-pass` und `2026-10-16-phase1-pacing-entscheidungen.md` zuerst lesen, messen vor rechnen (Pkt 17; Bot-Batch nur nach Rückfrage) — Mittel
   - **C) UI (ui-specialist)**
-  - [ ] **T43-C1** Hangar-Screen aufräumen; Training am Schiff bei Vorfeld und Buchten anzeigen statt als eigenes Panel darunter (Pkt 9, 10) — Mittel
-  - [ ] **T43-C2** Wirkung des Trainings im UI zeigen (was bringt die nächste Stufe) (Pkt 14) — Klein
-  - [ ] **T43-C3** Missionsauswahl („Mission wählen“): Missions-Level bzw. Familienstufe anzeigen (Pkt 20) — Klein
+  - [x] **T43-C1** Hangar-Screen aufräumen; Training am Schiff bei Vorfeld und Buchten anzeigen statt als eigenes Panel darunter (Pkt 9, 10) — Mittel
+  - [x] **T43-C2** Wirkung des Trainings im UI zeigen (was bringt die nächste Stufe) (Pkt 14) — Klein
+  - [x] **T43-C3** Missionsauswahl („Mission wählen“): Missions-Level bzw. Familienstufe anzeigen (Pkt 20) — Klein
   - [x] **T43-C4** Cantina-Layout: Tomas als Barkeeper hinter der Bar statt unter dem Bild (Pkt 25) — Klein
   - [x] **T43-C5** Karte: laufende Baustelle optisch erkennbar (kleiner Hinweis am Feld) (Pkt 6) — Klein
   - [ ] **T43-C6** Sidebar des freien Felds und der Gebäude optisch überarbeiten (Pkt 3, 7; nicht priorisiert) — Mittel

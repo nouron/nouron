@@ -25,6 +25,18 @@ final class MissionReward
         'find_salvage' => 'reward_find_salvage',
     ];
 
+    /** True when the family yield factor changes the payout of this reward (amount parts, also inside a loot table). */
+    public static function scales(array $reward): bool
+    {
+        foreach ($reward['loot_table'] ?? [] as $option) {
+            if (self::scales($option)) {
+                return true;
+            }
+        }
+
+        return array_intersect_key($reward, self::AMOUNT_PARTS) !== [];
+    }
+
     /** @param array<string, mixed> $reward one reward definition from config/missions.php */
     public static function label(array $reward, float $factor = 1.0): string
     {
