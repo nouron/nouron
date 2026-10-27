@@ -528,14 +528,7 @@ class ColonyController extends BaseController
         $buildCost = $isHarvester ? [] : $this->buildingCostService->placementCost((int) $data['building_id']);
         $chargesBuildCost = ! $isHarvester;
 
-        // The first Harvester is the unchecked bootstrap (GDD §6 "Supply als Bau-Gate");
-        // the fresh second instance occupies supply like any other building.
-        if ($isSecondInstanceFreshPlacement
-            && ! config('game.bypass.supply_checks')
-            && $this->resourcesService->getFreeSupply($colony->id) < (int) ($building->supply_cost ?? 0)) {
-            return $this->fail('supply_limit', __('colony.onboarding_trigger_supply_full'));
-        }
-
+        // The Harvester is the unchecked bootstrap (GDD §6 "Kolonisten als Bau-Gate").
         if ($chargesBuildCost) {
             if (! config('game.bypass.resource_costs') && $buildCost !== []) {
                 $costs = [];
