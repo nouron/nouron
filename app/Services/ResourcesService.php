@@ -288,7 +288,7 @@ class ResourcesService
      * used.buildings includes the level-0 reserve (buildingWorkplaces()); used.reserved
      * is that share on its own, for display only (not to be added again).
      *
-     * @return array{cap: int, free: int, sources: array{cc: int, housing: int, knowledge: int}, used: array{buildings: int, reserved: int, researches: int, advisors: int}}
+     * @return array{cap: int, free: int, sources: array{cc: int, housing: int}, used: array{buildings: int, reserved: int, researches: int, advisors: int}}
      */
     public function getSupplyBreakdown(int $colonyId): array
     {
@@ -296,7 +296,7 @@ class ResourcesService
         if (! $colony) {
             return [
                 'cap' => 0, 'free' => 0,
-                'sources' => ['cc' => 0, 'housing' => 0, 'knowledge' => 0],
+                'sources' => ['cc' => 0, 'housing' => 0],
                 'used' => ['buildings' => 0, 'reserved' => 0, 'researches' => 0, 'advisors' => 0],
             ];
         }
@@ -317,8 +317,6 @@ class ResourcesService
             ->where('building_id', BuildingId::Housing->value)
             ->sum('level');
         $housingContribution = $housingLevel * (int) config('buildings.housingComplex.supply_cap', 8);
-
-        $knowledgeContribution = max(0, $cap - $ccContribution - $housingContribution);
 
         ['total' => $usedBuildings, 'reserved' => $reservedBuildings] = $this->buildingWorkplaces($colonyId);
 
@@ -341,14 +339,14 @@ class ResourcesService
         return [
             'cap' => $cap,
             'free' => $cap - ($usedBuildings + $usedResearches + $usedAdvisors),
-            'sources' => ['cc' => $ccContribution, 'housing' => $housingContribution, 'knowledge' => $knowledgeContribution],
+            'sources' => ['cc' => $ccContribution, 'housing' => $housingContribution],
             'used' => ['buildings' => $usedBuildings, 'reserved' => $reservedBuildings, 'researches' => $usedResearches, 'advisors' => $usedAdvisors],
         ];
     }
 
     /**
      * The supply cap a Sol stores for this colony (GDD §6), from its current state:
-     *   cap = CC_flat + housing_level × housing_cap + Σ(knowledge_cap_per_level), capped at cap_max
+     *   cap = CC_flat + housing_level × housing_cap capped at cap_max
      * 0 without a Command Center. GameTick::calculateSupply() persists this value.
      */
     public function calculateSupplyCap(int $colonyId): int
@@ -367,26 +365,9 @@ class ResourcesService
             ->where('building_id', BuildingId::Housing->value)
             ->sum('level');
 
-        $capPerLevel = config('game.supply.knowledge_cap_per_level', []);
-        $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
-        $knowledgeCap = 0;
-        if (! empty($knowledgeIds)) {
-            $levels = DB::table('colony_researches')
-                ->where('colony_id', $colonyId)
-                ->whereIn('research_id', $knowledgeIds)
-                ->pluck('level', 'research_id');
-
-            foreach ($levels as $level) {
-                for ($i = 1; $i <= min((int) $level, 5); $i++) {
-                    $knowledgeCap += $capPerLevel[$i] ?? 0;
-                }
-            }
-        }
-
         return min(
             (int) config('buildings.commandCenter.supply_cap', 10)
-                + $housingLevel * (int) config('buildings.housingComplex.supply_cap', 8)
-                + $knowledgeCap,
+                + $housingLevel * (int) config('buildings.housingComplex.supply_cap', 8),
             (int) config('game.supply.cap_max', 200)
         );
     }

@@ -93,14 +93,13 @@
                 );
         }
 
-        // Supply chip popup extra: cap composition (CC/Housing/Knowledge) + usage
+        // Supply chip popup extra: cap composition (CC/Housing) + usage
         // breakdown (Buildings/Researches/Advisors) — see ResourcesService::getSupplyBreakdown().
         $supplyPopupExtra = isset($supplyBreakdown)
             ? $breakdownRows(
                     array_filter([
                         __("resources.popup_sup_source_cc") => $supplyBreakdown["sources"]["cc"],
                         __("resources.popup_sup_source_housing") => $supplyBreakdown["sources"]["housing"],
-                        __("resources.popup_sup_source_knowledge") => $supplyBreakdown["sources"]["knowledge"],
                     ]),
                 ) .
                 '<div class="res-popup-extra"></div>' .

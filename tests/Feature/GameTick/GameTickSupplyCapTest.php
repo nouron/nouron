@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\GameTick;
 
+use App\Services\ResourcesService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -12,7 +13,7 @@ use Tests\TestCase;
  * GameTick step 7 — Supply cap recalculation.
  *
  * The supply cap is SET (not incremented) in user_resources.supply each tick.
- * Formula: CC_flat (10) + housing_level × 8 + Σ(knowledge_cap_per_level), max 200.
+ * Formula: CC_flat (10) + housing_level × 8, max 200.
  *
  * Covered scenarios:
  *  Happy path:
@@ -123,36 +124,24 @@ class GameTickSupplyCapTest extends TestCase
     }
 
     /**
-     * Knowledge researches contribute to supply cap via knowledge_cap_per_level config.
-     *
-     * If no knowledge entries exist in config this test is skipped (not an error).
+     * Knowledge levels are no supply cap source (GDD §6): housing is the only growth source.
      */
-    public function test_knowledge_cap_adds_to_supply(): void
+    public function test_knowledge_does_not_change_supply_cap(): void
     {
-        $knowledgeIds = collect(config('knowledge', []))->pluck('id')->toArray();
-        $capPerLevel = config('game.supply.knowledge_cap_per_level', []);
+        $knowledgeId = (int) collect(config('knowledge', []))->pluck('id')->first();
 
-        if (empty($knowledgeIds) || empty($capPerLevel)) {
-            $this->markTestSkipped('No knowledge or knowledge_cap_per_level config — cannot test knowledge supply bonus.');
-        }
-
-        $knowledgeId = $knowledgeIds[0];
-
-        // Give the colony a knowledge research at level 2 (uses cap levels 1 and 2)
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => $knowledgeId],
             ['level' => 2, 'status_points' => 20]
         );
 
-        $expectedBonus = ($capPerLevel[1] ?? 0) + ($capPerLevel[2] ?? 0);
-
         Artisan::call('game:tick', ['--tick' => 11104]);
 
         $supply = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('supply');
-        // base = 10 (CC) + 56 (housing sum=7 × 8) = 66, plus knowledge bonus
-        $expectedSupply = min(200, 66 + $expectedBonus);
-        $this->assertEquals($expectedSupply, $supply,
-            'Knowledge cap bonus must be added to the supply cap');
+        // 10 (CC) + 56 (housing sum=7 × 8); knowledge adds nothing
+        $this->assertEquals(66, $supply);
+        $this->assertEquals(66, app(ResourcesService::class)->calculateSupplyCap(self::COLONY_ID));
+        $this->assertArrayNotHasKey('knowledge', app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID)['sources']);
     }
 
     // ── Adversarial ────────────────────────────────────────────────────────────
