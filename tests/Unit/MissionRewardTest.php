@@ -61,7 +61,6 @@ class MissionRewardTest extends TestCase
     {
         $this->assertSame('2 Sektoren kartiert', MissionReward::label(['reveal_tiles' => 2]));
         $this->assertSame('+8 Forschungs-AP', MissionReward::label(['research_ap' => 8]));
-        $this->assertSame('Geborgener Harvester (beschädigt)', MissionReward::label(['harvester_instance' => true]));
     }
 
     public function test_every_catalog_mission_shows_every_configured_amount(): void

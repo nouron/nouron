@@ -12,7 +12,6 @@ use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
 use App\Services\HangarService;
-use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\NexusImportService;
 use App\Services\OnboardingHintService;
@@ -47,7 +46,6 @@ class ColonyController extends BaseController
         private readonly EventService $eventService,
         private readonly ResourcesService $resourcesService,
         private readonly TrustService $trustService,
-        private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly BuildingUnlockService $buildingUnlockService,
         private readonly CharacterCodexService $characterCodexService,
@@ -377,7 +375,7 @@ class ColonyController extends BaseController
             'q' => 'required|integer',
             'r' => 'required|integer',
             // Harvester only: 1 (default, bootstrap-exempt) or 2 (paid expansion, GDD §4c).
-            'instance_id' => 'sometimes|integer|in:1,2',
+            'instance_id' => 'sometimes|integer|in:1',
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -443,10 +441,8 @@ class ColonyController extends BaseController
             return $this->fail('building_not_found');
         }
 
-        // Harvester instance targeted by this request — 1 (default, bootstrap-exempt,
-        // always moved/UPDATEd, never duplicated) or 2 (paid expansion, GDD §4c). Every
-        // other building keeps the existing single-row-per-instanced-slot lookup.
-        $requestedInstanceId = $isHarvester ? (int) ($data['instance_id'] ?? 1) : 1;
+        // There is exactly one Harvester (instance 1); it is moved, never duplicated.
+        $requestedInstanceId = 1;
 
         $existingBuilding = ($isHarvester || ! $building->is_instanced)
             ? DB::table('colony_buildings')
@@ -471,39 +467,6 @@ class ColonyController extends BaseController
                 && $existingBuilding->pending_until_tick !== null
                 && (int) $existingBuilding->pending_until_tick >= $this->getTick()) {
             return $this->fail('harvester_in_transit');
-        }
-
-        // Second Harvester instance gate (GDD §4c "Harvester-Zweitinstanz:
-        // Bezugsquelle", freigegeben 2026-08-05): instance 1 keeps the Regolith-free
-        // bootstrap exemption. Instance 2 keeps the CommandCenter-level gate, but is no
-        // longer a deterministic Regolith buy — it requires an opportunistic entitlement
-        // earned via Weg A (Orin's purchase, CorporateContactService) or Weg B
-        // (mission_harvester_salvage reward), see HarvesterEntitlementService. Only
-        // applies to the FRESH placement (not a subsequent relocation of an
-        // already-placed instance 2).
-        $isSecondInstanceFreshPlacement = $isHarvester && $requestedInstanceId === 2 && ! $isHarvesterMove;
-        $secondInstanceIsSalvageSourced = false;
-
-        if ($isSecondInstanceFreshPlacement) {
-            $requiredCcLevel = (int) config('game.harvester.second_instance_cc_level', 3);
-            $ccLevel = (int) DB::table('colony_buildings')
-                ->where('colony_id', $colony->id)
-                ->where('building_id', BuildingId::CommandCenter->value)
-                ->value('level');
-
-            if ($ccLevel < $requiredCcLevel) {
-                return $this->fail('harvester_second_instance_cc_gate');
-            }
-
-            if (! $this->harvesterEntitlementService->hasEntitlement(Auth::id())) {
-                return $this->fail('harvester_second_instance_locked');
-            }
-
-            // Purchase wins over salvage when both are somehow present (edge case: both
-            // earned before either is consumed by placement) — a paid-for instance must
-            // never be downgraded by an also-earned salvage entitlement.
-            $secondInstanceIsSalvageSourced = $this->harvesterEntitlementService->isSalvageSourced(Auth::id())
-                && ! $this->harvesterEntitlementService->hasPurchaseEntitlement(Auth::id());
         }
 
         // CC level gate for placement (the build menu lists such buildings locked, so the
@@ -654,12 +617,7 @@ class ColonyController extends BaseController
                 $nextInstanceId = (int) $existingBuilding->instance_id;
             } else {
                 $maxSp = (int) ($building->max_status_points ?? 20);
-                // Salvage-sourced second Harvester instance (Weg B, GDD §4c 2026-08-05):
-                // arrives damaged, not fully productive — the "cheaper but not free" trade
-                // against Orin's Credits price (Weg A, always full health).
-                $initialStatusPoints = $secondInstanceIsSalvageSourced
-                    ? (int) round($maxSp * (float) config('game.harvester.salvage_arrival_sp_pct', 0.25))
-                    : $maxSp;
+                $initialStatusPoints = $maxSp;
 
                 DB::table('colony_buildings')->insert([
                     'colony_id' => $colony->id,
@@ -681,8 +639,7 @@ class ColonyController extends BaseController
         }
 
         // Deduct the placement cost (erect cost + first-level Regolith, plus any
-        // Werkstoffe). Every Harvester placement — relocation, bootstrap instance,
-        // entitlement-based second instance — is Regolith-free.
+        // Werkstoffe). Every Harvester placement is Regolith-free.
         if ($chargesBuildCost && ! config('game.bypass.resource_costs') && $buildCost !== []) {
             $costs = [];
             foreach ($buildCost as $resourceId => $amount) {

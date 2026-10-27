@@ -9,8 +9,8 @@ use InvalidArgumentException;
  * Handelsvorteil (GDD §12, A13): the single, additive trade advantage per
  * trade channel. It is the ONLY place that knows which sources exist — both
  * the execution paths (BarService::acceptOffer(), MerchantService::buyItem(),
- * CorporateContactService::buyHarvesterOffer()) and every display path
- * (Cantina offer list, Corvan's special inventory, Orin's dialog) read it from
+ * NexusImportService) and every display path
+ * (Cantina offer list, Corvan's special inventory, Kommandozentrale) read it from
  * here, so a shown amount/price can never differ from the executed one.
  *
  * Channels and their sources (all additive, never multiplied):

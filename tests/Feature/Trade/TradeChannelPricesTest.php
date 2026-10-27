@@ -10,7 +10,6 @@ namespace Tests\Feature\Trade;
  */
 
 use App\Models\User;
-use App\Services\CorporateContactService;
 use App\Services\MerchantService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
@@ -30,7 +29,7 @@ class TradeChannelPricesTest extends TestCase
 
     private const TRUST_RESOURCE_ID = 12;
 
-    private const OFFER_HIT_TICK = 71; // Orin offers the harvester at 495 Cr on this tick (see CorporateContactServiceTest)
+    private const OFFER_HIT_TICK = 71; // fixed Sol the Corvan fixtures are valid on
 
     protected function setUp(): void
     {
@@ -133,54 +132,5 @@ class TradeChannelPricesTest extends TestCase
         // The chip shows the charged price; the base cost only appears as the struck-through "was" price (P2b).
         $this->assertStringContainsString('<span class="res-amount" x-text="item.price_credits">', $html);
         $this->assertStringNotContainsString('<span class="res-amount" x-text="item.cost_credits">', $html);
-    }
-
-    // ── Orin ('nexus') ────────────────────────────────────────────────────────
-
-    private function prepareOrin(): void
-    {
-        DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'building_id' => 25, 'instance_id' => 1],
-            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
-        );
-        DB::table('colony_buildings')
-            ->where('colony_id', self::COLONY_ID)->where('building_id', 27)->where('instance_id', 2)->delete();
-        DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
-            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 3, 'tile_y' => 0]
-        );
-    }
-
-    public function test_orin_price_ignores_the_konsul_and_reports_base_price_and_advantage(): void
-    {
-        $this->prepareOrin();
-        $this->assignConsul(3);
-        $this->setTradingPostLevel(3); // 12
-        $this->setTradeLevel(3); // 8 -> 20 %
-
-        $offer = $this->app->make(CorporateContactService::class)->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
-
-        $this->assertNotNull($offer);
-        $this->assertSame(495, $offer['base_price']);
-        $this->assertSame(396, $offer['price'], '495 x 0.80');
-        $this->assertSame(20, $offer['advantage']['total_percent']);
-        $this->assertNotContains('consul', array_column($offer['advantage']['sources'], 'key'));
-    }
-
-    public function test_orin_buy_charges_exactly_the_shown_price(): void
-    {
-        $this->prepareOrin();
-        $this->setTradingPostLevel(3);
-        $this->setTradeLevel(5); // 12 + 12 = 24 %
-        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['credits' => 1000]);
-        $service = $this->app->make(CorporateContactService::class);
-
-        $shown = $service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK)['price'];
-        $result = $service->buyHarvesterOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
-
-        $this->assertTrue($result['ok']);
-        $this->assertSame(376, $shown, '495 x 0.76 = 376.2 -> 376');
-        $this->assertSame($shown, $result['price']);
-        $this->assertSame(1000 - $shown, $this->credits());
     }
 }

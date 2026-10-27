@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 /**
  * Sol-0 flow of a NEW run: the single Harvester must always be relocatable once (real AP
- * gate on), and the dropped second Harvester must not be offered while its CC gate holds.
+ * gate on), and there is no second Harvester.
  */
 class HarvesterSolZeroRelocationTest extends TestCase
 {
@@ -55,22 +55,21 @@ class HarvesterSolZeroRelocationTest extends TestCase
         $this->assertSame([(int) $tile->q, (int) $tile->r], [(int) $row->tile_x, (int) $row->tile_y]);
     }
 
-    public function test_second_harvester_stays_rejected_below_its_cc_gate(): void
+    public function test_second_harvester_instance_is_rejected(): void
     {
         $user = $this->startNewRun();
         $tile = $this->explored_regolith_tile();
 
         $this->actingAs($user)->postJson(route('colony.building.place'), [
             'building_id' => self::HARVESTER_ID, 'q' => $tile->q, 'r' => $tile->r, 'instance_id' => 2,
-        ])->assertStatus(422)->assertJson(['error' => 'harvester_second_instance_cc_gate']);
+        ])->assertStatus(422)->assertJsonValidationErrors('instance_id');
     }
 
-    public function test_tile_panel_offers_move_and_gates_second_harvester_button(): void
+    public function test_tile_panel_offers_move_and_no_second_harvester_button(): void
     {
         $html = $this->actingAs($this->startNewRun())->get(route('colony.view'))->assertOk()->getContent();
 
-        $this->assertStringContainsString('harvesterSecondCcLevel', $html);
-        $this->assertStringContainsString('canPlaceSecondHarvester(selectedTile)', $html);
+        $this->assertStringNotContainsString('canPlaceSecondHarvester', $html);
         $this->assertStringContainsString('canMoveHarvesterHere(selectedTile)', $html);
         $this->assertStringContainsString('moveHarvesterHere(selectedTile)', $html);
     }

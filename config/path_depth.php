@@ -46,11 +46,11 @@ return [
     // Payout factor = 1 + yield_per_level * family level (scalable reward types only).
     'yield_per_level' => 0.05,
 
-    // Family key => mission catalog keys. (find_salvage, salvage_sweep and
-    // harvester_salvage -> salvage is a plan assumption.)
+    // Family key => mission catalog keys. (find_salvage and salvage_sweep
+    // -> salvage is a plan assumption.)
     'families' => [
         'exploration' => ['mission_recon_flight', 'mission_data_sweep', 'mission_long_range_expedition'],
-        'salvage' => ['mission_find_salvage', 'mission_salvage_sweep', 'mission_ruin_expedition', 'mission_harvester_salvage'],
+        'salvage' => ['mission_find_salvage', 'mission_salvage_sweep', 'mission_ruin_expedition'],
         'supply' => ['mission_supply_run', 'mission_aid_transport'],
         'trade' => ['mission_courier_run', 'mission_trade_convoy'],
         'protection' => ['mission_escort_convoy', 'mission_perimeter_patrol'],

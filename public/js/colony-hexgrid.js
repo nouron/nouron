@@ -96,7 +96,6 @@ function colonyHexView(config) {
         tiles: config.tiles,
         colony: config.colony,
         ccLevel: config.ccLevel,
-        harvesterSecondCcLevel: config.harvesterSecondCcLevel ?? 3,
         buildingCcLevelOffset: config.buildingCcLevelOffset ?? 0,
         ccGateTemplate: config.ccGateTemplate ?? '',
         ccBuildingId: config.ccBuildingId ?? 25,
@@ -724,31 +723,6 @@ function colonyHexView(config) {
             return this.tiles.some((t) => this.isHarvesterTarget(t));
         },
 
-        // Second Harvester instance (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle",
-        // freigegeben 2026-08-05) — earned via Orin's offer (Weg A, Cantina) or the
-        // mission_harvester_salvage reward (Weg B), never built from a menu. Placement
-        // reuses the normal placeBuilding endpoint with instance_id: 2; the server is
-        // the sole source of truth for whether the player has actually earned it
-        // (HarvesterEntitlementService) — this button intentionally shows whenever a
-        // second slot could exist so the server's rejection message
-        // (error_harvester_second_instance_locked / _cc_gate) is the explanation, not a
-        // guess made client-side about an entitlement the client cannot observe.
-        hasSecondHarvesterInstance() {
-            return this.buildings.some((b) => b.building_key === 'building_harvester' && b.instance_id === 2);
-        },
-
-        // The second Harvester button is only offered once its CC gate is met — below it the
-        // server would just answer error_harvester_second_instance_cc_gate (UX trap: the target
-        // tile of a relocation used to offer ONLY this dead-end button).
-        canPlaceSecondHarvester(tile) {
-            return (
-                !!tile &&
-                !this.hasSecondHarvesterInstance() &&
-                this.ccLevel >= this.harvesterSecondCcLevel &&
-                this.isHarvesterTarget(tile)
-            );
-        },
-
         // The single (first) Harvester can be relocated straight from a valid target tile.
         movableHarvester() {
             return (
@@ -779,27 +753,6 @@ function colonyHexView(config) {
             this.movingHarvesterInstanceId = hv.instance_id ?? 1;
             await this.doMoveHarvester(tile);
             this.movingHarvesterInstanceId = null;
-        },
-
-        async doPlaceHarvesterInstance2(tile) {
-            const hv = this.buildings.find((b) => b.building_key === 'building_harvester');
-            if (!hv) return;
-            const res = await this.post(this.routes.placeBuilding, {
-                building_id: hv.building_id,
-                q: tile.q,
-                r: tile.r,
-                instance_id: 2,
-            });
-            if (res.ok) {
-                this.updateBuilding(res.building);
-                this.selectedTile = tile;
-                this.updateAp(res);
-                this.updateHint(res);
-                this.$nextTick(() => this.redrawGrid());
-            } else {
-                const msg = res.message ?? res.error;
-                this.showToast(msg, 'error');
-            }
         },
 
         async doMoveHarvester(tile) {

@@ -28,7 +28,6 @@
             tiles: @json($tiles),
             colony: @json(["id" => $colony->id, "name" => $colony->name]),
             ccLevel: {{ (int) $ccLevel }},
-            harvesterSecondCcLevel: {{ (int) config("game.harvester.second_instance_cc_level", 3) }},
             buildingCcLevelOffset: {{ (int) config("game.building_cc_level_offset", 0) }},
             ccGateTemplate: @json(__("colony.error_building_cc_gate", ["level" => ":level"])),
             ccBuildingId: {{ \App\Enums\BuildingId::CommandCenter->value }},
@@ -353,22 +352,6 @@
                                     <span class="tile-action-btn__body">{{ __("colony.harvester_move") }}</span>
                                     <span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true"
                                         x-text="harvesterMoveCostTo(selectedTile) + ' AP'"></span>
-                                </button>
-                            </template>
-                            {{-- Second Harvester instance (GDD §4c "Harvester-Zweitinstanz:
-                             Bezugsquelle") — placement, not the build menu (Harvester is
-                             excluded from getBuildableBuildings(), see
-                             ColonyController::availableBuildings()). Shown on any empty,
-                             explored Regolith tile once a second slot isn't taken yet — the
-                             server is the only source of truth for whether the player has
-                             actually earned the entitlement (Orin's offer or the salvage
-                             mission), so a rejected attempt surfaces the real reason
-                             (error_harvester_second_instance_locked / _cc_gate) instead of
-                             the button silently disappearing. --}}
-                            <template x-if="!selectedBuilding && canPlaceSecondHarvester(selectedTile)">
-                                <button class="tile-action-btn tile-action-btn--secondary"
-                                    @click="doPlaceHarvesterInstance2(selectedTile)">
-                                    <span class="tile-action-btn__body">{{ __("colony.harvester_place_second") }}</span>
                                 </button>
                             </template>
                         </div>

@@ -5,7 +5,7 @@
  * character's sheet (docs/characters/*.md) and drives which mechanic a figure
  * is eligible for (A36, GDD §12 Kanal 1):
  *   - permanent: always-present fixture, no encounter (Tomas, spot_0)
- *   - dedicated: has its own bespoke mechanic (Orin/CorporateContactService,
+ *   - dedicated: has its own bespoke mechanic (Orin: mechanic open,
  *     Zara/wager, Voss/auction — see BarService)
  *   - bar_trade: shares the generic anonymous-guest barter offer, with a
  *     personalized flavor line (lang/de/colony.php → bar_trade_flavor_*)

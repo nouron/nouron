@@ -146,23 +146,6 @@ return [
             'difficulties' => ['normal', 'hard'],
         ],
 
-        'mission_harvester_salvage' => [
-            // Weg B for the Harvester second instance (GDD §4c "Harvester-Zweitinstanz:
-            // Bezugsquelle", freigegeben 2026-08-05). A derelict extraction rig from an
-            // earlier expedition — same ruin_tile pattern as mission_ruin_expedition,
-            // "once per revealed ruin". Reward is an unlock flag, not a resource — see
-            // HarvesterEntitlementService and GameTick::payMissionRewards. Gated on
-            // instance_count < max_instances at dispatch time (HangarService::dispatchShip),
-            // same seam as the ruin_tile target-consumed check below.
-            'ships' => ['freighter', 'corvette'],
-            'sol_distance' => 4,
-            'requires' => ['target' => 'ruin_tile'],
-            'target_type' => 'ruin_tile',
-            'reward' => ['harvester_instance' => true],
-            'repeatable' => false, // once per revealed ruin tile
-            'difficulties' => ['easy', 'normal'],
-        ],
-
         // ── Corvette — protection ────────────────────────────────────────────
 
         'mission_escort_convoy' => [

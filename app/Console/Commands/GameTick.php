@@ -17,7 +17,6 @@ use App\Services\EncounterService;
 use App\Services\EventService;
 use App\Services\FindFlightService;
 use App\Services\HangarService;
-use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
 use App\Services\PathDepthService;
@@ -87,7 +86,6 @@ class GameTick extends Command
         private readonly ProjectBonusService $projectBonusService,
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
-        private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
         private readonly PathDepthService $pathDepthService,
@@ -523,7 +521,7 @@ class GameTick extends Command
 
         $resourceIds = ['regolith' => 3, 'compounds' => 4, 'organics' => 5];
         // Only quantity-shaped reward types scale with difficulty — flags/unlocks
-        // (trust_event, harvester_instance) stay binary regardless of difficulty.
+        // (trust_event) stay binary regardless of difficulty.
         $scalableTypes = ['credits', 'regolith', 'compounds', 'organics', 'research_ap', 'reveal_tiles'];
         $details = [];
 
@@ -560,15 +558,6 @@ class GameTick extends Command
                 $details += $this->hangarService->completeFindFlight($colonyId, $target, $shipId);
 
                 continue;
-            } elseif ($type === 'harvester_instance') {
-                // Weg B (mission_harvester_salvage, GDD §4c "Harvester-Zweitinstanz:
-                // Bezugsquelle", freigegeben 2026-08-05): grants the earned entitlement,
-                // it does NOT place the building — the player still picks a Regolith
-                // tile via ColonyController::placeBuilding, which then arrives damaged
-                // (HarvesterEntitlementService::isSalvageSourced).
-                if ($userId !== null) {
-                    $this->harvesterEntitlementService->grantSalvage($userId);
-                }
             }
 
             $details[$type] = $value;

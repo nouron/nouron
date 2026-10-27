@@ -73,7 +73,7 @@ class BotStrategyInvestFindTest extends TestCase
 
         $this->assertSame('invest_find', end($names));
         $this->assertSame('deep_scan_signal_tile', $names[count($names) - 2]);
-        foreach (['hire_advisor', 'explore_tile', 'place_building', 'invest_production', 'research_knowledge', 'request_ship', 'dispatch_salvage_mission'] as $before) {
+        foreach (['hire_advisor', 'explore_tile', 'place_building', 'invest_production', 'research_knowledge', 'request_ship'] as $before) {
             $pos = array_search($before, $names, true);
             $this->assertNotFalse($pos, "{$before} missing");
             $this->assertLessThan(count($names) - 2, $pos, "{$before} must precede the scan");

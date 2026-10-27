@@ -25,7 +25,7 @@ namespace App\Support;
  *
  * Path actions (successful log entries, rule names from BotStrategy):
  *  - labor:   research_knowledge
- *  - hangar:  request_ship, dispatch_mission, dispatch_salvage_mission,
+ *  - hangar:  request_ship, dispatch_mission,
  *             dispatch_find_flight, repair_ship_for_flight,
  *             dispatch_credit_mission, dispatch_compounds_mission,
  *             focus_expedition_mission (dispatch_regolith_mission: older reports)
@@ -127,7 +127,7 @@ class OpeningComparison
     private const PATH_RULES = [
         'labor' => ['research_knowledge'],
         'hangar' => [
-            'request_ship', 'dispatch_mission', 'dispatch_salvage_mission', 'dispatch_find_flight', 'repair_ship_for_flight',
+            'request_ship', 'dispatch_mission', 'dispatch_find_flight', 'repair_ship_for_flight',
             'dispatch_credit_mission', 'dispatch_compounds_mission', 'focus_expedition_mission',
             // Pre-T30-step-3 reports still carry the old Regolith mission rule.
             'dispatch_regolith_mission',
@@ -143,7 +143,7 @@ class OpeningComparison
     ];
 
     private const BUILD_RULES = [
-        'place_building', 'place_agrardom', 'place_harvester_instance2', 'invest_production', 'invest_cc',
+        'place_building', 'place_agrardom', 'invest_production', 'invest_cc',
         'relocate_harvester', 'focus_engineering_levelup', 'focus_trust_building',
     ];
 

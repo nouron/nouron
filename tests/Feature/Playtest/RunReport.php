@@ -29,7 +29,7 @@ class RunReport
 
     /**
      * A30/B1a: maps a BotSession::act() rule name to its AP-spend category.
-     * Unmapped rules (hire_advisor, accept_bar_offer, buy_corporate_harvester_offer,
+     * Unmapped rules (hire_advisor, accept_bar_offer,
      * sol_next) cost Credits or nothing, not AP — deliberately excluded rather
      * than lumped into a catch-all "other" bucket the plan doesn't ask for.
      */
@@ -39,14 +39,12 @@ class RunReport
         'invest_cc' => 'project',
         'invest_production' => 'project',
         'place_building' => 'project',
-        'place_harvester_instance2' => 'project',
-        'relocate_harvester' => 'project',
+                'relocate_harvester' => 'project',
         'research_knowledge' => 'project',
         'explore_tile' => 'action',
         'deep_scan_signal_tile' => 'action',
         'dispatch_mission' => 'action',
-        'dispatch_salvage_mission' => 'action',
-        'dispatch_compounds_mission' => 'action',
+                'dispatch_compounds_mission' => 'action',
         'dispatch_find_flight' => 'action',
         'repair_ship_for_flight' => 'repair',
         'request_ship' => 'action',
@@ -168,7 +166,7 @@ class RunReport
         $sources = ['agrardom' => 0, 'mission' => 0, 'trade' => 0, 'event' => 0];
         $consumption = ['hunger_consumed' => 0, 'mission_dispatch_consumed' => 0];
 
-        $dispatchRules = ['dispatch_mission', 'dispatch_salvage_mission', 'dispatch_compounds_mission', 'dispatch_find_flight', 'request_ship'];
+        $dispatchRules = ['dispatch_mission', 'dispatch_compounds_mission', 'dispatch_find_flight', 'request_ship'];
 
         foreach ($bot->log as $entry) {
             if ($entry['sol'] !== $bot->sol || ! $entry['ok']) {

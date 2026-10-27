@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\DB;
  *
  * recordProgress() is called from several trigger points across the codebase
  * (BarService for information/bar_trade/dedicated/story_hook triggers,
- * CorporateContactService for Orin's dedicated deal, ColonyController for
- * Tomas' Cantina-level milestones) — see each call site's own comment for
+ * ColonyController for Tomas' Cantina-level milestones; Orin currently has no trigger) — see each call site's own comment for
  * which figure/trigger it covers.
  */
 class CharacterCodexService
