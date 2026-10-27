@@ -96,8 +96,6 @@ Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einma
 **3. Nur eine Kolonie — Tiefe statt Breite**
 Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
 
-> **Außenposten:** Außenposten (nicht Kolonien) sind als Phase-4-Konzept vorgesehen — kein Kolonisierungssystem. Design noch nicht definiert. Der Spieler betreibt im gesamten Spiel genau eine Kolonie; Außenposten wären ressourcenextrahierende Außenstellen ohne eigene Verwaltungsebene.
-
 **4. Roguelike-Elemente im Strategieformat**
 Jeder Run hat variable Aufgaben, zufällige Ereignisse und echte Konsequenzen. Das Scheitern ist möglich und lehrreich. Kein Run ist identisch — aber die Kolonie bleibt immer dieselbe Art von Ort.
 
@@ -1435,7 +1433,7 @@ Die Bar ist ab CC Lv2 verfügbar. Sie ist der Ort des Handels — verkörpert du
 
 **Marktbericht (Konsul, A13):** Der Konsul kündigt Corvans nächsten Besuch vorab an — je höher der Rang, desto weiter im Voraus. Auf dem höchsten Rang zeigt der Bericht zusätzlich, welche Sonderinventar-Kategorien (AP-Paket, Information, Einmal-Item — Schiffe erscheinen dort erst, sobald der Item-Pool welche enthält) Corvan mitbringt, nicht aber die konkreten Lose des Alltagsgeschäfts. Der Spieler kann damit Credits für ein absehbar teures Sonderangebot zurückhalten oder Organika für die Verkaufslose aufsparen. Es ist reine Planungsinformation: kein Einkommen, keine Wirkung auf Häufigkeit oder Preise, und ohne zugewiesenen, verfügbaren Konsul (nicht gesperrt) entfällt die Ankündigung — Corvan kommt trotzdem, nur ohne Vorwarnung. Der Marktbericht ist die spielwirksame Ausprägung des Konsul-Motivs „pflegt die Kontakte"; er ergänzt die kontextuelle Händler-Einschätzung aus §13 („Berater als Informationsebene").
 
-**Orin ist nicht Teil dieses Kanals.** Orin (`corporate_rep`) ist eine Cantina-Figur mit eigener Rolle außerhalb von `BarService`/`MerchantService`. Sein ursprünglicher Auftrag (Vermittlung einer zweiten Harvester-Instanz) entfällt, weil es keinen zweiten Harvester gibt (§4c); seine künftige Rolle ist offen (ROADMAP T31).
+**Orin** (`corporate_rep`) ist eine feste Cantina-Figur mit eigener Rolle außerhalb von `BarService`/`MerchantService`. Er hat keinen Bezug zu Harvestern; seine Mechanik ist noch offen (ROADMAP T43-H8).
 
 **Cantina-Verhandlung (Risiko-Handel)** steht für beide Angebotsquellen zur Verfügung (unten).
 
@@ -1489,7 +1487,7 @@ Damit der Kodex keine eigene, parallele Trigger-Mechanik pro Figur braucht, scha
 
 - **information (Deva, Lenn):** Trigger ist jede Begegnung aus dem Ausgangs-Pool oben — mechanisch oder erzählerisch, beide zählen für den Kodex-Fortschritt.
 - **bar_trade (Dax, Vesper, Sarka, Maret, Fen, Juno):** Trigger ist ein abgeschlossener Tausch mit der personalisierten Flavor-Zeile der jeweiligen Figur (`bar_trade_flavor_*`) — die Mechanik existiert bereits, der Kodex hängt sich nur zusätzlich daran.
-- **dedicated (Orin, Zara, Voss):** Trigger ist eine abgeschlossene Interaktion mit der jeweils eigenen Mechanik (Wette, Auktion; Orins Rolle ist offen) — bereits vorhanden, kein neuer Auslöser nötig.
+- **dedicated (Orin, Zara, Voss):** Trigger ist eine abgeschlossene Interaktion mit der jeweils eigenen Mechanik (Wette, Auktion; Orins Mechanik ist offen) — bereits vorhanden, kein neuer Auslöser nötig.
 - **story_hook (Aldra, Sorel, die namenlose Gestalt):** Trigger ist eine abgeschlossene Interaktion aus dem Anliegen-Slot (s.o.) — der Begegnungspool selbst bleibt für diese drei Figuren flavor-only, aber seit dem Anliegen-Slot haben auch sie eine mechanische Interaktion mit echter Ressourcenwirkung, die als Kodex-Trigger dient.
 - **permanent (Tomas):** Kein Zufalls-Spawn, den man "antreffen" könnte, also kein Begegnungs-Trigger verfügbar — sein erster Kodex-Eintrag schaltet sich stattdessen am Baumeilenstein frei (Cantina erreicht Ausbaustufe I), spätere Einträge an höheren Cantina-Ausbaustufen, passend zu seiner Rolle als feste Einrichtung statt Zufallsfigur.
 
