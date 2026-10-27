@@ -65,16 +65,13 @@ class TechtreeController extends BaseController
 
         ['phases' => $phases, 'edges' => $edges] = $this->buildPhases($colonyId);
 
-        // Onboarding pulse: ranks 2 (personell), 4 (research), 5 (buildings) highlight techtree cards.
         $userId = Auth::id();
-        $hint = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
-        $activeHintRank = ($hint && in_array($hint['rank'], [2, 4, 5])) ? $hint['rank'] : 0;
 
         $pageData = ['phases' => $phases, 'edges' => $edges];
 
         $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
 
-        return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank', 'firstVisit'));
+        return view('techtree.index', compact('pageData', 'colonyId', 'firstVisit'));
     }
 
     /**

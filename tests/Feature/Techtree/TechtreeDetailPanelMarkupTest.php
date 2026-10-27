@@ -140,4 +140,20 @@ class TechtreeDetailPanelMarkupTest extends TestCase
     {
         $this->techtree()->assertSee('x-if="acquireHint(selectedTech)"', false);
     }
+
+    /**
+     * T43-H5 — onboarding hints never pulse techtree tiles (GDD onboarding §16.3: building pulses live in
+     * the colony view, no hint targets a techtree card). The rank-keyed pulse mapping is gone.
+     */
+    public function test_techtree_has_no_rank_based_onboarding_pulse(): void
+    {
+        $html = $this->techtree()->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('hintRank', $html);
+        $this->assertStringNotContainsString('data-hint-rank', $html);
+
+        $js = file_get_contents(public_path('js/techtree-view.js'));
+        $this->assertStringNotContainsString('HINT_TYPE', $js);
+        $this->assertStringNotContainsString('hintRank', $js);
+    }
 }

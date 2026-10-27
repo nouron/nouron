@@ -15,7 +15,6 @@
     <script>
         window.__techtreeData = @json($pageData);
         window.__techtreeData.colonyViewUrl = @json(route("colony.view"));
-        window.__techtreeData.hintRank = @json((int) $activeHintRank);
         window.__techtreeData.i18n = {
             instanceLevel: @json(__("techtree.detail_instance_level")),
             instanceLevelUncapped: @json(__("techtree.detail_instance_level_uncapped")),
@@ -36,8 +35,8 @@
         };
     </script>
 
-    <div class="techtree-page" x-ref="page" x-data="techtreeView(window.__techtreeData)" x-cloak :class="{ 'techtree-page--panel': selectedTech }"
-        data-hint-rank="{{ $activeHintRank }}">
+    <div class="techtree-page" x-ref="page" x-data="techtreeView(window.__techtreeData)" x-cloak
+        :class="{ 'techtree-page--panel': selectedTech }">
 
         <div class="techtree-toast" :class="`techtree-toast--${toastType}`" x-show="toastVisible" x-transition
             x-text="toastMessage" aria-live="polite" role="status"></div>
@@ -48,8 +47,7 @@
                     class="tt-sw tt-sw--b"></span>{{ __("techtree.legend_building") }}</span>
             <span class="tt-leg" role="listitem"><span
                     class="tt-sw tt-sw--k"></span>{{ __("techtree.legend_research") }}</span>
-            <span class="tt-leg" role="listitem"><span
-                    class="tt-sw tt-sw--s"></span>{{ __("techtree.legend_ship") }}</span>
+            <span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--s"></span>{{ __("techtree.legend_ship") }}</span>
             <span class="tt-leg" role="listitem"><span
                     class="tt-sw tt-sw--a"></span>{{ __("techtree.legend_advisor") }}</span>
             <span class="tt-leg" role="listitem"><span class="tt-st"></span>{{ __("techtree.legend_required") }}</span>
