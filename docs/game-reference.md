@@ -27,12 +27,12 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | **Harvester** | Lv1 | — | 2 | 1 | 2 |
 | **Agrardom** | 1 + Harv | 70 Rg | 2 | 3 | 1 |
 | **Analytik-Labor** | Lv2 | 95 Rg | 6 | 5 | 1 |
-| **Krankenstation** | Lv2 | 60 Rg / 25 Wk | 10 | 3 | 1 |
+| **Krankenstation** | Lv3 | 60 Rg / 25 Wk | 10 | 3 | 1 |
 | **Cantina** | Lv2 | 95 Rg | 6 | 3 | 1 |
 | **Hangar** | Lv2 | 95 Rg | 6 | 3 | 1 (eine Halle, T30 Schritt 3; Stufe 1–3 flat je 25 Rg) |
 | **Religiöse Stätte** | Lv4 | 50 Rg / 15 Wk | 4 | 1 | 1 |
 | **Kolonialdenkmal** | Lv5 | 60 Rg / 25 Wk | 2 | 1 | 1 |
-| **Leitstelle** | Lv3 | 80 Rg / 25 Wk | 8 | 3 | 1 |
+| **Leitstelle** | Lv2 | 80 Rg / 25 Wk | 8 | 3 | 1 |
 | **Uplink Station** | Lv2 | 80 Rg | 6 | 3 | 1 |
 | **Trading Post** | Lv4 | 100 Rg / 25 Wk | 6 | 3 | 1 |
 

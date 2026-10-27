@@ -35,7 +35,7 @@ Das Problem: Der Spieler sieht viele Optionen, hat aber keinen Hinweis, welche d
 
 ### § 16.1 — Der erste Bildschirm: Nexus-Briefing
 
-**Mechanik:** Beim allerersten Login eines Runs erscheint eine **Nexus-Nachricht im INNN-Feed** (kein Popup, kein Modal). Die Nachricht ist bereits sichtbar ohne dass der Spieler aktiv etwas öffnen muss — sie ist der erste Eintrag im INNN-Feed, Absender "Nexus Command", Priorität "dringend".
+**Mechanik:** Beim allerersten Login eines Runs erscheint eine **Nexus-Nachricht im Kolonieprotokoll (Nexus-Funk)** (kein Popup, kein Modal). Die Nachricht ist bereits sichtbar ohne dass der Spieler aktiv etwas öffnen muss — sie ist der erste Eintrag im Kolonieprotokoll (Nexus-Funk), Absender "Nexus Command", Priorität "dringend".
 
 **Inhalt der Nachricht (Ton: karg, professionell, Roguelike-Atmosphäre):**
 
@@ -58,7 +58,7 @@ Diese Nachricht erfüllt vier Funktionen gleichzeitig:
 - Verankert den Berater-Mechanic als frühe Priorität
 - Ist kein Popup — erfahrene Spieler überlesen sie ohne Unterbrechung
 
-**Technisch:** Die Nachricht wird beim Erzeugen eines neuen Runs über `InnnService::createEvent()` mit `sender = 'nexus'` erzeugt. Kein neues Schema erforderlich.
+**Technisch:** Die Nachricht wird beim Erzeugen eines neuen Runs über `EventService::createEvent()` mit `sender = 'nexus'` erzeugt. Kein neues Schema erforderlich.
 
 ---
 
@@ -70,7 +70,7 @@ Das **Hint-System** zeigt zu jedem Zeitpunkt genau **einen** hervorgehobenen Hin
 
 Beispiel-Darstellung:
 ```
-[!] Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10. → Jetzt bauen
+[!] Kein Wohnhabitat gebaut — Der Wohnraum bleibt bei der Basis. → Jetzt bauen
                                                                           [×]
 ```
 
@@ -115,7 +115,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 - `hint_invest_site` (Rang 6) und `hint_explore` (Rang 13): lenken verbleibende AP in die aktive Baustelle bzw. in Erkundung, statt sie verfallen zu lassen.
 - `hint_build_priority` (Rang 8): Reine Strategie-Hinweisebene, kein Aktionslink zu einem einzelnen Gebäude — signalisiert nur, dass eine Wahl zwischen mehreren gleichwertig bereiten Gebäuden besteht.
 - `hint_end_sol` (Rang 17): Universeller Fallback, der verhindert, dass die Hint-Leiste je leer bleibt.
-- `canAffordBuildingPlacement()`-Gate auf den Bau-Hints (Ränge 4, 9–11): Alle Bau-Hints prüfen tatsächliche Bezahlbarkeit (AP, Regolith, Werkstoffe, Supply) bevor sie feuern — verhindert, dass der Hint auf ein Gebäude zeigt, das der Spieler in diesem Sol gar nicht bauen kann.
+- `canAffordBuildingPlacement()`-Gate auf den Bau-Hints (Ränge 4, 9–11): Alle Bau-Hints prüfen tatsächliche Bezahlbarkeit (AP, Regolith, Werkstoffe, freie Kolonisten) bevor sie feuern — verhindert, dass der Hint auf ein Gebäude zeigt, das der Spieler in diesem Sol gar nicht bauen kann.
 
 > **Designentscheidung zu Rang 2 (Reparieren dringend):** Eigener Hint getrennt vom Lehr-Hint `hint_repair` (Rang 5). `hint_repair` wird beim ersten Reparieren-Klick dauerhaft dismissed (Lehrmoment „du kannst reparieren"). `hint_repair_urgent` warnt dagegen **wiederkehrend** vor dem einzigen irreversiblen Verlust (Leveldown bei SP 0): er ist nicht dismissbar (kein Eintrag in `dismissed_hints`), selbst-clearend sobald alle Gebäude wieder über `hint_repair_urgent_sp` liegen, und feuert bei jedem erneuten Verfall. Höchste Repair-Priorität, nur hinter `hint_1` (Baumeister liefert die AP). Die Schwelle gibt selbst beim schnellsten Verfall (Cantina) noch mehr als einen Sol Reaktionszeit und sollte nach Playtest validiert werden.
 
@@ -228,7 +228,7 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 
 **Aktion 4 — Pfadgebäude wählen und bauen (Sol 2/3, `hint_6`/`hint_analytik`/`hint_hangar_path`, ggf. `hint_build_priority`)**
 
-- Warum: Ab Sol 2 (Agrardom platziert) stehen Cantina, Sciencelab und Hangar auf derselben Tick-Schwelle — die erste gleichwertige strategische Wahl: Handel, Forschung oder Flotte zuerst. Das Pfadgebäude muss **vor** CC Lv2 stehen, damit der freigeschaltete Beraterslot 2 sofort besetzbar ist (Slots 2–4 verlangen ein gebautes Pfadgebäude).
+- Warum: Ab Sol 2 (Agrardom platziert) stehen Cantina, Sciencelab und Hangar auf derselben Tick-Schwelle — die erste gleichwertige strategische Wahl: Handel, Forschung oder Schiffe zuerst. Das Pfadgebäude muss **vor** CC Lv2 stehen, damit der freigeschaltete Beraterslot 2 sofort besetzbar ist (Slots 2–4 verlangen ein gebautes Pfadgebäude).
 - Kosten: 70 (Cantina) / 80 (Sciencelab) / 80 (Hangar) Rg + 1 AP Platzieren + 10 Invest-AP
 - Ergebnis: Pfadgebäude fertig ~Sol 3. Wer zuerst baut, bekommt automatisch den passenden Berater-Slot-Typ (Sciencelab → Analytiker, Hangar → Raumfahrer, Cantina → Konsul) — die Bau-Entscheidung *ist* die Berater-Entscheidung.
 - **Kein permanenter Lockout:** Die anderen Pfade folgen bei höherem CC-Level — die Wahl bestimmt Reihenfolge, nicht endgültigen Zugang.
@@ -269,17 +269,17 @@ Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anz
 
 | Konzept | Trigger | Anzeigeform |
 |---------|---------|-------------|
-| Decay (Verfall) | Erstes Gebäude fällt auf < 80% Status-Points | INNN-Ereignis: "Ihre [Gebäudename] zeigt erste Verfallserscheinungen. Reparatur-AP verlangsamen den Prozess." |
-| Supply-Cap erreicht | `freies_supply` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Supply-Cap erreicht — kein neues Schiff oder Berater baubar." |
-| Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | INNN-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
+| Decay (Verfall) | Erstes Gebäude fällt auf < 80% Status-Points | Protokoll-Ereignis: "Ihre [Gebäudename] zeigt erste Verfallserscheinungen. Reparatur-AP verlangsamen den Prozess." |
+| Keine freien Kolonisten | `freie_kolonisten` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Keine freien Kolonisten — Neubau und Ausbau ruhen, bis der Wohnraum wächst." |
+| Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | Protokoll-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
 | Erstes AP-Limit | Spieler versucht Aktion aber AP = 0 | Tooltip am Button: "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." |
 | Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet AP pro Hex Distanz — er kommt nächsten Sol an und produziert unterwegs nichts." |
 
-**Format:** INNN-Ereignisse für narrative Konzepte (Verfall, Vertrauen), Inline-Banner für kritische Systemgrenzen (Supply-Cap), Tooltips für Aktions-Mechaniken. Kein Modal, kein Overlay.
+**Format:** Protokoll-Ereignisse für narrative Konzepte (Verfall, Vertrauen), Inline-Banner für kritische Systemgrenzen (Kolonisten), Tooltips für Aktions-Mechaniken. Kein Modal, kein Overlay.
 
-**Technisch:** Alle fünf Trigger sind einmalige `innn_events`-Einträge mit einem Flag `is_onboarding_hint = true` (oder einem separaten `event_type`-Präfix `onboarding_*`). Sie werden beim Erzeugen markiert und nach dem Lesen nicht mehr wiederholt.
+**Technisch:** Alle fünf Trigger sind einmalige Kolonieprotokoll-Einträge (`colony_log`) mit einem Flag `is_onboarding_hint = true` (oder einem separaten `event_type`-Präfix `onboarding_*`). Sie werden beim Erzeugen markiert und nach dem Lesen nicht mehr wiederholt.
 
-> **Designentscheidung:** INNN ist der natürliche Kanal für alle narrativen Erklärungen — der Spieler lernt früh, dass INNN wichtige Informationen liefert. Onboarding-Hinweise über denselben Kanal zu liefern stärkt diese Gewohnheit statt eine neue UI-Schicht einzuführen.
+> **Designentscheidung:** Das Kolonieprotokoll ist der natürliche Kanal für alle narrativen Erklärungen — der Spieler lernt früh, dass das Protokoll wichtige Informationen liefert. Onboarding-Hinweise über denselben Kanal zu liefern stärkt diese Gewohnheit statt eine neue UI-Schicht einzuführen.
 
 ---
 
@@ -302,11 +302,11 @@ Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und 
 
 | Maßnahme | Implementierungsaufwand | Abhängigkeiten |
 |----------|------------------------|----------------|
-| Nexus-Briefing (INNN-Nachricht beim Run-Start) | Klein — `InnnService::createEvent()` erweitern | Run-Erzeugung muss Hook haben |
+| Nexus-Briefing (Nexus-Funk-Nachricht beim Run-Start) | Klein — `EventService::createEvent()` erweitern | Run-Erzeugung muss Hook haben |
 | Hint-System (Zustandscheck + Leiste unter Ressourcen) | Mittel — Alpine.js Komponente, 5 Bedingungsregeln | Ressourcenleiste-Layout, User-Preferences |
 | Pulse-Indikator (CSS-Animation auf Kacheln/Tiles) | Klein — CSS-Klasse `ring-pulse` + Condition-Flag im Blade | Hint-System (welches Element pulsiert) |
 | Kachel-Sortierung im Techtree | Mittel — Techtree-Controller liefert Gruppierungsflag | Techtree-Screen-Refactoring |
-| Inline-Erklärungen (5 Trigger-Punkte) | Klein pro Trigger — INNN-Event + Flag | Run-State (Trigger darf nur einmal feuern) |
+| Inline-Erklärungen (5 Trigger-Punkte) | Klein pro Trigger — Protokoll-Event + Flag | Run-State (Trigger darf nur einmal feuern) |
 | User-Preference `onboarding_hints` | Klein — User-Settings-Tabelle oder Cookie | User-Settings-Screen |
 
 **Konfiguration:** Alle Schwellen des Hint-Systems (Sol-Schwellen der Bau- und Kenntnis-Hints, Vertrauens-Schwelle, SP-Schwelle der Leveldown-Warnung, Erkundungs-Throttle) liegen in `config/game.php → onboarding` (Quelle der Wahrheit; Werte siehe `docs/game-reference.md`). Die drei Pfad-Hints (Cantina, Analytik-Labor, Hangar) teilen sich dieselbe Schwelle.

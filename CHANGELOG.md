@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-27
+
+- Doku: GDD-Audit gegen den Code (`docs/gdd-audit-2026-10-27.md`) — Supply heißt durchgehend Kolonisten (§6 „Kolonisten & Wohnraum"), Mehrspieler-, Flotten-/Systemkarten-, Ressourcen-Ebenen- und Zweit-Harvester-Reste aus dem GDD und `docs/gdd/` entfernt (INNN-Begriffe durch Kolonieprotokoll ersetzt), §5 (Produktion), Tile-Katalog, Planetentypen, Notreparatur, §14/§15/§18 an den Code angeglichen; Krankenstation (CC Lv3) und Leitstelle (CC Lv2) in GDD und `docs/game-reference.md` nach dem Seeder berichtigt. Code-Reste und Owner-Fragen in ROADMAP T43-H6 ff.
+
 ## 2026-10-26
 
 - Feat: T43-C4 — Cantina: Tomas steht als Barkeeper hinter dem Tresen im Bild (klickbar, öffnet den bisherigen Tomas-Dialog) statt als Banner unter dem Bild; seine Gesprächsoptionen bleiben im Panel „Beziehung pflegen“.
