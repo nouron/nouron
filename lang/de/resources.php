@@ -23,7 +23,6 @@ return [
     'popup_sup_desc' => 'Die Kolonisten der Siedlung: so viele, wie Kommandozentrale und Wohnhabitate unterbringen — fest, ohne Zuzug. Davon beschäftigt sind die Kolonisten, die einen Arbeitsplatz in Gebäuden oder Forschung besetzen; der Rest ist frei und deckt den Bedarf neuer Gebäude. Reichen die freien Kolonisten nicht, ruhen Neubau und Ausbau, bis Wohnhabitat oder Kommandozentrale wachsen. Geht Wohnraum verloren, sinken die Kolonisten sofort. Jeder Kolonist braucht Platz, aber nur Beschäftigte arbeiten.',
     'popup_sup_source_cc' => 'Kommandozentrale',
     'popup_sup_source_housing' => 'Wohnhabitat',
-    'popup_sup_source_knowledge' => 'Kenntnisse',
     'popup_sup_used_buildings' => 'Arbeitsplätze: Gebäude',
     'popup_sup_used_researches' => 'Arbeitsplätze: Forschung',
     'popup_sup_used_advisors' => 'Berater',

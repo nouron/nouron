@@ -342,7 +342,6 @@ Stand Code (`GameTick::calculateSupply()`, Anzeige gespiegelt in `ResourcesServi
 Cap = min(
   CC-Beitrag (flach, sobald CC-Stufe ≥ 1)
   + Σ(Stufen aller Wohnhabitat-Instanzen) × Wohnhabitat-Wert
-  + Σ je Kenntnis Σ(Bonus je erreichter Stufe)
   , game.supply.cap_max
 )
 CC-Stufe 0 → Cap = 0
@@ -354,7 +353,6 @@ CC-Stufe 0 → Cap = 0
 |---|---|---|---|
 | Kommandozentrale | flach, unabhängig von der Stufe (nur Stufe ≥ 1) | `buildings.commandCenter.supply_cap` | 10 |
 | Wohnhabitat | Stufe × Wert, über alle Instanzen summiert (max. 6 × Stufe 3 × 8 = 144) | `buildings.housingComplex.supply_cap` | 8 je Stufe |
-| Kenntnisse | Bonus je erreichter Stufe, je Kenntnis kumuliert | `game.supply.knowledge_cap_per_level` | 3/5/5/4/3 = 20 je Kenntnis |
 | Hard-Cap | Deckel über alles | `game.supply.cap_max` | 200 |
 
 > **Achtung Drift:** `game.supply.cap_commandcenter` (10) und `game.supply.cap_housingcomplex` (8) werden vom Code nicht gelesen — maßgeblich sind die `buildings.*.supply_cap`-Keys. Die Kommentare an beiden Stellen sprechen beim CC von „pro Level", der Code rechnet flach (offene Owner-Frage, siehe GDD §6 „Supply-Cap-Quellen").

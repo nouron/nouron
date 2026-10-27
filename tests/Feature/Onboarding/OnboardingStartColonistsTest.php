@@ -45,7 +45,7 @@ class OnboardingStartColonistsTest extends TestCase
     {
         $svc = app(ResourcesService::class);
         $breakdown = $svc->getSupplyBreakdown($colonyId);
-        $sum = $breakdown['sources']['cc'] + $breakdown['sources']['housing'] + $breakdown['sources']['knowledge'];
+        $sum = $breakdown['sources']['cc'] + $breakdown['sources']['housing'];
 
         $this->assertSame($sum, $svc->colonistsOverview($colonyId)['colonists']);
         $this->assertSame($svc->calculateSupplyCap($colonyId), $svc->colonistsOverview($colonyId)['colonists']);

@@ -15,9 +15,6 @@
  *                      ResearchService reads this instead of the DB ap_for_levelup field.
  *                      Costs rise non-linearly to create meaningful mid-/late-run tradeoffs.
  *
- * Supply-Cap bonus per level is NOT per-entity — it is the same for all knowledge types.
- * See: config/game.php → supply.knowledge_cap_per_level (+3/+5/+5/+4/+3 = 20 max per knowledge)
- *
  * Localization: lang/de/knowledge.php, lang/en/knowledge.php
  */
 return [

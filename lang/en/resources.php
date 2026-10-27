@@ -23,7 +23,6 @@ return [
     'popup_sup_desc' => 'The settlement\'s colonists: as many as the Command Center and Residential Habitats house — fixed, no immigration. Employed colonists fill a workplace in buildings or research; the rest are free and cover the needs of new buildings. If there are not enough free colonists, construction and upgrades rest until the Residential Habitat or Command Center grows. If housing is lost, the colonists drop at once.',
     'popup_sup_source_cc' => 'Command Center',
     'popup_sup_source_housing' => 'Residential Habitat',
-    'popup_sup_source_knowledge' => 'Knowledge',
     'popup_sup_used_buildings' => 'Buildings',
     'popup_sup_used_researches' => 'Research',
     'popup_sup_used_advisors' => 'Advisors',

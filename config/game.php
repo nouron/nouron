@@ -314,18 +314,11 @@ return [
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
     // Formula: CC flat (buildings.commandCenter.supply_cap, once CC level ≥ 1)
     //   + Σ(housing instance levels) × buildings.housingComplex.supply_cap
-    //   + Σ(knowledge_cap_per_level), clamped to cap_max.
+    // clamped to cap_max. Knowledge is NOT a cap source (GDD §6).
     // Per-entity supply_cost values live in config/buildings.php (ships have none).
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
         'cap_max' => 200,   // absolute hard cap across the whole colony
-        'knowledge_cap_per_level' => [  // non-linear cap bonus per knowledge level (bell curve)
-            1 => 3,
-            2 => 5,
-            3 => 5,
-            4 => 4,
-            5 => 3,
-        ],
     ],
 
     // T30 §13.x/8: ship repair per ship (bay 0-3, apron included), AP only — no Regolith,
