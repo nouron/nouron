@@ -2,7 +2,11 @@
 
 ## 2026-10-27
 
+<<<<<<< HEAD
 - Fix: Techtree pulste bei Hinweisen auf falschen Kacheln (veraltete Rang-Zuordnung 2/4/5); der rangbasierte Hinweis-Pulse ist entfernt, da laut GDD §16.3 kein Hinweis eine Techtree-Kachel hervorhebt (T43-H5).
+=======
+- Chore: Mehrspieler- und Flotten-Reste entfernt (T43-H9) — Config `max_players`/`playbymailmode`/`tick_duration_hours` samt Lobby-/Debug-Anzeige, ungenutzte `lang/{de,en}/fleet.php` und `galaxy.php`, unbenutzte Spalten `colony_tiles.salvage_ap_spent`/`salvage_tick` (neue Migration); ADR 0003 als nicht verfolgt gekennzeichnet.
+>>>>>>> dcd69a92 (chore: Mehrspieler- und Flotten-Reste entfernen (T43-H9))
 - Chore: zweiter Harvester samt Orin-Angebot entfernt (Owner-Entscheidung T31) — `CorporateContactService`/-Controller, `HarvesterEntitlementService`, Routen, Cantina-Banner, Config `game.corporate_contact` und `harvester.second_instance_cc_level`/`salvage_arrival_sp_pct`, Mission `mission_harvester_salvage`, Fehlermeldungen und Texte, Bot-Regeln und Tests; `harvester.max_instances` ist 1, Platzierungs-Parameter `instance_id` nur noch 1. Orin bleibt als Cantina-Figur ohne Mechanik.
 - Doku: GDD-Audit gegen den Code (`docs/gdd-audit-2026-10-27.md`) — Supply heißt durchgehend Kolonisten (§6 „Kolonisten & Wohnraum"), Mehrspieler-, Flotten-/Systemkarten-, Ressourcen-Ebenen- und Zweit-Harvester-Reste aus dem GDD und `docs/gdd/` entfernt (INNN-Begriffe durch Kolonieprotokoll ersetzt), §5 (Produktion), Tile-Katalog, Planetentypen, Notreparatur, §14/§15/§18 an den Code angeglichen; Krankenstation (CC Lv3) und Leitstelle (CC Lv2) in GDD und `docs/game-reference.md` nach dem Seeder berichtigt. Code-Reste und Owner-Fragen in ROADMAP T43-H6 ff.
 

@@ -190,7 +190,6 @@ Der Flug verschleißt das Schiff nicht (keine Rückkehr-Garantie nötig). Ertrag
 | Fehlalarm | keine | `false` |
 | Flug unterwegs | keine | `in_flight` |
 | kein Hangar (Stufe 0) | Selbstbergung | `self` |
-| Selbstbergung begonnen (`salvage_ap_spent` > 0) | Selbstbergung fortsetzen | `grandfathered` (Hangar steht) bzw. `self` |
 | Hangar, tragendes Schiff bereit | Flug | `flight` |
 | Schiff unterwegs/in Lieferung | warten | `ship_busy` |
 | Schiff gedockt, aber Rückkehr-Garantie verfehlt | warten (Reparatur-AP) | `ship_worn` |

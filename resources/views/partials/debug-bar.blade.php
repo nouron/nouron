@@ -62,7 +62,7 @@
         {{-- Run --}}
         <div>
             <div style="color:#ff0;margin-bottom:4px;">Run</div>
-            @foreach (["tick_limit", "tick_duration_hours", "max_players", "playbymailmode"] as $k)
+            @foreach (["tick_limit"] as $k)
                 <div><span style="color:#666;">{{ $k }}:</span>
                     <span
                         style="color:#ddd;">{{ is_bool($cfgRun[$k]) ? ($cfgRun[$k] ? "true" : "false") : $cfgRun[$k] }}</span>

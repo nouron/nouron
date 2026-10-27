@@ -62,12 +62,12 @@ class FindFlightTest extends TestCase
         ]);
     }
 
-    private function find(int $q, int $ring, string $type, bool $scanned = true, int $spent = 0): void
+    private function find(int $q, int $ring, string $type, bool $scanned = true): void
     {
         DB::table('colony_tiles')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'q' => $q, 'r' => 0],
             ['ring' => $ring, 'tile_type' => 'terrain_empty', 'is_explored' => 1, 'is_colony_zone' => 0,
-                'is_deep_scanned' => $scanned ? 1 : 0, 'event_type' => $type, 'salvage_ap_spent' => $spent, 'salvage_tick' => null]
+                'is_deep_scanned' => $scanned ? 1 : 0, 'event_type' => $type]
         );
     }
 

@@ -86,7 +86,7 @@ php artisan db:reset --force
 
 Nach Branch-Wechseln zwischen Schema-Ständen, oder wenn die Baseline geändert wurde (vor dem Produktivgang wird sie noch direkt editiert), ist ebenfalls ein frischer Aufbau nötig: `php artisan db:reset --force`.
 
-Stand 2026-10-10: Die Baseline enthält neu `colony_tiles.salvage_ap_spent` und `salvage_tick` (T30 Pool v1). Dev-DB `nouron` und die paratest-Worker-DBs (`nouron_test_test_N`) brauchen dafür einmal `php artisan db:reset --force`.
+Stand 2026-10-27: Die Spalten `colony_tiles.salvage_ap_spent`/`salvage_tick` (T30) entfallen per Migration; `php artisan migrate` genügt.
 
 ## Tests
 
