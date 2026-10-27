@@ -6,7 +6,6 @@ function techtreeView(config) {
     let tree = null;
 
     const CAT = { building: 'b', research: 'k', ship: 's', personell: 'a' };
-    const HINT_TYPE = { 2: 'personell', 4: 'research', 5: 'building' };
 
     return {
         // Shared AP-bar helpers (apCapReached, apSegClasses, apCapLimitPos): public/js/ap-bar.js
@@ -15,7 +14,6 @@ function techtreeView(config) {
         edges: config.edges ?? [],
         colonyViewUrl: config.colonyViewUrl ?? '/colony/view',
         i18n: config.i18n ?? {},
-        hintRank: config.hintRank ?? 0,
         selectedTech: null,
         sheetMode: false,
 
@@ -30,10 +28,6 @@ function techtreeView(config) {
             // The header grows and shrinks (hint bar, encounter notice): keep the stage flush below it.
             const header = document.querySelector('.colony-header');
             if (header && window.ResizeObserver) new ResizeObserver(() => this.fit()).observe(header);
-
-            this.flatItems().forEach((it) => {
-                it.pulse = this.hintRank > 0 && it.type === HINT_TYPE[this.hintRank];
-            });
 
             this.$nextTick(() => {
                 tree = window.TechtreeCanvas.create({
