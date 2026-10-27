@@ -4,7 +4,6 @@ namespace Tests\Feature\Colony;
 
 use App\Models\User;
 use App\Services\AdvisorService;
-use App\Services\HarvesterEntitlementService;
 use App\Services\ResourcesService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,8 +15,8 @@ use Tests\TestCase;
  * 2026-09-24): a building level-up needs free supply (cap − workplaces) for the
  * supply_cost of the next level, otherwise 422 supply_limit before any AP or
  * Regolith is spent. Command Center and housing are exempt — they create the
- * housing that leads out of over-capacity. On placement the first Harvester
- * stays unchecked (bootstrap), the second one is checked.
+ * housing that leads out of over-capacity. On placement the Harvester
+ * stays unchecked (bootstrap).
  *
  * Fixture colony 1 (user 3): CC 25 level 3, housing 28 instance 1 level 2,
  * sciencelab 31 level 1, harvester 27 instance 1 level 1 (unplaced). Supply costs
@@ -196,29 +195,5 @@ class SupplyBuildGateTest extends TestCase
         $apSpend = $this->apSpend(self::AGRARDOM);
         $this->invest(self::AGRARDOM)->assertOk()->assertJsonPath('ok', true);
         $this->assertSame($apSpend + 1, $this->apSpend(self::AGRARDOM));
-    }
-
-    public function test_second_harvester_placement_is_checked_against_free_supply(): void
-    {
-        $this->app->make(HarvesterEntitlementService::class)->grantPurchase(self::USER_ID);
-        DB::table('colony_buildings')
-            ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER)->where('instance_id', 1)
-            ->update(['tile_x' => 3, 'tile_y' => 0]);
-        DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->whereIn('q', [3, -3])->where('r', 0)->delete();
-        DB::table('colony_tiles')->insert([
-            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
-            ['colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y1_d1', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 160, 'resource_max' => 160],
-        ]);
-        $place = fn () => $this->actingAs($this->user())->postJson(route('colony.building.place'), [
-            'building_id' => self::HARVESTER, 'q' => -3, 'r' => 0, 'instance_id' => 2,
-        ]);
-
-        $this->setFree(1); // harvester supply_cost 2
-        $place()->assertStatus(422)->assertJsonPath('error', 'supply_limit');
-        $this->assertFalse(DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
-            ->where('building_id', self::HARVESTER)->where('instance_id', 2)->exists());
-
-        $this->setFree(2);
-        $place()->assertOk()->assertJsonPath('ok', true);
     }
 }

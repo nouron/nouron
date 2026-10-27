@@ -24,15 +24,15 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 |---|---|---|---|---|---|
 | **Commandcenter (CC)** | — | — | 0 | 5 | 1 |
 | **Wohnhabitat** | Lv1 | 40 Rg | 0 | 3 | 6 |
-| **Harvester** | Lv1 | — | 2 | 1 | 2 |
+| **Harvester** | Lv1 | — | 2 | 1 | 1 |
 | **Agrardom** | 1 + Harv | 70 Rg | 2 | 3 | 1 |
 | **Analytik-Labor** | Lv2 | 95 Rg | 6 | 5 | 1 |
-| **Krankenstation** | Lv2 | 60 Rg / 25 Wk | 10 | 3 | 1 |
+| **Krankenstation** | Lv3 | 60 Rg / 25 Wk | 10 | 3 | 1 |
 | **Cantina** | Lv2 | 95 Rg | 6 | 3 | 1 |
 | **Hangar** | Lv2 | 95 Rg | 6 | 3 | 1 (eine Halle, T30 Schritt 3; Stufe 1–3 flat je 25 Rg) |
 | **Religiöse Stätte** | Lv4 | 50 Rg / 15 Wk | 4 | 1 | 1 |
 | **Kolonialdenkmal** | Lv5 | 60 Rg / 25 Wk | 2 | 1 | 1 |
-| **Leitstelle** | Lv3 | 80 Rg / 25 Wk | 8 | 3 | 1 |
+| **Leitstelle** | Lv2 | 80 Rg / 25 Wk | 8 | 3 | 1 |
 | **Uplink Station** | Lv2 | 80 Rg | 6 | 3 | 1 |
 | **Trading Post** | Lv4 | 100 Rg / 25 Wk | 6 | 3 | 1 |
 
@@ -213,7 +213,7 @@ Der Flug verschleißt das Schiff nicht (keine Rückkehr-Garantie nötig). Ertrag
 |---|---|---|
 | `bar` (Cantina) | Konsul-Rang + Handelsposten (Stufe ≥1) + `trade`-Kenntnis | mehr Ware auf der Get-Seite |
 | `merchant` (Corvans Sonderinventar) | Handelsposten (Stufe ≥2) + `trade`-Kenntnis (kein Konsul) | Preisnachlass |
-| `nexus` (Direktimport-Preis + Orin) | Handelsposten (Stufe ≥3) + `trade`-Kenntnis (kein Konsul, F5) | Preisnachlass |
+| `nexus` (Direktimport-Preis) | Handelsposten (Stufe ≥3) + `trade`-Kenntnis (kein Konsul, F5) | Preisnachlass |
 
 Stiller Deckel (nie im UI erklärt, `game.bar.trade_terms.silent_cap`): `bar` 60%, `merchant` 60%, `nexus` 25%.
 
@@ -262,7 +262,6 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 |---|---|---|---|
 | `mission_salvage_sweep` (Constr Lv1+) | 4 | 12 Or | 6–10 Wk |
 | `mission_ruin_expedition` | 4 | 12 Or | 440 Cr (1x pro Ruin) |
-| `mission_harvester_salvage` | 4 | 12 Or | Harvester Instanz #2 (1x pro Ruin) |
 
 ### Korvette
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
@@ -308,7 +307,6 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | `mission_aid_transport` | Hilfsgütertransport | Frachter | easy / normal |
 | `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | normal / hard |
 | `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | normal / hard |
-| `mission_harvester_salvage` | Bergungsauftrag: Förderanlage | Frachter o. Korvette | easy / normal |
 | `mission_escort_convoy` | Konvoi-Begleitung | Korvette | normal / hard |
 | `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | normal / hard |
 
@@ -543,11 +541,7 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0 (konstante Rate, harter 
 
 **Relocation**: 1–2 AP pro Hex (GDD §4c: 2 AP/Hex)
 
-**Second Harvester Instance**:
-- Gate: CC Lv3 (ownership entitlement)
-- Sources:
-  - Weg A: Orin (corporate_contact, 400–800 Cr, 30% chance alle 15–25 Sol)
-  - Weg B: Mission salvage (1× pro Ruin tile, damaged at 25% SP)
+**Instanzen**: genau ein Harvester (`max_instances` 1); es gibt keine zweite Instanz.
 
 ---
 

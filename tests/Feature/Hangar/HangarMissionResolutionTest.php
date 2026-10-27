@@ -25,7 +25,6 @@ namespace Tests\Feature\Hangar;
  * instance 1 already exists in TestSeeder (freed of pre-seeded ships here).
  */
 use App\Console\Commands\GameTick;
-use App\Services\HarvesterEntitlementService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -290,29 +289,6 @@ class HangarMissionResolutionTest extends TestCase
             ->where('colony_id', self::COLONY_ID)->where('research_id', 91)->first();
 
         $this->assertSame($discountedThreshold, (int) $row->ap_spend, 'ap_spend must cap at the discounted threshold, not the raw config value');
-    }
-
-    public function test_completion_grants_harvester_entitlement_via_salvage(): void
-    {
-        // mission_harvester_salvage reward: harvester_instance => true (GDD §4c
-        // "Harvester-Zweitinstanz: Bezugsquelle", freigegeben 2026-08-05, Weg B). This
-        // grants the earned entitlement (HarvesterEntitlementService) — it does NOT
-        // place the building itself, the player still picks a Regolith tile via the
-        // normal ColonyController::placeBuilding flow.
-        $this->dispatchFixture('mission_harvester_salvage', 4, dispatchTick: 20600, target: ['q' => 10, 'r' => 1]);
-
-        Artisan::call('game:tick', ['--run' => 1, '--tick' => 20608]); // return_tick = 20600 + 2×4
-
-        $entitlementService = $this->app->make(HarvesterEntitlementService::class);
-        $this->assertTrue($entitlementService->hasEntitlement(self::USER_ID));
-        $this->assertTrue($entitlementService->isSalvageSourced(self::USER_ID));
-
-        $log = DB::table('colony_log')
-            ->where('user', self::USER_ID)->where('tick', 20608)->where('event', 'hangar.mission_completed')
-            ->first();
-        $this->assertNotNull($log);
-        $params = json_decode($log->parameters, true);
-        $this->assertTrue($params['rewards']['harvester_instance']);
     }
 
     // ── Determinism (ADR 0003 rng_seed) ──────────────────────────────────────

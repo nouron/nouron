@@ -32,8 +32,8 @@ use Tests\TestCase;
  * Known gap: rules that need mid/late-game state never fire within these short runs
  * and are only covered structurally (band = rule index, cursor = legacy "next rule",
  * one act() per rule under its own name — see BotStrategy::default()):
- * repair_critical, promote_advisor, buy_merchant_item, buy_corporate_harvester_offer,
- * place_harvester_instance2, dispatch_salvage_mission, repair_ship_for_flight,
+ * repair_critical, promote_advisor, buy_merchant_item,
+ * repair_ship_for_flight,
  * dispatch_credit_mission, dispatch_compounds_mission, invest_find, the bar rules
  * (accept_bar_encounter, resolve_bar_concern, resolve_information_encounter,
  * accept_bar_offer) and the focus_* rules themselves (Phase-2 objectives). Longer

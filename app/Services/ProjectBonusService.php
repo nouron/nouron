@@ -161,7 +161,7 @@ class ProjectBonusService
 
     /**
      * Additive percent bonus applied to the price a player pays across all 3
-     * trade channels (BarService, MerchantService, CorporateContactService),
+     * trade channels (BarService, MerchantService),
      * sourced from the trade knowledge level — additive to the existing
      * TradingPostService per-channel discount, not a replacement.
      */

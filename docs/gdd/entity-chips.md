@@ -176,7 +176,7 @@ Das Alpine-Komponenten-Muster (`entityChip()`) wird vom UI-Spezialisten definier
 **Datenquelle**
 - Schiffsname: aus `ships`-Tabelle (Eigenname-Feld)
 - Typ: aus `ships`-Tabelle
-- Status: aus `fleet_orders` oder `ships.status` — dynamisch, muss vorgeladen werden
+- Status: aus `colony_ships.ship_state` — dynamisch, muss vorgeladen werden
 - Für CommLog-Kontext: Status ist zum Zeitpunkt des Log-Eintrags historical (Schiff könnte seither zerstört sein). Tooltip zeigt "Schiff nicht mehr aktiv" falls nicht mehr in DB vorhanden.
 
 ---

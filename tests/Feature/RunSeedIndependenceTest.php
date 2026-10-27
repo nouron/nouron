@@ -7,7 +7,6 @@ use App\Models\Colony;
 use App\Models\User;
 use App\Services\BarService;
 use App\Services\ColonyTileService;
-use App\Services\CorporateContactService;
 use App\Services\MerchantService;
 use App\Services\OnboardingService;
 use App\Support\RunSeed;
@@ -134,21 +133,6 @@ class RunSeedIndependenceTest extends TestCase
         $merchant->spawnVisit($this->colonyB, $spawnB);
         $offer = ['give_resource_id', 'give_amount', 'get_resource_id', 'get_amount'];
         $this->assertSame($this->rows('bar_offers', $this->colonyA, $offer), $this->rows('bar_offers', $this->colonyB, $offer));
-    }
-
-    public function test_corporate_contact_rolls_do_not_depend_on_the_colony_id(): void
-    {
-        $contact = app(CorporateContactService::class);
-
-        for ($tick = 1; $tick <= 30; $tick++) {
-            foreach (['appearanceRoll', 'offerRoll', 'priceRoll'] as $roll) {
-                $this->assertSame(
-                    $this->invokePrivate($contact, $roll, $this->colonyA, $tick),
-                    $this->invokePrivate($contact, $roll, $this->colonyB, $tick),
-                    "{$roll}, tick {$tick}"
-                );
-            }
-        }
     }
 
     public function test_tick_storm_roll_does_not_depend_on_the_colony_id(): void

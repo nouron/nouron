@@ -33,8 +33,6 @@ return [
     'mission_ruin_expedition_name' => 'Ruinen-Expedition',
     'mission_ruin_expedition_desc' => 'Wer die Ruine hinterlassen hat, ist lange fort — aber was zwischen ihren Wänden liegt, ist eine Expedition wert.',
 
-    'mission_harvester_salvage_name' => 'Bergungsauftrag: Förderanlage',
-    'mission_harvester_salvage_desc' => 'Eine frühere Expedition hat ihre Förderanlage in der Ruine zurückgelassen, havariert und halb im Staub versunken. Die Crew birgt, was sich retten lässt — nach der Reparatur fördert sie wieder.',
 
     'mission_escort_convoy_name' => 'Konvoi-Begleitung',
     'mission_escort_convoy_desc' => 'Die Korvette begleitet einen fremden Konvoi durch unwegsames Gelände — meist reicht schon ihre Silhouette am Himmel, damit nichts passiert.',
@@ -66,7 +64,6 @@ return [
     'error_find_not_scanned' => 'Das Signal ist noch nicht gescannt — erst scannen.',
     'error_find_too_large' => 'Dieser Fund ist zu schwer für das Schiff.',
     'error_find_in_flight' => 'Zu diesem Fund ist schon ein Schiff unterwegs.',
-    'error_harvester_instance_full' => 'Die Kolonie hat bereits die maximale Anzahl Harvester — eine Bergung würde nichts bringen.',
     'error_invalid_difficulty' => 'Diese Schwierigkeitsstufe ist für diese Mission nicht verfügbar.',
 
     // ── Difficulty ───────────────────────────────────────────────────────────
@@ -91,7 +88,6 @@ return [
     'reward_organics' => ':amount Organika',
     'reward_research_ap' => '+:amount Forschungs-AP',
     'reward_reveal_tiles' => ':amount Sektoren kartiert',
-    'reward_harvester_instance' => 'Geborgener Harvester (beschädigt)',
     'reward_find_salvage' => 'Fund + Flugbonus',
     'reward_trust' => 'Vertrauen',
     'reward_loot_table' => 'Zufallsfund: :options',

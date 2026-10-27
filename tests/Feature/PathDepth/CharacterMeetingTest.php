@@ -3,7 +3,6 @@
 namespace Tests\Feature\PathDepth;
 
 use App\Services\BarService;
-use App\Services\CorporateContactService;
 use App\Services\PathDepthService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -117,28 +116,6 @@ class CharacterMeetingTest extends TestCase
         $this->barService->resolveInformationEncounter(self::COLONY_ID, $id, self::USER_ID, 10);
 
         $this->assertTrue($this->met('veteran'));
-    }
-
-    public function test_corporate_contact_purchase_marks_corporate_rep_met(): void
-    {
-        DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'building_id' => 25, 'instance_id' => 1],
-            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
-        );
-        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['credits' => 5000]);
-        config([
-            'game.corporate_contact.appearance_interval_min' => 1,
-            'game.corporate_contact.appearance_interval_max' => 1,
-            'game.corporate_contact.offer_chance' => 1.0,
-        ]);
-        $service = $this->app->make(CorporateContactService::class);
-        $bought = false;
-        for ($tick = 15; $tick < 60 && ! $bought; $tick++) {
-            $bought = $service->buyHarvesterOffer(self::COLONY_ID, self::USER_ID, $tick)['ok'];
-        }
-
-        $this->assertTrue($bought);
-        $this->assertTrue($this->met('corporate_rep'));
     }
 
     public function test_story_roll_in_game_tick_marks_figure_met(): void

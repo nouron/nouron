@@ -49,15 +49,6 @@ class BotStrategyInactiveShipTest extends TestCase
         $this->assertNotEmpty($this->rule('dispatch_compounds_mission')['when']($bot));
     }
 
-    public function test_salvage_mission_skips_a_freighter_in_a_level_1_hangar(): void
-    {
-        $bot = $this->bootWithDockedFreighter(hangarLevel: 1);
-        $tile = DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->first();
-        DB::table('colony_tiles')->where('id', $tile->id)->update(['is_deep_scanned' => 1, 'event_type' => 'event_ruin']);
-
-        $this->assertEmpty($this->rule('dispatch_salvage_mission')['when']($bot));
-    }
-
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private function bootWithDockedFreighter(int $hangarLevel): BotSession

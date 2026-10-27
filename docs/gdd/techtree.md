@@ -17,7 +17,7 @@ Der Techtree hat genau zwei Aufgaben:
 
 Er ist **keine Verwaltungsansicht für Gebäude**. Jede Gebäude-Aktion — Errichten, Ausbauen, Reparieren, Rückbau — findet ausschließlich im Tile-Panel der Kolonieansicht statt (§11.4). Für Schiffe und Berater gilt dasselbe Prinzip: Der Techtree zeigt Voraussetzungen und Stand, gehandelt wird im Hangar-Screen (§8b) bzw. im Berater-Screen (§13).
 
-**Warum eine Stelle je Aktion:** Zwei Orte für dieselbe Aktion würden zwei Rechenwege für Supply-Gate, Rabatte und Rundung erzwingen, und der Spieler müsste lernen, dass dieselbe Aktion an zwei Orten verschieden aussehen kann. Ein Gebäude ist ein Ort auf der Karte. Also passiert alles, was diesen Ort verändert, auch auf der Karte. Der Techtree beantwortet die Planungsfrage („Was kommt als Nächstes, und was brauche ich dafür?"), die Kolonieansicht die Handlungsfrage („Was tue ich jetzt mit diesem Tile?").
+**Warum eine Stelle je Aktion:** Zwei Orte für dieselbe Aktion würden zwei Rechenwege für Kolonisten-Gate, Rabatte und Rundung erzwingen, und der Spieler müsste lernen, dass dieselbe Aktion an zwei Orten verschieden aussehen kann. Ein Gebäude ist ein Ort auf der Karte. Also passiert alles, was diesen Ort verändert, auch auf der Karte. Der Techtree beantwortet die Planungsfrage („Was kommt als Nächstes, und was brauche ich dafür?"), die Kolonieansicht die Handlungsfrage („Was tue ich jetzt mit diesem Tile?").
 
 Das Designziel: Ein Spieler soll in 30 Sekunden verstehen, was er bauen kann und warum etwas noch gesperrt ist. Kein Micromanagement, keine Forschungsketten die Monate dauern.
 
@@ -47,7 +47,7 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `tradingPost` | Handelsposten | CC Lv 4 | max. Lv 3 |
 | `monument` | Kolonialdenkmal | CC Lv 5 | Lv 1 |
 
-Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Leitstelle), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
+Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Missionen (Hangar), Kommunikation (Uplink-Station), Sicherheit (Leitstelle), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
 #### Kenntnisse
 
@@ -136,8 +136,8 @@ Kenntnisse können maximal auf das aktuelle CC-Level ausgebaut werden, sobald si
 | 4 | Gebäude-Voraussetzungen + CC Lv 4 |
 | 5 | Gebäude-Voraussetzungen + CC Lv 5 |
 
-**Regel 4 — Supply als weicher Gate**
-Jedes Gebäude und jedes Schiff verbraucht Supply. Supply-Cap ist durch CC-Level und Wohnhabitate begrenzt. Der Spieler kann theoretisch alles bauen wollen, ist aber durch Supply gezwungen, Prioritäten zu setzen. Das ist kein harter Abhängigkeitsbaum, sondern Ressourcendruck. Details in §6 (Supply-Generierung).
+**Regel 4 — Kolonisten als weicher Gate**
+Jedes Gebäude bindet Kolonisten als Arbeitsplätze (Schiffe nicht). Die Kolonisten sind durch den Wohnraum von CC und Wohnhabitaten begrenzt. Der Spieler kann theoretisch alles bauen wollen, ist aber durch die freien Kolonisten gezwungen, Prioritäten zu setzen. Das ist kein harter Abhängigkeitsbaum, sondern Ressourcendruck. Details in §6.
 
 > **Keine zyklischen Abhängigkeiten.** Jede Abhängigkeitskette endet beim CC. Ein Deadlock durch wechselseitige Abhängigkeiten ist konstruktiv ausgeschlossen.
 
@@ -202,7 +202,7 @@ Ein Klick auf eine Kachel öffnet das Detailpanel. Sein Inhalt hängt vom Entit�
 **Gebäude** — nur lesend, mit Sprung in die Kolonie:
 
 - **Info:** Beschreibung, Effekt, Kosten der nächsten Stufe als Orientierung.
-- **Voraussetzungen:** was erfüllt ist und was fehlt (CC-Stufe, funktionale Abhängigkeit nach Regel 2, Pfadwahl-Gate, Supply).
+- **Voraussetzungen:** was erfüllt ist und was fehlt (CC-Stufe, funktionale Abhängigkeit nach Regel 2, Pfadwahl-Gate, freie Kolonisten).
 - **Instanzen:** eine Zeile „Anzahl / maximale Instanzen" (z. B. Wohnhabitat), bei Gebäuden ohne Instanz-Deckel nur die Anzahl (Hangar). Der Deckel ist `max_instances`, nicht `max_level` — die beiden Achsen (§4c) dürfen in der Anzeige nicht verwechselt werden.
 - **Instanzliste:** eine Zeile je platzierter Instanz mit Stufe (bezogen auf `max_level`) und Zustand (Status-Punkte bzw. Zustandsklasse wie im Tile-Panel). Jede Zeile hat den Link **„Zum Tile"**. Er öffnet die Kolonieansicht mit genau dieser Instanz ausgewählt (Deep-Link mit Gebäude und Instanz als Parameter).
 - **„In der Kolonie errichten":** sichtbar, solange eine weitere Instanz möglich ist, d. h. der Instanz-Deckel nicht erreicht ist bzw. bei einem Gebäude ohne Instanzen noch keine steht. Der Link führt in die Kolonieansicht mit vorgewähltem Gebäude, denselben Einstieg, den auch die Bau-Hints nutzen (§16.2). Ob die Platzierung dort gelingt (Regolith, Supply, freies Tile), prüft die Kolonieansicht. Der Techtree zeigt fehlende Voraussetzungen vorab an, sperrt den Link aber nicht, damit der Spieler auch zum Planen in die Karte springen kann.
@@ -221,8 +221,8 @@ Alle Aktionen an einem Gebäude laufen über das Tile-Panel des Tiles, auf dem e
 
 | Aktion | Wirkung | Kosten / Gate |
 |---|---|---|
-| **Errichten** | Gebäude auf ein freies, passendes Tile setzen (Stufe 0, Baustelle) | Regolith bzw. Werkstoffe, AP; Supply-Gate beim Platzieren (§6 „Supply als Bau-Gate"); Zonen-Regel (§4 „Bauregeln") |
-| **Ausbauen** | AP in die nächste Stufe investieren, bei Erreichen der Schwelle Stufe +1 | AP, Regolith bei Abschluss (§4 „Baukosten & Level-Up-Kosten"); Supply-Gate ab der zweiten Stufe |
+| **Errichten** | Gebäude auf ein freies, passendes Tile setzen (Stufe 0, Baustelle) | Regolith bzw. Werkstoffe, AP; Kolonisten-Gate beim Platzieren (§6 „Kolonisten als Bau-Gate"); Zonen-Regel (§4 „Bauregeln") |
+| **Ausbauen** | AP in die nächste Stufe investieren, bei Erreichen der Schwelle Stufe +1 | AP, Regolith bei Abschluss (§4 „Baukosten & Level-Up-Kosten"); Kolonisten-Gate ab der zweiten Stufe |
 | **Reparieren** | Status-Punkte zurückholen | AP + Regolith je Schritt (CC und Harvester nur AP) |
 | **Rückbau** | Stufe der Instanz um eins senken; bei einer Baustelle auf Stufe 0: Bauabbruch | kostenlos, ohne Voraussetzungen, Bestätigung per Modal-Dialog (siehe unten) |
 
@@ -235,15 +235,15 @@ Der Direktor kann jede Instanz eines Gebäudes bewusst um eine Stufe zurückbaue
 **Regeln:**
 
 - **Eine Stufe je Aktion, je Instanz.** Der Rückbau senkt die Stufe der gewählten Instanz um genau eins. Andere Instanzen desselben Gebäudes bleiben unberührt.
-- **Kostenlos und ohne Voraussetzungen.** Keine AP, keine Ressourcen, kein Supply-Gate, keine Levelup-Voraussetzungen. Es gibt auch keine Rückerstattung. Das Material ist verbaut, der Rückbau gibt nichts zurück.
+- **Kostenlos und ohne Voraussetzungen.** Keine AP, keine Ressourcen, kein Kolonisten-Gate, keine Levelup-Voraussetzungen. Es gibt auch keine Rückerstattung. Das Material ist verbaut, der Rückbau gibt nichts zurück.
 - **Die Kommandozentrale fällt nie unter Stufe 1.** Sie ist der Anker der Kolonie und kann nicht geräumt werden.
-- **Rückbau auf Stufe 0 räumt das Tile.** Das Gebäude ist danach nicht mehr platziert: Das Tile ist frei, und die Arbeitsplatz-Reserve der ersten Stufe fällt weg (§6 „Supply als Bau-Gate"). Wer es wieder haben will, muss es neu errichten, mit vollen Kosten.
+- **Rückbau auf Stufe 0 räumt das Tile.** Das Gebäude ist danach nicht mehr platziert: Das Tile ist frei, und die Arbeitsplatz-Reserve der ersten Stufe fällt weg (§6 „Kolonisten als Bau-Gate"). Wer es wieder haben will, muss es neu errichten, mit vollen Kosten.
 - **Bauabbruch.** Der Rückbau gilt auch für eine platzierte Baustelle auf Stufe 0. Das Tile und die Arbeitsplatz-Reserve werden frei. Es gibt keine Rückerstattung der Errichtungskosten, und bereits investierte AP verfallen. Einen eigenen Begriff oder eine eigene Aktion braucht das nicht: Es ist dieselbe Regel wie beim Rückbau auf Stufe 0. (Im Code noch umzusetzen, dort verlangt der Rückbau derzeit eine Stufe größer 0.)
 - **Investierte AP eines laufenden Ausbaus verfallen.** Steckt in der Instanz bereits AP für die nächste Stufe, sind diese AP mit dem Rückbau weg.
 - **Zustand:** Die verbleibende Stufe steht danach mit vollem Zustand da, genauso wie nach einem Stufenverlust durch Verfall (§7).
-- **Arbeitsplätze sinken mit der Stufe.** Weniger Stufen binden weniger Kolonisten. Freies Supply entsteht sofort (§6 „Supply als Bau-Gate"). Sind Arbeitsplätze unbesetzt, verschwinden sie still mit, nach denselben Regeln wie beim Stufenverlust durch Verfall (§6 „Wohnraumverlust — Konsequenzen").
+- **Arbeitsplätze sinken mit der Stufe.** Weniger Stufen binden weniger Kolonisten. Freie Kolonisten entstehen sofort (§6 „Kolonisten als Bau-Gate"). Sind Arbeitsplätze unbesetzt, verschwinden sie still mit, nach denselben Regeln wie beim Stufenverlust durch Verfall (§6 „Wohnraumverlust — Konsequenzen").
 - **Wohnraum:** Der Rückbau eines Wohnhabitats senkt die Kolonisten-Kapazität. Die Kolonisten sinken sofort; sind danach Arbeitsplätze unbesetzt, sinkt die Rohstoffproduktion anteilig, und Neubau und Ausbau bleiben gesperrt, bis wieder genug freie Kolonisten da sind (§6 „Wohnraumverlust — Konsequenzen"). Es gibt keine Frist und keine Abwanderung. Damit ist der Rückbau neben Verfall und Sturm der dritte Weg, Wohnraum zu verlieren, und der einzige, den der Spieler selbst wählt.
-- **Effekte skalieren mit der neuen Stufe**, wie nach jedem Stufenverlust. Vertrauensbeiträge, Produktion, Rabatte und Supply-Cap-Beiträge sinken automatisch mit.
+- **Effekte skalieren mit der neuen Stufe**, wie nach jedem Stufenverlust. Vertrauensbeiträge, Produktion, Rabatte und Wohnraum-Beiträge sinken automatisch mit.
 - **Kein Vertrauens-Ereignis.** Der Rückbau ist eine bewusste Verwaltungsentscheidung des Direktors, keine Vernachlässigung, und löst kein eigenes Vertrauens-Ereignis aus. Die Folgen stecken schon im System: Vertrauensgebäude verlieren ihren Stufenbeitrag, und ein Wohnhabitat-Rückbau mindert über unbesetzte Arbeitsplätze die Produktion (§6). Dasselbe gilt für den Stufenverlust durch Verfall: Auch er hat keine eigene Vertrauensfolge.
 - **Bestandsschutz.** Unterschreitet ein Rückbau eine Voraussetzung, auf der schon etwas steht, bleibt das Bestehende erhalten: Gebäude, angestellte Berater, Schiffe und erreichte Kenntnis-Stufen. Nur neue Aktionen werden gegen die neue Stufe geprüft. Beispiele sind eine zurückgebaute CC trotz bebauter Kolonie-Zone oder belegter Berater-Slots, ein Pfadgebäude auf Stufe 0 bei angestelltem Berater und ein Analytik-Labor unter der Voraussetzung erforschter Kenntnisse. **Einzige Ausnahme:** Ein Hangar unter der Stufe seines Schiffs macht das Schiff inaktiv (§7 „Hangar unter Schiffsstufe“). Das Schiff kann dann keine neue Mission starten. Eine laufende Mission läuft weiter, und nach dem Wiederausbau ist das Schiff automatisch wieder einsatzbereit. Der Bestandsschutz gilt hier nicht, weil die Hangar-Stufe die Schiffsklasse selbst ist und keine bloße Bau-Voraussetzung.
 - **Bestätigung per Modal-Dialog.** Der Rückbau kostet nichts, ist aber nicht umkehrbar. Ein Fehlklick kostet eine Stufe, also AP und Regolith für den Wiederaufbau. Deshalb bestätigt der Spieler jeden Rückbau in einem Modal-Dialog. Der Dialog ist kein bloßes „Sicher?", er zeigt die konkreten Folgen:
@@ -255,7 +255,7 @@ Der Direktor kann jede Instanz eines Gebäudes bewusst um eine Stufe zurückbaue
 
   Warnfälle werden hervorgehoben: Stufe 0 bzw. Bauabbruch, verfallende AP, wegfallende Kolonisten und neu unbesetzte Arbeitsplätze. Die angezeigten Folgen sind die wirkenden Folgen.
 
-**Wofür der Rückbau da ist:** Der Rückbau ist ein Werkzeug zum Umplanen, nicht zum Sparen. Er macht Bauplatz frei (ein Gebäude auf Stufe 0 räumen, um das Tile anders zu nutzen), er senkt die Instandhaltungslast (§13.5) und er setzt Kolonisten frei, wenn Supply gebraucht wird. Weil er nichts zurückgibt, ist er nie ein Gewinngeschäft. Er tauscht Investition gegen Spielraum. Das passt zu „Entscheidungen ohne Optimalpfad": Ein Gebäude abzureißen, das man teuer gebaut hat, soll sich wie eine echte Abwägung anfühlen.
+**Wofür der Rückbau da ist:** Der Rückbau ist ein Werkzeug zum Umplanen, nicht zum Sparen. Er macht Bauplatz frei (ein Gebäude auf Stufe 0 räumen, um das Tile anders zu nutzen), er senkt die Instandhaltungslast (§13.5) und er setzt Kolonisten frei, wenn Kolonisten gebraucht werden. Weil er nichts zurückgibt, ist er nie ein Gewinngeschäft. Er tauscht Investition gegen Spielraum. Das passt zu „Entscheidungen ohne Optimalpfad": Ein Gebäude abzureißen, das man teuer gebaut hat, soll sich wie eine echte Abwägung anfühlen.
 
 > ⚠️ BALANCE CONCERN: Weil die verbleibende Stufe mit vollem Zustand dasteht, ist ein Rückbau bei fast verfallenem Gebäude ein kostenloser Ersatz für die Reparatur, mit Stufenverlust. Das Ergebnis ist identisch mit dem, was der Verfall ohnehin gleich tun würde. Der Rückbau zieht den Verlust also nur vor, er schafft keinen neuen Vorteil. Relevant wird das erst, wenn der Stufenverlust durch Verfall eine zusätzliche Folge hat, die der Rückbau nicht hat. Heute ist das nur das Recycling der Leitstelle (§4). Dann wird „kurz vor dem Verfall selbst zurückbauen" zur Ausweichtaktik. Im Playtest prüfen, ob sie zur Routine wird.
 

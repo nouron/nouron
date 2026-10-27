@@ -36,8 +36,6 @@ return [
     'mission_escort_convoy_name' => 'Convoy Escort',
     'mission_escort_convoy_desc' => 'The corvette shadows a convoy through rough country — most days nothing happens, and that is exactly the point.',
 
-    'mission_harvester_salvage_name' => 'Salvage Job: Extraction Rig',
-    'mission_harvester_salvage_desc' => 'A previous expedition left its extraction rig in the ruin, wrecked and half-buried in dust. The crew salvages what can be saved — once repaired, it produces again.',
 
     'mission_perimeter_patrol_name' => 'Perimeter Patrol',
     'mission_perimeter_patrol_desc' => 'The corvette runs quiet loops around the colony. Mostly it stays quiet — but the colonists sleep better knowing the ship is overhead.',
@@ -66,7 +64,6 @@ return [
     'error_find_not_scanned' => 'The signal has not been scanned yet — scan it first.',
     'error_find_too_large' => 'This find is too heavy for the ship.',
     'error_find_in_flight' => 'A ship is already on its way to this find.',
-    'error_harvester_instance_full' => 'The colony already has the maximum number of Harvesters — a salvage would yield nothing.',
     'error_invalid_difficulty' => 'This difficulty level is not available for this mission.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
@@ -91,7 +88,6 @@ return [
     'reward_organics' => ':amount Organics',
     'reward_research_ap' => '+:amount Research AP',
     'reward_reveal_tiles' => ':amount sectors charted',
-    'reward_harvester_instance' => 'Salvaged Harvester (damaged)',
     'reward_find_salvage' => 'Find + flight bonus',
     'reward_trust' => 'Trust',
     'reward_loot_table' => 'Random find: :options',

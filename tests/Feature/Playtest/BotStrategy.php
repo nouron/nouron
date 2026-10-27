@@ -196,41 +196,6 @@ class BotStrategy
                 ]),
             ],
             [
-                'name' => 'buy_corporate_harvester_offer',
-                // Weg A for the Harvester 2nd instance (GDD §4c, CorporateContactService).
-                // Rare, timed offer (Orin/corporate_rep) — checked early/high-priority since
-                // it can expire and doesn't cost AP, only Credits.
-                'when' => fn (BotSession $b) => self::corporateOfferCandidate($b),
-                'do' => fn (BotSession $b, array $offer) => $b->act('buy_corporate_harvester_offer', 'POST', '/colony/corporate-contact/buy-harvester'),
-            ],
-            [
-                'name' => 'place_harvester_instance2',
-                // Once either Weg A (Orin) or Weg B (mission_harvester_salvage) has granted
-                // the entitlement (HarvesterEntitlementService), place the 2nd instance —
-                // free (no build_cost), so this should fire the very next tick after earning it.
-                'when' => fn (BotSession $b) => self::harvesterInstance2Candidate($b),
-                'do' => fn (BotSession $b, object $tile) => $b->act('place_harvester_instance2', 'POST', '/colony/building/place', [
-                    'building_id' => BuildingId::Harvester->value,
-                    'instance_id' => 2,
-                    'q' => $tile->q,
-                    'r' => $tile->r,
-                ]),
-            ],
-            [
-                'name' => 'dispatch_salvage_mission',
-                // Weg B for the Harvester 2nd instance. Needs a docked freighter/corvette
-                // (mission_recon_flight's drone doesn't qualify) and a deep-scanned
-                // event_ruin tile — both are real prerequisites, not bot workarounds; if
-                // this rarely fires, that's a real finding about ship/ruin availability,
-                // not a bug in the rule.
-                'when' => fn (BotSession $b) => self::salvageDispatchCandidate($b),
-                'do' => fn (BotSession $b, array $candidate) => $b->act('dispatch_salvage_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
-                    'mission_key' => 'mission_harvester_salvage',
-                    'difficulty' => 'easy',
-                    'target' => ['q' => $candidate['tile']->q, 'r' => $candidate['tile']->r],
-                ]),
-            ],
-            [
                 'name' => 'dispatch_find_flight',
                 // T30 §13.3: with a hangar, finds are salvaged by flight only. Ship, lock and
                 // wait reasons come from ColonyTileService::findAction() — the same source the
@@ -267,7 +232,7 @@ class BotStrategy
                 // always failed their build_cost check for lack of compounds,
                 // masquerading as an economy-wall when it was a bot gap. Freighters/
                 // corvettes otherwise sit idle unless a ruin tile happens to be
-                // deep-scanned (dispatch_salvage_mission above) — this gives them
+                // deep-scanned — this gives them
                 // a routine job. mission_salvage_sweep chosen over the pricier
                 // long_range_expedition (needs cartography Lv3, a knowledge the
                 // bot may never reach) as the more reliably dispatchable option.
@@ -419,9 +384,8 @@ class BotStrategy
                 // T30: LOW priority (directly before invest_find) — scans only use leftover AP,
                 // the find pool must absorb idle AP, not displace buildings/research (Spec 11.3).
                 // Explored tiles with an event_type (signal) must be deep-scanned before
-                // they resolve into anything usable — including the event_ruin tiles Weg B
-                // (mission_harvester_salvage) targets. The bot never did this before, so
-                // ruin/event content was structurally unreachable regardless of missions.
+                // they resolve into anything usable — including find tiles. The bot never did this
+                // before, so find content was structurally unreachable.
                 'when' => fn (BotSession $b) => self::deepScanCandidate($b),
                 'do' => fn (BotSession $b, object $tile) => $b->act('deep_scan_signal_tile', 'POST', '/colony/tile/deep-scan', [
                     'q' => $tile->q,
@@ -2082,7 +2046,7 @@ class BotStrategy
         // time the freighter was unaffordable, with no cap — the bot ended up
         // hoarding 5-7 drones (300cr each) across a run instead of saving
         // toward the one 500cr freighter that actually unlocks
-        // dispatch_salvage_mission/dispatch_compounds_mission (both require
+        // dispatch_compounds_mission (requires
         // freighter/corvette, the drone doesn't qualify for either). Found via
         // RunReportShipSnapshotTest: 3 seeds ended with 5-7 drones and ZERO
         // freighters/corvettes despite reaching the 3-advisor threshold by
@@ -2099,82 +2063,8 @@ class BotStrategy
     }
 
     /**
-     * Weg A: Orin's (corporate_rep) current harvester offer, if any and affordable.
-     * Server re-derives/validates the offer on purchase — this only reads it for the
-     * `when` check, the price itself isn't trusted client-side.
-     */
-    private static function corporateOfferCandidate(BotSession $b): ?array
-    {
-        $result = $b->peek('/colony/corporate-contact/offer');
-        $offer = $result['body']['offer'] ?? null;
-        if ($offer === null) {
-            return null;
-        }
-
-        return self::credits($b) >= (int) $offer['price'] ? $offer : null;
-    }
-
-    /**
-     * Whether the player has earned the 2nd Harvester instance (Weg A or Weg B,
-     * HarvesterEntitlementService — stored as a fired trigger, not a resource) and
-     * hasn't placed it yet. Mirrors HarvesterEntitlementService::hasEntitlement()
-     * directly against user_preferences, same DB-read pattern as the rest of this
-     * class (no HTTP round-trip needed just to check a flag).
-     */
-    private static function harvesterInstance2Candidate(BotSession $b): ?object
-    {
-        $alreadyPlaced = DB::table('colony_buildings')
-            ->where('colony_id', $b->colonyId)
-            ->where('building_id', BuildingId::Harvester->value)
-            ->where('instance_id', 2)
-            ->whereNotNull('tile_x')
-            ->exists();
-        if ($alreadyPlaced) {
-            return null;
-        }
-
-        $fired = json_decode(
-            DB::table('user_preferences')->where('user_id', $b->userId)->value('fired_triggers') ?? '[]',
-            true
-        ) ?? [];
-        $entitled = in_array('harvester_second_instance_unlocked_purchase', $fired, true)
-            || in_array('harvester_second_instance_unlocked_salvage', $fired, true);
-        if (! $entitled) {
-            return null;
-        }
-
-        // Weg B (salvage) carries no CC-Lv3 gate of its own (HangarService::dispatchShip
-        // only checks instance count + entitlement) — unlike Weg A, where
-        // CorporateContactService::gatesSatisfied already requires CC-Lv3 before the
-        // offer appears. Server still enforces it here (ColonyController::placeBuilding),
-        // so without this check a salvage-earned entitlement before CC-3 would retry
-        // and fail every Sol (qa-tester review PR #244).
-        if (self::ccLevel($b) < 3) {
-            return null;
-        }
-
-        return DB::table('colony_tiles as ct')
-            ->where('ct.colony_id', $b->colonyId)
-            ->where('ct.is_explored', 1)
-            ->where('ct.tile_type', 'like', 'regolith_%')
-            ->where('ct.resource_amount', '>', 0)
-            ->whereNotExists(function ($query) use ($b) {
-                $query->select(DB::raw(1))
-                    ->from('colony_buildings as cb')
-                    ->where('cb.colony_id', $b->colonyId)
-                    ->whereColumn('cb.tile_x', 'ct.q')
-                    ->whereColumn('cb.tile_y', 'ct.r');
-            })
-            ->orderByDesc('ct.resource_amount')
-            ->orderBy('ct.q')
-            ->orderBy('ct.r')
-            ->first();
-    }
-
-    /**
      * Any explored tile carrying an unresolved signal (event_type set, not yet
-     * deep-scanned) — the prerequisite step for event_ruin tiles (Weg B target) and
-     * any other event content. Uplink-Station Lv2+ halves the AP cost (mirrors
+     * deep-scanned) — the prerequisite step for find content. Uplink-Station Lv2+ halves the AP cost (mirrors
      * ColonyTileService::deepScanTile); bot conservatively assumes the un-halved
      * cost when unsure to avoid overspending its Nav-AP.
      */
@@ -2229,7 +2119,7 @@ class BotStrategy
      * more reliably dispatchable of the two dedicated Werkstoffe-reward
      * missions (mission_long_range_expedition needs cartography Lv3, a
      * knowledge the bot may never research). No tile/target requirement,
-     * unlike salvageDispatchCandidate() — any eligible docked ship qualifies.
+     * any eligible docked ship qualifies.
      */
     private static function compoundsMissionCandidate(BotSession $b): ?object
     {
@@ -2263,56 +2153,6 @@ class BotStrategy
             ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
             ->get()
             ->first(fn (object $s): bool => self::readyFor($s, (int) config('missions.catalog.mission_salvage_sweep.sol_distance', 4)));
-    }
-
-    /**
-     * Weg B: a docked freighter/corvette (mission_harvester_salvage's ship gate —
-     * the drone doesn't qualify) plus an unclaimed deep-scanned event_ruin tile.
-     */
-    private static function salvageDispatchCandidate(BotSession $b): ?array
-    {
-        $navApCost = 4 * (int) config('missions.nav_ap_per_sol', 2); // sol_distance=4
-        if (self::availableAp($b) < $navApCost) {
-            return null;
-        }
-
-        // Same return guarantee as dispatchCandidate() (qa-tester review PR #244: a worn
-        // docked ship would otherwise match every Sol and fail every Sol, masking real
-        // ship/ruin-availability rarity behind a self-inflicted rejection loop).
-        $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
-        $ship = DB::table('colony_ships')
-            ->where('colony_id', $b->colonyId)
-            ->where('ship_state', 'docked')
-            ->whereIn('ship_id', $eligibleShipIds)
-            // T14: a ship in a hangar below its class can't start a mission (GDD §7).
-            ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
-            ->get()
-            ->first(fn (object $s): bool => self::readyFor($s, (int) config('missions.catalog.mission_harvester_salvage.sol_distance', 4)));
-        if ($ship === null) {
-            return null;
-        }
-
-        $claimedTargets = DB::table('colony_hangar_missions')
-            ->where('colony_id', $b->colonyId)
-            ->where('destination', 'mission_harvester_salvage')
-            ->whereIn('state', ['active', 'completed'])
-            ->pluck('target');
-
-        $tile = DB::table('colony_tiles')
-            ->where('colony_id', $b->colonyId)
-            ->where('is_deep_scanned', 1)
-            ->where('event_type', 'event_ruin')
-            ->orderBy('ring')
-            ->orderBy('q')
-            ->orderBy('r')
-            ->get(['q', 'r'])
-            ->first(fn ($t) => ! $claimedTargets->contains(json_encode(['q' => (int) $t->q, 'r' => (int) $t->r])));
-
-        if ($tile === null) {
-            return null;
-        }
-
-        return ['ship' => $ship, 'tile' => $tile];
     }
 
     private static function harvesterRelocateCandidate(BotSession $b): ?object

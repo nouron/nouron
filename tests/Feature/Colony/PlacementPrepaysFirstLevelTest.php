@@ -3,7 +3,6 @@
 namespace Tests\Feature\Colony;
 
 use App\Models\User;
-use App\Services\HarvesterEntitlementService;
 use App\Services\OnboardingHintService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -223,28 +222,7 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         $this->assertSame($afterPlace, $this->colonyRes(self::RES_REGOLITH), 'the re-placed 0 -> 1 step is prepaid too');
     }
 
-    // ── Harvester: second instance + relocation stay Regolith-free ─────────────
-
-    public function test_harvester_second_instance_placement_and_first_level_cost_no_regolith(): void
-    {
-        DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'building_id' => self::HARVESTER, 'instance_id' => 1],
-            ['level' => 1, 'status_points' => 16, 'ap_spend' => 0, 'tile_x' => 3, 'tile_y' => 0, 'pending_until_tick' => null]
-        );
-        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
-            ->where('building_id', self::HARVESTER)->where('instance_id', 2)->delete();
-        DB::table('colony_tiles')->insertOrIgnore([
-            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
-            ['colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_y1_d1', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 160, 'resource_max' => 160],
-        ]);
-        $this->app->make(HarvesterEntitlementService::class)->grantPurchase(self::BART_USER_ID);
-
-        $this->place(self::HARVESTER, -3, 0, ['instance_id' => 2])->assertOk()->assertJsonPath('ok', true);
-        $this->assertSame(500, $this->colonyRes(self::RES_REGOLITH), 'second instance placement is Regolith-free (GDD §4c)');
-
-        $this->invest(self::HARVESTER, 2)->assertOk();
-        $this->assertSame(500, $this->colonyRes(self::RES_REGOLITH), 'Harvester level-ups are Regolith-free');
-    }
+    // ── Harvester: relocation stays Regolith-free ─────────────
 
     public function test_harvester_relocation_costs_no_regolith(): void
     {
@@ -396,18 +374,12 @@ class PlacementPrepaysFirstLevelTest extends TestCase
 
     public function test_placing_a_harvester_on_the_cc_centre_tile_is_rejected(): void
     {
-        // Even if (0,0) were a regolith tile, neither the instance-1 move nor a
-        // fresh second instance may land on the CC centre.
+        // Even if (0,0) were a regolith tile, the Harvester may not land on the CC centre.
         DB::table('colony_tiles')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'q' => 0, 'r' => 0],
             ['ring' => 0, 'tile_type' => 'regolith_y2_d2', 'is_explored' => 1, 'is_colony_zone' => 1, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300]
         );
-        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)
-            ->where('building_id', self::HARVESTER)->where('instance_id', 2)->delete();
-        $this->app->make(HarvesterEntitlementService::class)->grantPurchase(self::BART_USER_ID);
-
         $this->place(self::HARVESTER, 0, 0)->assertStatus(422)->assertJsonPath('error', 'tile_occupied');
-        $this->place(self::HARVESTER, 0, 0, ['instance_id' => 2])->assertStatus(422)->assertJsonPath('error', 'tile_occupied');
 
         $this->assertFalse(
             DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('tile_x', 0)->where('tile_y', 0)->exists()

@@ -104,11 +104,10 @@ return [
         'decay_rate' => 0.80,
         'max_status_points' => 20,
         // Harvester ohne Level-Up (Owner-Entscheidung, GDD §13.5/§4c, 2026-08-03):
-        // max_level bleibt 1, Wachstum läuft über max_instances (Deckel 2), nicht
-        // mehr über production_curve[27]-Level 2-8 — die Kurve bleibt als Daten
+        // max_level bleibt 1, es gibt genau eine Instanz; production_curve[27]-Level 2-8 bleibt als Daten
         // stehen (inert), siehe Handoff docs/handoff-ap-ratenmodell.md §2/§4.1.
         'max_level' => 1,
-        'max_instances' => 2,
+        'max_instances' => 1,
     ],
 
     // bioFacility (Agrardom) — mandatory prerequisite for the CC Lv1→Lv2

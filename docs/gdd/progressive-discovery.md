@@ -42,7 +42,7 @@ Phase-2-Objectives werden nicht sofort beim Phasenübergang angezeigt. Stattdess
 
 | Sol nach Phase-2-Start | Ereignis |
 |------------------------|---------|
-| Sol +0 (Übergang) | INNN-Ereignis von Nexus: "Phase 1 abgeschlossen. Neue Direktive folgt." — keine Objectives sichtbar |
+| Sol +0 (Übergang) | Protokoll-Ereignis von Nexus: "Phase 1 abgeschlossen. Neue Direktive folgt." — keine Objectives sichtbar |
 | Sol +1 | Berater-Dialog (z.B. Baumeister): Objective 1 wird enthüllt. AP-Kosten entstehen, wenn der Spieler den Dialog aktiv annimmt. |
 | Sol +4–5 | Zweiter Berater (z.B. Analytiker) enthüllt Objective 2 |
 | Sol +8–12 | Dritter Berater enthüllt Objective 3 oder Objective wird durch ein Run-Ereignis ausgelöst |
@@ -60,7 +60,7 @@ Objectives können durch drei verschiedene Trigger enthüllt werden:
 | `sol_threshold` | Fester Sol-Zeitpunkt nach Phase-2-Start | Objective erscheint spätestens ab Sol +15 (Fallback wenn kein Dialog ausgelöst wurde) |
 | `run_event` | Ein bestimmtes Run-Ereignis löst das Objective aus | Korvette erkundet ein neues Tile → Objective "Expedition abschließen" wird sichtbar |
 
-**Fallback-Regel:** Jedes Objective hat einen `reveal_by_sol`-Wert (Anzahl Sole nach Phase-2-Start). Wurde das Objective bis dahin nicht durch Dialog oder Event enthüllt, erscheint es automatisch — stilles INNN-Ereignis mit Absender "Nexus Command". Kein Objective bleibt für immer versteckt.
+**Fallback-Regel:** Jedes Objective hat einen `reveal_by_sol`-Wert (Anzahl Sole nach Phase-2-Start). Wurde das Objective bis dahin nicht durch Dialog oder Event enthüllt, erscheint es automatisch — stilles Protokoll-Ereignis mit Absender "Nexus Command". Kein Objective bleibt für immer versteckt.
 
 **UI-Darstellung:** Im Objectives-Screen gibt es einen dritten Zustand neben "in Bearbeitung" und "abgeschlossen": **"Unbekannt"** (Fragezeichen-Icon). Dieser Zustand zeigt, dass ein weiteres Objective existiert, aber noch nicht enthüllt wurde. So weiß der Spieler, dass er auf etwas wartet — ohne zu wissen was.
 
@@ -78,7 +78,7 @@ Pro Run sind nicht nur die Objectives selbst variabel (§15), sondern auch die E
 
 Berater sind zunächst passive AP-Produzenten mit Rang-Progression. Dialoge machen sie zu **aktiven Akteuren**: Sie sprechen den Direktoren gezielt an, bieten Informationen an, formulieren Bitten und können Aktionen anstoßen.
 
-Ein Advisor Dialog ist ein strukturierter Informationsaustausch über **1–3 Sole**. Er erscheint als INNN-Ereignis mit Absender `[Berater-Typ]:[Berater-Name]`. Der Spieler kann den Dialog annehmen, verzögern oder ablehnen. Annehmen kann AP kosten.
+Ein Advisor Dialog ist ein strukturierter Informationsaustausch über **1–3 Sole**. Er erscheint als Protokoll-Ereignis mit Absender `[Berater-Typ]:[Berater-Name]`. Der Spieler kann den Dialog annehmen, verzögern oder ablehnen. Annehmen kann AP kosten.
 
 #### Dialog-Struktur
 
@@ -102,14 +102,14 @@ Jeder Dialog hat folgende Felder:
 #### Dialog-Verlauf
 
 **Sol 1 — Ankündigung:**
-INNN-Ereignis erscheint mit Absender-Name des Beraters. Kurze Eröffnung: "Direktor, ich habe etwas aufgegriffen das Ihre Aufmerksamkeit verdient. Haben Sie heute Zeit?"
+Protokoll-Ereignis erscheint mit Absender-Name des Beraters. Kurze Eröffnung: "Direktor, ich habe etwas aufgegriffen das Ihre Aufmerksamkeit verdient. Haben Sie heute Zeit?"
 
 Zwei Response-Optionen:
 - "Jetzt anhören" — kostet sofort die definierten AP (oder 0 wenn `ap_cost_amount = null`)
 - "Morgen" — Dialog verschiebt sich um 1 Sol (max. 2-mal verschiebbar, dann wird er automatisch aufgelöst)
 
 **Sol 2 (oder selber Sol bei Sofortannahme) — Hauptdialog:**
-Der eigentliche Inhalt erscheint: Objective-Enthüllung, Wissenshinweis, Ressourcen-Info oder narratives Lore-Fragment. Das INNN-Ereignis ist ausführlicher als ein Standard-Ereignis — max. 3 kurze Absätze.
+Der eigentliche Inhalt erscheint: Objective-Enthüllung, Wissenshinweis, Ressourcen-Info oder narratives Lore-Fragment. Das Protokoll-Ereignis ist ausführlicher als ein Standard-Ereignis — max. 3 kurze Absätze.
 
 **Sol 3 (optional) — Folgedialog oder Abschluss:**
 Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer optionalen Reaktion des Spielers. Kein weiterer AP-Verbrauch.
@@ -129,7 +129,7 @@ Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer opt
 
 Lehnt der Spieler einen Dialog explizit ab (`is_skippable = true`, Spieler wählt "Ablehnen"), wird er als `declined` abgeschlossen. Schiebt der Spieler ihn 2× auf ("Morgen") oder läuft `dialog_expire_after_ticks` ab, gilt er als `expired`. In beiden Fällen keine Konsequenz. Kein Dialog ist existenziell für den Run. Die Enthüllungen die über Dialoge transportiert werden, kommen im Zweifelsfall über den Sol-Threshold-Fallback (§17.1).
 
-**Nicht verfügbare Berater:** Wenn der Berater-Typ des Dialogs gerade keinen aktiven Berater hat (Slot leer, Nexus-Sanktion), ist der Dialog nicht verfügbar. Er erscheint nicht im INNN-Feed. Der Sol-Threshold-Fallback greift stattdessen.
+**Nicht verfügbare Berater:** Wenn der Berater-Typ des Dialogs gerade keinen aktiven Berater hat (Slot leer, Nexus-Sanktion), ist der Dialog nicht verfügbar. Er erscheint nicht im Kolonieprotokoll (Nexus-Funk). Der Sol-Threshold-Fallback greift stattdessen.
 
 ---
 
@@ -147,7 +147,7 @@ Almanach-Artikel sind in drei Kategorien aufgeteilt:
 
 | Kategorie | Freischalt-Bedingung | Beispiel-Artikel |
 |-----------|---------------------|-----------------|
-| **Immer verfügbar** | Kein Gate | Grundlegende Spielmechaniken (Supply, AP, Sol-Zyklus) |
+| **Immer verfügbar** | Kein Gate | Grundlegende Spielmechaniken (Kolonisten, AP, Sol-Zyklus) |
 | **Fortschrittsabhängig** | Sol-Zahl, Gebäude-Level oder Objective-Fortschritt | "Verfall & Entropie" freigeschaltet wenn erstes Gebäude < 80% SP |
 | **Entdeckungsabhängig** | Explizites Ereignis (Berater-Dialog, Event-Tile) | "Stürme — Entstehung und Schutzmaßnahmen" freigeschaltet nach der ersten Kolonistengefahr (§9) |
 
@@ -164,7 +164,7 @@ Almanach-Artikel sind in drei Kategorien aufgeteilt:
 
 **UI-Darstellung:** Gesperrte Artikel werden im Almanach-Index als grauer Eintrag mit dem Hinweis "Wird nach [Bedingung] freigeschaltet" gelistet. Der Spieler sieht, dass es dort etwas gibt — aber nicht den Inhalt. Das erzeugt Neugier ohne Frustration.
 
-Neu freigeschaltete Artikel werden mit einem Badge "Neu" markiert und erscheinen in einer kompakten INNN-Meldung: "Almanach — neuer Artikel freigeschaltet: [Titel]".
+Neu freigeschaltete Artikel werden mit einem Badge "Neu" markiert und erscheinen in einer kompakten Protokoll-Meldung: "Almanach — neuer Artikel freigeschaltet: [Titel]".
 
 #### Wissensbonus beim Lesen
 
@@ -294,7 +294,7 @@ Dialoge und Artikel-Definitionen kommen in eigene Config-Dateien:
 
 Die drei Teilmechaniken können unabhängig voneinander implementiert werden. Empfohlene Reihenfolge:
 
-1. **Almanach-Grundstruktur** (Artikel-Tabelle, Freischalt-System, INNN-Benachrichtigung) — kleiner Aufwand, sichtbarer Effekt, keine Abhängigkeiten
+1. **Almanach-Grundstruktur** (Artikel-Tabelle, Freischalt-System, Protokoll-Benachrichtigung) — kleiner Aufwand, sichtbarer Effekt, keine Abhängigkeiten
 2. **Objective Discovery via Sol-Threshold** (nur den Fallback implementieren, ohne Berater-Dialoge) — schafft sofort den Enthüllungseffekt mit minimalem Schema-Aufwand
 3. **Advisor Dialogs** — aufwendiger, aber der narrativ reichhaltigste Teil. Setzt Almanach und Objective Discovery als Empfänger voraus.
 

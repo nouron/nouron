@@ -132,14 +132,14 @@ class SyncConfigTest extends TestCase
 
     public function test_building_max_instances_syncs_to_configured_value(): void
     {
-        // harvester (id=27) has max_instances=2 in config.
+        // harvester (id=27) has max_instances=1 in config.
         DB::table('buildings')->where('id', 27)->update(['max_instances' => 9]);
 
         $this->artisan('game:sync-config')
             ->expectsOutputToContain('[building]')
             ->assertExitCode(0);
 
-        $this->assertSame(2, (int) DB::table('buildings')->where('id', 27)->value('max_instances'));
+        $this->assertSame(1, (int) DB::table('buildings')->where('id', 27)->value('max_instances'));
     }
 
     public function test_building_max_level_and_max_instances_sync_together_for_harvester(): void
@@ -150,7 +150,7 @@ class SyncConfigTest extends TestCase
 
         $row = DB::table('buildings')->where('id', 27)->first();
         $this->assertSame(1, (int) $row->max_level);
-        $this->assertSame(2, (int) $row->max_instances);
+        $this->assertSame(1, (int) $row->max_instances);
     }
 
     /**

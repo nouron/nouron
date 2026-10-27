@@ -131,7 +131,7 @@ class MissionFamilyYieldTest extends TestCase
         $this->assertTrue($trade['family_scales']);
 
         // Fixed rewards do not scale: the family is shown, the factor hint is not.
-        $this->assertFalse(MissionReward::scales(['harvester_instance' => true]));
+        $this->assertFalse(MissionReward::scales(['find_salvage' => true]));
         $this->assertTrue(MissionReward::scales(['loot_table' => [['credits' => 5]]]));
     }
 
