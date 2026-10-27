@@ -55,6 +55,14 @@ class MapSiteAndLockedReasonsTest extends TestCase
         }
     }
 
+    public function test_site_marker_outline_does_not_depend_on_css_for_its_fill(): void
+    {
+        // An SVG polygon without fill defaults to black when the stylesheet is stale or missing.
+        $js = file_get_contents(public_path('js/colony-hexgrid.js'));
+        $this->assertMatchesRegularExpression("/dash\.setAttribute\('fill', 'none'\)/", $js);
+        $this->assertMatchesRegularExpression("/dash\.setAttribute\('stroke', '#f59e0b'\)/", $js);
+    }
+
     public function test_map_marks_construction_sites_with_tooltip(): void
     {
         $js = file_get_contents(public_path('js/colony-hexgrid.js'));
