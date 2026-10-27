@@ -30,7 +30,7 @@ class FindFlightUiTest extends TestCase
             'level' => 0, 'status_points' => 20, 'ap_spend' => 0]);
         DB::table('colony_tiles')->updateOrInsert(['colony_id' => self::COLONY_ID, 'q' => 2, 'r' => 0],
             ['ring' => 2, 'tile_type' => 'terrain_empty', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 1,
-                'event_type' => 'find_medium', 'salvage_ap_spent' => 0, 'salvage_tick' => null]);
+                'event_type' => 'find_medium']);
     }
 
     private function bart(): User

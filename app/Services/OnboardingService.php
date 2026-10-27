@@ -189,7 +189,6 @@ class OnboardingService
                 'tick_limit' => config('game.run.tick_limit'),
                 'bypass' => config('game.bypass'),
                 'supply_cap_max' => config('game.supply.cap_max'),
-                'max_players' => config('game.run.max_players'),
             ],
             'rng_seed' => $rngSeed,
         ]);

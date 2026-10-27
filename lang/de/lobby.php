@@ -33,7 +33,6 @@ return [
     'run_number' => 'Mission #:id',
     'colony_unnamed' => '(Unbenannt)',
     'ended_at' => 'Beendet',
-    'max_players' => 'Max. Spieler',
 
     // Highscore table (Feature 1)
     'highscore_title' => 'Vergangene Missionen',

@@ -2,6 +2,8 @@
 Datum: 2026-07-01
 Status: Akzeptiert (Umsetzung zurückgestellt — Vorentscheidungen sofort wirksam)
 
+> **Stand 2026-10-27:** Nicht verfolgt. Das Spiel ist reiner Singleplayer (genau ein aktiver Run, Mehrspieler out-of-scope). Die Config-Reste `max_players`, `playbymailmode` und `tick_duration_hours` wurden entfernt (T43-H9). Dieses Dokument bleibt als Entwurfshistorie erhalten.
+
 ## Kontext
 
 Nouron ist aktuell Singleplayer (Roguelike Mini-4X, 1 Spieler pro Run). Ein optionaler

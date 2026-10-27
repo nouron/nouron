@@ -896,9 +896,6 @@ return [
             // 79–86, ahead of the ~90 rule. Purchased merchant items in this run.
             'task_trade_volume' => ['category' => 'economy', 'type' => 'counter', 'target' => 8],
         ],
-        'tick_duration_hours' => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
-        'max_players' => 1,      // 1 = singleplayer; 2–4 = multiplayer
-        'playbymailmode' => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
 
         // Nexus checkpoints in PHASE-2 Sols (GDD §15 "2 von 3", §18.4). Each is
         // evaluated once, on exactly that Phase-2 Sol, and checks progress rather

@@ -116,4 +116,4 @@ INSERT INTO bar_offers (colony_id,give_resource_id,give_amount,get_resource_id,g
 -- (colony 2, playerless multiplayer-era leftover) itself on 2026-09-23 (A14): the game
 -- only knows player colonies. Tests that need a foreign colony create one themselves
 -- (with its own user) instead of relying on the fixture.
-INSERT INTO runs (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,5,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
+INSERT INTO runs (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,5,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');

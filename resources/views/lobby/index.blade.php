@@ -72,7 +72,6 @@
                     @php
                         $tickLimit = $run->settings["tick_limit"] ?? 100;
                         $supplyCap = $run->settings["supply_cap_max"] ?? null;
-                        $maxPlayers = $run->settings["max_players"] ?? null;
                         $bypass = is_array($run->settings["bypass"] ?? null) ? $run->settings["bypass"] : [];
                         $anyBypass = collect($bypass)->contains(true);
                         $colonyName = $run->colony->name ?? __("lobby.colony_unnamed");
@@ -105,9 +104,6 @@
                             <li>{{ __("lobby.tick_limit") }}: <strong>{{ $tickLimit }}</strong></li>
                             @if ($supplyCap !== null)
                                 <li>{{ __("lobby.supply_cap") }}: <strong>{{ $supplyCap }}</strong></li>
-                            @endif
-                            @if ($maxPlayers !== null)
-                                <li>{{ __("lobby.max_players") }}: <strong>{{ $maxPlayers }}</strong></li>
                             @endif
                             @foreach ($bypass as $checkKey => $isActive)
                                 @if ($isActive)
@@ -157,7 +153,6 @@
                     @php
                         $tickLimit = $run->settings["tick_limit"] ?? 100;
                         $supplyCap = $run->settings["supply_cap_max"] ?? null;
-                        $maxPlayers = $run->settings["max_players"] ?? null;
                         $bypass = is_array($run->settings["bypass"] ?? null) ? $run->settings["bypass"] : [];
                         $anyBypass = collect($bypass)->contains(true);
                         $colonyName = $run->colony->name ?? __("lobby.colony_unnamed");
@@ -201,9 +196,6 @@
                                 <li>{{ __("lobby.tick_limit") }}: <strong>{{ $tickLimit }}</strong></li>
                                 @if ($supplyCap !== null)
                                     <li>{{ __("lobby.supply_cap") }}: <strong>{{ $supplyCap }}</strong></li>
-                                @endif
-                                @if ($maxPlayers !== null)
-                                    <li>{{ __("lobby.max_players") }}: <strong>{{ $maxPlayers }}</strong></li>
                                 @endif
                                 @if ($anyBypass)
                                     @foreach ($bypass as $checkKey => $isActive)
