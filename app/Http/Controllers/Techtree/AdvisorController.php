@@ -147,7 +147,6 @@ class AdvisorController extends BaseController
                     'name' => $previewKey ? trans("advisors.{$previewKey}") : 'Pfad-Berater',
                     'desc' => __('advisors.desc_path_open'),
                     'personell_id' => null,
-                    'ap_type' => $previewCfg['ap_type'] ?? null,
                     'hire_cost' => 0,
                     'junior_ap' => 0,
                     'junior_upkeep' => 0,
@@ -166,7 +165,6 @@ class AdvisorController extends BaseController
             $advisorCfg = config("advisors.{$key}");
             $personellId = $advisorCfg['id'];
             $hireCost = $advisorCfg['credits'];
-            $apType = $advisorCfg['ap_type'];
 
             /** @var Advisor|null $advisor */
             $advisor = $advisorsByPersonellId->get($personellId);
@@ -236,7 +234,6 @@ class AdvisorController extends BaseController
                 'name' => trans("advisors.{$key}"),
                 'desc' => trans("advisors.{$key}_desc"),
                 'personell_id' => $personellId,
-                'ap_type' => $apType,
                 'hire_cost' => $hireCost,
                 'junior_ap' => (int) ($apPerRank[1] ?? 2),
                 'junior_upkeep' => (int) ($upkeepMap[1] ?? 10),

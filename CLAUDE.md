@@ -31,7 +31,7 @@ app/
 config/
   game.php            -- Spielparameter (tick, supply, combat, advisors, onboarding, ...)
   buildings.php       -- Gebäude-Stammdaten (decay_rate, max_level, supply_cost, ...)
-  advisors.php        -- Berater-Stammdaten (ap_type, credits, rank_thresholds, ...)
+  advisors.php        -- Berater-Stammdaten (credits, rank_thresholds, ...)
 database/migrations/  -- Schema-Migrationen
 data/sql/
   testdata.sql -- Fixtures (INSERT + UPDATE, nur Spielerseite; Referenzdaten: database/seeders/data/)

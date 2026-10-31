@@ -49,7 +49,7 @@ class BotSessionNormalizeTest extends TestCase
         $this->assertFalse($res['ok']);
         $this->assertSame(422, $res['status']);
         $this->assertSame('ap_limit', $res['error']);
-        $this->assertSame('construction', $res['body']['ap_type']);
+        $this->assertArrayNotHasKey('ap_type', $res['body']);
         $this->assertSame('ap_limit', end($bot->log)['error']);
     }
 

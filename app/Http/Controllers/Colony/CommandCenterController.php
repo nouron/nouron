@@ -109,7 +109,6 @@ class CommandCenterController extends BaseController
                         default => '?',
                     },
                     'ap_per_tick' => $advisor->getApPerTick(),
-                    'ap_type' => $typeKey ? (config("advisors.{$typeKey}.ap_type") ?? '') : '',
                 ];
             })
             ->values();

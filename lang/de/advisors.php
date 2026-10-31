@@ -22,12 +22,8 @@ return [
     'strategist_plural' => 'Strategen',
     'strategist_desc' => 'Ruhig, präzise, selten zu hören — bis etwas schiefläuft. Der Stratege koordiniert Schutzmaßnahmen und hält Zwischenfälle klein, bevor sie eskalieren.',
 
-    // AP-Typ-Labels
-    'ap_construction' => 'Bau-AP',
-    'ap_research' => 'Forschungs-AP',
-    'ap_economy' => 'Wirtschafts-AP',
-    'ap_strategy' => 'Strategie-AP',
-    'ap_navigation' => 'Navigations-AP',
+    // AP label (unified pool — no AP types since 2026-08-02)
+    'ap_label' => 'Aktionspunkte',
 
     // Flash / JSON response messages
     'hired' => 'Berater eingestellt.',
