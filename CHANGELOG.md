@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- Architektur: ADR 0006 angenommen — SvelteKit-PWA als Frontend-Zielarchitektur; Entscheidungen: Token-Auth (Sanctum Bearer), `/api/v1/…` von Anfang an, i18n als JSON-Endpoint, Polling statt Real-time, eigener Subdomain `play.nouron.de`. `docs/adr/0006-frontend-svelte-pwa.md` auf master; `docs/migration-backlog.md` Section 6 abgeschlossen.
 - Balance: T43-G7 (M1-Paket) — `supply_per_eater` 4 → 1 (1 Organika je Kolonist); Agrardom-Produktionskurve 8/12/12 → 16/20/30 (Marginalkurven je Level); Start-Organika 0 → 10; `ResourcesService::foodNeed()` Default-Fallback aktualisiert. Tests: RED→GREEN für Kurven-Assertions und Start-Organika. Messung M1 folgt.
 - Chore: T42B — `nav_ap` → `ap_cost` und `nav_ap_available` → `ap_available` in API-Response, Services, Config und Frontend umbenannt: `config/game.php` (`finds.flight.nav_ap`), `config/missions.php` (`nav_ap_per_sol`), `FindFlightService`, `HangarService`, `ColonyTileService`; JS (`hangar.js`, `colony-hexgrid.js`); Blade (`hangar.blade.php`, `tile-terrain.blade.php`); Tests angepasst (TDD: RED vor GREEN). Interne Fehlercodes `no_nav_ap`/`hangar_dispatch_no_nav_ap` und `nav_ap_reduction_per_lv` in `knowledge.php` bleiben unverändert.
 - Fix: T39 — Veraltete AP-Typ-Strings in `lang/{de,en}` bereinigt: `reason_ap` von „Kein freier Bau-AP" → „Nicht genug AP" (unified pool); Hire-Warnungen in `advisors.php` beschreiben jetzt gesperrte Features statt veralteter AP-Typen.
