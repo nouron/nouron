@@ -195,4 +195,19 @@ class ResourcesServiceTest extends TestCase
 
         $this->assertEquals(0, $this->service->foodNeed($this->colonyId));
     }
+
+    public function test_food_need_equals_employed_colonist_count_with_per_eater_one(): void
+    {
+        config(['game.food.supply_per_eater' => 1]);
+
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->update(['level' => 0]);
+        DB::table('buildings')->where('id', 25)->update(['supply_cost' => 8]);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'building_id' => 25, 'instance_id' => 1],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
+        );
+
+        // used_supply = 3 × 8 = 24; with supply_per_eater=1 → foodNeed = 24 (T43-G7: 1 Organika per colonist)
+        $this->assertEquals(24, $this->service->foodNeed($this->colonyId));
+    }
 }

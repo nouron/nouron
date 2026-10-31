@@ -95,7 +95,7 @@ return [
     // security must stand up fast, before the hunger→trust spiral bites).
     'production_curve' => [
         27 => [3 => [1 => 8, 2 => 10, 3 => 12, 4 => 12, 5 => 10, 6 => 8, 7 => 6, 8 => 4]],   // harvester → Regolith (inert since §4c depletion wiring — see game.harvester below)
-        41 => [5 => [1 => 8, 2 => 12, 3 => 12, 4 => 9, 5 => 7, 6 => 5, 7 => 3, 8 => 2]],     // bioFacility → Organika
+        41 => [5 => [1 => 16, 2 => 20, 3 => 30, 4 => 9, 5 => 7, 6 => 5, 7 => 3, 8 => 2]],   // bioFacility → Organika (T43-G7: 16/20/30 marginal; Lv4-8 inert, never reached at max_level=3)
     ],
 
     // Lower bound for additive project-AP discounts (§13.3) — prevents bonuses from
@@ -783,7 +783,7 @@ return [
     // (see TrustService::hungerPenalty), making bioFacility a must-have. Missions also
     // burn Organika as crew provisions at dispatch.
     'food' => [
-        'supply_per_eater' => 4,     // 1 "eater" per 4 present colonists → food_need = floor(present/4)
+        'supply_per_eater' => 1,     // 1 Organika per colonist per Sol (T43-G7, 2026-10-25) → food_need = employed
         'well_fed_trust' => 1,       // (documented; actual bonus via trust.events.well_fed)
         'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
         'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol

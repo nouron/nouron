@@ -210,7 +210,7 @@ class OnboardingService
             // Start stock: config('game.onboarding.start_regolith') (GDD §13.7 Phase-1-Pacing).
             ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => (int) config('game.onboarding.start_regolith')],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
-            ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],    // organika  — produced by bioFacility
+            ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 10],   // organika  — T43-G7: start > 0 (~2 Sol Bedarf) prevents Sol-1 hunger
             ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // trust
         ];
 

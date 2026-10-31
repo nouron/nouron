@@ -156,7 +156,7 @@ class GameTickResourceGenerationTest extends TestCase
     }
 
     /**
-     * bioFacility at level 2 produces 20 Organics per tick.
+     * bioFacility at level 2 produces 36 Organics per tick (T43-G7: curve 16/20/30).
      */
     public function test_bio_facility_generates_organics_per_level(): void
     {
@@ -169,8 +169,8 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11202]);
 
         $organics = $this->getColonyResource(self::RES_ORGANICS);
-        $this->assertGreaterThanOrEqual(20, $organics,
-            'BioFacility level 2 must produce at least 20 Organics per tick (20 + any prior balance)');
+        $this->assertGreaterThanOrEqual(36, $organics,
+            'BioFacility level 2 must produce at least 36 Organics per tick (16+20, T43-G7 curve)');
     }
 
     /**
@@ -196,9 +196,9 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         $organics = $this->getColonyResource(self::RES_ORGANICS);
 
-        // harvester on full-reserve regolith_y2_d2 tile → 26 Regolith; bioFacility level 1 → 8 Organics
+        // harvester on full-reserve regolith_y2_d2 tile → 26 Regolith; bioFacility level 1 → 16 Organics (T43-G7)
         $this->assertEquals(26, $regolith, 'Harvester on full-reserve regolith_y2_d2 tile must produce 26 Regolith');
-        $this->assertEquals(8, $organics, 'BioFacility level 1 must produce 8 Organics');
+        $this->assertEquals(16, $organics, 'BioFacility level 1 must produce 16 Organics (T43-G7 curve)');
     }
 
     // ── Edge cases ─────────────────────────────────────────────────────────────
@@ -322,7 +322,7 @@ class GameTickResourceGenerationTest extends TestCase
      */
     public function test_agronomy_knowledge_adds_organika_bonus_on_top_of_biofacility_output(): void
     {
-        // bioFacility Lv1 alone yields 8 Organika/Sol (production_curve[41][5][1]).
+        // bioFacility Lv1 alone yields 16 Organika/Sol (production_curve[41][5][1], T43-G7).
         $this->setBuildingLevel(self::BIO_FACILITY_ID, 1);
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_ORGANICS],
@@ -337,8 +337,8 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11222]);
 
         $organics = $this->getColonyResource(self::RES_ORGANICS);
-        // 8 (base) + 5 (agronomy bonus) = 13, at trust multiplier 1.0 (neutral, fixed in setUp).
-        $this->assertEquals(13, $organics,
-            'bioFacility Lv1 (8 Organika) + agronomy Lv3 bonus (5 Organika) must total 13 Organika');
+        // 16 (base, T43-G7) + 5 (agronomy bonus) = 21, at trust multiplier 1.0 (neutral, fixed in setUp).
+        $this->assertEquals(21, $organics,
+            'bioFacility Lv1 (16 Organika, T43-G7) + agronomy Lv3 bonus (5 Organika) must total 21 Organika');
     }
 }
