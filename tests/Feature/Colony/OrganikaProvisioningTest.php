@@ -35,7 +35,7 @@ class OrganikaProvisioningTest extends TestCase
 
     private const SCIENCELAB = 31;   // supply_cost 6 (config/buildings.php)
 
-    private const HARVESTER = 27;    // supply_cost 2 → together used_supply 8 → food_need 2
+    private const HARVESTER = 27;    // supply_cost 2 → together used_supply 8 → food_need 8 (1 per colonist)
 
     private const SHIP_DRONE = 85;
 
@@ -93,13 +93,13 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_well_fed_consumes_organika_and_resets_streak(): void
     {
-        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);   // used 8 → need 2
+        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);   // used 8 → need 8
         $this->setOrganika(10);
         $this->setHungerStreak(3);
 
         Artisan::call('game:tick', ['--tick' => 11401]);
 
-        $this->assertSame(8, $this->organika(), 'fed colony consumes food_need (2)');
+        $this->assertSame(2, $this->organika(), 'fed colony consumes food_need (8)');
         $this->assertSame(0, $this->hungerStreak(), 'streak resets when fed');
         $this->assertDatabaseHas('trust_events', [
             'colony_id' => self::COLONY_ID, 'event_type' => 'well_fed', 'tick' => 11401,
@@ -108,7 +108,7 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_hunger_increments_streak_and_drains_stock(): void
     {
-        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);   // need 2
+        $this->onlyBuildings([['building_id' => self::SCIENCELAB], ['building_id' => self::HARVESTER]]);   // need 8
         $this->setOrganika(1);                                        // short
         $this->setHungerStreak(0);
 
