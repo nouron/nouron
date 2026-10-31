@@ -46,7 +46,7 @@ class OnboardingTest extends TestCase
             ->pluck('amount', 'resource_id');
         $this->assertEquals(config('game.onboarding.start_regolith'), $res[3]);   // regolith
         $this->assertEquals(0, $res[4]);   // werkstoffe — produced by harvester, no starting stock
-        $this->assertEquals(0, $res[5]);   // organika   — produced by bioFacility, no starting stock
+        $this->assertEquals(10, $res[5]);  // organika   — small start stock prevents Sol-1 hunger (T43-G7)
 
         // CommandCenter: level 1, status 16/20 (80% — slightly damaged, functional).
         $cc = DB::table('colony_buildings')
