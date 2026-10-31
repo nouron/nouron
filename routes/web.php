@@ -120,7 +120,6 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::post('/merchant/buy/{itemId}', [MerchantController::class, 'buy'])->name('merchant.buy')->where('itemId', '[0-9]+');
     Route::post('/merchant/visit/{visitId}/open', [MerchantController::class, 'markVisited'])->name('merchant.open')->where('visitId', '[0-9]+');
 
-
     // Hangar
     Route::get('/hangar', [HangarController::class, 'index'])->name('hangar');
     Route::post('/hangar/request', [HangarController::class, 'requestShip'])->name('hangar.request');

@@ -36,7 +36,6 @@ return [
     'mission_escort_convoy_name' => 'Convoy Escort',
     'mission_escort_convoy_desc' => 'The corvette shadows a convoy through rough country — most days nothing happens, and that is exactly the point.',
 
-
     'mission_perimeter_patrol_name' => 'Perimeter Patrol',
     'mission_perimeter_patrol_desc' => 'The corvette runs quiet loops around the colony. Mostly it stays quiet — but the colonists sleep better knowing the ship is overhead.',
 
