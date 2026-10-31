@@ -115,7 +115,7 @@
                                 :disabled="findFlightShortfall(selectedTile) !== null">
                                 <span class="tile-action-btn__body">{{ __("colony.find_flight") }}</span>
                                 <span class="ap-chip ap-cost-chip ap-chip--nav" aria-hidden="true"
-                                    x-text="`${selectedTile.find.action.costs.nav_ap} AP`"></span>
+                                    x-text="`${selectedTile.find.action.costs.ap_cost} AP`"></span>
                             </button>
                             <p class="find-card__reason" x-show="findFlightShortfall(selectedTile) !== null"
                                 x-text="findFlightShortfall(selectedTile)"></p>

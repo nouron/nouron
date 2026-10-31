@@ -138,7 +138,7 @@ final class Valuers
         $effect = match ($researchId) {
             self::GEOLOGY => $ctx->stream((float) (config('game.geology_harvester_bonus_per_level')[$target] ?? 0), $latency),
             self::CONSTRUCTION => $ctx->stream(($cfg['ap_cost_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['build_ap_per_sol'] * $ctx->lambdaAp, $latency),
-            self::CARTOGRAPHY => $ctx->stream(($cfg['nav_ap_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['nav_ap_per_sol'] * $ctx->lambdaAp, $latency),
+            self::CARTOGRAPHY => $ctx->stream(($cfg['nav_ap_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['ap_per_sol'] * $ctx->lambdaAp, $latency),
             // GameTick::generateAgronomyBonus() pays nothing while no Agrardom stands.
             self::AGRONOMY => self::agrardomLevel($b) === 0 ? 0.0
                 : $ctx->stream(min((int) (config('game.agronomy_agrardom_bonus_per_level')[$target] ?? 0), self::foodDeficit($b)) * $ctx->price('organics'), $latency),

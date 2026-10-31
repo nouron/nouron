@@ -526,7 +526,7 @@ class ColonyTileService
             'ship' => $ship,
             'level' => $a['needs_level'] ?? '',
             'total' => $a['yield']['total'] ?? '',
-            'ap' => $a['costs']['nav_ap'] ?? '',
+            'ap' => $a['costs']['ap_cost'] ?? '',
             'organika' => $a['costs']['organika'] ?? '',
         ]);
 

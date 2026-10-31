@@ -54,8 +54,8 @@ return [
         // denselben Pool floss, ohne cartography von den beiden anderen zu unterscheiden).
         // Wirkt auf ColonyTileService::exploreTile() (Tile-Erkundungskosten) und
         // HangarService::dispatchShip() (Missions-Reisekosten) — beides im Code konsistent
-        // als "Navigation-AP" behandelte Kostenpunkte (Fehlercodes no_nav_ap/
-        // hangar_dispatch_no_nav_ap). Platzhalter-Größenordnung, Zahlen-Kalibrierung nach
+        // AP cost reduction per cartography level (errors: no_nav_ap/
+        // hangar_dispatch_no_nav_ap are internal codes, kept). Calibration after
         // Playtest (ADR 0004) — bewusst auf das Doppelte der ursprünglichen Bau-Rabatt-Kurve
         // skaliert (Ruling 2026-08-30, SDD-Ledger): exploreTile()s Basiskosten sind winzige
         // Ganzzahlen (1/2/3 AP), eine 15%-Kurve rundet dort bei jedem Level auf den

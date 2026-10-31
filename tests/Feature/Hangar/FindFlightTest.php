@@ -108,9 +108,9 @@ class FindFlightTest extends TestCase
         $this->assertSame(['base' => 10, 'total' => 10], $svc->findFlightYield(self::COLONY_ID, 'find_medium'));
         $this->assertSame(18, $svc->findFlightYield(self::COLONY_ID, 'find_large')['total']);
         $ring2 = $svc->costs(self::COLONY_ID, 2);
-        $this->assertSame([1, 1, 1, 2], [$ring2['sol_distance'], $ring2['nav_ap'], $ring2['organika'], $ring2['duration']]);
+        $this->assertSame([1, 1, 1, 2], [$ring2['sol_distance'], $ring2['ap_cost'], $ring2['organika'], $ring2['duration']]);
         $ring3 = $svc->costs(self::COLONY_ID, 3);
-        $this->assertSame([2, 1, 2, 4], [$ring3['sol_distance'], $ring3['nav_ap'], $ring3['organika'], $ring3['duration']]);
+        $this->assertSame([2, 1, 2, 4], [$ring3['sol_distance'], $ring3['ap_cost'], $ring3['organika'], $ring3['duration']]);
     }
 
     public function test_dispatch_charges_ring_costs_and_stores_distance(): void
@@ -122,7 +122,7 @@ class FindFlightTest extends TestCase
         $this->fly(0, 3);
 
         $cost = $this->app->make(FindFlightService::class)->costs(self::COLONY_ID, 3);
-        $this->assertSame($ap - $cost['nav_ap'], $this->ap());
+        $this->assertSame($ap - $cost['ap_cost'], $this->ap());
         $this->assertSame($or - $cost['organika'], $this->organics());
         $mission = DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->first();
         $this->assertSame([2, '{"q":3,"r":0}', 0], [(int) $mission->sol_distance, $mission->target, (int) $mission->bay]);

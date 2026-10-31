@@ -90,7 +90,7 @@ class FindActionTest extends TestCase
 
         $this->assertSame([0, 'drone'], [$r['bay'], $r['ship_key']]);
         $this->assertSame(['base' => 10, 'total' => 10], $r['yield']);
-        $this->assertSame([1, 1, 102], [$r['costs']['nav_ap'], $r['costs']['organika'], $r['costs']['return_sol']]);
+        $this->assertSame([1, 1, 102], [$r['costs']['ap_cost'], $r['costs']['organika'], $r['costs']['return_sol']]);
     }
 
     public function test_smallest_carrying_class_flies(): void

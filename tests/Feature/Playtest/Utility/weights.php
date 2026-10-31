@@ -39,7 +39,7 @@ return [
         'research_floor' => 0.0,
         'research_min_density' => 0.3,
         'build_ap_per_sol' => 10,
-        'nav_ap_per_sol' => 4,
+        'ap_per_sol' => 4,
         'income_floor_rg' => 8,
         'goal_max_wait_sols' => 5,
         'min_net' => 0.01,

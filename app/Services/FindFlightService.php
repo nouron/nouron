@@ -20,14 +20,14 @@ class FindFlightService
         return (int) ($byRing[$ring] ?? max(1, $ring - 1));
     }
 
-    /** @return array{sol_distance:int, nav_ap:int, organika:int, duration:int} */
+    /** @return array{sol_distance:int, ap_cost:int, organika:int, duration:int} */
     public function costs(int $colonyId, int $ring): array
     {
         $distance = $this->solDistance($ring);
 
         return [
             'sol_distance' => $distance,
-            'nav_ap' => $this->projectBonusService->effectiveNavigationApCost($colonyId, (int) config('game.finds.flight.nav_ap')),
+            'ap_cost' => $this->projectBonusService->effectiveNavigationApCost($colonyId, (int) config('game.finds.flight.ap_cost')),
             'organika' => $distance * (int) config('game.finds.flight.organika_per_sol'),
             'duration' => 2 * $distance,
         ];
