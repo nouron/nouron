@@ -64,8 +64,8 @@ return [
     'dialog_fire' => 'Dismiss',
     'dialog_cancel' => 'Cancel',
 
-    // Hire-time warnings: AP-type has no consuming building yet
-    'warning_no_sciencelab' => 'You don\'t have an Analytics Lab yet — AP for knowledge will go unused for now.',
-    'warning_no_hangar' => 'You don\'t have a Hangar yet — AP will only be used for exploration for now.',
+    // Hire-time warnings: path building not yet built
+    'warning_no_sciencelab' => 'You don\'t have an Analytics Lab yet — knowledge research will stay locked until you build one.',
+    'warning_no_hangar' => 'You don\'t have a Hangar yet — missions will stay locked until you build one.',
     'error_not_found' => 'Advisor not found.',
 ];

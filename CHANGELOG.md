@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- Fix: T39 — Veraltete AP-Typ-Strings in `lang/{de,en}` bereinigt: `reason_ap` von „Kein freier Bau-AP" → „Nicht genug AP" (unified pool); Hire-Warnungen in `advisors.php` beschreiben jetzt gesperrte Features statt veralteter AP-Typen.
 - Chore: T42A — `ap_type`-Feld aus Config, allen Controllern, Services und Blade-Templates entfernt (toter Label des alten Mehr-Pool-AP-Systems, abgelöst 2026-08-02); `ap_type`-Proxy in `advisors/index.blade.php` durch semantisch korrektes `preview_advisor_key` ersetzt; `ap_*`-Lang-Keys durch `ap_label` ersetzt; Tests angepasst.
 - Chore: T43-H10 — `mission_ruin_expedition` in `config/missions.php` als STUB markiert (Ruinen-Kachel-Generator fehlt, Design-Entscheidung ausstehend).
 - Chore: Direkte Fixes — Merchant-System-TODOs in `config/buildings.php` als `NOT YET IMPLEMENTED (T33 / Phase 5)` umetikettiert; Onboarding-Event-Keys in `lang/{de,en}/events.php` als `STUB (T38)` markiert.
