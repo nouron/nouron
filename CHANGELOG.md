@@ -3,6 +3,7 @@
 ## 2026-10-31
 
 - Fix: Schwarzes Baustellen-Feld auf der Karte — in `colony.css` fehlte nach dem Cantina-Abschnitt eine schließende Klammer, dadurch griffen die folgenden Regeln (u. a. `.tile-site-marker`) nicht; Marker setzt Füllung/Rand zusätzlich am Element, neuer Test prüft die Klammern aller Stylesheets.
+- Chore: Schutz-Hooks — Pre-commit blockt Merge-Konflikt-Markierungen; Claude-Hook warnt/blockt zerstörerische Artisan-Befehle gegen die Dev-DB und Bot-Läufe ohne Freigabe (`.claude/hooks/guards.py`); Merge-Hook prüft CI-Status und warnt vor `TODO content-writer`. Pint-Verstöße in vier Dateien behoben (CI war rot).
 
 ## 2026-10-27
 

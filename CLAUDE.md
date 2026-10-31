@@ -123,6 +123,13 @@ git config core.hooksPath .githooks
 ```
 Configs: `pint.json` (laravel preset, `database/migrations` exkludiert), `.prettierrc.json`, `.prettierignore`. Blade nicht auto-formatieren — bewusst per `npx prettier --write <datei>` wenn der Hook eine Blade-Datei blockt.
 
+### Weitere Schutz-Hooks
+
+- **Pre-commit** blockt zusätzlich ungelöste Merge-Konflikt-Markierungen (`<<<<<<<` und `>>>>>>>` in derselben gestagten Datei).
+- **`.claude/hooks/guards.py`** (Claude-Hook auf Bash, Modus je Schutz in `.claude/hooks/guards.json`: `warn` oder `block`): zerstörerische Artisan-Befehle (`migrate:fresh`, `db:wipe`, `db:seed`, `game:reset-player` …) nie gegen die Dev-DB `nouron` — Wegwerf-DB per `DB_DATABASE=…` oder Freigabe des Owners (`NOURON_ALLOW_DEV_DB=1` vor dem Befehl); `game:playtest` nur mit Freigabe (`touch .claude/.bot-approved`, gilt 3 Stunden, nach Absprache der Dauerschätzung).
+- **Merge-Hook** (`docs_check.py`) prüft zusätzlich die GitHub-CI (fehlgeschlagen blockiert, laufend warnt) und warnt vor neuen `TODO content-writer`-Markern im PR.
+- Tests der Hooks: `python3 .claude/hooks/test_docs_check.py` und `python3 .claude/hooks/test_guards.py`.
+
 ### Git-Workflow (verbindlich)
 
 **Nie direkt auf `master` committen oder pushen.**

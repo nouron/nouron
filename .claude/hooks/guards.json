@@ -1,0 +1,4 @@
+{
+  "dev_db_guard": "warn",
+  "bot_guard": "warn"
+}

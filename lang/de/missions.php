@@ -33,7 +33,6 @@ return [
     'mission_ruin_expedition_name' => 'Ruinen-Expedition',
     'mission_ruin_expedition_desc' => 'Wer die Ruine hinterlassen hat, ist lange fort — aber was zwischen ihren Wänden liegt, ist eine Expedition wert.',
 
-
     'mission_escort_convoy_name' => 'Konvoi-Begleitung',
     'mission_escort_convoy_desc' => 'Die Korvette begleitet einen fremden Konvoi durch unwegsames Gelände — meist reicht schon ihre Silhouette am Himmel, damit nichts passiert.',
 

@@ -51,3 +51,6 @@ __pycache__/
 
 # Local scratch notes
 scratch_log.txt
+
+# Owner approval marker for game:playtest (.claude/hooks/guards.py)
+.claude/.bot-approved
