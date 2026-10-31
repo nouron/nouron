@@ -610,7 +610,7 @@ class HangarService
      *
      * Validates the mission key against config/missions.php: allowed ship type,
      * knowledge gate, target requirement (player-picked tile/knowledge) and the
-     * §7 SP dispatch block. Costs: nav AP = distance × nav_ap_per_sol; organika =
+     * §7 SP dispatch block. Costs: AP = distance × ap_per_sol; organika =
      * distance × per-sol rate reduced by knowledge levels above the gate (floor 1)
      * plus any mission extra_cost.
      *
@@ -689,10 +689,10 @@ class HangarService
             }
             if ($targetType === 'find_tile') {
                 $findCosts = $this->findFlightService->costs($colonyId, (int) $tile->ring);
-                $navApCost = $findCosts['nav_ap'];
+                $navApCost = $findCosts['ap_cost'];
                 $organikaCost = $findCosts['organika'];
             } else {
-                $baseNavApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
+                $baseNavApCost = $solDistance * (int) config('missions.ap_per_sol', 2);
                 $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseNavApCost);
                 $organikaCost = $this->organikaCostFor($colonyId, $mission, $solDistance);
             }
@@ -864,7 +864,7 @@ class HangarService
      */
     public function getMissionCatalogFor(int $colonyId): array
     {
-        $navPerSol = (int) config('missions.nav_ap_per_sol', 2);
+        $navPerSol = (int) config('missions.ap_per_sol', 2);
         $shipsConfig = config('ships');
         $pathDepth = app(PathDepthService::class);
 
@@ -949,8 +949,8 @@ class HangarService
                 'ships' => $mission['ships'],
                 'sol_distance' => $dist,
                 'duration' => 2 * $dist,
-                'nav_ap' => $navApCost,
-                'nav_ap_available' => $availableAp,
+                'ap_cost' => $navApCost,
+                'ap_available' => $availableAp,
                 'organika' => $organikaCost,
                 'organika_available' => $availableOrganika,
                 'wear' => $wear,

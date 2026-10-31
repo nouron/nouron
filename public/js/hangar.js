@@ -286,7 +286,7 @@ function hangarCarousel(config) {
                     ' · ' +
                     yieldLine +
                     ' · ' +
-                    target.nav_ap +
+                    target.ap_cost +
                     ' AP' +
                     ' · Or ' +
                     target.organika +
@@ -327,14 +327,14 @@ function hangarCarousel(config) {
                     : null;
             if (!target) {
                 return {
-                    nav_ap: mission.nav_ap,
+                    ap_cost: mission.ap_cost,
                     organika: mission.organika,
                     duration: mission.duration,
                     wear: this.missionWear(mission),
                 };
             }
             return {
-                nav_ap: target.nav_ap,
+                ap_cost: target.ap_cost,
                 organika: target.organika,
                 duration: target.duration,
                 wear: this.readinessFor(target.sol_distance)?.wear ?? this.missionWear(mission),
@@ -358,10 +358,10 @@ function hangarCarousel(config) {
             if (mission.target_type !== 'find_tile') return null;
             const target = mission.targets?.[parseInt(this.missionModal.targetIndex, 10)];
             if (!target) return null;
-            if (target.nav_ap > mission.nav_ap_available) {
+            if (target.ap_cost > mission.ap_available) {
                 return this.i18n.missionGateNavAp
-                    .replace(':available', mission.nav_ap_available)
-                    .replace(':required', target.nav_ap);
+                    .replace(':available', mission.ap_available)
+                    .replace(':required', target.ap_cost);
             }
             if (target.organika > mission.organika_available) {
                 return this.i18n.missionGateOrganika

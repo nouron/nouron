@@ -963,7 +963,7 @@ class HangarServiceTest extends TestCase
         // mission_courier_run: sol_distance=1 (siehe test_dispatch_ship_sets_dispatched_state_and_creates_mission).
         $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
 
-        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
+        $baseNavApCost = 1 * (int) config('missions.ap_per_sol', 2);
         $curve = config('knowledge.cartography.nav_ap_reduction_per_lv');
         $discountPercent = GameTick::cumulativeCurveYield($curve, 5);
         $expectedCost = ProjectBonusService::applyDiscount($baseNavApCost, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
@@ -983,7 +983,7 @@ class HangarServiceTest extends TestCase
 
         $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
 
-        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
+        $baseNavApCost = 1 * (int) config('missions.ap_per_sol', 2);
         $this->assertSame($before - $baseNavApCost, $advisorService->getAvailableActionPoints(self::COLONY_ID), 'no cartography → unchanged base nav AP cost');
     }
 
@@ -1006,13 +1006,13 @@ class HangarServiceTest extends TestCase
         $entry = collect($catalog)->firstWhere('key', 'mission_courier_run');
         $this->assertNotNull($entry);
 
-        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
-        $this->assertLessThan($baseNavApCost, $entry['nav_ap'], 'precondition: catalog must reflect the cartography discount');
+        $baseNavApCost = 1 * (int) config('missions.ap_per_sol', 2);
+        $this->assertLessThan($baseNavApCost, $entry['ap_cost'], 'precondition: catalog must reflect the cartography discount');
 
         $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
         $actualCharged = $before - $advisorService->getAvailableActionPoints(self::COLONY_ID);
 
-        $this->assertSame($actualCharged, $entry['nav_ap'], 'catalog nav_ap must match what dispatchShip() actually charges');
+        $this->assertSame($actualCharged, $entry['ap_cost'], 'catalog nav_ap must match what dispatchShip() actually charges');
     }
 
     // ── Mission success chance & difficulty options (consolidated from Feature/Hangar) ──

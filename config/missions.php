@@ -7,7 +7,7 @@
  * (return_tick = dispatch_tick + 2 × sol_distance, computed — not stored).
  *
  * Dispatch costs (both gate the start):
- *   nav AP   = sol_distance × nav_ap_per_sol
+ *   AP cost  = sol_distance × ap_per_sol
  *   organika = sol_distance × max(organika_floor_per_sol,
  *              organika_per_sol − organika_scaling_per_level × levels_above_gate)
  *              + extra_cost (knowledge scaling only applies to knowledge-gated missions)
@@ -27,7 +27,7 @@
  */
 return [
 
-    'nav_ap_per_sol' => 2,    // dispatch Nav-AP = sol_distance × this
+    'ap_per_sol' => 2,    // dispatch AP cost = sol_distance × this
     'organika_per_sol' => 3,  // dispatch provisions = sol_distance × this (before knowledge scaling)
     'organika_scaling_per_level' => 1, // −1 organika per sol per knowledge level above the gate
     'organika_floor_per_sol' => 1,    // scaling never drops below this

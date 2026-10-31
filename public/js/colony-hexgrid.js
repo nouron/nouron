@@ -402,10 +402,10 @@ function colonyHexView(config) {
         findFlightShortfall(tile) {
             const costs = tile?.find?.action?.costs;
             if (!costs) return null;
-            if (costs.nav_ap > this.apAvailable) {
+            if (costs.ap_cost > this.apAvailable) {
                 return this.i18n.findGateNavAp
                     .replace(':available', this.apAvailable)
-                    .replace(':required', costs.nav_ap);
+                    .replace(':required', costs.ap_cost);
             }
             if (costs.organika > this.organika) {
                 return this.i18n.findGateOrganika

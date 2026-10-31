@@ -58,12 +58,12 @@ return [
         'scan_ap' => 2,
         'scan_ap_uplink' => 1, // Uplink-Station Lv2+
         // T30 §13.3: salvage flight (mission_find_salvage). Yield = the find's Rg (no factor);
-        // flat nav_ap per flight, Organika per Sol of distance, no ship wear (Owner 2026-10-13).
+        // flat ap_cost per flight, Organika per Sol of distance, no ship wear (Owner 2026-10-13).
         // min_hangar_level = lowest hall level whose ship class carries the find (drone 1,
         // freighter 2) — shown as the lock reason on the find card; must match
         // ships.*.find_carry (tests/Unit/FindFlightConfigTest).
         'flight' => [
-            'nav_ap' => 1,
+            'ap_cost' => 1,
             'organika_per_sol' => 1,
             'min_hangar_level' => ['find_small' => 1, 'find_medium' => 1, 'find_large' => 2],
         ],
@@ -788,7 +788,7 @@ return [
         'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
         'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol
         'hunger_cap' => 8,           // max penalty
-        // mission dispatch costs moved to config/missions.php (nav_ap_per_sol, organika_per_sol)
+        // mission dispatch costs moved to config/missions.php (ap_per_sol, organika_per_sol)
     ],
 
     // Housing loss (GDD §6 "Wohnraumverlust — Konsequenzen", T43-G9, option A2): no

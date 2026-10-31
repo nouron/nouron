@@ -78,7 +78,7 @@
                 missionDialogEmpty: @json(__("missions.dialog_no_missions")),
                 missionGateKnowledge: @json(__("missions.gate_knowledge_hint")),
                 missionGateTarget: @json(__("missions.gate_target_hint")),
-                missionGateNavAp: @json(__("missions.gate_nav_ap_hint")),
+                missionGateAp: @json(__("missions.gate_nav_ap_hint")),
                 missionGateOrganika: @json(__("missions.gate_organika_hint")),
                 missionSelectTarget: @json(__("missions.select_target")),
                 missionChipDuration: @json(__("missions.chip_duration")),
@@ -622,7 +622,7 @@
 
                             <div class="hangar-mission-chips">
                                 <span class="ap-chip ap-cost-chip ap-chip--nav"
-                                    x-text="missionCosts(mission).nav_ap + ' AP'"></span>
+                                    x-text="missionCosts(mission).ap_cost + ' AP'"></span>
                                 <span class="hangar-mission-chip" x-show="missionCosts(mission).organika > 0"
                                     x-text="'Or ' + missionCosts(mission).organika"></span>
                                 <span class="hangar-mission-chip"
@@ -679,7 +679,7 @@
                                 </template>
                                 <template x-if="mission.availability === 'missing_ap'">
                                     <span class="hangar-mission-gate-hint"
-                                        x-text="i18n.missionGateNavAp.replace(':available', mission.nav_ap_available).replace(':required', mission.nav_ap)"></span>
+                                        x-text="i18n.missionGateAp.replace(':available', mission.ap_available).replace(':required', mission.ap_cost)"></span>
                                 </template>
                                 <template x-if="mission.availability === 'missing_organika'">
                                     <span class="hangar-mission-gate-hint"

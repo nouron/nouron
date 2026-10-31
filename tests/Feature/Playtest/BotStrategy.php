@@ -514,7 +514,7 @@ class BotStrategy
 
             $navAp = app(ProjectBonusService::class)->effectiveNavigationApCost(
                 $b->colonyId,
-                (int) $mission['sol_distance'] * (int) config('missions.nav_ap_per_sol', 2),
+                (int) $mission['sol_distance'] * (int) config('missions.ap_per_sol', 2),
             );
             if (self::availableAp($b) < $navAp || self::organics($b) < $hangar->organikaCostFor($b->colonyId, $mission)) {
                 continue;
@@ -1706,7 +1706,7 @@ class BotStrategy
 
     private static function dispatchCandidate(BotSession $b): ?object
     {
-        $navApCost = 1 * (int) config('missions.nav_ap_per_sol', 2); // mission_recon_flight: sol_distance = 1
+        $navApCost = 1 * (int) config('missions.ap_per_sol', 2); // mission_recon_flight: sol_distance = 1
 
         if (self::availableAp($b) < $navApCost) {
             return null;
@@ -1737,7 +1737,7 @@ class BotStrategy
             ->orderBy('ring')->orderBy('q')->orderBy('r')->get()
             ->map(fn ($t) => ['tile' => $t, 'action' => $tiles->findAction($b->colonyId, $t)])
             ->filter(fn ($c) => $c['action']['action'] === 'flight'
-                && self::availableAp($b) >= $c['action']['costs']['nav_ap']
+                && self::availableAp($b) >= $c['action']['costs']['ap_cost']
                 && self::organics($b) - $c['action']['costs']['organika'] >= $foodNeed)
             ->sortByDesc(fn ($c) => (int) $types[$c['tile']->event_type]['rg'])
             ->first();
@@ -1811,7 +1811,7 @@ class BotStrategy
 
             $navAp = app(ProjectBonusService::class)->effectiveNavigationApCost(
                 $b->colonyId,
-                (int) $mission['sol_distance'] * (int) config('missions.nav_ap_per_sol', 2),
+                (int) $mission['sol_distance'] * (int) config('missions.ap_per_sol', 2),
             );
             if (self::availableAp($b) < $navAp || self::organics($b) < $hangar->organikaCostFor($b->colonyId, $mission)) {
                 continue;
@@ -2123,7 +2123,7 @@ class BotStrategy
      */
     private static function compoundsMissionCandidate(BotSession $b): ?object
     {
-        $navApCost = 4 * (int) config('missions.nav_ap_per_sol', 2); // sol_distance=4
+        $navApCost = 4 * (int) config('missions.ap_per_sol', 2); // sol_distance=4
         if (self::availableAp($b) < $navApCost) {
             return null;
         }
