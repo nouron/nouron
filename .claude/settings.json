@@ -29,6 +29,11 @@
             "type": "command",
             "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 .claude/hooks/docs_check.py merge",
             "statusMessage": "Doku-Check (nur bei gh pr merge)..."
+          },
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 .claude/hooks/guards.py",
+            "statusMessage": "Schutz-Check (Dev-DB, Bot-Läufe)..."
           }
         ]
       }

@@ -26,6 +26,21 @@ PHPSTAN_FILES=$(echo "$PHP_FILES" | grep -E '^app/' || true)
 BLADE_FILES=$(staged | grep -E '\.blade\.php$' || true)
 ASSET_FILES=$(staged | grep -E '\.(js|css)$' | grep -vE '\.min\.(js|css)$' | grep -vE '^public/vendor/' || true)
 
+# ── Merge-Konflikt-Markierungen (alle Dateitypen) ────────────────────────────
+# Beide Markierungen müssen vorkommen: "=======" allein ist in Markdown normal.
+CONFLICTED=$(staged | while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    content=$(git show ":$f" 2>/dev/null) || continue
+    if printf '%s\n' "$content" | grep -qaE '^<<<<<<< ' && printf '%s\n' "$content" | grep -qaE '^>>>>>>> '; then
+        echo "$f"
+    fi
+done)
+if [ -n "$CONFLICTED" ]; then
+    echo "✗ Ungelöste Merge-Konflikt-Markierungen (<<<<<<< / >>>>>>>) in:" >&2
+    echo "$CONFLICTED" | sed 's/^/    /' >&2
+    exit 1
+fi
+
 [ -z "$PHP_FILES$BLADE_FILES$ASSET_FILES" ] && exit 0
 
 fail=0

@@ -76,6 +76,18 @@ def changelog_missing(today, local, diff, files):
     return heading not in local and f"+{heading}" not in diff
 
 
+def ci_problems(checks):
+    """(failing, pending) check names from `gh pr checks --json name,bucket`."""
+    failing = [c.get("name", "?") for c in checks if c.get("bucket") == "fail"]
+    pending = [c.get("name", "?") for c in checks if c.get("bucket") == "pending"]
+    return failing, pending
+
+
+def todo_markers(diff):
+    """Number of added lines that still carry a `TODO content-writer` marker."""
+    return sum(1 for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++") and "TODO content-writer" in l)
+
+
 def merge_mode(data):
     ti = data.get("tool_input", {})
     pr = ti.get("pull_number") or ti.get("pullNumber")
@@ -101,6 +113,20 @@ def merge_mode(data):
         local = None
     if local is not None and changelog_missing(today, local, pr_diff(pr), files):
         hard.append(f"CHANGELOG.md hat keinen Eintrag für heute (## {today})")
+
+    # CI status (GitHub checks): failing blocks, running only warns. No checks -> nothing to say.
+    rc, out = run("gh", "pr", "checks", *([str(pr)] if pr else []), "--json", "name,bucket")
+    try:
+        failing, pending = ci_problems(json.loads(out)) if out else ([], [])
+    except ValueError:
+        failing, pending = [], []
+    if failing:
+        hard.append("CI-Checks fehlgeschlagen: " + ", ".join(failing))
+    if pending:
+        warn.append("CI-Checks laufen noch: " + ", ".join(pending))
+    todos = todo_markers(pr_diff(pr))
+    if todos:
+        warn.append(f"{todos} neue Zeile(n) mit „TODO content-writer“ im PR (Platzhaltertexte)")
 
     if hard:
         sys.stderr.write("MERGE BLOCKIERT — folgende Punkte fehlen noch:\n" + "".join(f"  • {h}\n" for h in hard))
