@@ -3553,6 +3553,8 @@ dialog[x-ref="discoveryDialog"] {
         width: 90px;
         height: 110px;
     }
+}
+
 /* map construction + locked reasons */
 
 /* C5: dashed inset outline on tiles with a running construction site. */
