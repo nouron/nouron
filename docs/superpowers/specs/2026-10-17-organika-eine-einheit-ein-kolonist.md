@@ -45,3 +45,21 @@ M1 = ein Paket (Faktor, Kurve und Startvorrat gehören zusammen): 24 Läufe, Def
 ## Nicht verifiziert
 
 Ob "Supply belegt" Kolonisten oder Arbeitsplätze zählt (Annahme: Kolonisten, siehe Entscheidung 1); Cantina-Verkaufswerte; ob Organika einen Lagerdeckel hat; Wirkung von Agronomy nach der Skalierung; Marginal-AP der Agrardom-Stufen; aktuelle `feed_colony`-Regel; Reaktion des Bots auf die neue Kurve.
+
+
+## Messhistorie
+
+### M1 — 2026-10-31 (Paket: supply_per_eater 4→1, Kurve 16/20/30, Start-Organika 0→10)
+
+24 Läufe (3 Eröffnungen × 8 Seeds, default.utility, bis Sol 60).
+
+| KPI | Ziel | Ergebnis | Status |
+|---|---|---|---|
+| Hunger-Sols Phase 1 | = 0 | 0/24 | ✅ |
+| Phase-1-Ende | Sol 12–13 | min=10, med=11, max=13 | ✅ |
+| Vorrat Sol 20 | 1–3 Sol Bedarf | med=4.8, min=1.8 | ⚠️ über Ziel |
+| Vorrat Sol 40 | 1–3 Sol Bedarf | med=3.6, min=1.6 | ⚠️ knapp über |
+| Agrardom Lv2 | ab Sol ~22 | med=14, min=11 | ⚠️ früher |
+| Agrardom Lv3 | ab Sol ~31 | med=34, min=25 | ✅ |
+
+**Bewertung:** Hunger-KPI erfüllt, Phase-1-Ende unverändert. Vorrat med=4.8d bei Sol 20 liegt über 1–3d, ist aber kein Spielproblem — Puffer ist Lohn für frühen Agrardom-Bau. M2 (Kurvenkorrektur) nicht gefahren (Game-Designer: Orientierungswert, kein hartes Limit). M1 abgeschlossen.

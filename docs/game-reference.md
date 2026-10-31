@@ -394,7 +394,7 @@ beschäftigt    = min(Kolonisten, Arbeitsplätze)
 frei           = Kolonisten − beschäftigt
 unbesetzt      = max(0, Arbeitsplätze − Kolonisten)
 Personalanteil = beschäftigt / Arbeitsplätze   (1,0 solange nichts unbesetzt ist; wirkt nur auf Regolith-/Organika-Produktion)
-food_need      = floor(beschäftigt / game.food.supply_per_eater)   (T43-G7 stellt auf alle Kolonisten um)
+food_need      = floor(beschäftigt / game.food.supply_per_eater)   (T43-G7: supply_per_eater = 1 → food_need = beschäftigt)
 ```
 
 Kein gespeicherter Zustand (die Spalten `glx_colonies.overcap_streak` / `overcap_departed` sind entfernt), keine Frist, keine Abwanderung, kein „Wegschicken". Wohnraumverlust (Verfall, Sturm, Rückbau) senkt die Kolonisten im selben Moment; das Bau-Gate (freies Supply, Abschnitt 10) bleibt zu, bis wieder genug freie Kolonisten da sind. Tick-Reihenfolge: Decay → Produktion → Verpflegung → Begegnungen → Supply-Cap → Vertrauen.
@@ -477,7 +477,9 @@ Gesamttrust = clamp(Σ buildings + Σ researches + clamp(Σ ships, −30, +30) +
 
 | Aspekt | Wert |
 |---|---|
-| **Verbrauch pro Tick** | floor(anwesende Kolonisten / 4) Organika (`game.food.supply_per_eater`; anwesend = Arbeitsplätze inkl. Reserve − abgewandert, siehe Abschnitt 10a) |
+| **Verbrauch pro Tick** | beschäftigte Kolonisten × 1 Organika (`game.food.supply_per_eater = 1`, T43-G7 2026-10-31; anwesend = Arbeitsplätze inkl. Reserve − abgewandert, siehe Abschnitt 10a) |
+| **Start-Organika** | 10 (`OnboardingService`, T43-G7 2026-10-31) |
+| **Agrardom-Kurve** | 16 / 20 / 30 Organika je Sol (Marginalwerte Lv1/2/3; kumulativ 16/36/66; `game.production_curve[41][5]`, T43-G7 2026-10-31) |
 | **"Gut versorgt" Bonus** | +1 Trust (wenn Bestand ≥ Bedarf) |
 | **Hunger-Strafe Base** | −2 Trust auf erste hungrige Sol |
 | **Hunger-Strafe Step** | +1 pro weitere Sol in Streak |
