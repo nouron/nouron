@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import Button from '#lib/components/Button.svelte';
 	import { api, token } from '#lib/stores/auth.ts';
 
 	let result = $state('…');
@@ -18,5 +19,13 @@
 <main>
 	<h1>Nouron</h1>
 	<p>Ping: <code>{result}</code></p>
-	<button onclick={() => token.set(null)}>Abmelden</button>
+	<Button variant="ghost" onclick={() => token.set(null)}>Abmelden</Button>
 </main>
+
+<style>
+	main {
+		max-width: 56rem;
+		margin: 0 auto;
+		padding: var(--space-lg) var(--space-md);
+	}
+</style>

@@ -14,5 +14,7 @@ export default defineConfig({
 			// Pure SPA (ADR 0006): static build, client-side routing via fallback page.
 			adapter: adapter({ fallback: 'index.html' })
 		})
-	]
+	],
+	// Design tokens are read straight from docs/design-system (single source of truth).
+	server: { fs: { allow: ['../docs/design-system'] } }
 });

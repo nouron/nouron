@@ -17,6 +17,7 @@ class AuthApiTest extends TestCase
     private function makeUser(): User
     {
         return User::factory()->create([
+            'username' => 'spike',
             'email' => 'spike@example.com',
             'password' => bcrypt('secret123'),
         ]);
@@ -27,7 +28,17 @@ class AuthApiTest extends TestCase
         $this->makeUser();
 
         $this->postJson('/api/v1/auth/login', [
-            'email' => 'spike@example.com',
+            'login' => 'spike@example.com',
+            'password' => 'secret123',
+        ])->assertOk()->assertJsonStructure(['token']);
+    }
+
+    public function test_login_accepts_username_like_the_web_login(): void
+    {
+        $this->makeUser();
+
+        $this->postJson('/api/v1/auth/login', [
+            'login' => 'spike',
             'password' => 'secret123',
         ])->assertOk()->assertJsonStructure(['token']);
     }
@@ -37,16 +48,16 @@ class AuthApiTest extends TestCase
         $this->makeUser();
 
         $this->postJson('/api/v1/auth/login', [
-            'email' => 'spike@example.com',
+            'login' => 'spike@example.com',
             'password' => 'wrong',
         ])->assertStatus(422)->assertJsonMissingPath('token');
     }
 
-    public function test_login_requires_email_and_password(): void
+    public function test_login_requires_login_and_password(): void
     {
         $this->postJson('/api/v1/auth/login', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['email', 'password']);
+            ->assertJsonValidationErrors(['login', 'password']);
     }
 
     public function test_ping_without_token_returns_401(): void
@@ -59,7 +70,7 @@ class AuthApiTest extends TestCase
         $user = $this->makeUser();
 
         $token = $this->postJson('/api/v1/auth/login', [
-            'email' => 'spike@example.com',
+            'login' => 'spike@example.com',
             'password' => 'secret123',
         ])->json('token');
 

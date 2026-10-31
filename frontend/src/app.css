@@ -1,0 +1,83 @@
+/* Tokens: docs/design-system is binding (CLAUDE.md); never redefine values here. */
+@import "../../docs/design-system/styles.css";
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--color-bg);
+	color: var(--color-text-primary);
+	font-family: var(--font-body);
+	font-size: var(--text-body-size);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2 {
+	font-family: var(--font-display);
+	font-weight: var(--text-h1-weight);
+	text-transform: uppercase;
+	letter-spacing: var(--text-h1-tracking);
+	margin: 0 0 var(--space-md);
+}
+h1 {
+	font-size: var(--text-h1-size);
+}
+h2 {
+	font-size: var(--text-h2-size);
+}
+h3 {
+	font-size: var(--text-h3-size);
+	font-weight: var(--text-h3-weight);
+}
+
+a {
+	color: var(--color-accent);
+}
+
+label {
+	display: block;
+	font-size: var(--text-meta-size);
+	color: var(--color-text-secondary);
+	margin-bottom: var(--space-md);
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select {
+	display: block;
+	width: 100%;
+	margin-top: var(--space-xs);
+	font: inherit;
+	font-size: 1rem; /* >=16px: stops iOS zoom on focus */
+	padding: 0.55rem 0.7rem;
+	color: var(--color-text-primary);
+	background: var(--color-input-bg);
+	border: 1px solid var(--color-border-strong);
+	border-radius: var(--radius-sm);
+	outline: none;
+	transition:
+		border-color var(--duration-fast),
+		box-shadow var(--duration-fast);
+}
+input:focus,
+select:focus {
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px var(--color-accent-tint);
+}
+input[aria-invalid="true"] {
+	border-color: var(--color-danger);
+}
+
+.error {
+	color: var(--color-danger-fg);
+	background: var(--color-danger-bg);
+	padding: var(--space-sm) var(--space-md);
+	border-radius: var(--radius-sm);
+	font-size: var(--text-meta-size);
+	animation: ds-slide-fade-in var(--duration-base) ease-out;
+}
