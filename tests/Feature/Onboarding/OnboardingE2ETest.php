@@ -213,4 +213,17 @@ class OnboardingE2ETest extends TestCase
             return $event->run->id === $run->id;
         });
     }
+
+    public function test_setup_new_player_starts_with_organika_greater_than_zero(): void
+    {
+        // T43-G7: start stock > 0 so Sol-1 hunger is impossible (≈2 Sol Bedarf at colonist count 4-6).
+        $colony = $this->onboardingService->setupNewPlayer($this->userId, 'Organika-Start-Test');
+
+        $organics = (int) DB::table('colony_resources')
+            ->where('colony_id', $colony->id)
+            ->where('resource_id', 5)
+            ->value('amount');
+
+        $this->assertGreaterThan(0, $organics, 'Fresh run must start with organika > 0 (T43-G7)');
+    }
 }

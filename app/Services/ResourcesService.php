@@ -224,16 +224,14 @@ class ResourcesService
     /**
      * Colony's Organika need for the current Sol (GDD §14 Hunger-Mechanik, §4a).
      *
-     * food_need = floor(employed colonists / supply_per_eater) — the same colonist
-     * count the display shows as "davon beschäftigt" (colonistsOverview()). T43-G7
-     * will switch the base to all colonists.
+     * food_need = employed colonists / supply_per_eater (T43-G7: supply_per_eater=1 → 1 Organika per colonist).
      * Kept as the single source of truth for this formula — GameTick::processFoodConsumption()
      * and any reserve-floor check gated on the food buffer (e.g. Corvan's Organika-Verkauf,
      * GDD §4b/§12) must read it from here rather than re-deriving it.
      */
     public function foodNeed(int $colonyId): int
     {
-        $perEater = max(1, (int) config('game.food.supply_per_eater', 4));
+        $perEater = max(1, (int) config('game.food.supply_per_eater', 1));
 
         return intdiv($this->colonistsOverview($colonyId)['employed'], $perEater);
     }

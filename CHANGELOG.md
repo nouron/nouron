@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- Balance: T43-G7 (M1-Paket) — `supply_per_eater` 4 → 1 (1 Organika je Kolonist); Agrardom-Produktionskurve 8/12/12 → 16/20/30 (Marginalkurven je Level); Start-Organika 0 → 10; `ResourcesService::foodNeed()` Default-Fallback aktualisiert. Tests: RED→GREEN für Kurven-Assertions und Start-Organika. Messung M1 folgt.
 - Chore: T42B — `nav_ap` → `ap_cost` und `nav_ap_available` → `ap_available` in API-Response, Services, Config und Frontend umbenannt: `config/game.php` (`finds.flight.nav_ap`), `config/missions.php` (`nav_ap_per_sol`), `FindFlightService`, `HangarService`, `ColonyTileService`; JS (`hangar.js`, `colony-hexgrid.js`); Blade (`hangar.blade.php`, `tile-terrain.blade.php`); Tests angepasst (TDD: RED vor GREEN). Interne Fehlercodes `no_nav_ap`/`hangar_dispatch_no_nav_ap` und `nav_ap_reduction_per_lv` in `knowledge.php` bleiben unverändert.
 - Fix: T39 — Veraltete AP-Typ-Strings in `lang/{de,en}` bereinigt: `reason_ap` von „Kein freier Bau-AP" → „Nicht genug AP" (unified pool); Hire-Warnungen in `advisors.php` beschreiben jetzt gesperrte Features statt veralteter AP-Typen.
 - Chore: T42A — `ap_type`-Feld aus Config, allen Controllern, Services und Blade-Templates entfernt (toter Label des alten Mehr-Pool-AP-Systems, abgelöst 2026-08-02); `ap_type`-Proxy in `advisors/index.blade.php` durch semantisch korrektes `preview_advisor_key` ersetzt; `ap_*`-Lang-Keys durch `ap_label` ersetzt; Tests angepasst.
