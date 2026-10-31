@@ -3,4 +3,5 @@
 return [
     'invite_code' => 'Einladungs-Code',
     'invite_code_invalid' => 'Der Einladungs-Code ist ungültig.',
+    'failed' => 'Die eingegebenen Zugangsdaten sind nicht korrekt.',
 ];

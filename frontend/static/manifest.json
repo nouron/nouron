@@ -1,0 +1,10 @@
+{
+	"name": "Nouron",
+	"short_name": "Nouron",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#ffffff",
+	"theme_color": "#ffffff",
+	"lang": "de",
+	"icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
