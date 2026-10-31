@@ -64,8 +64,8 @@ return [
     'dialog_fire' => 'Entlassen',
     'dialog_cancel' => 'Abbrechen',
 
-    // Hire-time warnings: AP-type has no consuming building yet
-    'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — AP für Kenntnisse bleibt vorerst ungenutzt.',
-    'warning_no_hangar' => 'Du hast noch keinen Hangar — AP wird vorerst nur für Erkundung genutzt.',
+    // Hire-time warnings: path building not yet built
+    'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — Kenntnisforschung bleibt gesperrt, bis du eines baust.',
+    'warning_no_hangar' => 'Du hast noch keinen Hangar — Missionen bleiben gesperrt, bis du einen baust.',
     'error_not_found' => 'Berater nicht gefunden.',
 ];

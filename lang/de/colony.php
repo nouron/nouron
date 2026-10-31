@@ -791,7 +791,7 @@ return [
     'find_large_desc' => 'Ein mächtiges Signal, das die Instrumente übersteuert — was auch dort liegt, es ist gewaltig.',
     'find_false' => 'Fehlalarm',
     'site_marker_tooltip' => 'Im Bau :spent/:total AP',
-    'reason_ap' => 'Kein freier Bau-AP',
+    'reason_ap' => 'Nicht genug AP',
     'reason_colonists' => 'Zu wenige freie Kolonisten',
     'reason_regolith' => 'Zu wenig Regolith',
     'reason_werkstoffe' => 'Zu wenig Werkstoffe',

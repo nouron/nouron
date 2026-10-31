@@ -792,7 +792,7 @@ return [
     'find_large_desc' => 'A massive signal that overloads the instruments — whatever lies there, it is huge.',
     'find_false' => 'False alarm',
     'site_marker_tooltip' => 'Under construction :spent/:total AP',
-    'reason_ap' => 'No free construction AP',
+    'reason_ap' => 'Not enough AP',
     'reason_colonists' => 'Too few free colonists',
     'reason_regolith' => 'Not enough regolith',
     'reason_werkstoffe' => 'Not enough alloys',
