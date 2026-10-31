@@ -1805,6 +1805,11 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         const dash = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
         dash.setAttribute('points', inset.join(' '));
         dash.setAttribute('class', 'tile-site-marker');
+        // Presentation attributes too: a polygon without fill is black if the stylesheet is stale/cached.
+        dash.setAttribute('fill', 'none');
+        dash.setAttribute('stroke', '#f59e0b');
+        dash.setAttribute('stroke-width', '1.5');
+        dash.setAttribute('stroke-dasharray', '4 3');
         dash.setAttribute('pointer-events', 'none');
         g.appendChild(dash);
 

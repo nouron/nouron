@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-31
+
+- Fix: Schwarzes Baustellen-Feld auf der Karte — in `colony.css` fehlte nach dem Cantina-Abschnitt eine schließende Klammer, dadurch griffen die folgenden Regeln (u. a. `.tile-site-marker`) nicht; Marker setzt Füllung/Rand zusätzlich am Element, neuer Test prüft die Klammern aller Stylesheets.
+
 ## 2026-10-27
 
 - Fix: Techtree pulste bei Hinweisen auf falschen Kacheln (veraltete Rang-Zuordnung 2/4/5); der rangbasierte Hinweis-Pulse ist entfernt, da laut GDD §16.3 kein Hinweis eine Techtree-Kachel hervorhebt (T43-H5).
