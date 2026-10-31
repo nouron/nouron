@@ -367,10 +367,10 @@ return [
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).
     // Effect Lv2+: deep-scan costs 1 Nav-AP instead of 2 (ColonyTileService).
-    // Effect Lv2+: merchant appears more frequently (TODO: implement with merchant system).
-    // Effect Lv3: run-completion action — TODO: implement when run-end mechanic is built.
+    // Effect Lv2+: merchant appears more frequently (NOT YET IMPLEMENTED — see T33 / Phase 5).
+    // Effect Lv3: run-completion action — NOT YET IMPLEMENTED — see Phase 5.
     // Lv1 build cost: Regolith + Credits only — no Compounds (circular dep risk).
-    // TODO Balance: per-level CC gates (Lv2→CC3, Lv3→CC5) not yet enforced — post-playtest.
+    // Balance: per-level CC gates (Lv2→CC3, Lv3→CC5) not yet enforced — post-playtest.
     'uplinkStation' => [
         'id' => 54,
         // Late building, but NO Werkstoffe: the Uplink is the Werkstoff-import gate
@@ -391,8 +391,8 @@ return [
 
     // Trading Post — CC Lv4, max 1 instance (is_instanced=0).
     // Effect: Merchant (+Reisender Händler) gives +12% better trade value when present.
-    //         Konsul Economy-AP reduction: TODO implement when merchant system is built.
-    // TODO Balance: merchant_price_bonus vs. Konsul-Rang-System (kein Stack-Effekt) — post-playtest.
+    //         Konsul Economy-AP reduction: NOT YET IMPLEMENTED — see T33 / Phase 5.
+    // Balance: merchant_price_bonus vs. Konsul-Rang-System (kein Stack-Effekt) — post-playtest.
     'tradingPost' => [
         'id' => 55,
         'build_cost' => [3 => 100, 4 => 25],   // late: Regolith + Werkstoffe (accent)

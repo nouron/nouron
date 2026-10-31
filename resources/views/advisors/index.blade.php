@@ -20,7 +20,7 @@
                 "label" => __("advisors.{$key}"),
                 "tooltip" => [
                     "description" => __("advisors.{$key}_desc"),
-                    "meta" => __("advisors.ap_" . config("advisors.{$key}.ap_type")),
+                    "meta" => __("advisors.ap_label"),
                 ],
             ],
         ],
@@ -38,7 +38,7 @@
         <div class="advisors-header">
             <h2>Berater</h2>
 
-            {{-- AP type chips — one per slot showing ap_type label --}}
+            {{-- AP chips — one per active advisor --}}
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                 <template x-for="slot in slots" :key="'chip-' + slot.key">
                     <span class="ap-chip" x-show="slot.state === 'active'">
@@ -162,7 +162,7 @@
                                 </template>
                                 <template x-if="slot.is_path_open && slot.state !== 'locked'">
                                     <span class="advisor-subtitle"
-                                        x-text="slot.ap_type ? 'Vakant' : 'Pfad ausstehend'"></span>
+                                        x-text="slot.preview_advisor_key ? 'Vakant' : 'Pfad ausstehend'"></span>
                                 </template>
                                 <template x-if="slot.state === 'locked'">
                                     <span class="advisor-subtitle">Gesperrt</span>

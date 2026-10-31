@@ -22,12 +22,8 @@ return [
     'strategist_plural' => 'Strategists',
     'strategist_desc' => 'Quiet, precise, rarely heard — until something goes wrong. The Strategist coordinates protective measures and keeps incidents small before they escalate.',
 
-    // AP type labels
-    'ap_construction' => 'Construction AP',
-    'ap_research' => 'Research AP',
-    'ap_economy' => 'Economy AP',
-    'ap_strategy' => 'Strategy AP',
-    'ap_navigation' => 'Navigation AP',
+    // AP label (unified pool — no AP types since 2026-08-02)
+    'ap_label' => 'Action Points',
 
     // Flash / JSON response messages
     'hired' => 'Advisor hired.',

@@ -499,8 +499,8 @@ class MerchantService
     private function buildPayload(string $type, array $def): ?string
     {
         $data = match ($type) {
-            'ap_flex' => ['ap_type' => 'any',          'amount' => $def['ap_amount'] ?? 20],
-            'ap_targeted' => ['ap_type' => 'construction', 'amount' => $def['ap_amount'] ?? 15],
+            'ap_flex' => ['amount' => $def['ap_amount'] ?? 20],
+            'ap_targeted' => ['amount' => $def['ap_amount'] ?? 15],
             'repair_kit' => ['sp_amount' => $def['sp_amount'] ?? 30],
             'trust_boost' => ['trust_amount' => $def['trust_amount'] ?? 15],
             'information' => [],
@@ -551,7 +551,6 @@ class MerchantService
                 break;
 
             case 'ap_targeted':
-                // ap_targeted: credit AP to the single unified pool (ignoring item-level ap_type from payload).
                 $apAmount = (int) ($payload['amount'] ?? 15);
                 $this->advisorService->creditAp($colonyId, $apAmount);
                 Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to colony {$colonyId}.");

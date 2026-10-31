@@ -742,7 +742,7 @@ class MerchantServiceTest extends TestCase
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
         $itemId = $this->insertItem($visitId, [
             'item_type' => 'ap_targeted',
-            'payload' => json_encode(['amount' => $apAmount, 'ap_type' => 'construction']),
+            'payload' => json_encode(['amount' => $apAmount]),
             'cost_credits' => 500,
         ]);
         $this->setCredits(1000);

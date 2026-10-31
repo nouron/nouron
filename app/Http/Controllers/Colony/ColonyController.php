@@ -513,7 +513,6 @@ class ColonyController extends BaseController
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < $apCost) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
-                'ap_type' => 'construction',
                 'current' => $this->advisorService->getAvailableActionPoints($colony->id),
             ]);
         }
@@ -703,10 +702,7 @@ class ColonyController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
-            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
-                'ap_type' => 'construction',
-                'current' => 0,
-            ]);
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), ['current' => 0]);
         }
 
         $building = DB::table('buildings')->where('id', $buildingId)->first();
@@ -904,10 +900,7 @@ class ColonyController extends BaseController
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
-            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
-                'ap_type' => 'construction',
-                'current' => 0,
-            ]);
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), ['current' => 0]);
         }
 
         $row = DB::table('colony_buildings')

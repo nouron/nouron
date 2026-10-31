@@ -198,7 +198,6 @@ class TechtreeController extends BaseController
                     'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                     'key' => $type === 'building' ? $tech['name'] : null,
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
-                    'ap_type' => $advisorCfg['ap_type'] ?? null,
                     'hire_cost' => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
                     'is_instanced' => (bool) ($tech['is_instanced'] ?? false),
                     'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,

@@ -193,15 +193,6 @@
             @else
                 <p class="cc-stat">{{ __("command_center.widget_advisors_count", ["count" => $advisors->count()]) }}</p>
                 <ul class="cc-list">
-                    @php
-                        $apChipClass = [
-                            "construction" => "ap-chip--build",
-                            "research" => "ap-chip--research",
-                            "navigation" => "ap-chip--nav",
-                            "economy" => "ap-chip--economy",
-                            "strategy" => "ap-chip--strategy",
-                        ];
-                    @endphp
                     @foreach ($advisors as $a)
                         @php
                             $advisorEntityKey = "advisor_" . $a["type_key"];
@@ -215,8 +206,7 @@
                                 <x-entity-chip type="advisor" :entity-key="$advisorEntityKey" :label="$advisorLabel" :tooltip="$advisorTooltip" />
                                 ({{ $a["rank_name"] }})
                             </span>
-                            <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}
-                                AP</span>
+                            <span class="ap-chip">+{{ $a["ap_per_tick"] }} AP</span>
                         </li>
                     @endforeach
                 </ul>

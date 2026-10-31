@@ -134,15 +134,16 @@ return [
             'repeatable' => true,
             'difficulties' => ['normal', 'hard'],
         ],
+        // STUB: mission_ruin_expedition — ruin tiles have no generator yet (T43-H10).
+        // Mission key is reserved; unreachable in normal play until ruin tile generation is implemented.
+        // Design decision pending (game-designer, T43-H10): cut entirely or bind to tile generator.
         'mission_ruin_expedition' => [
             'ships' => ['freighter', 'corvette'],
             'sol_distance' => 4,
             'requires' => ['target' => 'ruin_tile'],
             'target_type' => 'ruin_tile',
-            // almanac_unlock reward follows once §17 (Almanach) is implemented
-            // 150 → 220 (2026-08-17), see mission_courier_run comment.
-            'reward' => ['credits' => 440], // ×2 (Owner 2026-09-30, task_credit_reserve: Credits come from missions/events)
-            'repeatable' => false, // once per revealed ruin tile
+            'reward' => ['credits' => 440],
+            'repeatable' => false,
             'difficulties' => ['normal', 'hard'],
         ],
 

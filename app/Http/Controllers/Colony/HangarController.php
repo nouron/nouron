@@ -273,7 +273,6 @@ class HangarController extends BaseController
             return response()->json([
                 'ok' => false,
                 'error' => 'ap_limit',
-                'ap_type' => 'construction',
                 'current' => 0,
                 'message' => __('colony.onboarding_trigger_ap_limit'),
             ], 422);

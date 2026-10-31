@@ -2,6 +2,9 @@
 
 ## 2026-10-31
 
+- Chore: T42A — `ap_type`-Feld aus Config, allen Controllern, Services und Blade-Templates entfernt (toter Label des alten Mehr-Pool-AP-Systems, abgelöst 2026-08-02); `ap_type`-Proxy in `advisors/index.blade.php` durch semantisch korrektes `preview_advisor_key` ersetzt; `ap_*`-Lang-Keys durch `ap_label` ersetzt; Tests angepasst.
+- Chore: T43-H10 — `mission_ruin_expedition` in `config/missions.php` als STUB markiert (Ruinen-Kachel-Generator fehlt, Design-Entscheidung ausstehend).
+- Chore: Direkte Fixes — Merchant-System-TODOs in `config/buildings.php` als `NOT YET IMPLEMENTED (T33 / Phase 5)` umetikettiert; Onboarding-Event-Keys in `lang/{de,en}/events.php` als `STUB (T38)` markiert.
 - Fix: Schwarzes Baustellen-Feld auf der Karte — in `colony.css` fehlte nach dem Cantina-Abschnitt eine schließende Klammer, dadurch griffen die folgenden Regeln (u. a. `.tile-site-marker`) nicht; Marker setzt Füllung/Rand zusätzlich am Element, neuer Test prüft die Klammern aller Stylesheets.
 - Chore: Schutz-Hooks — Pre-commit blockt Merge-Konflikt-Markierungen; Claude-Hook warnt/blockt zerstörerische Artisan-Befehle gegen die Dev-DB und Bot-Läufe ohne Freigabe (`.claude/hooks/guards.py`); Merge-Hook prüft CI-Status und warnt vor `TODO content-writer`. Pint-Verstöße in vier Dateien behoben (CI war rot).
 - Docs: `docs/migration-backlog.md` angelegt — Pflicht-Checkliste, API-Surface-Inventar und Feature-Backlog für die Headless-Architektur (SvelteKit-Frontend); Branch `feat/headless-migration-prep` eröffnet.
