@@ -1,6 +1,8 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+// Laravel origin: serves images under /img and the not-yet-migrated Blade screens.
+export const BACKEND_URL = new URL(API_URL).origin;
 
 const KEY = 'nouron.token';
 
@@ -12,18 +14,43 @@ export async function login(login: string, password: string): Promise<void> {
 	const res = await fetch(`${API_URL}/auth/login`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-		body: JSON.stringify({ login, password }),
+		body: JSON.stringify({ login, password })
 	});
 	const body = await res.json();
 	if (!res.ok) throw new Error(body.message ?? `HTTP ${res.status}`);
 	token.set(body.token);
 }
 
-export async function api<T>(path: string, t: string | null): Promise<T> {
+/** Error carrying the API's machine code (`error`) next to the player text (`message`). */
+export class ApiError extends Error {
+	constructor(
+		public status: number,
+		public code: string | undefined,
+		message: string
+	) {
+		super(message);
+	}
+}
+
+/**
+ * JSON request with the bearer token. 401 logs out. Other non-2xx throw ApiError,
+ * except when `allowError` is set: then the body (e.g. a 422 {success:false,error,message}) is returned.
+ */
+export async function api<T>(
+	path: string,
+	{ method = 'GET', body, allowError = false }: { method?: string; body?: unknown; allowError?: boolean } = {}
+): Promise<T> {
 	const res = await fetch(`${API_URL}${path}`, {
-		headers: { Accept: 'application/json', Authorization: `Bearer ${t}` },
+		method,
+		headers: {
+			Accept: 'application/json',
+			Authorization: `Bearer ${get(token)}`,
+			...(body === undefined ? {} : { 'Content-Type': 'application/json' })
+		},
+		body: body === undefined ? undefined : JSON.stringify(body)
 	});
 	if (res.status === 401) token.set(null);
-	if (!res.ok) throw new Error(`HTTP ${res.status}`);
-	return res.json();
+	const json = await res.json().catch(() => ({}));
+	if (!res.ok && !allowError) throw new ApiError(res.status, json.error, json.message ?? `HTTP ${res.status}`);
+	return json as T;
 }

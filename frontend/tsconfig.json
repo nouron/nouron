@@ -1,7 +1,9 @@
 {
 	"extends": "$app/tsconfig",
 	"compilerOptions": {
-		"strict": true
+		"strict": true,
+		// Legacy framework-free JS shared from ../public (ADR 0006 coexistence) is not ours to type.
+		"checkJs": false
 	},
 	"include": ["src", "vite.config.ts"]
 }

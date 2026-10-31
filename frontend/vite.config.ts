@@ -15,6 +15,7 @@ export default defineConfig({
 			adapter: adapter({ fallback: 'index.html' })
 		})
 	],
-	// Design tokens are read straight from docs/design-system (single source of truth).
-	server: { fs: { allow: ['../docs/design-system'] } }
+	// Design tokens come straight from docs/design-system; while Blade and Svelte coexist,
+	// legacy framework-free JS/CSS (techtree canvas, AP bar) is shared from public/ instead of copied.
+	server: { fs: { allow: ['../docs/design-system', '../public'] } }
 });

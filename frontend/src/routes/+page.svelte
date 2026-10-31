@@ -10,7 +10,7 @@
 			goto('/login');
 			return;
 		}
-		api<{ pong: boolean; user_id: number }>('/ping', $token)
+		api<{ pong: boolean; user_id: number }>('/ping')
 			.then((r) => (result = JSON.stringify(r)))
 			.catch((e) => (result = e.message));
 	});
@@ -19,6 +19,7 @@
 <main>
 	<h1>Nouron</h1>
 	<p>Ping: <code>{result}</code></p>
+	<p><a href="/techtree">Techtree</a></p>
 	<Button variant="ghost" onclick={() => token.set(null)}>Abmelden</Button>
 </main>
 

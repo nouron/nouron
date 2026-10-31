@@ -53,12 +53,7 @@ class TechtreeController extends BaseController
     {
         $colonyId = $this->resolveColonyId();
 
-        $sciencelabBuilt = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 31)
-            ->where('level', '>', 0)
-            ->exists();
-        if (! $sciencelabBuilt) {
+        if (! $this->sciencelabBuilt($colonyId)) {
             return redirect()->route('colony.view')
                 ->with('info', __('colony.nav_techtree_locked'));
         }
@@ -72,6 +67,38 @@ class TechtreeController extends BaseController
         $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
 
         return view('techtree.index', compact('pageData', 'colonyId', 'firstVisit'));
+    }
+
+    /**
+     * Same data as index() as JSON, for the SvelteKit frontend (ADR 0006).
+     * The locked case answers 409 with a machine code, like the other JSON endpoints.
+     */
+    public function data(): JsonResponse
+    {
+        $colonyId = $this->resolveColonyId();
+
+        if (! $this->sciencelabBuilt($colonyId)) {
+            return response()->json([
+                'error' => 'techtree_locked',
+                'message' => __('colony.nav_techtree_locked'),
+            ], 409);
+        }
+
+        $userId = Auth::id();
+
+        return response()->json([
+            ...$this->buildPhases($colonyId),
+            'first_visit' => $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false,
+        ]);
+    }
+
+    private function sciencelabBuilt(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Sciencelab->value)
+            ->where('level', '>', 0)
+            ->exists();
     }
 
     /**

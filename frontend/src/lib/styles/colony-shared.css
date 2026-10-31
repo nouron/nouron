@@ -1,0 +1,169 @@
+/* ponytail: copied from public/css/colony.css (which can't be imported: it sets :root/body for the Blade layout).
+   Delete there when the Blade colony view goes (ADR 0006 stage 5). Only what the techtree panel needs. */
+
+.btn-segbar {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.32rem;
+    display: flex;
+    gap: 2px;
+    height: 0.28rem;
+    pointer-events: none;
+}
+
+.btn-seg {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 1px;
+    transition: background 0.15s ease;
+}
+
+.building-detail-wrap {
+    margin-bottom: 0.75rem;
+}
+
+.building-detail-img-wrap {
+    aspect-ratio: 1 / 1;
+}
+
+.building-detail-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.building-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.building-detail-name {
+    font-size: 0.95rem;
+    color: var(--color-anthracite, #333);
+}
+
+/* General effect text (Owner-Playtest-Fund 2026-08-31) — sits outside
+ * .building-detail-wrap so it still shows for image-less types (knowledge). */
+.building-detail-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-anthracite, #333);
+    opacity: 0.8;
+    margin: 0 0 0.75rem;
+}
+
+/* ── Building level badge (shared building-detail partial) ───────────────── */
+
+.sidebar-level-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #e8f4e8;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.tile-action-btn {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 4px;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    /* Row layout: label body left, AP-cost chip right */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    text-align: left;
+}
+
+.tile-action-btn:hover:not(:disabled) {
+    background: var(--color-accent-hover); /* was legacy #a93226 */
+}
+
+/* Button carrying an embedded segmented progress strip (.btn-segbar) at its
+   bottom edge: positioned context + extra bottom padding so the label clears
+   the strip. */
+.tile-action-btn--barred {
+    position: relative;
+    padding-bottom: 0.8rem;
+}
+
+/* Label column (single- or two-line: main + cost/effect hint) */
+.tile-action-btn__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tile-action-btn__main {
+    display: block;
+}
+
+.tile-action-btn__sub {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-top: 0.1rem;
+    white-space: nowrap;
+}
+
+/* AP-cost chip inside an action button — mirrors the resource-bar .ap-chip,
+   pinned to the right edge so it never shrinks. */
+.ap-cost-chip {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+}
+
+/* Cost chips of one action button (Rg + AP), pinned right and never shrunk */
+.tile-action-btn__costs {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    flex-shrink: 0;
+}
+.tile-action-btn__costs .ap-cost-chip {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.68rem;
+}
+
+/* Regolith cost chip next to the AP chip (partials/rg-cost-chip). "Short" = not
+   enough Regolith for this click. */
+.rg-cost-chip {
+    background: #fdf0e0;
+    color: #8a4a0a;
+}
+.rg-cost-chip--short {
+    background: #fee2e2;
+    color: #b91c1c;
+    text-decoration: line-through;
+}
+
+.tile-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tile-action-btn--secondary {
+    background: transparent;
+    border-color: #7a9ab8;
+    color: #4a6a88;
+}
+
+.tile-action-btn--secondary:hover:not(:disabled) {
+    background: #e8f0f8;
+    border-color: #4a6a88;
+    color: #2a4a68;
+}
