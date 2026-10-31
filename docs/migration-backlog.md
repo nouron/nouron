@@ -167,13 +167,15 @@ Laut CLAUDE.md und `docs/gdd/archiv-flotten-systemkarte.md` dauerhaft gestrichen
 
 ---
 
-## 6 — Infrastruktur-Entscheide für das SvelteKit-Frontend (noch offen)
+## 6 — Infrastruktur-Entscheide für das SvelteKit-Frontend ✅ entschieden 2026-10-31
 
-Diese Fragen sind nicht im Backlog gelöst — sie brauchen eine Owner-Entscheidung:
+| # | Frage | Entscheidung |
+|---|---|---|
+| 1 | Auth-Strategie | **Token** (Sanctum Bearer) — cross-domain sauber, direkte Basis für Capacitor |
+| 2 | API-Versionierung | **`/api/v1/…` von Anfang an** |
+| 3 | i18n-Ownership | **JSON-Endpoint** `GET /api/locale/{lang}`; `lang/de/*.php` bleibt canonical source |
+| 4 | Real-time | **Polling** — kein Echo/Reverb für Beta |
+| 5 | Asset-Host | **Eigener Subdomain `play.nouron.de`**; Laravel bleibt pure API |
+| 6 | ADR-Basis | **ADR 0006** (`docs/adr/0006-frontend-svelte-pwa.md`) übernommen und angepasst |
 
-1. **Auth-Strategie:** Laravel Sanctum (Token) vs. Session-Cookie (SPA-Mode)? Laravel Sanctum ist die übliche Wahl für SvelteKit + Laravel.
-2. **API-Versionierung:** `/api/v1/...` von Anfang an oder erst wenn Breaking Changes auftreten?
-3. **i18n-Ownership:** Übersetzungen in `lang/de/*.php` bleiben Backend-owned, oder werden sie als JSON-Endpoint serviert (`GET /api/locale/{lang}`)?
-4. **Real-time-Updates:** Polling (einfacher) vs. Laravel Echo/Reverb (WebSocket)? Sol-basiertes Spiel braucht kein Echtzeit-Push, Polling reicht für Beta.
-5. **Asset-Host:** SvelteKit auf eigenem Subdomain (`play.nouron.de`) oder als Laravel-Inertia-Ersatz? Empfehlung: eigener Subdomain, Laravel bleibt pure API.
-6. **ADR 0006 prüfen:** Branch `ccr-48190b46-civgr7` enthält den SvelteKit-PWA-Entwurf — vor dem ersten Commit lesen und entscheiden ob er als Ausgangsbasis dient oder neu begonnen wird.
+Vollständige Begründungen und Migrationsplan → `docs/adr/0006-frontend-svelte-pwa.md`.
