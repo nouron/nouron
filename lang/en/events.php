@@ -14,10 +14,10 @@ return [
     // Onboarding events (Phase 3e)
     'onboarding_nexus_briefing' => 'Colony :colony — status report Nexus outpost. Command Center and Harvester operational. First priority: build Residential Habitat. Without personnel, action points remain critically limited.',
 
-    // TODO: trigger when a building first drops a status level in the player's session
+    // STUB: event key reserved, firing logic pending (T38) — trigger when building first drops a status level
     'onboarding_decay' => 'Structure :tech on colony :colony showing decay damage — schedule repair AP.',
 
-    // TODO: trigger when colony trust first drops below threshold
+    // STUB: event key reserved, firing logic pending (T38) — trigger when colony trust first drops below threshold
     'onboarding_trust' => 'Colonist trust on :colony has dropped — investigate cause.',
 
     // Merchant events
