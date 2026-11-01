@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Colony\ColonyController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Services\ShellStateService;
@@ -13,6 +14,10 @@ use Illuminate\Support\Str;
 // JSON API for the SvelteKit frontend (ADR 0006). Bearer-token auth via Sanctum.
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::middleware('auth:sanctum')->post('/auth/logout', [AuthController::class, 'logout']);
+
+    // In-game feedback (closed beta) — same action and throttle as Blade.
+    Route::middleware(['auth:sanctum', 'throttle:5,1'])->post('/feedback', [FeedbackController::class, 'store']);
 
     Route::middleware('auth:sanctum')->get('/ping', fn (Request $request) => [
         'pong' => true,

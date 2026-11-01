@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
 	import AppHeader from '#lib/components/AppHeader.svelte';
+	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
 	import { token } from '#lib/stores/auth.ts';
 	import { refreshShell, shell, solEpoch } from '#lib/stores/shell.ts';
 
@@ -24,3 +25,5 @@
 {#key page.url.pathname + ':' + $solEpoch}
 	<main in:fade={{ duration: 150 }}>{@render children()}</main>
 {/key}
+
+{#if $shell}<FeedbackButton />{/if}

@@ -21,6 +21,15 @@ export async function login(login: string, password: string): Promise<void> {
 	token.set(body.token);
 }
 
+/** Revoke the token server-side, then forget it locally (even if the server call fails). */
+export async function logout(): Promise<void> {
+	await fetch(`${API_URL}/auth/logout`, {
+		method: 'POST',
+		headers: { Accept: 'application/json', Authorization: `Bearer ${get(token)}` }
+	}).catch(() => {});
+	token.set(null);
+}
+
 /** Error carrying the API's machine code (`error`) next to the player text (`message`). */
 export class ApiError extends Error {
 	constructor(

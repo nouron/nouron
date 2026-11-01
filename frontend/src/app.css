@@ -48,7 +48,8 @@ label {
 }
 
 input:not([type="checkbox"]):not([type="radio"]),
-select {
+select,
+textarea {
 	display: block;
 	width: 100%;
 	margin-top: var(--space-xs);
@@ -65,7 +66,8 @@ select {
 		box-shadow var(--duration-fast);
 }
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
 	border-color: var(--color-accent);
 	box-shadow: 0 0 0 3px var(--color-accent-tint);
 }

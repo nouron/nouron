@@ -2,7 +2,7 @@
 	// Port of the header in resources/views/layouts/colony.blade.php (nav, user menu, resource bar).
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
-	import { BACKEND_URL, token } from '#lib/stores/auth.ts';
+	import { BACKEND_URL, logout } from '#lib/stores/auth.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
 	import HintBar from './HintBar.svelte';
 	import ResourceBar from './ResourceBar.svelte';
@@ -63,7 +63,6 @@
 	]);
 
 	const isActive = (item: NavItem) => item.href.startsWith('/') && page.url.pathname.startsWith(item.href);
-	const logout = () => token.set(null);
 </script>
 
 <svelte:window

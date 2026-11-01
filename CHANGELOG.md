@@ -4,6 +4,7 @@
 
 - Svelte-Frontend: App-Rahmen Schritt 2c — Hinweisleiste (mit Wegklicken), Gefahrenmeldungen und Erstbesuch-Hinweis im Techtree; `POST /api/v1/hint/dismiss` nutzt dieselbe Aktion wie Blade.
 - Svelte-Frontend: App-Rahmen Schritt 2d — Sol beenden mit AP-Bestätigung, animiertem Sol-Bericht, Phasenfortschritt, Startbildschirm und Finale; `GET /api/v1/sol/remaining-ap` und `POST /api/v1/sol/next` nutzen den `SolController` wie Blade. Dialogtexte als Sprachschlüssel.
+- Svelte-Frontend: App-Rahmen Schritt 2e — Abmelden widerruft den Token serverseitig (`POST /api/v1/auth/logout`), Feedback-Knopf mit Dialog (`POST /api/v1/feedback`, gleicher Controller und gleiche Drosselung wie Blade).
 
 ## 2026-10-31
 

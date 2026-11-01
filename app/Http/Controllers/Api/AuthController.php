@@ -27,4 +27,12 @@ class AuthController extends Controller
 
         return ['token' => $user->createToken('spa')->plainTextToken];
     }
+
+    /** Revoke the bearer token used for this request. */
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->noContent();
+    }
 }

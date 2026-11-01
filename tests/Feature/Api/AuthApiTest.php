@@ -85,4 +85,19 @@ class AuthApiTest extends TestCase
             ->getJson('/api/v1/ping')
             ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
     }
+
+    public function test_logout_revokes_the_token(): void
+    {
+        $this->makeUser();
+        $token = $this->postJson('/api/v1/auth/login', [
+            'login' => 'spike',
+            'password' => 'secret123',
+        ])->json('token');
+
+        $this->withToken($token)->postJson('/api/v1/auth/logout')->assertNoContent();
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/v1/ping')->assertUnauthorized();
+    }
 }
