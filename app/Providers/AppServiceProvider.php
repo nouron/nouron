@@ -6,13 +6,11 @@ use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\BarService;
 use App\Services\ColonyService;
-use App\Services\EncounterNoticeService;
 use App\Services\EventService;
 use App\Services\MerchantService;
-use App\Services\OnboardingHintService;
 use App\Services\ProjectBonusService;
-use App\Services\ResourceFlowService;
 use App\Services\ResourcesService;
+use App\Services\ShellStateService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\TechtreeColonyService;
@@ -105,107 +103,8 @@ class AppServiceProvider extends ServiceProvider
                         session(['activeIds.colonyId' => $colonyId]);
                     }
                 }
-                $resourcesService = app(ResourcesService::class);
-                $possessions = $colonyId ? $resourcesService->getPossessionsByColonyId($colonyId) : [];
-                $resourceTypes = $resourcesService->getResources()->keyBy('id');
-                foreach ($possessions as $resId => $poss) {
-                    if (isset($resourceTypes[$resId])) {
-                        $possessions[$resId] = array_merge($poss, $resourceTypes[$resId]->toArray());
-                    }
-                }
-                $view->with('resourceBarPossessions', $possessions);
-
-                // Inject Sol run-progress for the resource bar Sol chip.
-                // The active run's current_tick is the canonical clock:
-                // run start (current_tick = 0) is "Sol 1".
-                $activeRunTick = Run::where('user_id', Auth::id())
-                    ->where('status', 'active')
-                    ->value('current_tick');
-                $solLimit = (int) config('game.run.tick_limit', 100);
-                $currentSol = $activeRunTick !== null
-                    ? min($solLimit, max(1, (int) $activeRunTick + 1))
-                    : null;
-
-                $view->with('currentSol', $currentSol);
-                $view->with('solLimit', $solLimit);
-
-                // Feature 3: Nexus debt from the active run — shown in the navbar.
-                // The cap comes from game.run.nexus_debt_fail_threshold — the same value the
-                // run-fail check reads, so the navbar gauge and the actual fail point cannot drift.
-                // Only runs with started_at set count as "in-run" — pending runs do not show run UI.
-                $activeRun = Run::where('user_id', Auth::id())
-                    ->where('status', 'active')
-                    ->whereNotNull('started_at')
-                    ->first(['nexus_debt', 'colony_id']);
-
-                $view->with('nexusDebt', $activeRun?->nexus_debt);
-                $view->with('nexusDebtMax', (int) config('game.run.nexus_debt_fail_threshold', 12000));
-                $view->with('inActiveRun', $activeRun !== null);
-
-                // Nav-link gating: grey out when prerequisite building not yet built.
-                // Take the colony from the player's own run — never from a session default,
-                // which would gate the navbar on a stranger's colony for anyone whose
-                // session lacks the key. No run in progress: everything stays gated, which
-                // matches the `run.started` middleware guarding those screens anyway.
-                $colonyIdForBar = $activeRun?->colony_id;
-                $barBuilt = DB::table('colony_buildings')
-                    ->where('colony_id', $colonyIdForBar)
-                    ->where('building_id', 52)
-                    ->where('level', '>', 0)
-                    ->exists();
-                $view->with('barBuilt', $barBuilt);
-
-                // Hangar nav-link gating: grey out when no hangar built
-                $hangarBuilt = DB::table('colony_buildings')
-                    ->where('colony_id', $colonyIdForBar)
-                    ->where('building_id', 44)
-                    ->where('level', '>', 0)
-                    ->exists();
-                $view->with('hangarBuilt', $hangarBuilt);
-
-                // Techtree nav-link gating: locked until Analytiklabor (sciencelab, id=31) built
-                $sciencelabBuilt = DB::table('colony_buildings')
-                    ->where('colony_id', $colonyIdForBar)
-                    ->where('building_id', 31)
-                    ->where('level', '>', 0)
-                    ->exists();
-                $view->with('sciencelabBuilt', $sciencelabBuilt);
-
-                // Nexus-Funk unread badge count for colony nav
-                $unreadNexusCount = app(EventService::class)->countUnreadNexus(Auth::id());
-                $view->with('unreadNexusCount', $unreadNexusCount);
-
-                // Trust + AP pools + active onboarding hint for the header bars — shared
-                // across every screen (not just colony.view) so nav/resource/hint bars look
-                // identical everywhere. ColonyController::hexview computes these the same
-                // way and passes its own copy through @extends' shared scope, which simply
-                // overwrites these with identical numbers there — no conflict.
-                if ($colonyId) {
-                    $advisorService = app(AdvisorService::class);
-                    $view->with('trust', (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 12)->value('amount') ?? 0));
-                    $view->with('colonyAp', $advisorService->getAvailableActionPoints($colonyId));
-
-                    $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
-                    $view->with('colonistsOverview', app(ResourcesService::class)->colonistsOverview($colonyId));
-                    $view->with('staffingShare', app(ResourcesService::class)->staffingShare($colonyId));
-                    $view->with('resourceFlow', app(ResourceFlowService::class)->perSol($colonyId));
-                    $view->with('hungerPenalty', app(TrustService::class)->hungerPenalty($colonyId));
-                    $view->with('apBreakdown', $advisorService->getApBreakdown($colonyId));
-
-                    $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());
-                    if ($hint) {
-                        $hint['text'] = __($hint['text_key'], $hint['text_params']);
-                    }
-                    $view->with('activeHint', $hint);
-
-                    // Danger notices (GDD §9 Sturm/Instabilität/Seuche) — own, more
-                    // urgent banner above the hint suggestion (Owner-Playtest-Fund
-                    // 2026-08-31). Reuses $activeRunTick (computed above for the Sol
-                    // chip) so both stay on the exact same clock.
-                    $view->with('activeEncounterNotices', $activeRunTick !== null
-                        ? app(EncounterNoticeService::class)->activeNotices($colonyId, (int) $activeRunTick)
-                        : []);
-                }
+                // Header data (resource bar, nav gates, hint, notices) — shared with GET /api/v1/shell.
+                $view->with(app(ShellStateService::class)->forUser((int) Auth::id(), $colonyId ?: null));
             }
         });
     }

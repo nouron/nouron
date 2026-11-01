@@ -1,16 +1,16 @@
 <script lang="ts">
 	// Shared with the Blade techtree while both coexist (ADR 0006): one renderer, one stylesheet.
-	import '../../../../public/css/resources.css';
-	import '../../../../public/css/techtree-view.css';
-	import '../../../../public/css/ap-upgrade-button.css';
+	import '../../../../../public/css/techtree-view.css';
+	import '../../../../../public/css/ap-upgrade-button.css';
 	import '#lib/styles/colony-shared.css';
-	import '../../../../public/js/ap-bar.js';
-	import '../../../../public/js/techtree-canvas.js';
+	import '../../../../../public/js/ap-bar.js';
+	import '../../../../../public/js/techtree-canvas.js';
 
-	import { goto } from '$app/navigation';
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
-	import { api, ApiError, BACKEND_URL, token } from '#lib/stores/auth.ts';
+	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
+	import { setAp, shell } from '#lib/stores/shell.ts';
+	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import { t } from '#lib/i18n.ts';
 
 	type TechType = 'building' | 'research' | 'ship' | 'personell';
@@ -96,9 +96,10 @@
 	let phases = $state<Phases>({});
 	let edges: Edge[] = [];
 	let selected = $state<Tech | null>(null);
-	let apAvailable = $state(0);
+	const apAvailable = $derived($shell?.colony_ap ?? 0);
 	let sheetMode = $state(false);
 	let loadError = $state('');
+	let firstVisit = $state(false);
 	let toast = $state<{ message: string; type: 'error' | 'info' } | null>(null);
 	let hover = $state(false);
 	let tree: Canvas | null = null;
@@ -233,7 +234,7 @@
 		if (!json.success) return showToast(json.message ?? t('techtree.toast_invest_failed'));
 
 		if (json.tech) Object.assign(tech, json.tech);
-		if (json.ap_available !== undefined) apAvailable = json.ap_available;
+		if (json.ap_available !== undefined) setAp(json.ap_available);
 		if (json.phases_update) {
 			for (const [n, update] of Object.entries(json.phases_update.phases)) {
 				for (const u of update.items) {
@@ -250,20 +251,20 @@
 	}
 
 	onMount(() => {
-		if (!$token) {
-			goto('/login');
-			return;
-		}
 		onResize();
 		window.addEventListener('resize', onResize);
+		// The header grows and shrinks (resource bar wraps): keep the stage flush below it.
+		const header = document.querySelector('.app-header');
+		const ro = new ResizeObserver(() => fit());
+		if (header) ro.observe(header);
 
-		api<{ phases: Phases; edges: Edge[] }>('/techtree')
+		api<{ phases: Phases; edges: Edge[]; first_visit: boolean }>('/techtree')
 			.then(async (data) => {
 				// Band = phase number; set once here (writing state while rendering is not allowed).
 				for (const [n, phase] of Object.entries(data.phases)) for (const it of phase.items) it.band = Number(n);
 				phases = data.phases;
 				edges = data.edges ?? [];
-				apAvailable = flatItems().find((it) => it.type === 'research')?.ap_available ?? 0;
+				firstVisit = data.first_visit;
 				await tick();
 				fit();
 				tree = w.TechtreeCanvas.create({
@@ -297,11 +298,10 @@
 				else if (!(e instanceof ApiError && e.status === 401)) loadError = String(e.message ?? e);
 			});
 
-		return () => window.removeEventListener('resize', onResize);
-	});
-
-	$effect(() => {
-		if (!$token) goto('/login');
+		return () => {
+			window.removeEventListener('resize', onResize);
+			ro.disconnect();
+		};
 	});
 </script>
 
@@ -345,10 +345,7 @@
 	{/if}
 {/snippet}
 
-<header class="topbar">
-	<a href="/" class="wordmark">Nouron</a>
-	<span class="ap-chip ap-chip--research">{apAvailable} AP</span>
-</header>
+{#if firstVisit}<FirstVisit screen="techtree" />{/if}
 
 {#if loadError}
 	<p class="error load-error" role="alert">{loadError}</p>
@@ -563,21 +560,6 @@
 </div>
 
 <style>
-	.topbar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: var(--space-sm) var(--space-md);
-		border-bottom: 1px solid var(--color-border);
-		background: var(--color-navbar-bg);
-	}
-	.wordmark {
-		font-family: var(--font-display);
-		text-transform: uppercase;
-		letter-spacing: var(--text-h1-tracking);
-		color: var(--color-text-primary);
-		text-decoration: none;
-	}
 	.load-error {
 		margin: var(--space-md);
 	}

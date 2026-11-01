@@ -1,0 +1,219 @@
+/* ponytail: copied from public/css/colony.css (lines ~1570-1800: encounter notice, hint bar, first-visit popup).
+   Delete there when the Blade layout goes (ADR 0006 stage 5). */
+
+.encounter-notice-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 1rem;
+    background: #fee2e2;
+    border-bottom: 1px solid #fecaca;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.encounter-notice-bar__icon {
+    flex-shrink: 0;
+}
+
+/* Stacking context for the brief overlap between the fading "done" banner
+ * and the new hint sliding in above it (see setActiveHint() in
+ * colony-hexgrid.js). */
+.hint-bar-stack {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.hint-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 1rem;
+    background: #fef3c7;
+    border-bottom: 1px solid #fde68a;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.hint-bar--enter {
+    animation: hint-bar-slide-in 0.35s ease-out;
+}
+
+@keyframes hint-bar-slide-in {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* "Done" confirmation: sits behind the live hint-bar, fades out on its own
+ * (cleared from completedHint after 1s — see setActiveHint()). */
+.hint-bar--done {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: #dcfce7;
+    border-bottom-color: #bbf7d0;
+    animation: hint-bar-fade-out 1s ease-in forwards;
+}
+
+.hint-bar-stack > .hint-bar:not(.hint-bar--done) {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes hint-bar-fade-out {
+    0%,
+    60% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.hint-bar__icon--done {
+    background: #16a34a;
+}
+
+.hint-bar__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    background: #d97706;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hint-bar__text {
+    flex: 1;
+    color: #78350f;
+    line-height: 1.3;
+}
+
+.hint-bar__badge {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #92400e;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    padding: 0.05rem 0.45rem;
+    cursor: help;
+}
+
+.hint-bar__link {
+    flex-shrink: 0;
+    color: #92400e;
+    font-weight: 700;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+.hint-bar__link:hover {
+    color: #78350f;
+}
+
+.hint-bar__dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0 0.2rem;
+    font-size: 1rem;
+    line-height: 1;
+    color: #92400e;
+    cursor: pointer;
+    /* Override PicoCSS button margin/padding */
+    margin: 0;
+    box-shadow: none;
+    min-width: unset;
+}
+
+.hint-bar__dismiss:hover {
+    color: #78350f;
+}
+
+/* ── First-visit popup (Techtree/Nexus-DB/Cantina/Hangar) ────────────────────
+ * Deliberately neutral (anthracite/white), not the hint-bar's amber warning
+ * color — this is a one-time explanation, not an action prompt. */
+.first-visit-popup {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 50;
+    max-width: 22rem;
+}
+
+.first-visit-popup__card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    background: #fff;
+    border: 1px solid #d4d4d4;
+    border-left: 3px solid #3f3f46;
+    border-radius: 0.4rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    padding: 0.75rem 0.85rem;
+}
+
+.first-visit-popup__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    background: #3f3f46;
+    color: #fff;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.first-visit-popup__body {
+    flex: 1;
+}
+
+.first-visit-popup__title {
+    font-weight: 700;
+    color: #27272a;
+    margin: 0 0 0.2rem;
+}
+
+.first-visit-popup__text {
+    color: #3f3f46;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.first-visit-popup__dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid #d4d4d4;
+    border-radius: 0.3rem;
+    color: #3f3f46;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.55rem;
+    margin: 0;
+    box-shadow: none;
+}
+
+.first-visit-popup__dismiss:hover {
+    background: #f4f4f5;
+}
+

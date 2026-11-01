@@ -125,6 +125,17 @@ return [
     'onboarding_hint_spend_ap_economy' => 'AP remaining — check the Cantina to see if a guest has an offer ready.',
     'onboarding_hint_spend_ap_hangar' => 'There is not enough Regolith for new construction right now — the Hangar has find flights, missions and ship maintenance waiting.',
     'onboarding_hint_spend_ap_blocked' => 'Nothing sensible to build right now: Regolith is short or the AP cap of the buildings is reached for today. End the Sol — the Regolith keeps coming.',
+    // Svelte frontend (ADR 0006): nav labels, formerly hardcoded in layouts/colony.blade.php
+    'nav_colony' => 'Colony',
+    'nav_advisors' => 'Advisors',
+    'nav_techtree' => 'Techtree',
+    'nav_cantina' => 'Cantina',
+    'nav_log' => 'Log',
+    'nav_nexusdb' => 'Nexus DB',
+    'nav_menu' => 'Menu',
+    'user_nav_profile' => 'Profile',
+    'user_nav_settings' => 'Settings',
+    'user_nav_logout' => 'Log out',
     'nav_techtree_locked' => 'Analytics Lab required.',
     'nav_cantina_locked' => 'Cantina not built — Residential Habitat lv1 required.',
 

@@ -1,10 +1,15 @@
 # Changelog
 
+## 2026-11-01
+
+- Svelte-Frontend: App-Rahmen Schritt 2c — Hinweisleiste (mit Wegklicken), Gefahrenmeldungen und Erstbesuch-Hinweis im Techtree; `POST /api/v1/hint/dismiss` nutzt dieselbe Aktion wie Blade.
+
 ## 2026-10-31
 
 - Spike: ADR 0006 Stufe 0 — SvelteKit-SPA (`frontend/`, adapter-static, TypeScript) mit Login und PWA-Manifest; Laravel liefert `POST /api/v1/auth/login` (Sanctum-Bearer-Token, Throttle 5/min) und `GET /api/v1/ping`, CORS nur für `FRONTEND_URL` (Dev `localhost:5173`). Neue Migration `personal_access_tokens`.
 - Svelte-Frontend: Design-Grundlage — Tokens direkt aus `docs/design-system` eingebunden, eigenes Basis-CSS statt PicoCSS (nur im neuen Frontend), Schrägschnitt-Button; Login gestaltet und nimmt wie das Web-Login Benutzername oder E-Mail an.
 - Svelte-Frontend: Techtree-Pilot (ADR 0006 Stufe 1) — `GET /api/v1/techtree` und `POST /api/v1/techtree/{type}/{id}/order` über denselben `TechtreeController` wie Blade, `GET /api/v1/locale/{lang}` liefert `lang/*` als JSON; Svelte-Seite nutzt Canvas-Renderer und Techtree-CSS gemeinsam mit Blade. Neue Sprachschlüssel für Typ-Bezeichnungen und Toasts.
+- Svelte-Frontend: App-Rahmen Schritt 2a — Kopfdaten des Layouts in `ShellStateService` gezogen (Blade-Composer und neues `GET /api/v1/shell` lesen dieselbe Quelle); Svelte-Kopf mit Navigation (Desktop, Icon-Modus, Handy-Menü), Benutzermenü und Ressourcenleiste samt Popups, gemeinsames Spiel-Layout mit Seitenübergang. Navigations-Texte als Sprachschlüssel.
 - Architektur: ADR 0006 angenommen — SvelteKit-PWA als Frontend-Zielarchitektur; Entscheidungen: Token-Auth (Sanctum Bearer), `/api/v1/…` von Anfang an, i18n als JSON-Endpoint, Polling statt Real-time, eigener Subdomain `play.nouron.de`. `docs/adr/0006-frontend-svelte-pwa.md` auf master; `docs/migration-backlog.md` Section 6 abgeschlossen.
 - Balance: T43-G7 (M1-Paket) — `supply_per_eater` 4 → 1 (1 Organika je Kolonist); Agrardom-Produktionskurve 8/12/12 → 16/20/30 (Marginalkurven je Level); Start-Organika 0 → 10; `ResourcesService::foodNeed()` Default-Fallback aktualisiert. Tests: RED→GREEN für Kurven-Assertions und Start-Organika. Messung M1 folgt.
 - Chore: T42B — `nav_ap` → `ap_cost` und `nav_ap_available` → `ap_available` in API-Response, Services, Config und Frontend umbenannt: `config/game.php` (`finds.flight.nav_ap`), `config/missions.php` (`nav_ap_per_sol`), `FindFlightService`, `HangarService`, `ColonyTileService`; JS (`hangar.js`, `colony-hexgrid.js`); Blade (`hangar.blade.php`, `tile-terrain.blade.php`); Tests angepasst (TDD: RED vor GREEN). Interne Fehlercodes `no_nav_ap`/`hangar_dispatch_no_nav_ap` und `nav_ap_reduction_per_lv` in `knowledge.php` bleiben unverändert.

@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Techtree\TechtreeController;
+use App\Services\ShellStateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 // JSON API for the SvelteKit frontend (ADR 0006). Bearer-token auth via Sanctum.
 Route::prefix('v1')->group(function () {
@@ -21,6 +25,19 @@ Route::prefix('v1')->group(function () {
         return collect(glob(lang_path($lang.'/*.php')))
             ->mapWithKeys(fn (string $file) => [basename($file, '.php') => require $file]);
     });
+
+    // Header data of every in-run screen — same source as the Blade layout composer.
+    Route::middleware('auth:sanctum')->get('/shell', function (Request $request, ShellStateService $shell) {
+        $user = $request->user();
+        $colonyId = DB::table('glx_colonies')->where('user_id', $user->user_id)->where('is_primary', 1)->value('id');
+
+        return collect($shell->forUser($user->user_id, $colonyId ? (int) $colonyId : null))
+            ->mapWithKeys(fn ($value, $key) => [Str::snake($key) => $value])
+            ->put('username', $user->username);
+    });
+
+    // Hint bar "×" and first-visit popups (hint_key visit_<screen>) — same action as Blade.
+    Route::middleware(['auth:sanctum', 'run.started'])->post('/hint/dismiss', [ColonyController::class, 'dismissHint']);
 
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('techtree')->group(function () {
         Route::get('/', [TechtreeController::class, 'data']);

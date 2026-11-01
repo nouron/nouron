@@ -126,6 +126,17 @@ return [
     'onboarding_hint_spend_ap_economy' => 'Es sind noch AP übrig — in der Cantina nachsehen, ob ein Gast ein Angebot bereit hat.',
     'onboarding_hint_spend_ap_hangar' => 'Für Neubau reicht das Regolith gerade nicht — im Hangar warten Fundflüge, Missionen und die Wartung der Schiffe.',
     'onboarding_hint_spend_ap_blocked' => 'Gerade lässt sich nichts Sinnvolles bauen: Es fehlt Regolith, oder der AP-Deckel der Gebäude ist für heute erreicht. Sol beenden — das Regolith kommt von selbst.',
+    // Svelte frontend (ADR 0006): nav labels, formerly hardcoded in layouts/colony.blade.php
+    'nav_colony' => 'Kolonie',
+    'nav_advisors' => 'Berater',
+    'nav_techtree' => 'Techtree',
+    'nav_cantina' => 'Cantina',
+    'nav_log' => 'Protokoll',
+    'nav_nexusdb' => 'Nexus-DB',
+    'nav_menu' => 'Menü',
+    'user_nav_profile' => 'Profil',
+    'user_nav_settings' => 'Einstellungen',
+    'user_nav_logout' => 'Abmelden',
     'nav_techtree_locked' => 'Analytiklabor erforderlich.',
     'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 erforderlich.',
 
