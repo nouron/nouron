@@ -6,22 +6,6 @@
     <link rel="stylesheet" href="{{ asset("css/entity-chips.css") }}">
 @endpush
 
-@php
-    // Static per-type chip data for the building catalog (config('buildings')) — names and
-    // descriptions are fixed per building type, not per-instance, so this can be pre-computed
-    // once server-side and matched client-side against building_key / .key.
-    $buildingChipData = collect(config("buildings"))->mapWithKeys(function ($cfg, $camelKey) {
-        $key = "building_{$camelKey}";
-
-        return [
-            $key => [
-                "label" => __("techtree.{$key}"),
-                "tooltip" => ["description" => __("buildings.{$camelKey}_desc")],
-            ],
-        ];
-    });
-@endphp
-
 @section("content")
     <script>
         window.__colonyViewData = {

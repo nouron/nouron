@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Colony\ColonyController;
+use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\TechtreeController;
@@ -50,6 +51,21 @@ Route::prefix('v1')->group(function () {
 
     // Hint bar "×" and first-visit popups (hint_key visit_<screen>) — same action as Blade.
     Route::middleware(['auth:sanctum', 'run.started'])->post('/hint/dismiss', [ColonyController::class, 'dismissHint']);
+
+    // Colony hex view — data plus the same tile/building actions as the Blade screen.
+    Route::middleware(['auth:sanctum', 'run.started'])->prefix('colony')->group(function () {
+        Route::get('/', [ColonyController::class, 'data']);
+        Route::post('/tile/explore', [ColonyController::class, 'exploreTile']);
+        Route::post('/tile/deep-scan', [ColonyController::class, 'deepScanTile']);
+        Route::post('/tile/salvage', [ColonyController::class, 'salvageTile']);
+        Route::get('/buildings/available', [ColonyController::class, 'availableBuildings']);
+        Route::post('/building/place', [ColonyController::class, 'placeBuilding']);
+        Route::post('/building/invest', [ColonyController::class, 'investBuilding']);
+        Route::post('/building/repair', [ColonyController::class, 'repairBuilding']);
+        Route::get('/building/leveldown-preview', [ColonyController::class, 'leveldownPreview']);
+        Route::post('/building/leveldown', [ColonyController::class, 'leveldownBuilding']);
+        Route::post('/hangar/{bay}/dispatch', [HangarController::class, 'dispatch'])->whereNumber('bay');
+    });
 
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('techtree')->group(function () {
         Route::get('/', [TechtreeController::class, 'data']);

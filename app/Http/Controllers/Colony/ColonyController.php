@@ -77,6 +77,51 @@ class ColonyController extends BaseController
 
     public function hexview(): View
     {
+        return view('colony.hexview', $this->hexviewData());
+    }
+
+    /** Hex view data as the SvelteKit frontend needs it — same keys as window.__colonyViewData. */
+    public function data(): JsonResponse
+    {
+        $d = $this->hexviewData();
+
+        return response()->json([
+            'tiles' => $d['tiles'],
+            'colony' => ['id' => $d['colony']->id, 'name' => $d['colony']->name],
+            'ccLevel' => $d['ccLevel'],
+            'buildingCcLevelOffset' => (int) config('game.building_cc_level_offset', 0),
+            'ccGateTemplate' => __('colony.error_building_cc_gate', ['level' => ':level']),
+            'ccBuildingId' => BuildingId::CommandCenter->value,
+            'buildings' => $d['buildings'],
+            'buildingCatalog' => $d['buildingChipData'],
+            'apAvailable' => (int) $d['colonyAp'],
+            'regolith' => $d['regolith'],
+            'werkstoffe' => $d['werkstoffe'],
+            'organika' => $d['organika'],
+            'freeSupply' => (int) $d['freeSupply'],
+            'trust' => $d['trust'],
+            'currentSol' => $d['currentSol'],
+            'solLimit' => $d['solLimit'],
+            'activeHint' => $d['activeHint'],
+            'merchantVisit' => $d['merchantVisit'],
+            'merchantItems' => $d['merchantItems'],
+            'exploreCostPerRing' => config('game.colony.explore_cost_per_ring'),
+            'exploreCostDefault' => (int) config('game.colony.explore_cost_default', 1),
+            'tileYields' => collect(config('tile_types'))->map(fn ($t) => $t['base_yield'])->filter(),
+            'repairDisplayThreshold' => (float) config('game.repair.display_threshold', 0.7),
+            'damagedThresholdPct' => (float) config('game.encounter.damaged_threshold_pct', 0.66),
+            'criticalThresholdPct' => (float) config('game.encounter.critical_threshold_pct', 0.33),
+            'deepScanAp' => (int) $d['deepScanAp'],
+            'relocateApPerHex' => (int) config('game.harvester.relocate_ap_per_hex', 2),
+            'phaseProgress' => $d['phaseProgress'],
+            'regolithFallbackTiles' => $d['regolithFallbackTiles'],
+            'supplyCapFull' => $d['supplyCapFull'],
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function hexviewData(): array
+    {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $tiles = $this->tileService->getTilesForColony($colony->id);
 
@@ -229,7 +274,15 @@ class ColonyController extends BaseController
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
         $deepScanAp = $this->tileService->deepScanCost($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp'));
+        // Static per-type chip data for the building catalog — matched client-side against building_key.
+        $buildingChipData = collect(config('buildings'))->mapWithKeys(fn ($cfg, $camelKey) => [
+            "building_{$camelKey}" => [
+                'label' => __("techtree.building_{$camelKey}"),
+                'tooltip' => ['description' => __("buildings.{$camelKey}_desc")],
+            ],
+        ]);
+
+        return compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp', 'buildingChipData');
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
