@@ -1,9 +1,13 @@
 import { BACKEND_URL } from '#lib/stores/auth.ts';
 
 // Screens already migrated to Svelte; everything else still lives in Blade (ADR 0006 coexistence).
-const MIGRATED = ['/techtree', '/colony', '/advisors', '/command-center'];
+const MIGRATED = ['/techtree', '/colony', '/advisors', '/command-center', '/hangar'];
 // Blade paths whose Svelte route has another name.
-const RENAMED: Record<string, string> = { '/colony/view': '/colony', '/colony/command-center': '/command-center' };
+const RENAMED: Record<string, string> = {
+	'/colony/view': '/colony',
+	'/colony/command-center': '/command-center',
+	'/colony/hangar': '/hangar'
+};
 
 /** Server-side paths (hint target_url, nav) → Svelte route when migrated, else the Blade page. */
 export function appLink(path: string): string {

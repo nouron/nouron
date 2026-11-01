@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\CommandCenterController;
 use App\Http\Controllers\Colony\HangarController;
+use App\Http\Controllers\Colony\PathDepthController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\AdvisorController;
@@ -67,6 +68,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/building/leveldown-preview', [ColonyController::class, 'leveldownPreview']);
         Route::post('/building/leveldown', [ColonyController::class, 'leveldownBuilding']);
         Route::post('/hangar/{bay}/dispatch', [HangarController::class, 'dispatch'])->whereNumber('bay');
+        Route::post('/hangar/{bay}/recall', [HangarController::class, 'recall'])->whereNumber('bay');
+        Route::post('/hangar/{bay}/repair', [HangarController::class, 'repair'])->whereNumber('bay');
+        Route::post('/hangar/request', [HangarController::class, 'requestShip']);
+        Route::post('/hangar/assign', [HangarController::class, 'assignToHangar']);
+        // Path depth (T41): hangar training and cantina relationships.
+        Route::post('/path-depth/{kind}/{key}/invest', [PathDepthController::class, 'invest']);
         // Kommandozentrale actions: Kolonisten-Zulage and Nexus imports.
         Route::post('/stipend', [ColonyController::class, 'purchaseStipend']);
         Route::post('/nexus/import-compounds', [ColonyController::class, 'nexusImportCompounds']);
@@ -74,6 +81,7 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::middleware(['auth:sanctum', 'run.started'])->get('/command-center', [CommandCenterController::class, 'data']);
+    Route::middleware(['auth:sanctum', 'run.started'])->get('/hangar', [HangarController::class, 'data']);
 
     // Advisors carousel — same actions as Blade (hire, fire, promote).
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('advisors')->group(function () {

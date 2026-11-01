@@ -824,4 +824,7 @@ return [
     'event_unknown' => 'Unknown phenomenon',
     'sols_remaining' => '≈:n Sols',
     'regolith_needed' => ':needed RG needed, :have RG available',
+    // Svelte hangar screen (ADR 0006): carousel arrows (were hardcoded English in Blade)
+    'hangar_prev_bay' => 'Previous bay',
+    'hangar_next_bay' => 'Next bay',
 ];

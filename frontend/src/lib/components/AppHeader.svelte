@@ -42,7 +42,7 @@
 			key: 'hangar',
 			icon: 'bi-rocket',
 			label: t('colony.nav_hangar'),
-			href: `${BACKEND_URL}/colony/hangar`,
+			href: '/hangar',
 			locked: s.hangar_built ? undefined : t('colony.nav_hangar_locked')
 		},
 		{

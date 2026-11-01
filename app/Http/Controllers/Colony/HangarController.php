@@ -36,6 +36,22 @@ class HangarController extends BaseController
 
     public function index(): View
     {
+        return view('colony.hangar', $this->hangarData());
+    }
+
+    /** Hangar data for the SvelteKit screen — same values as the Blade view plus training config. */
+    public function data(): JsonResponse
+    {
+        return response()->json($this->hangarData() + [
+            'yieldPerLevelPct' => round((float) config('path_depth.yield_per_level') * 100),
+            'trainingMaxLevel' => (int) config('path_depth.max_level'),
+            'trainingBuildingGate' => config('path_depth.building_gate'),
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function hangarData(): array
+    {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
         $slots = $this->hangarService->getHangarSlots($colony->id);
@@ -94,7 +110,7 @@ class HangarController extends BaseController
 
         $trainingFamilies = $this->trainingFamilies($colony->id);
 
-        return view('colony.hangar', compact(
+        return compact(
             'trainingFamilies',
             'slots',
             'pendingShips',
@@ -110,7 +126,7 @@ class HangarController extends BaseController
             'missionCatalog',
             'hangarMaxLevel',
             'maxShipStatus',
-        ));
+        );
     }
 
     /**
