@@ -437,7 +437,7 @@
 				<div class="detail-body">
 					{#if tech.type === 'personell'}
 						{@render effects(tech)}
-						<a href="{BACKEND_URL}/advisors" class="detail-cta-link">{t('techtree.detail_advisor_link')} &rarr;</a>
+						<a href="/advisors" class="detail-cta-link">{t('techtree.detail_advisor_link')} &rarr;</a>
 					{:else if tech.type === 'building'}
 						{#if tech.is_instanced && tech.instances.length > 0}
 							<div class="detail-row">

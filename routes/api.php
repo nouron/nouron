@@ -5,6 +5,7 @@ use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SolController;
+use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Services\ShellStateService;
 use Illuminate\Http\Request;
@@ -65,6 +66,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/building/leveldown-preview', [ColonyController::class, 'leveldownPreview']);
         Route::post('/building/leveldown', [ColonyController::class, 'leveldownBuilding']);
         Route::post('/hangar/{bay}/dispatch', [HangarController::class, 'dispatch'])->whereNumber('bay');
+    });
+
+    // Advisors carousel — same actions as Blade (hire, fire, promote).
+    Route::middleware(['auth:sanctum', 'run.started'])->prefix('advisors')->group(function () {
+        Route::get('/', [AdvisorController::class, 'data']);
+        Route::post('/hire', [AdvisorController::class, 'hire']);
+        Route::delete('/{id}', [AdvisorController::class, 'fire'])->whereNumber('id');
+        Route::post('/{id}/promote', [AdvisorController::class, 'promote'])->whereNumber('id');
     });
 
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('techtree')->group(function () {

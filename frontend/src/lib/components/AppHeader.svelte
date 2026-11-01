@@ -23,7 +23,7 @@
 			label: t('command_center.nav_label'),
 			href: `${BACKEND_URL}/colony/command-center`
 		},
-		{ key: 'advisors', icon: 'bi-people', label: t('colony.nav_advisors'), href: `${BACKEND_URL}/advisors` },
+		{ key: 'advisors', icon: 'bi-people', label: t('colony.nav_advisors'), href: '/advisors' },
 		{
 			key: 'techtree',
 			icon: 'bi-diagram-3',

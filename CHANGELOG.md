@@ -10,6 +10,7 @@
 - Svelte-Frontend: Kolonie Schritt 3c — Seitenleiste zur Kachel mit Gebäude-/Geländeinfos, Fundkarte, Erkunden, Tiefenscan (mit Fund-Popup), Bergung, Bergungsflug, Reparieren, Ausbauen und Rückbau-Dialog; Toast und Stufenaufstieg-Hinweis. AP-Ausbau-Knopf als gemeinsame Komponente für Kolonie und Techtree. Bisher fest verdrahtete Texte der Seitenleiste als Sprachschlüssel (de+en).
 - Svelte-Frontend: Kolonie Schritt 3d — Baumodus (Gebäudeliste mit Kosten und fehlenden Voraussetzungen, Baustellen-Übersicht, Direktlink `?build=`) und Harvester-Umzug (Umzugsmodus mit Vorschaupfeil und Gedrückthalten, „Verlegen“ direkt von der Zielkachel, Bewegungsanimation). Gebäude-Chips mit Tooltip als wiederverwendbare Komponente.
 - Svelte-Frontend: Kolonie Schritt 3e — Meilenstein-Popup beim Fertigstellen (Navigation schaltet ohne Neuladen frei); „Kolonie“ im Menü, Startseite, Hinweis-Links (`/colony/view?build=…`) und Techtree-Gebäudelinks führen auf die Svelte-Kolonie; Sol-Knopf am Handy auf der Kolonie, nach dem Sol-Bericht geht es zur Kolonie. Damit ist Stufe 3 abgeschlossen.
+- Svelte-Frontend: Stufe 4a Berater — Karussell mit Einstellen, Entlassen und Befördern; `GET/POST/DELETE /api/v1/advisors…` auf den `AdvisorController`. Nach Entlassen aktualisiert sich die Ressourcenleiste (Blade-Lücke), „AP/Tick (Junior)“ zeigt den Konfigurationswert statt fest 4. Texte als Sprachschlüssel, Karussell als wiederverwendbarer Helfer.
 
 ## 2026-10-31
 

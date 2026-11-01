@@ -288,6 +288,20 @@ class AdvisorController extends BaseController
         return array_values(array_filter($all, fn ($k) => ! in_array($k, $placedBuildingIds), ARRAY_FILTER_USE_KEY));
     }
 
+    /** Carousel data for the SvelteKit advisors screen (same slots as index()). */
+    public function data(): JsonResponse
+    {
+        $colonyId = $this->resolveColonyId();
+        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
+
+        return response()->json([
+            'slots' => $this->buildSlots($advisors, $slotInfo, $this->getTick(), $colonyId),
+            'slotInfo' => $slotInfo,
+            'junior_upkeep' => config('game.advisor.upkeep', [1 => 10])[1] ?? 10,
+        ]);
+    }
+
     public function index(): View
     {
         $colonyId = $this->resolveColonyId();
