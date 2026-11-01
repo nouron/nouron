@@ -46,7 +46,7 @@ class ColonyApiTest extends TestCase
             'freeSupply', 'trust', 'currentSol', 'solLimit', 'activeHint', 'merchantVisit',
             'merchantItems', 'exploreCostPerRing', 'exploreCostDefault', 'tileYields',
             'repairDisplayThreshold', 'damagedThresholdPct', 'criticalThresholdPct',
-            'deepScanAp', 'relocateApPerHex', 'phaseProgress', 'regolithFallbackTiles', 'supplyCapFull',
+            'deepScanAp', 'relocateApPerHex', 'phaseProgress', 'regolithFallbackTiles', 'supplyCapFull', 'findTotal',
         ]);
         $this->assertSame(__('techtree.building_commandCenter'), $response->json('buildingCatalog.building_commandCenter.label'));
         $this->assertNotEmpty($response->json('buildingCatalog.building_commandCenter.tooltip.description'));

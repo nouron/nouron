@@ -1,0 +1,1374 @@
+/* ponytail: copied from public/css/colony.css (hex page: layout, canvas, legend, tile panel, build mode,
+   SVG effects, supply banner, toast, levelup, merchant chip, responsive, find card, build-list reasons). Blocks already in
+   colony-shared.css are left out. Delete there when the Blade colony view goes (ADR 0006 stage 5). */
+
+/* ── Hex page layout ─────────────────────────────────────────────────────── */
+
+/*
+ * Two-column grid: canvas area fills remaining space, sidebar is fixed-width.
+ * min-height accounts for header (~44px) + resource bar (~38px) + 2px border = ~84px.
+ */
+.hex-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    align-items: start;
+    min-height: calc(100vh - 84px); /* fallback for browsers without dvh */
+    min-height: calc(100dvh - 84px); /* dynamic viewport — mobile address bar safe */
+}
+
+/* ── Canvas wrap (left column) ───────────────────────────────────────────── */
+
+.hex-canvas-wrap {
+    background: #fafafa;
+    border-right: 1px solid var(--color-border);
+    /* Fill the full height of the layout row so the border extends all the way down */
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* anchor for .merchant-notify--floating */
+}
+
+/* AP chip styles live in resources.css (imported at top of file) */
+
+/*
+ * The SVG canvas container.
+ * flex: 1 makes it grow to fill remaining vertical space in .hex-canvas-wrap.
+ * Flex centering ensures the SVG sits in the middle of the available area
+ * rather than sticking to the top-left corner.
+ */
+.hex-canvas {
+    flex: 1;
+    display: flex;
+    /* Top-aligned, NOT centered: the wrap stretches to the sidebar height, and the
+     * sidebar grows/shrinks with the selection (build menu is long). Vertical
+     * centering made the whole map jump down when a free tile was selected. */
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.5rem;
+    /* Ensure the SVG never becomes tiny on very wide screens */
+    min-height: 400px;
+}
+
+.hex-canvas svg {
+    width: 100%;
+    height: auto;
+    max-width: 580px;
+}
+
+/* Full HD+ desktops: canvas area sits idle at the 580px cap — let it grow so
+ * the hex tiles are actually readable on a large monitor instead of floating
+ * in whitespace. Sidebar stays at its fixed 320px (chip layout, not content
+ * that benefits from more width). */
+@media (min-width: 1400px) {
+    .hex-canvas {
+        min-height: 700px;
+    }
+
+    .hex-canvas svg {
+        max-width: 1100px;
+    }
+}
+
+.hex-canvas svg polygon {
+    transition: filter 0.1s ease;
+}
+
+.hex-canvas svg g.tile--unlocked {
+    cursor: pointer;
+}
+
+.hex-canvas svg g.tile--unlocked:hover polygon {
+    filter: brightness(1.14);
+}
+
+/* ── Grid legend (tile-state key) ───────────────────────────────────────── */
+
+/* ── Canvas info bar (phase progress + legend) ───────────────────────────── */
+
+.canvas-info-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-top: 1px solid var(--color-border, #e8e8ec);
+    background: #fafafa;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.info-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    background: #fff;
+    border: 1px solid #d0d4db;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #444;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.4;
+    list-style: none; /* summary reset */
+}
+
+.info-bar-btn:hover {
+    border-color: #aaa;
+    background: #f5f5f7;
+}
+
+.hex-legend {
+    font-size: 0.8rem;
+    color: #4a4f5a;
+}
+
+.hex-legend > summary {
+    cursor: pointer;
+    color: #5a6070;
+    user-select: none;
+}
+
+.hex-legend__list {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.35rem 1rem;
+}
+
+.hex-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.hex-legend__swatch {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+}
+
+.hex-legend__swatch--buildable {
+    background: #c8cdd6;
+    border: 1px solid #a0a8b4;
+}
+
+.hex-legend__swatch--soon {
+    background: #c8cdd6;
+    border: 1px dashed #7f8aa0;
+    position: relative;
+}
+
+/* Padlock hint on the "soon buildable" swatch. */
+.hex-legend__swatch--soon::after {
+    content: "\1F512";
+    font-size: 0.6rem;
+    color: #3c4252;
+}
+
+.hex-legend__swatch--zonefog {
+    background: #a9b2c4;
+    border: 1px dashed #7f8aa0;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.28) 0,
+        rgba(255, 255, 255, 0.28) 2px,
+        transparent 2px,
+        transparent 5px
+    );
+}
+
+.hex-legend__swatch--explorefog {
+    background: #9aa4b8;
+    border: 1px solid #6f7a90;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.28) 0,
+        rgba(255, 255, 255, 0.28) 2px,
+        transparent 2px,
+        transparent 5px
+    );
+}
+
+.hex-legend__swatch--regolith {
+    background: #7fb5dc;
+    border: 1px solid #5090c0;
+}
+
+/* Colors mirror the JS render constants (colony-hexgrid.js: CC_COLOR/TILE_COLORS/EVENT_COLOR)
+   so the legend always matches what's actually drawn on the grid. */
+.hex-legend__swatch--cc {
+    background: #7ec87e;
+    border: 1px solid #2e7d32;
+}
+
+.hex-legend__swatch--hazard {
+    background: #e8b87a;
+    border: 1px solid #c08040;
+}
+
+.hex-legend__swatch--impassable {
+    background: #7a7f8a;
+    border: 1px solid #555;
+}
+
+.hex-legend__swatch--event {
+    background: #e8d89a;
+    border: 1px solid #b09a40;
+}
+
+/* Desktop: legend expands below the info bar pills — wider grid layout */
+@media (min-width: 900px) {
+    .hex-legend__list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Tile info sidebar (right column) ───────────────────────────────────── */
+
+.tile-panel {
+    background: #fff;
+    overflow-y: auto;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Action strip: quick-action bar above the section header */
+.tile-panel-action-strip {
+    padding: 0.5rem 1.25rem;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.tile-panel-action-strip .tile-actions {
+    margin-top: 0;
+}
+
+/* Sticky section header inside the sidebar */
+.tile-panel-header {
+    padding: 0.65rem 1.25rem 0.55rem;
+    border-bottom: 2px solid var(--color-accent);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.tile-panel-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Scrollable content area inside the sidebar */
+.tile-panel-body {
+    padding: 1rem 1.25rem 1.5rem;
+    flex: 1;
+}
+
+/* Context title at the top of the sidebar: building name + level badge, or the
+   terrain name on an empty tile. Stays visible on mobile (identity first). */
+.tile-panel-title {
+    padding: 0.6rem 1.25rem;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.tile-panel-title__row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tile-panel-title__name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Hover popup for the level detail — desktop only (touch devices have no
+   hover to trigger it, same (hover: hover) gate as the repair-button ghost
+   segment). Position anchor for the reused .res-popup (resources.css). */
+.tile-panel-title__name--hoverable {
+    position: relative;
+}
+
+.tile-panel-title__name--hoverable .res-popup {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+}
+
+@media (hover: hover) {
+    .tile-panel-title__name--hoverable {
+        cursor: default;
+    }
+}
+
+@media not all and (hover: hover) {
+    .tile-panel-title__name--hoverable .res-popup {
+        display: none !important;
+    }
+}
+
+/* Terrain detail demoted to a closed disclosure on a built tile. PicoCSS styles
+   <details>/<summary> natively; this only tunes spacing + the summary label. */
+.tile-terrain-disclosure {
+    margin-top: 1rem;
+    padding-top: 0.6rem;
+}
+.tile-terrain-disclosure summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+.tile-terrain-disclosure .tile-terrain {
+    margin-top: 0.6rem;
+}
+
+/* dl/dt/dd styling lives in the .tile-dl block below (single source). */
+
+/* Empty-state: centred hint with a pseudo-icon */
+.tile-panel-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    color: #aaa;
+    text-align: center;
+}
+
+.tile-panel-empty::before {
+    content: "⬡"; /* hollow hex character as a lightweight icon */
+    font-size: 2.5rem;
+    line-height: 1;
+    color: #d0d4db;
+}
+
+.tile-panel-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+/* ── Status chips ────────────────────────────────────────────────────────── */
+
+.tile-status-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1rem;
+}
+
+.chip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.chip--locked {
+    background: #eee;
+    color: #999;
+}
+.chip--fog {
+    background: #f0f0f0;
+    color: #888;
+}
+.chip--explored {
+    background: #e8f4e8;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+.chip--scanned {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
+
+/* ── Zone status line ────────────────────────────────────────────────────── */
+
+/* One plain-language sentence telling the player what they can do with the
+   selected tile. Coloured left border keys the four zone states to the same
+   palette the grid uses (buildable green, soon-buildable amber, fog slate). */
+.tile-zone-status {
+    margin-top: 0.75rem;
+}
+
+.tile-zone-line {
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid #c0c4cc;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    background: #f5f6f8;
+    color: #4a4a55;
+}
+
+.tile-zone-line--buildable {
+    border-left-color: #2e7d32;
+    background: #edf6ed;
+    color: #2e7d32;
+}
+
+.tile-zone-line--soon {
+    border-left-color: #c08040;
+    background: #fbf3e9;
+    color: #8a5a20;
+}
+
+.tile-zone-line--outside {
+    border-left-color: #9aa4b8;
+    background: #f2f3f6;
+    color: #6b7180;
+}
+
+.tile-zone-line--fog {
+    border-left-color: #7f8aa0;
+    background: #eef0f5;
+    color: #5a6478;
+}
+
+/* ── Per-terrain hints ───────────────────────────────────────────────────── */
+
+.tile-terrain-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.tile-terrain-hint--regolith {
+    color: #1565c0;
+}
+
+.tile-terrain-hint--hazard {
+    color: #b45309;
+}
+
+.tile-terrain-hint--impassable {
+    color: #888;
+}
+
+/* ── Sidebar description list ────────────────────────────────────────────── */
+
+.tile-dl {
+    margin: 0.5rem 0 0;
+}
+
+.tile-dl dt {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-top: 0.6rem;
+}
+
+.tile-dl dd {
+    margin: 0.1rem 0 0;
+    font-size: 0.88rem;
+}
+
+/* ── Sidebar resource + progress bars ───────────────────────────────────── */
+
+.tile-resource {
+    margin-top: 0.75rem;
+}
+
+.tile-bar-group {
+    margin-top: 0.75rem;
+}
+
+.tile-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.tile-bar-wrap {
+    position: relative;
+    height: 0.5rem;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.tile-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.tile-bar--resource {
+    background: #2196f3;
+}
+
+/* On the red Reparieren button: white fill, faint white empty track. Healthy
+   condition (tone === 'neutral') keeps this default. Damaged/critical tones
+   override the filled-segment color below — same thresholds as
+   conditionTone()/conditionLabelColor() in colony-hexgrid.js. */
+.btn-segbar--status .btn-seg {
+    background: rgba(255, 255, 255, 0.28);
+}
+.btn-segbar--status .btn-seg--filled {
+    background: #fff;
+}
+
+/* Damaged: amber fill, same tone as the hex-tile label warning color
+   (conditionLabelColor() 'warning' — #facc15). */
+.btn-segbar--status--warning .btn-seg--filled {
+    background: #facc15;
+}
+
+/* Critical: red segments would be invisible on the red button background, so
+   this uses a dark fill with a light outline instead — reads as clearly worse
+   than the amber warning state, still legible on the red button. */
+.btn-segbar--status--danger .btn-seg--filled {
+    background: #1a1a1a;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+/* Desktop-only +1 hover preview on the Reparieren bar (the Ausbauen ghost lives in
+   ap-upgrade-button.css). Gated to (hover: hover) so a tap on touch can never leave
+   a ghost segment stuck on. */
+@media (hover: hover) and (pointer: fine) {
+    .btn-segbar--status .btn-seg--ghost {
+        background: rgba(255, 255, 255, 0.62);
+    }
+}
+
+/* ── Shared "Voraussetzungen" chip row (partials/required-list-chips) ────── */
+/* PicoCSS's bare aside li/ul rules beat unscoped chip-list classes, so this
+   mirrors .tech-panel's equivalent block in techtree-view.css scoped to
+   .tile-panel instead — see docs/design-system for the res-chip component
+   these list items wrap (.res-chip--neutral lives in resources.css). */
+.tile-panel .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: var(--color-text-primary, #333);
+    padding: 0;
+    margin: 0 0 0.5rem;
+}
+
+.tile-panel .detail-row-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
+}
+
+.tile-panel .detail-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.tile-panel .detail-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tile-panel .detail-list--chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.tile-panel .detail-list--chips li {
+    display: inline-flex;
+}
+
+.tile-building-levelup-cost {
+    margin: 0.3rem 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+}
+
+.tile-building-unlocks {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+}
+
+.tile-building-regolith-remaining {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tile-building-sols-remaining {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tile-building-sols-remaining--warn {
+    color: #7a5500;
+    font-weight: 600;
+}
+
+.tile-under-construction {
+    margin: 0.5rem 0;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #78350f;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* ── Sidebar action buttons ──────────────────────────────────────────────── */
+
+/* Stacked full-width buttons: two-line labels (e.g. "Reparieren (80 %)" +
+   "1 AP → +5 % Zustand") need the full sidebar width to stay single-line. */
+.tile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+
+/* Inline note shown in the action strip (e.g. harvester in transit) */
+.tile-action-note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #777;
+}
+
+/* ── Rückbau (leveldown) ─────────────────────────────────────────────────── */
+
+/* Destructive action at the bottom of the built-tile panel: outlined in the
+   danger tone, never the solid primary accent. */
+.tile-building .tile-leveldown {
+    margin-top: var(--space-md, 1rem);
+    padding-top: var(--space-sm, 0.5rem);
+    border-top: 1px solid var(--color-border, #e8e8ec);
+}
+
+.tile-building .tile-leveldown__btn {
+    background: transparent;
+    border-color: var(--color-danger, #c0392b);
+    color: var(--color-danger-fg, #8c2030);
+}
+
+.tile-building .tile-leveldown__btn:hover:not(:disabled) {
+    background: var(--color-danger-bg, #fdf0f2);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__body {
+    padding-top: var(--space-md, 1rem);
+    font-size: 0.85rem;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__name {
+    margin: 0 0 var(--space-sm, 0.5rem);
+    font-weight: 700;
+    color: var(--color-anthracite, #333);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__loading,
+dialog.leveldown-dialog .leveldown-dialog__note {
+    margin: 0 0 var(--space-sm, 0.5rem);
+    color: var(--color-text-secondary, #6b6b7a);
+    font-size: 0.8rem;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__list {
+    margin: 0 0 var(--space-sm, 0.5rem);
+    padding: 0;
+    list-style: none;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__list li {
+    margin: 0 0 var(--space-xs, 0.25rem);
+    padding: var(--space-xs, 0.25rem) var(--space-sm, 0.5rem);
+    list-style: none;
+    border-left: 3px solid var(--color-border-strong, #d0d0dc);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__list li.leveldown-dialog__warn {
+    border-left-color: var(--color-warning, #d4a017);
+    background: var(--color-warning-bg, #fef9e7);
+    color: var(--color-warning-fg, #7a5500);
+    font-weight: 600;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm, 0.5rem);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__actions button {
+    width: auto;
+    margin: 0;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__cancel {
+    background: transparent;
+    border: 1px solid var(--color-border-strong, #d0d0dc);
+    color: var(--color-anthracite, #333);
+}
+
+dialog.leveldown-dialog .leveldown-dialog__confirm {
+    background: var(--color-accent, #8c2030);
+    border: 1px solid var(--color-accent, #8c2030);
+    color: #fff;
+}
+
+dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ── Build mode sidebar ──────────────────────────────────────────────────── */
+
+.build-mode-hint {
+    font-size: 0.82rem;
+    color: #777;
+    margin: 0 0 0.75rem;
+}
+
+.build-mode-selected {
+    font-size: 0.82rem;
+    color: var(--color-accent);
+    margin: 0 0 0.75rem;
+    padding: 0.35rem 0.6rem;
+    background: #fff0ee;
+    border-left: 3px solid var(--color-accent);
+    border-radius: 2px;
+}
+
+.build-mode-empty {
+    font-size: 0.82rem;
+    color: #aaa;
+    margin: 0;
+}
+
+.build-mode-inprogress {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.7rem;
+    background: #fffbe6;
+    border: 1px solid #e8d86a;
+    border-radius: 6px;
+}
+
+.build-mode-inprogress-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8a6a00;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4rem 0;
+}
+
+.build-mode-inprogress-hint {
+    font-size: 0.75rem;
+    color: #8a6a00;
+    margin: 0.4rem 0 0 0;
+}
+
+.building-list-item--inprogress {
+    cursor: default;
+    background: #fffbe6;
+    border-color: #e8d86a;
+    opacity: 0.9;
+}
+
+.building-list-item--inprogress:hover {
+    background: #fffbe6;
+    border-color: #e8d86a;
+}
+
+.building-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.building-list-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    background: #fafafa;
+    cursor: pointer;
+    transition:
+        background 0.1s ease,
+        border-color 0.1s ease;
+}
+
+.building-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.building-list-row--costs {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.building-list-item:hover {
+    background: #f0f4ff;
+    border-color: #b0c0e8;
+}
+
+.building-list-item--selected {
+    background: #fff0ee;
+    border-color: var(--color-accent);
+}
+
+.building-list-item--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.building-list-item--disabled:hover {
+    background: none;
+    border-color: var(--color-border, #e8e8ec);
+}
+
+.building-list-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-anthracite);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.building-list-ap {
+    font-size: 0.72rem;
+    color: #888;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.building-list-row-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.building-list-info {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--color-border, #e8e8ec);
+    color: #888;
+    font-size: 0.65rem;
+    font-style: italic;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.building-list-info:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.building-list-supply {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--color-border, #e8e8ec);
+    border-radius: 10px;
+    padding: 0 0.4rem;
+}
+
+.building-list-cost {
+    font-size: 0.72rem;
+    color: #6b5a2a;
+    background: #fbf6e8;
+    border: 1px solid #e6d8a8;
+    border-radius: 10px;
+    padding: 0 0.4rem;
+}
+
+.building-list-cost--compounds {
+    color: #2a5a6b;
+    background: #e8f3fb;
+    border-color: #a8cfe6;
+}
+
+/* Erect cost + level 1 breakdown next to the placement total (T9). */
+.building-list-cost-breakdown {
+    font-size: 0.68rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+/* Short hint under a build card's cost row (e.g. hangar: finds go by ship). */
+.building-list-notice {
+    margin: 0.25rem 0 0;
+    font-size: 0.68rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+/* ── Signal chip ─────────────────────────────────────────────────────────── */
+
+.chip--signal {
+    background: #fff8dc;
+    color: #8a6500;
+    border: 1px solid #e0c040;
+    animation: chip-signal-pulse 2s ease-in-out infinite;
+}
+
+@keyframes chip-signal-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ── SVG signal pulse (class applied to SVG circle element) ──────────────── */
+
+@keyframes signal-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.25;
+    }
+}
+
+.signal-pulse {
+    animation: signal-pulse 1.8s ease-in-out infinite;
+}
+
+/* ── Onboarding pulse ring (SVG polygon, blue-300) ───────────────────────── */
+
+/*
+ * Distinct from .signal-pulse (orange/yellow circle for hidden events).
+ * This ring is blue-white and targets buildable tiles (rank 1)
+ * or the misplaced Harvester tile (rank 3).
+ */
+@keyframes onboarding-ring-pulse {
+    0%,
+    100% {
+        opacity: 0.9;
+        stroke-width: 2.5px;
+    }
+    50% {
+        opacity: 0.35;
+        stroke-width: 1.5px;
+    }
+}
+
+.onboarding-pulse {
+    animation: onboarding-ring-pulse 2s ease-in-out infinite;
+}
+
+/* ── Harvester move animation (SVG circle, slides old → new tile) ─────────── */
+@keyframes hv-move {
+    0% {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    70% {
+        transform: translate(var(--dx), var(--dy));
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy));
+        opacity: 0;
+    }
+}
+.hv-move-dot {
+    animation: hv-move 380ms ease-out forwards;
+}
+
+/* ── Event discovery dialog ──────────────────────────────────────────────── */
+
+/* PicoCSS already styles <dialog> and <article> inside it.
+   We only need to size the dialog and call out the event name. */
+dialog[x-ref="discoveryDialog"] {
+    max-width: 340px;
+    width: 90%;
+}
+
+.discovery-event-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    text-align: center;
+    margin: 0.25rem 0 0.75rem;
+}
+
+/* ── Supply-cap warning banner (Trigger 2) ───────────────────────────────── */
+
+/*
+ * Amber-on-dark strip rendered directly below the onboarding hint bar when
+ * the supply cap was hit during the last game tick.
+ * Static server-rendered (@if), so no Alpine transition needed.
+ */
+.supply-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 1rem;
+    background: #92400e;
+    color: #fef3c7;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ── Action toast (Triggers 4 + 5) ──────────────────────────────────────── */
+
+/*
+ * Fixed-position non-interactive notification that fades out after 3.5 s.
+ * Type variants: --error (dark red) and --info (dark green).
+ * pointer-events: none prevents the toast from blocking clicks on the grid.
+ */
+.colony-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 320px;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    z-index: 500;
+    pointer-events: none;
+    color: #fff;
+    /* Default (error) colour — overridden by modifier below */
+    background: #7f1d1d;
+}
+
+.colony-toast--error {
+    background: #7f1d1d;
+}
+
+.colony-toast--info {
+    background: #14532d;
+}
+
+/* ── Levelup notice: centered slide-up + fade ───────────────────────────── */
+
+.colony-levelup-notice {
+    position: fixed;
+    bottom: 25vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.4rem;
+    background: #1a3a1a;
+    color: #7ec87e;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.levelup-icon {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Alpine transition classes */
+.levelup-enter {
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
+}
+.levelup-enter-start {
+    opacity: 0;
+    transform: translateX(-50%) translateY(30px);
+}
+.levelup-enter-end {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.levelup-leave {
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+}
+.levelup-leave-start {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.levelup-leave-end {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+}
+
+/* ── Merchant notification chip (hexview canvas header) ─────────────────── */
+
+/*
+ * Amber/gold chip — visible but not dominant.
+ * Replaces the old .merchant-btn trigger now that the modal lives in the bar.
+ */
+.merchant-notify {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: #fffbea;
+    border: 1px solid #e6c84a;
+    color: #7a5c00;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.merchant-notify:hover {
+    background: #fff3c4;
+    text-decoration: none;
+    color: #5a4000;
+}
+
+/* Floating variant — overlays the grid top-right (canvas header row removed) */
+.merchant-notify--floating {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    z-index: 5;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+/* Stack grid + sidebar at 900px and below */
+@media (max-width: 899px) {
+    .hex-layout {
+        grid-template-columns: 1fr;
+        min-height: unset;
+    }
+
+    .hex-canvas-wrap {
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .hex-canvas {
+        min-height: 48dvh;
+        padding: 0.4rem;
+    }
+
+    .hex-canvas svg {
+        max-width: 100%;
+    }
+
+    .tile-panel {
+        border-left: none;
+        border-top: 1px solid var(--color-border);
+        /* Limit sidebar height on mobile so it doesn't push the grid far up */
+        max-height: 360px;
+    }
+
+    .tile-panel-empty {
+        justify-content: flex-start;
+        padding: 1rem;
+    }
+
+    /* Hide section header — action strip + tile heading give enough context */
+    .tile-panel-header--hideable {
+        display: none;
+    }
+
+    /* Hide coordinate row in tile info on mobile */
+    .tile-dl-coords {
+        display: none;
+    }
+}
+
+
+/* ── T30 find card + map counters ─────────────────────────────────────────── */
+
+.find-card {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #e0c040;
+    border-radius: 4px;
+    background: #fff8dc;
+}
+
+.find-card__false {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6b6b7a;
+}
+
+.find-card__reason {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: #6b6b7a;
+}
+
+.find-card__dl {
+    margin-top: 0;
+}
+
+.find-card__action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.find-card__action .find-card__ap {
+    width: 4rem;
+    margin: 0;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.85rem;
+}
+
+.find-counters {
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    margin-right: auto;
+}
+
+.hex-legend__help {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+}
+
+/* Labels next to the cost chips stay on one line where they fit; the chips never shrink. */
+.tile-action-btn--barred .tile-action-btn__main {
+    white-space: nowrap;
+}
+
+
+/* map construction + locked reasons */
+
+/* C5: dashed inset outline on tiles with a running construction site. */
+.tile-site-marker {
+    fill: none;
+    stroke: #f59e0b;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    stroke-linejoin: round;
+    opacity: 0.9;
+}
+
+/* C8: a locked build card keeps its reason chips fully readable; only the rest dims. */
+.building-list-item--disabled {
+    opacity: 1;
+}
+
+.building-list-item--disabled .building-list-row:not(.building-list-row--costs) {
+    opacity: 0.5;
+}
+
+.building-list-item--disabled .building-list-row--costs > :not(.building-list-chip--missing) {
+    opacity: 0.55;
+}
+
+.building-list-chip--missing {
+    color: #a32020;
+    background: #fdecec;
+    border-color: #e8a8a8;
+}
+
+.building-list-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.building-list-reason {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #a32020;
+    background: #fdecec;
+    border: 1px solid #e8a8a8;
+    border-radius: 10px;
+}
+
+/* Svelte only: the legend chevron PicoCSS drew on <summary> in Blade. */
+.hex-legend > summary::-webkit-details-marker {
+    display: none;
+}
+.hex-legend > summary::after {
+    content: '\203A';
+    margin-left: 0.6rem;
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform var(--duration-fast) ease;
+}
+.hex-legend[open] > summary::after {
+    transform: rotate(90deg);
+}

@@ -6,6 +6,7 @@
 - Svelte-Frontend: App-Rahmen Schritt 2d — Sol beenden mit AP-Bestätigung, animiertem Sol-Bericht, Phasenfortschritt, Startbildschirm und Finale; `GET /api/v1/sol/remaining-ap` und `POST /api/v1/sol/next` nutzen den `SolController` wie Blade. Dialogtexte als Sprachschlüssel.
 - Svelte-Frontend: App-Rahmen Schritt 2e — Abmelden widerruft den Token serverseitig (`POST /api/v1/auth/logout`), Feedback-Knopf mit Dialog (`POST /api/v1/feedback`, gleicher Controller und gleiche Drosselung wie Blade).
 - Svelte-Frontend: Kolonie Schritt 3a — `GET /api/v1/colony` liefert die Hexfeld-Daten (gleiche Quelle wie die Blade-Seite, `ColonyController::hexviewData()`), Kachel-/Gebäude-Aktionen und Bergungsflug als `/api/v1/colony/*` auf dieselben Controller.
+- Svelte-Frontend: Kolonie Schritt 3b — Seite `/colony` mit Hexfeld (Zeichenteil aus `colony-hexgrid.js` geteilt), Funde-Zähler, Legende, Händler- und Versorgungshinweis, Kachelauswahl und Direktlink auf ein Gebäude; `GET /api/v1/colony` liefert zusätzlich die Signal-Gesamtzahl.
 
 ## 2026-10-31
 

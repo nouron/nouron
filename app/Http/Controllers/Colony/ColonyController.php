@@ -116,6 +116,7 @@ class ColonyController extends BaseController
             'phaseProgress' => $d['phaseProgress'],
             'regolithFallbackTiles' => $d['regolithFallbackTiles'],
             'supplyCapFull' => $d['supplyCapFull'],
+            'findTotal' => array_sum(config('game.finds.start_pool')),
         ]);
     }
 

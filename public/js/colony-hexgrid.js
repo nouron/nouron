@@ -1987,3 +1987,6 @@ function svgCircle(cx, cy, r, fill, stroke) {
     el.setAttribute('pointer-events', 'none');
     return el;
 }
+
+// Shared with the SvelteKit colony page (ADR 0006), which imports this file as a module.
+window.NouronHexGrid = { initHexGrid, isBuildableTile, TILE_LABELS };
