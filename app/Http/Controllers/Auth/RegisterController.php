@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Handles new player registration.
@@ -20,11 +21,13 @@ class RegisterController extends Controller
 {
     public function __construct(private readonly OnboardingService $onboardingService) {}
 
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
-        return view('auth.register', [
-            'inviteRequired' => config('auth.invite_code') !== null,
-        ]);
+        $inviteRequired = config('auth.invite_code') !== null;
+
+        return $request->is('api/*')
+            ? response()->json(['invite_required' => $inviteRequired])
+            : view('auth.register', ['inviteRequired' => $inviteRequired]);
     }
 
     public function register(Request $request)
@@ -67,9 +70,9 @@ class RegisterController extends Controller
             }, OnboardingService::DEADLOCK_ATTEMPTS);
         } catch (\RuntimeException $e) {
             if (str_contains($e->getMessage(), 'No free planets')) {
-                return back()->withErrors([
+                throw ValidationException::withMessages([
                     'username' => 'Derzeit sind leider keine freien Planeten verfügbar. Bitte versuche es später erneut.',
-                ])->onlyInput('username', 'email');
+                ]);
             }
             // Never the message: a QueryException carries the SQL with its bindings
             // (e-mail, password hash). Class and error codes only, like DeadlockRetry.
@@ -80,9 +83,14 @@ class RegisterController extends Controller
                 'driver_code' => isset($info[1]) ? (int) $info[1] : null,
             ]);
 
-            return back()->withErrors([
+            throw ValidationException::withMessages([
                 'username' => 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
-            ])->onlyInput('username', 'email');
+            ]);
+        }
+
+        // SvelteKit frontend (ADR 0006): bearer token instead of a session.
+        if ($request->is('api/*')) {
+            return response()->json(['token' => $user->createToken('spa')->plainTextToken], 201);
         }
 
         Auth::login($user);

@@ -21,6 +21,26 @@ export async function login(login: string, password: string): Promise<void> {
 	token.set(body.token);
 }
 
+/** Validation errors per field, as Laravel returns them with a 422. */
+export class FormError extends Error {
+	constructor(public errors: Record<string, string[]>) {
+		super(Object.values(errors)[0]?.[0] ?? '');
+	}
+}
+
+/** Register a player (Blade rules incl. invite code); logs in on success. */
+export async function register(data: Record<string, string>): Promise<void> {
+	const res = await fetch(`${API_URL}/auth/register`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+		body: JSON.stringify(data)
+	});
+	const body = await res.json().catch(() => ({}));
+	if (res.status === 422) throw new FormError(body.errors ?? {});
+	if (!res.ok) throw new Error(body.message ?? `HTTP ${res.status}`);
+	token.set(body.token);
+}
+
 /** Revoke the token server-side, then forget it locally (even if the server call fails). */
 export async function logout(): Promise<void> {
 	await fetch(`${API_URL}/auth/logout`, {

@@ -16,6 +16,7 @@
 - Svelte-Frontend: Stufe 4d Cantina — Panorama mit Hotspots (Angebote, Corvan, Begegnungspool, Story, Anliegen, Deva & Lenn), Barkeeper Tomas, Händlerdialog mit Kauf, Angebotsdialog mit Handelsvorteil/Verhandeln, Beziehungen pflegen und Marktbericht; `GET /api/v1/cantina` aus derselben Datenmethode wie Blade, Aktionen über `/api/v1/colony/bar/*` und `/api/v1/colony/merchant/*`. Nach Händlerkauf aktualisiert sich jetzt die Ressourcenleiste.
 - Svelte-Frontend: Stufe 4e Protokoll (mit Nexus-Funk-Tab, markiert gelesen), Nexus-DB und Charakter-Kodex; `GET /api/v1/comm-log`, `/nexus-db`, `/codex` auf dieselben Controller, Texte der Einträge serverseitig aufgelöst.
 - Svelte-Frontend: Stufe 4f Lobby und Ergebnisseite (eigener Rahmen außerhalb eines Laufs, Codex dorthin verschoben): Lauf starten, umbenennen, aufgeben, neuer Lauf, Highscore; ohne gestarteten Lauf führen Spielseiten und Startseite zur Lobby, ein beendeter Lauf zur Ergebnisseite, das Sol-Finale ebenfalls. `GET /api/v1/lobby`, `/run/{id}/result` und JSON-Antworten der Lobby-Aktionen. Umbenennen geht jetzt auch vor dem Start (die Blade-Route lag hinter `run.started` und schlug dort still fehl).
+- Svelte-Frontend: Stufe 5a Login und Registrierung (mit Einladungscode, gleiche Drosselung wie Blade); angemeldete Spieler überspringen die Formulare. `GET/POST /api/v1/auth/register` antwortet mit Token, der API-Login richtet wie der Blade-Login Altkonten ohne Kolonie eine ein.
 
 ## 2026-10-31
 

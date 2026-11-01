@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Colony\BarController;
 use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\CommandCenterController;
@@ -26,6 +27,9 @@ use Illuminate\Support\Str;
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::middleware('auth:sanctum')->post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/auth/register', [RegisterController::class, 'showRegistrationForm']);
+    // Throttled like the web form: the shared beta invite code must not be brute-forceable (R9).
+    Route::post('/auth/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
 
     // In-game feedback (closed beta) — same action and throttle as Blade.
     Route::middleware(['auth:sanctum', 'throttle:5,1'])->post('/feedback', [FeedbackController::class, 'store']);
