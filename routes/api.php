@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Colony\ColonyController;
+use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Services\ShellStateService;
 use Illuminate\Http\Request;
@@ -34,6 +35,12 @@ Route::prefix('v1')->group(function () {
         return collect($shell->forUser($user->user_id, $colonyId ? (int) $colonyId : null))
             ->mapWithKeys(fn ($value, $key) => [Str::snake($key) => $value])
             ->put('username', $user->username);
+    });
+
+    // End the Sol — same actions as the Blade Sol button (report JSON, 409 while another advance runs).
+    Route::middleware('auth:sanctum')->prefix('sol')->group(function () {
+        Route::get('/remaining-ap', [SolController::class, 'remainingAp']);
+        Route::post('/next', [SolController::class, 'next']);
     });
 
     // Hint bar "×" and first-visit popups (hint_key visit_<screen>) — same action as Blade.

@@ -570,6 +570,15 @@ return [
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 
     'next_sol_button' => 'End Sol',
+    // Svelte frontend (ADR 0006): Sol confirm dialog, formerly hardcoded in partials/sol-button.blade.php
+    'sol_confirm_title' => 'End the Sol?',
+    'sol_confirm_body' => 'You have not spent all AP yet: :ap AP.',
+    'sol_confirm_expire' => 'Unspent AP expire at the end of the Sol.',
+    'sol_confirm_keep_playing' => 'Keep playing',
+    'sol_confirm_end_anyway' => 'End Sol anyway',
+    'sol_loading' => 'Computing Sol …',
+    'sol_loading_sub' => 'Events, production, decay',
+    'sol_error' => 'Could not end the Sol. Please reload the page.',
 
     // ── Nexus debt display ────────────────────────────────────────────────────
 

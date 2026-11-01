@@ -574,6 +574,15 @@ return [
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 
     'next_sol_button' => 'Sol beenden',
+    // Svelte frontend (ADR 0006): Sol confirm dialog, formerly hardcoded in partials/sol-button.blade.php
+    'sol_confirm_title' => 'Sol beenden?',
+    'sol_confirm_body' => 'Du hast noch nicht alle AP ausgegeben: :ap AP.',
+    'sol_confirm_expire' => 'Ungenutzte AP verfallen am Sol-Ende.',
+    'sol_confirm_keep_playing' => 'Weiterspielen',
+    'sol_confirm_end_anyway' => 'Sol trotzdem beenden',
+    'sol_loading' => 'Sol wird berechnet …',
+    'sol_loading_sub' => 'Ereignisse, Produktion, Verfall',
+    'sol_error' => 'Fehler beim Beenden des Sol. Bitte Seite neu laden.',
 
     // ── Nexus-Schulden-Anzeige (Feature 3) ───────────────────────────────────
 

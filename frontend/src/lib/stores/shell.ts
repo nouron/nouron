@@ -35,6 +35,9 @@ export type Shell = {
 
 export const shell = writable<Shell | null>(null);
 
+/** Bumped when a new Sol starts: the (game) layout remounts the page so it reloads its data. */
+export const solEpoch = writable(0);
+
 export async function refreshShell(): Promise<void> {
 	shell.set(await api<Shell>('/shell'));
 }

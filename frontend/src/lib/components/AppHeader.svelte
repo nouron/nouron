@@ -6,6 +6,7 @@
 	import type { Shell } from '#lib/stores/shell.ts';
 	import HintBar from './HintBar.svelte';
 	import ResourceBar from './ResourceBar.svelte';
+	import SolButton from './SolButton.svelte';
 
 	let { s }: { s: Shell } = $props();
 
@@ -94,6 +95,8 @@
 		</ul>
 
 		<div class="right">
+			<!-- ponytail: hidden on phones like in Blade (there only shown on the colony view, not migrated yet). -->
+			{#if s.in_active_run}<div class="sol-wrap"><SolButton /></div>{/if}
 			<div class="user nav-desktop-only">
 				<button
 					class="plain"
@@ -331,7 +334,8 @@
 	}
 	@media (max-width: 599px) {
 		.nav-desktop,
-		.nav-desktop-only {
+		.nav-desktop-only,
+		.sol-wrap {
 			display: none;
 		}
 		.nav-mobile {
