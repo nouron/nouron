@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetUserLocale::class,
         ]);
+        $middleware->api(append: [
+            SetUserLocale::class,
+        ]);
         $middleware->alias([
             'run.started' => EnsureRunStarted::class,
         ]);

@@ -6,7 +6,7 @@
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
 	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
-	import { BACKEND_URL, logout, token } from '#lib/stores/auth.ts';
+	import { logout, token } from '#lib/stores/auth.ts';
 	import { refreshShell, shell } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
 
@@ -43,8 +43,7 @@
 					{#if open}
 						<div class="menu">
 							<a class="menu-item" href="/lobby">{t('lobby.nav_runs')}</a>
-							<a class="menu-item" href="{BACKEND_URL}/user">{t('colony.user_nav_profile')}</a>
-							<a class="menu-item" href="{BACKEND_URL}/user/settings">{t('colony.user_nav_settings')}</a>
+							<a class="menu-item" href="/settings">{t('colony.user_nav_settings')}</a>
 							<a class="menu-item" href="/codex">{t('colony.user_nav_codex')}</a>
 							<button class="menu-item" onclick={logout}>{t('colony.user_nav_logout')}</button>
 						</div>

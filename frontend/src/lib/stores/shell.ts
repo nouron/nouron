@@ -1,11 +1,13 @@
 import { writable } from 'svelte/store';
 import { api } from '#lib/stores/auth.ts';
+import { useLocale } from '#lib/i18n.ts';
 
 type Flow = { sources: Record<string, number>; net: number; consumption?: number; upkeep?: number };
 
 /** GET /api/v1/shell — header data of every in-run screen (App\Services\ShellStateService). */
 export type Shell = {
 	username: string;
+	locale: string;
 	resource_bar_possessions: Record<string, { amount: number; abbreviation: string }>;
 	current_sol: number | null;
 	sol_limit: number;
@@ -39,7 +41,9 @@ export const shell = writable<Shell | null>(null);
 export const solEpoch = writable(0);
 
 export async function refreshShell(): Promise<void> {
-	shell.set(await api<Shell>('/shell'));
+	const s = await api<Shell>('/shell');
+	useLocale(s.locale); // player changed the language (other device, settings page)
+	shell.set(s);
 }
 
 /** Live AP sync after an action that spent AP (every AJAX action must keep the bar current). */

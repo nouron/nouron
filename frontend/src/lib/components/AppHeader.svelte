@@ -2,7 +2,7 @@
 	// Port of the header in resources/views/layouts/colony.blade.php (nav, user menu, resource bar).
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
-	import { BACKEND_URL, logout } from '#lib/stores/auth.ts';
+	import { logout } from '#lib/stores/auth.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
 	import HintBar from './HintBar.svelte';
 	import ResourceBar from './ResourceBar.svelte';
@@ -57,8 +57,7 @@
 
 	const userNav = $derived([
 		{ icon: 'bi-list-check', label: t('lobby.nav_runs'), href: '/lobby' },
-		{ icon: 'bi-person', label: t('colony.user_nav_profile'), href: `${BACKEND_URL}/user` },
-		{ icon: 'bi-gear', label: t('colony.user_nav_settings'), href: `${BACKEND_URL}/user/settings` },
+		{ icon: 'bi-gear', label: t('colony.user_nav_settings'), href: '/settings' },
 		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: '/codex' }
 	]);
 

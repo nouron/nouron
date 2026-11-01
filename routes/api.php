@@ -54,7 +54,17 @@ Route::prefix('v1')->group(function () {
 
         return collect($shell->forUser($user->user_id, $colonyId ? (int) $colonyId : null))
             ->mapWithKeys(fn ($value, $key) => [Str::snake($key) => $value])
-            ->put('username', $user->username);
+            ->put('username', $user->username)
+            ->put('locale', app()->getLocale());
+    });
+
+    // Profile and settings — same actions as the Blade settings page.
+    Route::middleware('auth:sanctum')->prefix('settings')->group(function () {
+        Route::get('/', [UserController::class, 'settingsJson']);
+        Route::patch('/name', [UserController::class, 'updateDisplayName']);
+        Route::patch('/password', [UserController::class, 'updatePassword']);
+        Route::patch('/onboarding', [UserController::class, 'updateOnboardingHints']);
+        Route::patch('/locale', [UserController::class, 'updateLocale']);
     });
 
     // End the Sol — same actions as the Blade Sol button (report JSON, 409 while another advance runs).
