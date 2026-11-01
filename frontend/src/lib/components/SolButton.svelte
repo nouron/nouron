@@ -4,6 +4,8 @@
 	import '#lib/styles/sol.css';
 	import { t } from '#lib/i18n.ts';
 	import { api, ApiError } from '#lib/stores/auth.ts';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { refreshShell, solEpoch } from '#lib/stores/shell.ts';
 
 	type Line = { label: string; detail?: string; tone?: string; beat?: boolean; from?: number; to?: number };
@@ -129,12 +131,13 @@
 		schedule(() => (launchPhase = 3), 2000);
 	}
 
-	// Stay on the current screen: reload header data and remount the page (new Sol, new state).
+	// Like Blade: the new Sol starts on the colony view (remounted when already there).
 	async function begin() {
 		clearTimers();
 		report = null;
 		await refreshShell();
-		solEpoch.update((n) => n + 1);
+		if (page.url.pathname === '/colony') solEpoch.update((n) => n + 1);
+		else await goto('/colony');
 	}
 
 	const counterValue = (g: Group, li: number) => counters[`${g.key}:${li}`] ?? g.lines[li].from ?? '';

@@ -39,6 +39,8 @@
 	let levelupNotice = $state<string | null>(null);
 	let eventDiscovery = $state<Tile | null>(null);
 	let leveldownOf = $state<Building | null>(null);
+	// Tutorial popup when a milestone building is finished (B4).
+	let completionPopup = $state<{ title: string; text: string } | null>(null);
 	let busy = $state(false);
 	let repairHover = $state(false);
 	let titleHover = $state(false);
@@ -329,6 +331,8 @@
 		if (res.ap_cap !== undefined && res.building) res.building.ap_cap = res.ap_cap;
 		await apply(res);
 		if (res.leveled_up && res.building) showLevelup(res.building.label);
+		// Blade reloaded for a newly unlocked nav entry; apply() already refreshed the shell (nav gates).
+		if (res.leveled_up && res.completion_popup) completionPopup = res.completion_popup;
 		if (res.showHarvesterMoveTip) showToast(t('colony.onboarding_trigger_harvester_move'), 'info');
 	}
 
@@ -1044,6 +1048,23 @@
 			<footer><button onclick={() => (eventDiscovery = null)}>{t('colony.discovery_dismiss')}</button></footer>
 		</article>
 	</dialog>
+{/if}
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && (completionPopup = null)} />
+
+{#if completionPopup}
+	<div class="first-visit-popup">
+		<div class="first-visit-popup__card" role="dialog" aria-modal="true">
+			<div class="first-visit-popup__icon" aria-hidden="true">ℹ</div>
+			<div class="first-visit-popup__body">
+				<p class="first-visit-popup__title">{completionPopup.title}</p>
+				<p class="first-visit-popup__text">{completionPopup.text}</p>
+			</div>
+			<button class="first-visit-popup__dismiss" type="button" onclick={() => (completionPopup = null)}>
+				{t('colony.first_visit_dismiss')}
+			</button>
+		</div>
+	</div>
 {/if}
 
 {#if toast}

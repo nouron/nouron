@@ -16,7 +16,7 @@
 	// `href` starting with "/" = migrated Svelte screen; anything else still lives in Blade (ADR 0006 coexistence).
 	type NavItem = { key: string; icon: string; label: string; href: string; locked?: string; badge?: number };
 	const nav = $derived<NavItem[]>([
-		{ key: 'colony', icon: 'bi-hexagon', label: t('colony.nav_colony'), href: `${BACKEND_URL}/colony/view` },
+		{ key: 'colony', icon: 'bi-hexagon', label: t('colony.nav_colony'), href: '/colony' },
 		{
 			key: 'cc',
 			icon: 'bi-diagram-2',
@@ -94,8 +94,10 @@
 		</ul>
 
 		<div class="right">
-			<!-- ponytail: hidden on phones like in Blade (there only shown on the colony view, not migrated yet). -->
-			{#if s.in_active_run}<div class="sol-wrap"><SolButton /></div>{/if}
+			<!-- On phones only on the colony view, like Blade (body.page-colony). -->
+			{#if s.in_active_run}<div class="sol-wrap" class:on-colony={page.url.pathname === '/colony'}>
+					<SolButton />
+				</div>{/if}
 			<div class="user nav-desktop-only">
 				<button
 					class="plain"
@@ -338,6 +340,9 @@
 			display: none;
 		}
 		.nav-mobile {
+			display: block;
+		}
+		.sol-wrap.on-colony {
 			display: block;
 		}
 	}

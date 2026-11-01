@@ -9,6 +9,7 @@
 - Svelte-Frontend: Kolonie Schritt 3b — Seite `/colony` mit Hexfeld (Zeichenteil aus `colony-hexgrid.js` geteilt), Funde-Zähler, Legende, Händler- und Versorgungshinweis, Kachelauswahl und Direktlink auf ein Gebäude; `GET /api/v1/colony` liefert zusätzlich die Signal-Gesamtzahl.
 - Svelte-Frontend: Kolonie Schritt 3c — Seitenleiste zur Kachel mit Gebäude-/Geländeinfos, Fundkarte, Erkunden, Tiefenscan (mit Fund-Popup), Bergung, Bergungsflug, Reparieren, Ausbauen und Rückbau-Dialog; Toast und Stufenaufstieg-Hinweis. AP-Ausbau-Knopf als gemeinsame Komponente für Kolonie und Techtree. Bisher fest verdrahtete Texte der Seitenleiste als Sprachschlüssel (de+en).
 - Svelte-Frontend: Kolonie Schritt 3d — Baumodus (Gebäudeliste mit Kosten und fehlenden Voraussetzungen, Baustellen-Übersicht, Direktlink `?build=`) und Harvester-Umzug (Umzugsmodus mit Vorschaupfeil und Gedrückthalten, „Verlegen“ direkt von der Zielkachel, Bewegungsanimation). Gebäude-Chips mit Tooltip als wiederverwendbare Komponente.
+- Svelte-Frontend: Kolonie Schritt 3e — Meilenstein-Popup beim Fertigstellen (Navigation schaltet ohne Neuladen frei); „Kolonie“ im Menü, Startseite, Hinweis-Links (`/colony/view?build=…`) und Techtree-Gebäudelinks führen auf die Svelte-Kolonie; Sol-Knopf am Handy auf der Kolonie, nach dem Sol-Bericht geht es zur Kolonie. Damit ist Stufe 3 abgeschlossen.
 
 ## 2026-10-31
 

@@ -165,9 +165,8 @@
 		return t('techtree.detail_instance_level', { level: inst.level, max: inst.max_level });
 	}
 
-	// ponytail: colony view is still Blade on the Laravel origin until stage 3 migrates it.
 	const colonyLink = (params: Record<string, number>) =>
-		`${BACKEND_URL}/colony/view?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))}`;
+		`/colony?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))}`;
 
 	const showSubhead = (tech: Tech) =>
 		(tech.type === 'building' && !tech.is_instanced && tech.level > 0) || (tech.type === 'research' && tech.level > 0);

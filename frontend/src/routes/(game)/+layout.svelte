@@ -22,7 +22,7 @@
 
 {#if $shell}<AppHeader s={$shell} />{/if}
 
-{#key page.url.pathname + ':' + $solEpoch}
+{#key page.url.pathname + page.url.search + ':' + $solEpoch}
 	<main in:fade={{ duration: 150 }}>{@render children()}</main>
 {/key}
 
