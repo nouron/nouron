@@ -1,0 +1,874 @@
+/* ponytail: copied from public/css/colony.css (merchant section, Cantina viewport/hotspots/drawer/dialog,
+   Marktbericht, Handelsvorteil, relationships, bartender). Delete there when the Blade cantina goes (ADR 0006 stage 5). */
+
+.bar-page {
+    /* PicoCSS variables the copied Cantina rules read (Blade loaded PicoCSS globally). */
+    --pico-muted-color: var(--color-text-secondary);
+    --pico-muted-border-color: var(--color-border);
+    --pico-border-radius: var(--radius-sm);
+    --pico-del-color: var(--color-danger);
+}
+
+/* ── Merchant section (bar/cantina page) ─────────────────────────────────── */
+
+.merchant-section {
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    border: 1px solid #e6c84a;
+    border-radius: var(--pico-border-radius, 6px);
+    background: #fffdf0;
+    max-width: 560px;
+}
+
+.merchant-section__header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.merchant-items-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+/* Each item row: label | cost | buy-button */
+.merchant-item-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    margin: 0;
+    border: 1px solid var(--pico-muted-border-color, #ddd);
+    border-radius: var(--pico-border-radius, 6px);
+    background: #fff;
+    transition: opacity 0.2s ease;
+}
+
+.merchant-item-bar--sold {
+    opacity: 0.5;
+}
+
+.merchant-item-bar__label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.merchant-item-bar__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.merchant-item-bar__cost {
+    font-weight: 600;
+    color: var(--pico-muted-color, #666);
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.merchant-item-bar__buy {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    margin: 0;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* ── Merchant buy feedback toast (bar page) ──────────────────────────────── */
+
+.merchant-toast {
+    padding: 0.45rem 0.9rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: #fff;
+}
+
+.merchant-toast--info {
+    background: #14532d;
+}
+.merchant-toast--error {
+    background: #7f1d1d;
+}
+/* ── Cantina Viewport & Panning ────────────────────────────────────────── */
+
+.cantina-viewport {
+    position: relative;
+    width: 100%;
+    height: 720px;
+    overflow: hidden;
+    border-radius: var(--pico-border-radius, 8px);
+    border: 1px solid var(--pico-muted-border-color, #e8e8ec);
+    background: #f7f7f5;
+    margin-bottom: 2rem;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.cantina-background-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-image: url("../../../../public/img/cantina/cantina-interior.webp"); /* was relative to public/css */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
+}
+
+/* On mobile, full-bleed viewport — breaks out of any parent padding */
+@media (max-width: 767px) {
+    .cantina-viewport {
+        height: calc(100vh - 105px); /* fallback for browsers without dvh */
+        height: calc(100dvh - 105px);
+        aspect-ratio: unset;
+        border-radius: 0;
+        border: none;
+        margin-bottom: 0;
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .cantina-background-wrapper {
+        width: 300%;
+        background-position: left center;
+    }
+}
+
+/* Force static background on desktop (prevent translation) */
+@media (min-width: 768px) {
+    .cantina-background-wrapper {
+        transform: none !important;
+    }
+}
+
+/* ── Hotspots ──────────────────────────────────────────────────────────── */
+
+.cantina-hotspot {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    margin-left: -35px; /* Center hotspot on coordinate */
+    margin-top: -35px;
+    border-radius: 50%;
+    background: rgba(140, 32, 48, 0.12);
+    border: 2px dashed var(--color-accent, #8c2030);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #8c2030);
+    transition:
+        transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        background 0.2s;
+    box-shadow: 0 0 12px rgba(140, 32, 48, 0.2);
+    z-index: 10;
+}
+
+.cantina-hotspot:hover {
+    transform: scale(1.15);
+    background: rgba(140, 32, 48, 0.22);
+}
+
+.cantina-hotspot.has-portrait {
+    width: 160px;
+    height: 220px;
+    margin-left: -80px;
+    margin-top: -110px;
+    border-radius: 12px;
+    border-style: solid;
+    background: transparent;
+    overflow: hidden;
+}
+
+.cantina-hotspot.has-portrait .hotspot-pulse {
+    display: none;
+}
+
+.hotspot-portrait {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    border-radius: 6px;
+    pointer-events: none;
+}
+
+/* Small highlight badge — used for hotspots the player shouldn't miss (e.g. the
+   time-limited traveling merchant), layered over the top-right corner of the portrait. */
+.hotspot-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-accent, #8c2030);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Corvan's Alltagsgeschäft offer badge (GDD §12 Kanal 1) — gold/credits accent
+   (matches .res-Cr's border-color in resources.css) instead of the urgent-red
+   merchant-visit badge, so a Corvan commodity offer reads as "trade opportunity",
+   not "don't miss this". */
+.hotspot-badge--corvan {
+    background: #e6c84a;
+    color: var(--color-anthracite, #333333);
+}
+
+.cantina-hotspot i {
+    font-size: 1.5rem;
+    pointer-events: none;
+}
+
+/* Pulsing outer ring */
+.hotspot-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--color-accent, #8c2030);
+    animation: hotspot-pulse-anim 2.2s infinite;
+    pointer-events: none;
+}
+
+@keyframes hotspot-pulse-anim {
+    0% {
+        transform: scale(1);
+        opacity: 0.95;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+/* Hotspot names / labels */
+.hotspot-label {
+    position: absolute;
+    top: -28px;
+    background: rgba(26, 26, 30, 0.85);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Modal Drawer (Responsive) ─────────────────────────────────────────── */
+
+.cantina-modal {
+    position: fixed;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--pico-muted-border-color, #e8e8ec);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    /* Portrait fills the dialog edge-to-edge (.cantina-dialog handles its own
+       padding for the body column) — clip it to the dialog's rounded corners. */
+    padding: 0;
+    overflow: hidden;
+    transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.3s ease;
+}
+
+/* Action-type accent — one edge only, colour matches the AP-chip family for that
+   type (nav/build/research/economy/strategy), neutral grey when the type is
+   unclear/not yet categorized. Top edge on the mobile bottom-sheet (the edge
+   the drawer "enters" from), left edge on the centered desktop dialog. */
+.cantina-modal--nav {
+    border-top-color: #1e40af;
+}
+.cantina-modal--build {
+    border-top-color: #166534;
+}
+.cantina-modal--research {
+    border-top-color: #5b21b6;
+}
+.cantina-modal--economy {
+    border-top-color: #b45309;
+}
+.cantina-modal--strategy {
+    border-top-color: #9f1239;
+}
+.cantina-modal--neutral {
+    border-top-color: #6b7280;
+}
+
+/* Mobile drawer (slides up from bottom) */
+@media (max-width: 767px) {
+    .cantina-modal {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 85vh;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        border-top-width: 4px;
+        transform: translateY(100%);
+    }
+    .cantina-modal.open {
+        transform: translateY(0);
+    }
+}
+
+/* Desktop dialog (centered popup) */
+@media (min-width: 768px) {
+    .cantina-modal {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.92);
+        border-radius: 10px;
+        width: 720px;
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 4rem);
+        opacity: 0;
+        pointer-events: none;
+    }
+    .cantina-modal.open {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .cantina-modal[class*="cantina-modal--"] {
+        border-top-width: 1px;
+        border-left-width: 4px;
+    }
+    .cantina-modal--nav {
+        border-left-color: #1e40af;
+    }
+    .cantina-modal--build {
+        border-left-color: #166534;
+    }
+    .cantina-modal--research {
+        border-left-color: #5b21b6;
+    }
+    .cantina-modal--economy {
+        border-left-color: #b45309;
+    }
+    .cantina-modal--strategy {
+        border-left-color: #9f1239;
+    }
+    .cantina-modal--neutral {
+        border-left-color: #6b7280;
+    }
+}
+
+/* ── Dialog (portrait fills the left side, name/role/body on the right) —
+   shared by the offer dialog and the merchant dialog ── */
+
+.cantina-dialog {
+    display: flex;
+    align-items: stretch;
+    max-height: inherit;
+}
+
+.cantina-dialog__portrait {
+    flex: 0 0 34%;
+    align-self: stretch;
+    background: #f0f0f2;
+}
+
+.cantina-dialog__portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+.cantina-dialog__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.75rem;
+    overflow-y: auto;
+}
+
+.cantina-dialog__name {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.cantina-dialog__role {
+    color: var(--pico-muted-color);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.cantina-dialog__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Mobile: stack — portrait on top (fixed height), body below */
+@media (max-width: 767px) {
+    .cantina-dialog {
+        flex-direction: column;
+        max-height: 85vh;
+    }
+    .cantina-dialog__portrait {
+        flex: 0 0 auto;
+        width: 100%;
+        height: 12rem;
+    }
+    .cantina-dialog__body {
+        padding: 1.25rem 1.25rem 1.75rem;
+    }
+}
+
+.cantina-modal-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--pico-muted-color, #666);
+    cursor: pointer;
+    padding: 0.25rem;
+    margin: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+.cantina-modal-close:hover {
+    color: var(--color-text-primary, #1a1a1e);
+}
+
+.cantina-empty-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1rem 2rem;
+    border-radius: 6px;
+    border: 1px solid var(--pico-muted-border-color);
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Marktbericht (Konsul, A13) — quiet, non-interactive notice above the
+   character banners; deliberately not clickable (planning information only). */
+.market-report {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--pico-border-radius, 6px);
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--pico-muted-border-color, #ddd);
+}
+
+.market-report > i {
+    font-size: 1.25rem;
+    color: var(--color-accent, #8c2030);
+    flex-shrink: 0;
+}
+
+.market-report__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.market-report__text span {
+    font-size: 0.82rem;
+    color: var(--pico-muted-color, #666);
+}
+
+/* ── Handelsvorteil (A13 P2b, GDD §12) ────────────────────────────────────
+   Cantina header line, Corvan/Orin price lines and hints, and the offer dialog's
+   source breakdown. Quiet by design: the numbers do the talking. */
+
+.trade-advantage-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--color-border, #e8e8ec);
+    border-radius: var(--pico-border-radius, 6px);
+}
+
+.trade-advantage-bar > i {
+    color: var(--color-success-fg, #166534);
+    flex-shrink: 0;
+}
+
+.trade-price-line,
+.trade-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.trade-price-line {
+    color: var(--color-success-fg, #166534);
+    font-weight: 500;
+}
+
+.trade-hint {
+    font-style: italic;
+}
+
+.trade-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.merchant-item-bar__price {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.merchant-item-bar__base {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-terms {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--pico-muted-border-color, #e8e8ec);
+    border-radius: 6px;
+    font-size: 0.88rem;
+}
+
+.offer-terms__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.offer-terms__label {
+    color: var(--color-text-secondary, #6b6b7a);
+    min-width: 0;
+}
+
+.offer-terms__value {
+    text-align: right;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+}
+
+.offer-terms__value--percent,
+.offer-terms__value--nowrap {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Basisangebot: label and "20 Regolith → 10 Organika" on one line if they fit, else the value drops below */
+.offer-terms__row--base {
+    flex-wrap: wrap;
+    row-gap: 0.1rem;
+}
+
+.offer-terms__row--base .offer-terms__value {
+    margin-left: auto;
+}
+
+/* One source per line, indented under "Dein Handelsvorteil" */
+.offer-terms__row--source {
+    padding-left: 1rem;
+    font-size: 0.82rem;
+}
+
+.offer-terms__row--source .offer-terms__value {
+    font-weight: 500;
+}
+
+.offer-terms__row--result {
+    margin-top: 0.3rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--color-border-strong, #d0d0dc);
+    align-items: center;
+}
+
+.offer-terms__row--result .offer-terms__label {
+    color: var(--color-text-primary, #1a1a1e);
+    font-weight: 600;
+}
+
+.offer-terms__plus {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-success-fg, #166534);
+}
+
+.offer-terms__swap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.offer-terms__arrow {
+    font-size: 1.25rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.offer-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+}
+
+.offer-action .tile-action-btn {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.offer-action__outcome {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    padding-left: 0.15rem;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.offer-action__lose {
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--color-border-strong, #d0d0dc);
+}
+
+.offer-note {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.offer-status {
+    font-size: 0.88rem;
+}
+
+.offer-status--ok {
+    color: var(--color-success-fg, #166534);
+}
+
+.offer-status--fail {
+    color: var(--pico-del-color, #c0392b);
+}
+
+
+/* Cantina: relationship panel (path depth, T41) */
+.bar-relationships {
+    margin: var(--space-4, 1rem) 0;
+}
+
+.bar-relationships-title {
+    margin-bottom: 0;
+    font-size: 1.125rem;
+}
+
+.bar-relationships-hint {
+    margin: 0 0 var(--space-2, 0.5rem);
+    color: var(--color-text-muted, #666);
+    font-size: 0.875rem;
+}
+
+.bar-relationships-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-3, 0.75rem);
+}
+
+.bar-relationship-card {
+    margin: 0;
+    padding: var(--space-3, 0.75rem);
+}
+
+.bar-relationship-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.bar-relationship-level,
+.bar-relationship-progress {
+    font-size: 0.875rem;
+    color: var(--color-text-muted, #666);
+}
+
+.bar-relationship-level {
+    white-space: nowrap;
+}
+
+.bar-relationship-progress {
+    margin: 0.25rem 0 0.5rem;
+}
+
+.bar-conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.bar-conversation-caption {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #666);
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.bar-conversation-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.875rem;
+    text-align: left;
+}
+
+.bar-conversation-btn--blocked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.bar-conversation-btn__name {
+    min-width: 0;
+}
+
+.bar-relationship-error {
+    margin: 0.25rem 0 0;
+    color: var(--pico-del-color);
+    font-size: 0.85rem;
+}
+
+/* cantina bar layout */
+.cantina-bartender {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 15;
+    width: 150px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cantina-bartender__portrait {
+    width: 120px;
+    height: 150px;
+    object-fit: cover;
+    object-position: top center;
+    border-radius: 12px 12px 0 0;
+    border: 2px solid var(--color-accent, #8c2030);
+    border-bottom: 0;
+    background: #f7f7f5;
+}
+
+.cantina-bartender__counter {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.35rem 0.5rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid var(--color-accent, #8c2030);
+    border-radius: 6px 6px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    color: #333;
+}
+
+.cantina-bartender:hover .cantina-bartender__counter,
+.cantina-bartender:focus-visible .cantina-bartender__counter {
+    background: #fff;
+}
+
+/* Desktop: static background, so he can stand behind the bar on the left of the picture. */
+@media (min-width: 768px) {
+    .cantina-bartender {
+        left: 14%;
+        bottom: 250px;
+    }
+}
+
+@media (max-width: 767px) {
+    .cantina-bartender {
+        bottom: 1.75rem;
+        width: 120px;
+    }
+    .cantina-bartender__portrait {
+        width: 90px;
+        height: 110px;
+    }
+}

@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Colony\BarController;
 use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\CommandCenterController;
 use App\Http\Controllers\Colony\HangarController;
+use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Colony\PathDepthController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SolController;
@@ -72,6 +74,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/hangar/{bay}/repair', [HangarController::class, 'repair'])->whereNumber('bay');
         Route::post('/hangar/request', [HangarController::class, 'requestShip']);
         Route::post('/hangar/assign', [HangarController::class, 'assignToHangar']);
+        // Cantina: offers, encounters, bartender, concerns, information pool, merchant.
+        Route::post('/bar/accept/{offer}', [BarController::class, 'accept'])->whereNumber('offer');
+        Route::post('/bar/negotiate/{offer}', [BarController::class, 'negotiate'])->whereNumber('offer');
+        Route::post('/bar/accept-encounter/{encounter}', [BarController::class, 'acceptEncounter'])->whereNumber('encounter');
+        Route::post('/bar/talk-to-bartender', [BarController::class, 'talkToBartender']);
+        Route::post('/bar/concern/{concern}', [BarController::class, 'resolveConcern'])->whereNumber('concern');
+        Route::post('/bar/information-encounter/{encounter}', [BarController::class, 'resolveInformationEncounter'])->whereNumber('encounter');
+        Route::post('/merchant/buy/{itemId}', [MerchantController::class, 'buy'])->whereNumber('itemId');
+        Route::post('/merchant/visit/{visitId}/open', [MerchantController::class, 'markVisited'])->whereNumber('visitId');
         // Path depth (T41): hangar training and cantina relationships.
         Route::post('/path-depth/{kind}/{key}/invest', [PathDepthController::class, 'invest']);
         // Kommandozentrale actions: Kolonisten-Zulage and Nexus imports.
@@ -82,6 +93,7 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['auth:sanctum', 'run.started'])->get('/command-center', [CommandCenterController::class, 'data']);
     Route::middleware(['auth:sanctum', 'run.started'])->get('/hangar', [HangarController::class, 'data']);
+    Route::middleware(['auth:sanctum', 'run.started'])->get('/cantina', [BarController::class, 'data']);
 
     // Advisors carousel — same actions as Blade (hire, fire, promote).
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('advisors')->group(function () {

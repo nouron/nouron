@@ -35,7 +35,7 @@
 			key: 'cantina',
 			icon: 'bi-cup-hot',
 			label: t('colony.nav_cantina'),
-			href: `${BACKEND_URL}/colony/bar`,
+			href: '/cantina',
 			locked: s.bar_built ? undefined : t('colony.nav_cantina_locked')
 		},
 		{

@@ -21,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\View\View;
 
 class BarController extends BaseController
@@ -44,6 +45,40 @@ class BarController extends BaseController
     }
 
     public function index(): View
+    {
+        return view('colony.bar', $this->barData());
+    }
+
+    /**
+     * Cantina data for the SvelteKit screen — the Blade view's data plus the bits the
+     * view resolved itself (character names, concern/information lines, path-depth config).
+     */
+    public function data(): JsonResponse
+    {
+        $d = $this->barData();
+        unset($d['colony']);
+        $concernFailureKey = $d['concern'] ? "colony.bar_concern_{$d['concern']->character_slug}_failure" : null;
+        $informationLines = [];
+        if ($d['informationEncounter']) {
+            foreach (['drill_buffer', 'knowledge_boost', 'nav_discount', 'narrative_1', 'narrative_2'] as $outcome) {
+                $key = "colony.bar_information_{$d['informationEncounter']->character_slug}_{$outcome}";
+                if (Lang::has($key)) {
+                    $informationLines[$outcome] = __($key);
+                }
+            }
+        }
+
+        return response()->json($d + [
+            'characters' => config('characters'),
+            'concernHasFailureLine' => $concernFailureKey !== null && Lang::has($concernFailureKey),
+            'informationOutcomeLines' => (object) $informationLines,
+            'relationshipGate' => config('path_depth.building_gate'),
+            'relationshipMaxLevel' => (int) config('path_depth.max_level'),
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function barData(): array
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $tick = $this->tick->getTickCount();
@@ -161,14 +196,14 @@ class BarController extends BaseController
 
         $relationships = $barLevel > 0 ? $this->relationships($colony->id, $characters) : [];
 
-        return view('colony.bar', compact(
+        return compact(
             'relationships',
             'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
             'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
-        ));
+        );
     }
 
     /**
