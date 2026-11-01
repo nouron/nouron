@@ -58,7 +58,8 @@
 	const userNav = $derived([
 		{ icon: 'bi-list-check', label: t('lobby.nav_runs'), href: '/lobby' },
 		{ icon: 'bi-gear', label: t('colony.user_nav_settings'), href: '/settings' },
-		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: '/codex' }
+		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: '/codex' },
+		...(s.is_admin ? [{ icon: 'bi-chat-left-text', label: t('feedback.admin_title'), href: '/admin/feedback' }] : [])
 	]);
 
 	const isActive = (item: NavItem) => item.href.startsWith('/') && page.url.pathname.startsWith(item.href);

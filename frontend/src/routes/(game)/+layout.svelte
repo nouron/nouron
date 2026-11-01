@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
 	import AppHeader from '#lib/components/AppHeader.svelte';
+	import DebugBar from '#lib/components/DebugBar.svelte';
 	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
 	import { token } from '#lib/stores/auth.ts';
 	import { refreshShell, shell, solEpoch } from '#lib/stores/shell.ts';
@@ -32,3 +33,4 @@
 {/key}
 
 {#if $shell}<FeedbackButton />{/if}
+{#if $shell?.is_admin}<DebugBar />{/if}

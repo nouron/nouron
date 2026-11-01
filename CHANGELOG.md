@@ -18,6 +18,7 @@
 - Svelte-Frontend: Stufe 4f Lobby und Ergebnisseite (eigener Rahmen außerhalb eines Laufs, Codex dorthin verschoben): Lauf starten, umbenennen, aufgeben, neuer Lauf, Highscore; ohne gestarteten Lauf führen Spielseiten und Startseite zur Lobby, ein beendeter Lauf zur Ergebnisseite, das Sol-Finale ebenfalls. `GET /api/v1/lobby`, `/run/{id}/result` und JSON-Antworten der Lobby-Aktionen. Umbenennen geht jetzt auch vor dem Start (die Blade-Route lag hinter `run.started` und schlug dort still fehl).
 - Svelte-Frontend: Stufe 5a Login und Registrierung (mit Einladungscode, gleiche Drosselung wie Blade); angemeldete Spieler überspringen die Formulare. `GET/POST /api/v1/auth/register` antwortet mit Token, der API-Login richtet wie der Blade-Login Altkonten ohne Kolonie eine ein.
 - Svelte-Frontend: Stufe 5b Einstellungen (Profil, Anzeigename, Passwort, Onboarding-Hinweise, Sprache) auf einer Seite statt Profil + Einstellungen. Die gewählte Sprache gilt jetzt auch für API-Antworten und das neue Frontend (vorher immer Deutsch). `GET/PATCH /api/v1/settings/*`; feste deutsche Meldungen der Einstellungen in `lang/*/settings.php` verschoben.
+- Svelte-Frontend: Stufe 5c Admin-Feedback-Übersicht (mit Blättern, Menüpunkt für Admins), schlanke Debug-Leiste für Admins (Run, Sol, Umgehungen, Umgebung, Konfiguration; ohne Finale-Vorschau) und Fehlerseite 404/500. `GET /api/v1/admin/feedback`, `/admin/debug`; Feedback-Liste bei gleichem Zeitstempel nach ID sortiert.
 
 ## 2026-10-31
 

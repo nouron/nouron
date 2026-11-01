@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
+	import DebugBar from '#lib/components/DebugBar.svelte';
 	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
 	import { logout, token } from '#lib/stores/auth.ts';
 	import { refreshShell, shell } from '#lib/stores/shell.ts';
@@ -45,6 +46,7 @@
 							<a class="menu-item" href="/lobby">{t('lobby.nav_runs')}</a>
 							<a class="menu-item" href="/settings">{t('colony.user_nav_settings')}</a>
 							<a class="menu-item" href="/codex">{t('colony.user_nav_codex')}</a>
+							{#if $shell.is_admin}<a class="menu-item" href="/admin/feedback">{t('feedback.admin_title')}</a>{/if}
 							<button class="menu-item" onclick={logout}>{t('colony.user_nav_logout')}</button>
 						</div>
 					{/if}
@@ -59,6 +61,7 @@
 {/key}
 
 {#if $shell}<FeedbackButton />{/if}
+{#if $shell?.is_admin}<DebugBar />{/if}
 
 <style>
 	nav {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Colony\BarController;
@@ -55,7 +56,14 @@ Route::prefix('v1')->group(function () {
         return collect($shell->forUser($user->user_id, $colonyId ? (int) $colonyId : null))
             ->mapWithKeys(fn ($value, $key) => [Str::snake($key) => $value])
             ->put('username', $user->username)
-            ->put('locale', app()->getLocale());
+            ->put('locale', app()->getLocale())
+            ->put('is_admin', $user->isAdmin());
+    });
+
+    // Admin screens (403 for players).
+    Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+        Route::get('/feedback', [AdminFeedbackController::class, 'index']);
+        Route::get('/debug', [AdminFeedbackController::class, 'debug']);
     });
 
     // Profile and settings — same actions as the Blade settings page.

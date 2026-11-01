@@ -8,6 +8,7 @@ type Flow = { sources: Record<string, number>; net: number; consumption?: number
 export type Shell = {
 	username: string;
 	locale: string;
+	is_admin: boolean;
 	resource_bar_possessions: Record<string, { amount: number; abbreviation: string }>;
 	current_sol: number | null;
 	sol_limit: number;
