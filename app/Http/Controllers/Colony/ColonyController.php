@@ -1331,7 +1331,7 @@ class ColonyController extends BaseController
             ->where('id', $colony->id)
             ->update(['name' => $request->input('name')]);
 
-        if ($request->expectsJson()) {
+        if ($request->is('api/*')) {
             return response()->json(['ok' => true]);
         }
 

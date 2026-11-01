@@ -168,13 +168,17 @@ class LobbyController extends Controller
 
         $run->update(['started_at' => now()]);
 
-        return $request->expectsJson() ? response()->json(['ok' => true]) : redirect()->route('colony.view');
+        return $request->is('api/*') ? response()->json(['ok' => true]) : redirect()->route('colony.view');
     }
 
-    /** JSON for the SvelteKit lobby, else the Blade redirect back to the lobby with a flash message. */
+    /**
+     * JSON for the SvelteKit API, else the Blade redirect back to the lobby with a flash message.
+     * Keyed on the API route, not expectsJson(): the playtest bot posts JSON to the web routes
+     * and relies on their redirects.
+     */
     private function answer(Request $request, bool $ok, string $message): RedirectResponse|JsonResponse
     {
-        if ($request->expectsJson()) {
+        if ($request->is('api/*')) {
             return response()->json(['ok' => $ok, 'message' => $message], $ok ? 200 : 422);
         }
 
