@@ -14,6 +14,7 @@
 - Svelte-Frontend: Stufe 4b Kommandozentrale — alle Widgets (Phasenziele, Zulage, Kolonisten, Run-Fortschritt, Wartungsstau, Sol-Bilanz, Berater, Vertrauens-Ereignisse, beide Nexus-Importe); `GET /api/v1/command-center` aus derselben Datenmethode wie Blade, Zulage und Importe über `/api/v1/colony/*` auf den `ColonyController`.
 - Svelte-Frontend: Stufe 4c Hangar — Training (Pfadtiefe), Stellplatz-Karussell mit Reparieren, Zurückrufen, Nexus-Anfrage (Kredit, Konsul-Verhandlung), Zuweisen gelieferter Schiffe und Missionsdialog (Ziel, Schwierigkeit, Verschleiß); `GET /api/v1/hangar` aus derselben Datenmethode wie Blade, Aktionen über `/api/v1/colony/hangar/*` und `/api/v1/colony/path-depth/*`.
 - Svelte-Frontend: Stufe 4d Cantina — Panorama mit Hotspots (Angebote, Corvan, Begegnungspool, Story, Anliegen, Deva & Lenn), Barkeeper Tomas, Händlerdialog mit Kauf, Angebotsdialog mit Handelsvorteil/Verhandeln, Beziehungen pflegen und Marktbericht; `GET /api/v1/cantina` aus derselben Datenmethode wie Blade, Aktionen über `/api/v1/colony/bar/*` und `/api/v1/colony/merchant/*`. Nach Händlerkauf aktualisiert sich jetzt die Ressourcenleiste.
+- Svelte-Frontend: Stufe 4e Protokoll (mit Nexus-Funk-Tab, markiert gelesen), Nexus-DB und Charakter-Kodex; `GET /api/v1/comm-log`, `/nexus-db`, `/codex` auf dieselben Controller, Texte der Einträge serverseitig aufgelöst.
 
 ## 2026-10-31
 

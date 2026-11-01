@@ -1,13 +1,15 @@
 import { BACKEND_URL } from '#lib/stores/auth.ts';
 
 // Screens already migrated to Svelte; everything else still lives in Blade (ADR 0006 coexistence).
-const MIGRATED = ['/techtree', '/colony', '/advisors', '/command-center', '/hangar', '/cantina'];
+const MIGRATED = ['/techtree', '/colony', '/advisors', '/command-center', '/hangar', '/cantina', '/comm-log', '/nexus-db', '/codex'];
 // Blade paths whose Svelte route has another name.
 const RENAMED: Record<string, string> = {
 	'/colony/view': '/colony',
 	'/colony/command-center': '/command-center',
 	'/colony/hangar': '/hangar',
-	'/colony/bar': '/cantina'
+	'/colony/bar': '/cantina',
+	'/comm-log/nexus': '/comm-log?tab=nexus',
+	'/user/codex': '/codex'
 };
 
 /** Server-side paths (hint target_url, nav) → Svelte route when migrated, else the Blade page. */

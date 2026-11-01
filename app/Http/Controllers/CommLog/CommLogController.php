@@ -6,9 +6,13 @@ use App\Http\Controllers\BaseController;
 use App\Models\ColonyLog;
 use App\Services\EventService;
 use App\Services\TickService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class CommLogController extends BaseController
@@ -96,6 +100,39 @@ class CommLogController extends BaseController
             'entries' => $entries,
             'unreadCount' => 0,
         ]);
+    }
+
+    /**
+     * Protokoll / Nexus-Funk for the SvelteKit screen: the same entries as log()/nexus(),
+     * with the texts the Blade view resolved itself (title/body/badge, icon, fallback text).
+     */
+    public function data(Request $request): JsonResponse
+    {
+        $nexus = $request->query('tab') === 'nexus';
+        $d = ($nexus ? $this->nexus() : $this->log())->getData();
+
+        $entries = collect($d['entries'])->map(function (array $e) use ($nexus) {
+            if ($nexus) {
+                $key = "comm_log.nexus_events.{$e['event']}";
+                $badge = Lang::has("{$key}.badge") ? __("{$key}.badge") : null;
+
+                return $e + [
+                    'title' => Lang::has("{$key}.title") ? __("{$key}.title") : $e['event'],
+                    'body' => Lang::has("{$key}.body") ? __("{$key}.body") : null,
+                    'badge' => $badge,
+                    'badge_class' => 'comm-nexus-badge--'.($badge ? Str::slug($badge) : 'neutral'),
+                ];
+            }
+            $icon = __("comm_log.area_icons.{$e['area']}");
+            $eventKey = "comm_log.events.{$e['event']}";
+
+            return $e + [
+                'icon' => Str::startsWith($icon, 'bi-') ? $icon : 'bi-journal-text',
+                'text' => Lang::has($eventKey) ? __($eventKey) : $e['event'],
+            ];
+        })->values();
+
+        return response()->json(['tab' => $d['tab'], 'entries' => $entries, 'unreadCount' => $d['unreadCount']]);
     }
 
     /**

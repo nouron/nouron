@@ -7,10 +7,13 @@ use App\Http\Controllers\Colony\CommandCenterController;
 use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Colony\PathDepthController;
+use App\Http\Controllers\CommLog\CommLogController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\NexusDbController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
+use App\Http\Controllers\UserController;
 use App\Services\ShellStateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +97,11 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'run.started'])->get('/command-center', [CommandCenterController::class, 'data']);
     Route::middleware(['auth:sanctum', 'run.started'])->get('/hangar', [HangarController::class, 'data']);
     Route::middleware(['auth:sanctum', 'run.started'])->get('/cantina', [BarController::class, 'data']);
+
+    // Read-only pages: Protokoll/Nexus-Funk (?tab=nexus marks read), Nexus-DB, Codex (no run needed).
+    Route::middleware(['auth:sanctum', 'run.started'])->get('/comm-log', [CommLogController::class, 'data']);
+    Route::middleware(['auth:sanctum', 'run.started'])->get('/nexus-db', [NexusDbController::class, 'data']);
+    Route::middleware('auth:sanctum')->get('/codex', [UserController::class, 'codexData']);
 
     // Advisors carousel — same actions as Blade (hire, fire, promote).
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('advisors')->group(function () {

@@ -49,17 +49,17 @@
 			key: 'log',
 			icon: 'bi-journal-text',
 			label: t('colony.nav_log'),
-			href: `${BACKEND_URL}/comm-log`,
+			href: '/comm-log',
 			badge: s.unread_nexus_count
 		},
-		{ key: 'nexusdb', icon: 'bi-database', label: t('colony.nav_nexusdb'), href: `${BACKEND_URL}/nexus-db` }
+		{ key: 'nexusdb', icon: 'bi-database', label: t('colony.nav_nexusdb'), href: '/nexus-db' }
 	]);
 
 	const userNav = $derived([
 		{ icon: 'bi-list-check', label: t('lobby.nav_runs'), href: `${BACKEND_URL}/lobby` },
 		{ icon: 'bi-person', label: t('colony.user_nav_profile'), href: `${BACKEND_URL}/user` },
 		{ icon: 'bi-gear', label: t('colony.user_nav_settings'), href: `${BACKEND_URL}/user/settings` },
-		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: `${BACKEND_URL}/user/codex` }
+		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: '/codex' }
 	]);
 
 	const isActive = (item: NavItem) => item.href.startsWith('/') && page.url.pathname.startsWith(item.href);

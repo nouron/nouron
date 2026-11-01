@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\CharacterCodexService;
 use App\Services\TickService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,12 @@ class UserController extends BaseController
      * /colony) because it survives across runs, unlike everything else in
      * the Cantina system.
      */
+    /** Codex roster for the SvelteKit page — same data as codex(). */
+    public function codexData(): JsonResponse
+    {
+        return response()->json(['characters' => $this->characterCodexService->getRosterWithUnlockedEntries(Auth::id())]);
+    }
+
     public function codex()
     {
         return view('user.codex', [
