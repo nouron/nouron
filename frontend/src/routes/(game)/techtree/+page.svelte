@@ -1,9 +1,7 @@
 <script lang="ts">
 	// Shared with the Blade techtree while both coexist (ADR 0006): one renderer, one stylesheet.
 	import '../../../../../public/css/techtree-view.css';
-	import '../../../../../public/css/ap-upgrade-button.css';
 	import '#lib/styles/colony-shared.css';
-	import '../../../../../public/js/ap-bar.js';
 	import '../../../../../public/js/techtree-canvas.js';
 
 	import { onMount, tick } from 'svelte';
@@ -11,6 +9,7 @@
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
 	import { setAp, shell } from '#lib/stores/shell.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
+	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import { t } from '#lib/i18n.ts';
 
 	type TechType = 'building' | 'research' | 'ship' | 'personell';
@@ -76,15 +75,7 @@
 	// Legacy globals from public/js (framework-free, set on window).
 	const w = window as unknown as {
 		TechtreeCanvas: { create(opts: object): Canvas };
-		NouronApBar: {
-			apCapReached(r: Tech): boolean;
-			apCapTipApplies(r: Tech): boolean;
-			apBarLayout(r: Tech): { rows: number; cols: number };
-			apCapLimitPlace(r: Tech): { left: number; row: number } | null;
-			apSegClasses(r: Tech, i: number): Record<string, boolean>;
-		};
 	};
-	const bar = w.NouronApBar;
 	const CAT: Record<TechType, string> = { building: 'b', research: 'k', ship: 's', personell: 'a' };
 
 	let page = $state<HTMLDivElement>();
@@ -101,7 +92,6 @@
 	let loadError = $state('');
 	let firstVisit = $state(false);
 	let toast = $state<{ message: string; type: 'error' | 'info' } | null>(null);
-	let hover = $state(false);
 	let tree: Canvas | null = null;
 	let toastTimer: ReturnType<typeof setTimeout>;
 
@@ -489,49 +479,16 @@
 					{:else if tech.type === 'research'}
 						{@render effects(tech)}
 						{#if tech.ap_for_levelup > 0 && tech.status !== 'locked'}
-							{@const blocked =
-								bar.apCapReached(tech) || apAvailable <= 0 || tech.ap_spend >= tech.ap_for_levelup}
-							{@const tipOn = bar.apCapTipApplies(tech)}
-							{@const layout = bar.apBarLayout(tech)}
-							{@const limit = bar.apCapLimitPlace(tech)}
 							<div class="detail-ap-section">
-								<button
-									class="tile-action-btn tile-action-btn--barred ap-upgrade-btn"
-									class:tile-action-btn--hascap={tipOn}
-									class:tile-action-btn--capped={blocked}
-									style="--seg-rows: {layout.rows}"
-									onmouseenter={() => (hover = true)}
-									onmouseleave={() => (hover = false)}
-									aria-disabled={blocked ? 'true' : undefined}
-									aria-describedby={tipOn ? 'ap-cap-tip-tech' : undefined}
-									onclick={() => !blocked && investAp(tech)}
-								>
-									<span class="tile-action-btn__body">
-										<span class="tile-action-btn__main"
-											>{t('techtree.detail_ap_invest')} {tech.ap_spend}/{tech.ap_for_levelup}</span
-										>
-									</span>
-									<span class="tile-action-btn__costs">
-										<span class="ap-chip ap-cost-chip ap-chip--research" aria-hidden="true">1 AP</span>
-									</span>
-									<span class="btn-segbar btn-segbar--ap" aria-hidden="true" style="--seg-cols: {layout.cols}">
-										{#each Array.from({ length: tech.ap_for_levelup }, (_, k) => k + 1) as i (i)}
-											<span
-												class={[
-													'btn-seg',
-													bar.apSegClasses(tech, i),
-													{ 'btn-seg--ghost': hover && i === tech.ap_spend + 1 && !blocked }
-												]}
-											></span>
-										{/each}
-										{#if limit}
-											<span class="btn-seg-limit" style="left: {limit.left}%; --limit-row: {limit.row}"></span>
-										{/if}
-									</span>
-									<span id="ap-cap-tip-tech" class="tile-action-btn__tip" role="tooltip"
-										>{t('techtree.knowledge_ap_cap_tooltip')}</span
-									>
-								</button>
+								<ApUpgradeButton
+									row={tech}
+									label="{t('techtree.detail_ap_invest')} {tech.ap_spend}/{tech.ap_for_levelup}"
+									chip="research"
+									blocked={apAvailable <= 0 || tech.ap_spend >= tech.ap_for_levelup}
+									capTip={t('techtree.knowledge_ap_cap_tooltip')}
+									tipId="ap-cap-tip-tech"
+									onclick={() => investAp(tech)}
+								/>
 								{#if tech.ap_cap && tech.ap_spend < tech.ap_for_levelup}
 									<p class="detail-ap-hint">
 										{t('techtree.knowledge_ap_cap_today', { spent: tech.ap_cap.spent, cap: tech.ap_cap.cap })}

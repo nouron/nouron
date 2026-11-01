@@ -1042,7 +1042,7 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
 
 /* PicoCSS already styles <dialog> and <article> inside it.
    We only need to size the dialog and call out the event name. */
-dialog[x-ref="discoveryDialog"] {
+dialog.discovery-dialog {
     max-width: 340px;
     width: 90%;
 }

@@ -815,4 +815,12 @@ return [
     'reason_colonists' => 'Zu wenige freie Kolonisten',
     'reason_regolith' => 'Zu wenig Regolith',
     'reason_werkstoffe' => 'Zu wenig Werkstoffe',
+    // Svelte colony panel (ADR 0006) — were hardcoded in colony-hexgrid.js
+    'levelup_start' => 'Stufe :level starten (0/:ap)',
+    'level_popup' => 'Level :level / :max',
+    'level_popup_uncapped' => 'Level :level',
+    'tile_unknown' => 'Unbekanntes Terrain',
+    'event_unknown' => 'Unbekanntes Phänomen',
+    'sols_remaining' => '≈:n Sole',
+    'regolith_needed' => ':needed RG benötigt, :have RG vorhanden',
 ];

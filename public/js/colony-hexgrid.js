@@ -1989,4 +1989,4 @@ function svgCircle(cx, cy, r, fill, stroke) {
 }
 
 // Shared with the SvelteKit colony page (ADR 0006), which imports this file as a module.
-window.NouronHexGrid = { initHexGrid, isBuildableTile, TILE_LABELS };
+window.NouronHexGrid = { initHexGrid, isBuildableTile, TILE_LABELS, EVENT_TYPE_NAMES };

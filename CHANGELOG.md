@@ -7,6 +7,7 @@
 - Svelte-Frontend: App-Rahmen Schritt 2e — Abmelden widerruft den Token serverseitig (`POST /api/v1/auth/logout`), Feedback-Knopf mit Dialog (`POST /api/v1/feedback`, gleicher Controller und gleiche Drosselung wie Blade).
 - Svelte-Frontend: Kolonie Schritt 3a — `GET /api/v1/colony` liefert die Hexfeld-Daten (gleiche Quelle wie die Blade-Seite, `ColonyController::hexviewData()`), Kachel-/Gebäude-Aktionen und Bergungsflug als `/api/v1/colony/*` auf dieselben Controller.
 - Svelte-Frontend: Kolonie Schritt 3b — Seite `/colony` mit Hexfeld (Zeichenteil aus `colony-hexgrid.js` geteilt), Funde-Zähler, Legende, Händler- und Versorgungshinweis, Kachelauswahl und Direktlink auf ein Gebäude; `GET /api/v1/colony` liefert zusätzlich die Signal-Gesamtzahl.
+- Svelte-Frontend: Kolonie Schritt 3c — Seitenleiste zur Kachel mit Gebäude-/Geländeinfos, Fundkarte, Erkunden, Tiefenscan (mit Fund-Popup), Bergung, Bergungsflug, Reparieren, Ausbauen und Rückbau-Dialog; Toast und Stufenaufstieg-Hinweis. AP-Ausbau-Knopf als gemeinsame Komponente für Kolonie und Techtree. Bisher fest verdrahtete Texte der Seitenleiste als Sprachschlüssel (de+en).
 
 ## 2026-10-31
 
