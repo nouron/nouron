@@ -21,7 +21,7 @@
 			key: 'cc',
 			icon: 'bi-diagram-2',
 			label: t('command_center.nav_label'),
-			href: `${BACKEND_URL}/colony/command-center`
+			href: '/command-center'
 		},
 		{ key: 'advisors', icon: 'bi-people', label: t('colony.nav_advisors'), href: '/advisors' },
 		{

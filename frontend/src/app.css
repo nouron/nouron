@@ -71,6 +71,12 @@ textarea:focus {
 	border-color: var(--color-accent);
 	box-shadow: 0 0 0 3px var(--color-accent-tint);
 }
+input:disabled,
+select:disabled,
+textarea:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
 input[aria-invalid="true"] {
 	border-color: var(--color-danger);
 }

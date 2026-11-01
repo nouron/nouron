@@ -11,6 +11,7 @@ use App\Services\ResourcesService;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
 use App\Services\TrustService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,25 @@ class CommandCenterController extends BaseController
     }
 
     public function index(): View
+    {
+        return view('colony.command_center', $this->dashboardData());
+    }
+
+    /** Dashboard data for the SvelteKit screen — same values as the Blade view, plus tier trust values. */
+    public function data(): JsonResponse
+    {
+        $d = $this->dashboardData();
+        $d['stipendTiers'] = collect($d['stipendTiers'])->map(fn (array $tier, string $key) => [
+            'key' => $key,
+            'cost' => (int) $tier['cost'],
+            'trust' => (int) config("game.trust.events.{$tier['event_key']}"),
+        ])->values();
+
+        return response()->json($d);
+    }
+
+    /** @return array<string, mixed> */
+    private function dashboardData(): array
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $run = Run::where('colony_id', $colony->id)->where('status', 'active')->first();
@@ -144,7 +164,7 @@ class CommandCenterController extends BaseController
 
         $colonists = $this->resourcesService->colonistsOverview($colony->id);
 
-        return view('colony.command_center', compact(
+        return compact(
             'colonists',
             'phaseProgress',
             'stipendTiers',
@@ -162,6 +182,6 @@ class CommandCenterController extends BaseController
             'trustEventCap',
             'uplinkLevel',
             'nexusImport',
-        ));
+        );
     }
 }
