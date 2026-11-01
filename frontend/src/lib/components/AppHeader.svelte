@@ -56,7 +56,7 @@
 	]);
 
 	const userNav = $derived([
-		{ icon: 'bi-list-check', label: t('lobby.nav_runs'), href: `${BACKEND_URL}/lobby` },
+		{ icon: 'bi-list-check', label: t('lobby.nav_runs'), href: '/lobby' },
 		{ icon: 'bi-person', label: t('colony.user_nav_profile'), href: `${BACKEND_URL}/user` },
 		{ icon: 'bi-gear', label: t('colony.user_nav_settings'), href: `${BACKEND_URL}/user/settings` },
 		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: '/codex' }

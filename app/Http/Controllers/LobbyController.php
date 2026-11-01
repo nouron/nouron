@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Colony;
 use App\Models\Run;
 use App\Services\OnboardingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -77,20 +78,54 @@ class LobbyController extends Controller
     }
 
     /**
+     * Lobby data for the SvelteKit screen: the same runs as index(), as plain rows.
+     * resultRunId replaces index()'s redirect: set when the latest run ended and none is active.
+     */
+    public function data(): JsonResponse
+    {
+        $view = $this->index();
+        $userId = Auth::id();
+        $runs = Run::where('user_id', $userId)->with('colony')->orderByDesc('created_at')->get();
+        $row = fn (Run $r) => [
+            'id' => $r->id,
+            'status' => $r->status,
+            'colony_name' => $r->colony->name ?? __('lobby.colony_unnamed'),
+            'current_tick' => (int) $r->current_tick,
+            'tick_limit' => (int) ($r->settings['tick_limit'] ?? 100),
+            'supply_cap' => $r->settings['supply_cap_max'] ?? null,
+            'bypass' => is_array($r->settings['bypass'] ?? null) ? $r->settings['bypass'] : [],
+            'started_at' => $r->started_at?->format('d.m.Y'),
+            'ended_at' => $r->ended_at?->format('d.m.Y'),
+        ];
+        $data = $view instanceof View ? $view->getData() : null;
+
+        return response()->json([
+            'active' => $runs->filter(fn (Run $r) => $r->status === 'active' && $r->started_at !== null)->map($row)->values(),
+            'pending' => $runs->filter(fn (Run $r) => $r->status === 'active' && $r->started_at === null)->map($row)->values(),
+            'finished' => $runs->filter(fn (Run $r) => in_array($r->status, ['completed', 'failed'], true))->map($row)->values(),
+            'finishedRuns' => $data ? collect($data['finishedRuns'])->map(fn (array $e) => ['ended_at' => $e['ended_at']?->format('d.m.Y')] + $e)->values() : [],
+            'allowMultiple' => (bool) config('game.run.allow_multiple', false),
+            'resultRunId' => $view instanceof RedirectResponse
+                ? $runs->first(fn (Run $r) => in_array($r->status, ['completed', 'failed'], true))?->id
+                : null,
+        ]);
+    }
+
+    /**
      * Feature 2: Create a new run for the authenticated user.
      *
      * Resets the existing colony to the canonical Sol-1 starting state, then
      * creates a fresh Run record. Guards against starting a new run when an
      * active run already exists.
      */
-    public function newRun(Request $request): RedirectResponse
+    public function newRun(Request $request): RedirectResponse|JsonResponse
     {
         $userId = Auth::id();
 
         // Guard: block if there is already an active run.
         $activeRun = Run::where('user_id', $userId)->where('status', 'active')->first();
         if ($activeRun !== null) {
-            return redirect()->route('lobby')->with('error', __('run.new_run_active_exists'));
+            return $this->answer($request, false, __('run.new_run_active_exists'));
         }
 
         $colony = Colony::where('user_id', $userId)->first();
@@ -98,22 +133,22 @@ class LobbyController extends Controller
         if ($colony === null) {
             // No colony exists — this should not happen for a registered player,
             // but fall back gracefully so the user gets a clear message.
-            return redirect()->route('lobby')->with('error', __('run.new_run_no_colony'));
+            return $this->answer($request, false, __('run.new_run_no_colony'));
         }
 
         $this->onboardingService->resetColonyToSol1($userId, $colony->id);
 
-        return redirect()->route('lobby')->with('success', __('run.new_run_started'));
+        return $this->answer($request, true, __('run.new_run_started'));
     }
 
-    public function abandon(Run $run): RedirectResponse
+    public function abandon(Request $request, Run $run): RedirectResponse|JsonResponse
     {
         if ($run->user_id !== Auth::id()) {
             abort(403);
         }
 
         if ($run->status !== 'active') {
-            return redirect()->route('lobby')->with('error', __('lobby.abandon_not_active'));
+            return $this->answer($request, false, __('lobby.abandon_not_active'));
         }
 
         $run->update([
@@ -121,10 +156,10 @@ class LobbyController extends Controller
             'ended_at' => now(),
         ]);
 
-        return redirect()->route('lobby')->with('success', __('lobby.abandon_success'));
+        return $this->answer($request, true, __('lobby.abandon_success'));
     }
 
-    public function start(Request $request): RedirectResponse
+    public function start(Request $request): RedirectResponse|JsonResponse
     {
         $run = Run::where('user_id', auth()->id())
             ->where('status', 'active')
@@ -133,6 +168,16 @@ class LobbyController extends Controller
 
         $run->update(['started_at' => now()]);
 
-        return redirect()->route('colony.view');
+        return $request->expectsJson() ? response()->json(['ok' => true]) : redirect()->route('colony.view');
+    }
+
+    /** JSON for the SvelteKit lobby, else the Blade redirect back to the lobby with a flash message. */
+    private function answer(Request $request, bool $ok, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $ok, 'message' => $message], $ok ? 200 : 422);
+        }
+
+        return redirect()->route('lobby')->with($ok ? 'success' : 'error', $message);
     }
 }

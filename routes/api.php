@@ -9,7 +9,9 @@ use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Colony\PathDepthController;
 use App\Http\Controllers\CommLog\CommLogController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\NexusDbController;
+use App\Http\Controllers\RunResultController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
@@ -102,6 +104,17 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'run.started'])->get('/comm-log', [CommLogController::class, 'data']);
     Route::middleware(['auth:sanctum', 'run.started'])->get('/nexus-db', [NexusDbController::class, 'data']);
     Route::middleware('auth:sanctum')->get('/codex', [UserController::class, 'codexData']);
+
+    // Lobby and run result (outside a running run). Renaming is allowed before the start —
+    // the lobby offers it for pending runs (the Blade route sat behind run.started).
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/lobby', [LobbyController::class, 'data']);
+        Route::post('/lobby/start', [LobbyController::class, 'start']);
+        Route::post('/lobby/{run}/abandon', [LobbyController::class, 'abandon'])->whereNumber('run');
+        Route::post('/run/new', [LobbyController::class, 'newRun']);
+        Route::get('/run/{id}/result', [RunResultController::class, 'data'])->whereNumber('id');
+        Route::patch('/colony/name', [ColonyController::class, 'rename']);
+    });
 
     // Advisors carousel — same actions as Blade (hire, fire, promote).
     Route::middleware(['auth:sanctum', 'run.started'])->prefix('advisors')->group(function () {

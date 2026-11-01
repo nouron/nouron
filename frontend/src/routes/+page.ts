@@ -1,6 +1,11 @@
 import { redirect } from '@sveltejs/kit';
+import { get } from 'svelte/store';
+import { token } from '#lib/stores/auth.ts';
+import { refreshShell, shell } from '#lib/stores/shell.ts';
 
-// ponytail: techtree is the only migrated screen; point "/" at the colony once stage 3 lands.
-export function load() {
-	redirect(307, '/colony');
+// Entry point like Blade's "/": the colony during a started run, otherwise the lobby.
+export async function load() {
+	if (!get(token)) redirect(307, '/login');
+	await refreshShell().catch(() => {});
+	redirect(307, get(shell)?.in_active_run ? '/colony' : '/lobby');
 }

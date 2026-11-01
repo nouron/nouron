@@ -1319,7 +1319,7 @@ class ColonyController extends BaseController
         return response()->json(['ok' => true, 'hint' => $this->resolveHint($colony->id)]);
     }
 
-    public function rename(Request $request): RedirectResponse
+    public function rename(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[^<>{}\[\]]*$/'],
@@ -1330,6 +1330,10 @@ class ColonyController extends BaseController
         DB::table('glx_colonies')
             ->where('id', $colony->id)
             ->update(['name' => $request->input('name')]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true]);
+        }
 
         return redirect()->route('lobby')
             ->with('success', 'Kolonienname wurde aktualisiert.');

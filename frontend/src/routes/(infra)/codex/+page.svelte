@@ -48,8 +48,6 @@
 	/* Was inline style + PicoCSS <details> in Blade. */
 	.codex {
 		max-width: 48rem;
-		margin: 0 auto;
-		padding: var(--space-lg, 1.5rem) var(--space-md);
 	}
 	.muted {
 		color: var(--color-text-secondary);

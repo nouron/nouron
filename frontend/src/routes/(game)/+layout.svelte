@@ -18,6 +18,11 @@
 	$effect(() => {
 		if ($token) refreshShell().catch(() => {});
 	});
+
+	// Like the run.started middleware: without a started run the in-run screens send you to the lobby.
+	$effect(() => {
+		if ($shell && !$shell.in_active_run) goto('/lobby', { replaceState: true });
+	});
 </script>
 
 {#if $shell}<AppHeader s={$shell} />{/if}

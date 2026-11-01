@@ -5,6 +5,7 @@
 	import { t } from '#lib/i18n.ts';
 	import { api, ApiError } from '#lib/stores/auth.ts';
 	import { goto } from '$app/navigation';
+	import { appLink } from '#lib/links.ts';
 	import { page } from '$app/state';
 	import { refreshShell, solEpoch } from '#lib/stores/shell.ts';
 
@@ -190,7 +191,7 @@
 				<button
 					type="button"
 					class="sol-btn sol-btn--primary sol-finale__cta"
-					onclick={() => (r.result_url ? (location.href = r.result_url) : begin())}
+					onclick={() => (r.result_url ? goto(appLink(r.result_url)) : begin())}
 				>
 					{r.finale.outcome === 'win' ? t('colony.sol_report_finale_win_cta') : t('colony.sol_report_finale_lose_cta')}
 				</button>

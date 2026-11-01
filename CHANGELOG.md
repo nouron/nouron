@@ -15,6 +15,7 @@
 - Svelte-Frontend: Stufe 4c Hangar — Training (Pfadtiefe), Stellplatz-Karussell mit Reparieren, Zurückrufen, Nexus-Anfrage (Kredit, Konsul-Verhandlung), Zuweisen gelieferter Schiffe und Missionsdialog (Ziel, Schwierigkeit, Verschleiß); `GET /api/v1/hangar` aus derselben Datenmethode wie Blade, Aktionen über `/api/v1/colony/hangar/*` und `/api/v1/colony/path-depth/*`.
 - Svelte-Frontend: Stufe 4d Cantina — Panorama mit Hotspots (Angebote, Corvan, Begegnungspool, Story, Anliegen, Deva & Lenn), Barkeeper Tomas, Händlerdialog mit Kauf, Angebotsdialog mit Handelsvorteil/Verhandeln, Beziehungen pflegen und Marktbericht; `GET /api/v1/cantina` aus derselben Datenmethode wie Blade, Aktionen über `/api/v1/colony/bar/*` und `/api/v1/colony/merchant/*`. Nach Händlerkauf aktualisiert sich jetzt die Ressourcenleiste.
 - Svelte-Frontend: Stufe 4e Protokoll (mit Nexus-Funk-Tab, markiert gelesen), Nexus-DB und Charakter-Kodex; `GET /api/v1/comm-log`, `/nexus-db`, `/codex` auf dieselben Controller, Texte der Einträge serverseitig aufgelöst.
+- Svelte-Frontend: Stufe 4f Lobby und Ergebnisseite (eigener Rahmen außerhalb eines Laufs, Codex dorthin verschoben): Lauf starten, umbenennen, aufgeben, neuer Lauf, Highscore; ohne gestarteten Lauf führen Spielseiten und Startseite zur Lobby, ein beendeter Lauf zur Ergebnisseite, das Sol-Finale ebenfalls. `GET /api/v1/lobby`, `/run/{id}/result` und JSON-Antworten der Lobby-Aktionen. Umbenennen geht jetzt auch vor dem Start (die Blade-Route lag hinter `run.started` und schlug dort still fehl).
 
 ## 2026-10-31
 
