@@ -111,3 +111,19 @@ export type ActionResult = {
 	construction_cancelled?: boolean;
 	[k: string]: unknown;
 };
+
+/** GET /api/v1/colony/buildings/available — one entry per building the build menu offers. */
+export type AvailableBuilding = {
+	building_id: number;
+	key: string;
+	ap_for_levelup: number;
+	supply_cost?: number;
+	colonists_gain?: number;
+	build_cost?: Record<string, number> | null;
+	placement_cost?: Record<string, number> | null;
+	first_level_regolith?: number;
+	notice?: string | null;
+	locked?: boolean;
+	locked_reason?: string | null;
+	[k: string]: unknown;
+};

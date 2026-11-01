@@ -14,9 +14,10 @@
 	import { appLink } from '#lib/links.ts';
 	import { t } from '#lib/i18n.ts';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
+	import EntityChip from '#lib/components/EntityChip.svelte';
 	import TileTerrain from './TileTerrain.svelte';
 	import LeveldownDialog, { type LeveldownResult } from './LeveldownDialog.svelte';
-	import type { ActionResult, Building, ColonyData, Tile } from './types.ts';
+	import type { ActionResult, AvailableBuilding, Building, ColonyData, Tile } from './types.ts';
 
 	// Legacy global from public/js/colony-hexgrid.js (framework-free, set on window).
 	const hex = (
@@ -41,6 +42,13 @@
 	let busy = $state(false);
 	let repairHover = $state(false);
 	let titleHover = $state(false);
+	// Build mode (pick a building, then a tile) and Harvester relocation mode.
+	let buildMode = $state(false);
+	let pendingBuilding = $state<AvailableBuilding | null>(null);
+	let availableBuildings = $state<AvailableBuilding[]>([]);
+	let buildTargetTile = $state<Tile | null>(null);
+	let harvesterMoveMode = $state(false);
+	let movingHarvesterInstanceId = $state<number | null>(null);
 
 	// Plain (non-reactive) renderer bookkeeping, same as the Alpine component's _-fields.
 	const polygons = new Map<string, SVGPolygonElement & { _defaultStroke?: string; _defaultStrokeW?: string }>();
@@ -121,15 +129,16 @@
 		if (!data || !gridEl) return;
 		positions.clear();
 		hex.initHexGrid(gridEl, data.tiles, {
-			onSelect: (tile: Tile) => selectTile(tile),
+			onSelect: (tile: Tile) => onTileClick(tile),
+			onHarvesterMoveConfirm: (tile: Tile) => moveHarvester(tile),
 			polygonMap: polygons,
 			positionMap: positions,
 			buildings: data.buildings,
-			buildMode: false,
-			pendingBuilding: null,
+			buildMode,
+			pendingBuilding,
 			activeHint: $shell?.active_hint ?? null,
-			harvesterMoveMode: false,
-			harvesterBuilding: null,
+			harvesterMoveMode,
+			harvesterBuilding: harvesterMoveMode ? harvesterBuilding() : null,
 			tileYields: data.tileYields,
 			repairDisplayThreshold: data.repairDisplayThreshold,
 			damagedThresholdPct: data.damagedThresholdPct,
@@ -148,6 +157,23 @@
 		const cur = polygons.get(key(tile));
 		cur?.setAttribute('stroke', '#c0392b');
 		cur?.setAttribute('stroke-width', '3');
+	}
+
+	function onTileClick(tile: Tile) {
+		// Move mode: a click only selects (the renderer shows the preview arrow); pressing
+		// and holding a valid target does the move. Invalid targets still get feedback.
+		if (harvesterMoveMode) {
+			if (!isHarvesterTarget(tile)) showToast(t('colony.harvester_move_invalid_target'), 'info');
+			return;
+		}
+		if (buildMode && pendingBuilding) {
+			if (hex.isBuildableTile(tile) && !buildingForTile(tile)) placeBuilding(tile);
+			return;
+		}
+		// A free, buildable tile opens the build menu straight away (saves a click).
+		selectTile(tile);
+		if (hex.isBuildableTile(tile) && !buildingForTile(tile)) startBuildForTile(tile);
+		else if (buildMode) cancelBuildMode();
 	}
 
 	function selectTile(tile: Tile) {
@@ -314,6 +340,171 @@
 		showToast(res.construction_cancelled ? t('colony.leveldown_cancelled_done') : t('colony.leveldown_done'), 'info');
 	}
 
+	// ── Build mode ──────────────────────────────────────────────────────────
+
+	async function loadAvailable() {
+		const res = await api<{ buildings?: AvailableBuilding[] }>('/colony/buildings/available').catch(() => ({
+			buildings: []
+		}));
+		availableBuildings = res.buildings ?? [];
+	}
+
+	async function redrawSoon() {
+		await tick();
+		redrawGrid();
+	}
+
+	async function startBuildForTile(tile: Tile) {
+		await loadAvailable();
+		buildTargetTile = tile;
+		buildMode = true;
+		harvesterMoveMode = false;
+		selectedTile = tile;
+		redrawSoon();
+	}
+
+	function cancelBuildMode() {
+		buildMode = false;
+		pendingBuilding = null;
+		buildTargetTile = null;
+		redrawSoon();
+	}
+
+	function selectPendingBuilding(b: AvailableBuilding) {
+		pendingBuilding = pendingBuilding?.building_id === b.building_id ? null : b;
+		if (pendingBuilding && buildTargetTile) placeBuilding(buildTargetTile);
+		else redrawSoon();
+	}
+
+	// One entry per missing build requirement (T43-C8); server gates arrive as locked_reason.
+	function buildMissingReasons(b: AvailableBuilding) {
+		if (!data) return [];
+		const cost = b.placement_cost ?? b.build_cost;
+		const out: { kind: string; text: string }[] = [];
+		if (b.locked_reason) out.push({ kind: 'locked', text: b.locked_reason });
+		if (apAvailable < 1) out.push({ kind: 'ap', text: t('colony.reason_ap') });
+		if ((b.supply_cost ?? 0) > data.freeSupply) out.push({ kind: 'colonists', text: t('colony.reason_colonists') });
+		if ((cost?.[3] ?? 0) > data.regolith) out.push({ kind: 'regolith', text: t('colony.reason_regolith') });
+		if ((cost?.[4] ?? 0) > data.werkstoffe) out.push({ kind: 'werkstoffe', text: t('colony.reason_werkstoffe') });
+		return out;
+	}
+	// Placing costs 1 AP plus the full placement cost and colonists — all must clear up front.
+	const canPlaceBuilding = (b: AvailableBuilding) => !b.locked && buildMissingReasons(b).length === 0;
+
+	async function placeBuilding(tile: Tile) {
+		if (!pendingBuilding) return;
+		const res = await act('/colony/building/place', { building_id: pendingBuilding.building_id, q: tile.q, r: tile.r });
+		if (!res.ok) return fail(res);
+		buildMode = false;
+		pendingBuilding = null;
+		buildTargetTile = null;
+		selectedTile = tile;
+		await apply(res);
+	}
+
+	const sites = $derived(data?.buildings.filter((b) => b.level === 0 && b.tile_x !== null) ?? []);
+	const chip = (k: string) => data?.buildingCatalog[k] ?? { label: k, tooltip: { description: '' } };
+
+	// ── Harvester relocation ────────────────────────────────────────────────
+
+	const isHarvesterTarget = (tile: Tile) =>
+		tile.is_explored &&
+		tile.tile_type.startsWith('regolith_') &&
+		!data?.buildings.some((b) => b.tile_x === tile.q && b.tile_y === tile.r);
+
+	// The instance being relocated (a colony can hold two Harvester instances).
+	function harvesterBuilding(): Building | null {
+		const hvs = data?.buildings.filter((b) => b.building_key === 'building_harvester') ?? [];
+		return (movingHarvesterInstanceId !== null ? hvs.find((b) => b.instance_id === movingHarvesterInstanceId) : hvs[0]) ?? null;
+	}
+
+	// The first Harvester can be relocated straight from a valid target tile.
+	const movableHarvester = () =>
+		data?.buildings.find(
+			(b) =>
+				b.building_key === 'building_harvester' &&
+				(b.instance_id ?? 1) === 1 &&
+				b.level > 0 &&
+				b.tile_x !== null &&
+				!b.in_transit
+		) ?? null;
+	const canMoveHarvesterHere = (tile: Tile) => movableHarvester() !== null && isHarvesterTarget(tile);
+	const hexDistance = (q1: number, r1: number, q2: number, r2: number) =>
+		Math.max(Math.abs(q1 - q2), Math.abs(r1 - r2), Math.abs(q1 - q2 + r1 - r2));
+	function harvesterMoveCostTo(tile: Tile) {
+		const hv = movableHarvester();
+		if (!hv || hv.tile_x === null || hv.tile_y === null) return 0;
+		return Math.max(1, hexDistance(hv.tile_x, hv.tile_y, tile.q, tile.r) * (data?.relocateApPerHex ?? 2));
+	}
+
+	function startHarvesterMove(b: Building) {
+		movingHarvesterInstanceId = b.instance_id ?? 1;
+		harvesterMoveMode = true;
+		buildMode = false;
+		pendingBuilding = null;
+		selectedTile = null;
+		redrawSoon();
+	}
+
+	function cancelHarvesterMove() {
+		harvesterMoveMode = false;
+		movingHarvesterInstanceId = null;
+		redrawSoon();
+	}
+
+	async function moveHarvesterHere(tile: Tile) {
+		const hv = movableHarvester();
+		if (!hv) return;
+		movingHarvesterInstanceId = hv.instance_id ?? 1;
+		await moveHarvester(tile);
+		movingHarvesterInstanceId = null;
+	}
+
+	async function moveHarvester(tile: Tile) {
+		const hv = harvesterBuilding();
+		if (!hv) return;
+		const oldPos = hv.tile_x !== null ? positions.get(`${hv.tile_x},${hv.tile_y}`) : undefined;
+		const newPos = positions.get(key(tile));
+		const res = await act('/colony/building/place', {
+			building_id: hv.building_id,
+			q: tile.q,
+			r: tile.r,
+			// Without it the server moves instance 1, even when the player picked the second one.
+			instance_id: hv.instance_id ?? 1
+		});
+		if (!res.ok) return fail(res);
+		harvesterMoveMode = false;
+		movingHarvesterInstanceId = null;
+		selectedTile = tile;
+		if (oldPos && newPos) {
+			animateHarvesterMove(oldPos, newPos);
+			await new Promise((r) => setTimeout(r, 400));
+		}
+		await apply(res);
+	}
+
+	// Amber dot sliding old → new tile (CSS .hv-move-dot in colony-view.css).
+	function animateHarvesterMove(from: { cx: number; cy: number }, to: { cx: number; cy: number }) {
+		const svg = gridEl?.querySelector('svg');
+		if (!svg) return;
+		const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+		for (const [k, v] of Object.entries({
+			cx: from.cx,
+			cy: from.cy,
+			r: 10,
+			fill: '#f59e0b',
+			stroke: '#b45309',
+			'stroke-width': 2,
+			'pointer-events': 'none',
+			class: 'hv-move-dot'
+		}))
+			dot.setAttribute(k, String(v));
+		dot.style.setProperty('--dx', `${to.cx - from.cx}px`);
+		dot.style.setProperty('--dy', `${to.cy - from.cy}px`);
+		svg.appendChild(dot);
+		setTimeout(() => dot.remove(), 450);
+	}
+
 	// ── Map header ──────────────────────────────────────────────────────────
 
 	const findCounters = $derived.by(() => {
@@ -361,8 +552,20 @@
 				await tick();
 				redrawGrid();
 				onResize();
-				const linked = parseInt(page.url.searchParams.get('building') ?? '', 10);
-				if (linked) selectBuildingInstance(linked, parseInt(page.url.searchParams.get('instance') ?? '', 10) || null);
+				const params = page.url.searchParams;
+				// Deep link ?build=ID (techtree "Bauen"): open the build menu with that building picked.
+				const buildId = parseInt(params.get('build') ?? '', 10);
+				if (buildId) {
+					await loadAvailable();
+					const match = availableBuildings.find((b) => b.building_id === buildId);
+					if (match && !match.locked) {
+						buildMode = true;
+						pendingBuilding = match;
+						redrawSoon();
+					} else showToast(t('colony.build_link_unavailable'), 'info');
+				}
+				const linked = parseInt(params.get('building') ?? '', 10);
+				if (!buildId && linked) selectBuildingInstance(linked, parseInt(params.get('instance') ?? '', 10) || null);
 			})
 			.catch((e) => {
 				if (!(e instanceof ApiError && e.status === 401)) loadError = String(e.message ?? e);
@@ -411,7 +614,158 @@
 		</div>
 
 		<aside class="tile-panel">
-			{#if selectedTile && data}
+			{#if harvesterMoveMode && data}
+				<div class="tile-panel-action-strip">
+					<div class="tile-actions">
+						<button class="tile-action-btn" onclick={cancelHarvesterMove}>{t('colony.cancel')}</button>
+					</div>
+				</div>
+				<div class="tile-panel-header tile-panel-header--hideable"><h3>{t('colony.harvester_move')}</h3></div>
+				<div class="tile-panel-body">
+					<p class="build-mode-hint">
+						{data.tiles.some(isHarvesterTarget) ? t('colony.harvester_move_mode_hint') : t('colony.harvester_move_no_targets')}
+					</p>
+				</div>
+			{:else if buildMode && data}
+				{@const d = data}
+				<div class="tile-panel-action-strip">
+					<div class="tile-actions">
+						<button class="tile-action-btn tile-action-btn--secondary" onclick={cancelBuildMode}
+							>{t('colony.cancel')}</button
+						>
+					</div>
+				</div>
+				<div class="tile-panel-header tile-panel-header--hideable"><h3>{t('colony.build_mode_title')}</h3></div>
+				<div class="tile-panel-body">
+					{#if buildTargetTile && selectedTile}
+						<div class="build-target-tile">
+							<p class="tile-panel-title__name">{tileHeading(buildTargetTile)}</p>
+							<TileTerrain
+								tile={selectedTile}
+								{tileTypeName}
+								{eventTypeName}
+								{flightShortfall}
+								onsalvage={salvage}
+								onflight={findFlight}
+							/>
+						</div>
+					{/if}
+					<p class="build-mode-hint">
+						{buildTargetTile ? t('colony.build_mode_hint_tile') : t('colony.build_mode_hint')}
+					</p>
+
+					{#if pendingBuilding}
+						<p class="build-mode-selected">
+							<strong
+								><EntityChip
+									type="building"
+									entityKey={pendingBuilding.key}
+									label={chip(pendingBuilding.key).label}
+									tooltip={chip(pendingBuilding.key).tooltip}
+								/></strong
+							>
+							&nbsp;&mdash; {t('colony.select_tile_hint')}
+						</p>
+					{/if}
+
+					<!-- Placed but level 0: guide the player to click the tile. -->
+					{#if sites.length}
+						<div class="build-mode-inprogress">
+							<p class="build-mode-inprogress-label">{t('colony.inprogress_label')}</p>
+							<ul class="building-list">
+								{#each sites as b (b.building_id + '-' + b.instance_id)}
+									<li class="building-list-item building-list-item--inprogress">
+										<span class="building-list-name"
+											><EntityChip
+												type="building"
+												entityKey={b.building_key}
+												label={chip(b.building_key).label}
+												tooltip={chip(b.building_key).tooltip}
+											/></span
+										>
+										<span class="building-list-ap">{b.ap_spend} / {b.ap_for_levelup} AP</span>
+									</li>
+								{/each}
+							</ul>
+							<p class="build-mode-inprogress-hint">{t('colony.inprogress_hint')}</p>
+						</div>
+					{/if}
+
+					{#if availableBuildings.length === 0}
+						<p class="build-mode-empty">{t('colony.no_buildings')}</p>
+					{/if}
+
+					<ul class="building-list">
+						{#each availableBuildings as b (b.building_id)}
+							{@const ok = canPlaceBuilding(b)}
+							{@const reasons = buildMissingReasons(b)}
+							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+							<li
+								class="building-list-item"
+								class:building-list-item--selected={pendingBuilding?.building_id === b.building_id}
+								class:building-list-item--disabled={!ok}
+								onclick={() => ok && selectPendingBuilding(b)}
+							>
+								<div class="building-list-row">
+									<span class="building-list-name"
+										><EntityChip
+											type="building"
+											entityKey={b.key}
+											label={chip(b.key).label}
+											tooltip={chip(b.key).tooltip}
+										/></span
+									>
+									<span class="building-list-row-right"
+										><span class="building-list-ap">{b.ap_for_levelup} AP</span></span
+									>
+								</div>
+								<div class="building-list-row building-list-row--costs">
+									{#if (b.supply_cost ?? 0) > 0}
+										<span
+											class="building-list-supply"
+											class:building-list-chip--missing={(b.supply_cost ?? 0) > d.freeSupply}
+											>{t('colony.building_needs_colonists', { count: b.supply_cost ?? 0 })}</span
+										>
+									{/if}
+									{#if (b.colonists_gain ?? 0) > 0}
+										<span class="building-list-supply"
+											>{t('colony.building_gives_colonists', { count: b.colonists_gain ?? 0 })}</span
+										>
+									{/if}
+									<!-- Placement pays erect cost + level 1 in one go (T9): total, then the breakdown. -->
+									{#if b.placement_cost?.[3]}
+										<span
+											class="building-list-cost"
+											class:building-list-chip--missing={b.placement_cost[3] > d.regolith}
+											>{b.placement_cost[3]} Rg</span
+										>
+									{/if}
+									{#if b.build_cost?.[3] && (b.first_level_regolith ?? 0) > 0}
+										<span class="building-list-cost-breakdown"
+											>({b.build_cost[3]} {t('colony.build_cost_erect')} + {b.first_level_regolith}
+											{t('colony.build_cost_first_level')})</span
+										>
+									{/if}
+									{#if b.build_cost?.[4]}
+										<span class="building-list-cost building-list-cost--compounds">{b.build_cost[4]} Wk</span>
+									{/if}
+								</div>
+								{#if b.notice}<p class="building-list-notice">{b.notice}</p>{/if}
+								{#if reasons.length}
+									<ul class="building-list-reasons">
+										{#each reasons as r (r.kind)}
+											<li class="building-list-reason building-list-reason--missing building-list-reason--{r.kind}">
+												<i class="bi bi-x-circle-fill" aria-hidden="true"></i>
+												<span>{r.text}</span>
+											</li>
+										{/each}
+									</ul>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{:else if selectedTile && data}
 				{@const tile = selectedTile}
 				{@const b = selectedBuilding}
 
@@ -526,7 +880,26 @@
 						{#if b?.building_key === 'building_harvester' && b.in_transit}
 							<p class="tile-action-note">{t('colony.harvester_in_transit')}</p>
 						{/if}
-						<!-- ponytail: build mode + harvester relocation buttons land in stage 3d. -->
+						{#if b?.building_key === 'building_harvester' && b.level > 0 && !b.in_transit}
+							<button class="tile-action-btn tile-action-btn--secondary" onclick={() => startHarvesterMove(b)}>
+								<span class="tile-action-btn__body">{t('colony.harvester_move')}</span>
+								<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true"
+									>{t('colony.ap_per_tile', { n: data.relocateApPerHex })}</span
+								>
+							</button>
+						{/if}
+						{#if !b && hex.isBuildableTile(tile)}
+							<button class="tile-action-btn tile-action-btn--secondary" onclick={() => startBuildForTile(tile)}>
+								<span class="tile-action-btn__body">{t('colony.build')}</span>
+							</button>
+						{/if}
+						<!-- Relocate the first Harvester straight from a valid target tile. -->
+						{#if !b && canMoveHarvesterHere(tile)}
+							<button class="tile-action-btn tile-action-btn--secondary" onclick={() => moveHarvesterHere(tile)}>
+								<span class="tile-action-btn__body">{t('colony.harvester_move')}</span>
+								<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{harvesterMoveCostTo(tile)} AP</span>
+							</button>
+						{/if}
 					</div>
 				</div>
 

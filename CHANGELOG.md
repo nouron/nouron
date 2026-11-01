@@ -8,6 +8,7 @@
 - Svelte-Frontend: Kolonie Schritt 3a — `GET /api/v1/colony` liefert die Hexfeld-Daten (gleiche Quelle wie die Blade-Seite, `ColonyController::hexviewData()`), Kachel-/Gebäude-Aktionen und Bergungsflug als `/api/v1/colony/*` auf dieselben Controller.
 - Svelte-Frontend: Kolonie Schritt 3b — Seite `/colony` mit Hexfeld (Zeichenteil aus `colony-hexgrid.js` geteilt), Funde-Zähler, Legende, Händler- und Versorgungshinweis, Kachelauswahl und Direktlink auf ein Gebäude; `GET /api/v1/colony` liefert zusätzlich die Signal-Gesamtzahl.
 - Svelte-Frontend: Kolonie Schritt 3c — Seitenleiste zur Kachel mit Gebäude-/Geländeinfos, Fundkarte, Erkunden, Tiefenscan (mit Fund-Popup), Bergung, Bergungsflug, Reparieren, Ausbauen und Rückbau-Dialog; Toast und Stufenaufstieg-Hinweis. AP-Ausbau-Knopf als gemeinsame Komponente für Kolonie und Techtree. Bisher fest verdrahtete Texte der Seitenleiste als Sprachschlüssel (de+en).
+- Svelte-Frontend: Kolonie Schritt 3d — Baumodus (Gebäudeliste mit Kosten und fehlenden Voraussetzungen, Baustellen-Übersicht, Direktlink `?build=`) und Harvester-Umzug (Umzugsmodus mit Vorschaupfeil und Gedrückthalten, „Verlegen“ direkt von der Zielkachel, Bewegungsanimation). Gebäude-Chips mit Tooltip als wiederverwendbare Komponente.
 
 ## 2026-10-31
 
