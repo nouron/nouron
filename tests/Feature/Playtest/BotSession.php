@@ -10,15 +10,22 @@ use App\Services\OnboardingService;
 use App\Services\TickService;
 use App\Support\RegolithLedger;
 use Database\Seeders\ReferenceDataSeeder;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
  * HTTP driver for the playtest bot. Every mutation goes through a real route
  * via $test->json() — the only exception is boot(), which sets up the Sol-1
  * fixture (equivalent to a test fixture, not a player action).
+ *
+ * Requests go to the JSON API the SvelteKit frontend uses (ADR 0006), with a
+ * bearer-token user. Paths are written without the /api/v1 prefix; the log and
+ * the run report keep them that way.
  */
 class BotSession
 {
+    private const API = '/api/v1';
+
     public int $sol = 0;
 
     private string $status = 'active';
@@ -136,13 +143,14 @@ class BotSession
 
         $run = Run::where('user_id', $userId)->where('status', 'active')->firstOrFail();
 
-        $test->actingAs(User::where('user_id', $userId)->firstOrFail());
-        // actingAs() skips LoginController, which is what pins the active colony in
-        // the session. Pin it here like a real login — otherwise a second boot() in
-        // the same test keeps the previous bot's colony id in the session and every
-        // ResolvesActiveColony controller acts on the wrong colony (CI 2026-10-09).
+        // Token user like the SvelteKit frontend.
+        app('auth')->forgetGuards();
+        Sanctum::actingAs(User::where('user_id', $userId)->firstOrFail());
+        // ResolvesActiveColony still caches the colony in the session, which outlives
+        // requests within one test: pin this bot's colony, otherwise a second boot()
+        // acts on the previous bot's colony (CI 2026-10-09).
         $test->withSession(['activeIds.colonyId' => $colonyId]);
-        $test->postJson('/lobby/start')->assertRedirect();
+        $test->postJson(self::API.'/lobby/start')->assertOk();
 
         // In a web request TickService is bound to the active run's current_tick
         // (AppServiceProvider), but under PHPUnit runningInConsole() is true and the
@@ -209,7 +217,7 @@ class BotSession
         $regolithBefore = BotStrategy::regolith($this);
         $organicsBefore = BotStrategy::organics($this);
 
-        $res = $this->test->json($method, $url, $payload);
+        $res = $this->test->json($method, self::API.$url, $payload);
         $norm = $this->normalize($res);
 
         $apAfter = app(AdvisorService::class)->getAvailableActionPoints($this->colonyId);
@@ -254,7 +262,7 @@ class BotSession
      */
     public function peek(string $url): array
     {
-        return $this->normalize($this->test->json('GET', $url));
+        return $this->normalize($this->test->json('GET', self::API.$url));
     }
 
     /**

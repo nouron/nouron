@@ -19,6 +19,7 @@
 - Svelte-Frontend: Stufe 5a Login und Registrierung (mit Einladungscode, gleiche Drosselung wie Blade); angemeldete Spieler überspringen die Formulare. `GET/POST /api/v1/auth/register` antwortet mit Token, der API-Login richtet wie der Blade-Login Altkonten ohne Kolonie eine ein.
 - Svelte-Frontend: Stufe 5b Einstellungen (Profil, Anzeigename, Passwort, Onboarding-Hinweise, Sprache) auf einer Seite statt Profil + Einstellungen. Die gewählte Sprache gilt jetzt auch für API-Antworten und das neue Frontend (vorher immer Deutsch). `GET/PATCH /api/v1/settings/*`; feste deutsche Meldungen der Einstellungen in `lang/*/settings.php` verschoben.
 - Svelte-Frontend: Stufe 5c Admin-Feedback-Übersicht (mit Blättern, Menüpunkt für Admins), schlanke Debug-Leiste für Admins (Run, Sol, Umgehungen, Umgebung, Konfiguration; ohne Finale-Vorschau) und Fehlerseite 404/500. `GET /api/v1/admin/feedback`, `/admin/debug`; Feedback-Liste bei gleichem Zeitstempel nach ID sortiert.
+- Playtest-Bot (Stufe 5d): spielt über die JSON-API (`/api/v1`, Token-Anmeldung) statt über die Blade-Routen; Pfade im Bot-Log und Bericht unverändert. Golden-Tests bestätigen gleiche Aktionsfolgen.
 
 ## 2026-10-31
 
