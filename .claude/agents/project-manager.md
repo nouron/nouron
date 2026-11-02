@@ -93,7 +93,7 @@ Tasks:
 - [ ] [db-migration-agent] Schema-Änderungen
 - [ ] [game-developer] Service-/Logik-Implementierung
 - [ ] [backend-coder] Controller + Route + Validierung
-- [ ] [ui-specialist] Frontend-View + AJAX
+- [ ] [ui-specialist] Svelte-Seite/-Komponente + API-Aufruf
 - [ ] [qa-tester] Unit + Integration Tests
 - [ ] [content-writer] UI-Texte, Tooltips, Lore (falls anwendbar)
 ```

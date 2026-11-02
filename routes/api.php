@@ -18,9 +18,9 @@ use App\Http\Controllers\SolController;
 use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\UserController;
+use App\Services\ColonyService;
 use App\Services\ShellStateService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -51,9 +51,10 @@ Route::prefix('v1')->group(function () {
     // Header data of every in-run screen — same source as the Blade layout composer.
     Route::middleware('auth:sanctum')->get('/shell', function (Request $request, ShellStateService $shell) {
         $user = $request->user();
-        $colonyId = DB::table('glx_colonies')->where('user_id', $user->user_id)->where('is_primary', 1)->value('id');
+        // Same lookup as ResolvesActiveColony; null for a user without a colony.
+        $colonyId = rescue(fn () => app(ColonyService::class)->getPrimeColony($user->user_id)->id, null, false);
 
-        return collect($shell->forUser($user->user_id, $colonyId ? (int) $colonyId : null))
+        return collect($shell->forUser($user->user_id, $colonyId))
             ->mapWithKeys(fn ($value, $key) => [Str::snake($key) => $value])
             ->put('username', $user->username)
             ->put('locale', app()->getLocale())

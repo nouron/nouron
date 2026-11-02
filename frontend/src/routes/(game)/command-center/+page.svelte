@@ -79,11 +79,14 @@
 		toastTimer = setTimeout(() => (toast = null), 3500);
 	}
 
+	// Locks every purchase button while a request runs: a double click must not pay twice.
+	let busy = $state(false);
 	async function post(path: string, body: object, errorKey: string): Promise<Result | null> {
-		const res: Result = await api<Result>(path, { method: 'POST', body, allowError: true }).catch(() => ({
-			ok: false,
-			message: t('colony.network_error')
-		}));
+		if (busy) return null;
+		busy = true;
+		const res: Result = await api<Result>(path, { method: 'POST', body, allowError: true })
+			.catch(() => ({ ok: false, message: t('colony.network_error') }))
+			.finally(() => (busy = false));
 		if (res.ok) {
 			refreshShell();
 			return res;
@@ -178,7 +181,7 @@
 			<p class="cc-card-hint">{t('colony.stipend_dialog_hint')}</p>
 			<div class="stipend-tiers">
 				{#each d.stipendTiers as tier (tier.key)}
-					<button class="stipend-tier-btn" onclick={() => stipend(tier.key)}>
+					<button class="stipend-tier-btn" disabled={busy} onclick={() => stipend(tier.key)}>
 						<strong>{t(`colony.stipend_tier_${tier.key}`)}</strong>
 						<span class="cc-chip-row">
 							<span class="res-chip res-Cr"><span class="res-abbr">CR</span><span class="res-amount">{tier.cost}</span></span>
@@ -357,7 +360,7 @@
 					aria-label={t('colony.nexus_import_amount')}
 				/>
 				<span class="nexus-import-total">{(importAmount || 0) * price(4)} Cr</span>
-				<Button disabled={locked || !importAmount || importAmount < 1} onclick={importCompounds}
+				<Button disabled={busy || locked || !importAmount || importAmount < 1} onclick={importCompounds}
 					>{t('colony.nexus_import_confirm')}</Button
 				>
 			</div>
@@ -389,7 +392,7 @@
 					aria-label={t('colony.nexus_import_delayed_amount')}
 				/>
 				<span class="nexus-import-total">{(delayedAmount || 0) * price(delayedResource)} Cr</span>
-				<Button disabled={locked || !delayedAmount || delayedAmount < 1} onclick={importDelayed}
+				<Button disabled={busy || locked || !delayedAmount || delayedAmount < 1} onclick={importDelayed}
 					>{t('colony.nexus_import_delayed_confirm')}</Button
 				>
 			</div>

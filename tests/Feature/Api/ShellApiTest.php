@@ -61,4 +61,23 @@ class ShellApiTest extends TestCase
             ->assertJsonPath('current_sol', null)
             ->assertJsonPath('sciencelab_built', false);
     }
+
+    public function test_shell_finds_the_colony_like_the_controllers_do(): void
+    {
+        // Same lookup as ResolvesActiveColony: a player's only colony counts even without is_primary.
+        DB::table('glx_colonies')->where('user_id', 3)->update(['is_primary' => 0]);
+        Sanctum::actingAs(User::find(3));
+
+        $this->getJson('/api/v1/shell')
+            ->assertOk()
+            ->assertJsonPath('trust', (int) DB::table('colony_resources')->where(['colony_id' => 1, 'resource_id' => 12])->value('amount'));
+    }
+
+    public function test_shell_works_for_a_user_without_a_colony(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/shell')->assertOk()->assertJsonPath('in_active_run', false);
+    }
 }

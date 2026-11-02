@@ -315,6 +315,7 @@
 	}
 
 	async function investAp(b: Building) {
+		if (busy) return; // ignore clicks while the previous invest is still on its way
 		const res = await act('/colony/building/invest', { building_id: b.building_id, instance_id: b.instance_id ?? 1 });
 		if (!res.ok) {
 			if (res.error === 'building_ap_cap' && b.ap_cap) {

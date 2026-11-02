@@ -107,11 +107,13 @@
 		refreshShell();
 	}
 
+	// Locks hire/fire/promote while a request runs: a double click must not act twice.
+	let busy = $state(false);
 	async function send(path: string, method: string, body?: object): Promise<Result> {
-		return api<Result>(path, { method, body, allowError: true }).catch(() => ({
-			ok: false,
-			message: t('colony.network_error')
-		}));
+		busy = true;
+		return api<Result>(path, { method, body, allowError: true })
+			.catch(() => ({ ok: false, message: t('colony.network_error') }))
+			.finally(() => (busy = false));
 	}
 
 	async function doHire() {
@@ -301,7 +303,7 @@
 													: t('advisors.ui_active')}</span
 											>
 											{#if !a.is_max_rank && a.next_rank_ticks !== null && a.active_ticks >= a.next_rank_ticks}
-												<button class="btn-hire" onclick={() => doPromote(slot)}>{t('advisors.ui_promote')}</button>
+												<button class="btn-hire" disabled={busy} onclick={() => doPromote(slot)}>{t('advisors.ui_promote')}</button>
 											{/if}
 											<button class="btn-fire" onclick={() => openDialog(slot, 'fire')}>{t('advisors.dialog_fire')}</button>
 										</div>
@@ -417,7 +419,7 @@
 			<div class="dialog-error">{errorMsg ?? ''}</div>
 			<div class="dialog-actions">
 				<button class="btn-cancel" onclick={closeDialog}>{t('advisors.dialog_cancel')}</button>
-				<button class="btn-confirm-hire" onclick={doHire}>{t('advisors.dialog_hire')}</button>
+				<button class="btn-confirm-hire" disabled={busy} onclick={doHire}>{t('advisors.dialog_hire')}</button>
 			</div>
 		{:else if dialogSlot}
 			<h3>{t('advisors.dialog_fire_title')}</h3>
@@ -425,7 +427,7 @@
 			<div class="dialog-error">{errorMsg ?? ''}</div>
 			<div class="dialog-actions">
 				<button class="btn-cancel" onclick={closeDialog}>{t('advisors.dialog_cancel')}</button>
-				<button class="btn-confirm-fire" onclick={doFire}>{t('advisors.dialog_fire')}</button>
+				<button class="btn-confirm-fire" disabled={busy} onclick={doFire}>{t('advisors.dialog_fire')}</button>
 			</div>
 		{/if}
 	</dialog>

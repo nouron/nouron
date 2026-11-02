@@ -1,6 +1,6 @@
 ---
 name: content-writer
-description: Proaktiv einsetzen für alle In-Game-Texte — Lore, Fraktionsbeschreibungen, Enzyklopädie-Einträge, Gebäude-/Schiffs-/Forschungsbeschreibungen, Tooltip-Texte, Event-Meldungen und INNN-Nachrichtenartikel. Aufrufen beim Hinzufügen neuer Spielentitäten, die spielerseitige Texte brauchen, oder beim Verbessern bestehender Beschreibungen.
+description: Proaktiv einsetzen für alle In-Game-Texte — Lore, Fraktionsbeschreibungen, Enzyklopädie-Einträge, Gebäude-/Schiffs-/Forschungsbeschreibungen, Tooltip-Texte, Event-Meldungen und Protokoll-Einträge. Aufrufen beim Hinzufügen neuer Spielentitäten, die spielerseitige Texte brauchen, oder beim Verbessern bestehender Beschreibungen.
 tools: Read, Write, Edit, Grep, Glob
 ---
 
@@ -55,29 +55,25 @@ Kurz (2–3 Sätze), funktional aber stimmungsvoll. Frage beantworten: Was tut e
 Längere Lore-Einträge zu Geschichte, Kultur oder Technologie.
 Als In-Universe-Dokumente geschrieben (Berichte, Datenblätter, historische Aufzeichnungen).
 
-### INNN-Event-Meldungen
-In-Game-Nachrichtensystem. Meldungen wirken wie echte Dispatches:
+### Event-Meldungen (Protokoll)
+Meldungen im Kolonie-Protokoll wirken wie echte Dispatches:
 - `techtree.level_down` — "Wartungsmangel: [Gebäude] in [Kolonie] hat eine Stufe verloren."
-- `galaxy.combat` — knappe Militärkommuniqué-Stilistik
-- `galaxy.fleet_arrived` — Navigationslog-Stil
 
 ### Tooltip-Texte
 Ultra-kurz (max 1 Satz). Faktisch, kein Fluff.
 
 ## Lokalisierungsdatei-Struktur
-Alle spielerseitigen Texte in `lang/de/<area>.php`. Vollständige Liste:
+Alle spielerseitigen Texte in `lang/de/<area>.php`. Wichtigste Dateien (vollständig: `ls lang/de/`):
 | Datei | Inhalt |
 |------|---------|
 | `techtree.php` | Gebäude-/Schiffs-/Forschungsnamen + Beschreibungen (`desc_techs_*`) |
 | `buildings.php` | Gebäudespezifische Labels |
 | `ships.php` | Schiffsnamen und -beschreibungen |
 | `resources.php` | Ressourcennamen und Abkürzungen |
-| `events.php` | INNN-Event-Meldungen (`:placeholder`-Syntax) |
-| `fleet.php` | Flotten-Order-Namen, Feldbezeichnungen, Order-Beschreibungen |
+| `events.php` | Event-Meldungen fürs Protokoll (`:placeholder`-Syntax) |
 | `trade.php` | Handels-UI-Labels |
 | `advisors.php` | Beratertyp-Namen und -beschreibungen |
-| `moral.php` | Moral-Event-Labels |
-| `techs.php` | Generische Tech-Labels |
+| `trust.php` | Vertrauens-Labels |
 | `colony.php` | Kolonieansicht-Labels, Tile-Aktionen, Zonenstatus |
 
 Neue Spielentitäten bekommen Einträge in passender Datei. Neue Feature-Bereiche bekommen neue Datei.

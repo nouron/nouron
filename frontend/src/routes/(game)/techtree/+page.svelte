@@ -7,7 +7,7 @@
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
-	import { setAp, shell } from '#lib/stores/shell.ts';
+	import { refreshShell, setAp, shell } from '#lib/stores/shell.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import { t } from '#lib/i18n.ts';
@@ -214,12 +214,16 @@
 
 	// Invest 1 AP; the server levels up by itself once the threshold is reached and
 	// re-derives every node's gate status (phases_update), so the whole graph stays current.
+	// Ignores clicks while the previous invest is still on its way.
+	let investing = false;
 	async function investAp(tech: Tech) {
+		if (investing) return;
+		investing = true;
 		const json = await api<OrderResponse>(`/techtree/research/${tech.id}/order`, {
 			method: 'POST',
 			body: { order: 'add', ap: 1 },
 			allowError: true
-		});
+		}).finally(() => (investing = false));
 		if (!json.success) return showToast(json.message ?? t('techtree.toast_invest_failed'));
 
 		if (json.tech) Object.assign(tech, json.tech);
@@ -235,8 +239,10 @@
 		}
 		tree?.refresh(null, json.phases_update?.edges);
 
-		if (json.leveled_up) showToast(t('techtree.toast_level_reached', { name: tech.name, level: tech.level }), 'info');
-		else if (json.levelup_blocked_message) showToast(json.levelup_blocked_message);
+		if (json.leveled_up) {
+			refreshShell(); // a new knowledge level takes supply: the header bar must follow
+			showToast(t('techtree.toast_level_reached', { name: tech.name, level: tech.level }), 'info');
+		} else if (json.levelup_blocked_message) showToast(json.levelup_blocked_message);
 	}
 
 	onMount(() => {
@@ -294,7 +300,7 @@
 	});
 </script>
 
-<svelte:head><title>Techtree – Nouron</title></svelte:head>
+<svelte:head><title>{t('colony.nav_techtree')} – Nouron</title></svelte:head>
 
 {#snippet chipList(lines: EffectLine[])}
 	<ul class="detail-list detail-list--chips">

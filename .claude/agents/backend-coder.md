@@ -25,11 +25,11 @@ Basis-Muster:
 - Controller extends `App\Http\Controllers\Controller`
 - Auth: `Auth::id()` oder `$request->user()->id` für aktuellen User
 - Validierung: `$request->validate([...])` inline oder Form-Request-Klassen
-- Flash-Messages: `redirect()->with('success', '...')` / `session('success')`
+- Antworten immer JSON (Laravel ist reine API, ADR 0006): Erfolg mit den geänderten Daten, Regelverstoß als 422 `{ok:false, error, message}`. Keine Session, kein Redirect, kein Flash.
 
 ## Kontext-Einstieg
 Beim Aufruf zuerst prüfen:
-- `routes/web.php` — alle Routen
+- `routes/api.php` — alle Routen (`/api/v1`, Sanctum-Token); `routes/web.php` leitet nur aufs Frontend um
 - `app/Http/Controllers/` — bestehende Controller
 - `app/Services/` — bestehende Services
 - `app/Models/` — Eloquent-Models
@@ -38,14 +38,14 @@ Beim Aufruf zuerst prüfen:
 ## Zuständigkeiten
 - Controller, Services, Middleware implementieren
 - Routen und Request-Validierung aufbauen
-- Endpoints für Frontend (redirect+flash für Forms, JSON für AJAX)
+- JSON-Endpoints für das SvelteKit-Frontend (`frontend/`)
 - Dependency Injection und Config-Handling
 
 Schema-Änderungen und Migrations gehören zu **db-migration-agent** — wenn Controller oder Service neue Spalte braucht, flaggen und übergeben.
 
 ## Lokalisierung
 - Alle user-facing Strings (Flash-Messages, Validierungsfehler, UI-Labels in JSON) via `__('file.key')` — nie hartkodiertes Deutsch in Controller- oder Service-Code.
-- Sprachdateien in `lang/de/<area>.php`. Bestehend: `fleet`, `techtree`, `buildings`, `ships`, `resources`, `events`, `trade`, `advisors`, `moral`, `techs`.
+- Sprachdateien in `lang/de/<area>.php`. Bestehende Dateien: `ls lang/de/`.
 - Neues Feature-Gebiet mit user-facing Text → passende `lang/de/<area>.php` anlegen oder erweitern.
 - Validierungsregel-Meldungen nutzen Laravel-Standard-Englisch (akzeptabel) — nur domänenspezifische Custom-Messages lokalisieren.
 

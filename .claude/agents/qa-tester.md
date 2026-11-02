@@ -37,17 +37,17 @@ Falls doch nachträglich für bestehenden, ungetesteten Code eingesetzt (Altbest
 ```
 tests/
   Feature/
+    Api/         — JSON API contracts of the SvelteKit frontend (/api/v1)
     Colony/      — colony tile, building, zone, explore, deep scan tests
-    Fleet/       — fleet order and movement tests
-    Trade/       — trade system tests
-    Tick/        — game tick and production tests
+    GameTick/    — game tick and production tests
     Techtree/    — building invest, research, ship tests
+    Playtest/    — playtest bot (suite `playtest`)
   Unit/          — pure logic tests (formulas, helpers)
 ```
 
 Basis-Klasse: `Tests\TestCase` (extends `Illuminate\Foundation\Testing\TestCase`)
 - `use RefreshDatabase;` für automatischen DB-Reset pro Test-Klasse
-- `$this->actingAs($user)` für authentifizierte Requests
+- `$this->actingAs($user)` für authentifizierte Requests (meldet per Sanctum-Token an, `tests/TestCase.php`)
 - `$this->postJson('/route', [...])` / `$this->getJson(...)` für JSON-API-Tests
 
 Test-Fixtures aus `TestSeeder` → `data/sql/testdata.sql`.
