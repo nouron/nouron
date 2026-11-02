@@ -65,13 +65,18 @@ class HarvesterSolZeroRelocationTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('instance_id');
     }
 
+    private function colonyPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
+    }
+
     public function test_tile_panel_offers_move_and_no_second_harvester_button(): void
     {
-        $html = $this->actingAs($this->startNewRun())->get(route('colony.view'))->assertOk()->getContent();
+        $page = $this->colonyPage();
 
-        $this->assertStringNotContainsString('canPlaceSecondHarvester', $html);
-        $this->assertStringContainsString('canMoveHarvesterHere(selectedTile)', $html);
-        $this->assertStringContainsString('moveHarvesterHere(selectedTile)', $html);
+        $this->assertStringNotContainsString('canPlaceSecondHarvester', $page);
+        $this->assertStringContainsString('{#if !b && canMoveHarvesterHere(tile)}', $page);
+        $this->assertStringContainsString('onclick={() => moveHarvesterHere(tile)}', $page);
     }
 
     public function test_move_chip_shows_the_real_ap_cost_per_hex(): void
@@ -79,10 +84,14 @@ class HarvesterSolZeroRelocationTest extends TestCase
         // The Harvester "Verlegen" chip must show the cost that is actually charged
         // (config relocate_ap_per_hex), not a hardcoded 1 AP/Feld.
         $perHex = (int) config('game.harvester.relocate_ap_per_hex');
-        $html = $this->actingAs($this->startNewRun())->get(route('colony.view'))->assertOk()->getContent();
-
-        $this->assertStringContainsString(__('colony.ap_per_tile', ['n' => $perHex]), $html);
         $this->assertGreaterThan(1, $perHex, 'the old hardcoded 1 would no longer be distinguishable');
-        $this->assertStringNotContainsString(__('colony.ap_per_tile', ['n' => 1]), $html);
+
+        $this->actingAs($this->startNewRun())->getJson(route('colony.view'))
+            ->assertOk()
+            ->assertJsonPath('relocateApPerHex', $perHex);
+
+        $page = $this->colonyPage();
+        $this->assertStringContainsString("t('colony.ap_per_tile', { n: data.relocateApPerHex })", $page);
+        $this->assertStringContainsString('hexDistance(hv.tile_x, hv.tile_y, tile.q, tile.r) * (data?.relocateApPerHex ?? 2)', $page);
     }
 }

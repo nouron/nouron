@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 /**
  * LobbyController::newRun() is already heavily covered by LobbyNewRunTest — this
- * file covers the rest: index() (listing + the auto-redirect-to-result branch),
+ * file covers the rest: data() (listing + the resultRunId jump-to-result hint),
  * abandon(), start(), and newRun()'s "no colony" fallback.
  */
 class LobbyControllerTest extends TestCase
@@ -60,8 +60,8 @@ class LobbyControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('lobby'));
 
         $response->assertOk();
-        $response->assertViewHas('pending', fn ($c) => $c->count() === 1);
-        $response->assertViewHas('finished', fn ($c) => $c->count() === 1);
+        $response->assertJsonCount(1, 'pending');
+        $response->assertJsonCount(1, 'finished');
     }
 
     public function test_index_shows_active_run_without_redirect(): void
@@ -71,27 +71,31 @@ class LobbyControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('lobby'));
 
         $response->assertOk();
-        $response->assertViewHas('active', fn ($c) => $c->count() === 1);
+        $response->assertJsonCount(1, 'active');
+        $response->assertJsonPath('resultRunId', null);
     }
 
-    public function test_index_redirects_to_result_when_latest_run_just_ended(): void
+    public function test_index_points_to_result_when_latest_run_just_ended(): void
     {
         $run = $this->makeRun('completed');
 
         $response = $this->actingAs($this->user())->get(route('lobby'));
 
-        $response->assertRedirect(route('run.result', $run->id));
+        // The former redirect is now the resultRunId hint the frontend follows.
+        $response->assertOk();
+        $response->assertJsonPath('resultRunId', $run->id);
     }
 
-    public function test_index_does_not_redirect_when_an_active_run_still_exists(): void
+    public function test_index_does_not_point_to_result_when_an_active_run_still_exists(): void
     {
-        // A finished run exists, but so does an active one — must not redirect.
+        // A finished run exists, but so does an active one — must not jump to the result.
         $this->makeRun('completed');
         $this->makeRun('active');
 
         $response = $this->actingAs($this->user())->get(route('lobby'));
 
         $response->assertOk();
+        $response->assertJsonPath('resultRunId', null);
     }
 
     public function test_index_includes_finished_run_highscore_data(): void
@@ -102,8 +106,7 @@ class LobbyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->get(route('lobby'));
 
-        $finishedRuns = $response->viewData('finishedRuns');
-        $this->assertSame(4200, $finishedRuns->first()['score']);
+        $response->assertJsonPath('finishedRuns.0.score', 4200);
     }
 
     // ── abandon() ─────────────────────────────────────────────────────────
@@ -114,7 +117,8 @@ class LobbyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->post(route('lobby.abandon', $run->id));
 
-        $response->assertRedirect(route('lobby'));
+        $response->assertOk();
+        $response->assertJson(['ok' => true, 'message' => __('lobby.abandon_success')]);
         $this->assertSame('failed', $run->fresh()->status);
         $this->assertNotNull($run->fresh()->ended_at);
     }
@@ -125,8 +129,8 @@ class LobbyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->post(route('lobby.abandon', $run->id));
 
-        $response->assertRedirect(route('lobby'));
-        $response->assertSessionHas('error');
+        $response->assertStatus(422);
+        $response->assertJson(['ok' => false, 'message' => __('lobby.abandon_not_active')]);
         $this->assertSame('completed', $run->fresh()->status);
     }
 
@@ -154,7 +158,8 @@ class LobbyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->post(route('lobby.start'));
 
-        $response->assertRedirect(route('colony.view'));
+        $response->assertOk();
+        $response->assertJson(['ok' => true]);
         $this->assertNotNull($run->fresh()->started_at);
     }
 
@@ -173,7 +178,7 @@ class LobbyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->post(route('run.new'));
 
-        $response->assertRedirect(route('lobby'));
-        $response->assertSessionHas('error');
+        $response->assertStatus(422);
+        $response->assertJson(['ok' => false, 'message' => __('run.new_run_no_colony')]);
     }
 }

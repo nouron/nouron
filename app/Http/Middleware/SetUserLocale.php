@@ -17,9 +17,11 @@ class SetUserLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check()) {
+        // Session login (Blade) or bearer token (SvelteKit API, ADR 0006).
+        $userId = Auth::id() ?? Auth::guard('sanctum')->id();
+        if ($userId !== null) {
             $locale = DB::table('user_preferences')
-                ->where('user_id', Auth::id())
+                ->where('user_id', $userId)
                 ->value('locale');
 
             if (in_array($locale, config('app.supported_locales'), true)) {

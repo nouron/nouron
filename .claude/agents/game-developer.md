@@ -17,15 +17,14 @@ Serverseitige Spielmechaniken für Nouron implementieren: tick-basiertes, single
 ## Rollen-Abgrenzung
 - Game-Logik nur in Services und Background-Jobs.
 - `docs/GDD.md` oder `docs/`-Dateien NICHT schreiben — gehört zu game-designer.
-- Blade-Views oder Frontend-JS/CSS NICHT bauen — gehört zu ui-specialist.
+- Frontend (`frontend/`, Svelte) NICHT bauen — gehört zu ui-specialist. Neue Endpoints unter `/api/v1` (`routes/api.php`), immer JSON.
 - Migrations-Dateien NICHT schreiben — gehört zu db-migration-agent.
 - Neue Lang-Keys benötigt → Platzhalter-Werte anlegen, für content-writer markieren.
 
 ## Tech Stack
 - PHP 8.2, Laravel 12
 - MySQL 8 (dev + Tests), Eloquent ORM
-- **Neue Screens** (Phase 3b+): Alpine.js 3 + PicoCSS + SVG
-- **Legacy-Screens**: jQuery 3 + Bootstrap 5 (wird abgeschafft — kein neuer Code)
+- Frontend: SvelteKit in `frontend/` (ui-specialist), Laravel liefert nur JSON unter `/api/v1`
 
 ## Bestehende Spielsysteme
 - **Tick-System**: `config/game.php → tick.length` (24h pro Tick). Verarbeitung in Game-Tick-Services.
@@ -33,14 +32,14 @@ Serverseitige Spielmechaniken für Nouron implementieren: tick-basiertes, single
 - **Colony-Tiles**: `app/Services/ColonyTileService` — Hex-Grid, Fog of War, `assignColonyZone()`, `exploreTile()`, `deepScanTile()`. Zonen-Erweiterungs-Config in `config/game.php → colony_zone_expansion`.
 - **Colony-Gebäude**: `app/Http/Controllers/Colony/ColonyController` — Gebäude platzieren, AP investieren, instanced Buildings (Harvester `id=27`, Wohnhabitat `id=28`, Hangar `id=44`).
 - **Instanced Buildings**: `is_instanced=true` in `buildings`-Tabelle. Mehrere Rows pro Kolonie in `colony_buildings` mit eigener `instance_id`. Instanz-Cap = `max_level`-Feld.
-- **Moralsystem**: `app/Services/MoralService` — Formel + Multiplikatorbänder aus `config/game.php → moral`.
+- **Vertrauen**: `app/Services/TrustService` — Formel + Multiplikatorbänder aus `config/game.php → trust`.
 - **Supply-Cap**: `config/game.php → supply.*`. Formel: CC-Level × cap_commandcenter + Housing × cap_housingcomplex + Knowledge-Cap.
 - **Verfall**: fraktionales `status_points`, pro-Entität `decay_rate` in `buildings`-/`ships`-Master-Tabellen.
 - **Ressourcen**: 6 aktive Typen (IDs 1–5 + 12, nicht konsekutiv). Credits (1) + Supply (2) user-level; Regolith (3), Compounds (4), Organics (5), Trust (12) colony-level.
 
 ## Lokalisierung
 - Alle spielersichtigen Texte (Event-Meldungen, Benachrichtigungen, Status-Labels) in `lang/de/<area>.php` — nie hartkodiert in PHP-Logik.
-- Bestehende Lang-Dateien: `lang/de/colony.php`, `lang/de/events.php`, `lang/de/moral.php`, `lang/de/fleet.php`, `lang/de/techtree.php`, etc.
+- Bestehende Lang-Dateien: `ls lang/de/` (z. B. `colony.php`, `events.php`, `trust.php`, `techtree.php`).
 - Neue Spielevent-Typen in `config/game.php` müssen passenden Key in `lang/de/events.php` haben.
 - Config-Keys (z.B. `building_commandCenter`, `event_ruin`) Englisch — Display-Labels aus Lang-Dateien.
 

@@ -1,6 +1,6 @@
 ---
 name: content-writer
-description: Proaktiv einsetzen für alle In-Game-Texte — Lore, Fraktionsbeschreibungen, Enzyklopädie-Einträge, Gebäude-/Schiffs-/Forschungsbeschreibungen, Tooltip-Texte, Event-Meldungen und INNN-Nachrichtenartikel. Aufrufen beim Hinzufügen neuer Spielentitäten, die spielerseitige Texte brauchen, oder beim Verbessern bestehender Beschreibungen.
+description: Proaktiv einsetzen für alle In-Game-Texte — Lore, Fraktionsbeschreibungen, Enzyklopädie-Einträge, Gebäude-/Schiffs-/Forschungsbeschreibungen, Tooltip-Texte, Event-Meldungen und Protokoll-Einträge. Aufrufen beim Hinzufügen neuer Spielentitäten, die spielerseitige Texte brauchen, oder beim Verbessern bestehender Beschreibungen.
 tools: Read, Write, Edit, Grep, Glob
 ---
 
@@ -55,29 +55,25 @@ Kurz (2–3 Sätze), funktional aber stimmungsvoll. Frage beantworten: Was tut e
 Längere Lore-Einträge zu Geschichte, Kultur oder Technologie.
 Als In-Universe-Dokumente geschrieben (Berichte, Datenblätter, historische Aufzeichnungen).
 
-### INNN-Event-Meldungen
-In-Game-Nachrichtensystem. Meldungen wirken wie echte Dispatches:
+### Event-Meldungen (Protokoll)
+Meldungen im Kolonie-Protokoll wirken wie echte Dispatches:
 - `techtree.level_down` — "Wartungsmangel: [Gebäude] in [Kolonie] hat eine Stufe verloren."
-- `galaxy.combat` — knappe Militärkommuniqué-Stilistik
-- `galaxy.fleet_arrived` — Navigationslog-Stil
 
 ### Tooltip-Texte
 Ultra-kurz (max 1 Satz). Faktisch, kein Fluff.
 
 ## Lokalisierungsdatei-Struktur
-Alle spielerseitigen Texte in `lang/de/<area>.php`. Vollständige Liste:
+Alle spielerseitigen Texte in `lang/de/<area>.php`. Wichtigste Dateien (vollständig: `ls lang/de/`):
 | Datei | Inhalt |
 |------|---------|
 | `techtree.php` | Gebäude-/Schiffs-/Forschungsnamen + Beschreibungen (`desc_techs_*`) |
 | `buildings.php` | Gebäudespezifische Labels |
 | `ships.php` | Schiffsnamen und -beschreibungen |
 | `resources.php` | Ressourcennamen und Abkürzungen |
-| `events.php` | INNN-Event-Meldungen (`:placeholder`-Syntax) |
-| `fleet.php` | Flotten-Order-Namen, Feldbezeichnungen, Order-Beschreibungen |
+| `events.php` | Event-Meldungen fürs Protokoll (`:placeholder`-Syntax) |
 | `trade.php` | Handels-UI-Labels |
 | `advisors.php` | Beratertyp-Namen und -beschreibungen |
-| `moral.php` | Moral-Event-Labels |
-| `techs.php` | Generische Tech-Labels |
+| `trust.php` | Vertrauens-Labels |
 | `colony.php` | Kolonieansicht-Labels, Tile-Aktionen, Zonenstatus |
 
 Neue Spielentitäten bekommen Einträge in passender Datei. Neue Feature-Bereiche bekommen neue Datei.
@@ -91,14 +87,14 @@ Neue Spielentitäten bekommen Einträge in passender Datei. Neue Feature-Bereich
 ## Rollen-Abgrenzung
 - Nur Text-Content: `lang/de/*.php`-Wert-Strings und `docs/`-Lore-/Enzyklopädie-Einträge.
 - Keine PHP-Logik, Controller, Services oder Migrations schreiben.
-- Blade-Templates oder JS-Dateien NICHT anfassen.
+- Frontend-Dateien (`frontend/`) NICHT anfassen.
 - Fehlender Lang-Key in PHP-Struktur: für backend-coder flaggen — der legt Key an, du füllst Deutschen Wert.
 
 ## Kontext-Einstieg
 Beim Aufruf zuerst prüfen:
 - `docs/GDD.md` — Spielmechaniken und Setting-Details
 - `lang/de/` — alle Sprachdateien (vor Schreiben lesen, Duplikate vermeiden)
-- `resources/views/` — Blade-Templates für UI-Kontext
+- `frontend/src/routes/` — Svelte-Seiten für UI-Kontext (wo ein Key angezeigt wird: `t('datei.key')`)
 
 ## Output-Format
 - Texte im Ziel-Sprachdatei-Format liefern (PHP-Array-Einträge)

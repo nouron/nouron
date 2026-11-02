@@ -191,7 +191,7 @@ class BarService
      *                                      flavor line was shown for this
      *                                      guest offer (bar_trade_flavor_*,
      *                                      A36) — a UI-only assignment
-     *                                      (resources/views/colony/bar.blade.php),
+     *                                      (cantina page),
      *                                      not persisted on bar_offers, so
      *                                      the caller passes it through
      *                                      explicitly. Only credited toward

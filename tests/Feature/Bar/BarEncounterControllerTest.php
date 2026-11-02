@@ -81,8 +81,7 @@ class BarEncounterControllerTest extends TestCase
 
     public function test_accept_encounter_requires_auth(): void
     {
-        $response = $this->post(route('colony.bar.accept-encounter', ['encounter' => 1]));
-        $response->assertRedirect(route('login'));
+        $this->postJson(route('colony.bar.accept-encounter', ['encounter' => 1]))->assertUnauthorized();
     }
 
     public function test_accept_encounter_returns_json_ok(): void

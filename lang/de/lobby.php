@@ -57,4 +57,6 @@ return [
     // Colony rename (moved here from the removed colony/index screen)
     'rename_label' => 'Kolonienname',
     'rename_button' => 'Umbenennen',
+    // Svelte lobby (ADR 0006): was a hardcoded flash text in ColonyController::rename()
+    'rename_success' => 'Kolonienname wurde aktualisiert.',
 ];

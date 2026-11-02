@@ -57,17 +57,20 @@ class RunResultControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('run.result', ['id' => $run->id]));
 
         $response->assertOk();
-        $response->assertViewHas('score');
-        $response->assertViewHas('objectives');
+        $response->assertJsonPath('id', $run->id);
+        $response->assertJsonPath('status', 'completed');
+        $response->assertJsonStructure(['score', 'objectives' => [['label', 'current', 'target', 'pct', 'done']]]);
+        $response->assertJsonPath('objectives.0.pct', 100);
     }
 
-    public function test_active_run_redirects_to_colony_view(): void
+    public function test_active_run_is_rejected_as_not_finished(): void
     {
         $run = $this->makeRun('active');
 
         $response = $this->actingAs($this->user())->get(route('run.result', ['id' => $run->id]));
 
-        $response->assertRedirect(route('colony.view'));
+        $response->assertStatus(409);
+        $response->assertJson(['ok' => false, 'error' => 'run_not_finished']);
     }
 
     public function test_other_users_run_is_forbidden(): void
@@ -91,19 +94,5 @@ class RunResultControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('run.result', ['id' => 999999]));
 
         $response->assertNotFound();
-    }
-
-    public function test_admin_dev_preview_shows_result_for_active_run(): void
-    {
-        $run = $this->makeRun('active');
-        $admin = $this->user();
-        $admin->role = 'admin';
-        $admin->save();
-
-        $response = $this->actingAs($admin)
-            ->get(route('run.result', ['id' => $run->id]).'?preview=1&outcome=failed');
-
-        $response->assertOk();
-        $response->assertViewHas('run', fn (Run $r) => $r->status === 'failed');
     }
 }

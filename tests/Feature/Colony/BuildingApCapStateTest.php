@@ -62,12 +62,12 @@ class BuildingApCapStateTest extends TestCase
     /** @return array<string, mixed>|null the `ap_cap` of the colony-screen row */
     private function viewCap(int $buildingId = self::CC_ID): ?array
     {
-        $rows = collect($this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->viewData('buildings'));
+        $rows = collect($this->actingAs($this->bart())->getJson(route('colony.view'))->assertOk()->json('buildings'));
         $row = $rows->firstWhere('building_id', $buildingId);
         $this->assertNotNull($row);
-        $this->assertTrue(property_exists($row, 'ap_cap'), 'row carries ap_cap');
+        $this->assertArrayHasKey('ap_cap', $row, 'row carries ap_cap');
 
-        return $row->ap_cap;
+        return $row['ap_cap'];
     }
 
     /** @return array<string, mixed>|null the `ap_cap` of the techtree instance entry */
@@ -172,7 +172,7 @@ class BuildingApCapStateTest extends TestCase
         $count = function (): int {
             DB::flushQueryLog();
             DB::enableQueryLog();
-            $this->actingAs($this->bart())->get(route('colony.view'))->assertOk();
+            $this->actingAs($this->bart())->getJson(route('colony.view'))->assertOk();
             $n = count(DB::getQueryLog());
             DB::disableQueryLog();
 

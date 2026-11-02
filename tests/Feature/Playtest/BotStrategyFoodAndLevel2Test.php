@@ -68,8 +68,8 @@ class BotStrategyFoodAndLevel2Test extends TestCase
         $bot = $this->bootWithAgrardomAtLevel(1);
         $this->placeAt($bot, self::SCIENCELAB, 1);
         $this->placeAt($bot, self::HANGAR, 1);
-        // One eater per colonist: the need clearly exceeds Lv1 production (8).
-        config(['game.food.supply_per_eater' => 1]);
+        // Pin Lv1 output low so the need clearly exceeds it, whatever the balance curve says.
+        config(['game.production_curve.41.5.1' => 8]);
         $this->setOrganics($bot, 0);
         $this->squeezeFreeSupplyTo($bot, 4);
         $this->assertGreaterThan(8, app(ResourcesService::class)->foodNeed($bot->colonyId));

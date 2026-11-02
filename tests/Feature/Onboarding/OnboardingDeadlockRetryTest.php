@@ -106,12 +106,12 @@ class OnboardingDeadlockRetryTest extends TestCase
         config(['auth.invite_code' => null]);
         $this->deadlockOnce();
 
-        $this->post('/register', [
+        $this->postJson(route('register'), [
             'username' => 'retry_register',
             'email' => 'retry_register@example.invalid',
             'password' => 'secret-password',
             'password_confirmation' => 'secret-password',
-        ])->assertSessionHasNoErrors();
+        ])->assertCreated()->assertJsonStructure(['token']);
 
         $userIds = DB::table('user')->where('username', 'retry_register')->pluck('user_id');
         $this->assertCount(1, $userIds);

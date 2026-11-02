@@ -9,7 +9,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-/** Server-markup tests for the cantina "Beziehung pflegen" panel (T41, path depth). */
+/**
+ * Cantina "Beziehung pflegen" panel (T41, path depth): the relationship rows from the
+ * Cantina JSON (BarController::data()) and their rendering in the Svelte page
+ * frontend/src/routes/(game)/cantina/+page.svelte.
+ */
 class BarRelationshipViewTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,9 +31,20 @@ class BarRelationshipViewTest extends TestCase
         );
     }
 
-    private function page(): string
+    private function data(): array
     {
-        return $this->actingAs(User::find(3))->get(route('colony.bar'))->assertOk()->getContent();
+        return $this->actingAs(User::find(3))->getJson(route('colony.bar'))->assertOk()->json();
+    }
+
+    private function cantinaPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
+    }
+
+    /** @return array<string, array<string, mixed>> relationship rows keyed by character slug */
+    private function relationships(): array
+    {
+        return collect($this->data()['relationships'])->keyBy('key')->all();
     }
 
     private function met(string $slug, int $level = 0, int $apSpend = 0): void
@@ -40,14 +55,9 @@ class BarRelationshipViewTest extends TestCase
         ]);
     }
 
-    private function jsonText(string $s): string
-    {
-        return substr(json_encode($s, 15), 1, -1);
-    }
-
     public function test_bartender_stands_behind_the_counter_inside_the_picture_not_below_it(): void
     {
-        $html = $this->page();
+        $html = $this->cantinaPage();
 
         $viewport = strpos($html, 'class="cantina-viewport"');
         $counter = strpos($html, 'data-bartender-counter');
@@ -56,88 +66,89 @@ class BarRelationshipViewTest extends TestCase
         $this->assertNotFalse($counter);
         $this->assertGreaterThan($viewport, $counter);
         $this->assertLessThan($panel, $counter);
-        // The counter sits before the empty-hint / swipe dots, i.e. still inside the viewport.
+        // The counter sits before the swipe dots, i.e. still inside the viewport.
         $this->assertLessThan(strpos($html, 'swipe-dots'), $counter);
-        $this->assertStringContainsString('@click="openBartender()"', $html);
-        $this->assertSame(1, substr_count($html, '@click="openBartender()"'));
-        $this->assertStringContainsString(__('colony.bartender_counter_role'), $html);
+        $this->assertSame(1, substr_count($html, "open('bartender');"));
+        $this->assertStringContainsString("t('colony.bartender_counter_role')", $html);
         // His conversation options stay reachable in the relationship panel.
-        $this->assertStringContainsString('data-character="bartender"', $html);
+        $this->assertArrayHasKey('bartender', $this->relationships());
     }
 
     public function test_only_bartender_listed_when_nobody_met(): void
     {
-        $html = $this->page();
+        $this->assertSame(['bartender'], array_keys($this->relationships()));
 
-        $this->assertStringContainsString('bar-relationships', $html);
-        $this->assertStringContainsString(__('pathdepth.ui_relationship_title'), $html);
-        $this->assertStringContainsString('data-character="bartender"', $html);
-        $this->assertSame(1, substr_count($html, 'data-character="'));
+        $html = $this->cantinaPage();
+        $this->assertStringContainsString("t('pathdepth.ui_relationship_title')", $html);
+        $this->assertStringContainsString('{#each data.relationships as rel (rel.key)}', $html);
+        $this->assertStringContainsString('data-character={rel.key}', $html);
     }
 
     public function test_met_characters_are_listed_and_unmet_are_not(): void
     {
         $this->met('smuggler');
-        $html = $this->page();
+        $rows = $this->relationships();
 
-        $this->assertStringContainsString('data-character="smuggler"', $html);
-        $this->assertStringContainsString(config('characters.smuggler.name'), $html);
-        $this->assertStringNotContainsString('data-character="veteran"', $html);
-        $this->assertSame(2, substr_count($html, 'data-character="'));
+        $this->assertArrayHasKey('smuggler', $rows);
+        $this->assertSame(config('characters.smuggler.name'), $rows['smuggler']['name']);
+        $this->assertArrayNotHasKey('veteran', $rows);
+        $this->assertCount(2, $rows);
     }
 
     public function test_row_has_cost_chip_and_route(): void
     {
-        $html = $this->page();
+        $html = $this->cantinaPage();
 
-        $this->assertStringContainsString('ap-cost-chip', $html);
-        $this->assertStringContainsString(
-            route('colony.pathdepth.invest', ['kind' => 'character', 'key' => '__KEY__']),
-            str_replace('\\/', '/', $html)
+        $this->assertStringContainsString('<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{opt.ap} AP</span>', $html);
+        $this->assertStringEndsWith(
+            '/colony/path-depth/character/__KEY__/invest',
+            route('colony.pathdepth.invest', ['kind' => 'character', 'key' => '__KEY__'])
         );
+        $this->assertStringContainsString('`/colony/path-depth/character/${rel.key}/invest`', $html);
     }
 
     public function test_state_is_carried_for_the_row(): void
     {
         $this->met('smuggler', 1, 3);
-        $html = $this->page();
+        $row = $this->relationships()['smuggler'];
 
-        $this->assertStringContainsString('"ap_spend":3', $html);
-        $this->assertStringContainsString('"level_cap":2', $html);
+        $this->assertSame(3, $row['ap_spend']);
+        $this->assertSame(2, $row['level_cap']);
     }
 
     public function test_building_cap_names_cantina_as_reason(): void
     {
         $this->met('smuggler', 2);
-        $html = $this->page();
+        $row = $this->relationships()['smuggler'];
 
         $reason = __('pathdepth.ui_locked_building', ['building' => __('buildings.bar'), 'level' => 2]);
-        $this->assertStringContainsString($this->jsonText($reason), $html);
+        $this->assertSame($reason, $row['lock_reason']);
     }
 
     public function test_run_and_overall_labels_are_separated_and_codex_page_unchanged(): void
     {
-        $html = $this->page();
-        $this->assertStringContainsString(__('pathdepth.ui_relationship_run_hint'), $html);
+        $this->assertStringContainsString("t('pathdepth.ui_relationship_run_hint')", $this->cantinaPage());
 
-        $codex = $this->actingAs(User::find(3))->get(route('user.codex'))->assertOk()->getContent();
+        $this->actingAs(User::find(3))->getJson(route('user.codex'))->assertOk()->assertJsonStructure(['characters']);
+        $codex = file_get_contents(base_path('frontend/src/routes/(infra)/codex/+page.svelte'));
         $this->assertStringNotContainsString('bar-relationships', $codex);
-        $this->assertStringContainsString(__('colony.codex_page_intro'), $codex);
+        $this->assertStringContainsString("t('colony.codex_page_intro')", $codex);
     }
 
     public function test_texts_follow_locale(): void
     {
-        app()->setLocale('en');
-        $en = $this->page();
-        $this->assertStringContainsString(trans('pathdepth.ui_relationship_title', [], 'en'), $en);
-        $this->assertStringNotContainsString(trans('pathdepth.ui_relationship_title', [], 'de'), $en);
+        // The Svelte page reads its texts from the locale endpoint (lang/{lang}/*.php).
+        $en = $this->getJson('/api/v1/locale/en')->assertOk();
+        $de = $this->getJson('/api/v1/locale/de')->assertOk();
+
+        $en->assertJsonPath('pathdepth.ui_relationship_title', trans('pathdepth.ui_relationship_title', [], 'en'));
+        $de->assertJsonPath('pathdepth.ui_relationship_title', trans('pathdepth.ui_relationship_title', [], 'de'));
+        $this->assertNotSame(trans('pathdepth.ui_relationship_title', [], 'en'), trans('pathdepth.ui_relationship_title', [], 'de'));
     }
 
     public function test_button_label_is_get_to_know_and_hint_has_no_restart_clause(): void
     {
-        $html = $this->page();
-
-        $this->assertStringContainsString($this->jsonText(__('pathdepth.ui_get_to_know')), $html);
+        $this->assertStringContainsString("t('pathdepth.ui_get_to_know')", $this->cantinaPage());
         $this->assertSame('Kennenlernen', trans('pathdepth.ui_get_to_know', [], 'de'));
         $this->assertStringNotContainsString('von vorn', __('pathdepth.ui_relationship_run_hint'));
         $this->assertStringNotContainsString('starts over', trans('pathdepth.ui_relationship_run_hint', [], 'en'));
@@ -146,28 +157,28 @@ class BarRelationshipViewTest extends TestCase
     public function test_conversation_options_replace_the_single_invest_button(): void
     {
         $this->met('smuggler', 0, 1);
-        $html = $this->page();
+        $row = $this->relationships()['smuggler'];
 
         // Options travel with the row (names from the pool, effective AP cost, configured cost to send).
-        $this->assertStringContainsString('"conversation":{"cap":{"cap":'.config('path_depth.conversation_ap_cap_per_sol.base'), $html);
-        foreach (['short', 'normal', 'long'] as $key) {
-            $this->assertStringContainsString('"key":"'.$key.'"', $html);
-        }
-        $this->assertStringContainsString('x-for="opt in rel.conversation.options"', $html);
+        $this->assertSame((int) config('path_depth.conversation_ap_cap_per_sol.base'), $row['conversation']['cap']['cap']);
+        $this->assertSame(['short', 'normal', 'long'], array_column($row['conversation']['options'], 'key'));
+
+        $html = $this->cantinaPage();
+        $this->assertStringContainsString('{#each rel.conversation.options as opt (opt.key)}', $html);
+        $this->assertStringContainsString('investRelation(rel, opt)', $html);
         $this->assertStringNotContainsString('investRelation(rel)', $html);
-        $this->assertStringContainsString(
-            $this->jsonText(__('pathdepth.ui_conversation_cap_tooltip')),
-            $html
-        );
+        $this->assertStringContainsString("t('pathdepth.ui_conversation_cap_tooltip')", $html);
     }
 
     public function test_option_costs_are_clamped_to_the_rest_of_the_level(): void
     {
         config(['path_depth.conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 10]]);
         $this->met('smuggler', 0, 1);
-        $html = $this->page();
+        $long = collect($this->relationships()['smuggler']['conversation']['options'])->firstWhere('key', 'long');
 
         // level 1 costs 4, 1 spent -> the long option shows 3 AP but still sends cost 10
-        $this->assertStringContainsString('"ap":3,"cost":10,"capped":false', $html);
+        $this->assertSame(3, $long['ap']);
+        $this->assertSame(10, $long['cost']);
+        $this->assertFalse($long['capped']);
     }
 }

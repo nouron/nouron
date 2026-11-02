@@ -7,10 +7,11 @@ use App\Models\User;
 use App\Services\OnboardingService;
 use App\Support\DeadlockRetry;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Handles new player registration.
@@ -20,14 +21,13 @@ class RegisterController extends Controller
 {
     public function __construct(private readonly OnboardingService $onboardingService) {}
 
-    public function showRegistrationForm()
+    /** Tells the registration form whether to ask for the beta invite code. */
+    public function showRegistrationForm(): JsonResponse
     {
-        return view('auth.register', [
-            'inviteRequired' => config('auth.invite_code') !== null,
-        ]);
+        return response()->json(['invite_required' => config('auth.invite_code') !== null]);
     }
 
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $inviteCode = config('auth.invite_code');
 
@@ -47,7 +47,7 @@ class RegisterController extends Controller
         ]);
 
         try {
-            [$user, $colony] = DeadlockRetry::transaction(function () use ($validated) {
+            [$user] = DeadlockRetry::transaction(function () use ($validated) {
                 $user = User::create([
                     'username' => $validated['username'],
                     'display_name' => $validated['username'],
@@ -67,9 +67,9 @@ class RegisterController extends Controller
             }, OnboardingService::DEADLOCK_ATTEMPTS);
         } catch (\RuntimeException $e) {
             if (str_contains($e->getMessage(), 'No free planets')) {
-                return back()->withErrors([
+                throw ValidationException::withMessages([
                     'username' => 'Derzeit sind leider keine freien Planeten verfügbar. Bitte versuche es später erneut.',
-                ])->onlyInput('username', 'email');
+                ]);
             }
             // Never the message: a QueryException carries the SQL with its bindings
             // (e-mail, password hash). Class and error codes only, like DeadlockRetry.
@@ -80,14 +80,12 @@ class RegisterController extends Controller
                 'driver_code' => isset($info[1]) ? (int) $info[1] : null,
             ]);
 
-            return back()->withErrors([
+            throw ValidationException::withMessages([
                 'username' => 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
-            ])->onlyInput('username', 'email');
+            ]);
         }
 
-        Auth::login($user);
-        $request->session()->put('activeIds.colonyId', $colony->id);
-
-        return redirect()->route('lobby');
+        // Logged in right away: bearer token for the SvelteKit frontend (ADR 0006).
+        return response()->json(['token' => $user->createToken('spa')->plainTextToken], 201);
     }
 }

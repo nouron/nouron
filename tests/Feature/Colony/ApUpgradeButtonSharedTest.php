@@ -8,8 +8,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * One shared "upgrade button with segmented AP bar" (partials/ap-upgrade-button.blade.php +
- * public/js/ap-bar.js + public/css/ap-upgrade-button.css) renders both the colony
+ * One shared "upgrade button with segmented AP bar" (frontend ApUpgradeButton.svelte +
+ * lib/js/ap-bar.js + lib/styles/ap-upgrade-button.css) renders both the colony
  * "Ausbauen" button and the techtree Kenntnis level-up button. No duplicated bar
  * logic or styles may remain in the screen-specific files.
  */
@@ -23,57 +23,71 @@ class ApUpgradeButtonSharedTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
     }
 
-    private function page(string $route): string
+    private function frontend(string $path): string
     {
-        return $this->actingAs(User::where('user_id', 3)->firstOrFail())
-            ->get(route($route))->assertOk()->getContent();
+        return file_get_contents(base_path('frontend/src/'.$path));
     }
 
-    public function test_shared_partial_exists_and_old_bar_partial_is_gone(): void
+    private function button(): string
     {
-        $this->assertFileExists(resource_path('views/partials/ap-upgrade-button.blade.php'));
-        $this->assertFileDoesNotExist(resource_path('views/colony/partials/ap-bar.blade.php'));
+        return $this->frontend('lib/components/ApUpgradeButton.svelte');
+    }
+
+    public function test_shared_component_exists_and_wires_shared_logic_and_styles(): void
+    {
+        $this->assertFileExists(base_path('frontend/src/lib/components/ApUpgradeButton.svelte'));
+        $button = $this->button();
+
+        $this->assertStringContainsString('ap-upgrade-btn', $button);
+        $this->assertStringContainsString('btn-seg-limit', $button);
+        $this->assertStringContainsString('role="tooltip"', $button);
+        $this->assertStringContainsString("import '#lib/js/ap-bar.js'", $button);
+        $this->assertStringContainsString("import '#lib/styles/ap-upgrade-button.css'", $button);
     }
 
     public function test_both_screens_render_the_shared_button(): void
     {
-        foreach (['colony.view', 'techtree.index'] as $route) {
-            $html = $this->page($route);
-            $this->assertStringContainsString('ap-upgrade-btn', $html, $route);
-            $this->assertStringContainsString('btn-seg-limit', $html, $route);
-            $this->assertStringContainsString('role="tooltip"', $html, $route);
-            $this->assertStringContainsString('js/ap-bar.js', $html, $route);
-            $this->assertStringContainsString('css/ap-upgrade-button.css', $html, $route);
+        foreach (['routes/(game)/colony/+page.svelte', 'routes/(game)/techtree/+page.svelte'] as $page) {
+            $svelte = $this->frontend($page);
+            $this->assertStringContainsString("import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte'", $svelte, $page);
+            $this->assertStringContainsString('<ApUpgradeButton', $svelte, $page);
         }
     }
 
     public function test_techtree_knowledge_uses_bar_button_not_old_segments(): void
     {
-        $html = $this->page('techtree.index');
-        $this->assertStringNotContainsString('ap-seg--done', $html);
-        $this->assertStringContainsString("investAp(selectedTech, 'research', 1)", html_entity_decode($html, ENT_QUOTES));
+        $techtree = $this->frontend('routes/(game)/techtree/+page.svelte');
+
+        $this->assertStringNotContainsString('ap-seg--done', $techtree);
+        $this->assertStringContainsString('onclick={() => investAp(tech)}', $techtree);
+        $this->assertStringContainsString('chip="research"', $techtree);
     }
 
     public function test_bar_logic_and_styles_live_only_in_the_shared_files(): void
     {
-        $shared = file_get_contents(public_path('js/ap-bar.js'));
+        $shared = $this->frontend('lib/js/ap-bar.js');
+        $hexgrid = $this->frontend('lib/js/colony-hexgrid.js');
+        $colonyPage = $this->frontend('routes/(game)/colony/+page.svelte');
         foreach (['apCapReached', 'apSegClasses', 'apCapLimitPos'] as $fn) {
             $this->assertStringContainsString($fn, $shared);
-            $this->assertStringNotContainsString($fn.'(building'.($fn === 'apSegClasses' ? ', i) {' : ') {'), file_get_contents(public_path('js/colony-hexgrid.js')));
+            $this->assertStringNotContainsString($fn, $hexgrid);
+            $this->assertStringNotContainsString($fn, $colonyPage);
         }
 
-        $css = file_get_contents(public_path('css/ap-upgrade-button.css'));
+        $css = $this->frontend('lib/styles/ap-upgrade-button.css');
+        $colonyCss = $this->frontend('lib/styles/colony-view.css').$this->frontend('lib/styles/colony-shared.css');
+        $techtreeCss = $this->frontend('lib/styles/techtree-view.css');
         foreach (['.btn-seg--today', '.btn-seg--locked', '.btn-seg-limit', '.tile-action-btn__tip'] as $sel) {
             $this->assertStringContainsString($sel, $css);
-            $this->assertStringNotContainsString($sel.' ', file_get_contents(public_path('css/colony.css')));
-            $this->assertStringNotContainsString($sel, file_get_contents(public_path('css/techtree-view.css')));
+            $this->assertStringNotContainsString($sel, $colonyCss);
+            $this->assertStringNotContainsString($sel, $techtreeCss);
         }
-        $this->assertStringNotContainsString('.ap-seg', file_get_contents(public_path('css/techtree-view.css')));
+        $this->assertStringNotContainsString('.ap-seg', $techtreeCss);
     }
 
     public function test_red_primary_variant_has_dedicated_bar_styles(): void
     {
-        $css = file_get_contents(public_path('css/ap-upgrade-button.css'));
+        $css = $this->frontend('lib/styles/ap-upgrade-button.css');
 
         foreach (['', '--filled', '--today', '--free', '--locked'] as $state) {
             $this->assertStringContainsString(
@@ -88,7 +102,7 @@ class ApUpgradeButtonSharedTest extends TestCase
 
     public function test_cap_decoration_only_shows_once_ap_was_invested(): void
     {
-        $js = file_get_contents(public_path('js/ap-bar.js'));
+        $js = $this->frontend('lib/js/ap-bar.js');
 
         // Level start (ap_spend 0): plain bar and no marker; reached-state stays independent.
         $this->assertStringContainsString('if (!cap || spend === 0)', $js);
@@ -98,26 +112,28 @@ class ApUpgradeButtonSharedTest extends TestCase
 
     public function test_gate_blocked_state_with_reason_precedence_over_cap_tooltip(): void
     {
-        $js = file_get_contents(public_path('js/ap-bar.js'));
+        $js = $this->frontend('lib/js/ap-bar.js');
         $this->assertStringContainsString('apCapTipApplies', $js);
 
-        $partial = file_get_contents(resource_path('views/partials/ap-upgrade-button.blade.php'));
-        $this->assertStringContainsString('gateReasonExpr', $partial);
+        $button = $this->button();
+        // A gate reason blocks the button and switches the tooltip on.
+        $this->assertStringContainsString('const blocked = $derived(!!gateReason || bar.apCapReached(row) || extraBlocked);', $button);
+        $this->assertStringContainsString('const tipOn = $derived(!!gateReason || bar.apCapTipApplies(row));', $button);
         // Gate reason wins over the cap text in the tooltip.
-        $this->assertMatchesRegularExpression('/\{\{ \$gate \}\} \|\| /', $partial);
+        $this->assertStringContainsString('{gateReason || capTip}', $button);
 
-        $hex = file_get_contents(public_path('js/colony-hexgrid.js'));
-        $this->assertStringContainsString('ccGateReason(building)', $hex);
+        $colonyPage = $this->frontend('routes/(game)/colony/+page.svelte');
+        $this->assertStringContainsString('gateReason={ccGateReason(b)}', $colonyPage);
     }
 
     public function test_gate_tooltip_text_is_the_servers_gate_error_text(): void
     {
-        $html = $this->actingAs(User::where('user_id', 3)->firstOrFail())
-            ->get(route('colony.view'))->assertOk()->getContent();
+        $response = $this->actingAs(User::where('user_id', 3)->firstOrFail())
+            ->getJson(route('colony.view'))->assertOk();
 
-        $text = __('colony.error_building_cc_gate', ['level' => ':level']);
-        $this->assertStringContainsString(json_encode($text), $html);
-        $this->assertStringContainsString('buildingCcLevelOffset', $html);
+        $response->assertJsonPath('ccGateTemplate', __('colony.error_building_cc_gate', ['level' => ':level']));
+        $response->assertJsonPath('buildingCcLevelOffset', (int) config('game.building_cc_level_offset', 0));
+        $this->assertStringContainsString("d.ccGateTemplate.replace(':level'", $this->frontend('routes/(game)/colony/+page.svelte'));
         // Single rule definition: the server uses the same lang key and config offset.
         $controller = file_get_contents(app_path('Http/Controllers/Colony/ColonyController.php'));
         $this->assertStringContainsString("__('colony.error_building_cc_gate'", $controller);

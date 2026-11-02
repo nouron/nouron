@@ -32,12 +32,12 @@ class RegistrationFailureLogTest extends TestCase
 
         Log::spy();
 
-        $this->post(route('register'), [
+        $this->postJson(route('register'), [
             'username' => 'logtester',
             'email' => 'leak@example.com',
             'password' => 'secret1234',
             'password_confirmation' => 'secret1234',
-        ])->assertSessionHasErrors('username');
+        ])->assertStatus(422)->assertJsonValidationErrors('username')->assertJsonMissingPath('token');
 
         Log::shouldHaveReceived('error')->once()->withArgs(function (string $message, array $context = []) {
             $dump = $message.json_encode($context);

@@ -10,7 +10,7 @@ Subagenten-Definitionen für Nouron-Projekt.
 | Konfigurationskeys, DB-Spaltennamen | **Englisch** |
 | `lang/de/*.php` Werte (User-facing Strings) | **Deutsch** |
 | GDD, ROADMAP, CHANGELOG, ADRs | **Deutsch** |
-| Blade-Templates (User-facing Text) | immer via `__('key')`, nie hardcoded |
+| Svelte-Seiten (User-facing Text) | immer via `t('key')` aus `lang/*`, nie hardcoded |
 
 ## Agenten-Übersicht
 
@@ -19,11 +19,11 @@ Subagenten-Definitionen für Nouron-Projekt.
 | `game-designer` | GDD, Mechanics Design, Balancing | Produktionscode schreiben |
 | `game-developer` | Game Logic, Services, Tick-System | GDD schreiben, Frontend bauen |
 | `backend-coder` | PHP/Laravel, Controller, API-Endpoints | GDD/ROADMAP bearbeiten, Frontend bauen |
-| `ui-specialist` | Alpine.js/PicoCSS (neu), Bootstrap/jQuery (Legacy), Blade | PHP-Logik schreiben, lang-Werte setzen |
+| `ui-specialist` | SvelteKit-Frontend (`frontend/`) | PHP-Logik schreiben, lang-Werte setzen |
 | `db-migration-agent` | Schema, Migrations, MySQL, Seeders | Game Logic, lang-Dateien ändern |
 | `qa-tester` | Tests, Security, Regression, Cheat-Detection | Produktionscode ändern |
 | `project-manager` | Roadmap, ADRs, Feature-Breakdown, CHANGELOG | Code schreiben, lang-Dateien ändern |
-| `content-writer` | lang/de/*.php Texte, Lore, Tooltips, INNN | Code schreiben, Blade/JS ändern |
+| `content-writer` | lang/de/*.php Texte, Lore, Tooltips, INNN | Code schreiben, Frontend ändern |
 
 ## Typischer Feature-Workflow
 
@@ -32,7 +32,7 @@ Subagenten-Definitionen für Nouron-Projekt.
 2. db-migration-agent → Schema-Änderungen + Migration
 3. game-developer     → Game Logic / Service implementieren
 4. backend-coder      → Controller + API Endpoint
-5. ui-specialist      → Frontend View + AJAX (Alpine.js + PicoCSS für neue Screens)
+5. ui-specialist      → Svelte-Seite gegen den `/api/v1`-Endpoint
 6. qa-tester          → Unit + Integration Tests (proaktiv nach jedem Schritt)
 7. content-writer     → lang/de/*.php Texte, Tooltips, Lore (proaktiv bei neuen Entitäten)
 8. project-manager    → CHANGELOG-Eintrag, ROADMAP aktualisieren (auf Anfrage)
@@ -40,12 +40,7 @@ Subagenten-Definitionen für Nouron-Projekt.
 
 ## Frontend-Stack
 
-| Screen-Typ | Stack |
-|---|---|
-| Neue Screens (Phase 3b+) | Alpine.js 3 + PicoCSS 2 + SVG |
-| Legacy-Screens (pre-3b) | jQuery 3 + Bootstrap 5 (wird schrittweise migriert) |
-
-**Nie mischen**: Kein jQuery auf neuen Screens, kein Alpine auf Legacy-Screens.
+SvelteKit-SPA in `frontend/` (Svelte 5, eigenes CSS auf den Design-Tokens, SVG/Canvas), Laravel als reine JSON-API unter `/api/v1` mit Sanctum-Token (ADR 0006). Kein Blade, Alpine, PicoCSS, jQuery oder Bootstrap mehr.
 
 ## Docs-Struktur
 

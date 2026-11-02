@@ -125,12 +125,14 @@ class TradeChannelPricesTest extends TestCase
         $this->setTradingPostLevel(2);
         $this->insertActiveMerchantItem(200);
 
-        $html = $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
+        $items = $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.bar'))->assertOk()->json('merchantItems');
 
-        $this->assertStringContainsString('"price_credits":176', $html, 'the page data must carry the charged price (200 x 0.88)');
-        $this->assertStringContainsString('item.price_credits', $html, 'the list must display the charged price, not the base cost');
+        $this->assertSame(176, $items[0]['price_credits'], 'the page data must carry the charged price (200 x 0.88)');
+        $this->assertSame(200, $items[0]['cost_credits']);
         // The chip shows the charged price; the base cost only appears as the struck-through "was" price (P2b).
-        $this->assertStringContainsString('<span class="res-amount" x-text="item.price_credits">', $html);
-        $this->assertStringNotContainsString('<span class="res-amount" x-text="item.cost_credits">', $html);
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
+        $this->assertStringContainsString('{@render chip(1, item.price_credits)}', $page);
+        $this->assertStringNotContainsString('{@render chip(1, item.cost_credits)}', $page);
+        $this->assertStringContainsString('{#if item.price_credits < item.cost_credits}', $page);
     }
 }

@@ -6,7 +6,6 @@ use App\Models\Colony;
 use App\Services\Concerns\ValidatesId;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use RuntimeException;
 
 /**
@@ -68,23 +67,6 @@ class ColonyService
         }
 
         throw new RuntimeException('No primary colony found for user.');
-    }
-
-    /**
-     * Store the active colony in the session (only if the colony belongs to
-     * the currently active user).
-     */
-    public function setActiveColony(int $selectedColonyId): void
-    {
-        $userId = Session::get('activeIds.userId');
-        if ($this->checkColonyOwner($selectedColonyId, $userId)) {
-            Session::put('activeIds.colonyId', $selectedColonyId);
-        }
-    }
-
-    public function setSelectedColony(int $selectedColonyId): void
-    {
-        Session::put('selectedIds.colonyId', $selectedColonyId);
     }
 
     /**

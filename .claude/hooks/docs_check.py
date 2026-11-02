@@ -7,7 +7,7 @@ Modes (hook input JSON arrives on stdin):
   stop   Stop hook -> reminds once (stop_hook_active guard) when the hard rules are violated.
 
 Rules (diff = PR diff for merge, branch-vs-master + working tree for stop):
-  hard  any app/, config/, lang/, resources/, public/, database/ change needs CHANGELOG.md in the diff
+  hard  any app/, config/, lang/, frontend/, public/, database/ change needs CHANGELOG.md in the diff
   hard  config/{game,buildings,advisors,ships,missions,knowledge}.php needs docs/game-reference.md in the diff,
         or the PR body says "game-reference: nicht nötig" (merge mode only)
   warn  mechanic-relevant change (app/, config/) without docs/GDD.md or ROADMAP.md in the diff
@@ -19,7 +19,7 @@ import re
 import subprocess
 import sys
 
-CODE = ("app/", "config/", "lang/", "resources/", "public/", "database/")
+CODE = ("app/", "config/", "lang/", "frontend/", "public/", "database/")
 REF_CONFIGS = {f"config/{n}.php" for n in ("game", "buildings", "advisors", "ships", "missions", "knowledge")}
 SKIP_MARK = "game-reference: nicht nötig"
 

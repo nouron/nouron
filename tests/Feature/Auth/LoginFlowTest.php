@@ -6,19 +6,20 @@ use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
- * LOW-1: Login brute-force throttle and auth flow tests.
+ * LOW-1: Login brute-force throttle and auth flow tests against POST /api/v1/auth/login.
  *
  * Covers:
  * - LOW-1 (throttle): 5 failed attempts are allowed; the 6th returns 429
- * - Wrong password shows error on username field, guest remains unauthenticated
- * - Non-existent username shows error, guest remains unauthenticated
- * - Successful login with username → redirect to lobby
- * - Successful login with email → redirect to lobby
- * - Throttle is per IP key — a different IP (different key) is not blocked
  * - After throttle triggers, the correct password also returns 429 (locked out)
+ * - Non-existent username shows a validation error and issues no token
+ * - Failed attempts below the limit do not block a following correct login
+ *
+ * Login by username/e-mail, wrong password and logout are covered by
+ * tests/Feature/Api/AuthApiTest.php.
  *
  * Note: the throttle middleware is `throttle:5,1` (5 attempts per 1 minute).
  * RefreshDatabase + RateLimiter::clear() ensure isolation between tests.
@@ -42,77 +43,25 @@ class LoginFlowTest extends TestCase
         parent::tearDown();
     }
 
+    private function login(string $login, string $password): TestResponse
+    {
+        return $this->postJson(route('login'), ['login' => $login, 'password' => $password]);
+    }
+
     // ── Auth flow: wrong credentials ─────────────────────────────────────────
 
     /**
-     * Wrong password must return a validation error on the username field,
-     * and the user must remain a guest.
-     */
-    public function test_wrong_password_shows_error_and_stays_guest(): void
-    {
-        User::factory()->create([
-            'username' => 'testplayer',
-            'password' => bcrypt('correct_password'),
-        ]);
-
-        $this->post(route('login'), [
-            'username' => 'testplayer',
-            'password' => 'wrong_password',
-        ])->assertSessionHasErrors('username');
-
-        $this->assertGuest();
-    }
-
-    /**
-     * Non-existent username must also return an error without leaking whether
-     * the username exists.
+     * Non-existent username must return the same error as a wrong password,
+     * without leaking whether the username exists, and no token.
      */
     public function test_unknown_username_shows_error(): void
     {
-        $this->post(route('login'), [
-            'username' => 'nobody_here',
-            'password' => 'irrelevant',
-        ])->assertSessionHasErrors('username');
+        $this->login('nobody_here', 'irrelevant')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['login' => __('auth.failed')])
+            ->assertJsonMissingPath('token');
 
-        $this->assertGuest();
-    }
-
-    // ── Auth flow: successful login ──────────────────────────────────────────
-
-    /**
-     * Correct credentials with username → redirected to lobby.
-     */
-    public function test_successful_login_with_username_redirects_to_galaxy(): void
-    {
-        $user = User::factory()->create([
-            'username' => 'validplayer',
-            'password' => bcrypt('mypassword'),
-        ]);
-
-        $this->post(route('login'), [
-            'username' => 'validplayer',
-            'password' => 'mypassword',
-        ])->assertRedirect(route('lobby'));
-
-        $this->assertAuthenticatedAs($user);
-    }
-
-    /**
-     * Correct credentials with email address → redirected to lobby.
-     */
-    public function test_successful_login_with_email_redirects_to_galaxy(): void
-    {
-        $user = User::factory()->create([
-            'email' => 'valid@example.com',
-            'password' => bcrypt('mypassword'),
-        ]);
-
-        $this->post(route('login'), [
-            'username' => 'valid@example.com',
-            'password' => 'mypassword',
-        ])->assertRedirect(route('lobby'));
-
-        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
     // ── LOW-1: brute-force throttle ──────────────────────────────────────────
@@ -128,20 +77,14 @@ class LoginFlowTest extends TestCase
             'password' => bcrypt('secret'),
         ]);
 
-        // Attempts 1–5: each should fail with a session error, not 429
+        // Attempts 1–5: each should fail with a validation error, not 429
         for ($i = 1; $i <= 5; $i++) {
-            $response = $this->post(route('login'), [
-                'username' => 'victim',
-                'password' => 'wrong',
-            ]);
-            $response->assertStatus(302, "Attempt {$i} should redirect (not 429 yet).");
+            $this->login('victim', 'wrong')
+                ->assertStatus(422, "Attempt {$i} should fail validation (not 429 yet).");
         }
 
         // 6th attempt: must be throttled
-        $this->post(route('login'), [
-            'username' => 'victim',
-            'password' => 'wrong',
-        ])->assertStatus(429);
+        $this->login('victim', 'wrong')->assertStatus(429);
     }
 
     /**
@@ -157,20 +100,15 @@ class LoginFlowTest extends TestCase
 
         // Exhaust the 5 allowed attempts with wrong passwords
         for ($i = 0; $i < 5; $i++) {
-            $this->post(route('login'), [
-                'username' => 'lockedout',
-                'password' => 'wrong',
-            ]);
+            $this->login('lockedout', 'wrong');
         }
 
-        // Now try the correct password — must still be blocked
-        $this->post(route('login'), [
-            'username' => 'lockedout',
-            'password' => 'correct',
-        ])->assertStatus(429);
+        // Now try the correct password — must still be blocked, no token issued
+        $this->login('lockedout', 'correct')
+            ->assertStatus(429)
+            ->assertJsonMissingPath('token');
 
-        // Must remain a guest
-        $this->assertGuest();
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
     /**
@@ -185,10 +123,7 @@ class LoginFlowTest extends TestCase
         ]);
 
         for ($i = 0; $i < 5; $i++) {
-            $response = $this->post(route('login'), [
-                'username' => 'boundary_user',
-                'password' => 'wrong',
-            ]);
+            $response = $this->login('boundary_user', 'wrong');
             // Must not be 429 on any of the first 5 attempts
             $this->assertNotEquals(429, $response->getStatusCode(),
                 'Attempt '.($i + 1).' must not be throttled.');
@@ -196,14 +131,13 @@ class LoginFlowTest extends TestCase
     }
 
     /**
-     * Successful login clears the throttle counter so the user can log out
-     * and back in without being rate-limited.
+     * Failed attempts below the limit do not lock out a following correct login.
      *
-     * Note: Laravel's built-in throttle middleware does NOT automatically clear
-     * the counter on successful login, but this test documents actual behavior.
-     * The throttle window is 1 minute; between tests RateLimiter is cleared.
+     * Note: Laravel's built-in throttle middleware does NOT clear the counter
+     * on successful login; the throttle window is 1 minute and the RateLimiter
+     * is cleared between tests.
      */
-    public function test_failed_attempts_are_tracked_per_session(): void
+    public function test_failed_attempts_below_the_limit_still_allow_login(): void
     {
         User::factory()->create([
             'username' => 'sessiontest',
@@ -211,16 +145,13 @@ class LoginFlowTest extends TestCase
         ]);
 
         // Two failed attempts
-        $this->post(route('login'), ['username' => 'sessiontest', 'password' => 'bad']);
-        $this->post(route('login'), ['username' => 'sessiontest', 'password' => 'bad']);
+        $this->login('sessiontest', 'bad')->assertStatus(422);
+        $this->login('sessiontest', 'bad')->assertStatus(422);
 
         // Then succeed — should still be allowed (< 5 attempts used)
-        $this->post(route('login'), [
-            'username' => 'sessiontest',
-            'password' => 'password',
-        ])->assertRedirect(route('lobby'));
-
-        $this->assertAuthenticated();
+        $this->login('sessiontest', 'password')
+            ->assertOk()
+            ->assertJsonStructure(['token']);
     }
 
     // ── Helper ───────────────────────────────────────────────────────────────

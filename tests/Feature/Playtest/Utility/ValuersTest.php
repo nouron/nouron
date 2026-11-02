@@ -89,11 +89,12 @@ class ValuersTest extends TestCase
         $this->setResource($bot, 5, 20);
         DB::table('colony_ships')->where('colony_id', $bot->colonyId)->delete();
         $foodNeed = app(ResourcesService::class)->foodNeed($bot->colonyId);
-        $this->assertLessThanOrEqual(8, $foodNeed, 'fixture: Lv1 (8 Or) covers the colony');
+        $lv1 = (int) config('game.production_curve.41.5.1');
+        $this->assertLessThanOrEqual($lv1, $foodNeed, 'fixture: Lv1 covers the colony');
 
         $without = Valuers::upgrade($bot, $this->ctx($bot), Valuers::buildingRow($bot, 41, 1));
         // Enough ships that their provisions (3 Or/Sol each) exceed what Lv1 leaves over.
-        foreach (range(1, intdiv(8 - $foodNeed, 3) + 1) as $bay) {
+        foreach (range(1, intdiv($lv1 - $foodNeed, 3) + 1) as $bay) {
             $this->addShip($bot, (int) config('ships.freighter.id'), $bay);
         }
         $with = Valuers::upgrade($bot, $this->ctx($bot), Valuers::buildingRow($bot, 41, 1));

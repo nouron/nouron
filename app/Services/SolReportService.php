@@ -172,7 +172,7 @@ class SolReportService
             'completed_sol' => $completedSol,
             'next_sol' => $nextSol,
             'run_status' => $run->status,
-            'result_url' => $finale !== null ? route('run.result', $run->id) : null,
+            'result_url' => $finale !== null ? '/run/'.$run->id : null, // SvelteKit route
             'finale' => $finale,
             'groups' => $groups,
             'phase_progress' => $this->phaseProgress($run),

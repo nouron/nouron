@@ -22,12 +22,12 @@ class OnboardingTest extends TestCase
 
     public function test_registration_creates_colony_with_starting_resources(): void
     {
-        $this->post(route('register'), [
+        $this->postJson(route('register'), [
             'username' => 'newplayer',
             'email' => 'new@example.com',
             'password' => 'secret1234',
             'password_confirmation' => 'secret1234',
-        ])->assertRedirect(route('lobby'));
+        ])->assertCreated();
 
         $user = User::where('username', 'newplayer')->firstOrFail();
 
@@ -46,7 +46,7 @@ class OnboardingTest extends TestCase
             ->pluck('amount', 'resource_id');
         $this->assertEquals(config('game.onboarding.start_regolith'), $res[3]);   // regolith
         $this->assertEquals(0, $res[4]);   // werkstoffe — produced by harvester, no starting stock
-        $this->assertEquals(0, $res[5]);   // organika   — produced by bioFacility, no starting stock
+        $this->assertEquals(10, $res[5]);  // organika   — small start stock prevents Sol-1 hunger (T43-G7)
 
         // CommandCenter: level 1, status 16/20 (80% — slightly damaged, functional).
         $cc = DB::table('colony_buildings')
@@ -89,23 +89,5 @@ class OnboardingTest extends TestCase
         $this->assertEquals($user->user_id, $colony->user_id);
         // Colonies no longer carry a galaxy/planet assignment — the column was dropped.
         $this->assertFalse(Schema::hasColumn('glx_colonies', 'system_object_id'));
-    }
-
-    public function test_login_triggers_onboarding_for_user_without_colony(): void
-    {
-        // Create a user but no colony
-        $user = User::factory()->create([
-            'username' => 'nocolony',
-            'password' => bcrypt('secret123'),
-        ]);
-
-        $this->assertDatabaseMissing('glx_colonies', ['user_id' => $user->user_id]);
-
-        $this->post(route('login'), [
-            'username' => 'nocolony',
-            'password' => 'secret123',
-        ])->assertRedirect(route('lobby'));
-
-        $this->assertDatabaseHas('glx_colonies', ['user_id' => $user->user_id]);
     }
 }

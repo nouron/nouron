@@ -38,22 +38,31 @@ class FindFlightUiTest extends TestCase
         return User::where('user_id', 3)->firstOrFail();
     }
 
+    private function colonyPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
+    }
+
     public function test_colony_view_ships_the_find_action_and_the_flight_route(): void
     {
-        $html = $this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->getContent();
+        $tiles = $this->actingAs($this->bart())->getJson(route('colony.view'))->assertOk()->json('tiles');
+        $tile = collect($tiles)->first(fn ($t) => (int) $t['q'] === 2 && (int) $t['r'] === 0);
 
-        $this->assertStringContainsString('"reason":"flight"', $html);
-        $this->assertStringContainsString('/colony/hangar/__BAY__/dispatch', $html);
+        $this->assertNotNull($tile);
+        $this->assertSame('flight', $tile['find']['action']['reason']);
+        $this->assertSame(0, $tile['find']['action']['bay']);
+        $this->assertStringEndsWith('/colony/hangar/0/dispatch', route('colony.hangar.dispatch', ['bay' => 0]));
+        $this->assertStringContainsString('`/colony/hangar/${action.bay}/dispatch`', $this->colonyPage());
     }
 
     public function test_colony_view_exposes_organika_for_the_flight_button_gate(): void
     {
         $organika = (int) DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->value('amount');
 
-        $html = $this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->getContent();
+        $this->actingAs($this->bart())->getJson(route('colony.view'))->assertOk()
+            ->assertJsonPath('organika', $organika);
 
-        $this->assertStringContainsString('organika: '.$organika.',', $html);
-        $this->assertStringContainsString('findGateOrganika', $html);
+        $this->assertStringContainsString('if (costs.organika > data.organika)', $this->colonyPage());
     }
 
     public function test_flight_dispatch_answers_with_the_tile_in_flight(): void
@@ -95,10 +104,13 @@ class FindFlightUiTest extends TestCase
 
     public function test_hangar_page_exposes_the_max_status_points_instead_of_a_literal(): void
     {
-        $html = $this->actingAs($this->bart())->get(route('colony.hangar'))->assertOk()->getContent();
+        $this->actingAs($this->bart())->getJson(route('colony.hangar'))->assertOk()
+            ->assertJsonPath('maxShipStatus', (int) config('game.ship_repair.max_status_points'));
 
-        $this->assertStringContainsString('maxStatus: '.(int) config('game.ship_repair.max_status_points'), $html);
-        $this->assertStringNotContainsString("status_points + '/20'", $html);
+        $html = file_get_contents(base_path('frontend/src/routes/(game)/hangar/+page.svelte'));
+        $this->assertStringContainsString('{ship.status_points}/{data.maxShipStatus}', $html);
+        $this->assertStringContainsString('ship.status_points >= data.maxShipStatus', $html);
+        $this->assertStringNotContainsString('{ship.status_points}/20', $html);
         $this->assertStringNotContainsString('status_points >= 20', $html);
     }
 

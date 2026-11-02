@@ -1,0 +1,787 @@
+/* Techtree screen: canvas stage + detail panel. Light mode only, Nouron design tokens. */
+
+[x-cloak] {
+    display: none !important;
+}
+
+.techtree-page {
+    /* Canvas palette (read by lib/js/techtree-canvas.js). Kind colours: buildings blue,
+       knowledge green, ships yellow, advisors violet. */
+    --tt-bg: #ffffff;
+    --tt-surface: #f7f7f5;
+    --tt-raised: #ffffff;
+    --tt-text: #1a1a1e;
+    --tt-text-2: #6b6b7a;
+    --tt-border: #e8e8ec;
+    --tt-border-strong: #d0d0dc;
+    --tt-accent: var(--color-accent, #8c2030);
+    --tt-anthracite: #333333;
+    --tt-cb: #5599dd;
+    --tt-cb-fg: #1e40af;
+    --tt-cb-bg: #dbeafe;
+    --tt-ck: #27ae60;
+    --tt-ck-fg: #166534;
+    --tt-ck-bg: #dcfce7;
+    --tt-cs: #d4a017;
+    --tt-cs-fg: #7a5500;
+    --tt-cs-bg: #fef3c7;
+    --tt-ca: #7c65cc;
+    --tt-ca-fg: #5b21b6;
+    --tt-ca-bg: #ede9fe;
+    position: relative;
+    background: var(--tt-bg);
+    color: var(--tt-text);
+}
+
+/* ── Legend ──────────────────────────────────────────────── */
+.techtree-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 1.1rem;
+    padding: 0.55rem 16px;
+    border-bottom: 1px solid var(--tt-border);
+    font-size: 0.78rem;
+    color: var(--tt-text-2);
+}
+
+.tt-leg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.tt-sw {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%);
+}
+.tt-sw--b {
+    background: var(--tt-cb);
+}
+.tt-sw--k {
+    background: var(--tt-ck);
+}
+.tt-sw--s {
+    background: var(--tt-cs);
+}
+.tt-sw--a {
+    background: var(--tt-ca);
+}
+
+.tt-st {
+    width: 30px;
+    height: 8px;
+    background: var(--tt-text-2);
+    flex-shrink: 0;
+}
+.tt-st--dash {
+    background: repeating-linear-gradient(90deg, var(--tt-text-2) 0 12px, transparent 12px 20px);
+}
+
+@media (max-width: 720px) {
+    .techtree-legend {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .techtree-legend::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ── Stage (height is set by techtree-view.js: viewport below the sticky header) ── */
+.techtree-stage {
+    position: relative;
+    overflow: hidden;
+    min-height: 320px;
+    background: var(--tt-bg);
+}
+
+/* Desktop: the open sidebar takes its width from the stage instead of covering it. */
+@media (min-width: 600px) {
+    .techtree-page--panel .techtree-stage {
+        margin-right: 300px;
+    }
+}
+
+.techtree-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: grab;
+    outline: none;
+}
+.techtree-canvas.drag {
+    cursor: grabbing;
+}
+.techtree-canvas.node {
+    cursor: pointer;
+}
+.techtree-canvas:focus-visible {
+    outline: 2px solid var(--tt-accent);
+    outline-offset: -2px;
+}
+
+.techtree-controls {
+    position: absolute;
+    z-index: 3;
+    top: 12px;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+}
+
+.tt-btn {
+    margin: 0;
+    width: auto;
+    border: 1px solid var(--tt-border-strong);
+    background: var(--tt-raised);
+    color: var(--tt-text);
+    border-radius: 4px;
+    padding: 0 0.8rem;
+    min-height: 40px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.tt-btn:hover {
+    background: var(--tt-surface);
+}
+.tt-btn:focus-visible {
+    outline: 2px solid var(--tt-accent);
+    outline-offset: 2px;
+}
+.tt-btn--sq {
+    width: 40px;
+    padding: 0;
+    font-size: 1.15rem;
+    line-height: 1;
+    align-self: flex-end;
+}
+
+/* Column dots (phones only; hidden by the script on wider screens) */
+.techtree-dots {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    pointer-events: none;
+}
+.techtree-dots[hidden] {
+    display: none !important;
+}
+.techtree-dots button {
+    pointer-events: auto;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.techtree-dots button::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--tt-border-strong);
+    transition:
+        width 0.2s ease,
+        background 0.2s ease;
+}
+.techtree-dots button.on::before {
+    width: 26px;
+    background: var(--tt-accent);
+}
+
+/* Text alternative for the canvas: visually hidden, still keyboard / screen-reader reachable */
+.tt-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    list-style: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .techtree-page * {
+        transition: none !important;
+    }
+}
+
+/* ── Tech detail panel (replaces dialog) ─────────────────── */
+/* Desktop: right sidebar that starts where the canvas stage starts (--tt-top is measured by
+   techtree-view.js because the sticky header's height is dynamic), so the nav stays usable.
+   Phones (<600px): bottom sheet over the lower part of the canvas. */
+.tech-panel {
+    position: fixed;
+    top: var(--tt-top, 0px);
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    background: #fff;
+    border-left: 1px solid var(--color-border, #e8e8ec);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+    z-index: 151;
+    overflow-y: auto;
+    transition: transform 0.2s ease;
+    padding: 0;
+}
+
+.tech-panel-hidden {
+    transform: translateX(100%);
+}
+.tech-panel-visible {
+    transform: translateX(0);
+}
+
+@media (max-width: 599px) {
+    .tech-panel {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: auto;
+        max-height: 60vh;
+        border-left: none;
+        border-top: 1px solid #ddd;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+        border-radius: 12px 12px 0 0;
+    }
+    .tech-panel-hidden {
+        transform: translateY(100%);
+    }
+    .tech-panel-visible {
+        transform: translateY(0);
+    }
+}
+
+.tech-panel .detail-inner {
+    --detail-accent: #3b82f6;
+    --detail-accent-bg: #eff4fe;
+    --detail-accent-line: rgba(59, 130, 246, 0.3);
+    border-top: 4px solid var(--detail-accent);
+    /* Extra top padding: the panel now overlays the header (see .tech-panel
+       above), so the title needs its own breathing room instead of relying
+       on sitting just below the resource bar. */
+    padding: 1.75rem 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    position: relative;
+    background: none;
+    overflow: visible;
+}
+
+.tech-panel .detail-cat-building {
+    --detail-accent: #3b82f6;
+    --detail-accent-bg: #eff4fe;
+    --detail-accent-line: rgba(59, 130, 246, 0.3);
+}
+.tech-panel .detail-cat-research {
+    --detail-accent: #10b981;
+    --detail-accent-bg: #ecf9f5;
+    --detail-accent-line: rgba(16, 185, 129, 0.3);
+}
+.tech-panel .detail-cat-ship {
+    --detail-accent: #f59e0b;
+    --detail-accent-bg: #fef8ec;
+    --detail-accent-line: rgba(245, 158, 11, 0.3);
+}
+.tech-panel .detail-cat-personell {
+    --detail-accent: #8b5cf6;
+    --detail-accent-bg: #f4f0fe;
+    --detail-accent-line: rgba(139, 92, 246, 0.3);
+}
+
+.tech-panel .detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.tech-panel .detail-badges {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tech-panel .detail-type-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--detail-accent);
+    background: var(--detail-accent-bg);
+    border: 1px solid var(--detail-accent-line);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill, 20px);
+}
+
+.tech-panel .detail-x {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--color-text-secondary, #9a9aa4);
+    cursor: pointer;
+    padding: 0.1rem 0.2rem;
+    flex-shrink: 0;
+    margin: -0.1rem -0.2rem 0 0.5rem;
+    border-radius: var(--radius-sm, 4px);
+    transition:
+        color 0.12s,
+        background 0.12s;
+}
+
+.tech-panel .detail-x:hover {
+    color: var(--color-text-primary, #1a1a1e);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Full-bleed building image in techtree detail-inner (padding: 1.25rem) */
+.tech-panel .detail-inner .building-detail-img-wrap {
+    width: calc(100% + 2.5rem);
+    margin: 0 -1.25rem 1rem;
+    overflow: hidden;
+}
+
+.tech-panel .detail-inner .building-detail-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
+/* Effect-description paragraph reads as supplementary copy, not body text —
+   sized to match .detail-ap-hint's existing "secondary helper text" weight
+   in this panel rather than colony.css's generic 0.8rem default, which read
+   too large next to the 0.62–0.64rem meta labels around it. */
+.tech-panel .building-detail-description {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--color-text-secondary, #9a9aa4);
+    opacity: 1;
+    margin: 0 0 1rem;
+}
+
+.tech-panel .detail-title {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #1a1a1e);
+    line-height: 1.3;
+    word-break: break-word;
+    position: relative;
+    z-index: 2;
+}
+
+/* Compact level indicator directly under the title (Owner-Fund 2026-09-02) —
+   pulled up into the title's own bottom margin via a negative top margin so
+   it reads as a subheader of the name, not a body row. Deliberately small:
+   this is a secondary detail, not the headline of the panel. */
+.tech-panel .detail-subhead {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin: -0.7rem 0 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.tech-panel .detail-subhead-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
+}
+
+.tech-panel .detail-subhead-value {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #1a1a1e);
+}
+
+.tech-panel .detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 0;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.tech-panel .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: var(--color-text-primary, #333);
+    padding: 0;
+}
+
+/* Single spacing rhythm: rows within the same per-type wrapper use this
+   margin, top-level siblings (e.g. the AP-invest block) use .detail-body's
+   flex gap above — both set to the same 1rem so the panel doesn't mix two
+   different vertical rhythms. */
+.tech-panel .detail-row + .detail-row {
+    margin-top: 1.25rem;
+}
+
+.tech-panel .detail-row-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
+}
+
+/* Values should read exactly as unobtrusive as .building-detail-description
+   above (Owner-Fund 2026-09-02, round 3: size+weight alone weren't enough —
+   the near-black text-primary color was still the dominant reason these
+   rows looked bold/prominent). Match secondary color + regular weight. */
+.tech-panel .detail-row > span:not(.detail-row-label),
+.tech-panel .detail-row > ul {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--color-text-secondary, #9a9aa4);
+}
+
+.tech-panel .detail-list {
+    margin: 0;
+    padding: 0;
+    padding-left: 0;
+    list-style: none;
+    list-style-position: outside;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* Explicit reset — Pico's base `ul`/`li` rules otherwise leave a
+   marker-position gutter even with list-style: none on the parent alone
+   (Owner-Fund 2026-09-02: Voraussetzungen/Effekte list items read as
+   indented relative to the row label above them). */
+.tech-panel .detail-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+    font-weight: 400;
+    color: var(--color-text-secondary, #9a9aa4);
+    font-size: 0.78rem;
+    margin: 0;
+    padding: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+/* Chip-cloud variant: "Voraussetzungen" and "Effekte" entries render as
+   res-chip badges (resource chip or neutral fallback chip), not full lines
+   of prose — wrap them like a chip row instead of stacking one per line. */
+.tech-panel .detail-list--chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.tech-panel .detail-list--chips li {
+    display: inline-flex;
+}
+
+.tech-panel .detail-close {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--color-border-strong, #d0d0dc);
+    background: transparent;
+    color: var(--color-text-primary, #2c2c2c);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm, 4px);
+    transition:
+        background 0.12s,
+        color 0.12s,
+        border-color 0.12s;
+}
+
+.tech-panel .detail-close:hover {
+    background: var(--color-text-primary, #2c2c2c);
+    border-color: var(--color-text-primary, #2c2c2c);
+    color: #fff;
+}
+
+/* Read-only instance list (A43): one row per placed instance — level,
+   condition, "Zum Tile" deep link. Same Pico list reset as .detail-list. */
+.tech-panel .detail-row.detail-row--instances {
+    margin-top: 1.25rem;
+}
+
+.tech-panel .detail-instance-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.tech-panel .detail-instance-list .detail-instance {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.3rem 0;
+    list-style: none;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #9a9aa4);
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
+    white-space: nowrap;
+}
+
+.tech-panel .detail-instance-list .detail-instance-level {
+    font-weight: 500;
+    color: var(--color-text-primary, #333);
+}
+
+.tech-panel .detail-instance-list .detail-instance-link {
+    margin-left: auto;
+    color: var(--detail-accent);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.tech-panel .detail-instance-list .detail-instance-link:hover {
+    text-decoration: underline;
+}
+
+/* Advisor-specific detail panel */
+.tech-panel .detail-advisor-hired {
+    color: var(--color-success, #16a34a);
+    font-weight: 600;
+}
+
+.tech-panel .detail-cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    padding: 0.6rem 1rem;
+    background: var(--detail-accent-bg);
+    border: 1px solid var(--detail-accent-line);
+    border-radius: var(--radius-sm, 4px);
+    color: var(--detail-accent);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+        background 0.12s,
+        border-color 0.12s;
+}
+
+.tech-panel .detail-cta-link:hover {
+    background: var(--detail-accent);
+    border-color: var(--detail-accent);
+    color: #fff;
+    text-decoration: none;
+}
+
+.tech-panel .detail-ap-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #9a9aa4);
+    margin: 0.6rem 0 0;
+    line-height: 1.4;
+}
+
+@media (max-width: 599px) {
+    .tech-panel .detail-inner {
+        padding: 1.5rem 1.25rem 1.75rem;
+    }
+
+    /* Grabber handle for the mobile bottom sheet — signals "swipeable panel"
+       without needing extra markup or JS. */
+    .tech-panel .detail-inner::before {
+        content: "";
+        position: absolute;
+        top: 0.55rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        border-radius: var(--radius-round, 999px);
+        background: var(--color-border-strong, #d0d0dc);
+    }
+}
+
+/* ── Technology buttons (legacy tree used in technology.blade.php) ──────── */
+a.technology.btn {
+    background: #fff;
+    background-image: none;
+    border: 1px solid #ddd;
+    border-left-width: 4px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #333;
+    padding: 4px 6px;
+    text-align: left;
+    transition:
+        background 0.15s,
+        box-shadow 0.15s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    white-space: normal;
+    line-height: 1.3;
+}
+a.technology.btn:hover {
+    background: #f5f5f5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    color: #111;
+    text-decoration: none;
+}
+a.technology.btn.notexists {
+    color: #999;
+    background: #fafafa;
+    border-color: #e0e0e0;
+    box-shadow: none;
+}
+a.technology.btn.notexists:hover {
+    background: #f0f0f0;
+    color: #666;
+}
+
+a.technology.building {
+    border-left-color: #7777ee;
+}
+a.technology.research {
+    border-left-color: #44bb66;
+}
+a.technology.ship {
+    border-left-color: #ccaa22;
+}
+a.technology.personell {
+    border-left-color: #aaaaaa;
+}
+
+a.technology.building:hover {
+    background: #f0f0ff;
+}
+a.technology.research:hover {
+    background: #f0fff4;
+}
+a.technology.ship:hover {
+    background: #fffdf0;
+}
+a.technology.personell:hover {
+    background: #f8f8f8;
+}
+
+a.technology.building.notexists {
+    border-left-color: #bbbbed;
+}
+a.technology.research.notexists {
+    border-left-color: #88cc99;
+}
+a.technology.ship.notexists {
+    border-left-color: #ddcc77;
+}
+a.technology.personell.notexists {
+    border-left-color: #cccccc;
+}
+
+/* ── Resource icons (resicon-* spans) ──────────────────────────────────── */
+[class^="resicon-"],
+[class*=" resicon-"] {
+    display: inline-block;
+    margin-top: 1px;
+    padding: 0 3px;
+    line-height: 1em;
+    vertical-align: text-top;
+    font-weight: bold;
+    border: 1px solid #333;
+    border-radius: 500px;
+}
+.resicon-credits {
+    background-color: gold;
+}
+.resicon-supply {
+    background-color: #ddd;
+}
+.resicon-trust {
+    background-color: #fff;
+}
+.resicon-iron {
+    background-color: #ccc;
+}
+.resicon-water {
+    background-color: #66f;
+}
+.resicon-silicates {
+    background-color: #cd853f;
+}
+.resicon-ena {
+    background-color: #9f9;
+}
+.resicon-aku {
+    background-color: #ff9;
+}
+.resicon-lho {
+    background-color: #99f;
+}
+
+/* ── Toast (invest/levelup feedback) ──────────────────────── */
+
+.techtree-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 320px;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    z-index: 500;
+    pointer-events: none;
+    color: #fff;
+    background: #7f1d1d;
+}
+
+.techtree-toast--error {
+    background: #7f1d1d;
+}
+
+.techtree-toast--info {
+    background: #14532d;
+}

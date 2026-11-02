@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Colony hex-view render smoke test — GET colony/view.
+ * Colony hex view — JSON data (GET colony.view) and the Svelte page wiring.
  *
  * Guards that the sidebar tab markup + Alpine bindings render server-side
  * without error and that the key wiring (repair endpoint, tab body, Alpine
@@ -36,57 +36,62 @@ class ColonyViewTest extends TestCase
         return User::where('user_id', $userId)->firstOrFail();
     }
 
+    private function colonyPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
+    }
+
     public function test_hexview_renders_for_authenticated_user(): void
     {
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
         $response->assertOk();
-        $response->assertSee('colonyHexView(window.__colonyViewData)', false);
+        $response->assertJsonStructure(['tiles', 'colony' => ['id', 'name'], 'buildings', 'buildingCatalog', 'apAvailable']);
+    }
+
+    public function test_hexview_requires_auth(): void
+    {
+        $this->getJson(route('colony.view'))->assertUnauthorized();
     }
 
     public function test_hexview_contains_sidebar_and_repair_wiring(): void
     {
-        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+        $page = $this->colonyPage();
 
-        $response->assertOk();
         // Sidebar context-title header + both action endpoints are wired into the page.
-        $response->assertSee('tile-panel-title', false);
-        $response->assertSee(route('colony.building.repair'), false);
-        $response->assertSee(route('colony.building.invest'), false);
+        $this->assertStringContainsString('tile-panel-title', $page);
+        $this->assertStringContainsString("'/colony/building/repair'", $page);
+        $this->assertStringContainsString("'/colony/building/invest'", $page);
+        // The frontend paths are the API routes the server registers.
+        $this->assertStringEndsWith('/colony/building/repair', route('colony.building.repair'));
+        $this->assertStringEndsWith('/colony/building/invest', route('colony.building.invest'));
     }
 
     public function test_hexview_renders_ap_cost_chips_on_action_buttons(): void
     {
-        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
-
-        $response->assertOk();
         // AP-cost chips (game-wide convention) sit inside the action buttons.
-        $response->assertSee('ap-cost-chip', false);
+        $this->assertStringContainsString('ap-cost-chip', $this->colonyPage());
     }
 
     public function test_hexview_passes_resource_amounts_for_build_chip_affordability(): void
     {
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
         $response->assertOk();
-        $response->assertSee('regolith:', false);
-        $response->assertSee('werkstoffe:', false);
-        $response->assertSee('freeSupply:', false);
+        $this->assertIsInt($response->json('regolith'));
+        $this->assertIsInt($response->json('werkstoffe'));
+        $this->assertIsInt($response->json('freeSupply'));
     }
 
     public function test_hexview_renders_hint_completion_animation_markup(): void
     {
-        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+        // The hint bar moved from the colony page into the shell component.
+        $hintBar = file_get_contents(base_path('frontend/src/lib/components/HintBar.svelte'));
 
-        $response->assertOk();
-        $response->assertSee('hint-bar-stack', false);
-        $response->assertSee('x-show="completedHint"', false);
-        $response->assertSee('x-ref="hintBar"', false);
+        $this->assertStringContainsString('hint-bar-stack', $hintBar);
+        $this->assertStringContainsString('{#if completed}', $hintBar);
     }
 
     public function test_hexview_buildings_include_tier_label(): void
@@ -95,16 +100,16 @@ class ColonyViewTest extends TestCase
         $this->app->setLocale('de');
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
         $response->assertOk();
 
-        $buildings = $response->viewData('buildings');
+        $buildings = collect($response->json('buildings'));
         $infirmary = $buildings->firstWhere('building_id', 46);
 
         $this->assertNotNull($infirmary, 'Krankenstation (id=46) muss in den Testdaten vorhanden sein');
-        $this->assertSame(3, (int) $infirmary->level, 'Testdaten-Annahme: Krankenstation steht auf Level 3');
-        $this->assertSame('Vollausstattung', $infirmary->tier_label);
+        $this->assertSame(3, (int) $infirmary['level'], 'Testdaten-Annahme: Krankenstation steht auf Level 3');
+        $this->assertSame('Vollausstattung', $infirmary['tier_label']);
     }
 
     // Regression (Owner-Playtest 2026-08-31): the sidebar showed build cost
@@ -116,14 +121,14 @@ class ColonyViewTest extends TestCase
         $this->app->setLocale('de');
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $buildings = $response->viewData('buildings');
+        $buildings = collect($response->json('buildings'));
         $infirmary = $buildings->firstWhere('building_id', 46);
 
         $this->assertNotNull($infirmary);
-        $this->assertSame(__('buildings.infirmary_desc'), $infirmary->description);
-        $this->assertNotEmpty($infirmary->description);
+        $this->assertSame(__('buildings.infirmary_desc'), $infirmary['description']);
+        $this->assertNotEmpty($infirmary['description']);
     }
 
     // Regression (Owner-Playtest 2026-08-31, follow-up to the description
@@ -137,16 +142,16 @@ class ColonyViewTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', 1)->where('building_id', 44)->update(['level' => 1]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $buildings = $response->viewData('buildings');
+        $buildings = collect($response->json('buildings'));
         $hangar = $buildings->firstWhere('building_id', 44);
 
         $this->assertNotNull($hangar);
-        $this->assertSame(1, (int) $hangar->level, 'Testdaten-Annahme: Hangar steht auf Level 1');
+        $this->assertSame(1, (int) $hangar['level'], 'Testdaten-Annahme: Hangar steht auf Level 1');
         $this->assertContains(
             __('techtree.ship_freighter'),
-            array_column($hangar->unlocks_next_level, 'text')
+            array_column($hangar['unlocks_next_level'], 'text')
         );
     }
 
@@ -159,13 +164,13 @@ class ColonyViewTest extends TestCase
         $this->app->setLocale('de');
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $buildings = $response->viewData('buildings');
+        $buildings = collect($response->json('buildings'));
         $infirmary = $buildings->firstWhere('building_id', 46);
 
         $this->assertNotNull($infirmary);
-        $this->assertSame([__('techtree.building_commandCenter').' Lv3'], $infirmary->required_list);
+        $this->assertSame([__('techtree.building_commandCenter').' Lv3'], $infirmary['required_list']);
     }
 
     // Regression (Owner-Playtest 2026-09-04): resource_amount on the tile depletes
@@ -192,9 +197,9 @@ class ColonyViewTest extends TestCase
             ->update(['tile_x' => 5, 'tile_y' => 5]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $tiles = $response->viewData('tiles');
+        $tiles = collect($response->json('tiles'));
         $tile = $tiles->first(fn ($t) => $t['q'] === 5 && $t['r'] === 5);
 
         $this->assertNotNull($tile);
@@ -206,16 +211,16 @@ class ColonyViewTest extends TestCase
         $this->assertSame(450, $tile['regolith_max']);
     }
 
-    // A26: the "≈N Sole bis Erschöpfung" countdown markup renders (Alpine-bound,
-    // so the actual number is client-side — this guards the wiring exists).
+    // A26: the "≈N Sole bis Erschöpfung" countdown markup renders (bound
+    // client-side, so the actual number lives in the JSON — this guards the wiring exists).
     public function test_hexview_contains_sols_remaining_countdown_markup(): void
     {
-        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+        $page = $this->colonyPage();
 
-        $response->assertSee('tile-building-sols-remaining', false);
-        $response->assertSee('selectedTile.sols_remaining', false);
-        $response->assertSee(__('colony.harvester_sols_remaining_label'), false);
+        $this->assertStringContainsString('tile-building-sols-remaining', $page);
+        $this->assertStringContainsString('tile.sols_remaining', $page);
+        $this->assertStringContainsString("t('colony.harvester_sols_remaining_label')", $page);
+        $this->assertNotSame('colony.harvester_sols_remaining_label', __('colony.harvester_sols_remaining_label'));
     }
 
     /**
@@ -255,9 +260,9 @@ class ColonyViewTest extends TestCase
             ->update(['tile_x' => 5, 'tile_y' => 5]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $tiles = $response->viewData('tiles');
+        $tiles = collect($response->json('tiles'));
         $tile = $tiles->first(fn ($t) => $t['q'] === 5 && $t['r'] === 5);
 
         $this->assertNotNull($tile);
@@ -271,9 +276,9 @@ class ColonyViewTest extends TestCase
     public function test_hexview_tiles_have_null_sols_remaining_without_active_harvester(): void
     {
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $tiles = $response->viewData('tiles');
+        $tiles = collect($response->json('tiles'));
         $tile = $tiles->first(fn ($t) => ! isset($t['regolith_remaining']));
 
         $this->assertNotNull($tile);
@@ -326,10 +331,10 @@ class ColonyViewTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
         $response->assertOk();
-        $fallbackTiles = $response->viewData('regolithFallbackTiles')
+        $fallbackTiles = collect($response->json('regolithFallbackTiles'))
             ->map(fn ($t) => [$t['q'], $t['r']])
             ->all();
 
@@ -339,7 +344,7 @@ class ColonyViewTest extends TestCase
         $this->assertNotContains([9, 2], $fallbackTiles);
     }
 
-    public function test_pending_run_redirects_to_lobby(): void
+    public function test_pending_run_is_refused_with_run_not_started(): void
     {
         // A pending run is active but not yet started (started_at = null).
         DB::table('runs')
@@ -348,50 +353,50 @@ class ColonyViewTest extends TestCase
             ->update(['started_at' => null]);
 
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+            ->getJson(route('colony.view'));
 
-        $response->assertRedirect(route('lobby'));
+        $response->assertStatus(409);
+        $response->assertJson(['ok' => false, 'error' => 'run_not_started']);
     }
 
     /**
      * "?build=ID" deep links (techtree, hints) for a building the build menu does
-     * not offer right now must not silently open an empty build mode — the view
-     * shows this toast instead (colony-hexgrid.js init()).
+     * not offer right now must not silently open an empty build mode — the page
+     * shows this toast instead (+page.svelte onMount()).
      */
     public function test_hexview_passes_build_link_unavailable_text(): void
     {
-        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view', ['build' => 27]));
-
-        $response->assertOk();
-        $response->assertSee('buildLinkUnavailable: '.json_encode(__('colony.build_link_unavailable'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), false);
+        $this->assertNotSame('colony.build_link_unavailable', __('colony.build_link_unavailable'));
+        $this->assertStringContainsString("t('colony.build_link_unavailable')", $this->colonyPage());
     }
 
     public function test_hexview_renders_find_card_markup_from_lang_keys(): void
     {
-        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'));
+        $terrain = file_get_contents(base_path('frontend/src/routes/(game)/colony/TileTerrain.svelte'));
 
-        $response->assertOk();
-        $response->assertSee(route('colony.tile.salvage'), false);
-        $response->assertSee(__('colony.find_salvage'), false);
-        $response->assertSee(__('colony.find_false_notice'), false);
-        // Scan cost comes from config, never hardcoded in the markup.
-        $response->assertSee('deepScanAp: '.(int) config('game.finds.scan_ap'), false);
+        $this->assertStringContainsString("'/colony/tile/salvage'", $this->colonyPage());
+        $this->assertStringEndsWith('/colony/tile/salvage', route('colony.tile.salvage'));
+        $this->assertStringContainsString("t('colony.find_salvage')", $terrain);
+        $this->assertStringContainsString("t('colony.find_false_notice')", $terrain);
+        $this->assertNotSame('colony.find_salvage', __('colony.find_salvage'));
+        $this->assertNotSame('colony.find_false_notice', __('colony.find_false_notice'));
+
+        // Scan cost comes from config, never hardcoded in the page.
+        $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->getJson(route('colony.view'))
+            ->assertOk()
+            ->assertJsonPath('deepScanAp', (int) config('game.finds.scan_ap'));
     }
 
     public function test_signal_dialog_has_description_text_per_find_size(): void
     {
-        $html = $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->get(route('colony.view'))->assertOk()->getContent();
+        $page = $this->colonyPage();
 
         foreach (['small', 'medium', 'large'] as $size) {
             $this->assertNotSame("colony.find_{$size}_desc", __("colony.find_{$size}_desc"));
-            $this->assertStringContainsString(
-                substr(json_encode(__("colony.find_{$size}_desc"), 15), 1, -1),
-                $html
-            );
         }
-        $this->assertStringContainsString('discovery-event-desc', $html);
+        // The page looks the description up per find type: colony.find_<size>_desc.
+        $this->assertStringContainsString("['find_small', 'find_medium', 'find_large'].includes(type) ? t(`colony.\${type}_desc`)", $page);
+        $this->assertStringContainsString('discovery-event-desc', $page);
     }
 }

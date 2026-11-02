@@ -16,7 +16,6 @@ use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use App\Support\TechtreeGraph;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -41,37 +40,35 @@ class TechtreeController extends BaseController
     }
 
     /**
-     * Display the full techtree overview for the active colony.
-     *
-     * Builds $pageData with 'phases' (0-5; band 0 is the Command Center itself,
-     * 1-5 are keyed by CC level) and the global 'edges' list consumed by the canvas
-     * techtree view. Every item carries its grid cell (grid_row/grid_col) derived
-     * from the reference data; edges come from required_building_id (solid) and
-     * required_building2_id (dashed) — see App\Support\TechtreeGraph.
+     * Same data as index() as JSON, for the SvelteKit frontend (ADR 0006).
+     * The locked case answers 409 with a machine code, like the other JSON endpoints.
      */
-    public function index(): View|RedirectResponse
+    public function data(): JsonResponse
     {
         $colonyId = $this->resolveColonyId();
 
-        $sciencelabBuilt = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 31)
-            ->where('level', '>', 0)
-            ->exists();
-        if (! $sciencelabBuilt) {
-            return redirect()->route('colony.view')
-                ->with('info', __('colony.nav_techtree_locked'));
+        if (! $this->sciencelabBuilt($colonyId)) {
+            return response()->json([
+                'error' => 'techtree_locked',
+                'message' => __('colony.nav_techtree_locked'),
+            ], 409);
         }
-
-        ['phases' => $phases, 'edges' => $edges] = $this->buildPhases($colonyId);
 
         $userId = Auth::id();
 
-        $pageData = ['phases' => $phases, 'edges' => $edges];
+        return response()->json([
+            ...$this->buildPhases($colonyId),
+            'first_visit' => $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false,
+        ]);
+    }
 
-        $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
-
-        return view('techtree.index', compact('pageData', 'colonyId', 'firstVisit'));
+    private function sciencelabBuilt(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Sciencelab->value)
+            ->where('level', '>', 0)
+            ->exists();
     }
 
     /**

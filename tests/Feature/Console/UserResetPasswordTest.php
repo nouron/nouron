@@ -67,9 +67,11 @@ class UserResetPasswordTest extends TestCase
         Artisan::call('user:reset-password', ['user' => $bart->username]);
         $password = $this->newPasswordFromOutput(Artisan::output());
 
-        $this->post(route('login'), ['username' => $bart->username, 'password' => $password]);
+        $token = $this->postJson(route('login'), ['login' => $bart->username, 'password' => $password])
+            ->assertOk()
+            ->json('token');
 
-        $this->assertAuthenticatedAs($bart);
+        $this->withToken($token)->getJson('/api/v1/ping')->assertOk()->assertJson(['user_id' => $bart->user_id]);
     }
 
     public function test_unknown_user_fails_without_changing_anything(): void

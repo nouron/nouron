@@ -18,7 +18,7 @@ Projektmanager + Tech-Lead. Gesamtbild behalten, Arbeit priorisieren, Roadmap tr
 - **Phase 3d abgeschlossen**: Colony-Zonen-Erweiterung — Tile-Count-Unlock (4/2/3/3/3), 3-Ring-Karte, instanced Buildings
 - **Phase 3e nächste**: Onboarding / neue-Spieler-Erfahrung
 - Test-Suite: ~393 Tests, 0 Fehler (PHPUnit 11, MySQL `nouron_test`, `bin/phpunit --testsuite=laravel-feature`)
-- Codebase: Laravel 12, PHP 8.2, SQLite, Alpine.js 3 + PicoCSS (neue Screens), Bootstrap 5 + jQuery 3 (Legacy)
+- Codebase: Laravel 12 als JSON-API (`/api/v1`), PHP 8.2+, MySQL 8, SvelteKit-Frontend in `frontend/` (ADR 0006)
 - **Spielrichtung**: Singleplayer Roguelike Mini-4X (FTL/Catan-Stil) — kein MMO, keine Rassen, vereinfachtes Ressourcenmodell in Arbeit
 
 ## Sprachregeln
@@ -93,7 +93,7 @@ Tasks:
 - [ ] [db-migration-agent] Schema-Änderungen
 - [ ] [game-developer] Service-/Logik-Implementierung
 - [ ] [backend-coder] Controller + Route + Validierung
-- [ ] [ui-specialist] Frontend-View + AJAX
+- [ ] [ui-specialist] Svelte-Seite/-Komponente + API-Aufruf
 - [ ] [qa-tester] Unit + Integration Tests
 - [ ] [content-writer] UI-Texte, Tooltips, Lore (falls anwendbar)
 ```

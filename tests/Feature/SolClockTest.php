@@ -11,7 +11,7 @@ namespace Tests\Feature;
  * (current_tick = 0) is "Sol 1", and each "Sol beenden" advances it by one.
  *
  * These tests assert that:
- *   - the colony hex-view Sol chip reflects runs.current_tick + 1
+ *   - the header Sol chip (GET /api/v1/shell current_sol) reflects runs.current_tick + 1
  *   - advancing the Sol moves the displayed Sol number forward
  *   - AP locked on the previous tick no longer count after the Sol advances
  *
@@ -78,17 +78,17 @@ class SolClockTest extends TestCase
     }
 
     /**
-     * A run at current_tick = 0 must render as "Sol 1" in the colony view,
+     * A run at current_tick = 0 must show as "Sol 1" in the header,
      * regardless of the colony's since_tick.
      */
     public function test_colony_view_shows_sol_one_at_run_start(): void
     {
         $this->setRunTick(0);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.view'));
+        $response = $this->actingAs($this->bart())->getJson('/api/v1/shell');
 
         $response->assertOk();
-        $response->assertSee('currentSol: 1,', false);
+        $response->assertJsonPath('current_sol', 1);
     }
 
     /**
@@ -98,10 +98,10 @@ class SolClockTest extends TestCase
     {
         $this->setRunTick(5);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.view'));
+        $response = $this->actingAs($this->bart())->getJson('/api/v1/shell');
 
         $response->assertOk();
-        $response->assertSee('currentSol: 6,', false);
+        $response->assertJsonPath('current_sol', 6);
     }
 
     /**
@@ -113,15 +113,15 @@ class SolClockTest extends TestCase
         $this->fakeGameTick();
         $run = $this->setRunTick(0);
 
-        $before = $this->actingAs($this->bart())->get(route('colony.view'));
-        $before->assertSee('currentSol: 1,', false);
+        $before = $this->actingAs($this->bart())->getJson('/api/v1/shell');
+        $before->assertJsonPath('current_sol', 1);
 
-        $this->actingAs($this->bart())->from('/colony/view')->post(route('sol.next'));
+        $this->actingAs($this->bart())->postJson(route('sol.next'))->assertOk();
 
         $this->assertDatabaseHas('runs', ['id' => $run->id, 'current_tick' => 1]);
 
-        $after = $this->actingAs($this->bart())->get(route('colony.view'));
-        $after->assertSee('currentSol: 2,', false);
+        $after = $this->actingAs($this->bart())->getJson('/api/v1/shell');
+        $after->assertJsonPath('current_sol', 2);
     }
 
     /**

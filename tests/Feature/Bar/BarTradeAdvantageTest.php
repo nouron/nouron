@@ -430,17 +430,19 @@ class BarTradeAdvantageTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::BAR_BUILDING_ID)->update(['level' => 1]);
         $this->assignConsul(3);
         $this->setTradingPostLevel(1); // 30 + 12 = 42 %
-        app()->setLocale('de');
         $offerId = $this->insertOffer(['give_amount' => 25, 'get_amount' => 20]);
 
-        $html = $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
+        $response = $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.bar'))->assertOk();
 
-        $section = $this->offerDialogHtml($html, $offerId);
-        $text = preg_replace('/\s+/', ' ', strip_tags($section));
-        // P2b: the dialog now lists the base offer as text and the result as a chip.
-        $this->assertStringContainsString('25 Regolith → 20 Werkstoffe', $text, 'base offer shown as such, price (Give) stays 25');
-        $this->assertMatchesRegularExpression('/Du erhältst\s+Co\s*28\b/', $text, '20 x 1.42 = 28.4 -> 28 is what accept will book');
-        $this->assertDoesNotMatchRegularExpression('/Du erhältst\s+Co\s*20\b/', $text, 'the stored base amount is never the shown result');
+        $dialog = $response->json("offerDialogs.{$offerId}");
+        $this->assertNotNull($dialog, 'offer dialog present');
+        // P2b: the dialog lists the base offer as text and the result as a chip.
+        $this->assertSame(25, $dialog['base_give'], 'base offer shown as such, price (Give) stays 25');
+        $this->assertSame(20, $dialog['base_get']);
+        $this->assertSame(25, $dialog['give_amount']);
+        $this->assertSame(28, $dialog['amount_safe'], '20 x 1.42 = 28.4 -> 28 is what accept will book');
+        $this->assertSame(8, $dialog['plus_safe']);
+        $this->assertSame(28, $response->json("offerTerms.{$offerId}.get_amount"));
     }
 
     public function test_bar_page_hides_negotiate_button_for_fixed_price_lots(): void
@@ -449,11 +451,15 @@ class BarTradeAdvantageTest extends TestCase
         $this->assignConsul(3);
         $lotId = $this->insertSellLot();
 
-        $html = $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
+        $response = $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.bar'))->assertOk();
 
-        $section = $this->offerDialogHtml($html, $lotId);
-        $this->assertNotSame('', $section);
-        $this->assertStringNotContainsString('negotiate('.$lotId, $section);
+        $dialog = $response->json("offerDialogs.{$lotId}");
+        $this->assertNotNull($dialog);
+        $this->assertTrue($dialog['fixed_price']);
+        $this->assertFalse($dialog['can_negotiate']);
+        // The Cantina page gates the Verhandeln button on can_negotiate.
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
+        $this->assertStringContainsString('{#if dlg.can_negotiate && !negotiated[id]', $page);
     }
 
     public function test_bar_page_negotiate_button_shows_the_ap_cost_chip_and_the_failure_facts_are_wired(): void
@@ -462,32 +468,22 @@ class BarTradeAdvantageTest extends TestCase
         $this->assignConsul(2);
         $offerId = $this->insertOffer(['give_amount' => 25, 'get_amount' => 20]);
 
-        $html = $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
+        $response = $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.bar'))->assertOk();
 
-        $section = $this->offerDialogHtml($html, $offerId);
-        $this->assertStringContainsString('negotiate('.$offerId, $section);
-        $this->assertStringContainsString('negotiate('.$offerId.', $el, "', $section, 'the Character name is passed as a JSON string argument (a broken quote would kill the Alpine handler)');
-        $this->assertStringContainsString('Eco 2 AP', $section, 'the Verhandeln chip shows the configured AP cost (= Annehmen)');
+        $this->assertTrue($response->json("offerDialogs.{$offerId}.can_negotiate"));
+        $response->assertJsonPath('negotiateApCost', 2);
         $this->assertSame(2, (int) config('game.bar.ap_cost_negotiate'));
+
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
+        $this->assertStringContainsString('negotiate(id, o.name)', $page, 'the Character name is passed to the negotiate handler');
+        $this->assertStringContainsString('Eco {data.negotiateApCost} AP', $page, 'the Verhandeln chip shows the configured AP cost (= Annehmen)');
         // The failure message names the facts: who withdrew, what stays with the player, how many AP are gone.
         $template = trans('colony.bar_offer_negotiate_failed', [], 'de'); // player-facing texts live in lang/de
         foreach ([':name', ':resource', ':ap'] as $placeholder) {
             $this->assertStringContainsString($placeholder, $template);
         }
-        $this->assertStringContainsString('negotiateFailedText[', $section, 'the dialog renders the failure facts inline');
-        $this->assertStringContainsString('resourceLabels', $html, 'resource names are handed to the page script');
-    }
-
-    /** The markup of one offer's dialog block (from its x-show marker to the next offer/encounter block). */
-    private function offerDialogHtml(string $html, int $offerId): string
-    {
-        $start = strpos($html, "activeModal === 'offer_{$offerId}'");
-        if ($start === false) {
-            return '';
-        }
-        $end = strpos($html, "activeModal === 'offer_", $start + 10);
-        $end = $end === false ? min(strlen($html), $start + 20000) : $end; // the dialog grew with the source breakdown (P2b)
-
-        return substr($html, $start, $end - $start);
+        $this->assertStringContainsString("t('colony.bar_offer_negotiate_failed'", $page, 'the dialog renders the failure facts inline');
+        $this->assertStringContainsString('{negotiateFailed[id]}', $page);
+        $this->assertStringContainsString('RES_LABEL[res.give_resource_id', $page, 'resource names are resolved on the page');
     }
 }

@@ -193,9 +193,8 @@ class TechtreeControllerTest extends TestCase
 
         $response = $this->actingAs($bart)->get(route('techtree.index'));
         $response->assertOk();
-        $response->assertViewHas('pageData');
 
-        $pageData = $response->viewData('pageData');
+        $pageData = $response->json();
         $this->assertArrayHasKey('phases', $pageData);
         // Band 0 is the Command Center itself, bands 1-5 are the CC levels.
         $this->assertCount(6, $pageData['phases']);
@@ -212,7 +211,7 @@ class TechtreeControllerTest extends TestCase
     public function test_index_phase_items_have_required_fields(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         foreach ($pageData['phases'] as $phaseNum => $phase) {
             foreach ($phase['items'] as $tech) {
@@ -238,7 +237,7 @@ class TechtreeControllerTest extends TestCase
     {
         $this->app->setLocale('de');
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $construction = null;
         $sciencelab = null;
@@ -263,7 +262,7 @@ class TechtreeControllerTest extends TestCase
     {
         $this->app->setLocale('de');
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $drone = null;
         foreach ($pageData['phases'] as $phase) {
@@ -283,7 +282,7 @@ class TechtreeControllerTest extends TestCase
         $this->app->setLocale('de');
         $this->pinHangarsToLevelOne();
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $hangar = null;
         foreach ($pageData['phases'] as $phase) {
@@ -314,7 +313,7 @@ class TechtreeControllerTest extends TestCase
             ['level' => 2, 'ap_spend' => 0, 'status_points' => 20]
         );
 
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $construction = null;
         foreach ($pageData['phases'] as $phase) {
@@ -335,7 +334,7 @@ class TechtreeControllerTest extends TestCase
         $this->app->setLocale('de');
         $this->pinHangarsToLevelOne();
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $hangar = null;
         foreach ($pageData['phases'] as $phase) {
@@ -368,7 +367,7 @@ class TechtreeControllerTest extends TestCase
             ->update(['tile_x' => 0, 'tile_y' => 1]);
 
         $pageData = $this->actingAs(User::find($this->userIdBart))
-            ->get(route('techtree.index'))->viewData('pageData');
+            ->get(route('techtree.index'))->json();
         $items = collect($pageData['phases'])->flatMap(fn ($phase) => $phase['items']);
 
         $housing = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 28);
@@ -408,7 +407,7 @@ class TechtreeControllerTest extends TestCase
             ['level' => 1, 'ap_spend' => 0, 'status_points' => 20]
         );
 
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $construction = null;
         foreach ($pageData['phases'] as $phase) {
@@ -427,7 +426,7 @@ class TechtreeControllerTest extends TestCase
         // every knowledge's progress bar at that stale 3 AP. The controller must
         // now resolve the cost dynamically for the knowledge's NEXT level.
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $research = null;
         foreach ($pageData['phases'] as $phase) {
@@ -456,7 +455,7 @@ class TechtreeControllerTest extends TestCase
             ['level' => 1, 'ap_spend' => 0, 'status_points' => 20]
         );
 
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $research = null;
         foreach ($pageData['phases'] as $phase) {
@@ -475,7 +474,7 @@ class TechtreeControllerTest extends TestCase
     public function test_all_phases_contain_items(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         foreach (range(1, 3) as $n) {
             $this->assertNotEmpty($pageData['phases'][$n]['items'], "Phase $n must have items");
@@ -485,7 +484,7 @@ class TechtreeControllerTest extends TestCase
     public function test_required_desc_shows_dual_prerequisites(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
         $cartography = null;
@@ -509,7 +508,7 @@ class TechtreeControllerTest extends TestCase
     public function test_required_list_shows_dual_prerequisites_as_separate_parts(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
         $cartography = null;
@@ -530,7 +529,7 @@ class TechtreeControllerTest extends TestCase
     public function test_knowledge_cartography_is_in_phase2(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $found = collect($pageData['phases'][2]['items'])
             ->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
@@ -541,7 +540,7 @@ class TechtreeControllerTest extends TestCase
     public function test_edges_include_hangar_arrow_and_mark_second_prerequisite_dashed(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $hangarEdges = array_values(array_filter($pageData['edges'], fn ($e) => $e['from'] === 'building-44' && $e['to'] === 'research-91'));
 
@@ -552,7 +551,7 @@ class TechtreeControllerTest extends TestCase
     public function test_every_edge_points_downwards_in_the_grid(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $rows = [];
         foreach ($pageData['phases'] as $phase) {
@@ -579,7 +578,7 @@ class TechtreeControllerTest extends TestCase
     public function test_infirmary_is_in_phase3(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $found = collect($pageData['phases'][3]['items'])
             ->first(fn ($t) => $t['id'] === 46 && $t['type'] === 'building');
@@ -590,7 +589,7 @@ class TechtreeControllerTest extends TestCase
     public function test_bar_is_in_phase2(): void
     {
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $found = collect($pageData['phases'][2]['items'])
             ->first(fn ($t) => $t['id'] === 52 && $t['type'] === 'building');
@@ -603,7 +602,7 @@ class TechtreeControllerTest extends TestCase
         // Canvas techtree (2026-10-18): a band is a layout row group below the Command Center,
         // not a gate — geology sits below its prerequisite sciencelab (band 2) in band 3.
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $found = collect($pageData['phases'][3]['items'])
             ->first(fn ($t) => $t['id'] === 92 && $t['type'] === 'research');
@@ -750,7 +749,7 @@ class TechtreeControllerTest extends TestCase
     {
         $this->assertSame(3, (int) DB::table('colony_buildings')->where('colony_id', $this->colonyIdBart)->where('building_id', 44)->value('level'));
         $bart = User::find($this->userIdBart);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
         $drone = null;
         foreach ($pageData['phases'] as $phase) {
@@ -759,7 +758,7 @@ class TechtreeControllerTest extends TestCase
         $this->assertSame(3, $drone['hangar_cap']);
 
         DB::table('colony_buildings')->where('colony_id', $this->colonyIdBart)->where('building_id', 44)->update(['level' => 0]);
-        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
         $drone = null;
         foreach ($pageData['phases'] as $phase) {
             $drone ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'ship' && $t['id'] === 85);

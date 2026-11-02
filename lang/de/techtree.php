@@ -121,6 +121,13 @@ return [
     'detail_effects_current_level' => 'Effekte der aktuellen Stufe',
     'detail_effects_next_level' => 'Effekte der nächsten Stufe',
     'detail_close' => 'Schließen',
+    // Svelte frontend (ADR 0006): type labels and toasts, formerly hardcoded in techtree-view.js
+    'type_building' => 'Gebäude',
+    'type_research' => 'Forschung',
+    'type_ship' => 'Schiff',
+    'type_personell' => 'Berater',
+    'toast_level_reached' => ':name: Level :level erreicht',
+    'toast_invest_failed' => 'Investition fehlgeschlagen.',
 
     // ── UI ───────────────────────────────────────────────────────────────────
     'tradeable' => 'handelbar',

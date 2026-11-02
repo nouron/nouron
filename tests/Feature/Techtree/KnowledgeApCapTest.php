@@ -102,11 +102,11 @@ class KnowledgeApCapTest extends TestCase
         $bart = User::find(3);
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 3);
 
-        $res = $this->actingAs($bart)->postJson("/techtree/research/{$this->knowledgeId}/order", ['order' => 'add', 'ap' => 1]);
+        $res = $this->actingAs($bart)->postJson(route('techtree.order', ['type' => 'research', 'id' => $this->knowledgeId]), ['order' => 'add', 'ap' => 1]);
         $res->assertStatus(422)->assertJson(['success' => false, 'error' => 'knowledge_ap_cap']);
         $this->assertStringContainsString('3', $res->json('message'));
 
-        $res = $this->actingAs($bart)->postJson('/techtree/research/93/order', ['order' => 'add', 'ap' => 1]);
+        $res = $this->actingAs($bart)->postJson(route('techtree.order', ['type' => 'research', 'id' => 93]), ['order' => 'add', 'ap' => 1]);
         $res->assertOk()->assertJsonPath('tech.ap_cap', ['cap' => 3, 'spent' => 1, 'remaining' => 2]);
     }
 }

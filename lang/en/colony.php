@@ -125,6 +125,17 @@ return [
     'onboarding_hint_spend_ap_economy' => 'AP remaining — check the Cantina to see if a guest has an offer ready.',
     'onboarding_hint_spend_ap_hangar' => 'There is not enough Regolith for new construction right now — the Hangar has find flights, missions and ship maintenance waiting.',
     'onboarding_hint_spend_ap_blocked' => 'Nothing sensible to build right now: Regolith is short or the AP cap of the buildings is reached for today. End the Sol — the Regolith keeps coming.',
+    // Svelte frontend (ADR 0006): nav labels, formerly hardcoded in layouts/colony.blade.php
+    'nav_colony' => 'Colony',
+    'nav_advisors' => 'Advisors',
+    'nav_techtree' => 'Techtree',
+    'nav_cantina' => 'Cantina',
+    'nav_log' => 'Log',
+    'nav_nexusdb' => 'Nexus DB',
+    'nav_menu' => 'Menu',
+    'user_nav_profile' => 'Profile',
+    'user_nav_settings' => 'Settings',
+    'user_nav_logout' => 'Log out',
     'nav_techtree_locked' => 'Analytics Lab required.',
     'nav_cantina_locked' => 'Cantina not built — Residential Habitat lv1 required.',
 
@@ -559,6 +570,15 @@ return [
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 
     'next_sol_button' => 'End Sol',
+    // Svelte frontend (ADR 0006): Sol confirm dialog, formerly hardcoded in partials/sol-button.blade.php
+    'sol_confirm_title' => 'End the Sol?',
+    'sol_confirm_body' => 'You have not spent all AP yet: :ap AP.',
+    'sol_confirm_expire' => 'Unspent AP expire at the end of the Sol.',
+    'sol_confirm_keep_playing' => 'Keep playing',
+    'sol_confirm_end_anyway' => 'End Sol anyway',
+    'sol_loading' => 'Computing Sol …',
+    'sol_loading_sub' => 'Events, production, decay',
+    'sol_error' => 'Could not end the Sol. Please reload the page.',
 
     // ── Nexus debt display ────────────────────────────────────────────────────
 
@@ -796,4 +816,15 @@ return [
     'reason_colonists' => 'Too few free colonists',
     'reason_regolith' => 'Not enough regolith',
     'reason_werkstoffe' => 'Not enough alloys',
+    // Svelte colony panel (ADR 0006) — were hardcoded in colony-hexgrid.js
+    'levelup_start' => 'Start level :level (0/:ap)',
+    'level_popup' => 'Level :level / :max',
+    'level_popup_uncapped' => 'Level :level',
+    'tile_unknown' => 'Unknown terrain',
+    'event_unknown' => 'Unknown phenomenon',
+    'sols_remaining' => '≈:n Sols',
+    'regolith_needed' => ':needed RG needed, :have RG available',
+    // Svelte hangar screen (ADR 0006): carousel arrows (were hardcoded English in Blade)
+    'hangar_prev_bay' => 'Previous bay',
+    'hangar_next_bay' => 'Next bay',
 ];

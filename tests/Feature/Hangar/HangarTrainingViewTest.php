@@ -9,7 +9,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-/** Server-markup tests for the hangar "Training" panel (T41, path depth). */
+/**
+ * Hangar "Training" panel (T41, path depth): the family rows from the Hangar JSON
+ * (HangarController::data()) and their rendering in the Svelte page
+ * frontend/src/routes/(game)/hangar/+page.svelte.
+ */
 class HangarTrainingViewTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,23 +31,43 @@ class HangarTrainingViewTest extends TestCase
         );
     }
 
-    private function page(): string
+    private function data(): array
     {
-        return $this->actingAs(User::find(3))->get(route('colony.hangar'))->assertOk()->getContent();
+        return $this->actingAs(User::find(3))->getJson(route('colony.hangar'))->assertOk()->json();
+    }
+
+    /** @return array<string, array<string, mixed>> training rows keyed by family */
+    private function families(): array
+    {
+        return collect($this->data()['trainingFamilies'])->keyBy('key')->all();
+    }
+
+    private function hangarPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/hangar/+page.svelte'));
     }
 
     public function test_panel_shows_five_families_with_cost_chip(): void
     {
-        $html = $this->page();
+        $families = $this->families();
 
-        $this->assertStringContainsString('hangar-training', $html);
-        $this->assertStringContainsString(__('pathdepth.ui_training_title'), $html);
-        $this->assertStringContainsString(__('pathdepth.ui_experience_label'), $html);
-        foreach (['exploration', 'salvage', 'supply', 'trade', 'protection'] as $key) {
-            $this->assertStringContainsString(__("pathdepth.family_{$key}"), $html);
+        $this->assertSame(['exploration', 'salvage', 'supply', 'trade', 'protection'], array_keys($families));
+        foreach ($families as $key => $row) {
+            $this->assertSame(__("pathdepth.family_{$key}"), $row['name']);
         }
-        $this->assertStringContainsString('ap-cost-chip', $html);
-        $this->assertStringContainsString(route('colony.pathdepth.invest', ['kind' => 'mission_family', 'key' => '__KEY__']), str_replace('\\/', '/', $html));
+
+        $html = $this->hangarPage();
+        $this->assertStringContainsString('<section class="hangar-training">', $html);
+        $this->assertStringContainsString("t('pathdepth.ui_training_title')", $html);
+        $this->assertStringContainsString("t('pathdepth.ui_experience_label')", $html);
+        // The Trainieren button is the shared AP button, which carries the cost chip.
+        $this->assertStringContainsString('<ApUpgradeButton', $html);
+        $this->assertStringContainsString('ap-cost-chip', file_get_contents(base_path('frontend/src/lib/components/ApUpgradeButton.svelte')));
+        $this->assertStringEndsWith(
+            '/colony/path-depth/mission_family/__KEY__/invest',
+            route('colony.pathdepth.invest', ['kind' => 'mission_family', 'key' => '__KEY__'])
+        );
+        $this->assertStringContainsString('`/colony/path-depth/mission_family/${fam.key}/invest`', $html);
     }
 
     public function test_hangar_data_carries_family_states(): void
@@ -52,12 +76,10 @@ class HangarTrainingViewTest extends TestCase
             'colony_id' => self::COLONY_ID, 'kind' => 'mission_family', 'entity_key' => 'salvage',
             'level' => 2, 'ap_spend' => 3,
         ]);
-        $html = $this->page();
+        $salvage = $this->families()['salvage'];
 
-        $this->assertMatchesRegularExpression('/trainingFamilies:\s*\[/', $html);
-        $this->assertStringContainsString('"key":"salvage"', $html);
-        $this->assertStringContainsString('"level_cap":2', $html);
-        $this->assertStringContainsString('"ap_spend":3', $html);
+        $this->assertSame(2, $salvage['level_cap']);
+        $this->assertSame(3, $salvage['ap_spend']);
     }
 
     public function test_locked_family_names_the_reason(): void
@@ -66,40 +88,36 @@ class HangarTrainingViewTest extends TestCase
             'colony_id' => self::COLONY_ID, 'kind' => 'mission_family', 'entity_key' => 'trade',
             'level' => 2, 'ap_spend' => 0,
         ]);
-        $html = $this->page();
 
-        $this->assertStringContainsString(
-            json_encode(__('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => 2]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            str_replace('\/', '/', $html)
+        $this->assertSame(
+            __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => 2]),
+            $this->families()['trade']['lock_reason']
         );
     }
 
     public function test_panel_texts_follow_locale(): void
     {
-        app()->setLocale('de');
-        $de = $this->page();
-        app()->setLocale('en');
-        $en = $this->page();
-
-        $this->assertStringContainsString('hangar-training', $de);
-        $this->assertStringContainsString(trans('pathdepth.ui_experience_label', [], 'de'), $de);
-        $this->assertStringContainsString(trans('pathdepth.ui_experience_label', [], 'en'), $en);
-        $this->assertStringNotContainsString(trans('pathdepth.ui_experience_label', [], 'de'), $en);
+        // The Svelte page reads its texts from the locale endpoint (lang/{lang}/*.php).
+        $this->getJson('/api/v1/locale/de')->assertOk()
+            ->assertJsonPath('pathdepth.ui_experience_label', trans('pathdepth.ui_experience_label', [], 'de'));
+        $this->getJson('/api/v1/locale/en')->assertOk()
+            ->assertJsonPath('pathdepth.ui_experience_label', trans('pathdepth.ui_experience_label', [], 'en'));
+        $this->assertNotSame(trans('pathdepth.ui_experience_label', [], 'de'), trans('pathdepth.ui_experience_label', [], 'en'));
     }
 
     public function test_button_label_is_train(): void
     {
-        $html = $this->page();
-
         $this->assertSame('Trainieren', trans('pathdepth.ui_train', [], 'de'));
-        $this->assertStringContainsString(substr(json_encode(__('pathdepth.ui_train'), 15), 1, -1), $html);
+        $this->assertStringContainsString("label={t('pathdepth.ui_train')}", $this->hangarPage());
     }
 
     public function test_panel_sits_above_the_bays(): void
     {
-        $html = $this->page();
+        $html = $this->hangarPage();
 
-        $this->assertLessThan(strpos($html, 'class="carousel-wrapper"'), strpos($html, 'class="hangar-training"'));
+        $training = strpos($html, '<section class="hangar-training">');
+        $this->assertNotFalse($training);
+        $this->assertLessThan(strpos($html, '<div class="carousel-wrapper">'), $training);
     }
 
     public function test_family_rows_carry_effect_numbers_from_config(): void
@@ -108,21 +126,26 @@ class HangarTrainingViewTest extends TestCase
             'colony_id' => self::COLONY_ID, 'kind' => 'mission_family', 'entity_key' => 'salvage',
             'level' => 2, 'ap_spend' => 0,
         ]);
-        $html = $this->page();
+        $salvage = $this->families()['salvage'];
         $per = (float) config('path_depth.yield_per_level');
 
-        $this->assertStringContainsString('"yield_now_pct":'.round($per * 2 * 100), $html);
-        $this->assertStringContainsString('"yield_next_pct":'.round($per * 3 * 100), $html);
-        $this->assertStringContainsString('"unlock_level":1', $html);
-        $this->assertStringContainsString(json_encode(__('missions.mission_salvage_sweep_name'), JSON_UNESCAPED_UNICODE), $html);
-        $this->assertStringContainsString(substr(json_encode(__('pathdepth.ui_training_effect'), 15), 1, -1), $html);
+        $this->assertEquals(round($per * 2 * 100), $salvage['yield_now_pct']);
+        $this->assertEquals(round($per * 3 * 100), $salvage['yield_next_pct']);
+        $this->assertSame(1, $salvage['unlock_level']);
+        $this->assertContains(__('missions.mission_salvage_sweep_name'), $salvage['missions']);
+        $this->assertStringContainsString("t('pathdepth.ui_training_effect', { pct: fam.yield_per_level_pct })", $this->hangarPage());
     }
 
     public function test_mission_dialog_shows_family_pill(): void
     {
-        $html = $this->page();
+        $salvage = collect($this->data()['missionCatalog'])->firstWhere('family', 'salvage');
+        $this->assertNotNull($salvage, 'catalog entries carry their training family');
+        $this->assertSame(__('pathdepth.family_salvage'), $salvage['family_name']);
+        $this->assertArrayHasKey('family_level', $salvage);
 
-        $this->assertStringContainsString('hangar-mission-family', $html);
-        $this->assertStringContainsString(substr(json_encode(__('missions.family_pill'), 15), 1, -1), $html);
+        $html = $this->hangarPage();
+
+        $this->assertStringContainsString('<span class="hangar-mission-family">', $html);
+        $this->assertStringContainsString("t('missions.family_pill'", $html);
     }
 }

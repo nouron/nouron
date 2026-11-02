@@ -770,7 +770,7 @@ class SolReportTest extends TestCase
         $this->assertNotNull($report['finale']);
         $this->assertSame('win', $report['finale']['outcome']);
         $this->assertNotNull($report['result_url']);
-        $this->assertStringContainsString('/run/'.$run->id.'/result', $report['result_url']);
+        $this->assertSame('/run/'.$run->id, $report['result_url']);
         $this->assertNull($this->groupByKey($report, 'run'), 'Run group must be replaced by the finale');
     }
 

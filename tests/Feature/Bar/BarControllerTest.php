@@ -118,20 +118,17 @@ class BarControllerTest extends TestCase
 
     public function test_index_requires_auth(): void
     {
-        $response = $this->get(route('colony.bar'));
-        $response->assertRedirect(route('login'));
+        $this->getJson(route('colony.bar'))->assertUnauthorized();
     }
 
     public function test_accept_requires_auth(): void
     {
-        $response = $this->post(route('colony.bar.accept', ['offer' => 1]));
-        $response->assertRedirect(route('login'));
+        $this->postJson(route('colony.bar.accept', ['offer' => 1]))->assertUnauthorized();
     }
 
     public function test_negotiate_requires_auth(): void
     {
-        $response = $this->post(route('colony.bar.negotiate', ['offer' => 1]));
-        $response->assertRedirect(route('login'));
+        $this->postJson(route('colony.bar.negotiate', ['offer' => 1]))->assertUnauthorized();
     }
 
     // ── INDEX ─────────────────────────────────────────────────────────────────
@@ -142,11 +139,10 @@ class BarControllerTest extends TestCase
         $this->setBarLevel(1);
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.bar'));
+            ->getJson(route('colony.bar'));
 
         $response->assertOk();
-        $response->assertViewIs('colony.bar');
-        $response->assertViewHasAll(['colony', 'offers', 'barLevel', 'currentSol']);
+        $response->assertJsonStructure(['offers', 'barLevel', 'currentSol']);
     }
 
     public function test_index_shows_bar_page_when_bar_not_built(): void
@@ -155,17 +151,13 @@ class BarControllerTest extends TestCase
         $this->setBarLevel(0);
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.bar'));
+            ->getJson(route('colony.bar'));
 
         $response->assertOk();
-        $response->assertViewIs('colony.bar');
 
         // barLevel must be 0 and offers must be empty
-        $barLevel = $response->viewData('barLevel');
-        $offers = $response->viewData('offers');
-
-        $this->assertEquals(0, $barLevel);
-        $this->assertCount(0, $offers);
+        $this->assertEquals(0, $response->json('barLevel'));
+        $this->assertCount(0, $response->json('offers'));
     }
 
     public function test_index_passes_active_offers_to_view(): void
@@ -176,11 +168,10 @@ class BarControllerTest extends TestCase
         $this->insertValidOffer(9999); // expires far in the future
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.bar'));
+            ->getJson(route('colony.bar'));
 
         $response->assertOk();
-        $offers = $response->viewData('offers');
-        $this->assertCount(1, $offers, 'Index must pass the active offer to the view');
+        $this->assertCount(1, $response->json('offers'), 'Index must return the active offer');
     }
 
     // ── MARKTBERICHT (Konsul, A13) ────────────────────────────────────────────
@@ -222,12 +213,11 @@ class BarControllerTest extends TestCase
         $start = $this->corvanStartTick();
         $this->mockTick($start - 2);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.bar'));
+        $response = $this->actingAs($this->bart())->getJson(route('colony.bar'));
 
         $response->assertOk();
-        $response->assertSee(__('colony.merchant_forecast_title'));
-        $response->assertSee(__('colony.merchant_forecast_in_sols', ['sols' => 2]));
-        $response->assertViewHas('merchantForecast', fn ($f) => $f['sols'] === 2 && $f['tick'] === $start);
+        $response->assertJsonPath('merchantForecast.sols', 2);
+        $response->assertJsonPath('merchantForecast.tick', $start);
     }
 
     public function test_index_shows_category_line_only_at_rank_3(): void
@@ -237,13 +227,18 @@ class BarControllerTest extends TestCase
         $this->mockTick($start - 1);
 
         $this->setConsulRank(2);
-        $rank2 = $this->actingAs($this->bart())->get(route('colony.bar'));
-        $rank2->assertSee(__('colony.merchant_forecast_title'));
-        $rank2->assertDontSee(__('colony.merchant_forecast_inventory', ['categories' => '']));
+        $rank2 = $this->actingAs($this->bart())->getJson(route('colony.bar'));
+        $this->assertNotNull($rank2->json('merchantForecast'));
+        $this->assertNull($rank2->json('merchantForecast.categories'));
 
         $this->setConsulRank(3);
-        $rank3 = $this->actingAs($this->bart())->get(route('colony.bar'));
-        $rank3->assertSee(__('colony.merchant_forecast_inventory', ['categories' => '']), false);
+        $rank3 = $this->actingAs($this->bart())->getJson(route('colony.bar'));
+        $this->assertIsArray($rank3->json('merchantForecast.categories'));
+        $this->assertNotEmpty($rank3->json('merchantForecast.categories'));
+
+        // The Cantina page renders the category line only when categories is not null.
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
+        $this->assertStringContainsString('{#if f.categories !== null}', $page);
     }
 
     public function test_index_uses_tomorrow_wording_for_one_sol(): void
@@ -252,10 +247,11 @@ class BarControllerTest extends TestCase
         $this->setConsulRank(1);
         $this->mockTick($this->corvanStartTick() - 1);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.bar'));
+        $response = $this->actingAs($this->bart())->getJson(route('colony.bar'));
 
-        $response->assertSee(__('colony.merchant_forecast_tomorrow'));
-        $response->assertDontSee(__('colony.merchant_forecast_in_sols', ['sols' => 1]));
+        $response->assertJsonPath('merchantForecast.sols', 1);
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
+        $this->assertStringContainsString("f.sols === 1 ? t('colony.merchant_forecast_tomorrow')", $page);
     }
 
     public function test_index_hides_market_report_without_consul(): void
@@ -264,11 +260,10 @@ class BarControllerTest extends TestCase
         $this->setConsulRank(null);
         $this->mockTick($this->corvanStartTick() - 1);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.bar'));
+        $response = $this->actingAs($this->bart())->getJson(route('colony.bar'));
 
         $response->assertOk();
-        $response->assertDontSee(__('colony.merchant_forecast_title'));
-        $response->assertViewHas('merchantForecast', null);
+        $response->assertJsonPath('merchantForecast', null);
     }
 
     // ── ACCEPT ────────────────────────────────────────────────────────────────
@@ -403,7 +398,7 @@ class BarControllerTest extends TestCase
     }
 
     /**
-     * A42: the Blade dialog already knows which character a bar_trade offer
+     * A42: the Cantina dialog already knows which character a bar_trade offer
      * belongs to (A36's slot-based assignment) — the controller must forward
      * that slug from the request body to BarService::acceptOffer() so the
      * Charakter-Kodex actually credits the trade (see BarOfferCodexHookupTest

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\OnboardingHintService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 
 class NexusDbController extends Controller
 {
@@ -12,11 +12,11 @@ class NexusDbController extends Controller
         private readonly OnboardingHintService $onboardingHintService,
     ) {}
 
-    public function index(): View
+    /** First-visit flag for the SvelteKit page; the concept texts come from the lang files. */
+    public function data(): JsonResponse
     {
         $userId = Auth::id();
-        $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('nexusdb', $userId) : false;
 
-        return view('nexusdb.index', compact('firstVisit'));
+        return response()->json(['first_visit' => $userId ? $this->onboardingHintService->checkFirstVisit('nexusdb', $userId) : false]);
     }
 }

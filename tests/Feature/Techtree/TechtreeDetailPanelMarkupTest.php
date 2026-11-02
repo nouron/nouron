@@ -14,7 +14,7 @@ use Tests\TestCase;
  * line counts placed instances against max_instances (never max_level), the
  * read-only instance list deep-links into the colony view, and "In der Kolonie
  * errichten" is only offered while another instance is possible (canBuildMore()
- * in public/js/techtree-view.js).
+ * in the Svelte techtree page). Markup checks read the Svelte page source.
  *
  * Fixture: Colony 1 (Springfield), user_id=3 (Bart). Housing (28): max_level 3,
  * max_instances 6.
@@ -37,6 +37,11 @@ class TechtreeDetailPanelMarkupTest extends TestCase
     {
         return $this->actingAs(User::where('user_id', self::BART_USER_ID)->firstOrFail())
             ->get(route('techtree.index'));
+    }
+
+    private function page(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/techtree/+page.svelte'));
     }
 
     private function placeHousing(array $instanceTiles): void
@@ -66,27 +71,25 @@ class TechtreeDetailPanelMarkupTest extends TestCase
 
     public function test_detail_panel_uses_instance_helpers_instead_of_max_level(): void
     {
-        $response = $this->techtree();
+        $page = $this->page();
 
-        $response->assertSee('x-text="instanceCountLabel(selectedTech)"', false);
-        $response->assertDontSee("selectedTech.instance_count + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')", false);
+        $this->assertStringContainsString('<span class="detail-instance-count">{instanceCountLabel(tech)}</span>', $page);
+        $this->assertStringContainsString('${placed} / ${tech.max_instances}', $page, 'count is placed / max_instances');
+        $this->assertStringNotContainsString('instance_count', $page);
     }
 
     public function test_instance_list_links_each_instance_to_its_tile(): void
     {
         $this->placeHousing([1 => [0, 1]]);
 
-        $response = $this->techtree();
+        $page = $this->page();
+        $this->assertStringContainsString('{#each tech.instances as inst (inst.instance_id)}', $page);
+        $this->assertStringContainsString('href={colonyLink({ building: tech.id, instance: inst.instance_id })}', $page);
+        $this->assertStringContainsString("t('techtree.detail_instance_tile_link')", $page);
+        // colonyLink() targets the SvelteKit colony route.
+        $this->assertStringContainsString('`/colony?${new URLSearchParams(', $page);
 
-        $response->assertSee('x-for="inst in selectedTech.instances"', false);
-        $response->assertSee(':href="tileLink(selectedTech, inst)"', false);
-        $response->assertSee(__('techtree.detail_instance_tile_link'));
-        // tileLink() builds on the named colony.view route, not a hard-coded path.
-        $response->assertSee('window.__techtreeData.colonyViewUrl = '.json_encode(route('colony.view'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), false);
-
-        $housing = collect($response->viewData('pageData')['phases'])
-            ->flatMap(fn ($phase) => $phase['items'])
-            ->first(fn ($item) => $item['type'] === 'building' && (int) $item['id'] === 28);
+        $housing = $this->buildingItem(28);
         $this->assertSame([['instance_id' => 1, 'q' => 0, 'r' => 1]], array_map(
             fn ($i) => ['instance_id' => $i['instance_id'], 'q' => $i['q'], 'r' => $i['r']],
             $housing['instances'],
@@ -95,17 +98,19 @@ class TechtreeDetailPanelMarkupTest extends TestCase
 
     public function test_build_link_is_gated_by_can_build_more(): void
     {
-        $response = $this->techtree();
+        $page = $this->page();
 
-        $response->assertSee('x-if="canBuildMore(selectedTech)"', false);
-        $response->assertSee(':href="buildLink(selectedTech)"', false);
-        $response->assertDontSee("'/colony/view?build='", false);
+        $this->assertMatchesRegularExpression(
+            '/\{#if canBuildMore\(tech\)\}\s*<a href=\{colonyLink\(\{ build: tech\.id \}\)\}/',
+            $page,
+        );
+        $this->assertStringNotContainsString('/colony/view?build=', $page);
     }
 
     /** @return array<string, mixed> */
     private function buildingItem(int $buildingId): array
     {
-        $item = collect($this->techtree()->viewData('pageData')['phases'])
+        $item = collect($this->techtree()->assertOk()->json('phases'))
             ->flatMap(fn ($phase) => $phase['items'])
             ->first(fn ($item) => $item['type'] === 'building' && (int) $item['id'] === $buildingId);
         $this->assertNotNull($item, "building {$buildingId} must be a techtree node");
@@ -138,7 +143,10 @@ class TechtreeDetailPanelMarkupTest extends TestCase
 
     public function test_detail_panel_renders_acquire_hint_for_non_menu_buildings(): void
     {
-        $this->techtree()->assertSee('x-if="acquireHint(selectedTech)"', false);
+        $this->assertMatchesRegularExpression(
+            '/\{#if acquireHint\(tech\)\}\s*<p class="detail-ap-hint">\{acquireHint\(tech\)\}<\/p>/',
+            $this->page(),
+        );
     }
 
     /**
@@ -147,12 +155,13 @@ class TechtreeDetailPanelMarkupTest extends TestCase
      */
     public function test_techtree_has_no_rank_based_onboarding_pulse(): void
     {
-        $html = $this->techtree()->assertOk()->getContent();
+        $json = $this->techtree()->assertOk()->getContent();
 
-        $this->assertStringNotContainsString('hintRank', $html);
-        $this->assertStringNotContainsString('data-hint-rank', $html);
+        $this->assertStringNotContainsString('hintRank', $json);
+        $this->assertStringNotContainsString('"pulse"', $json, 'the API never marks a techtree node to pulse');
+        $this->assertStringNotContainsString('hintRank', $this->page());
 
-        $js = file_get_contents(public_path('js/techtree-view.js'));
+        $js = file_get_contents(base_path('frontend/src/lib/js/techtree-canvas.js'));
         $this->assertStringNotContainsString('HINT_TYPE', $js);
         $this->assertStringNotContainsString('hintRank', $js);
     }

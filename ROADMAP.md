@@ -25,7 +25,7 @@ Hinweis: Neu ist T41 (Pfad-Vertiefung per AP-Investition, Spec überarbeitet 202
 | 7 | Closed Beta: Betrieb | R4 Deployment, R6 Backups, R7 Monitoring (Nightwatch vs. Sentry), R17 Tester-Anleitung | Owner |
 | 8 | Closed Beta: Spielerlebnis | R13 Durchspiel-Runs, R14 Intro-Seite, C17/Onboarding-Texte, R16 Unfertiges | Owner |
 
-Entschieden 2026-10-23: Die Branches `ccr-48190b46-civgr7` (ADR 0006 „Frontend auf SvelteKit-PWA“, widerspricht dem Alpine-/PicoCSS-Stack) und `claude/website-docs-sync-jijo7o` (Website) bleiben bewusst erhalten.
+Erledigt 2026-11-02: Frontend-Migration auf SvelteKit (ADR 0006, PR #444, Stufen 0–5e) — alle Bildschirme im neuen Frontend, Blade/Alpine/PicoCSS entfernt, Laravel ist reine JSON-API. **Offen (Stufe 5f, eigener Schritt):** Auslieferung (`play.nouron.de` + API, gehört zu R4) und Prüfung, ob der Login-Token im `localStorage` für die Beta reicht.
 
 ---
 
@@ -186,6 +186,7 @@ Owner-Entscheidung 2026-09-30: Diese Punkte sind für die Closed Beta nicht nöt
 
 ### Zurückgestellte A/T-Punkte
 
+- [ ] **T45 Kolonie nach Run-Ende ansehen** (Review PR #444, Owner 2026-11-02) — GDD §18 sieht nach einem Sieg „Kolonie ansehen“ als Nur-Lese-Ansicht vor. Hat nie funktioniert (Kolonieseiten verlangen einen aktiven Run, auch schon mit Blade), der Knopf ist deshalb von der Ergebnisseite entfernt. Braucht eine Nur-Lese-Kolonieansicht für beendete Runs (API ohne `run.started`-Sperre, Frontend ohne Aktionen). — Mittel
 - [ ] **R21 Neues Pool-Ziel „Nexus-Vorschuss tilgen"** (Owner 2026-09-30) — zusätzliches Ziel neben `credit_reserve`, nicht als Ersatz. Setzt eine Tilgungsmechanik für `nexus_debt` voraus (bisher tilgt der Code nie, Schuld endet in jedem Run bei 3000). Zuerst game-designer: Mechanik (manuelle Tilgung über Nexus-Funk?), Zielgröße, Kategorie (economy → Kombo-Blacklist beachten). — Mittel
 - [ ] **A1 Kommandozentrale-Dashboard** (§13.4, Stufe 4): Restzeit je Baustelle, AP-Zufluss/-Verwendung, Instandhaltungsanteil, Restertrag bis Run-Ende, Regolith-Bilanz, Over-Cap-Warnung, Konzessions-Prognose — **Groß**
 - [ ] **A2 Bonusquellen Berater-Rang + Koloniereife** (§13.3, Stufe 3) + `config('game.project_cost_bonus')` anlegen — Mittel

@@ -142,32 +142,33 @@ class FeedbackTest extends TestCase
         $this->actingAs($this->marge())->postJson(route('feedback.store'), $this->payload(['message' => 'Bar-Text abgeschnitten']));
 
         $this->actingAs($this->bart())
-            ->get(route('admin.feedback'))
+            ->getJson(route('admin.feedback'))
             ->assertOk()
-            ->assertSee('Bar-Text abgeschnitten')
-            ->assertSee('Marge');
+            ->assertJsonPath('data.0.message', 'Bar-Text abgeschnitten')
+            ->assertJsonPath('data.0.username', 'Marge');
     }
 
     public function test_player_cannot_open_the_feedback_overview(): void
     {
-        $this->actingAs($this->marge())->get(route('admin.feedback'))->assertForbidden();
+        $this->actingAs($this->marge())->getJson(route('admin.feedback'))->assertForbidden();
     }
 
     // ── UI ─────────────────────────────────────────────────────────────────
 
+    /** The lobby, run result, settings and admin screens share the (infra) layout. */
     public function test_feedback_button_is_on_pages_for_logged_in_users(): void
     {
-        $this->actingAs($this->marge())
-            ->get(route('lobby'))
-            ->assertOk()
-            ->assertSee('data-feedback-dialog', false);
+        $layout = file_get_contents(base_path('frontend/src/routes/(infra)/+layout.svelte'));
+
+        $this->assertStringContainsString("import FeedbackButton from '#lib/components/FeedbackButton.svelte';", $layout);
+        $this->assertStringContainsString('{#if $shell}<FeedbackButton />{/if}', $layout);
     }
 
     public function test_feedback_button_is_in_the_colony_layout(): void
     {
-        $this->actingAs($this->bart())
-            ->get(route('colony.view'))
-            ->assertOk()
-            ->assertSee('data-feedback-dialog', false);
+        $layout = file_get_contents(base_path('frontend/src/routes/(game)/+layout.svelte'));
+
+        $this->assertStringContainsString("import FeedbackButton from '#lib/components/FeedbackButton.svelte';", $layout);
+        $this->assertStringContainsString('{#if $shell}<FeedbackButton />{/if}', $layout);
     }
 }

@@ -31,8 +31,6 @@ return [
     'result_objective_fulfilled' => 'Erfüllt',
     'result_objective_open' => 'Nicht erfüllt',
     'result_btn_new_run' => 'Neue Mission starten',
-    'result_btn_colony' => 'Kolonie ansehen',
-    'result_btn_colony_disabled' => 'Kolonie ansehen (nur bei Erfolg)',
     'new_run_preparing' => 'Neuer Run wird vorbereitet — Feature kommt in Phase 4.',
 
     // New-run flow (Feature 2)

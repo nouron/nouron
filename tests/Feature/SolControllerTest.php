@@ -3,12 +3,12 @@
 namespace Tests\Feature;
 
 /**
- * SolController feature tests — POST /sol/next (route: sol.next).
+ * SolController feature tests — POST /api/v1/sol/next (route: sol.next).
  *
  * Covered scenarios:
  *
  *  AUTH GUARD
- *    - test_unauthenticated_request_redirects_to_login
+ *    - test_unauthenticated_request_is_rejected
  *
  *  NO ACTIVE RUN → 404
  *    - test_returns_404_when_no_active_run_exists
@@ -139,11 +139,11 @@ class SolControllerTest extends TestCase
      * The auth middleware short-circuits before the controller executes,
      * so no run or colony fixture is needed.
      */
-    public function test_unauthenticated_request_redirects_to_login(): void
+    public function test_unauthenticated_request_is_rejected(): void
     {
-        $response = $this->post(route('sol.next'));
+        $response = $this->postJson(route('sol.next'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertUnauthorized();
     }
 
     // ── NO ACTIVE RUN → 404 ───────────────────────────────────────────────────
