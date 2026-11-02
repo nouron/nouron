@@ -16,7 +16,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 class AdvisorController extends BaseController
 {
@@ -301,7 +300,7 @@ class AdvisorController extends BaseController
         ]);
     }
 
-    public function hire(Request $request): View|JsonResponse
+    public function hire(Request $request): JsonResponse
     {
         $request->validate([
             'personell_id' => ['required', 'integer', Rule::in(AdvisorService::allIds())],
