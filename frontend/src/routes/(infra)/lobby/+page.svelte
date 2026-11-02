@@ -6,6 +6,7 @@
 	import { api, ApiError } from '#lib/stores/auth.ts';
 	import { refreshShell } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 
 	type RunRow = {
 		id: number;
@@ -70,16 +71,35 @@
 		goto('/colony');
 	}
 
-	async function abandon(id: number) {
-		if (!confirm(t('lobby.abandon_confirm'))) return;
+	// Themed confirm dialog state (replaces window.confirm).
+	let pending = $state<{ title: string; message: string; label: string; run: () => Promise<void> } | null>(null);
+
+	function abandon(id: number) {
+		pending = {
+			title: t('lobby.abandon_button'),
+			message: t('lobby.abandon_confirm'),
+			label: t('lobby.abandon_button'),
+			run: () => doAbandon(id)
+		};
+	}
+
+	async function doAbandon(id: number) {
 		const res = await send(`/lobby/${id}/abandon`);
 		alert = { type: res.ok ? 'success' : 'error', text: res.message ?? '' };
 		await refreshShell();
 		await load();
 	}
 
-	async function newRun() {
-		if (!confirm(t('lobby.new_run_confirm'))) return;
+	function newRun() {
+		pending = {
+			title: t('lobby.new_run_button'),
+			message: t('lobby.new_run_confirm'),
+			label: t('lobby.new_run_button'),
+			run: doNewRun
+		};
+	}
+
+	async function doNewRun() {
 		const res = await send('/run/new');
 		alert = { type: res.ok ? 'success' : 'error', text: res.message ?? '' };
 		await load();
@@ -240,6 +260,21 @@
 			<div class="lobby-empty"><p>{t('lobby.no_runs')}</p></div>
 		{/if}
 	</div>
+{/if}
+
+{#if pending}
+	{@const p = pending}
+	<ConfirmDialog
+		title={p.title}
+		message={p.message}
+		confirmLabel={p.label}
+		oncancel={() => (pending = null)}
+		onconfirm={() => {
+			const run = p.run;
+			pending = null;
+			run();
+		}}
+	/>
 {/if}
 
 <style>

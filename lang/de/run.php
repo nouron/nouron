@@ -26,11 +26,13 @@ return [
     'result_fail_trust' => 'Die Kolonisten haben die Führung aufgegeben. Das Vertrauen ist zu weit gesunken.',
     'result_fail_time' => 'Die Konzessionslaufzeit ist verstrichen, ohne dass das Ziel erreicht wurde.',
     'result_fail_phase1_deadline' => 'Der Grundaufbau wurde nicht rechtzeitig abgeschlossen. Nexus hat die Reißleine gezogen.',
+    'result_fail_nexus_debt' => 'Das Schuldenlimit wurde überschritten. Nexus hat die Konzession entzogen.',
+    'result_fail_abandoned' => 'Die Mission wurde abgebrochen.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Erreicht in Sol :current von :limit',
     'result_objective_fulfilled' => 'Erfüllt',
     'result_objective_open' => 'Nicht erfüllt',
-    'result_btn_new_run' => 'Neue Mission starten',
+    'result_btn_new_run' => 'Zurück zur Mission Control',
     'new_run_preparing' => 'Neuer Run wird vorbereitet — Feature kommt in Phase 4.',
 
     // New-run flow (Feature 2)

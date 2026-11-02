@@ -60,6 +60,7 @@ class LobbyApiTest extends TestCase
 
         $this->postJson("/api/v1/lobby/{$run->id}/abandon")->assertOk()->assertJsonPath('ok', true);
         $this->assertSame('failed', $run->fresh()->status);
+        $this->assertSame('abandoned', $run->fresh()->fail_reason);
 
         $this->getJson('/api/v1/lobby')->assertJsonPath('resultRunId', $run->id);
         $this->getJson("/api/v1/run/{$run->id}/result")->assertOk()->assertJsonStructure([

@@ -4,7 +4,6 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { api, ApiError } from '#lib/stores/auth.ts';
-	import { refreshShell } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
 
 	type Result = {
@@ -16,31 +15,21 @@
 		objectives: { label: string; current: number; target: number; pct: number; done: boolean }[];
 	};
 
+	const FAIL_BODY: Record<string, string> = {
+		trust_collapse: 'run.result_fail_trust',
+		phase1_deadline: 'run.result_fail_phase1_deadline',
+		nexus_debt: 'run.result_fail_nexus_debt',
+		abandoned: 'run.result_fail_abandoned'
+	};
+
 	let r = $state<Result | null>(null);
 	let error = $state('');
-	let busy = $state(false);
 	const won = $derived(r?.status === 'completed');
 	const body = $derived(
 		won
 			? t('run.run_completed')
-			: r?.fail_reason === 'trust_collapse'
-				? t('run.result_fail_trust')
-				: r?.fail_reason === 'phase1_deadline'
-					? t('run.result_fail_phase1_deadline')
-					: t('run.result_fail_time')
+			: t(FAIL_BODY[r?.fail_reason ?? ''] ?? 'run.result_fail_time')
 	);
-
-	async function newRun() {
-		busy = true;
-		const res = await api<{ ok: boolean; message?: string }>('/run/new', { method: 'POST', allowError: true }).catch(() => ({
-			ok: false,
-			message: t('colony.network_error')
-		}));
-		busy = false;
-		if (!res.ok) return void (error = res.message ?? '');
-		await refreshShell();
-		goto('/lobby');
-	}
 
 	onMount(() => {
 		api<Result>(`/run/${page.params.id}/result`)
@@ -95,7 +84,7 @@
 		</div>
 
 		<div class="run-result__actions">
-			<button class="primary" disabled={busy} onclick={newRun}><i class="bi bi-arrow-repeat"></i> {t('run.result_btn_new_run')}</button>
+			<a class="primary" href="/lobby"><i class="bi bi-arrow-left"></i> {t('run.result_btn_new_run')}</a>
 		</div>
 	</div>
 {/if}
@@ -122,9 +111,5 @@
 	.primary {
 		background: var(--color-accent);
 		color: #fff;
-	}
-	button:disabled {
-		opacity: 0.55;
-		cursor: not-allowed;
 	}
 </style>

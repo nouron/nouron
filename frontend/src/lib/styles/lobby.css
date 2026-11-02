@@ -85,6 +85,24 @@
     clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
 }
 
+/* The inset frame is clipped away along the bevel; redraw the diagonal. */
+.lobby-run-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    background: linear-gradient(
+        to top right,
+        transparent calc(50% - 2px),
+        var(--color-accent, #8c2030) calc(50% - 2px),
+        var(--color-accent, #8c2030) 50%,
+        transparent 50%
+    );
+}
+
 .lobby-run-card header {
     display: flex;
     align-items: baseline;
