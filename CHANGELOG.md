@@ -3,7 +3,7 @@
 ## 2026-11-02
 
 - Svelte-Frontend: Stufe 5e Blade-Abbau (ADR 0006) — Blade-Views, Web-Routen, PicoCSS/Alpine-Code und die alten `public/js`/`public/css` entfernt; Laravel ist reine JSON-API (`/api/v1`, Fehler immer JSON, API-Routen tragen die alten Routennamen). Die noch genutzten Zeichner und Stylesheets liegen jetzt in `frontend/src/lib/` (Alpine-Teil des Hexfeld-Zeichners gelöscht). Die aktive Kolonie hängt nicht mehr an der Session; Server-Links (Hinweise, Berater, Protokoll, Sol-Finale) zeigen direkt auf Frontend-Pfade. Tests auf die API umgestellt, reine Blade-Tests gelöscht. CLAUDE.md, Agenten-Beschreibungen, `docs/frontend-conventions.md` und Pre-commit-Hook nachgezogen.
-- Organika-Test-Fix (`fix/organika-tests`) in die Migration gemergt.
+- Organika-Test-Fix (`fix/organika-tests`) in die Migration gemergt; die 8 seit T43-G7 roten Bot-Tests (Futter-Regel, Sparziel, Agrardom-Bewertung) an das neue Organika-Modell angepasst.
 
 ## 2026-11-01
 

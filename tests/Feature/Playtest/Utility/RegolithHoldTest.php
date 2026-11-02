@@ -80,7 +80,8 @@ class RegolithHoldTest extends TestCase
         $bot = BotSession::boot($this, 1);
         $this->setPhase($bot, 2);
         $this->setCc($bot, 3);
-        $this->placeAt($bot, 41, 1);
+        // Agrardom maxed: since T43-G7 every colonist eats, a Lv1 Agrardom would win the goal.
+        $this->placeAt($bot, 41, 3);
         $this->placeAt($bot, BuildingId::Sciencelab->value, 2);
         $this->placeAt($bot, BuildingId::Hangar->value, 2);
         $this->setResource($bot, 3, 50);
