@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/components/entity-chip.blade.php: inline pill with hover/tap tooltip.
-	import '../../../../public/css/entity-chips.css';
+	import '#lib/styles/entity-chips.css';
 	import { t } from '#lib/i18n.ts';
 
 	type Tooltip = { level?: number | null; description?: string; link?: string; link_label?: string; meta?: string };

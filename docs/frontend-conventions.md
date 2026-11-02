@@ -1,19 +1,16 @@
 # Nouron — Frontend Engineering Conventions
 
-**Verbindlich für:** Alle Screens mit AJAX-Interaktionen. Ergänzt `docs/design-system/` (Optik/Tokens/Komponenten) um technische Verträge, die kein Design-System-Export abdeckt — Backend-Response-Contracts, Screen-Kompositionsregeln, Breakpoint-Implementierungsdetails.
+**Verbindlich für:** Alle Seiten des SvelteKit-Frontends (`frontend/`) und die JSON-API dahinter (`/api/v1`, ADR 0006). Ergänzt `docs/design-system/` (Optik/Tokens/Komponenten) um technische Verträge, die kein Design-System-Export abdeckt — Backend-Response-Contracts, Screen-Kompositionsregeln, Breakpoint-Implementierungsdetails.
 
 Migriert aus `docs/design-guide.md` (2026-08-01, abgelöst) — nur die Abschnitte ohne visuelles Gegenstück im Design System.
 
 ---
 
-## 1. Live-Sync nach AJAX-Aktionen (verbindlich)
+## 1. Live-Sync nach Aktionen (verbindlich)
 
-Die Resource Bar ist reines server-gerendertes Blade ohne eigenen reaktiven State — sie aktualisiert sich nicht von selbst. **Jeder Screen mit AJAX-Aktionen, die AP oder Ressourcen verändern, muss beides selbst erledigen:**
+Kopfzeile und Ressourcenleiste lesen den Store `shell` (`frontend/src/lib/stores/shell.ts`, Quelle `GET /api/v1/shell`). Sie aktualisieren sich nicht von selbst. **Jede Seite mit Aktionen, die AP oder Ressourcen verändern, ruft nach einer erfolgreichen Aktion `refreshShell()` auf** (oder `setAp()` mit dem AP-Wert aus der Antwort, wenn nur AP betroffen sind; `setHint()` für einen mitgelieferten Hinweis).
 
-1. **Backend:** Die JSON-Antwort liefert die aktualisierten Werte mit — exakt diese Feldnamen (Referenz: `ColonyController::currentAp()`): `apNav`, `apConstruction`, `apResearch`, `apEconomy`, `apStrategy`, `regolith`, `werkstoffe`, `organika`, `credits`, `freeSupply`. Gleiche Feldnamen spielweit, damit ein künftiger gemeinsamer Store (siehe unten) beide Seiten ohne Umbenennung zusammenführen kann.
-2. **Frontend:** Die zurückgegebenen Werte werden per DOM-Patch in die Resource-Bar-Chips geschrieben und bei Abnahme kurz aufgeblitzt. Kanonisches Referenzmuster: `public/js/colony-hexgrid.js` (`updateAp()`, `syncResbarAp()`/`syncResbarAmount()`, `flashApChip()`/`flashResChip()`) — Chips werden über ihre `#resbar-ap-*`-ID bzw. `.res-{{Abbr}}`-Klasse angesprochen (z.B. `.res-Or` für Organika).
-
-Es gibt aktuell **keinen** globalen Store — das ist ein bewusstes Copy-Paste-Muster pro Screen (Zukunftsschritt „gemeinsamer Alpine-Store" ist im Code vermerkt, aber nicht Teil dieser Konvention). Ein neuer Screen mit AJAX-Aktionen **ohne** diesen Sync gilt als unvollständig — Symptom: Ressourcenleiste hinkt hinterher, korrigiert sich erst beim nächsten Reload.
+Eine Seite **ohne** diesen Sync gilt als unvollständig — Symptom: Ressourcenleiste hinkt hinterher und korrigiert sich erst beim nächsten Laden.
 
 **Abkürzungen sind fix und werden nie übersetzt:** `Cr`, `Rg`, `Co`, `Or`, `Sup`, `Nav`/`Con`/`Res`/`Eco`/`Str` + `AP` — jeder Kosten-/Ertrags-Chip verwendet dieselbe Abkürzung wie die Resource Bar, nie den ausgeschriebenen Ressourcennamen (auch nicht via `__()`/Lang-Key).
 
@@ -35,7 +32,9 @@ Eine Aktion, die die Spielregeln verbieten, antwortet mit **HTTP 422** und diese
 
 Der umgekehrte Weg — den übersetzten Satz in `error` zu legen — macht das Feld als Schlüssel unbrauchbar: jede Übersetzungsänderung bricht dann still alles, was darauf verzweigt oder aggregiert. Referenz: `ColonyController::fail()`.
 
-**Die JS-Helper ignorieren den HTTP-Status bewusst** (`public/js/colony-hexgrid.js`, `command_center.js`): sie machen `.then(r => r.json())` und die Call-Sites verzweigen auf das JSON-Feld `res.ok`, nie auf `response.ok`. Das ist load-bearing — ein globaler „non-2xx = throw"-Interceptor würde allen Call-Sites gleichzeitig ihre spezifische Meldung nehmen. Anzeige immer als `res.message ?? res.error`.
+**Im Frontend:** Aktionen rufen `api(path, { method, body, allowError: true })` (`#lib/stores/auth.ts`) und verzweigen auf das JSON-Feld `res.ok`, nie auf den HTTP-Status — so behält jede Aufrufstelle ihre spezifische Meldung. Ohne `allowError` wirft `api()` bei Nicht-2xx einen `ApiError` (für Datenabrufe). 401 meldet ab. Anzeige immer als `res.message ?? res.error`.
+
+**Ohne gestarteten Run** antworten die Spiel-Endpunkte mit 409 `{ "ok": false, "error": "run_not_started" }`; das Frontend schickt dann in die Lobby.
 
 ---
 
@@ -55,17 +54,17 @@ Einstiegspunkt vor und nach einem Run.
 
 ### 3.2 In-Run Screens (Standard)
 
-Gilt für: Colony, Berater, Techtree, Handel, Nachrichten, Flotte, Galaxis, Systemkarte.
+Gilt für: Kolonie, Kommandozentrale, Berater, Techtree, Hangar, Cantina, Protokoll, Nexus-DB (Routengruppe `(game)`).
 
 **Schichtung (von oben nach unten):**
 1. Navbar (`position: fixed; top: 0; width: 100%`, hell)
 2. Resource Bar (direkt darunter, horizontale Leiste)
 3. Subnav / Tabs (wenn der Screen interne Sektionen hat)
-4. Screen-Content (`container-fluid`, `margin-top: 1rem`)
+4. Seiteninhalt
 
 - Kein eigener Page-Title als H1 nötig, wenn der Screen-Name bereits in der Navbar-Navigation aktiv ist
 - H2 für Abschnitte innerhalb des Screens, Whitespace zwischen Sektionen: `lg` (32px)
-- Flash-Messages (Erfolg/Fehler): oberhalb des Contents als Alert-Banner, schliessbar, zeitlich begrenzt sichtbar (kein permanentes Element)
+- Meldungen (Erfolg/Fehler) nach Aktionen: als Banner/Toast oberhalb des Inhalts, zeitlich begrenzt (kein permanentes Element)
 
 ### 3.3 Carousel-Screens
 
@@ -74,8 +73,8 @@ Screens mit Carousel-Navigation (aktuell: Berater-Screen, Hangar-Screen).
 - Card-basierte Darstellung: eine Entität pro Card (ein Berater, eine Hangarbucht)
 - Navigation: Swipe auf Mobile, Pfeil-Buttons auf Desktop, Dots-Pager unterhalb der Cards als Positionsanzeige
 - Kein horizontales Scrolling der gesamten Seite — nur der Carousel-Bereich scrollt
-- Stack: Alpine.js für State (aktiver Index, Swipe-Events), PicoCSS für Card-Grundlayout, Carousel-Logik in `public/js/carousel.js` + `public/css/carousel.css`. Kein jQuery, kein Bootstrap.
-- Card-States: jede Card zeigt genau einen Zustand an (leer/aktiv/inaktiv/abwesend). State-Übergänge über Alpine.js `x-show`/`x-data`, nicht durch DOM-Neuladen.
+- Umsetzung: Klasse `Carousel` in `frontend/src/lib/carousel.svelte.ts` (aktiver Index, Swipe, Pfeile, Dots) mit `lib/styles/carousel.css`.
+- Card-States: jede Card zeigt genau einen Zustand an (leer/aktiv/inaktiv/abwesend). Übergänge reaktiv im Svelte-State, nicht durch Neuladen.
 
 ### 3.4 Cantina / Bar
 
@@ -101,8 +100,8 @@ Verbindliches Set — keine weiteren Schwellwerte einführen:
 - **Mobile-first:** Neue Styles mobil als Basis schreiben, Desktop additiv über `min-width`. Bestehende `max-width`-Blöcke werden bei Migrationen schrittweise umgedreht.
 - **Komplemente:** `max-width` immer 599 / 767 / 899 — nie 600 / 768 / 900, sonst matchen `min`- und `max`-Query bei exakter Breite gleichzeitig.
 - **Viewport-Höhen:** `dvh` statt `vh` (mobile Adressleiste); `vh`-Zeile als Fallback davor stehen lassen.
-- **JS spiegelt CSS:** `innerWidth < 600` (Techtree `isMobile`), `< 768` (Carousel Full-width-Card), `< 900` (Carousel Arrow-Modus, `carousel.js` BREAKPOINT).
-- **Navigation (Colony-Layout):** Burger-Menü < 600, Icon-only-Leiste 600–1099, Icons + Labels ≥ 1100. Nav-Items niemals intern umbrechen (`white-space: nowrap`); kein horizontales Scrollen, kein Mehrzeilen-Umbruch — bei Platzmangel fallen die Labels weg.
+- **JS spiegelt CSS:** `innerWidth < 600` (Techtree `isMobile`), `< 768` (Carousel Full-width-Card), `< 900` (Carousel Arrow-Modus, `carousel.svelte.ts`).
+- **Navigation (In-Run-Kopfzeile, `AppHeader.svelte`):** Burger-Menü < 600, Icon-only-Leiste 600–1099, Icons + Labels ≥ 1100. Nav-Items niemals intern umbrechen (`white-space: nowrap`); kein horizontales Scrollen, kein Mehrzeilen-Umbruch — bei Platzmangel fallen die Labels weg.
 - **Touch-Targets:** Interaktive Elemente min. 24×24 px Hitbox (Dots: sichtbarer Punkt via `::before`, Hitbox über Elementgröße).
 
 ---
@@ -111,14 +110,14 @@ Verbindliches Set — keine weiteren Schwellwerte einführen:
 
 | Do | Don't |
 |---|---|
-| Alpine.js + Vanilla `fetch()` für alle Interaktionen | jQuery verwenden (vollständig entfernt, Mai 2026) |
+| Svelte-State + `api()` aus `#lib/stores/auth.ts` für alle Interaktionen | Eigene `fetch()`-Aufrufe am Token vorbei; jQuery/Alpine (entfernt) |
 | Container in `em`/`rem` | Fixe `px`-Grössen für Icons und Portraits |
-| Neue Panel-/Card-Klassen mit dem Wrapper-Container prefixen (z.B. `.tech-panel .detail-row`) | Bare Klassen wie `.detail-row` ohne Scope — PicoCSS hat globale `aside li`/`aside ul`-Regeln, die bei gleicher Spezifität gewinnen und neue Styles unsichtbar machen (Bug in PR #305/#306, Techtree-Sidebar) |
+| Seitenspezifisches CSS im `<style>`-Block der Komponente (automatisch gescoped); geteilte Stylesheets in `lib/styles/` mit Wrapper-Präfix | Globale bare Klassen in geteilten Stylesheets — kollidieren seitenübergreifend |
 | Sekundäre Detail-Zeilen (Werte neben Meta-Labels, Listeneinträge) klein + `font-weight: 500` halten, angelehnt an die Description-Textgröße (~0.8rem) | Body-Werte in Sidebars mit `font-weight: 600–700` + `~0.95rem` — wirkt in schmalen Panels zu groß/prägnant, nicht "modern/elegant/minimal" |
 
 ### Upgrade-Button mit segmentiertem AP-Balken (geteilte Komponente)
 
-Colony „Ausbauen“ und Techtree-Kenntnis-Button nutzen **eine** Komponente: Partial `resources/views/partials/ap-upgrade-button.blade.php` (`@include`, Params `row`, `click`, `btnLabel`, `chip`, `classExpr`, `blockedExpr`, `tipId` — nicht `label` nennen, das liest der eingebundene `ap-cost-chip`), Logik `public/js/ap-bar.js` (`window.NouronApBar`, in die Alpine-Komponente spreaden), Styles `public/css/ap-upgrade-button.css`. Keine eigenen Balken-Klassen/-Logik in Screen-Dateien.
+Kolonie „Ausbauen“, Techtree-Kenntnis-Button und Hangar-Training nutzen **eine** Komponente: `frontend/src/lib/components/ApUpgradeButton.svelte`, Logik `lib/js/ap-bar.js`, Styles `lib/styles/ap-upgrade-button.css`. Keine eigenen Balken-Klassen/-Logik in Seiten.
 
 - Zeilen-Vertrag: `ap_spend`, `ap_for_levelup` Pflicht; `ap_cap: null | { cap, spent, remaining }` optional. `null` = schlichter Balken. Gesetzt = vier Zustände (früher gefüllt / heute gefüllt `--today` / heute frei `--free` / heute gesperrt `--locked`), Tageslimit-Marker `.btn-seg-limit`, Tooltip `colony.ap_cap_tooltip`; `remaining <= 0` sperrt den Button (`aria-disabled`).
-- Neue Screens mit Upgrade-Buttons binden dieses Partial ein; ein neues Backend-Feld `ap_cap` schaltet die Zustände automatisch frei.
+- Neue Seiten mit Upgrade-Buttons nutzen diese Komponente; ein neues Backend-Feld `ap_cap` schaltet die Zustände automatisch frei.

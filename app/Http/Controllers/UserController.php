@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Services\CharacterCodexService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,25 +37,6 @@ class UserController extends BaseController
         return response()->json(['characters' => $this->characterCodexService->getRosterWithUnlockedEntries(Auth::id())]);
     }
 
-    public function codex()
-    {
-        return view('user.codex', [
-            'characters' => $this->characterCodexService->getRosterWithUnlockedEntries(Auth::id()),
-        ]);
-    }
-
-    public function show()
-    {
-        return view('user.show', [
-            'user' => Auth::user(),
-        ]);
-    }
-
-    public function settings()
-    {
-        return view('user.settings', $this->settingsData());
-    }
-
     /** Profile and settings for the SvelteKit page — same data as show() and settings(). */
     public function settingsJson(): JsonResponse
     {
@@ -81,15 +61,12 @@ class UserController extends BaseController
         ];
     }
 
-    /** JSON for the SvelteKit frontend, a redirect with flash message for Blade. */
-    private function saved(Request $request, string $message): JsonResponse|RedirectResponse
+    private function saved(string $message): JsonResponse
     {
-        return $request->is('api/*')
-            ? response()->json(['ok' => true, 'message' => $message])
-            : redirect()->route('user.settings')->with('success', $message);
+        return response()->json(['ok' => true, 'message' => $message]);
     }
 
-    public function updateDisplayName(Request $request): JsonResponse|RedirectResponse
+    public function updateDisplayName(Request $request): JsonResponse
     {
         $data = $request->validate([
             'display_name' => ['required', 'string', 'max:50'],
@@ -97,10 +74,10 @@ class UserController extends BaseController
 
         Auth::user()->update(['display_name' => $data['display_name']]);
 
-        return $this->saved($request, __('settings.display_name_saved'));
+        return $this->saved(__('settings.display_name_saved'));
     }
 
-    public function updateLocale(Request $request): JsonResponse|RedirectResponse
+    public function updateLocale(Request $request): JsonResponse
     {
         $data = $request->validate([
             'locale' => ['required', 'string', Rule::in(config('app.supported_locales'))],
@@ -112,10 +89,10 @@ class UserController extends BaseController
                 ['locale' => $data['locale'], 'updated_at' => now()]
             );
 
-        return $this->saved($request, __('settings.saved', [], $data['locale']));
+        return $this->saved(__('settings.saved', [], $data['locale']));
     }
 
-    public function updateOnboardingHints(Request $request): JsonResponse|RedirectResponse
+    public function updateOnboardingHints(Request $request): JsonResponse
     {
         $data = $request->validate([
             'onboarding_hints' => ['required', 'boolean'],
@@ -127,10 +104,10 @@ class UserController extends BaseController
                 ['onboarding_hints' => $data['onboarding_hints'], 'updated_at' => now()]
             );
 
-        return $this->saved($request, __('settings.saved'));
+        return $this->saved(__('settings.saved'));
     }
 
-    public function updatePassword(Request $request): JsonResponse|RedirectResponse
+    public function updatePassword(Request $request): JsonResponse
     {
         $request->validate([
             'current_password' => ['required', 'string'],
@@ -143,6 +120,6 @@ class UserController extends BaseController
 
         Auth::user()->update(['password' => Hash::make($request->password)]);
 
-        return $this->saved($request, __('settings.password_saved'));
+        return $this->saved(__('settings.password_saved'));
     }
 }

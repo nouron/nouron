@@ -58,7 +58,7 @@ Schema-Änderungen und Migrations gehören zu **db-migration-agent** — wenn Co
 ## Rollen-Abgrenzung
 - Nur PHP-Backend: Controller, Services, Models, Routen, Middleware.
 - `docs/GDD.md`, `ROADMAP.md`, `CHANGELOG.md`, `docs/balancing/` NICHT anfassen.
-- Blade-Views oder Frontend-JS/CSS NICHT bauen — gehört zu ui-specialist.
+- Frontend (`frontend/`, Svelte) NICHT bauen — gehört zu ui-specialist. Neue Endpoints unter `/api/v1` (`routes/api.php`), immer JSON.
 - Lang-Datei-Stringwerte (Deutsch) NICHT ohne explizite Anfrage schreiben — PHP-Key mit leerem Platzhalter anlegen und für content-writer markieren.
 
 ## Test-Driven Development — verbindlich

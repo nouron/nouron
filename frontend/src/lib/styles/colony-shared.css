@@ -1,5 +1,4 @@
-/* ponytail: copied from public/css/colony.css (which can't be imported: it sets :root/body for the Blade layout).
-   Delete there when the Blade colony view goes (ADR 0006 stage 5). Only what the techtree panel needs. */
+/* Ported from the former Blade public/css/colony.css: only what the techtree panel needs. */
 
 .btn-segbar {
     position: absolute;

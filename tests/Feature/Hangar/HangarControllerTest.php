@@ -149,8 +149,8 @@ class HangarControllerTest extends TestCase
 
     public function test_index_requires_auth(): void
     {
-        $this->get(route('colony.hangar'))
-            ->assertRedirect(route('login'));
+        $this->getJson(route('colony.hangar'))
+            ->assertUnauthorized();
     }
 
     public function test_request_ship_requires_auth(): void
@@ -184,11 +184,10 @@ class HangarControllerTest extends TestCase
         $this->insertHangar(1);
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.hangar'));
+            ->getJson(route('colony.hangar'));
 
         $response->assertOk();
-        $response->assertViewIs('colony.hangar');
-        $response->assertViewHasAll([
+        $response->assertJsonStructure([
             'slots',
             'shipTypes',
             'hasPilot',
@@ -210,10 +209,10 @@ class HangarControllerTest extends TestCase
             ->delete();
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.hangar'));
+            ->getJson(route('colony.hangar'));
 
         $response->assertOk();
-        $this->assertFalse($response->viewData('hasPilot'));
+        $this->assertFalse($response->json('hasPilot'));
     }
 
     public function test_index_view_lists_apron_and_three_bays_of_the_single_hall(): void
@@ -221,10 +220,10 @@ class HangarControllerTest extends TestCase
         $this->insertHangar(1);
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.hangar'));
+            ->getJson(route('colony.hangar'));
 
         $response->assertOk();
-        $slots = $response->viewData('slots');
+        $slots = $response->json('slots');
         $this->assertSame([0, 1, 2, 3], array_column($slots, 'bay'));
     }
 
@@ -233,10 +232,10 @@ class HangarControllerTest extends TestCase
         $this->insertHangar(1);
 
         $response = $this->actingAs($this->bart())
-            ->get(route('colony.hangar'));
+            ->getJson(route('colony.hangar'));
 
         $response->assertOk();
-        $shipTypes = $response->viewData('shipTypes');
+        $shipTypes = $response->json('shipTypes');
 
         $this->assertSame(
             [self::SHIP_DRONE, self::SHIP_FREIGHTER, self::SHIP_CORVETTE],
@@ -274,10 +273,10 @@ class HangarControllerTest extends TestCase
                 ]);
                 DB::table('user_resources')->where('user_id', self::USER_ID_BART)->update(['credits' => 10000]);
 
-                $index = $this->actingAs($this->bart())->get(route('colony.hangar'));
+                $index = $this->actingAs($this->bart())->getJson(route('colony.hangar'));
                 $index->assertOk();
-                $displayedPerAp = $index->viewData('consulApDiscount');
-                $displayed = $index->viewData('shipCosts')[$shipId];
+                $displayedPerAp = $index->json('consulApDiscount');
+                $displayed = $index->json('shipCosts')[$shipId];
 
                 $this->assertSame($expectedPerAp[$rank], $displayedPerAp, "rank {$rank}");
                 $this->assertSame($expectedMaxAp[$rank][$shipId], $displayed['max_consul_ap'], "rank {$rank} ship {$shipId}");
@@ -352,11 +351,11 @@ class HangarControllerTest extends TestCase
         $this->insertHangar(1);
         DB::table('advisors')->where('colony_id', self::COLONY_ID_BART)->where('personell_id', 92)->delete();
 
-        $index = $this->actingAs($this->bart())->get(route('colony.hangar'));
+        $index = $this->actingAs($this->bart())->getJson(route('colony.hangar'));
 
-        $this->assertFalse($index->viewData('hasAktivierterKonsul'));
-        $this->assertSame(0, $index->viewData('consulApDiscount'));
-        $this->assertSame(0, $index->viewData('shipCosts')[self::SHIP_DRONE]['max_consul_ap']);
+        $this->assertFalse($index->json('hasAktivierterKonsul'));
+        $this->assertSame(0, $index->json('consulApDiscount'));
+        $this->assertSame(0, $index->json('shipCosts')[self::SHIP_DRONE]['max_consul_ap']);
     }
 
     // ── REQUEST SHIP ──────────────────────────────────────────────────────────
@@ -671,9 +670,9 @@ class HangarControllerTest extends TestCase
         $this->insertHangar(1);
 
         $this->actingAs($this->bart())
-            ->get(route('colony.hangar'))
+            ->getJson(route('colony.hangar'))
             ->assertOk()
-            ->assertViewHas('canUseNexusCredit', true);
+            ->assertJsonPath('canUseNexusCredit', true);
     }
 
     public function test_index_hides_nexus_credit_when_command_center_below_threshold(): void
@@ -685,9 +684,9 @@ class HangarControllerTest extends TestCase
             ->update(['level' => (int) config('game.hangar.nexus_credit_min_cc_level', 2) - 1]);
 
         $this->actingAs($this->bart())
-            ->get(route('colony.hangar'))
+            ->getJson(route('colony.hangar'))
             ->assertOk()
-            ->assertViewHas('canUseNexusCredit', false);
+            ->assertJsonPath('canUseNexusCredit', false);
     }
 
     // ── T22: delivered ship goes to a hangar that can operate it ─────────────

@@ -22,12 +22,12 @@ class OnboardingTest extends TestCase
 
     public function test_registration_creates_colony_with_starting_resources(): void
     {
-        $this->post(route('register'), [
+        $this->postJson(route('register'), [
             'username' => 'newplayer',
             'email' => 'new@example.com',
             'password' => 'secret1234',
             'password_confirmation' => 'secret1234',
-        ])->assertRedirect(route('lobby'));
+        ])->assertCreated();
 
         $user = User::where('username', 'newplayer')->firstOrFail();
 
@@ -89,23 +89,5 @@ class OnboardingTest extends TestCase
         $this->assertEquals($user->user_id, $colony->user_id);
         // Colonies no longer carry a galaxy/planet assignment — the column was dropped.
         $this->assertFalse(Schema::hasColumn('glx_colonies', 'system_object_id'));
-    }
-
-    public function test_login_triggers_onboarding_for_user_without_colony(): void
-    {
-        // Create a user but no colony
-        $user = User::factory()->create([
-            'username' => 'nocolony',
-            'password' => bcrypt('secret123'),
-        ]);
-
-        $this->assertDatabaseMissing('glx_colonies', ['user_id' => $user->user_id]);
-
-        $this->post(route('login'), [
-            'username' => 'nocolony',
-            'password' => 'secret123',
-        ])->assertRedirect(route('lobby'));
-
-        $this->assertDatabaseHas('glx_colonies', ['user_id' => $user->user_id]);
     }
 }

@@ -64,7 +64,7 @@ class HarvesterSol1BootstrapTest extends TestCase
 
     public function test_sol1_seeded_harvester_produces_nothing_before_relocation(): void
     {
-        $this->actingAs($this->user())->post(route('run.new'))->assertRedirect();
+        $this->actingAs($this->user())->postJson(route('run.new'))->assertOk()->assertJson(['ok' => true]);
 
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'resource_id' => 12],
@@ -83,7 +83,7 @@ class HarvesterSol1BootstrapTest extends TestCase
 
     public function test_harvester_produces_after_relocating_to_the_preexplored_regolith_tile(): void
     {
-        $this->actingAs($this->user())->post(route('run.new'))->assertRedirect();
+        $this->actingAs($this->user())->postJson(route('run.new'))->assertOk()->assertJson(['ok' => true]);
 
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'resource_id' => 12],

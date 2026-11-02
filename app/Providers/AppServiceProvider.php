@@ -10,17 +10,13 @@ use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
-use App\Services\ShellStateService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use App\Services\TradeAdvantageService;
 use App\Services\TrustService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -91,22 +87,6 @@ class AppServiceProvider extends ServiceProvider
         date_default_timezone_set('UTC');
 
         $this->bootBypassFlags();
-
-        // Inject resource bar data into game layouts for authenticated users
-        View::composer(['layouts.app', 'layouts.colony'], function ($view) {
-            if (Auth::check()) {
-                $colonyId = (int) session('activeIds.colonyId', 0);
-                // Validate the session colony belongs to the current user; heal stale sessions.
-                if (! $colonyId || ! DB::table('glx_colonies')->where('id', $colonyId)->where('user_id', Auth::id())->exists()) {
-                    $colonyId = (int) DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->value('id');
-                    if ($colonyId) {
-                        session(['activeIds.colonyId' => $colonyId]);
-                    }
-                }
-                // Header data (resource bar, nav gates, hint, notices) — shared with GET /api/v1/shell.
-                $view->with(app(ShellStateService::class)->forUser((int) Auth::id(), $colonyId ?: null));
-            }
-        });
     }
 
     /**

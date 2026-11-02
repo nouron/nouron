@@ -2,7 +2,6 @@
 	// Port of partials/encounter-notice-bar + partials/hint-bar.
 	import '#lib/styles/hints.css';
 	import { t } from '#lib/i18n.ts';
-	import { appLink } from '#lib/links.ts';
 	import { dismissHint, type Shell } from '#lib/stores/shell.ts';
 
 	let { s }: { s: Shell } = $props();
@@ -44,7 +43,7 @@
 				<span class="hint-bar__icon" aria-hidden="true" title={t('colony.hint_not_mandatory')}>!</span>
 				<span class="hint-bar__text">{s.active_hint.text}</span>
 				<span class="hint-bar__badge" title={t('colony.hint_not_mandatory')}>{t('colony.hint_suggestion_label')}</span>
-				<a class="hint-bar__link" href={appLink(s.active_hint.target_url)}>→</a>
+				<a class="hint-bar__link" href={s.active_hint.target_url}>→</a>
 				<button
 					class="hint-bar__dismiss"
 					aria-label={t('techtree.detail_close')}

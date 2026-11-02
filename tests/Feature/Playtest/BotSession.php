@@ -146,10 +146,6 @@ class BotSession
         // Token user like the SvelteKit frontend.
         app('auth')->forgetGuards();
         Sanctum::actingAs(User::where('user_id', $userId)->firstOrFail());
-        // ResolvesActiveColony still caches the colony in the session, which outlives
-        // requests within one test: pin this bot's colony, otherwise a second boot()
-        // acts on the previous bot's colony (CI 2026-10-09).
-        $test->withSession(['activeIds.colonyId' => $colonyId]);
         $test->postJson(self::API.'/lobby/start')->assertOk();
 
         // In a web request TickService is bound to the active run's current_tick

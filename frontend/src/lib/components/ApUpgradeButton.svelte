@@ -10,8 +10,8 @@
 	// Port of resources/views/partials/ap-upgrade-button.blade.php — ONE upgrade button with a
 	// segmented AP bar for the colony "Ausbauen" and the techtree knowledge level-up.
 	// Bar logic: public/js/ap-bar.js (window.NouronApBar), styles: public/css/ap-upgrade-button.css.
-	import '../../../../public/css/ap-upgrade-button.css';
-	import '../../../../public/js/ap-bar.js';
+	import '#lib/styles/ap-upgrade-button.css';
+	import '#lib/js/ap-bar.js';
 	import { t } from '#lib/i18n.ts';
 
 	let {

@@ -132,10 +132,10 @@ class HangarShipInactiveTest extends TestCase
     {
         $this->setHangarLevel(1);
 
-        $response = $this->actingAs(User::find(self::USER_ID))->get(route('colony.hangar'));
+        $response = $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.hangar'));
 
         $response->assertOk();
-        $slots = $response->viewData('slots');
+        $slots = $response->json('slots');
         $slot = collect($slots)->firstWhere('bay', self::BAY);
         $this->assertTrue($slot['ship']['inactive']);
         $this->assertSame(__('colony.hangar_ship_inactive', ['level' => 2]), $slot['ship']['inactive_reason']);

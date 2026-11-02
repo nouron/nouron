@@ -44,11 +44,6 @@ class BarController extends BaseController
         parent::__construct($tick);
     }
 
-    public function index(): View
-    {
-        return view('colony.bar', $this->barData());
-    }
-
     /**
      * Cantina data for the SvelteKit screen — the Blade view's data plus the bits the
      * view resolved itself (character names, concern/information lines, path-depth config).

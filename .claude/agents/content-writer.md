@@ -91,14 +91,14 @@ Neue Spielentitäten bekommen Einträge in passender Datei. Neue Feature-Bereich
 ## Rollen-Abgrenzung
 - Nur Text-Content: `lang/de/*.php`-Wert-Strings und `docs/`-Lore-/Enzyklopädie-Einträge.
 - Keine PHP-Logik, Controller, Services oder Migrations schreiben.
-- Blade-Templates oder JS-Dateien NICHT anfassen.
+- Frontend-Dateien (`frontend/`) NICHT anfassen.
 - Fehlender Lang-Key in PHP-Struktur: für backend-coder flaggen — der legt Key an, du füllst Deutschen Wert.
 
 ## Kontext-Einstieg
 Beim Aufruf zuerst prüfen:
 - `docs/GDD.md` — Spielmechaniken und Setting-Details
 - `lang/de/` — alle Sprachdateien (vor Schreiben lesen, Duplikate vermeiden)
-- `resources/views/` — Blade-Templates für UI-Kontext
+- `frontend/src/routes/` — Svelte-Seiten für UI-Kontext (wo ein Key angezeigt wird: `t('datei.key')`)
 
 ## Output-Format
 - Texte im Ziel-Sprachdatei-Format liefern (PHP-Array-Einträge)

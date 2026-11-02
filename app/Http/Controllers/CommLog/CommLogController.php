@@ -51,7 +51,8 @@ class CommLogController extends BaseController
         parent::__construct($tick);
     }
 
-    public function log(): View
+    /** @return array{tab: string, entries: Collection, unreadCount: int} */
+    private function logData(): array
     {
         $userId = Auth::id();
         $nexusKeys = self::NEXUS_EVENT_KEYS;
@@ -71,14 +72,15 @@ class CommLogController extends BaseController
 
         $unreadCount = $this->eventService->countUnreadNexus($userId);
 
-        return view('comm_log.index', [
+        return [
             'tab' => 'log',
             'entries' => $entries,
             'unreadCount' => $unreadCount,
-        ]);
+        ];
     }
 
-    public function nexus(): View
+    /** @return array{tab: string, entries: Collection, unreadCount: int} */
+    private function nexusData(): array
     {
         $userId = Auth::id();
         $nexusKeys = self::NEXUS_EVENT_KEYS;
@@ -95,21 +97,21 @@ class CommLogController extends BaseController
 
         $this->eventService->markNexusRead($userId);
 
-        return view('comm_log.index', [
+        return [
             'tab' => 'nexus',
             'entries' => $entries,
             'unreadCount' => 0,
-        ]);
+        ];
     }
 
     /**
      * Protokoll / Nexus-Funk for the SvelteKit screen: the same entries as log()/nexus(),
-     * with the texts the Blade view resolved itself (title/body/badge, icon, fallback text).
+     * with the texts resolved here (title/body/badge, icon, fallback text).
      */
     public function data(Request $request): JsonResponse
     {
         $nexus = $request->query('tab') === 'nexus';
-        $d = ($nexus ? $this->nexus() : $this->log())->getData();
+        $d = $nexus ? $this->nexusData() : $this->logData();
 
         $entries = collect($d['entries'])->map(function (array $e) use ($nexus) {
             if ($nexus) {
@@ -341,7 +343,7 @@ class CommLogController extends BaseController
 
         return [
             'level' => $level,
-            'link' => route('colony.view', $query),
+            'link' => '/colony?'.http_build_query($query), // SvelteKit route
             'link_label' => __('entity_chip.label_tile_link'),
         ];
     }

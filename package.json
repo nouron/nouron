@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
-    "@shufo/prettier-plugin-blade": "^1.16.2",
     "prettier": "^3.8.4"
   }
 }

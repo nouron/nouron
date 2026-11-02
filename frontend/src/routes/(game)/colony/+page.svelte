@@ -1,17 +1,16 @@
 <script lang="ts">
-	// Port of resources/views/colony/hexview.blade.php (ADR 0006 stage 3). The SVG renderer
-	// is shared with Blade (public/js/colony-hexgrid.js); the Alpine part is ported here.
+	// Colony hex view (ported from the Blade hexview, ADR 0006 stage 3). The SVG renderer
+	// lives in lib/js/colony-hexgrid.js.
 	import '#lib/styles/colony-shared.css';
 	import '#lib/styles/colony-view.css';
-	import '../../../../../public/css/resources.css';
-	import '../../../../../public/js/colony-hexgrid.js';
+	import '#lib/styles/resources.css';
+	import '#lib/js/colony-hexgrid.js';
 
 	import { onMount, tick } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { page } from '$app/state';
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
 	import { refreshShell, setAp, setHint, shell, type Shell } from '#lib/stores/shell.ts';
-	import { appLink } from '#lib/links.ts';
 	import { t } from '#lib/i18n.ts';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import EntityChip from '#lib/components/EntityChip.svelte';
@@ -587,7 +586,7 @@
 	<div class="hex-layout">
 		<div class="hex-canvas-wrap">
 			{#if data?.merchantVisit}
-				<a href={appLink('/colony/bar')} class="merchant-notify merchant-notify--floating">
+				<a href="/cantina" class="merchant-notify merchant-notify--floating">
 					🛸 {t('colony.merchant_in_system')}
 				</a>
 			{/if}

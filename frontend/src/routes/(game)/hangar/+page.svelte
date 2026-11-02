@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Port of resources/views/colony/hangar.blade.php + public/js/hangar.js (ADR 0006 stage 4c).
-	import '../../../../../public/css/hangar.css';
-	import '../../../../../public/css/dialogs.css';
+	import '#lib/styles/hangar.css';
+	import '#lib/styles/dialogs.css';
 	import { onMount } from 'svelte';
 	import { api, ApiError } from '#lib/stores/auth.ts';
 	import { refreshShell, setAp } from '#lib/stores/shell.ts';

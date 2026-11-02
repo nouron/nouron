@@ -7,6 +7,7 @@ use App\Services\ResourcesService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -27,49 +28,51 @@ class ResourcebarColonistChipTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
     }
 
-    private function chipHtml(): string
+    /** Header data behind the chip (GET /api/v1/shell), drawn by ResourceBar.svelte. */
+    private function shell(): TestResponse
     {
         $user = User::where('user_id', self::USER_ID)->firstOrFail();
 
-        // Any page extending layouts.colony renders the header chip with the view composer's supplyBreakdown.
-        return $this->actingAs($user)->get(route('nexusdb.index'))->assertOk()->getContent();
+        return $this->actingAs($user)->getJson('/api/v1/shell')->assertOk();
     }
 
-    private function chipText(string $html): string
+    private function resourceBar(): string
     {
-        $this->assertMatchesRegularExpression('/class="res-chip res-Sup[^"]*".*?<span class="res-amount">(.*?)<\/span>/s', $html);
-        preg_match('/class="res-chip res-Sup[^"]*".*?<span class="res-abbr">(.*?)<\/span>\s*<span class="res-amount">(.*?)<\/span>/s', $html, $m);
-
-        return trim($m[1]).'|'.trim(preg_replace('/\s+/', ' ', $m[2]));
+        return file_get_contents(base_path('frontend/src/lib/components/ResourceBar.svelte'));
     }
 
     public function test_chip_uses_kol_label_and_shows_colonists(): void
     {
         $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
 
-        $text = $this->chipText($this->chipHtml());
+        $this->shell()->assertJsonPath('colonists_overview.colonists', $breakdown['cap']);
 
-        $this->assertSame('KOL|'.$breakdown['cap'], $text);
+        $bar = $this->resourceBar();
+        $this->assertStringContainsString("abbr: 'KOL'", $bar);
+        $this->assertStringContainsString('amount: fmt(b ? (c?.colonists ?? b.cap)', $bar);
     }
 
     public function test_chip_is_flagged_when_workplaces_are_unfilled(): void
     {
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 1]);
 
-        $html = $this->chipHtml();
+        $unfilled = $this->shell()->json('colonists_overview.unfilled');
 
-        $this->assertMatchesRegularExpression('/class="res-chip res-Sup res-chip--warning"/', $html);
-        $this->assertStringNotContainsString('res-chip--over', $html);
+        $this->assertGreaterThan(0, $unfilled);
+        // The chip turns to the warning style exactly when workplaces stay unfilled.
+        $bar = $this->resourceBar();
+        $this->assertStringContainsString('const unfilledNone = (c?.unfilled ?? 0) <= 0;', $bar);
+        $this->assertStringContainsString("cls: `res-chip res-Sup\${unfilledNone ? '' : ' res-chip--warning'}`", $bar);
+        $this->assertStringNotContainsString('res-chip--over', $bar);
     }
 
     public function test_chip_is_not_flagged_when_every_workplace_is_staffed(): void
     {
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 500]);
 
-        $html = $this->chipHtml();
-
-        $this->assertStringNotContainsString('res-chip--warning', $html);
-        $this->assertSame('KOL|500', $this->chipText($html));
+        $this->shell()
+            ->assertJsonPath('colonists_overview.unfilled', 0)
+            ->assertJsonPath('colonists_overview.colonists', 500);
     }
 
     public function test_popup_names_staffing_share_and_has_no_dismiss_action(): void
@@ -77,13 +80,16 @@ class ResourcebarColonistChipTest extends TestCase
         $breakdown = app(ResourcesService::class)->getSupplyBreakdown(self::COLONY_ID);
         $workplaces = $breakdown['cap'] - $breakdown['free'];
         DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => $workplaces - 8]);
-        $pct = (int) round(app(ResourcesService::class)->staffingShare(self::COLONY_ID) * 100);
+        $share = app(ResourcesService::class)->staffingShare(self::COLONY_ID);
 
-        $html = $this->chipHtml();
+        $response = $this->shell()->assertJsonPath('colonists_overview.unfilled', 8);
+        $this->assertEqualsWithDelta($share, $response->json('staffing_share'), 0.0001);
 
-        $this->assertMatchesRegularExpression('/data-colonists-row="unfilled">.*?<span>8<\/span>/s', $html);
-        $this->assertStringContainsString(__('resources.popup_sup_staffing_value', ['pct' => $pct]), $html);
-        $this->assertStringNotContainsString('colonists/dismiss', $html);
-        $this->assertStringNotContainsString('overcapDismiss', $html);
+        $bar = $this->resourceBar();
+        $this->assertStringContainsString("label: t('resources.popup_sup_unfilled'), value: c.unfilled, hidden: unfilledNone", $bar);
+        $this->assertStringContainsString("t('resources.popup_sup_staffing_value', {", $bar);
+        $this->assertStringContainsString('pct: Math.round((s.staffing_share ?? 1) * 100)', $bar);
+        $this->assertStringNotContainsString('colonists/dismiss', $bar);
+        $this->assertStringNotContainsString('overcapDismiss', $bar);
     }
 }

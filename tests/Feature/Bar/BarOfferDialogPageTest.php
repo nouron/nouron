@@ -4,7 +4,9 @@ namespace Tests\Feature\Bar;
 
 /**
  * Cantina page — offer dialog with source breakdown (GDD §12 "Was der Angebotsdialog
- * zeigt", A13/P2b). Renders the real page and checks what the player reads:
+ * zeigt", A13/P2b). Reads the real Cantina JSON (BarController::data(), offerDialogs from
+ * BarOfferDialogPresenter) and checks the numbers and texts the Svelte dialog
+ * (frontend/src/routes/(game)/cantina/+page.svelte) shows the player:
  *   - basis offer, every ACTIVE Handelsvorteil source on its own line, result with "+X vs. Basis",
  *   - both negotiation outcomes in numbers, the chance with its sources, the Verhandlungs-Aufschlag,
  *   - quiet hints for a missing Konsul / Handelsposten (values from config),
@@ -113,44 +115,37 @@ class BarOfferDialogPageTest extends TestCase
         $this->setTradeLevel(3);       // +8 %, chance +5
     }
 
-    /** Whitespace-normalised text of one offer's dialog (tags stripped). */
-    private function dialogText(int $offerId): string
+    private function data(): array
     {
-        $html = $this->page();
-        $start = strpos($html, "activeModal === 'offer_{$offerId}'");
-        $this->assertNotFalse($start, 'offer dialog present');
-        $end = strpos($html, "activeModal === 'offer_", $start + 10);
-        $end = $end === false ? $this->dialogEnd($html, $start) : $end;
-        $block = substr($html, $start, $end - $start);
-
-        return preg_replace('/\s+/', ' ', html_entity_decode(strip_tags($block)));
+        return $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.bar'))->assertOk()->json();
     }
 
-    private function dialogHtml(int $offerId): string
+    /** One offer's dialog block from the Cantina JSON (BarOfferDialogPresenter::present()). */
+    private function dialog(int $offerId): array
     {
-        $html = $this->page();
-        $start = strpos($html, "activeModal === 'offer_{$offerId}'");
-        $end = strpos($html, "activeModal === 'offer_", $start + 10);
-        $end = $end === false ? $this->dialogEnd($html, $start) : $end;
+        $dialog = $this->data()['offerDialogs'][$offerId] ?? null;
+        $this->assertNotNull($dialog, 'offer dialog present');
 
-        return substr($html, $start, $end - $start);
+        return $dialog;
     }
 
-    /** End of the last offer dialog: the first of the blocks that always follow the offers. */
-    private function dialogEnd(string $html, int $start): int
+    /** @return list<string> "label percent_text" of every shown source line */
+    private function sourceLines(array $dialog): array
     {
-        $ends = array_filter([
-            strpos($html, "activeModal === 'encounter'", $start),
-            strpos($html, "activeModal === 'story'", $start),
-            strpos($html, "activeModal === 'bartender'", $start),
-        ], fn ($p) => $p !== false);
-
-        return min($ends);
+        return array_map(fn ($l) => $l['label'].' '.$l['percent_text'], $dialog['advantage']['lines']);
     }
 
-    private function page(): string
+    /** The certain-outcome line the page renders next to Annehmen. */
+    private function safeLine(array $dialog): string
     {
-        return $this->actingAs(User::find(self::USER_ID))->get(route('colony.bar'))->assertOk()->getContent();
+        return __('colony.bar_offer_accept_safe', [
+            'amount' => $dialog['amount_safe'], 'resource' => $dialog['get_label'], 'plus' => '+'.$dialog['plus_safe'],
+        ]);
+    }
+
+    private function cantinaPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
     }
 
     // ── Guest barter: sources, result, both negotiation outcomes ──────────────
@@ -160,14 +155,19 @@ class BarOfferDialogPageTest extends TestCase
         $this->fullAdvantage();
         $id = $this->insertOffer();
 
-        $text = $this->dialogText($id);
+        $dialog = $this->dialog($id);
 
-        $this->assertStringContainsString('Basisangebot (Marktwert) 20 Regolith → 10 Organika', $text);
-        $this->assertStringContainsString('Dein Handelsvorteil +40 %', $text);
-        $this->assertStringContainsString('Konsul (Rang 2) +20 %', $text);
-        $this->assertStringContainsString('Handelsposten (Stufe I) +12 %', $text);
-        $this->assertStringContainsString('Kenntnis Handel (Lv 3) +8 %', $text);
-        $this->assertMatchesRegularExpression('/Du erhältst\s+Or\s*14\s+\+4 gegenüber Basis/', $text);
+        $this->assertFalse($dialog['credits_give']);
+        $this->assertSame('20 Regolith → 10 Organika', "{$dialog['base_give']} {$dialog['give_label']} → {$dialog['base_get']} {$dialog['get_label']}");
+        $this->assertSame('+40 %', $dialog['advantage']['total_text']);
+        $this->assertSame([
+            'Konsul (Rang 2) +20 %',
+            'Handelsposten (Stufe I) +12 %',
+            'Kenntnis Handel (Lv 3) +8 %',
+        ], $this->sourceLines($dialog));
+        $this->assertSame(14, $dialog['amount_safe']);
+        $this->assertSame(4, $dialog['plus_safe']);
+        $this->assertSame('+4 gegenüber Basis', __('colony.bar_offer_plus_vs_base', ['plus' => '+'.$dialog['plus_safe']]));
     }
 
     public function test_dialog_shows_both_negotiation_outcomes_the_chance_sources_and_the_surcharge(): void
@@ -175,13 +175,19 @@ class BarOfferDialogPageTest extends TestCase
         $this->fullAdvantage();
         $id = $this->insertOffer();
 
-        $text = $this->dialogText($id);
+        $data = $this->data();
+        $dialog = $data['offerDialogs'][$id];
 
-        $this->assertStringContainsString('sicher: 14 Organika (+4)', $text);
-        $this->assertStringContainsString('70 %: 16 Organika (+6)', $text);
-        $this->assertStringContainsString('30 %: kein Handel, du behältst Regolith, das Angebot verfällt, 2 AP verbraucht.', $text);
-        $this->assertStringContainsString('Chance 70 % = Konsul Rang 2: 65 % + Kenntnis Handel +5 %', $text);
-        $this->assertStringContainsString('Verhandlungs-Aufschlag: +20 % (10 Basis + 4 Vorteil + 2 Aufschlag = 16 Organika)', $text);
+        $this->assertSame('sicher: 14 Organika (+4)', $this->safeLine($dialog));
+        $this->assertSame('70 %: 16 Organika (+6)', __('colony.bar_offer_negotiate_win', [
+            'chance' => $dialog['chance']['total_percent'], 'amount' => $dialog['amount_negotiated'],
+            'resource' => $dialog['get_label'], 'plus' => '+'.$dialog['plus_negotiated'],
+        ]));
+        $this->assertSame('30 %: kein Handel, du behältst Regolith, das Angebot verfällt, 2 AP verbraucht.', __('colony.bar_offer_negotiate_lose', [
+            'chance' => $dialog['chance']['lose_percent'], 'resource' => $dialog['give_label'], 'ap' => $data['negotiateApCost'],
+        ]));
+        $this->assertSame('Chance 70 % = Konsul Rang 2: 65 % + Kenntnis Handel +5 %', $dialog['chance']['breakdown']);
+        $this->assertStringContainsString('Verhandlungs-Aufschlag: +20 % (10 Basis + 4 Vorteil + 2 Aufschlag = 16 Organika)', $dialog['negotiation_sum']);
     }
 
     public function test_both_buttons_carry_the_ap_cost_chip(): void
@@ -189,11 +195,16 @@ class BarOfferDialogPageTest extends TestCase
         $this->fullAdvantage();
         $id = $this->insertOffer();
 
-        $html = $this->dialogHtml($id);
+        $data = $this->data();
 
-        $this->assertStringContainsString('Eco 2 AP', $html);
+        $this->assertTrue($data['offerDialogs'][$id]['can_negotiate']);
+        $this->assertSame(2, $data['offerApCost']);
+        $this->assertSame(2, $data['negotiateApCost']);
         $this->assertSame(2, (int) config('game.bar.ap_cost_accept'));
-        $this->assertSame(2, substr_count($html, 'ap-cost-chip'), 'Annehmen and Verhandeln each show their cost');
+        // Annehmen and Verhandeln each show their cost.
+        $page = $this->cantinaPage();
+        $this->assertStringContainsString('Eco {negotiated[id] ? 0 : data.offerApCost} AP', $page);
+        $this->assertStringContainsString('Eco {data.negotiateApCost} AP', $page);
     }
 
     /** @return array<string, array{int, string, string}> */
@@ -212,12 +223,10 @@ class BarOfferDialogPageTest extends TestCase
         $this->assignConsul($rank);
         $id = $this->insertOffer();
 
-        $text = $this->dialogText($id);
+        $dialog = $this->dialog($id);
 
-        $this->assertStringContainsString($line, $text);
-        $this->assertStringContainsString($chance, $text, 'no trade knowledge => the chance names only the rank');
-        $this->assertStringNotContainsString('Handelsposten (Stufe', $text, 'inactive sources get no line');
-        $this->assertStringNotContainsString('Kenntnis Handel (Lv', $text);
+        $this->assertSame([$line], $this->sourceLines($dialog), 'inactive sources get no line');
+        $this->assertSame($chance, $dialog['chance']['breakdown'], 'no trade knowledge => the chance names only the rank');
     }
 
     public function test_without_consul_there_is_no_negotiate_button_and_a_hint_says_what_a_junior_would_bring(): void
@@ -225,15 +234,15 @@ class BarOfferDialogPageTest extends TestCase
         $this->setTradingPostLevel(1);
         $id = $this->insertOffer();
 
-        $html = $this->dialogHtml($id);
-        $text = $this->dialogText($id);
+        $dialog = $this->dialog($id);
 
-        $this->assertStringNotContainsString('negotiate('.$id, $html);
-        $this->assertStringNotContainsString('Konsul (Rang', $text, 'no inactive Konsul line');
+        $this->assertFalse($dialog['can_negotiate']);
+        $this->assertNull($dialog['chance']);
+        $this->assertSame(['Handelsposten (Stufe I) +12 %'], $this->sourceLines($dialog), 'no inactive Konsul line');
         $juniorPercent = (int) round(config('game.bar.trader_discount.1') * 100);
-        $this->assertStringContainsString("Kein Konsul verfügbar — kein Verhandeln möglich. Ein Junior-Konsul brächte +{$juniorPercent} %.", $text);
-        $this->assertStringNotContainsString('Chance', $text);
-        $this->assertStringContainsString('sicher:', $text, 'Annehmen still shows its certain outcome');
+        $this->assertContains("Kein Konsul verfügbar — kein Verhandeln möglich. Ein Junior-Konsul brächte +{$juniorPercent} %.", $dialog['advantage']['hints']);
+        $this->assertFalse($dialog['fixed_price'], 'Annehmen still shows its certain outcome');
+        $this->assertStringStartsWith('sicher:', $this->safeLine($dialog));
     }
 
     public function test_without_trading_post_a_hint_names_the_cc_level_and_the_config_bonus(): void
@@ -241,12 +250,12 @@ class BarOfferDialogPageTest extends TestCase
         $this->assignConsul(2);
         $id = $this->insertOffer();
 
-        $text = $this->dialogText($id);
+        $dialog = $this->dialog($id);
 
         $cc = (int) DB::table('buildings')->where('id', self::TRADING_POST_ID)->value('required_building_level');
         $percent = (int) round(config('buildings.tradingPost.merchant_price_bonus') * 100);
-        $this->assertStringContainsString("Handelsposten (ab CC {$cc}) würde +{$percent} % bringen.", $text);
-        $this->assertStringNotContainsString('Handelsposten (Stufe', $text);
+        $this->assertContains("Handelsposten (ab CC {$cc}) würde +{$percent} % bringen.", $dialog['advantage']['hints']);
+        $this->assertSame(['Konsul (Rang 2) +20 %'], $this->sourceLines($dialog));
     }
 
     public function test_source_line_stays_visible_when_the_advantage_is_invisible_on_a_small_amount(): void
@@ -254,10 +263,11 @@ class BarOfferDialogPageTest extends TestCase
         $this->setTradingPostLevel(1); // +12 % of 3 rounds to +0
         $id = $this->insertOffer(['give_amount' => 6, 'get_amount' => 3]);
 
-        $text = $this->dialogText($id);
+        $dialog = $this->dialog($id);
 
-        $this->assertStringContainsString('Handelsposten (Stufe I) +12 %', $text);
-        $this->assertMatchesRegularExpression('/Du erhältst\s+Or\s*3\s+\+0 gegenüber Basis/', $text);
+        $this->assertSame(['Handelsposten (Stufe I) +12 %'], $this->sourceLines($dialog));
+        $this->assertSame(3, $dialog['amount_safe']);
+        $this->assertSame(0, $dialog['plus_safe']);
     }
 
     // ── Already negotiated ────────────────────────────────────────────────────
@@ -267,13 +277,17 @@ class BarOfferDialogPageTest extends TestCase
         $this->fullAdvantage();
         $id = $this->insertOffer(['is_negotiated' => true]);
 
-        $html = $this->page();
-        $text = $this->dialogText($id);
+        $data = $this->data();
+        $dialog = $data['offerDialogs'][$id];
 
-        $this->assertStringContainsString('Verhandelt:', $text);
-        $this->assertStringContainsString('negotiatedOffers', $html);
-        $this->assertMatchesRegularExpression('/negotiatedOffers"?\s*:\s*\{"?'.$id.'"?\s*:\s*true/', $html, 'the page script starts with this offer flagged as negotiated');
-        $this->assertStringNotContainsString('negotiate('.$id, $this->dialogHtml($id), 'no second negotiation offered');
+        $this->assertTrue($data['negotiatedOffers'][$id] ?? false, 'the page starts with this offer flagged as negotiated');
+        $this->assertTrue($dialog['negotiated']);
+        $this->assertFalse($dialog['can_negotiate'], 'no second negotiation offered');
+        $this->assertSame(16, $dialog['amount_negotiated']);
+        $this->assertSame('Verhandelt:', __('colony.bar_offer_negotiated_label'));
+        $page = $this->cantinaPage();
+        $this->assertStringContainsString('negotiated = { ...r.negotiatedOffers };', $page);
+        $this->assertStringContainsString("t('colony.bar_offer_negotiated_label')", $page);
     }
 
     // ── Fixed-price lots and Corvan buy offers ────────────────────────────────
@@ -287,15 +301,16 @@ class BarOfferDialogPageTest extends TestCase
             'get_resource_id' => self::RES_CREDITS, 'get_amount' => 700,
         ]);
 
-        $text = $this->dialogText($id);
+        $data = $this->data();
+        $dialog = $data['offerDialogs'][$id];
 
-        $this->assertStringContainsString('Corvan kauft 20 Organika für 700 Cr. Festpreis: Handelsvorteil und Verhandeln gelten nicht für Verkaufs-Credits.', $text);
-        $this->assertStringNotContainsString('Dein Handelsvorteil', $text);
-        $this->assertStringNotContainsString('Konsul (Rang', $text);
-        $this->assertStringNotContainsString('Chance', $text);
-        $this->assertStringNotContainsString('Kein Konsul', $text);
-        $this->assertStringNotContainsString('negotiate('.$id, $this->dialogHtml($id));
-        $this->assertMatchesRegularExpression('/Cr\s*700/', $text);
+        $this->assertTrue($dialog['fixed_price']);
+        $this->assertSame('Corvan kauft 20 Organika für 700 Cr. Festpreis: Handelsvorteil und Verhandeln gelten nicht für Verkaufs-Credits.', $dialog['fixed_price_note']);
+        $this->assertFalse($dialog['can_negotiate']);
+        $this->assertNull($dialog['chance']);
+        $this->assertSame(700, $data['offerTerms'][$id]['get_amount']);
+        // The fixed-price branch renders only the swap and the note — no advantage rows, no hints.
+        $this->assertMatchesRegularExpression('/\{#if dlg\.fixed_price\}\s*<div class="offer-terms offer-terms--fixed">/', $this->cantinaPage());
     }
 
     public function test_corvan_buy_offer_keeps_the_price_and_raises_the_amount(): void
@@ -307,13 +322,16 @@ class BarOfferDialogPageTest extends TestCase
             'get_resource_id' => self::RES_COMPOUNDS, 'get_amount' => 10,
         ]);
 
-        $text = $this->dialogText($id);
+        $dialog = $this->dialog($id);
 
-        $this->assertStringContainsString('Basisangebot 10 Werkstoffe für 1100 Cr', $text);
-        $this->assertStringContainsString('Dein Handelsvorteil +40 %', $text);
-        $this->assertMatchesRegularExpression('/Du erhältst\s+Co\s*14\s+\+4 gegenüber Basis/', $text);
-        $this->assertStringContainsString('Der Preis bleibt bei 1100 Cr, der Vorteil erhöht die Menge.', $text);
-        $this->assertStringContainsString('sicher: 14 Werkstoffe (+4)', $text);
+        $this->assertTrue($dialog['credits_give']);
+        $this->assertSame('Basisangebot 10 Werkstoffe für 1100 Cr', __('colony.bar_offer_base_label_credits').' '.$dialog['base_credits_text']);
+        $this->assertSame('+40 %', $dialog['advantage']['total_text']);
+        $this->assertSame(14, $dialog['amount_safe']);
+        $this->assertSame(4, $dialog['plus_safe']);
+        $this->assertSame(1100, $dialog['give_amount']);
+        $this->assertSame('Der Preis bleibt bei 1100 Cr, der Vorteil erhöht die Menge.', $dialog['price_stays_text']);
+        $this->assertSame('sicher: 14 Werkstoffe (+4)', $this->safeLine($dialog));
     }
 
     // ── Cantina header line ───────────────────────────────────────────────────
@@ -323,20 +341,19 @@ class BarOfferDialogPageTest extends TestCase
         $this->fullAdvantage();
         $this->insertOffer();
 
-        $html = $this->page();
+        $data = $this->data();
 
-        $this->assertStringContainsString('class="trade-advantage-bar"', $html);
-        $this->assertStringContainsString('Handelsvorteil +40 % (Konsul Rang 2 +20, Handelsposten +12, Handel Lv3 +8)', $html);
+        $this->assertSame('Handelsvorteil +40 % (Konsul Rang 2 +20, Handelsposten +12, Handel Lv3 +8)', $data['tradeAdvantage']['summary']);
+        $this->assertStringContainsString('{#if data.tradeAdvantage?.summary}', $this->cantinaPage());
     }
 
     public function test_header_line_is_absent_without_any_advantage(): void
     {
         $this->insertOffer();
 
-        $html = $this->page();
+        $data = $this->data();
 
-        $this->assertStringNotContainsString('class="trade-advantage-bar"', $html);
-        $this->assertStringNotContainsString('Handelsvorteil +0', $html);
+        $this->assertNull($data['tradeAdvantage']['summary'] ?? null, 'no header line at +0');
     }
 
     // ── Corvan's special inventory ────────────────────────────────────────────
@@ -355,36 +372,33 @@ class BarOfferDialogPageTest extends TestCase
         $this->setTradeLevel(3); // −12 −8 = −20 %
         $this->insertMerchantItem($this->insertVisit(), 600);
 
-        $html = $this->page();
+        $data = $this->data();
 
-        $this->assertStringContainsString('Preisvorteil −20 % (Handelsposten −12, Handel Lv3 −8)', $html);
-        $this->assertStringContainsString('"cost_credits":600', $html);
-        $this->assertStringContainsString('"price_credits":480', $html, '600 x 0.80 = the price the purchase charges');
+        $this->assertSame('Preisvorteil −20 % (Handelsposten −12, Handel Lv3 −8)', $data['merchantAdvantage']['summary']);
+        $this->assertSame(600, $data['merchantItems'][0]['cost_credits']);
+        $this->assertSame(480, $data['merchantItems'][0]['price_credits'], '600 x 0.80 = the price the purchase charges');
     }
 
     public function test_special_inventory_without_advantage_has_no_price_line_but_a_hint(): void
     {
         $this->insertMerchantItem($this->insertVisit(), 600);
 
-        $html = $this->page();
+        $data = $this->data();
 
-        $this->assertStringNotContainsString('Preisvorteil', $html);
-        $this->assertStringContainsString('Handelsposten ab Stufe II würde −12 % bringen.', $html);
+        $this->assertNull($data['merchantAdvantage']['summary']);
+        $this->assertContains('Handelsposten ab Stufe II würde −12 % bringen.', $data['merchantAdvantage']['hints']);
     }
 
     // ── Toast state ───────────────────────────────────────────────────────────
 
     public function test_toast_is_bound_to_the_dialog_that_raised_it(): void
     {
-        $this->fullAdvantage();
-        $id = $this->insertOffer();
-        $this->insertMerchantItem($this->insertVisit(), 600);
+        $page = $this->cantinaPage();
 
-        $html = $this->page();
-
-        $this->assertStringContainsString("toast.visible && toast.modal === 'offer_{$id}'", $html);
-        $this->assertStringContainsString("toast.visible && toast.modal === 'merchant'", $html);
-        $this->assertStringContainsString('hideToast()', $html, 'opening/closing a dialog resets the toast');
+        $this->assertStringContainsString('{#if toast && toast.modal === modal}', $page);
+        $this->assertStringContainsString('{@render toastFor(`offer_${id}`)}', $page);
+        $this->assertStringContainsString("{@render toastFor('merchant')}", $page);
+        $this->assertMatchesRegularExpression('/function open\(modal: string \| null\) \{\s*activeModal = modal;\s*toast = null;/', $page, 'opening/closing a dialog resets the toast');
     }
 
     // ── Shown == booked ───────────────────────────────────────────────────────
@@ -396,7 +410,7 @@ class BarOfferDialogPageTest extends TestCase
         DB::table('colony_resources')->updateOrInsert(['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_ORGANICS], ['amount' => 0]);
         $id = $this->insertOffer();
 
-        $this->assertStringContainsString('sicher: 14 Organika (+4)', $this->dialogText($id));
+        $this->assertSame('sicher: 14 Organika (+4)', $this->safeLine($this->dialog($id)));
 
         $this->actingAs(User::find(self::USER_ID))->postJson(route('colony.bar.accept', ['offer' => $id]))
             ->assertOk()->assertJsonPath('get_amount', 14);
@@ -411,7 +425,10 @@ class BarOfferDialogPageTest extends TestCase
         DB::table('colony_resources')->updateOrInsert(['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_ORGANICS], ['amount' => 0]);
         $id = $this->insertOffer();
 
-        $this->assertStringContainsString('100 %: 16 Organika (+6)', $this->dialogText($id));
+        $dialog = $this->dialog($id);
+        $this->assertSame(100, $dialog['chance']['total_percent']);
+        $this->assertSame(16, $dialog['amount_negotiated']);
+        $this->assertSame(6, $dialog['plus_negotiated']);
 
         $user = User::find(self::USER_ID);
         $this->actingAs($user)->postJson(route('colony.bar.negotiate', ['offer' => $id]))

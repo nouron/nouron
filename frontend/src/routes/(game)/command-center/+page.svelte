@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/colony/command_center.blade.php + public/js/command_center.js (ADR 0006 stage 4b).
-	import '../../../../../public/css/command_center.css';
+	import '#lib/styles/command_center.css';
 	import '#lib/styles/colony-view.css';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';

@@ -34,11 +34,6 @@ class HangarController extends BaseController
         parent::__construct($tick);
     }
 
-    public function index(): View
-    {
-        return view('colony.hangar', $this->hangarData());
-    }
-
     /** Hangar data for the SvelteKit screen — same values as the Blade view plus training config. */
     public function data(): JsonResponse
     {
@@ -167,7 +162,7 @@ class HangarController extends BaseController
 
     /**
      * Request a ship from the Nexus (replaces the old buildShip action).
-     * POST /colony/hangar/request
+     * POST /api/v1/colony/hangar/request
      */
     public function requestShip(Request $request): JsonResponse
     {
@@ -201,7 +196,7 @@ class HangarController extends BaseController
 
     /**
      * Assign a pending ship to a hangar bay (1-3; the apron is reserved).
-     * POST /colony/hangar/assign
+     * POST /api/v1/colony/hangar/assign
      */
     public function assignToHangar(Request $request): JsonResponse
     {

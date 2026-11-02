@@ -325,15 +325,14 @@ class NexusImportPriceTest extends TestCase
         $this->setTradingPostLevel(3);
         $this->setTradeLevel(5);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->actingAs($this->bart())->getJson(route('colony.command_center'));
 
         $response->assertOk();
-        $response->assertViewHas('nexusImport', function (array $quote) {
-            return $quote['resources'][self::RES_COMPOUNDS] === ['base' => 165, 'price' => 125]
-                && $quote['resources'][self::RES_REGOLITH] === ['base' => 35, 'price' => 27]
-                && $quote['resources'][self::RES_ORGANICS] === ['base' => 65, 'price' => 49]
-                && $quote['advantage']['total_percent'] === 24;
-        });
+        $quote = $response->json('nexusImport');
+        $this->assertSame(['base' => 165, 'price' => 125], $quote['resources'][self::RES_COMPOUNDS]);
+        $this->assertSame(['base' => 35, 'price' => 27], $quote['resources'][self::RES_REGOLITH]);
+        $this->assertSame(['base' => 65, 'price' => 49], $quote['resources'][self::RES_ORGANICS]);
+        $this->assertSame(24, $quote['advantage']['total_percent']);
     }
 
     public function test_command_center_shows_sources_line_and_base_price_with_advantage(): void
@@ -342,29 +341,33 @@ class NexusImportPriceTest extends TestCase
         $this->setTradingPostLevel(3);
         $this->setTradeLevel(3);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $quote = $this->actingAs($this->bart())->getJson(route('colony.command_center'))->assertOk()->json('nexusImport');
 
-        $response->assertSee(__('colony.trade_line_trading_post', ['tier' => 'III']).' −12 %', false);
-        $response->assertSee(__('colony.trade_line_trade_knowledge', ['level' => 3]).' −8 %', false);
-        $response->assertSee('132', false);
-        $response->assertSee('165', false);
+        $lines = array_map(fn ($l) => $l['label'].' '.$l['percent_text'], $quote['advantage_view']['lines']);
+        $this->assertContains(__('colony.trade_line_trading_post', ['tier' => 'III']).' −12 %', $lines);
+        $this->assertContains(__('colony.trade_line_trade_knowledge', ['level' => 3]).' −8 %', $lines);
+        $this->assertSame(['base' => 165, 'price' => 132], $quote['resources'][self::RES_COMPOUNDS]);
+
+        // The Kommandozentrale strikes the base price through and lists the sources line.
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/command-center/+page.svelte'));
+        $this->assertStringContainsString('{#if row.price < row.base}<s class="cc-nexus-price-base">{row.base}</s>{/if}', $page);
+        $this->assertStringContainsString('cc-nexus-price-sources', $page);
     }
 
     public function test_command_center_without_advantage_hints_at_the_trading_post(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $quote = $this->actingAs($this->bart())->getJson(route('colony.command_center'))->assertOk()->json('nexusImport');
 
-        $response->assertOk();
-        $response->assertSee(__('colony.trade_hint_trading_post_tier', ['tier' => 'III', 'percent' => 12]), false);
-        $response->assertDontSee('cc-nexus-price-sources', false);
+        $this->assertContains(__('colony.trade_hint_trading_post_tier', ['tier' => 'III', 'percent' => 12]), $quote['advantage_view']['hints']);
+        $this->assertSame([], $quote['advantage_view']['lines'], 'no sources line without an active source');
     }
 
     public function test_command_center_hides_the_price_hint_when_tier_3_is_built(): void
     {
         $this->setTradingPostLevel(3);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $quote = $this->actingAs($this->bart())->getJson(route('colony.command_center'))->assertOk()->json('nexusImport');
 
-        $response->assertDontSee(__('colony.trade_hint_trading_post_tier', ['tier' => 'III', 'percent' => 12]), false);
+        $this->assertNotContains(__('colony.trade_hint_trading_post_tier', ['tier' => 'III', 'percent' => 12]), $quote['advantage_view']['hints']);
     }
 }

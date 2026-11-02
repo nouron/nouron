@@ -251,7 +251,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertEquals(5, $hint['rank']);
         $this->assertEquals('hint_repair', $hint['key']);
         $this->assertEquals('colony.onboarding_hint_repair', $hint['text_key']);
-        $this->assertEquals('/colony/view', $hint['target_url']);
+        $this->assertEquals('/colony', $hint['target_url']);
     }
 
     public function test_repair_hint_silent_above_display_threshold(): void
@@ -751,7 +751,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame(6, $hint['rank']);
         $this->assertSame('hint_invest_site', $hint['key']);
         $this->assertSame('colony.onboarding_hint_invest_site', $hint['text_key']);
-        $this->assertSame('/colony/view', $hint['target_url']);
+        $this->assertSame('/colony', $hint['target_url']);
     }
 
     public function test_invest_site_hint_fires_for_started_cc_upgrade(): void
@@ -931,7 +931,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame(13, $hint['rank']);
         $this->assertSame('hint_explore', $hint['key']);
         $this->assertSame('colony.onboarding_hint_explore', $hint['text_key']);
-        $this->assertSame('/colony/view', $hint['target_url']);
+        $this->assertSame('/colony', $hint['target_url']);
     }
 
     public function test_explore_hint_silent_when_remaining_nav_ap_cant_afford_cheapest_fog_tile(): void
@@ -1189,7 +1189,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotNull($hint);
         $this->assertSame('hint_spend_remaining_ap', $hint['key']);
         $this->assertSame('colony.onboarding_hint_spend_ap_economy', $hint['text_key']);
-        $this->assertSame('/colony/bar', $hint['target_url']);
+        $this->assertSame('/cantina', $hint['target_url']);
     }
 
     public function test_path_hints_silent_while_first_path_building_placed_and_cc_below_2(): void
@@ -1876,7 +1876,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('hint_harvester_low_regolith', $hint['key']);
         $this->assertSame(19, $hint['rank']);
         $this->assertSame('colony.onboarding_hint_harvester_low_regolith', $hint['text_key']);
-        $this->assertSame('/colony/view', $hint['target_url']);
+        $this->assertSame('/colony', $hint['target_url']);
     }
 
     public function test_harvester_low_regolith_hint_silent_above_threshold(): void

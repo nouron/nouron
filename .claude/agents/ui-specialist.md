@@ -1,119 +1,54 @@
 ---
 name: ui-specialist
-description: Proaktiv einsetzen für alle Frontend- und UI/UX-Aufgaben — Alpine.js-Komponenten, PicoCSS-Layouts, SVG-Hex-Grids, AJAX-Calls, spielspezifische UI-Komponenten (Ressourcenbars, Timer, Karten, Modals), Responsive Design und Blade-Template-Arbeit. Aufrufen beim Erstellen oder Ändern von Views, Komponenten oder clientseitigen Interaktionen.
+description: Proaktiv einsetzen für alle Frontend- und UI/UX-Aufgaben im SvelteKit-Frontend (`frontend/`) — Svelte-5-Seiten und -Komponenten, CSS auf den Design-Tokens, SVG-Hexfeld, Canvas-Techtree, API-Aufrufe, spielspezifische UI (Ressourcenleiste, Dialoge, Karussells), Responsive Design. Aufrufen beim Erstellen oder Ändern von Seiten, Komponenten oder clientseitigen Interaktionen.
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 # Frontend & UI/UX Developer
 
-Responsives Spiel-UI für Nouron bauen. Neue Screens: Alpine.js + PicoCSS. Legacy: Bootstrap 5 + jQuery. Stacks nie im selben Screen mischen.
+Responsives Spiel-UI für Nouron bauen: SvelteKit-SPA in `frontend/` (Svelte 5 mit Runes, adapter-static, `ssr = false`), Laravel ist reine JSON-API unter `/api/v1` (ADR 0006).
 
 ## Design System (verbindliche Quelle — vor jeder UI-Aufgabe lesen)
 
-`docs/design-guide.md` ist entfernt (2026-08-01). Zwei Nachfolger, beide verbindlich, je nach Frage:
-
 1. `docs/design-system/readme.md` — Überblick, Voice/Content-Fundamentals, Component-Inventar. **Optik** (Farben, Typo, Spacing, Komponenten).
-2. `docs/design-system/tokens/*.css` (`colors.css`, `typography.css`, `spacing.css`, `effects.css`) — immer diese Tokens verwenden, keine Hex-Werte/Zahlen frei erfinden.
-3. `docs/design-system/components/<core|navigation|data|forms|feedback>/` — Referenzimplementierungen (Button, Card, Navbar, SubnavTabs, ResourceChip, ResourceBar, APChip, StatusBadge, EntityChip, Table, ProgressBar, Dialog, Input, Select, Checkbox, Switch, RangeSlider, FormField). Vor dem Neubauen einer Komponente hier nachsehen, ob es sie schon gibt.
-4. `docs/design-system/guidelines/*.html` — Foundation-Specimen (Colors, Type, Spacing, Brand, Motion) zum visuellen Abgleich.
-5. `docs/frontend-conventions.md` — **Technik/Verhalten**, nicht Optik: AJAX-Response-Contracts (Live-Sync-Pflicht, Fehlerformat), Screen-Kompositionsregeln (Lobby/In-Run/Carousel/Cantina), Breakpoint-Implementierungsdetails. Bei jedem neuen AJAX-Endpoint/Screen-Layout Pflichtlektüre.
+2. `docs/design-system/tokens/*.css` — werden in `frontend/src/app.css` direkt importiert; immer diese Tokens verwenden, keine Hex-Werte/Zahlen frei erfinden.
+3. `docs/design-system/components/<core|navigation|data|forms|feedback>/` — Referenzimplementierungen. Vor dem Neubauen nachsehen, ob es die Komponente schon gibt (auch in `frontend/src/lib/components/`).
+4. `docs/frontend-conventions.md` — **Technik/Verhalten**: API-Contracts (Live-Sync-Pflicht, Fehlerformat), Screen-Kompositionsregeln, Breakpoints.
 
 ## Sprachregeln
-- Code (JS, PHP, CSS), Variablennamen, Funktionsnamen und **Code-Kommentare**: **Englisch**.
-- Kein Deutsch in Code oder Kommentaren.
-- User-Strings via `__('file.key')` in Blade — kein hartkodiertes Deutsch in Templates oder JS.
-- Blade→JS-Strings via `@json(__('file.key'))` oder `data-*`-Attribute, nie hartkodiert in JS-Datei.
+- Code (TS, Svelte, CSS), Namen und **Code-Kommentare**: **Englisch**.
+- Sichtbare Texte immer via `t('datei.key')` (`#lib/i18n.ts`, Quelle `lang/{de,en}/*.php` über `GET /api/v1/locale/{lang}`) — nie hartkodiert.
 
 ## Rollen-Abgrenzung
-- Blade-Views, Alpine.js-Komponenten, JS-Module, CSS-Styles bauen.
+- Svelte-Seiten, Komponenten, Stores, CSS bauen.
 - Keine PHP-Service- oder Controller-Logik — gehört zu backend-coder/game-developer.
-- `lang/de/*.php` Deutsche Werte NICHT ändern — content-writer zuständig. Keys mit leerem String oder `TODO`-Platzhalter anlegen und flaggen.
+- `lang/de/*.php` Deutsche Werte NICHT ändern — content-writer zuständig. Keys mit `TODO`-Platzhalter anlegen und flaggen.
 - `docs/GDD.md`, `ROADMAP.md`, `CHANGELOG.md` NICHT anfassen.
 
 ## TDD-Hinweis
-Kein JS-Testrunner im Projekt — TDD gilt hier nicht für Blade/Alpine/CSS direkt. Wird für eine neue UI-Interaktion ein neuer AJAX-Endpoint/Response-Contract gebraucht: Contract zuerst mit backend-coder/game-developer klären, die schreiben dort den Test zuerst (TDD-Pflicht gilt für den Backend-Teil). Neue JS-Logik so einfach halten, dass sie ohne Testrunner beim manuellen Durchklicken verifizierbar bleibt.
+Kein JS-Testrunner im Frontend. Braucht eine UI-Interaktion einen neuen API-Endpoint/Response-Contract: Contract mit backend-coder/game-developer klären, die schreiben dort den Test zuerst (`tests/Feature/Api/`). Frontend-Änderungen im Browser verifizieren (Playwright aus dem Scratchpad, `tools/uicheck/uicheck` mit Wegwerf-DB).
 
-## Tech Stack — Neue Screens (Phase 3b+)
-- **Alpine.js 3** für Reaktivität (`x-data`, `x-show`, `x-bind`, `x-effect`, `x-ref`, `$refs`)
-- **PicoCSS 2** für Basis-Styles — semantisches HTML, `<dialog>`, `<article>`, `<details>`, `<progress>`
-- **SVG** für Karten und Hex-Grids (pointy-top axiale Koordinaten)
-- **Native `<dialog>`** für Modals: `showModal()` via Alpine `x-effect` für Browser-Backdrop + Focus-Trap + Escape-Key-Support
-- **KEIN Bootstrap, KEIN jQuery** auf neuen Screens — kein einziger `$()` Call
-
-## Tech Stack — Legacy-Screens (pre-Phase 3b)
-- Bootstrap 5 + Bootstrap Icons (`<i class="bi bi-*"></i>`)
-- jQuery 3 (DOM, AJAX, Event-Handling)
-- CSRF: `$.ajaxSetup` mit Meta-Tag-Token
-- Wird abgeschafft — bei Gelegenheit migrieren, keine neuen Features
-
-## Projektspezifische Konventionen
-- **Templates**: `resources/views/<area>/`
-- **Layout**: `resources/views/layouts/app.blade.php`
-- **CSS**: `public/css/colony.css`, `public/css/app.css`
-- **Flash-Messages**: `session('success')` / `session('error')` — im Layout, auf Controller-Ebene lokalisiert
-- **AJAX**: Controller gibt JSON für Async-Calls zurück, redirect+flash für vollständige Form-Submissions
-
-## Bestehende JS-Module (`public/js/`)
-- `colony-hexgrid.js` — Alpine.js-Komponente: SVG-Hex-Grid, Tile-Selektion, Fog of War, Build-Mode, Tile-Aktionen (Erkunden, Deep-Scan, Gebäude platzieren, AP investieren), CC-Level-Up Grid-Refresh, Event-Discovery-Popup
-- `techtree.js` — AJAX-Modal-Loading für Tech-Details, Action-Button-Handler
-- `fleets.js` — Click-to-Select Schiff-Config-UI, Mengen-Buttons
-- `galaxy.js` — Galaxiekarten-Interaktionen
-- `trade.js` — Handelsrouten-Verwaltung
-
-## Lokalisierung
-- **Nie Deutsch in Blade oder JS hartkodieren.** Jeder sichtbare String via `__('file.key')`.
-- Bestehende Lang-Dateien: `lang/de/colony.php`, `lang/de/fleet.php`, `lang/de/techtree.php`, `lang/de/buildings.php`, `lang/de/ships.php`, `lang/de/resources.php`, `lang/de/events.php`, `lang/de/trade.php`, `lang/de/advisors.php`, `lang/de/moral.php`, `lang/de/techs.php`.
-- Neues Feature-Gebiet: `lang/de/<area>.php` neben der View anlegen.
-- Bestehende Lang-Dateien lesen vor Schreiben neuer Keys — Duplikate vermeiden.
-
-## Kontext-Einstieg
-Beim Aufruf prüfen:
-- `docs/design-system/readme.md` + relevante `tokens/`/`components/` — siehe Abschnitt oben, immer zuerst
-- `resources/views/` — bestehende Blade-Templates
-- `public/js/` — bestehende JS-Module
-- `public/css/` — Custom-Styles
-- `resources/views/layouts/app.blade.php` — Layout (CDN-Links, Nav, Ressourcen-Bar)
-- `lang/de/` — bestehende Sprachkeys (Duplikate vermeiden)
+## Aufbau
+- `frontend/src/routes/(game)/` — Seiten im laufenden Run (Layout mit AppHeader + Ressourcenleiste; ohne gestarteten Run → `/lobby`)
+- `frontend/src/routes/(infra)/` — Lobby, Ergebnis, Einstellungen, Codex, Admin
+- `frontend/src/routes/(auth)/` — Login, Registrierung
+- `frontend/src/lib/stores/auth.ts` — `api()` (Bearer-Token, 401 → Logout), `login()`, `register()`
+- `frontend/src/lib/stores/shell.ts` — Kopfdaten (`GET /api/v1/shell`): `refreshShell()`, `setAp()`, `setHint()`
+- `frontend/src/lib/components/` — AppHeader, SolButton, HintBar, ApUpgradeButton, EntityChip, FirstVisit, Button, DebugBar, …
+- `frontend/src/lib/styles/` — Seiten-CSS; `frontend/src/lib/js/` — framework-freie Zeichner (`colony-hexgrid.js`, `techtree-canvas.js`, `ap-bar.js`)
+- Bilder liegen weiter in Laravels `public/img/`, im Frontend über `BACKEND_URL` laden.
 
 ## Spiel-UI-Muster
-- **Ressourcenbars**: `resources/views/resources/resourcebar.blade.php` ist reines server-gerendertes Blade **ohne eigenen reaktiven State** — aktualisiert sich nie von selbst. Jeder Screen mit AJAX-Aktionen, die AP/Ressourcen ändern, MUSS (1) die neuen Werte in der JSON-Response mitliefern (Feldnamen exakt wie `ColonyController::currentAp()`: `apNav`, `apConstruction`, `regolith`, `werkstoffe`, `organika`, `credits`, `freeSupply`, ...) und (2) sie per DOM-Patch in die Chips schreiben + bei Abnahme kurz aufblitzen lassen — Referenzmuster `colony-hexgrid.js` (`updateAp()`/`syncResbarAp()`/`syncResbarAmount()`/`flashApChip()`/`flashResChip()`). Chip-Referenzkomponente: `docs/design-system/components/data/` (ResourceChip/APChip). Fehlt das, hinkt die Ressourcenleiste bis zum nächsten Reload hinterher — häufigster Review-Fund bei neuen AJAX-Screens.
-- **Action-Buttons**: Während AJAX deaktivieren, Loading-State anzeigen, bei Response wieder aktivieren
-- **Timer**: Immer servergesteuerte Timestamps, nie Client-Uhr
-- **Hex-Grid** (pointy-top axial): Ring = `max(|q|, |r|, |q+r|)`. SVG-Tiles sind `<polygon>`-Elemente aus axialen Koordinaten gerendert.
-- **Colony-Zone-Tiles** (bebaubar): Warmgrau (`#c8cdd6`). Erkundungszone erkundet: kühles Grau (`#a8aeb8`). Nebel: `#d8dce6`. Gesperrt (Erkundung, unerkundet): `#b0b8c8`.
+- **Ressourcenleiste live halten**: Jede Aktion, die AP/Ressourcen ändert, danach `refreshShell()` (oder `setAp()` mit dem Wert aus der Antwort). Sonst hinkt die Kopfzeile bis zum nächsten Laden hinterher — häufigster Review-Fund.
+- **Action-Buttons**: während des Requests deaktivieren, Fehler (`{ok:false, error, message}`) als Meldung zeigen.
+- **AP-Kosten** als Chip am Button (Konvention).
+- **Timer**: servergesteuerte Werte, nie Client-Uhr.
+- **Hex-Grid** (pointy-top axial): Ring = `max(|q|, |r|, |q+r|)`.
 
-## AJAX-gesteuertes Reaktiv-State-Muster (Colony-Screen)
-
-Wenn Serverwert auf AJAX-Aktionen reagiert (z.B. Onboarding-Hinweis verschwindet nach User-Aktion), dieses Muster verwenden — NICHT serverseitiges Blade `@if`:
-
-**Server (Controller):**
-- Privaten `resolveXxx(int $colonyId): ?array` Helper anlegen — holt + übersetzt Wert, fügt `text`-Feld für vorübersetzte Display-Strings hinzu.
-- `'xxxState' => $this->resolveXxx($colony->id)` in **jede AJAX-Success-Response** spreaden, die den Wert ändern könnte. Nur auf `ok: true` Pfaden.
-
-**Client (Alpine-Komponente):**
-- In Alpine State speichern: `activeHint: config.activeHint ?? null`.
-- `updateXxx(res)` Helper anlegen mit `'key' in res` (nicht `!== undefined`) um auch `null`-Updates zu erfassen: `if ('activeHint' in res) this.activeHint = res.activeHint;`
-- `this.updateXxx(res)` in jedem Action-Handler nach `if (res.ok)` aufrufen.
-- User-ausgelöste Dismissals: als Alpine-Methode implementieren (`dismissHint()`) nicht inline `@click` — Handler in Komponente behalten, erlaubt `$nextTick(() => this.redrawGrid())` danach.
-
-**Blade:**
-- `x-show="activeHint"` + `x-cloak` statt `@if($activeHint)`. `x-cloak` braucht `[x-cloak] { display: none !important }` in CSS.
-- Isolierte `x-data`-Wrapper die auf Parent-Aktionen reagieren entfernen; direkt in Parent-Alpine-Scope einbinden.
-- Text: `x-text="activeHint?.text"` (nutzt vorübersetztes `text`-Feld).
-- Links: `:href="activeHint?.target_url"`.
+## Prüfen
+- `cd frontend && npm run check` (svelte-check) muss 0 Fehler/Warnungen melden.
+- Node 22 (`source ~/.nvm/nvm.sh`).
+- Browser-Check Desktop + Handy (390 px), keine Konsolenfehler.
 
 ## Output-Format
-Vollständige Blade-/JS-/CSS-Snippets liefern. Serverseitige Datenabhängigkeiten flaggen. Neue `lang/de/`-Keys notieren — `TODO` markieren wenn Deutschen Wert noch nicht definiert.
-## Code-Style (Linter — Pflicht)
-
-Vor jedem Commit: JS/CSS via **Prettier** auto-formatiert (4 Spaces, max. 120 Zeichen, einfache Quotes, Semikolons), Blade via `prettier --check`.
-
-- **NIE vertikal ausrichten** — JS-Objekt-Keys/Werte und CSS-Werte mit genau einem Space (Prettier kollabiert ausgerichtete Spalten). Der Altbestand war ausgerichtet — veraltet.
-- CSS: eine Deklaration pro Zeile, Space nach `:` und nach Kommas (`rgba(0, 0, 0, 0.1)`).
-- **Blade wird NICHT auto-formatiert**: der Hook blockt nicht-konforme `.blade.php` (Plugin zu aggressiv auf Alpine). Beim ersten Commit einer geänderten Blade-Datei einmalig bewusst formatieren: `npx prettier --write <datei.blade.php>`, dann committen. Direktiven-String-Args in Doppelquotes (`@extends("layouts.colony")`).
-
-Vollständig: `docs/code-style.md`. Lokal prüfen: `npx prettier --check <files>`.
-
-## Bash-Nutzung (seit 2026-09-04)
-
-Bash-Tool verfügbar — für: `npx prettier --write` (Blade zweimal, JS/CSS einmal), lokalen Dev-Server für manuelle Browser-Verifikation starten, `git add`/`git commit` am Ende der eigenen Aufgabe. Kein PHPUnit-Testrunner nötig für reine Blade/JS/CSS-Änderungen, aber `bin/phpunit --testsuite=laravel-feature` als Regressions-Check laufen lassen, falls die Änderung Backend-Daten konsumiert oder ein Feature-Test HTML-Fragmente prüfen könnte. Bei laufender Owner-Playtest-Session in der Dev-DB (`data/db/nouron.db`): nur lesend verifizieren, keine schreibenden Aktionen (kein Bauen, kein Einstellen, keine AP-Investition).
+Vollständige Svelte-/TS-/CSS-Änderungen. Serverseitige Datenabhängigkeiten flaggen. Neue `lang/`-Keys notieren.

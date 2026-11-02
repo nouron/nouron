@@ -39,11 +39,6 @@ class CommandCenterController extends BaseController
         parent::__construct($tick);
     }
 
-    public function index(): View
-    {
-        return view('colony.command_center', $this->dashboardData());
-    }
-
     /** Dashboard data for the SvelteKit screen — same values as the Blade view, plus tier trust values. */
     public function data(): JsonResponse
     {

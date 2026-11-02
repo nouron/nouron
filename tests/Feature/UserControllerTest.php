@@ -26,11 +26,14 @@ class UserControllerTest extends TestCase
         return User::where('user_id', self::USER_ID)->firstOrFail();
     }
 
-    public function test_show_renders_profile(): void
+    public function test_settings_returns_profile(): void
     {
-        $response = $this->actingAs($this->user())->get(route('user.show'));
+        $response = $this->actingAs($this->user())->get(route('user.settings'));
 
         $response->assertOk();
+        $response->assertJsonPath('username', 'Bart');
+        $response->assertJsonStructure(['username', 'display_name', 'email', 'role', 'registration']);
+        $response->assertJsonMissingPath('password');
     }
 
     public function test_settings_defaults_onboarding_hints_to_true_without_prefs_row(): void
@@ -40,7 +43,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('user.settings'));
 
         $response->assertOk();
-        $response->assertViewHas('onboarding_hints', true);
+        $response->assertJsonPath('onboarding_hints', true);
     }
 
     public function test_settings_reads_onboarding_hints_from_prefs_row(): void
@@ -52,7 +55,7 @@ class UserControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->get(route('user.settings'));
 
-        $response->assertViewHas('onboarding_hints', false);
+        $response->assertJsonPath('onboarding_hints', false);
     }
 
     public function test_update_display_name(): void
@@ -60,7 +63,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->user())
             ->patch(route('user.update.displayname'), ['display_name' => 'Bartholomew']);
 
-        $response->assertRedirect(route('user.settings'));
+        $response->assertOk()->assertJson(['ok' => true]);
         $this->assertSame('Bartholomew', $this->user()->display_name);
     }
 
@@ -69,7 +72,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->user())
             ->patch(route('user.update.displayname'), ['display_name' => '']);
 
-        $response->assertSessionHasErrors('display_name');
+        $response->assertUnprocessable()->assertJsonValidationErrors('display_name');
     }
 
     public function test_update_onboarding_hints(): void
@@ -77,7 +80,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->user())
             ->patch(route('user.update.onboarding'), ['onboarding_hints' => false]);
 
-        $response->assertRedirect(route('user.settings'));
+        $response->assertOk()->assertJson(['ok' => true]);
         $this->assertSame(0, (int) DB::table('user_preferences')
             ->where('user_id', self::USER_ID)->value('onboarding_hints'));
     }
@@ -87,7 +90,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->user())
             ->patch(route('user.update.locale'), ['locale' => 'en']);
 
-        $response->assertRedirect(route('user.settings'));
+        $response->assertOk()->assertJson(['ok' => true]);
         $this->assertSame('en', DB::table('user_preferences')
             ->where('user_id', self::USER_ID)->value('locale'));
     }
@@ -108,7 +111,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->user())
             ->patch(route('user.update.locale'), ['locale' => 'fr']);
 
-        $response->assertSessionHasErrors('locale');
+        $response->assertUnprocessable()->assertJsonValidationErrors('locale');
     }
 
     public function test_locale_preference_is_applied_to_requests(): void
@@ -120,7 +123,7 @@ class UserControllerTest extends TestCase
 
         $response->assertOk();
         $this->assertSame('en', app()->getLocale());
-        $response->assertSee('<html lang="en"', false);
+        $response->assertJsonPath('locale', 'en');
     }
 
     public function test_default_locale_is_used_without_preference(): void
@@ -132,7 +135,7 @@ class UserControllerTest extends TestCase
 
         $response->assertOk();
         $this->assertSame('de', app()->getLocale());
-        $response->assertSee('<html lang="de"', false);
+        $response->assertJsonPath('locale', 'de');
     }
 
     public function test_settings_shows_language_selection(): void
@@ -141,8 +144,10 @@ class UserControllerTest extends TestCase
 
         $response = $this->actingAs($this->user())->get(route('user.settings'));
 
-        $response->assertSee('name="locale"', false);
-        $response->assertSee(__('settings.language'));
+        $response->assertOk();
+        $this->assertSame(config('app.supported_locales'), $response->json('supported_locales'));
+        $this->assertContains('en', $response->json('supported_locales'));
+        $this->assertContains('de', $response->json('supported_locales'));
     }
 
     public function test_update_password_with_wrong_current_password_fails(): void
@@ -154,7 +159,7 @@ class UserControllerTest extends TestCase
                 'password_confirmation' => 'newpassword123',
             ]);
 
-        $response->assertSessionHasErrors('current_password');
+        $response->assertUnprocessable()->assertJsonValidationErrors('current_password');
     }
 
     public function test_update_password_with_correct_current_password_succeeds(): void
@@ -166,8 +171,7 @@ class UserControllerTest extends TestCase
                 'password_confirmation' => 'newpassword123',
             ]);
 
-        $response->assertRedirect(route('user.settings'));
-        $response->assertSessionHas('success');
+        $response->assertOk()->assertJson(['ok' => true, 'message' => __('settings.password_saved')]);
         $this->assertTrue(Hash::check('newpassword123', $this->user()->password));
     }
 }

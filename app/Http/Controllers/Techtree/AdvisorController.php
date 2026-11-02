@@ -11,7 +11,6 @@ use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -260,7 +259,7 @@ class AdvisorController extends BaseController
                 'image_slug' => 'sciencelab',
                 'advisor' => __('advisors.scientist'),
                 'unlock' => __('advisors.path_unlock_scientist'),
-                'url' => '/colony/view?build=31',
+                'url' => '/colony?build=31',
                 'desc' => __('advisors.path_choice_scientist'),
             ],
             44 => [
@@ -270,7 +269,7 @@ class AdvisorController extends BaseController
                 'image_slug' => 'hangar',
                 'advisor' => __('advisors.pilot'),
                 'unlock' => __('advisors.path_unlock_pilot'),
-                'url' => '/colony/view?build=44',
+                'url' => '/colony?build=44',
                 'desc' => __('advisors.path_choice_pilot'),
             ],
             52 => [
@@ -280,7 +279,7 @@ class AdvisorController extends BaseController
                 'image_slug' => 'cantina',
                 'advisor' => __('advisors.trader'),
                 'unlock' => __('advisors.path_unlock_trader'),
-                'url' => '/colony/view?build=52',
+                'url' => '/colony?build=52',
                 'desc' => __('advisors.path_choice_trader'),
             ],
         ];
@@ -302,32 +301,7 @@ class AdvisorController extends BaseController
         ]);
     }
 
-    public function index(): View
-    {
-        $colonyId = $this->resolveColonyId();
-        $currentTick = $this->getTick();
-
-        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
-        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
-        $slots = $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId);
-
-        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
-        $pageData = [
-            'slots' => $slots,
-            'slotInfo' => $slotInfo,
-            'routes' => [
-                'hire' => route('advisors.hire'),
-                'fire' => route('advisors.fire', ['id' => '__ID__']),
-                'promote' => route('advisors.promote', ['id' => '__ID__']),
-            ],
-            'colonyId' => $colonyId,
-            'junior_upkeep' => $upkeepMap[1] ?? 10,
-        ];
-
-        return view('advisors.index', compact('pageData'));
-    }
-
-    public function hire(Request $request): View|RedirectResponse|JsonResponse
+    public function hire(Request $request): View|JsonResponse
     {
         $request->validate([
             'personell_id' => ['required', 'integer', Rule::in(AdvisorService::allIds())],
@@ -349,11 +323,7 @@ class AdvisorController extends BaseController
             ];
             $errorMessage = $errorMessages[$result] ?? __('advisors.error_generic');
 
-            if ($request->expectsJson()) {
-                return response()->json(['ok' => false, 'error' => $result, 'message' => $errorMessage], 422);
-            }
-
-            return back()->with('error', $errorMessage);
+            return response()->json(['ok' => false, 'error' => $result, 'message' => $errorMessage], 422);
         }
 
         $advisorCfg = collect(config('advisors'))->firstWhere(fn (array $cfg) => $cfg['id'] === $personellId) ?? [];
@@ -377,56 +347,45 @@ class AdvisorController extends BaseController
             ]),
         ]);
 
-        if ($request->expectsJson()) {
-            $currentTick = $this->getTick();
-            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
+        $currentTick = $this->getTick();
+        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
-            return response()->json([
-                'ok' => true,
-                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
-                'slotInfo' => $slotInfo,
-                'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
-                'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
-                'activeHint' => $this->resolveHint($colonyId),
-            ]);
-        }
-
-        return back()->with('success', __('advisors.hired'));
+        return response()->json([
+            'ok' => true,
+            'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
+            'slotInfo' => $slotInfo,
+            'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
+            'activeHint' => $this->resolveHint($colonyId),
+        ]);
     }
 
-    public function fire(Request $request, int $id): RedirectResponse|JsonResponse
+    public function fire(Request $request, int $id): JsonResponse
     {
         $advisor = Advisor::where('id', $id)
             ->where('user_id', $this->getCurrentUserId())
             ->first();
 
         if (! $advisor) {
-            if ($request->expectsJson()) {
-                return response()->json(['ok' => false, 'error' => 'advisor_not_found', 'message' => __('advisors.error_not_found')], 404);
-            }
-            abort(404);
+            return response()->json(['ok' => false, 'error' => 'advisor_not_found', 'message' => __('advisors.error_not_found')], 404);
         }
 
         $colonyId = (int) $advisor->colony_id;
 
         $this->advisorService->fire($id);
 
-        if ($request->expectsJson()) {
-            $currentTick = $this->getTick();
-            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
+        $currentTick = $this->getTick();
+        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
-            return response()->json([
-                'ok' => true,
-                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
-                'slotInfo' => $slotInfo,
-                'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
-                'activeHint' => $this->resolveHint($colonyId),
-            ]);
-        }
-
-        return back()->with('success', __('advisors.fired'));
+        return response()->json([
+            'ok' => true,
+            'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
+            'slotInfo' => $slotInfo,
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
+            'activeHint' => $this->resolveHint($colonyId),
+        ]);
     }
 
     /**
@@ -434,7 +393,7 @@ class AdvisorController extends BaseController
      * replaces the old automatic GameTick promotion. Mirrors fire()'s
      * ownership-check + JSON-response pattern.
      */
-    public function promote(Request $request, int $id): RedirectResponse|JsonResponse
+    public function promote(Request $request, int $id): JsonResponse
     {
         $userId = $this->getCurrentUserId();
         $result = $this->advisorService->promote($id, $userId);
@@ -449,30 +408,22 @@ class AdvisorController extends BaseController
             $errorMessage = $errorMessages[$result] ?? __('advisors.error_generic');
             $status = $result === 'not_found' ? 404 : 422;
 
-            if ($request->expectsJson()) {
-                return response()->json(['ok' => false, 'error' => $result, 'message' => $errorMessage], $status);
-            }
-
-            return back()->with('error', $errorMessage);
+            return response()->json(['ok' => false, 'error' => $result, 'message' => $errorMessage], $status);
         }
 
         $colonyId = (int) DB::table('advisors')->where('id', $id)->value('colony_id');
 
-        if ($request->expectsJson()) {
-            $currentTick = $this->getTick();
-            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
+        $currentTick = $this->getTick();
+        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
-            return response()->json([
-                'ok' => true,
-                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
-                'slotInfo' => $slotInfo,
-                'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
-                'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
-                'activeHint' => $this->resolveHint($colonyId),
-            ]);
-        }
-
-        return back()->with('success', __('advisors.promoted'));
+        return response()->json([
+            'ok' => true,
+            'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
+            'slotInfo' => $slotInfo,
+            'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
+            'activeHint' => $this->resolveHint($colonyId),
+        ]);
     }
 }

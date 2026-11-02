@@ -1,4 +1,4 @@
-import '../../../public/css/carousel.css';
+import '#lib/styles/carousel.css';
 
 // Port of public/js/carousel.js (card carousel for advisors and hangar): swipe with drag-to-peek,
 // arrow keys, full-width cards on mobile, a row on desktop. Not for the Cantina panorama.

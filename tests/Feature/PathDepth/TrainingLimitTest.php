@@ -165,17 +165,20 @@ class TrainingLimitTest extends TestCase
     public function test_hangar_page_shows_cap_and_lock_reason(): void
     {
         $this->setHangar(1);
-        $html = $this->actingAs(User::find(3))->get(route('colony.hangar'))->assertOk()->getContent();
-        $flat = str_replace('\/', '/', $html);
+        $families = collect($this->actingAs(User::find(3))->getJson(route('colony.hangar'))->assertOk()->json('trainingFamilies'));
 
-        $this->assertStringContainsString('"locked_until":3', $html);
-        $this->assertStringContainsString(
-            json_encode(__('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => 3]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            $flat
+        $locked = $families->firstWhere('locked_until', 3);
+        $this->assertNotNull($locked, 'a family locked until hangar level 3');
+        $this->assertSame(
+            __('pathdepth.ui_locked_building', ['building' => __('buildings.hangar'), 'level' => 3]),
+            $locked['lock_reason']
         );
-        $this->assertStringContainsString('"ap_cap":{"cap":4', $html);
-        $this->assertStringContainsString('hangar-training-hint', $html);
-        $this->assertStringContainsString(__('pathdepth.ui_training_ap_today'), $flat);
+        $this->assertTrue($families->contains(fn ($f) => ($f['ap_cap']['cap'] ?? null) === 4), 'the daily AP cap travels with the rows');
+
+        $html = file_get_contents(base_path('frontend/src/routes/(game)/hangar/+page.svelte'));
+        $this->assertStringContainsString('class="hangar-training-hint"', $html);
+        $this->assertStringContainsString("t('pathdepth.ui_training_ap_today', { spent: fam.ap_cap.spent, cap: fam.ap_cap.cap })", $html);
+        $this->assertStringContainsString('<p class="hangar-training-lock">{fam.lock_reason}</p>', $html);
     }
 
     public function test_texts_exist_in_both_languages(): void

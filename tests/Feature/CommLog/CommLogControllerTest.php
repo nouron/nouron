@@ -66,7 +66,7 @@ class CommLogControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('comm.log'));
 
         $response->assertOk();
-        $entries = $response->viewData('entries');
+        $entries = $response->collect('entries');
         $this->assertCount(1, $entries);
         $this->assertSame('colony.building_placed', $entries->first()['event']);
     }
@@ -79,7 +79,7 @@ class CommLogControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('comm.log'));
 
         $response->assertOk();
-        $this->assertSame(2, $response->viewData('unreadCount'));
+        $this->assertSame(2, $response->json('unreadCount'));
     }
 
     // ── nexus(): filtering + read-marking ───────────────────────────────────
@@ -90,12 +90,12 @@ class CommLogControllerTest extends TestCase
         $this->log('run.run_failed_trust', [], area: 'nexus');
         $this->log('colony.building_placed', ['building_id' => 25], area: 'colony');
 
-        $response = $this->actingAs($this->user())->get(route('comm.nexus'));
+        $response = $this->actingAs($this->user())->get(route('comm.log', ['tab' => 'nexus']));
 
         $response->assertOk();
-        $entries = $response->viewData('entries');
+        $entries = $response->collect('entries');
         $this->assertCount(2, $entries);
-        $this->assertSame(0, $response->viewData('unreadCount'));
+        $this->assertSame(0, $response->json('unreadCount'));
     }
 
     public function test_nexus_includes_phase1_deadline_warning_and_fail_events(): void
@@ -104,10 +104,10 @@ class CommLogControllerTest extends TestCase
         $this->log('run.run_failed_phase1_deadline', [], area: 'colony'); // nexus key, non-nexus area
         $this->log('colony.building_placed', ['building_id' => 25], area: 'colony');
 
-        $response = $this->actingAs($this->user())->get(route('comm.nexus'));
+        $response = $this->actingAs($this->user())->get(route('comm.log', ['tab' => 'nexus']));
 
         $response->assertOk();
-        $entries = $response->viewData('entries');
+        $entries = $response->collect('entries');
         $this->assertCount(2, $entries);
         $events = $entries->pluck('event')->all();
         $this->assertContains('run.nexus_phase1_warning', $events);
@@ -120,8 +120,8 @@ class CommLogControllerTest extends TestCase
 
         $this->assertSame(1, app(EventService::class)->countUnreadNexus(self::USER_ID));
 
-        $events = $this->actingAs($this->user())->get(route('comm.nexus'))
-            ->assertOk()->viewData('entries')->pluck('event')->all();
+        $events = $this->actingAs($this->user())->get(route('comm.log', ['tab' => 'nexus']))
+            ->assertOk()->collect('entries')->pluck('event')->all();
         $this->assertContains('run.nexus_trust_critical', $events);
     }
 
@@ -130,7 +130,7 @@ class CommLogControllerTest extends TestCase
         $this->log('run.nexus_warning_sol30', [], area: 'nexus');
         $this->assertSame(1, app(EventService::class)->countUnreadNexus(self::USER_ID));
 
-        $this->actingAs($this->user())->get(route('comm.nexus'))->assertOk();
+        $this->actingAs($this->user())->get(route('comm.log', ['tab' => 'nexus']))->assertOk();
 
         $this->assertSame(0, app(EventService::class)->countUnreadNexus(self::USER_ID));
     }
@@ -141,7 +141,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('colony.building_placed', ['building_id' => 25, 'building_name' => 'building_commandCenter']);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('building', $segments[0]['type']);
@@ -156,7 +156,7 @@ class CommLogControllerTest extends TestCase
             'ap_spend' => 3, 'ap_for_levelup' => 10, 'level_up' => false,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         // Regression (Owner-Playtest 2026-08-31): the AP amount must render as
@@ -175,7 +175,7 @@ class CommLogControllerTest extends TestCase
             'ap_spend' => 10, 'ap_for_levelup' => 10, 'level_up' => true, 'new_level' => 4,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('amount', $segments[0]['type']);
@@ -191,7 +191,7 @@ class CommLogControllerTest extends TestCase
             'status_points' => 15, 'max_status_points' => 20,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertStringContainsString('15 / 20', $segments[1]['value']);
@@ -201,7 +201,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('colony.tile_deep_scanned', ['q' => 2, 'r' => -1]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertNotEmpty($entries->first()['segments']);
     }
 
@@ -209,7 +209,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('colony.tile_deep_scanned', []);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertNotEmpty($entries->first()['segments']);
     }
 
@@ -217,12 +217,12 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('colony.tile_salvaged', ['colony_id' => 1, 'completed' => true]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertSame(__('comm_log.desc.tile_salvaged_done'), $entries->first()['segments'][0]['value']);
         $this->assertNotSame('comm_log.events.colony.tile_salvaged', __('comm_log.events.colony.tile_salvaged'));
 
         $this->log('colony.tile_salvaged', ['colony_id' => 1, 'completed' => false]);
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertSame(__('comm_log.desc.tile_salvaged'), $entries->first()['segments'][0]['value']);
     }
 
@@ -232,7 +232,7 @@ class CommLogControllerTest extends TestCase
             'entity_name' => 'knowledge_cartography', 'new_level' => 2,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('knowledge', $segments[1]['type']);
@@ -245,7 +245,7 @@ class CommLogControllerTest extends TestCase
         // No entity_name/entity_type — resolved via tech_id against the building map.
         $this->log('techtree.level_up_finished', ['tech_id' => 25, 'new_level' => 3]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('building', $segments[1]['type']);
@@ -256,7 +256,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('techtree.level_down', ['entity_type' => 'ship', 'entity_name' => 'ship_scout']);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('ship', $segments[1]['type']);
@@ -269,7 +269,7 @@ class CommLogControllerTest extends TestCase
             'entity_type' => 'building', 'entity_name' => 'building_commandCenter', 'new_level' => 2,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertStringContainsString('auf 2 gesunken', $segments[2]['value']);
@@ -279,7 +279,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('techtree.advisor_hired', ['advisor_type' => 'engineer', 'credits_cost' => 200]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('advisor', $segments[0]['type']);
@@ -294,7 +294,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('techtree.advisor_hired', ['advisor_type' => 'engineer', 'credits_cost' => 0]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertStringNotContainsString('CR', $segments[1]['value']);
@@ -310,7 +310,7 @@ class CommLogControllerTest extends TestCase
             'subsidy' => 30, 'relay_bonus' => 10, 'contract' => 0, 'total' => 40,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
@@ -324,7 +324,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('colony.stipend_purchased', ['tier' => 'medium', 'cost' => 150]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
@@ -334,20 +334,6 @@ class CommLogControllerTest extends TestCase
         $this->assertSame(-150, $segments[1]['value']);
     }
 
-    // Regression: none of the other tests here force a full HTML render
-    // (viewData() reads the View object before Blade compiles it) — this is
-    // the only test that would have caught a Blade syntax error in the
-    // amount-chip segment branch (Owner-Playtest 2026-08-31 follow-up).
-    public function test_log_page_with_amount_chip_segment_renders_without_error(): void
-    {
-        $this->log('techtree.advisor_hired', ['advisor_type' => 'engineer', 'credits_cost' => 200]);
-
-        $this->actingAs($this->user())
-            ->get(route('comm.log'))
-            ->assertOk()
-            ->assertSee('200', false);
-    }
-
     public function test_bar_accepted_with_resources(): void
     {
         $this->log('trade.bar_accepted', [
@@ -355,7 +341,7 @@ class CommLogControllerTest extends TestCase
             'get_resource_id' => 4, 'get_amount' => 5,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertSame('resource', $segments[1]['type']);
@@ -366,7 +352,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('trade.bar_accepted', []);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertNotEmpty($entries->first()['segments']);
     }
 
@@ -378,7 +364,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('encounter.storm_warning', ['colony_id' => 1], area: 'encounter');
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
@@ -400,7 +386,7 @@ class CommLogControllerTest extends TestCase
             'trust_event' => 'colony_threatened',
         ], area: 'encounter');
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $segments = $entries->first()['segments'];
 
         $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
@@ -414,7 +400,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('some.unmapped_event', ['foo' => 'bar']);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertSame([], $entries->first()['segments']);
     }
 
@@ -426,21 +412,12 @@ class CommLogControllerTest extends TestCase
         $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 2], tick: 5);
         $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 3], tick: 5);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
 
         // Collapsed to one entry without a counter; the shown AP is the sum (1+2+3).
         $this->assertCount(1, $entries);
         $this->assertArrayNotHasKey('_collapsed', $entries->first());
         $this->assertSame(6, $entries->first()['segments'][0]['value']);
-    }
-
-    public function test_collapsed_investments_render_without_counter_badge(): void
-    {
-        $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 1], tick: 5);
-        $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 2], tick: 5);
-
-        $this->actingAs($this->user())->get(route('comm.log'))
-            ->assertDontSee('comm-entry-collapsed', false);
     }
 
     public function test_pathdepth_family_investment_description(): void
@@ -449,7 +426,7 @@ class CommLogControllerTest extends TestCase
             'kind' => 'mission_family', 'key' => 'salvage', 'ap_spend' => 2, 'level' => 0, 'leveled_up' => false,
         ]);
 
-        $segments = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first()['segments'];
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries')->first()['segments'];
 
         $this->assertSame('amount', $segments[0]['type']);
         $this->assertSame(2, $segments[0]['value']);
@@ -463,7 +440,7 @@ class CommLogControllerTest extends TestCase
             'kind' => 'mission_family', 'key' => 'trade', 'ap_spend' => 3, 'level' => 2, 'leveled_up' => true,
         ]);
 
-        $segments = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first()['segments'];
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries')->first()['segments'];
 
         $this->assertStringContainsString('2', $segments[1]['value']);
         $this->assertStringContainsString(__('pathdepth.family_trade'), $segments[1]['value']);
@@ -475,7 +452,7 @@ class CommLogControllerTest extends TestCase
             'kind' => 'character', 'key' => 'bartender', 'ap_spend' => 1, 'level' => 0, 'leveled_up' => false,
         ]);
 
-        $segments = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries')->first()['segments'];
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries')->first()['segments'];
 
         $this->assertStringContainsString('Tomas', $segments[1]['value']);
     }
@@ -485,7 +462,7 @@ class CommLogControllerTest extends TestCase
         $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 1], tick: 5);
         $this->log('colony.building_invested', ['building_id' => 28, 'ap_spend' => 1], tick: 5);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
 
         $this->assertCount(2, $entries);
     }
@@ -495,7 +472,7 @@ class CommLogControllerTest extends TestCase
         $this->log('colony.renamed', [], tick: 5);
         $this->log('colony.renamed', [], tick: 5);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
 
         $this->assertCount(2, $entries);
     }
@@ -512,7 +489,7 @@ class CommLogControllerTest extends TestCase
             'parameters' => serialize(['building_id' => 25, 'building_name' => 'building_commandCenter']),
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertSame(__('techtree.building_commandCenter'), $entries->first()['segments'][0]['label']);
     }
 
@@ -526,7 +503,7 @@ class CommLogControllerTest extends TestCase
             'parameters' => '',
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $this->assertSame([], $entries->first()['params']);
     }
 
@@ -535,7 +512,7 @@ class CommLogControllerTest extends TestCase
     /** @return array<string, mixed> tooltip of the first building chip in the newest entry */
     private function firstBuildingChipTooltip(): array
     {
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $chip = collect($entries->first()['segments'])->firstWhere('type', 'building');
         $this->assertNotNull($chip, 'entry must render a building chip');
 
@@ -548,7 +525,7 @@ class CommLogControllerTest extends TestCase
 
         $tooltip = $this->firstBuildingChipTooltip();
 
-        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 4]), $tooltip['link']);
+        $this->assertSame('/colony?building=28&instance=4', $tooltip['link']);
         $this->assertSame(__('entity_chip.label_tile_link'), $tooltip['link_label']);
     }
 
@@ -561,7 +538,7 @@ class CommLogControllerTest extends TestCase
 
         $tooltip = $this->firstBuildingChipTooltip();
 
-        $this->assertSame(route('colony.view', ['building' => 25]), $tooltip['link']);
+        $this->assertSame('/colony?building=25', $tooltip['link']);
         $this->assertSame(__('entity_chip.label_tile_link'), $tooltip['link_label']);
     }
 
@@ -572,7 +549,7 @@ class CommLogControllerTest extends TestCase
             'ap_spend' => 3, 'ap_for_levelup' => 10, 'level_up' => false,
         ]);
 
-        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 2]), $this->firstBuildingChipTooltip()['link']);
+        $this->assertSame('/colony?building=28&instance=2', $this->firstBuildingChipTooltip()['link']);
     }
 
     public function test_building_level_down_chip_deep_links_via_tech_id(): void
@@ -582,7 +559,7 @@ class CommLogControllerTest extends TestCase
             'new_level' => 1, 'tech_id' => 28, 'instance_id' => 3, 'colony_id' => 1,
         ]);
 
-        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 3]), $this->firstBuildingChipTooltip()['link']);
+        $this->assertSame('/colony?building=28&instance=3', $this->firstBuildingChipTooltip()['link']);
     }
 
     public function test_knowledge_level_down_chip_keeps_nexus_db_link(): void
@@ -591,7 +568,7 @@ class CommLogControllerTest extends TestCase
             'entity_type' => 'knowledge', 'entity_name' => 'knowledge_construction', 'new_level' => 1, 'tech_id' => 90,
         ]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
         $chip = collect($entries->first()['segments'])->firstWhere('type', 'knowledge');
 
         $this->assertSame('/nexus-db', $chip['tooltip']['link']);
@@ -602,7 +579,7 @@ class CommLogControllerTest extends TestCase
     {
         $this->log('encounter.storm_beschaedigt', ['building_id' => 28, 'instance_id' => 5], area: 'encounter');
 
-        $this->assertSame(route('colony.view', ['building' => 28, 'instance' => 5]), $this->firstBuildingChipTooltip()['link']);
+        $this->assertSame('/colony?building=28&instance=5', $this->firstBuildingChipTooltip()['link']);
     }
 
     /** Legacy entries without building_id/instance_id keep the old link and never crash. */
@@ -627,17 +604,26 @@ class CommLogControllerTest extends TestCase
         $response = $this->actingAs($this->user())->get(route('comm.log'));
 
         $response->assertOk();
-        $response->assertDontSee('colony/view?building', false);
+        $links = collect($response->json('entries'))
+            ->flatMap(fn (array $e) => $e['segments'])
+            ->pluck('tooltip.link')
+            ->filter();
+        $this->assertNotEmpty($links);
+        foreach ($links as $link) {
+            $this->assertStringStartsNotWith('/colony?building', $link);
+        }
     }
 
     public function test_rendered_building_chip_contains_tile_deep_link(): void
     {
         $this->log('colony.building_placed', ['colony_id' => 1, 'building_id' => 28, 'instance_id' => 4]);
 
-        $response = $this->actingAs($this->user())->get(route('comm.log'));
+        $this->assertSame('/colony?building=28&instance=4', $this->firstBuildingChipTooltip()['link']);
 
-        $response->assertSee('href="'.e(route('colony.view', ['building' => 28, 'instance' => 4])).'"', false);
-        $response->assertSee(__('entity_chip.label_tile_link'));
+        // The entity chip renders the tooltip link as an anchor with its label.
+        $chip = file_get_contents(base_path('frontend/src/lib/components/EntityChip.svelte'));
+        $this->assertStringContainsString('<a href={tooltip.link}', $chip);
+        $this->assertStringContainsString('tooltip.link_label', $chip);
     }
 
     /** Invests into different instances of the same building link to different tiles — never merged. */
@@ -646,7 +632,7 @@ class CommLogControllerTest extends TestCase
         $this->log('colony.building_invested', ['building_id' => 28, 'instance_id' => 1, 'ap_spend' => 1]);
         $this->log('colony.building_invested', ['building_id' => 28, 'instance_id' => 2, 'ap_spend' => 1]);
 
-        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries');
 
         $this->assertCount(2, $entries);
     }

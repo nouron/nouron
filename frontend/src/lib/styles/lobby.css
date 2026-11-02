@@ -1,6 +1,6 @@
 /* ── Nouron Design System wiring ────────────────────────────────────────────
  * Token names throughout this file match docs/design-system/tokens/*.css
- * verbatim (mirrored into public/css/infra.css :root). Card bevel follows the
+ * verbatim (mirrored into lib/styles/infra.css). Card bevel follows the
  * same clip-path shape as dialogs.css (.sol-modal) for a consistent
  * "beveled panel" language across cards and dialogs.
  * ─────────────────────────────────────────────────────────────────────────── */

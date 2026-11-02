@@ -14,9 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [
-            SetUserLocale::class,
-        ]);
         $middleware->api(append: [
             SetUserLocale::class,
         ]);
@@ -25,5 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Pure API (ADR 0006): errors are always JSON, never a redirect to a login page.
+        $exceptions->shouldRenderJsonWhen(fn ($request) => true);
     })->create();

@@ -1,5 +1,5 @@
-/* ponytail: copied from public/css/infra.css (tokens stripped — app.css loads the design system; brand, header,
-   main, alerts, run result). Delete there when the Blade infra layout goes (ADR 0006 stage 5). */
+/* Ported from the former Blade public/css/infra.css (tokens stripped — app.css loads the design system; brand, header,
+   main, alerts, run result). */
 
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {

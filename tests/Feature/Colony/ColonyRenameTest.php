@@ -9,17 +9,17 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * MED-3: Colony rename — input validation and flash messenger.
+ * MED-3: Colony rename — PATCH colony.rename, JSON API.
  *
  * Covers:
- * - Happy path: valid name → colony name updated in DB, redirect to lobby
- * - Flash success message appears after successful rename
- * - HTML injection guard: names containing <, > or { } must be rejected
+ * - Happy path: valid name → colony name updated in DB, {ok:true}
+ * - Success message: the lobby page shows lobby.rename_success after {ok:true}
+ * - HTML injection guard: names containing <, > or { } must be rejected (422)
  * - XSS attempt: <script>…</script> in name → validation error, DB unchanged
  * - Name too short (< 2 chars) → validation error
  * - Name too long (> 50 chars) → validation error
  * - Empty name → validation error
- * - Unauthenticated request → redirect to login
+ * - Unauthenticated request → 401
  *
  * Fixture: Colony 1 (Springfield) belongs to Bart (user_id=3).
  */
@@ -41,8 +41,8 @@ class ColonyRenameTest extends TestCase
 
     public function test_rename_requires_auth(): void
     {
-        $this->patch(route('colony.rename'), ['name' => 'NewName'])
-            ->assertRedirect(route('login'));
+        $this->patchJson(route('colony.rename'), ['name' => 'NewName'])
+            ->assertUnauthorized();
 
         // DB unchanged
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => 'Springfield']);
@@ -53,37 +53,40 @@ class ColonyRenameTest extends TestCase
     public function test_rename_happy_path_updates_db(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'New Springfield'])
-            ->assertRedirect(route('lobby'));
+            ->patchJson(route('colony.rename'), ['name' => 'New Springfield'])
+            ->assertOk()
+            ->assertJson(['ok' => true]);
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => 'New Springfield']);
     }
 
-    public function test_rename_redirects_to_lobby(): void
+    public function test_rename_answers_ok_json(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'Renamed'])
-            ->assertRedirect(route('lobby'));
+            ->patchJson(route('colony.rename'), ['name' => 'Renamed'])
+            ->assertOk()
+            ->assertExactJson(['ok' => true]);
     }
 
-    // ── Flash messenger ──────────────────────────────────────────────────────
+    // ── Success message ──────────────────────────────────────────────────────
 
-    public function test_rename_shows_success_flash_message(): void
+    public function test_rename_success_message_is_shown_by_the_lobby_page(): void
     {
-        $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'Renamed Colony'])
-            ->assertSessionHas('success');
+        $lobby = file_get_contents(base_path('frontend/src/routes/(infra)/lobby/+page.svelte'));
+
+        $this->assertStringContainsString("'/colony/name', 'PATCH'", $lobby);
+        $this->assertStringEndsWith('/colony/name', route('colony.rename'));
+        $this->assertStringContainsString("t('lobby.rename_success')", $lobby);
     }
 
-    public function test_rename_success_flash_contains_meaningful_text(): void
+    public function test_rename_success_message_contains_meaningful_text(): void
     {
-        $response = $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'Renamed Colony']);
+        $this->app->setLocale('de');
 
         $this->assertStringContainsStringIgnoringCase(
             'aktualisiert',
-            session('success'),
-            'Flash message should confirm the update.'
+            __('lobby.rename_success'),
+            'Success message should confirm the update.'
         );
     }
 
@@ -96,8 +99,8 @@ class ColonyRenameTest extends TestCase
     public function test_rename_rejects_script_tag(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => '<script>alert(1)</script>'])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => '<script>alert(1)</script>'])
+            ->assertJsonValidationErrors('name');
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => 'Springfield']);
     }
@@ -108,8 +111,8 @@ class ColonyRenameTest extends TestCase
     public function test_rename_rejects_opening_angle_bracket(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => '<Evil'])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => '<Evil'])
+            ->assertJsonValidationErrors('name');
     }
 
     /**
@@ -118,8 +121,8 @@ class ColonyRenameTest extends TestCase
     public function test_rename_rejects_closing_angle_bracket(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'Evil>Colony'])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => 'Evil>Colony'])
+            ->assertJsonValidationErrors('name');
     }
 
     /**
@@ -128,8 +131,8 @@ class ColonyRenameTest extends TestCase
     public function test_rename_rejects_curly_braces(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => '{{evil}}'])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => '{{evil}}'])
+            ->assertJsonValidationErrors('name');
     }
 
     /**
@@ -138,8 +141,8 @@ class ColonyRenameTest extends TestCase
     public function test_rename_rejects_square_brackets(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => '[injection]'])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => '[injection]'])
+            ->assertJsonValidationErrors('name');
     }
 
     // ── Boundary values ──────────────────────────────────────────────────────
@@ -147,23 +150,23 @@ class ColonyRenameTest extends TestCase
     public function test_rename_rejects_empty_name(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => ''])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => ''])
+            ->assertJsonValidationErrors('name');
     }
 
     public function test_rename_rejects_single_character_name(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'X'])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => 'X'])
+            ->assertJsonValidationErrors('name');
     }
 
     public function test_rename_accepts_minimum_length_name(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => 'AB'])
-            ->assertRedirect(route('lobby'))
-            ->assertSessionMissing('errors');
+            ->patchJson(route('colony.rename'), ['name' => 'AB'])
+            ->assertOk()
+            ->assertJson(['ok' => true]);
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => 'AB']);
     }
@@ -173,8 +176,8 @@ class ColonyRenameTest extends TestCase
         $tooLong = str_repeat('A', 51);
 
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => $tooLong])
-            ->assertSessionHasErrors('name');
+            ->patchJson(route('colony.rename'), ['name' => $tooLong])
+            ->assertJsonValidationErrors('name');
     }
 
     public function test_rename_accepts_name_at_exactly_50_chars(): void
@@ -182,8 +185,9 @@ class ColonyRenameTest extends TestCase
         $exactly50 = str_repeat('B', 50);
 
         $this->actingAs($this->makeUser($this->bartUserId))
-            ->patch(route('colony.rename'), ['name' => $exactly50])
-            ->assertRedirect(route('lobby'));
+            ->patchJson(route('colony.rename'), ['name' => $exactly50])
+            ->assertOk()
+            ->assertJson(['ok' => true]);
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => $exactly50]);
     }

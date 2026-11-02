@@ -116,35 +116,4 @@ class ColonyServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->service->getPrimeColony(19);
     }
-
-    public function test_set_active_colony_stores_in_session(): void
-    {
-        // Seed the session with Bart's userId so the ownership check passes
-        $this->withSession(['activeIds' => ['userId' => $this->userId, 'colonyId' => null]]);
-
-        session(['activeIds.userId' => $this->userId, 'activeIds.colonyId' => null]);
-
-        $this->service->setActiveColony(1);
-        $this->assertEquals(1, session('activeIds.colonyId'));
-    }
-
-    public function test_set_active_colony_ignores_non_owned_colony(): void
-    {
-        // User 19 does not own colony 1
-        session(['activeIds.userId' => 19, 'activeIds.colonyId' => null]);
-
-        $this->service->setActiveColony(1);
-        $this->assertNull(session('activeIds.colonyId'));
-    }
-
-    public function test_set_selected_colony(): void
-    {
-        session(['selectedIds.colonyId' => null]);
-
-        $this->service->setSelectedColony(1);
-        $this->assertEquals(1, session('selectedIds.colonyId'));
-
-        $this->service->setSelectedColony(2);
-        $this->assertEquals(2, session('selectedIds.colonyId'));
-    }
 }

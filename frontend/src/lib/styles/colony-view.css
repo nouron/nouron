@@ -1,6 +1,6 @@
-/* ponytail: copied from public/css/colony.css (hex page: layout, canvas, legend, tile panel, build mode,
-   SVG effects, supply banner, toast, levelup, merchant chip, responsive, find card, build-list reasons). Blocks already in
-   colony-shared.css are left out. Delete there when the Blade colony view goes (ADR 0006 stage 5). */
+/* Ported from the former Blade public/css/colony.css (hex page: layout, canvas, legend, tile panel, build mode,
+   SVG effects, supply banner, toast, levelup, merchant chip, responsive, find card, build-list reasons). Blocks in
+   colony-shared.css are left out. */
 
 /* ── Hex page layout ─────────────────────────────────────────────────────── */
 

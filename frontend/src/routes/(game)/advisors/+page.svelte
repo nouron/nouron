@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/advisors/index.blade.php + public/js/advisors.js (ADR 0006 stage 4a).
-	import '../../../../../public/css/advisors.css';
+	import '#lib/styles/advisors.css';
 	import { onMount } from 'svelte';
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
 	import { refreshShell, setAp, setHint, type Shell } from '#lib/stores/shell.ts';

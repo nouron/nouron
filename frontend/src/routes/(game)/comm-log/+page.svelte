@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/comm_log/index.blade.php (ADR 0006 stage 4e): Protokoll and Nexus-Funk tabs.
-	import '../../../../../public/css/comm_log.css';
+	import '#lib/styles/comm_log.css';
 	import { page } from '$app/state';
 	import { api, ApiError } from '#lib/stores/auth.ts';
 	import { refreshShell } from '#lib/stores/shell.ts';

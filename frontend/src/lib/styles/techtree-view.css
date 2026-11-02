@@ -5,7 +5,7 @@
 }
 
 .techtree-page {
-    /* Canvas palette (read by public/js/techtree-canvas.js). Kind colours: buildings blue,
+    /* Canvas palette (read by lib/js/techtree-canvas.js). Kind colours: buildings blue,
        knowledge green, ships yellow, advisors violet. */
     --tt-bg: #ffffff;
     --tt-surface: #f7f7f5;

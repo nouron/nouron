@@ -3,24 +3,19 @@
 namespace Tests\Feature;
 
 /**
- * NexusDbController feature tests — GET /nexus-db (route: nexusdb.index).
+ * NexusDbController feature tests — GET /api/v1/nexus-db (route: nexusdb.index).
  *
  * Covered scenarios:
  *
  *  AUTH GUARD
- *    - test_unauthenticated_access_redirects_to_login
+ *    - test_unauthenticated_access_is_rejected
  *
  *  HAPPY PATH
  *    - test_authenticated_access_returns_200
- *    - test_view_nexusdb_index_is_rendered
+ *    - test_response_carries_the_first_visit_flag
  *
- *
- * Note on DB fixtures:
- *   The view composer in AppServiceProvider fires on every authenticated request
- *   and calls ResourcesService->getPossessionsByColonyId() for the default colony
- *   (session key 'activeIds.colonyId', fallback = 1).  Colony 1 must therefore
- *   exist in the DB.  TestSeeder provides colony 1 (Springfield, owned by Bart,
- *   user_id=3).  Tests act as Bart so the session default matches his colony.
+ * Fixture: TestSeeder provides colony 1 (Springfield, owned by Bart, user_id=3)
+ * with a started run.
  */
 
 use App\Models\User;
@@ -55,14 +50,14 @@ class NexusDbControllerTest extends TestCase
     // ── AUTH GUARD ────────────────────────────────────────────────────────────
 
     /**
-     * An unauthenticated GET must redirect to the login page (302).
+     * An unauthenticated GET must be rejected with 401.
      * The `auth` middleware short-circuits before the controller runs.
      */
-    public function test_unauthenticated_access_redirects_to_login(): void
+    public function test_unauthenticated_access_is_rejected(): void
     {
         $response = $this->get(route('nexusdb.index'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertUnauthorized();
     }
 
     // ── HAPPY PATH ────────────────────────────────────────────────────────────
@@ -79,13 +74,14 @@ class NexusDbControllerTest extends TestCase
     }
 
     /**
-     * The controller must render the `nexusdb.index` Blade view.
+     * The page data tells the frontend whether to show the first-visit popup.
      */
-    public function test_view_nexusdb_index_is_rendered(): void
+    public function test_response_carries_the_first_visit_flag(): void
     {
         $response = $this->actingAs($this->bart())
             ->get(route('nexusdb.index'));
 
-        $response->assertViewIs('nexusdb.index');
+        $response->assertOk();
+        $this->assertIsBool($response->json('first_visit'));
     }
 }

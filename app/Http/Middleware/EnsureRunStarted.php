@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  * A freshly created run is active but started_at = null (pending) until the
  * player clicks "Mission starten" in the lobby. Without this guard a pending
  * run could open the colony view but show no Sol button (dead end), since the
- * run UI is gated on started_at. Pending / missing runs are sent to the lobby.
+ * run UI is gated on started_at. Pending / missing runs get a 409; the frontend goes to the lobby.
  */
 class EnsureRunStarted
 {
@@ -25,18 +25,11 @@ class EnsureRunStarted
             ->first();
 
         if ($run === null || $run->started_at === null) {
-            $redirect = redirect()->route('lobby')->with('info', __('lobby.run_not_started'));
-
-            // AJAX/JSON callers (in-run fetch actions) get a JSON pointer instead of HTML.
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'ok' => false,
-                    'error' => 'run_not_started',
-                    'redirect' => route('lobby'),
-                ], 409);
-            }
-
-            return $redirect;
+            return response()->json([
+                'ok' => false,
+                'error' => 'run_not_started',
+                'message' => __('lobby.run_not_started'),
+            ], 409);
         }
 
         return $next($request);

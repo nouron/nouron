@@ -2,14 +2,21 @@
 
 namespace Tests;
 
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Laravel\Sanctum\Sanctum;
 
 abstract class TestCase extends BaseTestCase
 {
-    protected function setUp(): void
+    /**
+     * Log in like the SvelteKit frontend: the API only accepts Sanctum tokens
+     * (ADR 0006), so a session login would be "Unauthenticated".
+     */
+    public function actingAs(Authenticatable $user, $guard = null)
     {
-        parent::setUp();
-        $this->withoutMiddleware(ValidateCsrfToken::class);
+        $this->app['auth']->forgetGuards();
+        Sanctum::actingAs($user);
+
+        return $this;
     }
 }

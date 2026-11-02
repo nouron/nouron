@@ -7,36 +7,31 @@ use App\Models\Feedback;
 use App\Models\Run;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 /**
  * R15: admin overview of tester feedback, newest first.
  */
 class FeedbackController extends Controller
 {
-    public function index(Request $request): View|JsonResponse
+    public function index(Request $request): JsonResponse
     {
         abort_unless($request->user()->isAdmin(), 403);
 
         $feedback = Feedback::with('user')->latest()->latest('id')->paginate(50);
 
-        if ($request->is('api/*')) {
-            return response()->json($feedback->through(fn (Feedback $entry) => [
-                'id' => $entry->id,
-                'created_at' => $entry->created_at->format('d.m.Y H:i'),
-                'username' => $entry->user->username, // FK cascades: the user always exists
-                'category' => __('feedback.category_'.$entry->category),
-                'run_id' => $entry->run_id,
-                'sol' => $entry->sol,
-                'page' => $entry->page,
-                'message' => $entry->message,
-            ]));
-        }
-
-        return view('admin.feedback', ['feedback' => $feedback]);
+        return response()->json($feedback->through(fn (Feedback $entry) => [
+            'id' => $entry->id,
+            'created_at' => $entry->created_at->format('d.m.Y H:i'),
+            'username' => $entry->user->username, // FK cascades: the user always exists
+            'category' => __('feedback.category_'.$entry->category),
+            'run_id' => $entry->run_id,
+            'sol' => $entry->sol,
+            'page' => $entry->page,
+            'message' => $entry->message,
+        ]));
     }
 
-    /** Debug bar for admins (same content as partials/debug-bar.blade.php, minus the finale previews). */
+    /** Debug bar data for admins: active run, bypass flags, environment, key config values. */
     public function debug(Request $request): JsonResponse
     {
         abort_unless($request->user()->isAdmin(), 403);

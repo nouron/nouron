@@ -252,14 +252,15 @@ class PathBuildingGateTest extends TestCase
     /** The build menu greys out a locked entry, shows the reason and refuses to select it (also via ?build= deep link). */
     public function test_build_menu_client_honours_the_lock(): void
     {
-        $js = file_get_contents(public_path('js/colony-hexgrid.js'));
-        $blade = file_get_contents(resource_path('views/colony/hexview.blade.php'));
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
 
-        $this->assertMatchesRegularExpression('/canPlaceBuilding\(b\)\s*\{[^}]*b\.locked[^}]*canAffordBuilding\(b\)/s', $js);
-        $this->assertMatchesRegularExpression('/match && !match\.locked/', $js);
-        $this->assertStringContainsString('@click="canPlaceBuilding(b) && selectPendingBuilding(b)"', $blade);
-        $this->assertStringContainsString('buildMissingReasons(b)', $blade);
-        $this->assertStringContainsString("{ kind: 'locked', text: b.locked_reason }", $js);
+        // Locked entries can't be placed; affordability runs through buildMissingReasons().
+        $this->assertStringContainsString('const canPlaceBuilding = (b: AvailableBuilding) => !b.locked && buildMissingReasons(b).length === 0;', $page);
+        $this->assertMatchesRegularExpression('/match && !match\.locked/', $page);
+        $this->assertStringContainsString('{@const ok = canPlaceBuilding(b)}', $page);
+        $this->assertStringContainsString('onclick={() => ok && selectPendingBuilding(b)}', $page);
+        $this->assertStringContainsString('{@const reasons = buildMissingReasons(b)}', $page);
+        $this->assertStringContainsString("{ kind: 'locked', text: b.locked_reason }", $page);
     }
 
     public function test_menu_unlocks_the_next_path_building_at_the_next_cc_level(): void

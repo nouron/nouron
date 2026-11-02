@@ -6,7 +6,7 @@ namespace Tests\Feature\User;
  * UserController::codex() feature tests (Charakter-Kodex screen, A42).
  *
  * User-persistent, account-bound view of the Cantina cast's unlocked lore
- * entries — not colony-/run-scoped, so it lives under /user, not /colony.
+ * entries — not colony-/run-scoped, so it needs no started run.
  *
  * Covered scenarios:
  *  - test_codex_requires_auth
@@ -40,7 +40,7 @@ class UserCodexControllerTest extends TestCase
     public function test_codex_requires_auth(): void
     {
         $response = $this->get(route('user.codex'));
-        $response->assertRedirect(route('login'));
+        $response->assertUnauthorized();
     }
 
     public function test_codex_shows_page(): void
@@ -48,8 +48,8 @@ class UserCodexControllerTest extends TestCase
         $response = $this->actingAs($this->bart())->get(route('user.codex'));
 
         $response->assertOk();
-        $response->assertViewIs('user.codex');
-        $response->assertViewHasAll(['characters']);
+        $response->assertJsonStructure(['characters']);
+        $this->assertNotEmpty($response->json('characters'));
     }
 
     public function test_codex_marks_unlocked_entries(): void
@@ -59,7 +59,7 @@ class UserCodexControllerTest extends TestCase
         $response = $this->actingAs($this->bart())->get(route('user.codex'));
 
         $response->assertOk();
-        $characters = $response->viewData('characters');
+        $characters = $response->json('characters');
         $veteran = collect($characters)->firstWhere('slug', 'veteran');
 
         $this->assertNotNull($veteran);

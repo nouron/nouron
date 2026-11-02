@@ -2,15 +2,14 @@
 
 namespace Tests\Feature\Colony;
 
-use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
  * T43-C5 (construction marker on the hex map) and T43-C8 (one reason chip per missing
- * build requirement). Reasons/markers are computed client-side from live state; the
- * server renders the wiring, the lang strings and the reason markup.
+ * build requirement). Reasons/markers are computed client-side from live state: the reason
+ * list in the colony +page.svelte, the map marker in frontend/src/lib/js/colony-hexgrid.js.
  */
 class MapSiteAndLockedReasonsTest extends TestCase
 {
@@ -22,30 +21,34 @@ class MapSiteAndLockedReasonsTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
     }
 
-    private function html(): string
+    private function frontend(string $path): string
     {
-        return $this->actingAs(User::where('user_id', 3)->firstOrFail())
-            ->get(route('colony.view'))->assertOk()->getContent();
+        return file_get_contents(base_path('frontend/src/'.$path));
+    }
+
+    private function colonyPage(): string
+    {
+        return $this->frontend('routes/(game)/colony/+page.svelte');
     }
 
     public function test_build_list_renders_reason_chips_with_missing_cause_only(): void
     {
-        $html = $this->html();
+        $page = $this->colonyPage();
 
-        $this->assertStringContainsString('buildMissingReasons(b)', $html);
-        $this->assertStringContainsString('building-list-reason--missing', $html);
-        $this->assertStringContainsString('building-list-reasons', $html);
+        $this->assertStringContainsString('buildMissingReasons(b)', $page);
+        $this->assertStringContainsString('building-list-reason--missing', $page);
+        $this->assertStringContainsString('building-list-reasons', $page);
     }
 
     public function test_missing_colonists_reason_is_colonists_not_regolith(): void
     {
-        $js = file_get_contents(public_path('js/colony-hexgrid.js'));
-        $this->assertStringContainsString('buildMissingReasons(b)', $js);
-        $this->assertStringContainsString("kind: 'colonists'", $js);
-        $this->assertStringContainsString("kind: 'regolith'", $js);
+        $page = $this->colonyPage();
+        $this->assertStringContainsString('function buildMissingReasons(b: AvailableBuilding)', $page);
+        $this->assertStringContainsString("kind: 'colonists'", $page);
+        $this->assertStringContainsString("kind: 'regolith'", $page);
         // Each reason is gated on its own shortfall.
-        $this->assertMatchesRegularExpression('/supply_cost[^;]*>\s*this\.freeSupply[^}]*kind: \'colonists\'/s', $js);
-        $this->assertMatchesRegularExpression('/\[3\][^;]*>\s*this\.regolith[^}]*kind: \'regolith\'/s', $js);
+        $this->assertMatchesRegularExpression('/supply_cost[^;]*>\s*data\.freeSupply[^}]*kind: \'colonists\'/s', $page);
+        $this->assertMatchesRegularExpression('/\[3\][^;]*>\s*data\.regolith[^}]*kind: \'regolith\'/s', $page);
 
         foreach (['de', 'en'] as $loc) {
             $lang = require lang_path("$loc/colony.php");
@@ -58,17 +61,18 @@ class MapSiteAndLockedReasonsTest extends TestCase
     public function test_site_marker_outline_does_not_depend_on_css_for_its_fill(): void
     {
         // An SVG polygon without fill defaults to black when the stylesheet is stale or missing.
-        $js = file_get_contents(public_path('js/colony-hexgrid.js'));
+        $js = $this->frontend('lib/js/colony-hexgrid.js');
         $this->assertMatchesRegularExpression("/dash\.setAttribute\('fill', 'none'\)/", $js);
         $this->assertMatchesRegularExpression("/dash\.setAttribute\('stroke', '#f59e0b'\)/", $js);
     }
 
     public function test_map_marks_construction_sites_with_tooltip(): void
     {
-        $js = file_get_contents(public_path('js/colony-hexgrid.js'));
+        $js = $this->frontend('lib/js/colony-hexgrid.js');
         $this->assertStringContainsString('tile-site-marker', $js);
         $this->assertStringContainsString('isConstructionSite', $js);
-        $this->assertStringContainsString('tile-site-marker', file_get_contents(public_path('css/colony.css')));
-        $this->assertStringContainsString('siteMarkerTooltip', $this->html());
+        $this->assertStringContainsString('opts.siteMarkerTooltip', $js);
+        $this->assertStringContainsString('tile-site-marker', $this->frontend('lib/styles/colony-view.css'));
+        $this->assertStringContainsString("siteMarkerTooltip: t('colony.site_marker_tooltip')", $this->colonyPage());
     }
 }

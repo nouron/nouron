@@ -314,14 +314,14 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         $cost = (int) DB::table('buildings')->where('id', self::INFIRMARY)->value('supply_cost');
         $this->assertGreaterThan(0, $cost);
 
-        $find = fn () => collect($this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->viewData('buildings'))
-            ->first(fn ($b) => (int) $b->building_id === self::INFIRMARY);
+        $find = fn () => collect($this->actingAs($this->bart())->getJson(route('colony.view'))->assertOk()->json('buildings'))
+            ->first(fn ($b) => (int) $b['building_id'] === self::INFIRMARY);
 
-        $this->assertSame($cost, $find()->workplaces, 'level-0 site reserves one level');
+        $this->assertSame($cost, $find()['workplaces'], 'level-0 site reserves one level');
 
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::INFIRMARY)
             ->update(['level' => 2]);
-        $this->assertSame(2 * $cost, $find()->workplaces);
+        $this->assertSame(2 * $cost, $find()['workplaces']);
     }
 
     public function test_hexview_sidebar_data_marks_level_zero_site_as_prepaid(): void
@@ -329,31 +329,34 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         $this->ensureBuildableTile(1, 0);
         $this->place(self::INFIRMARY, 1, 0)->assertOk();
 
-        $buildings = $this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->viewData('buildings');
+        $buildings = $this->actingAs($this->bart())->getJson(route('colony.view'))->assertOk()->json('buildings');
 
-        $site = collect($buildings)->first(fn ($b) => (int) $b->building_id === self::INFIRMARY);
-        $this->assertSame(0, $site->levelup_cost);
-        $this->assertTrue($site->first_level_prepaid);
+        $site = collect($buildings)->first(fn ($b) => (int) $b['building_id'] === self::INFIRMARY);
+        $this->assertSame(0, $site['levelup_cost']);
+        $this->assertTrue($site['first_level_prepaid']);
     }
 
     public function test_hexview_markup_shows_placement_total_breakdown_and_prepaid_note(): void
     {
-        $html = $this->actingAs($this->bart())->get(route('colony.view'))->assertOk()->getContent();
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
 
         // Build list: the charged total, broken down into erect cost + level 1.
-        $this->assertStringContainsString('b.placement_cost?.[3]', $html);
-        $this->assertStringContainsString('b.first_level_regolith', $html);
-        $this->assertStringContainsString(e(__('colony.build_cost_first_level')), $html);
+        $this->assertStringContainsString('b.placement_cost?.[3]', $page);
+        $this->assertStringContainsString('b.first_level_regolith', $page);
+        $this->assertStringContainsString("t('colony.build_cost_first_level')", $page);
+        $this->assertNotSame('colony.build_cost_first_level', __('colony.build_cost_first_level'));
         // Sidebar: a placed level-0 site states that level 1 is already paid.
-        $this->assertStringContainsString('selectedBuilding.first_level_prepaid', $html);
-        $this->assertStringContainsString(e(__('colony.first_level_prepaid')), $html);
+        $this->assertStringContainsString('b.first_level_prepaid', $page);
+        $this->assertStringContainsString("t('colony.first_level_prepaid')", $page);
+        $this->assertNotSame('colony.first_level_prepaid', __('colony.first_level_prepaid'));
     }
 
     public function test_build_chip_affordability_uses_the_placement_cost(): void
     {
-        $js = file_get_contents(public_path('js/colony-hexgrid.js'));
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
 
-        $this->assertMatchesRegularExpression('/canAffordBuilding\(b\)\s*\{[^}]*placement_cost/s', $js);
+        $this->assertMatchesRegularExpression('/function buildMissingReasons\(b: AvailableBuilding\)\s*\{[^}]*placement_cost/s', $page);
+        $this->assertStringContainsString('const canPlaceBuilding = (b: AvailableBuilding) => !b.locked && buildMissingReasons(b).length === 0;', $page);
     }
 
     // ── CC centre (0,0) is never buildable ──────────────────────────────────────

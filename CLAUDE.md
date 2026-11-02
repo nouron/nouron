@@ -4,7 +4,7 @@
 
 **Nouron** Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv.
 - GitHub: https://github.com/nouron/nouron
-- Techstack: PHP/Laravel, MySQL 8, Blade-Templates, Alpine.js + PicoCSS, SVG für Spielfelder
+- Techstack: Laravel als reine JSON-API (`/api/v1`, Sanctum-Token), MySQL 8, SvelteKit-Frontend in `frontend/` (Svelte 5, SPA, eigenes CSS auf den Design-Tokens), SVG/Canvas für Spielfelder (ADR 0006)
 - **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 - **Entfernt (2026-06-20):** Galaxie-/Systemkarte, Flotten, Kommandanten, INNN-Messaging — nicht wieder einführen, siehe `docs/gdd/archiv-flotten-systemkarte.md`.
 - **Projektstand, offene Tasks, Prioritäten:** ausschließlich `ROADMAP.md` (Historie: `CHANGELOG.md`).
@@ -35,17 +35,19 @@ config/
 database/migrations/  -- Schema-Migrationen
 data/sql/
   testdata.sql -- Fixtures (INSERT + UPDATE, nur Spielerseite; Referenzdaten: database/seeders/data/)
-resources/views/      -- Blade-Templates
-  partials/           -- sol-button.blade.php, res-popup.blade.php (wiederverwendbar)
-public/js|css/        -- techtree-view.js, advisors.js, techtree-view.css, resources.css, ...
+routes/api.php        -- JSON-API für das Frontend (routes/web.php leitet nur auf das Frontend um)
+public/img/           -- Spielgrafiken (vom Frontend über die Laravel-URL geladen)
+frontend/             -- SvelteKit-App
+  src/routes/         -- Seiten: (game) im Lauf, (infra) Lobby/Ergebnis/Einstellungen, (auth) Login
+  src/lib/            -- components/, stores/, styles/, js/ (Hexfeld- und Techtree-Zeichner), i18n.ts
 ```
 
-Schichtung: `Controller → Service → Eloquent Model → MySQL`
+Schichtung: `Svelte-Seite → /api/v1 → Controller → Service → Eloquent Model → MySQL`
 
 ## Technische Hinweise
 
 - `config/game.php` und `config/buildings.php` sind **canonical source of truth** für alle Spielwerte — GDD folgt Config, nicht umgekehrt
-- Frontend: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap (beide vollständig entfernt; nur der `bootstrap-icons`-Font bleibt)
+- Frontend: SvelteKit (`frontend/`, Node 22) — Texte kommen aus `lang/*` über `GET /api/v1/locale/{lang}`, im Code via `t('datei.key')`; kein Blade, kein Alpine, kein PicoCSS mehr (entfernt 2026-11-02); nur der `bootstrap-icons`-Font bleibt. Lokal: `php artisan serve --port=8001` + in `frontend/` `VITE_API_URL=http://localhost:8001/api/v1 npm run dev`
 - Referenzdaten (resources, buildings, building_costs, personell, researches, ships) kommen aus `ReferenceDataSeeder` (Upsert, Daten in `database/seeders/data/*.php`, danach `game:sync-config`); `TestSeeder` = `ReferenceDataSeeder` + Fixtures aus `data/sql/testdata.sql` (regex-filtered: nur INSERT/UPDATE Statements, nur Spielerseite)
 - Techtree-Koordinaten phase-lokal (Zeile/Spalte innerhalb Phase), nicht global
 - Trust-Events (`game.trust.*`): Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
@@ -63,7 +65,7 @@ Spiel-Grafiken: **WebP**, transparent, **2× Zielgröße**; kein SVG für Illust
 | Konfigurationskeys, DB-Spaltennamen | **Englisch** |
 | `lang/de/*.php` Werte (User-facing Strings) | **Deutsch** |
 | GDD, ROADMAP, CHANGELOG, ADRs | **Deutsch** |
-| Blade-Templates (sichtbare Texte) | immer via `__('key')`, nie hardcoded |
+| Svelte-Seiten (sichtbare Texte) | immer via `t('key')` aus `lang/*`, nie hardcoded |
 
 ## GDD Dokumentation (ADR 0004: Zahlen-Scope)
 
@@ -84,7 +86,7 @@ Spiel-Grafiken: **WebP**, transparent, **2× Zielgröße**; kein SVG für Illust
 - `game-designer` — Mechanics definieren, GDD aktualisieren (vor jeder neuen Mechanik)
 - `game-developer` — Game Logic, Services, Tick-Verarbeitung
 - `backend-coder` — Controller, Routes, API-Endpoints, Middleware
-- `ui-specialist` — Blade, Alpine.js + PicoCSS (kein jQuery/Bootstrap mehr)
+- `ui-specialist` — SvelteKit-Frontend (`frontend/`), Svelte 5 + eigenes CSS auf Design-Tokens
 - `db-migration-agent` — Schema, Migrations, MySQL, Seeder/Fixtures (`database/seeders/data/`, `data/sql/testdata.sql`)
 - `qa-tester` — Tests schreiben: VOR der Implementierung (TDD-Pflicht, siehe unten) + danach für Security-/Adversarial-/Regressionstests
 - `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
@@ -114,14 +116,14 @@ Bei reaktivierten/bestehenden Dateien mit Coverage-Lücke (siehe `bin/phpunit --
 
 ### Pre-commit Lint-Hook
 
-`.githooks/pre-commit` lintet gestagte Dateien vor jedem Commit: PHP → Laravel Pint (Auto-Fix), JS/CSS → Prettier (Auto-Fix), Blade → Prettier `--check` (blockt nur, kein Auto-Write). Nicht behebbare Fehler brechen den Commit ab.
+`.githooks/pre-commit` lintet gestagte Dateien vor jedem Commit: PHP → Laravel Pint (Auto-Fix) + Larastan für `app/`, JS/CSS außerhalb von `frontend/` → Prettier (Auto-Fix). Das Frontend prüft `npm run check` (svelte-check) in `frontend/`. Nicht behebbare Fehler brechen den Commit ab.
 
 **Aktivierung pro Clone** (nicht via Git geklont — lokale Config):
 ```
 npm install
 git config core.hooksPath .githooks
 ```
-Configs: `pint.json` (laravel preset, `database/migrations` exkludiert), `.prettierrc.json`, `.prettierignore`. Blade nicht auto-formatieren — bewusst per `npx prettier --write <datei>` wenn der Hook eine Blade-Datei blockt.
+Configs: `pint.json` (laravel preset, `database/migrations` exkludiert), `.prettierrc.json`, `.prettierignore`.
 
 ### Weitere Schutz-Hooks
 
@@ -157,7 +159,7 @@ Gilt für jede Änderung, auch ohne ausdrücklichen Auftrag. Der Hook prüft bei
 
 | Änderung | Pflicht-Doku | Hook |
 |---|---|---|
-| Code, Config, Lang, Views, JS, Datenbank | `CHANGELOG.md` (eine Zeile im Tagesblock) | **blockiert** |
+| Code, Config, Lang, Frontend, Datenbank | `CHANGELOG.md` (eine Zeile im Tagesblock) | **blockiert** |
 | `config/{game,buildings,advisors,ships,missions,knowledge}.php` | `docs/game-reference.md` (oder im PR-Text `game-reference: nicht nötig` mit Grund) | **blockiert** |
 | Mechanik, Regel, Owner-Entscheidung (`app/`, `config/`) | GDD (zahlenfrei, ADR 0004) und ROADMAP (Status, neue Punkte) | warnt |
 | Neue Spec oder Entscheidung | ROADMAP-Eintrag mit Verweis auf die Spec | — |

@@ -68,11 +68,11 @@ Regeln:
 
 ```bash
 gh pr create \
-  --title "feat(advisor): carousel UI with Alpine.js" \
+  --title "feat(advisor): carousel UI in Svelte" \
   --body "$(cat <<'EOF'
 ## Summary
-- Replaces static advisor list with Alpine.js carousel
-- Uses PicoCSS card layout, no Bootstrap dependency
+- Replaces static advisor list with a carousel component
+- Uses design-system tokens for the card layout
 - Hotkey navigation: ←/→
 
 ## Test plan

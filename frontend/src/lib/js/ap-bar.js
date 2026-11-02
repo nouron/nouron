@@ -1,8 +1,7 @@
 /**
  * Shared logic of the segmented AP bar inside the "upgrade button"
- * (resources/views/partials/ap-upgrade-button.blade.php), used by the colony hex
- * view ("Ausbauen") and the techtree (Kenntnis level-up). Spread it into an Alpine
- * component: `{ ...window.NouronApBar, ... }`. Pure helpers, no component state.
+ * (components/ApUpgradeButton.svelte), used by the colony ("Ausbauen"), the techtree
+ * (Kenntnis level-up) and hangar training. Pure helpers, no component state.
  *
  * A row needs ap_spend and ap_for_levelup; the optional per-Sol cap contract is
  * `ap_cap: null | { cap, spent, remaining }` (null/absent = cap off, plain bar).

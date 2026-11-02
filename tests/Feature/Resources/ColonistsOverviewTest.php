@@ -71,14 +71,17 @@ class ColonistsOverviewTest extends TestCase
         $this->setCap($wp + 10);
         $user = User::where('user_id', self::USER_ID)->firstOrFail();
 
-        $html = $this->actingAs($user)->get(route('nexusdb.index'))->assertOk()->getContent();
+        $this->actingAs($user)->getJson('/api/v1/shell')
+            ->assertOk()
+            ->assertJsonPath('colonists_overview', ['colonists' => $wp + 10, 'employed' => $wp, 'free' => 10, 'unfilled' => 0]);
 
-        preg_match('/class="res-chip res-Sup[^"]*".*?<span class="res-abbr">(.*?)<\/span>\s*<span class="res-amount">(.*?)<\/span>/s', $html, $m);
-        $this->assertSame('KOL', trim($m[1]));
-        $this->assertSame((string) ($wp + 10), trim(preg_replace('/\s+/', ' ', $m[2])));
-        $this->assertStringContainsString(__('resources.popup_sup_colonists'), $html);
-        $this->assertStringContainsString('data-colonists-row="employed"', $html);
-        $this->assertStringContainsString('data-colonists-row="free"', $html);
+        // The header chip shows the colonist count under the KOL label; its popup names employed and free.
+        $bar = file_get_contents(base_path('frontend/src/lib/components/ResourceBar.svelte'));
+        $this->assertStringContainsString("abbr: 'KOL'", $bar);
+        $this->assertStringContainsString('c?.colonists ?? b.cap', $bar);
+        $this->assertStringContainsString("t('resources.popup_sup_colonists'), value: c.colonists", $bar);
+        $this->assertStringContainsString("t('resources.popup_sup_employed'), value: c.employed", $bar);
+        $this->assertStringContainsString("t('resources.popup_sup_free'), value: c.free", $bar);
     }
 
     public function test_command_center_shows_colonists_card(): void
@@ -87,11 +90,14 @@ class ColonistsOverviewTest extends TestCase
         $this->setCap($wp + 10);
         $user = User::where('user_id', self::USER_ID)->firstOrFail();
 
-        $this->actingAs($user)->get(route('colony.command_center'))
+        $this->actingAs($user)->getJson(route('colony.command_center'))
             ->assertOk()
-            ->assertSee(__('command_center.widget_colonists_title'))
-            ->assertSee(__('command_center.widget_colonists_line', ['colonists' => $wp + 10, 'employed' => $wp]), false)
-            ->assertSee(__('command_center.widget_colonists_free', ['free' => 10]), false);
+            ->assertJsonPath('colonists', ['colonists' => $wp + 10, 'employed' => $wp, 'free' => 10, 'unfilled' => 0]);
+
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/command-center/+page.svelte'));
+        $this->assertStringContainsString("t('command_center.widget_colonists_title')", $page);
+        $this->assertStringContainsString("t('command_center.widget_colonists_line', { colonists: d.colonists.colonists, employed: d.colonists.employed })", $page);
+        $this->assertStringContainsString("t('command_center.widget_colonists_free', { free: d.colonists.free })", $page);
     }
 
     public function test_command_center_names_unfilled_workplaces(): void
@@ -100,18 +106,19 @@ class ColonistsOverviewTest extends TestCase
         $this->setCap($wp - 3);
         $user = User::where('user_id', self::USER_ID)->firstOrFail();
 
-        $this->actingAs($user)->get(route('colony.command_center'))
+        $this->actingAs($user)->getJson(route('colony.command_center'))
             ->assertOk()
-            ->assertSee(__('command_center.widget_colonists_unfilled', ['count' => 3]), false);
+            ->assertJsonPath('colonists.unfilled', 3);
+
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/command-center/+page.svelte'));
+        $this->assertStringContainsString("t('command_center.widget_colonists_unfilled', { count: d.colonists.unfilled })", $page);
     }
 
     public function test_hexview_sidebar_says_needs_colonists_not_kol(): void
     {
-        $user = User::where('user_id', self::USER_ID)->firstOrFail();
+        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
 
-        $html = $this->actingAs($user)->get(route('colony.view'))->assertOk()->getContent();
-
-        $this->assertStringNotContainsString('} KOL`', $html);
-        $this->assertStringContainsString(".replace(':count', b.supply_cost)", $html);
+        $this->assertStringNotContainsString('} KOL`', $page);
+        $this->assertStringContainsString("t('colony.building_needs_colonists', { count: b.supply_cost ?? 0 })", $page);
     }
 }

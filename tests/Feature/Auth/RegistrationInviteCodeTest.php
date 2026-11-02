@@ -10,6 +10,9 @@ use Tests\TestCase;
  * R9 — closed beta: registration requires the shared invite code
  * (config auth.invite_code, env BETA_INVITE_CODE) whenever one is configured.
  * Without a configured code (local dev, tests) registration stays open.
+ *
+ * Wrong code, the form's invite_required flag and the throttle are covered by
+ * tests/Feature/Api/RegisterApiTest.php.
  */
 class RegistrationInviteCodeTest extends TestCase
 {
@@ -36,8 +39,9 @@ class RegistrationInviteCodeTest extends TestCase
     {
         config(['auth.invite_code' => 'NOURON-BETA']);
 
-        $this->post(route('register'), $this->payload(['invite_code' => 'NOURON-BETA']))
-            ->assertRedirect(route('lobby'));
+        $this->postJson(route('register'), $this->payload(['invite_code' => 'NOURON-BETA']))
+            ->assertCreated()
+            ->assertJsonStructure(['token']);
 
         $this->assertDatabaseHas('user', ['username' => 'betatester']);
     }
@@ -46,30 +50,20 @@ class RegistrationInviteCodeTest extends TestCase
     {
         config(['auth.invite_code' => 'NOURON-BETA']);
 
-        $this->post(route('register'), $this->payload(['invite_code' => '  NOURON-BETA ']))
-            ->assertRedirect(route('lobby'));
-    }
+        $this->postJson(route('register'), $this->payload(['invite_code' => '  NOURON-BETA ']))
+            ->assertCreated();
 
-    public function test_registration_fails_with_wrong_invite_code(): void
-    {
-        config(['auth.invite_code' => 'NOURON-BETA']);
-
-        $this->from(route('register'))
-            ->post(route('register'), $this->payload(['invite_code' => 'guess']))
-            ->assertRedirect(route('register'))
-            ->assertSessionHasErrors('invite_code');
-
-        $this->assertDatabaseMissing('user', ['username' => 'betatester']);
-        $this->assertGuest();
+        $this->assertDatabaseHas('user', ['username' => 'betatester']);
     }
 
     public function test_registration_fails_without_invite_code_when_one_is_configured(): void
     {
         config(['auth.invite_code' => 'NOURON-BETA']);
 
-        $this->from(route('register'))
-            ->post(route('register'), $this->payload())
-            ->assertSessionHasErrors('invite_code');
+        $this->postJson(route('register'), $this->payload())
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('invite_code')
+            ->assertJsonMissingPath('token');
 
         $this->assertDatabaseMissing('user', ['username' => 'betatester']);
     }
@@ -78,28 +72,9 @@ class RegistrationInviteCodeTest extends TestCase
     {
         config(['auth.invite_code' => null]);
 
-        $this->post(route('register'), $this->payload())
-            ->assertRedirect(route('lobby'));
-    }
+        $this->postJson(route('register'), $this->payload())
+            ->assertCreated();
 
-    public function test_register_form_shows_invite_field_only_when_required(): void
-    {
-        config(['auth.invite_code' => 'NOURON-BETA']);
-        $this->get(route('register'))->assertOk()->assertSee('name="invite_code"', false);
-
-        config(['auth.invite_code' => null]);
-        $this->get(route('register'))->assertOk()->assertDontSee('name="invite_code"', false);
-    }
-
-    public function test_registration_is_rate_limited(): void
-    {
-        config(['auth.invite_code' => 'NOURON-BETA']);
-
-        for ($i = 0; $i < 5; $i++) {
-            $this->post(route('register'), $this->payload(['invite_code' => "wrong{$i}"]));
-        }
-
-        $this->post(route('register'), $this->payload(['invite_code' => 'wrong-again']))
-            ->assertStatus(429);
+        $this->assertDatabaseHas('user', ['username' => 'betatester']);
     }
 }

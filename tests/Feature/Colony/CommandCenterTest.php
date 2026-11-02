@@ -8,6 +8,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -36,47 +37,61 @@ class CommandCenterTest extends TestCase
         return User::find(self::BART_USER_ID);
     }
 
+    private function ccPage(): string
+    {
+        return file_get_contents(base_path('frontend/src/routes/(game)/command-center/+page.svelte'));
+    }
+
+    private function getData(): TestResponse
+    {
+        return $this->actingAs($this->bart())->getJson(route('colony.command_center'));
+    }
+
     public function test_index_loads_successfully(): void
     {
-        $this->actingAs($this->bart())
-            ->get(route('colony.command_center'))
+        $this->getData()
             ->assertOk()
-            ->assertViewIs('colony.command_center');
+            ->assertJsonStructure([
+                'colonists', 'phaseProgress', 'stipendTiers', 'solLimit', 'currentSol', 'nexusDebt',
+                'damagedBuildings', 'lastSolDeltas', 'advisors', 'trustEvents', 'trustEventsSum', 'nexusImport',
+            ]);
+    }
+
+    public function test_index_requires_auth(): void
+    {
+        $this->getJson(route('colony.command_center'))->assertUnauthorized();
     }
 
     public function test_nav_link_is_always_accessible_no_lock_gate(): void
     {
         // Unlike Hangar/Cantina, the Kommandozentrale route has no build-gate —
         // it must be reachable even on a fresh colony with no path buildings.
-        $this->actingAs($this->bart())
-            ->get(route('colony.command_center'))
-            ->assertOk();
+        $this->getData()->assertOk();
     }
 
     public function test_phase_progress_widget_shows_criteria(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
         $response->assertOk();
-        $response->assertViewHas('phaseProgress', function ($phaseProgress) {
-            return $phaseProgress['phase'] === 1 && count($phaseProgress['criteria']) === 4;
-        });
+        $response->assertJsonPath('phaseProgress.phase', 1);
+        $response->assertJsonCount(4, 'phaseProgress.criteria');
     }
 
     public function test_stipend_tiers_are_passed_to_view(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $tiers = collect($this->getData()->json('stipendTiers'));
 
-        $response->assertViewHas('stipendTiers', function ($tiers) {
-            return array_keys($tiers) === ['small', 'medium', 'large'];
-        });
+        $this->assertSame(['small', 'medium', 'large'], $tiers->pluck('key')->all());
+        // The tier's trust value is the configured trust event of that tier.
+        $small = $tiers->firstWhere('key', 'small');
+        $this->assertSame((int) config('game.stipend.tiers.small.cost'), $small['cost']);
+        $this->assertSame((int) config('game.trust.events.'.config('game.stipend.tiers.small.event_key')), $small['trust']);
     }
 
     public function test_maintenance_widget_shows_no_buildings_when_none_damaged(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
-
-        $response->assertViewHas('damagedBuildings', fn ($buildings) => $buildings->isEmpty());
+        $this->getData()->assertJsonCount(0, 'damagedBuildings');
     }
 
     public function test_maintenance_widget_lists_critically_damaged_buildings(): void
@@ -86,11 +101,10 @@ class CommandCenterTest extends TestCase
             ->where('building_id', 27)
             ->update(['status_points' => 2]);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
-        $response->assertViewHas('damagedBuildings', function ($buildings) {
-            return $buildings->count() === 1 && $buildings->first()['status_points'] === 2;
-        });
+        $response->assertJsonCount(1, 'damagedBuildings');
+        $response->assertJsonPath('damagedBuildings.0.status_points', 2);
     }
 
     /**
@@ -104,17 +118,19 @@ class CommandCenterTest extends TestCase
             ->where('building_id', 27)
             ->update(['status_points' => 2, 'tile_x' => 1, 'tile_y' => 0]);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        // The data carries building + instance, the page builds the tile link from them.
+        $response = $this->getData();
+        $response->assertJsonPath('damagedBuildings.0.building_id', 27);
+        $response->assertJsonPath('damagedBuildings.0.instance_id', 1);
 
-        $response->assertSee(route('colony.view', ['building' => 27, 'instance' => 1]));
-        $response->assertSee(__('entity_chip.label_tile_link'));
+        $page = $this->ccPage();
+        $this->assertStringContainsString('link: `/colony?building=${b.building_id}&instance=${b.instance_id}`', $page);
+        $this->assertStringContainsString("t('entity_chip.label_tile_link')", $page);
     }
 
     public function test_net_balance_widget_shows_no_data_before_first_sol_ends(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
-
-        $response->assertViewHas('lastSolDeltas', fn ($deltas) => $deltas === null);
+        $this->getData()->assertJsonPath('lastSolDeltas', null);
     }
 
     public function test_net_balance_widget_shows_cached_deltas_after_sol_ends(): void
@@ -123,30 +139,30 @@ class CommandCenterTest extends TestCase
             'regolith' => 10, 'werkstoffe' => 0, 'organika' => -5, 'credits' => 40, 'trust' => 2,
         ], now()->addDay());
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
-        $response->assertViewHas('lastSolDeltas', fn ($deltas) => $deltas['credits'] === 40 && $deltas['trust'] === 2);
+        $response->assertJsonPath('lastSolDeltas.credits', 40);
+        $response->assertJsonPath('lastSolDeltas.trust', 2);
     }
 
     public function test_advisors_widget_shows_active_advisor(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
-        $response->assertViewHas('advisors', function ($advisors) {
-            return $advisors->count() === 1 && $advisors->first()['rank_name'] === 'Junior';
-        });
+        $response->assertJsonCount(1, 'advisors');
+        $response->assertJsonPath('advisors.0.rank_name', 'Junior');
     }
 
     public function test_advisors_widget_renders_advisor_name_not_just_rank(): void
     {
-        // Regression: nested double-quoted array access inside a <x-entity-chip label="{{ ... }}">
-        // attribute broke Blade's component-tag compiler, leaving the whole tag uncompiled
-        // and its label text invisible — only the "(Junior)" rank suffix rendered.
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
-        $advisorName = $response->viewData('advisors')->first()['name'];
+        // Regression (Blade era): the advisor chip lost its label and only the rank
+        // suffix rendered. Now: the data carries the translated name, the page uses it as label.
+        $name = $this->getData()->json('advisors.0.name');
 
-        $response->assertDontSee('x-entity-chip', false);
-        $response->assertSee($advisorName);
+        $this->assertIsString($name);
+        $this->assertNotSame('?', $name);
+        $this->assertStringNotContainsString('advisors.', $name);
+        $this->assertStringContainsString('label={a.name}', $this->ccPage());
     }
 
     public function test_trust_events_widget_shows_events_acting_next_sol(): void
@@ -157,10 +173,11 @@ class CommandCenterTest extends TestCase
             ['colony_id' => self::COLONY_ID, 'tick' => $next - 1, 'event_type' => 'well_fed'], // 1-Sol profile: already over
         ]);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
-        $response->assertViewHas('trustEvents', fn ($events) => $events->count() === 1 && $events->first()['tick'] === $next);
-        $response->assertViewHas('trustEventsSum', (int) config('game.trust.events.stipend_small'));
+        $response->assertJsonCount(1, 'trustEvents');
+        $response->assertJsonPath('trustEvents.0.tick', $next);
+        $response->assertJsonPath('trustEventsSum', (int) config('game.trust.events.stipend_small'));
     }
 
     public function test_trust_events_widget_shows_fading_aftereffect_and_following_values(): void
@@ -174,21 +191,21 @@ class CommandCenterTest extends TestCase
             ['colony_id' => self::COLONY_ID, 'tick' => $next - 1, 'event_type' => 'research_level_up'],
         ]);
 
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
-        $response->assertViewHas('trustEvents', fn ($events) => $events->count() === 1
-            && $events->first()['delta'] === 1
-            && $events->first()['following'] === [1]);
-        $response->assertViewHas('trustEventsSum', 1);
+        $response->assertJsonCount(1, 'trustEvents');
+        $response->assertJsonPath('trustEvents.0.delta', 1);
+        $response->assertJsonPath('trustEvents.0.following', [1]);
+        $response->assertJsonPath('trustEventsSum', 1);
     }
 
     public function test_run_progress_widget_shows_sol_and_nexus_debt(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
-        $response->assertViewHas('currentSol');
-        $response->assertViewHas('solLimit');
-        $response->assertViewHas('nexusDebt');
+        $this->assertIsInt($response->json('currentSol'));
+        $this->assertIsInt($response->json('solLimit'));
+        $this->assertIsInt($response->json('nexusDebt'));
     }
 
     /**
@@ -198,15 +215,16 @@ class CommandCenterTest extends TestCase
      */
     public function test_delayed_import_widget_shows_prices_and_route(): void
     {
-        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $response = $this->getData();
 
         // No trading post / trade knowledge on the fixture colony -> price == base price.
-        $response->assertViewHas('nexusImport', function ($quote) {
-            return $quote['resources'][3]['price'] === (int) config('game.economy.delayed_import_price.3')
-                && $quote['resources'][5]['price'] === (int) config('game.economy.delayed_import_price.5')
-                && $quote['resources'][4]['price'] === (int) config('game.economy.compound_import_price');
-        });
-        $response->assertSee(__('colony.nexus_import_delayed_title'));
-        $response->assertSee(route('colony.nexus.import-delayed'), false);
+        $response->assertJsonPath('nexusImport.resources.3.price', (int) config('game.economy.delayed_import_price.3'));
+        $response->assertJsonPath('nexusImport.resources.5.price', (int) config('game.economy.delayed_import_price.5'));
+        $response->assertJsonPath('nexusImport.resources.4.price', (int) config('game.economy.compound_import_price'));
+
+        $page = $this->ccPage();
+        $this->assertStringContainsString("t('colony.nexus_import_delayed_title')", $page);
+        $this->assertStringContainsString("'/colony/nexus/import-delayed'", $page);
+        $this->assertStringEndsWith('/colony/nexus/import-delayed', route('colony.nexus.import-delayed'));
     }
 }

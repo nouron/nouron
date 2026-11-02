@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Port of partials/feedback.blade.php (R15, closed beta): fixed button → beveled dialog → POST /feedback.
-	import '../../../../public/css/dialogs.css';
-	import '../../../../public/css/feedback.css';
+	import '#lib/styles/dialogs.css';
+	import '#lib/styles/feedback.css';
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
 	import { api, ApiError } from '#lib/stores/auth.ts';

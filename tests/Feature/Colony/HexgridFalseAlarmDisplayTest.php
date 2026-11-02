@@ -23,7 +23,7 @@ vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(process.argv[1], 'utf8'), ctx);
 console.log(JSON.stringify(vm.runInContext(process.argv[2], ctx)));
 JS;
-        $p = new Process(['node', '-e', $script, public_path('js/colony-hexgrid.js'), $expr]);
+        $p = new Process(['node', '-e', $script, base_path('frontend/src/lib/js/colony-hexgrid.js'), $expr]);
         $p->run();
         if (! $p->isSuccessful()) {
             $this->markTestSkipped('node unavailable or script failed: '.$p->getErrorOutput());

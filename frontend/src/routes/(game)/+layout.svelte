@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Frame of every in-run screen: header + resource bar, page transition.
-	import '../../../../public/css/resources.css';
+	import '#lib/styles/resources.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';

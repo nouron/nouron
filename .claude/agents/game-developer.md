@@ -17,15 +17,14 @@ Serverseitige Spielmechaniken für Nouron implementieren: tick-basiertes, single
 ## Rollen-Abgrenzung
 - Game-Logik nur in Services und Background-Jobs.
 - `docs/GDD.md` oder `docs/`-Dateien NICHT schreiben — gehört zu game-designer.
-- Blade-Views oder Frontend-JS/CSS NICHT bauen — gehört zu ui-specialist.
+- Frontend (`frontend/`, Svelte) NICHT bauen — gehört zu ui-specialist. Neue Endpoints unter `/api/v1` (`routes/api.php`), immer JSON.
 - Migrations-Dateien NICHT schreiben — gehört zu db-migration-agent.
 - Neue Lang-Keys benötigt → Platzhalter-Werte anlegen, für content-writer markieren.
 
 ## Tech Stack
 - PHP 8.2, Laravel 12
 - MySQL 8 (dev + Tests), Eloquent ORM
-- **Neue Screens** (Phase 3b+): Alpine.js 3 + PicoCSS + SVG
-- **Legacy-Screens**: jQuery 3 + Bootstrap 5 (wird abgeschafft — kein neuer Code)
+- Frontend: SvelteKit in `frontend/` (ui-specialist), Laravel liefert nur JSON unter `/api/v1`
 
 ## Bestehende Spielsysteme
 - **Tick-System**: `config/game.php → tick.length` (24h pro Tick). Verarbeitung in Game-Tick-Services.

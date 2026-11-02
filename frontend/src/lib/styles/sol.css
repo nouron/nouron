@@ -1,5 +1,4 @@
-/* ponytail: copied from public/css/colony.css (Sol button overlay, dialog, report, finale, phase, launch).
-   Delete there when the Blade layout goes (ADR 0006 stage 5). */
+/* Ported from the former Blade public/css/colony.css (Sol button overlay, dialog, report, finale, phase, launch). */
 
 /* ── Sol Button Overlay & Dialog (colony layout) ───────────────────────── */
 .sol-overlay {

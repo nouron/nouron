@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/lobby/index.blade.php (ADR 0006 stage 4f).
-	import '../../../../../public/css/lobby.css';
+	import '#lib/styles/lobby.css';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api, ApiError } from '#lib/stores/auth.ts';

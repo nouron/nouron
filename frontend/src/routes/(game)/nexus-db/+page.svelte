@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/nexusdb/index.blade.php (ADR 0006 stage 4e): the core concepts in short.
-	import '../../../../../public/css/nexusdb.css';
+	import '#lib/styles/nexusdb.css';
 	import { onMount } from 'svelte';
 	import { api } from '#lib/stores/auth.ts';
 	import { t } from '#lib/i18n.ts';

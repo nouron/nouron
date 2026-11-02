@@ -12,19 +12,15 @@ namespace Tests\Feature\Techtree;
  *    - test_index_slots_have_correct_cc_required_values
  *    - test_locked_slots_when_cc_level_three
  *
- *  HIRE — redirect branch
- *    - test_hire_redirects_on_success
+ *  HIRE
+ *    - test_hire_creates_advisor_record_in_database
  *    - test_hire_fails_for_unknown_personell_id
- *
- *  HIRE — JSON branch
  *    - test_hire_returns_json_on_ajax_request
  *    - test_hire_json_returns_422_on_duplicate
  *
- *  FIRE — redirect branch
- *    - test_fire_redirects_on_success
+ *  FIRE
+ *    - test_fire_sets_colony_id_to_null_on_advisor
  *    - test_fire_returns_404_for_foreign_advisor
- *
- *  FIRE — JSON branch
  *    - test_fire_returns_json_on_ajax_request
  *    - test_fire_json_returns_404_for_foreign_advisor
  */
@@ -64,14 +60,6 @@ class AdvisorControllerTest extends TestCase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    /**
-     * Return a request session carrying the active colony for Bart.
-     */
-    private function bartSession(): array
-    {
-        return ['activeIds' => ['colonyId' => $this->colonyIdBart]];
-    }
 
     /**
      * Remove all advisors for Bart's colony so hire tests start from zero.
@@ -130,7 +118,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->getJson(route('advisors.index'))
             ->assertOk();
     }
@@ -140,18 +127,15 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->get(route('advisors.index'));
 
         $response->assertOk();
-        $response->assertViewHas('pageData');
 
-        $pageData = $response->viewData('pageData');
+        $pageData = $response->json();
 
         $this->assertArrayHasKey('slots', $pageData);
         $this->assertArrayHasKey('slotInfo', $pageData);
-        $this->assertArrayHasKey('routes', $pageData);
-        $this->assertArrayHasKey('colonyId', $pageData);
+        $this->assertArrayHasKey('junior_upkeep', $pageData);
 
         $slots = $pageData['slots'];
         $this->assertCount(4, $slots, 'There must be exactly 4 advisor slots');
@@ -169,10 +153,9 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->get(route('advisors.index'));
 
-        $slots = $response->viewData('pageData')['slots'];
+        $slots = $response->json('slots');
 
         // Engineer (pos 1): cc_required=1. Placed path slots (2-3): position-based gate (2, 3).
         // Unplaced path slot (pos 4, bar not yet built): cc_required=2 (path_open gate).
@@ -203,10 +186,9 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->get(route('advisors.index'));
 
-        $slots = $response->viewData('pageData')['slots'];
+        $slots = $response->json('slots');
 
         // CC=3: slots 1-3 are fixed/path slots (unlocked with CC Lv3). Slot 4 is path_open
         // requiring CC Lv2 (unlocked with CC Lv3, shows as path_open state).
@@ -224,10 +206,9 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->get(route('advisors.index'));
 
-        $slots = $response->viewData('pageData')['slots'];
+        $slots = $response->json('slots');
 
         // First unlocked slot (engineer / position 1) must be 'empty'
         $this->assertEquals('empty', $slots[0]['state'],
@@ -242,10 +223,9 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->get(route('advisors.index'));
 
-        $slots = $response->viewData('pageData')['slots'];
+        $slots = $response->json('slots');
 
         // engineer is position 1 (index 0)
         $engineerSlot = $slots[0];
@@ -255,22 +235,7 @@ class AdvisorControllerTest extends TestCase
             'Advisor data must be populated for an active slot');
     }
 
-    // ── HIRE — redirect branch ────────────────────────────────────────────────
-
-    public function test_hire_redirects_on_success(): void
-    {
-        $this->clearBartAdvisors();
-        $this->ensureCredits($this->userIdBart, 10000);
-
-        $bart = User::find($this->userIdBart);
-
-        $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
-            ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success');
-    }
+    // ── HIRE ────────────────────────────────────────────────
 
     public function test_hire_creates_advisor_record_in_database(): void
     {
@@ -280,7 +245,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
         $this->assertDatabaseHas('advisors', [
@@ -296,12 +260,11 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->post(route('advisors.hire'), ['personell_id' => 999]);
 
-        // Validation must reject unknown IDs (422 for JSON, redirect-with-errors for HTML)
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors('personell_id');
+        // Validation must reject unknown IDs.
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('personell_id');
     }
 
     // ── HIRE — JSON branch ────────────────────────────────────────────────────
@@ -314,7 +277,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
@@ -338,7 +300,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
@@ -360,7 +321,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
@@ -376,32 +336,18 @@ class AdvisorControllerTest extends TestCase
 
         $bart = User::find($this->userIdBart);
 
-        // First hire via plain POST (seeds the advisor)
+        // First hire seeds the advisor
         $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
-        // Second hire via AJAX should return 422 with ok=false
+        // Second hire must return 422 with ok=false
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false])
             ->assertJsonStructure(['ok', 'error']);
-    }
-
-    public function test_hire_json_returns_422_on_unknown_personell_id(): void
-    {
-        $bart = User::find($this->userIdBart);
-
-        $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
-            ->withHeaders(['Accept' => 'application/json'])
-            ->post(route('advisors.hire'), ['personell_id' => 999]);
-
-        $response->assertStatus(422);
     }
 
     public function test_hire_json_returns_422_when_slot_full(): void
@@ -423,7 +369,6 @@ class AdvisorControllerTest extends TestCase
         // 3 of 3 slots filled (CC=3). Trader is a distinct, not-yet-hired type —
         // this exercises slot_full, since a duplicate check would not apply here.
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.hire'), ['personell_id' => $this->personellTrader]);
 
@@ -431,23 +376,7 @@ class AdvisorControllerTest extends TestCase
             ->assertJson(['ok' => false, 'error' => 'slot_full']);
     }
 
-    // ── FIRE — redirect branch ────────────────────────────────────────────────
-
-    public function test_fire_redirects_on_success(): void
-    {
-        $this->clearBartAdvisors();
-
-        $advisorId = $this->insertAdvisor($this->userIdBart, $this->personellEngineer, $this->colonyIdBart);
-
-        $bart = User::find($this->userIdBart);
-
-        $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
-            ->delete(route('advisors.fire', ['id' => $advisorId]));
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success');
-    }
+    // ── FIRE ────────────────────────────────────────────────
 
     public function test_fire_sets_colony_id_to_null_on_advisor(): void
     {
@@ -458,7 +387,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->delete(route('advisors.fire', ['id' => $advisorId]));
 
         $this->assertDatabaseHas('advisors', [
@@ -476,7 +404,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->delete(route('advisors.fire', ['id' => $foreignAdvisorId]));
 
         $response->assertNotFound();
@@ -488,7 +415,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->delete(route('advisors.fire', ['id' => 99999]));
 
         $response->assertNotFound();
@@ -505,7 +431,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->delete(route('advisors.fire', ['id' => $advisorId]));
 
@@ -523,7 +448,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->delete(route('advisors.fire', ['id' => $foreignAdvisorId]));
 
@@ -545,7 +469,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.promote', ['id' => $advisorId]));
 
@@ -564,7 +487,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.promote', ['id' => $advisorId]));
 
@@ -582,7 +504,6 @@ class AdvisorControllerTest extends TestCase
         $bart = User::find($this->userIdBart);
 
         $response = $this->actingAs($bart)
-            ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
             ->post(route('advisors.promote', ['id' => $foreignAdvisorId]));
 
@@ -595,18 +516,18 @@ class AdvisorControllerTest extends TestCase
     public function test_index_requires_authentication(): void
     {
         $response = $this->get(route('advisors.index'));
-        $response->assertRedirect(route('login'));
+        $response->assertUnauthorized();
     }
 
     public function test_hire_requires_authentication(): void
     {
         $response = $this->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
-        $response->assertRedirect(route('login'));
+        $response->assertUnauthorized();
     }
 
     public function test_fire_requires_authentication(): void
     {
         $response = $this->delete(route('advisors.fire', ['id' => 1]));
-        $response->assertRedirect(route('login'));
+        $response->assertUnauthorized();
     }
 }

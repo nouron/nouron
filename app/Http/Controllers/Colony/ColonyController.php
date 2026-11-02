@@ -25,7 +25,6 @@ use App\Services\Techtree\BuildingUnlockService;
 use App\Services\TickService;
 use App\Services\TrustService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -73,11 +72,6 @@ class ColonyController extends BaseController
             ->where('building_id', (int) config('buildings.bioFacility.id', 41))
             ->whereNotNull('tile_x')
             ->exists();
-    }
-
-    public function hexview(): View
-    {
-        return view('colony.hexview', $this->hexviewData());
     }
 
     /** Hex view data as the SvelteKit frontend needs it — same keys as window.__colonyViewData. */
@@ -1319,7 +1313,7 @@ class ColonyController extends BaseController
         return response()->json(['ok' => true, 'hint' => $this->resolveHint($colony->id)]);
     }
 
-    public function rename(Request $request): RedirectResponse|JsonResponse
+    public function rename(Request $request): JsonResponse
     {
         $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[^<>{}\[\]]*$/'],
@@ -1331,12 +1325,7 @@ class ColonyController extends BaseController
             ->where('id', $colony->id)
             ->update(['name' => $request->input('name')]);
 
-        if ($request->is('api/*')) {
-            return response()->json(['ok' => true]);
-        }
-
-        return redirect()->route('lobby')
-            ->with('success', 'Kolonienname wurde aktualisiert.');
+        return response()->json(['ok' => true]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

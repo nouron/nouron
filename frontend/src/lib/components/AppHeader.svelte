@@ -13,7 +13,6 @@
 	let menuOpen = $state(false);
 	let userOpen = $state(false);
 
-	// `href` starting with "/" = migrated Svelte screen; anything else still lives in Blade (ADR 0006 coexistence).
 	type NavItem = { key: string; icon: string; label: string; href: string; locked?: string; badge?: number };
 	const nav = $derived<NavItem[]>([
 		{ key: 'colony', icon: 'bi-hexagon', label: t('colony.nav_colony'), href: '/colony' },

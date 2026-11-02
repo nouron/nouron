@@ -6,9 +6,9 @@ namespace Tests\Feature;
  * HTTP endpoint tests for LobbyController::newRun().
  *
  * Covered scenarios:
- *   POST /run/new
+ *   POST /api/v1/run/new
  *     - new_run_requires_authentication
- *     - new_run_redirects_when_active_run_already_exists
+ *     - new_run_is_rejected_when_active_run_already_exists
  *     - new_run_creates_run_and_resets_colony
  *     - new_run_resets_research_levels
  *     - new_run_resets_tiles_to_unexplored
@@ -54,11 +54,11 @@ class LobbyNewRunTest extends TestCase
 
     public function test_new_run_requires_authentication(): void
     {
-        $this->post(route('run.new'))
-            ->assertRedirect(route('login'));
+        $this->postJson(route('run.new'))
+            ->assertUnauthorized();
     }
 
-    public function test_new_run_redirects_when_active_run_already_exists(): void
+    public function test_new_run_is_rejected_when_active_run_already_exists(): void
     {
         Run::create([
             'user_id' => $this->userId,
@@ -70,19 +70,19 @@ class LobbyNewRunTest extends TestCase
 
         $response = $this->actingAs($this->user())->post(route('run.new'));
 
-        $response->assertRedirect(route('lobby'));
-        $response->assertSessionHas('error');
+        $response->assertStatus(422);
+        $response->assertJson(['ok' => false, 'message' => __('run.new_run_active_exists')]);
 
         // No additional run must have been created.
         $this->assertEquals(1, Run::where('user_id', $this->userId)->count());
     }
 
-    public function test_new_run_creates_run_record_and_redirects(): void
+    public function test_new_run_creates_run_record(): void
     {
         $response = $this->actingAs($this->user())->post(route('run.new'));
 
-        $response->assertRedirect(route('lobby'));
-        $response->assertSessionHas('success');
+        $response->assertOk();
+        $response->assertJson(['ok' => true, 'message' => __('run.new_run_started')]);
 
         $run = Run::where('user_id', $this->userId)->where('status', 'active')->first();
         $this->assertNotNull($run, 'A new active Run must be created');

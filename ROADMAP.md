@@ -25,7 +25,7 @@ Hinweis: Neu ist T41 (Pfad-Vertiefung per AP-Investition, Spec überarbeitet 202
 | 7 | Closed Beta: Betrieb | R4 Deployment, R6 Backups, R7 Monitoring (Nightwatch vs. Sentry), R17 Tester-Anleitung | Owner |
 | 8 | Closed Beta: Spielerlebnis | R13 Durchspiel-Runs, R14 Intro-Seite, C17/Onboarding-Texte, R16 Unfertiges | Owner |
 
-Entschieden 2026-10-23: Die Branches `ccr-48190b46-civgr7` (ADR 0006 „Frontend auf SvelteKit-PWA“, widerspricht dem Alpine-/PicoCSS-Stack) und `claude/website-docs-sync-jijo7o` (Website) bleiben bewusst erhalten.
+Erledigt 2026-11-02: Frontend-Migration auf SvelteKit (ADR 0006, PR #444, Stufen 0–5e) — alle Bildschirme im neuen Frontend, Blade/Alpine/PicoCSS entfernt, Laravel ist reine JSON-API. **Offen (Stufe 5f, eigener Schritt):** Auslieferung (`play.nouron.de` + API, gehört zu R4) und Prüfung, ob der Login-Token im `localStorage` für die Beta reicht.
 
 ---
 

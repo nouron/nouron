@@ -1,8 +1,8 @@
 <script lang="ts">
-	// Shared with the Blade techtree while both coexist (ADR 0006): one renderer, one stylesheet.
-	import '../../../../../public/css/techtree-view.css';
+	// Techtree: canvas renderer in lib/js/techtree-canvas.js, styles in lib/styles/techtree-view.css.
+	import '#lib/styles/techtree-view.css';
 	import '#lib/styles/colony-shared.css';
-	import '../../../../../public/js/techtree-canvas.js';
+	import '#lib/js/techtree-canvas.js';
 
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';

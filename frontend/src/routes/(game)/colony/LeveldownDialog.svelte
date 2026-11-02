@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Rückbau confirmation (GDD techtree §11.5): loads the real consequences from the preview
 	// endpoint, writes only on confirm. Port of the leveldown <dialog> in hexview.blade.php.
-	import '../../../../../public/css/dialogs.css';
+	import '#lib/styles/dialogs.css';
 	import { onMount } from 'svelte';
 	import { api } from '#lib/stores/auth.ts';
 	import { t } from '#lib/i18n.ts';

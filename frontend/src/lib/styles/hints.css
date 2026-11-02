@@ -1,5 +1,4 @@
-/* ponytail: copied from public/css/colony.css (lines ~1570-1800: encounter notice, hint bar, first-visit popup).
-   Delete there when the Blade layout goes (ADR 0006 stage 5). */
+/* Ported from the former Blade public/css/colony.css (lines ~1570-1800: encounter notice, hint bar, first-visit popup). */
 
 .encounter-notice-bar {
     display: flex;

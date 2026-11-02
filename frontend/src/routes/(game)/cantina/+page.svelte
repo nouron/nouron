@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/colony/bar.blade.php incl. its inline barPage() component (ADR 0006 stage 4d).
-	import '../../../../../public/css/swipe.css';
+	import '#lib/styles/swipe.css';
 	import '#lib/styles/colony-shared.css';
 	import '#lib/styles/cantina.css';
 	import { onMount } from 'svelte';

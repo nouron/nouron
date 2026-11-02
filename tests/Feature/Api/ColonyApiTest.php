@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -50,6 +51,20 @@ class ColonyApiTest extends TestCase
         ]);
         $this->assertSame(__('techtree.building_commandCenter'), $response->json('buildingCatalog.building_commandCenter.label'));
         $this->assertNotEmpty($response->json('buildingCatalog.building_commandCenter.tooltip.description'));
+    }
+
+    public function test_colony_is_the_players_own_even_with_a_stale_session_id(): void
+    {
+        // Pure API (ADR 0006 stage 5e): the session no longer picks the colony.
+        Sanctum::actingAs(User::find(self::USER_ID));
+        $foreign = DB::table('glx_colonies')->insertGetId(['name' => 'Shelbyville', 'user_id' => 1, 'is_primary' => 1, 'hunger_streak' => 0]);
+
+        $own = $this->getJson('/api/v1/advisors')->assertOk()->json('slotInfo');
+        $this->withSession(['activeIds.colonyId' => $foreign])
+            ->getJson('/api/v1/advisors')
+            ->assertOk()
+            ->assertJsonPath('slotInfo', $own);
+        $this->assertSame(0, DB::table('advisors')->where('colony_id', $foreign)->count());
     }
 
     public function test_available_buildings(): void

@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Frame of the screens outside a running run (lobby, result, codex) — port of layouts/infra.blade.php.
-	import '../../../../public/css/resources.css';
+	import '#lib/styles/resources.css';
 	import '#lib/styles/infra.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
