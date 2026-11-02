@@ -96,11 +96,6 @@
 
 		<div class="run-result__actions">
 			<button class="primary" disabled={busy} onclick={newRun}><i class="bi bi-arrow-repeat"></i> {t('run.result_btn_new_run')}</button>
-			{#if won}
-				<a href="/colony" class="outline"><i class="bi bi-hexagon"></i> {t('run.result_btn_colony')}</a>
-			{:else}
-				<button class="outline" disabled title={t('run.result_btn_colony_disabled')}><i class="bi bi-hexagon"></i> {t('run.result_btn_colony')}</button>
-			{/if}
 		</div>
 	</div>
 {/if}
@@ -112,8 +107,7 @@
 		color: var(--color-text-secondary);
 	}
 	/* PicoCSS drew these buttons in Blade; token-based equivalent. */
-	.primary,
-	.outline {
+	.primary {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
@@ -128,10 +122,6 @@
 	.primary {
 		background: var(--color-accent);
 		color: #fff;
-	}
-	.outline {
-		background: transparent;
-		color: var(--color-accent);
 	}
 	button:disabled {
 		opacity: 0.55;

@@ -31,8 +31,6 @@ return [
     'result_objective_fulfilled' => 'Fulfilled',
     'result_objective_open' => 'Not fulfilled',
     'result_btn_new_run' => 'Start new mission',
-    'result_btn_colony' => 'View colony',
-    'result_btn_colony_disabled' => 'View colony (success only)',
     'new_run_preparing' => 'New run being prepared — feature coming in Phase 4.',
 
     // New-run flow (Feature 2)
