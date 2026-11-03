@@ -340,11 +340,9 @@ class PlacementPrepaysFirstLevelTest extends TestCase
     {
         $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
 
-        // Build list: the charged total, broken down into erect cost + level 1.
+        // Build list: only the charged total (the erect + level 1 breakdown moved out of the list, T47).
         $this->assertStringContainsString('b.placement_cost?.[3]', $page);
-        $this->assertStringContainsString('b.first_level_regolith', $page);
-        $this->assertStringContainsString("t('colony.build_cost_first_level')", $page);
-        $this->assertNotSame('colony.build_cost_first_level', __('colony.build_cost_first_level'));
+        $this->assertStringNotContainsString("t('colony.build_cost_first_level')", $page);
         // Sidebar: a placed level-0 site states that level 1 is already paid.
         $this->assertStringContainsString('b.first_level_prepaid', $page);
         $this->assertStringContainsString("t('colony.first_level_prepaid')", $page);

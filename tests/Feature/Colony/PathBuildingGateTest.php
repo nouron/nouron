@@ -92,6 +92,14 @@ class PathBuildingGateTest extends TestCase
         return (int) DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 3)->value('amount');
     }
 
+    public function test_menu_marks_exactly_the_path_buildings(): void
+    {
+        $paths = collect($this->menu())->filter(fn ($b) => $b['is_path'])->keys()->sort()->values()->all();
+
+        $this->assertSame([31, 44, 52], array_values(array_intersect($paths, [31, 44, 52])));
+        $this->assertSame([], array_values(array_diff($paths, [31, 44, 52])), 'only Labor, Hangar and Cantina are path buildings');
+    }
+
     // ── placeBuilding() ───────────────────────────────────────────────────────
 
     public function test_cc2_allows_the_first_path_building(): void

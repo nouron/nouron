@@ -5,6 +5,8 @@
  *
  * A row needs ap_spend and ap_for_levelup; the optional per-Sol cap contract is
  * `ap_cap: null | { cap, spent, remaining }` (null/absent = cap off, plain bar).
+ * The cap decoration normally waits for the first invested AP; `cap_at_start: true` shows it from
+ * the level start on (knowledge).
  */
 window.NouronApBar = {
     AP_BAR_MAX_COLS: 10,
@@ -33,7 +35,7 @@ window.NouronApBar = {
     // null = no marker (cap off, or boundary at bar end).
     apCapLimitPlace(row) {
         const cap = row?.ap_cap;
-        if (!cap || !row.ap_for_levelup || row.ap_spend === 0) return null;
+        if (!cap || !row.ap_for_levelup || (row.ap_spend === 0 && !row.cap_at_start)) return null;
         const boundary = Math.min(row.ap_spend + Math.max(cap.remaining, 0), row.ap_for_levelup);
         if (boundary >= row.ap_for_levelup) return null;
         const { cols } = this.apBarLayout(row);
@@ -53,7 +55,7 @@ window.NouronApBar = {
     apSegClasses(row, i) {
         const cap = row.ap_cap;
         const spend = row.ap_spend;
-        if (!cap || spend === 0) return { 'btn-seg--filled': i <= spend };
+        if (!cap || (spend === 0 && !row.cap_at_start)) return { 'btn-seg--filled': i <= spend };
         const earlier = spend - cap.spent;
         return {
             'btn-seg--filled': i <= spend,

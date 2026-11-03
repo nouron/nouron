@@ -114,6 +114,7 @@ export type ActionResult = {
 
 /** GET /api/v1/colony/buildings/available — one entry per building the build menu offers. */
 export type AvailableBuilding = {
+	is_path?: boolean;
 	building_id: number;
 	key: string;
 	ap_for_levelup: number;

@@ -1,5 +1,6 @@
 <script lang="ts" module>
 	export type ApRow = {
+		cap_at_start?: boolean;
 		ap_spend: number;
 		ap_for_levelup: number;
 		ap_cap?: { cap: number; spent: number; remaining: number } | null;
@@ -15,7 +16,7 @@
 	import { t } from '#lib/i18n.ts';
 
 	let {
-		row,
+		row: rowProp,
 		label,
 		onclick,
 		chip = 'build',
@@ -25,7 +26,8 @@
 		regolith = 0,
 		capTip = t('colony.ap_cap_tooltip'),
 		tipId = 'ap-cap-tip',
-		secondary = false
+		secondary = false,
+		capAtStart = false
 	}: {
 		row: ApRow;
 		label: string;
@@ -38,7 +40,11 @@
 		capTip?: string;
 		tipId?: string;
 		secondary?: boolean;
+		capAtStart?: boolean;
 	} = $props();
+
+	// Knowledge shows its per-Sol allowance before the first AP too (see ap-bar.js cap_at_start).
+	const row = $derived(capAtStart ? { ...rowProp, cap_at_start: true } : rowProp);
 
 	const bar = (
 		window as unknown as {

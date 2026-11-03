@@ -497,6 +497,7 @@
 							<div class="detail-ap-section">
 								<ApUpgradeButton
 									row={tech}
+									capAtStart
 									label="{t('techtree.detail_ap_invest')} {tech.ap_spend}/{tech.ap_for_levelup}"
 									chip="research"
 									blocked={apAvailable <= 0 || tech.ap_spend >= tech.ap_for_levelup}
