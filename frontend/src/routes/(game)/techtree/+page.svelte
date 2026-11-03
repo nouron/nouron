@@ -41,6 +41,7 @@
 		max_level: number | null;
 		image_slug: string | null;
 		is_instanced: boolean;
+		is_path?: boolean;
 		max_instances: number | null;
 		instances: Instance[];
 		menu_buildable: boolean;
@@ -287,11 +288,12 @@
 					})),
 					edges,
 					bandLabels: bandLabels(),
-					labels: { columnN: t('techtree.column_n') },
+					labels: { columnN: t('techtree.column_n'), path: t('colony.path_badge') },
 					describe: (item: { ref: Tech & { pulse?: unknown } }) => ({
 						label: item.ref.name,
 						sub: statusLabel(item.ref),
 						tag: item.ref.req_cc ? t('techtree.cc_tag', { level: item.ref.req_cc }) : '',
+						path: !!item.ref.is_path,
 						status: item.ref.status,
 						pulse: item.ref.pulse
 					}),

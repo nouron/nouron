@@ -125,6 +125,7 @@
                     label: '',
                     sub: '',
                     tag: '',
+                    path: false,
                     isRoot: it.band === 0,
                 };
                 IDS.push(it.key);
@@ -199,6 +200,7 @@
                 n.label = d.label;
                 n.sub = d.sub;
                 n.tag = d.tag || '';
+                n.path = !!d.path;
                 n.status = d.status;
                 n.pulse = !!d.pulse;
             });
@@ -558,6 +560,14 @@
                 ctx.fillStyle = P.text2;
                 ctx.font = '600 11px ' + FONT;
                 ctx.fillText(n.tag, x1 - 8, y1 - 6);
+                ctx.textAlign = 'center';
+            }
+            // Path building (Labor/Hangar/Cantina): quiet accent marker in the lower-left corner.
+            if (n.path) {
+                ctx.textAlign = 'left';
+                ctx.fillStyle = P.accent;
+                ctx.font = '700 10px ' + FONT;
+                ctx.fillText(labels.path || 'Path', x0 + 10, y1 - 6);
                 ctx.textAlign = 'center';
             }
             ctx.globalAlpha = 1;
