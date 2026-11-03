@@ -48,7 +48,7 @@ return [
     'securityHub_desc' => 'Hier laufen die Meldungen zusammen, wenn draußen etwas schiefgeht — und weil jemand rechtzeitig reagiert, richten Zwischenfälle weniger Schaden an und Rückschläge erschüttern die Kolonisten weniger. Ist die Leitstelle zum Bergungsdienst ausgebaut, sorgt die Mannschaft außerdem dafür, dass ein Teil der verbauten Materialien geborgen wird, wenn ein Gebäude durch Verfall eine Stufe verliert. Schon das Wissen, dass jemand ein Auge auf alles hat, stärkt das Vertrauen in der Kolonie.',
 
     'uplinkStation' => 'Uplink-Station',
-    'uplinkStation_desc' => 'Leistungsstarke Kommunikations- und Scananlage. Ermöglicht präzisere Tiefenscans der Umgebung und verbessert die Handelsverbindungen zu Nexus-Konvois. Ab der dritten Ausbaustufe: Direktzugang zur Nexus-Abschlussübertragung.',
+    'uplinkStation_desc' => 'Leistungsstarke Kommunikations- und Scananlage. Schaltet den Nexus-Import frei, bringt jeden Sol Relaisvergütung in Credits und macht Tiefenscans der Umgebung günstiger (ab der zweiten Ausbaustufe).',
 
     'tradingPost' => 'Handelsposten',
     'tradingPost_desc' => 'Ausgewiesener Anlaufpunkt für reisende Händler. Wer einen eingerichteten Handelsposten vorfindet, bietet bessere Konditionen — Angebote fallen großzügiger aus als bei einem improvisierten Treff in der Cantina.',

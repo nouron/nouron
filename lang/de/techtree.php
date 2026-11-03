@@ -41,7 +41,7 @@ return [
     'desc_techs_monument' => 'Irgendwann fragt man sich: wofür das alles? Das Kolonialdenkmal gibt eine Antwort — sichtbar, dauerhaft, für alle. Es verankert die Geschichte dieser Kolonie im Boden des Planeten.',
     'desc_techs_securityHub' => 'Keine Leitstelle macht die Kolonie unverwundbar — aber sie sorgt dafür, dass Zwischenfälle nicht eskalieren. Ihr Betrieb dämpft negative Ereignisse und gibt den Kolonisten das Gefühl, dass jemand aufpasst.',
     'desc_techs_uplinkStation' => 'Ohne Uplink-Station ist die Kolonie stumm gegenüber dem Nexus — und der Nexus handelt nur auf Anfrage. Sie schaltet den Werkstoff-Direktimport frei und hält den einzigen Kommunikationskanal offen.',
-    'desc_techs_tradingPost' => 'Ein gut gepflegter Handelsposten ist ein Signal an alle Durchreisenden, dass diese Kolonie Geschäfte macht. Der Konsul arbeitet effizienter, der Reisende Händler handelt zu besseren Konditionen.',
+    'desc_techs_tradingPost' => 'Ein gut gepflegter Handelsposten ist ein Signal an alle Durchreisenden, dass diese Kolonie Geschäfte macht. Der Reisende Händler handelt zu besseren Konditionen.',
 
     // ── Kenntnisse ───────────────────────────────────────────────────────────
     'knowledge_construction' => 'Baukunde',

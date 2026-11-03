@@ -41,7 +41,7 @@ return [
     'desc_techs_monument' => 'At some point you ask yourself: what is all this for? The Colonial Monument provides an answer — visible, lasting, for everyone. It anchors the history of this colony in the soil of the planet.',
     'desc_techs_securityHub' => 'No Response Center makes the colony invulnerable — but it ensures that incidents don\'t escalate. Its operation dampens negative events and gives colonists the feeling that someone is watching.',
     'desc_techs_uplinkStation' => 'Without an Uplink Station the colony is silent to the Nexus — and the Nexus only acts on request. It unlocks direct Compound import and keeps the only communication channel open.',
-    'desc_techs_tradingPost' => 'A well-maintained Trading Post signals to all travellers that this colony does business. The Consul works more efficiently, the Travelling Merchant trades on better terms.',
+    'desc_techs_tradingPost' => 'A well-maintained Trading Post signals to all travellers that this colony does business. The Travelling Merchant trades on better terms.',
 
     // ── Knowledge ────────────────────────────────────────────────────────────
     'knowledge_construction' => 'Construction',
