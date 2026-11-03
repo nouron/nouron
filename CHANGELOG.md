@@ -2,7 +2,7 @@
 
 ## 2026-11-03
 
-- Playtest-Feinschliff (T47–T53): Baumenü zeigt bei fehlenden Voraussetzungen nur die Voraussetzung, „KOL“ statt Langtext und kein Kostendetail mehr; Pfadgebäude markiert und oben sortiert; Uplink-Station im Techtree in Reihe 1; Sol-Limit-Balken der Kenntnisse (nur dort) schon vor dem ersten AP; „Verstanden“-Button und Sol-Übersicht ohne Höhensprung; Puls-Effekt bei Erkunden und Harvester-Umzug; Hint-Texte (32) sprachlich überarbeitet, Erkunden-, Reparatur- und Umzug-Hint sachlich korrigiert.
+- Playtest-Feinschliff (T47–T53): Baumenü zeigt bei fehlenden Voraussetzungen nur die Voraussetzung, „KOL“ statt Langtext und kein Kostendetail mehr; Pfadgebäude markiert und oben sortiert; Uplink-Station im Techtree in Reihe 1; Sol-Limit-Balken der Kenntnisse (nur dort) schon vor dem ersten AP; „Verstanden“-Button und Sol-Übersicht ohne Höhensprung; Puls-Effekt bei Erkunden und Harvester-Umzug; Hint-Texte (32) sprachlich überarbeitet, Erkunden-, Reparatur- und Umzug-Hint sachlich korrigiert; der Verschleiß-Hint nennt das beschädigte Gebäude.
 - T46 Mission Control: Abbruch setzt `fail_reason = abandoned` (Ergebnisseite zeigte fälschlich „Laufzeit verstrichen", `nexus_debt` fehlte ebenfalls); Ergebnis-Button führt zurück zur Mission Control; eigener Bestätigungsdialog statt Browser-`confirm`; Diagonale der Run-Karten gezeichnet.
 
 ## 2026-11-02

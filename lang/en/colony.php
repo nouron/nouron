@@ -99,7 +99,7 @@ return [
     'hint_suggestion_label' => 'Suggestion',
     'hint_not_mandatory' => 'Suggestion, not mandatory — other build orders are possible.',
     'onboarding_hint_1' => 'No Engineer on board, so AP is running at minimum. Hire one in the Advisor screen before another Sol slips by.',
-    'onboarding_hint_repair' => 'A building is badly worn. Repair it before the decay gets more expensive: tap the building, choose "Repair" — it costs AP and a little Regolith.',
+    'onboarding_hint_repair' => ':building is badly worn. Repair it before the decay gets more expensive: tap the building, choose "Repair" — it costs AP and a little Regolith.',
     'onboarding_hint_repair_urgent' => 'Warning: a building is about to lose a level. Repair it now, or the next Sol decides for you.',
     'onboarding_hint_2' => 'The Harvester is running empty laps, it is still inside the colony zone. Move it to an explored Regolith tile outside, and it will actually produce.',
     'onboarding_hint_harvester_low_regolith' => 'The Harvester\'s Regolith deposit is running dry. A fallback deposit is already explored — relocate it now.',

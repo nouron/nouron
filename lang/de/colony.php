@@ -100,7 +100,7 @@ return [
     'hint_suggestion_label' => 'Vorschlag',
     'hint_not_mandatory' => 'Vorschlag, kein Zwang — andere Baureihenfolgen sind möglich.',
     'onboarding_hint_1' => 'Kein Baumeister an Bord, die AP laufen auf Minimum. Stell im Berater-Screen einen ein, bevor der nächste Sol verstreicht.',
-    'onboarding_hint_repair' => 'Ein Gebäude ist deutlich verschlissen. Repariere es, bevor der Verfall teurer wird: Gebäude antippen, „Reparieren" wählen — das kostet AP und etwas Regolith.',
+    'onboarding_hint_repair' => ':building ist deutlich verschlissen. Repariere es, bevor der Verfall teurer wird: Gebäude antippen, „Reparieren" wählen — das kostet AP und etwas Regolith.',
     'onboarding_hint_repair_urgent' => 'Achtung: Ein Gebäude steht kurz vor dem Stufenverlust. Repariere es jetzt, sonst entscheidet der nächste Sol für dich.',
     'onboarding_hint_2' => 'Der Harvester dreht Leerrunden, er steht noch in der Koloniezone. Verlege ihn auf ein erkundetes Regolith-Tile außerhalb, dann fördert er wirklich.',
     'onboarding_hint_harvester_low_regolith' => 'Das Regolith-Vorkommen des Harvesters geht zur Neige. Ein Ausweich-Vorkommen ist schon erkundet — verlege ihn jetzt.',

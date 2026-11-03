@@ -212,6 +212,7 @@ class OnboardingHintService
                 'key' => 'hint_repair',
                 'active' => $this->checkHintRepair($colonyId),
                 'text_key' => 'colony.onboarding_hint_repair',
+                'text_params' => ['building' => $this->mostDamagedBuildingLabel($colonyId)],
                 'target_url' => '/colony',
             ],
             [
@@ -398,6 +399,19 @@ class OnboardingHintService
             ->where('colony_buildings.level', '>=', 1) // level 0 = under construction, not repairable
             ->whereRaw('colony_buildings.status_points < buildings.max_status_points * ?', [$threshold])
             ->exists();
+    }
+
+    /** Label of the built building with the lowest status ratio (the one the repair hint is about). */
+    private function mostDamagedBuildingLabel(int $colonyId): string
+    {
+        $name = DB::table('colony_buildings')
+            ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
+            ->where('colony_buildings.colony_id', $colonyId)
+            ->where('colony_buildings.level', '>=', 1)
+            ->orderByRaw('colony_buildings.status_points / buildings.max_status_points')
+            ->value('buildings.name');
+
+        return $name ? __('techtree.'.$name) : '';
     }
 
     /**

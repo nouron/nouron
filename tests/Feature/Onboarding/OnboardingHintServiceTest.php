@@ -254,6 +254,19 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertEquals('/colony', $hint['target_url']);
     }
 
+    public function test_repair_hint_names_the_most_damaged_building(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->damageBuilding(25, 13);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_repair', $hint['key']);
+        $this->assertSame(__('techtree.building_commandCenter'), $hint['text_params']['building']);
+    }
+
     public function test_repair_hint_silent_above_display_threshold(): void
     {
         // Core of the invisible-pacing-timer design (playtest review 2026-07-14):
