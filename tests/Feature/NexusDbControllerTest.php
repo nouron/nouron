@@ -19,6 +19,7 @@ namespace Tests\Feature;
  */
 
 use App\Models\User;
+use App\Services\BuildingCostService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -83,5 +84,32 @@ class NexusDbControllerTest extends TestCase
 
         $response->assertOk();
         $this->assertIsBool($response->json('first_visit'));
+    }
+
+    public function test_catalog_lists_every_active_building_regardless_of_build_state(): void
+    {
+        $json = $this->actingAs($this->bart())->getJson(route('nexusdb.index'))->assertOk()->json('buildings');
+        $b = collect($json)->keyBy('key');
+
+        $this->assertCount(13, $json);
+
+        // Kolonialdenkmal needs CC Lv5: listed all the same, with its requirement.
+        $this->assertSame(5, $b['building_monument']['requires']['cc_level']);
+        $this->assertNull($b['building_monument']['requires']['building']);
+
+        // Agrardom hangs off the Harvester, not the CC.
+        $this->assertNull($b['building_bioFacility']['requires']['cc_level']);
+        $this->assertSame(1, $b['building_bioFacility']['requires']['building']['level']);
+        $this->assertSame(__('techtree.building_harvester'), $b['building_bioFacility']['requires']['building']['label']);
+
+        $hangar = $b['building_hangar'];
+        $costs = app(BuildingCostService::class);
+        $this->assertSame(__('techtree.building_hangar'), $hangar['label']);
+        $this->assertNotSame('', $hangar['description']);
+        $this->assertSame($costs->placementCost(44), array_map('intval', $hangar['placement_cost']));
+        $this->assertSame(3, $hangar['max_level']);
+        $this->assertCount(3, $hangar['levels']);
+        $this->assertTrue($hangar['is_path']);
+        $this->assertSame([], $b['building_harvester']['placement_cost']);
     }
 }

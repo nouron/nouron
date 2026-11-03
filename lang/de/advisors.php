@@ -34,11 +34,11 @@ return [
     'error_insufficient_credits' => 'Nicht genug Credits, um diesen Berater einzustellen.',
     'error_dismissed_this_tick' => 'Dieser Berater wurde gerade erst entlassen und kann erst im nächsten Sol wieder eingestellt werden.',
     'error_generic' => 'Berater konnte nicht eingestellt werden.',
-    'error_path_building_missing' => 'Das zugehörige Pfadgebäude muss zuerst gebaut und platziert werden.',
+    'error_path_building_missing' => 'Der zugehörige Schwerpunkt (Labor, Hangar oder Cantina) muss zuerst gebaut und platziert werden.',
     'error_promotion_not_eligible' => 'Dieser Berater hat die nötige Erfahrung für eine Beförderung noch nicht erreicht.',
     'error_promotion_max_rank' => 'Dieser Berater hat bereits den höchsten Rang erreicht.',
     'error_promotion_insufficient_credits' => 'Nicht genug Credits für diese Beförderung.',
-    'desc_path_open' => 'Kein Pfadgebäude gebaut — erst Analytiklabor, Hangar oder Cantina errichten, um diesen Slot freizuschalten.',
+    'desc_path_open' => 'Noch kein Schwerpunkt gebaut — erst Analytiklabor, Hangar oder Cantina errichten, um diesen Slot freizuschalten.',
 
     // Path choice descriptions shown in the advisor carousel for path_open slots
     'path_label_scientist' => 'Analytiker-Pfad',

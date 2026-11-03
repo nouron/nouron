@@ -763,8 +763,8 @@
 										/></span
 									>
 									<span class="building-list-row-right"
-										>{#if b.is_path}<span class="building-list-path" title={t('colony.path_badge_tip')}
-												>{t('colony.path_badge')}</span
+										>{#if b.is_path}<span class="building-list-path" title={t('colony.focus_tip')}
+												>{t('colony.focus_' + b.key)}</span
 											>{/if}<span class="building-list-ap">{b.ap_for_levelup} AP</span></span
 									>
 								</div>
