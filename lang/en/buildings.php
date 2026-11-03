@@ -48,7 +48,7 @@ return [
     'securityHub_desc' => 'This is where the reports come in when something goes wrong outside — and because someone responds in time, incidents do less damage and setbacks shake the colonists less. Once upgraded to a Salvage Crew, the crew also ensures that a portion of the materials is recovered when a building loses a level to decay. Just knowing that someone is keeping an eye on things strengthens trust in the colony.',
 
     'uplinkStation' => 'Uplink Station',
-    'uplinkStation_desc' => 'High-powered communications and scanning array. Enables more precise deep scans of the surroundings and improves trade connections to Nexus convoys. From upgrade level three onward: direct access to the Nexus final transmission.',
+    'uplinkStation_desc' => 'High-powered communications and scanning array. Unlocks the Nexus import, earns relay credits every Sol and makes deep scans of the surroundings cheaper (from the second upgrade level).',
 
     'tradingPost' => 'Trading Post',
     'tradingPost_desc' => 'Designated stop for travelling merchants. Those who find an established Trading Post offer better terms — deals are more generous than at an improvised meeting in the Cantina.',
