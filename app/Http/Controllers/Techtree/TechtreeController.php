@@ -8,6 +8,7 @@ use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\AdvisorService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
+use App\Services\PathBuildingGateService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
 use App\Services\Techtree\KnowledgeEffectDescriptionService;
@@ -197,6 +198,8 @@ class TechtreeController extends BaseController
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
                     'hire_cost' => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
                     'is_instanced' => (bool) ($tech['is_instanced'] ?? false),
+                    // Labor/Hangar/Cantina: the choice that shapes the run — the graph marks them.
+                    'is_path' => $type === 'building' && PathBuildingGateService::isPathBuilding((int) $id),
                     'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,
                     'max_instances' => $type === 'building' ? ($maxInstances[(int) $id] ?? null) : null,
                     'instances' => $type === 'building' ? ($placedInstances[(int) $id] ?? []) : [],

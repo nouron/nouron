@@ -50,6 +50,24 @@ class TechtreeControllerTest extends TestCase
      * colony_id segment. This test verifies that the order endpoint only
      * modifies the authenticated user's own colony, not any other colony.
      */
+    public function test_techtree_marks_path_buildings(): void
+    {
+        $bart = User::where('user_id', 3)->firstOrFail();
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
+
+        $paths = [];
+        foreach ($pageData['phases'] as $phase) {
+            foreach ($phase['items'] as $tech) {
+                $this->assertArrayHasKey('is_path', $tech);
+                if ($tech['is_path']) {
+                    $paths[] = $tech['id'];
+                }
+            }
+        }
+        sort($paths);
+        $this->assertSame([31, 44, 52], $paths, 'only Labor, Hangar and Cantina are path buildings');
+    }
+
     public function test_order_only_affects_own_colony(): void
     {
         $bart = User::find($this->userIdBart);
