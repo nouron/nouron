@@ -12,6 +12,22 @@ return [
     'page_subtitle' => 'Reference for game mechanics and terminology.',
 
     // Concept cards
+    'tab_concepts' => 'Concepts',
+    'tab_buildings' => 'Buildings',
+    'building_requires' => 'Requirement',
+    'building_requires_none' => 'none',
+    'building_requires_cc' => 'Command Center Lv:level',
+    'building_requires_building' => ':name Lv:level',
+    'building_cost_place' => 'Placing',
+    'building_cost_free' => 'free',
+    'building_colonists' => 'Colonists',
+    'building_max_level' => 'Max level',
+    'building_levels' => 'Upgrade levels',
+    'building_col_level' => 'Level',
+    'building_col_ap' => 'AP',
+    'building_col_regolith' => 'Regolith',
+    'building_path_note' => 'Path building',
+
     'concept_supply_title' => 'Supply',
     'concept_supply_body' => 'Supply denotes the colony-wide operational capacity, abstracted from power, water, and personnel infrastructure. Each commissioned unit occupies a fixed share of that capacity. Once the capacity limit is reached, no further unit can be commissioned; existing units remain unaffected. Capacity expansion is achieved through higher-level Command Centers or additional Residential Habitats.',
 

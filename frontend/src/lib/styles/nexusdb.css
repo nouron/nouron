@@ -110,3 +110,72 @@
         padding: 1rem 1rem 2rem;
     }
 }
+
+/* Tabs: Konzepte / Gebäude */
+.nexusdb-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+}
+
+.nexusdb-tabs button {
+    width: auto;
+    margin: 0;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: transparent;
+    color: #555;
+    border: 1px solid #e4e4ef;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.nexusdb-tabs button.active {
+    color: #fff;
+    background: var(--color-accent, #8c2030);
+    border-color: var(--color-accent, #8c2030);
+}
+
+.nexusdb-path {
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--color-accent, #8c2030);
+}
+
+.nexusdb-facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+}
+
+.nexusdb-facts dt {
+    color: #888;
+}
+
+.nexusdb-facts dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.nexusdb-levels {
+    width: 100%;
+    font-size: 0.8rem;
+    border-collapse: collapse;
+}
+
+.nexusdb-levels caption {
+    text-align: left;
+    color: #888;
+    padding-bottom: 0.25rem;
+}
+
+.nexusdb-levels th,
+.nexusdb-levels td {
+    text-align: left;
+    padding: 0.2rem 0.5rem 0.2rem 0;
+    border-bottom: 1px solid #eee;
+}
