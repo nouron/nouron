@@ -84,6 +84,7 @@ class ShellStateService
             'staffingShare' => $this->resources->staffingShare($colonyId),
             'resourceFlow' => $this->resourceFlow->perSol($colonyId),
             'hungerPenalty' => $this->trust->hungerPenalty($colonyId),
+            'trustBreakdown' => $this->trust->breakdown($colonyId, (int) $activeRunTick),
             'apBreakdown' => $this->advisors->getApBreakdown($colonyId),
             'activeHint' => $hint,
             // Danger notices (GDD §9) on the same clock as the Sol chip.

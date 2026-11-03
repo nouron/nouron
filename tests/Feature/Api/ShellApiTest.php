@@ -40,7 +40,7 @@ class ShellApiTest extends TestCase
             'username', 'resource_bar_possessions', 'current_sol', 'sol_limit', 'nexus_debt', 'nexus_debt_max',
             'in_active_run', 'bar_built', 'hangar_built', 'sciencelab_built', 'unread_nexus_count',
             'trust', 'colony_ap', 'supply_breakdown', 'colonists_overview', 'staffing_share', 'resource_flow',
-            'hunger_penalty', 'ap_breakdown', 'active_hint', 'active_encounter_notices',
+            'hunger_penalty', 'trust_breakdown' => ['buildings', 'research', 'ships', 'events', 'hunger', 'total'], 'ap_breakdown', 'active_hint', 'active_encounter_notices',
         ]);
         $response->assertJsonPath('in_active_run', true);
         $response->assertJsonPath('sciencelab_built', true);

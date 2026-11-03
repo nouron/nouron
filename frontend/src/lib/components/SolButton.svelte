@@ -8,7 +8,7 @@
 	import { page } from '$app/state';
 	import { refreshShell, solEpoch } from '#lib/stores/shell.ts';
 
-	type Line = { label: string; detail?: string; tone?: string; beat?: boolean; from?: number; to?: number };
+	type Line = { label: string; detail?: string; tone?: string; reason?: string; beat?: boolean; from?: number; to?: number };
 	type Group = { key: string; icon: string; title: string; lines: Line[] };
 	type Criterion = { key: string; label: string; done: boolean; current: number; target: number };
 	type Objective = { label: string; done: boolean; revealed: boolean; current: number; target: number };
@@ -218,7 +218,9 @@
 												shakeKey === `${group.key}:${li}` && 'sol-report__line--shake'
 											]}
 										>
-											<span class="sol-report__label">{line.label}</span>
+											<span class="sol-report__label"
+												>{line.label}{#if line.reason}<small class="sol-report__reason"> ({line.reason})</small>{/if}</span
+											>
 											<span class="sol-report__value">
 												{#if line.from !== undefined && line.to !== undefined}
 													<span class="sol-report__counter">{counterValue(group, li)}</span>

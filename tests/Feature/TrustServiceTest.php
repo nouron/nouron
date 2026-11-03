@@ -749,4 +749,22 @@ class TrustServiceTest extends TestCase
         // +10 (buildings) + +9 (researches) + +4 (ships) + +2 (events) = +25
         $this->assertSame(25, $trust);
     }
+
+    public function test_breakdown_lists_each_source_and_sums_to_calculate_trust(): void
+    {
+        DB::table('colony_buildings')->insert([
+            'colony_id' => $this->colonyId, 'building_id' => 46, 'level' => 4, 'status_points' => 10, 'ap_spend' => 0,
+        ]);
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['hunger_streak' => 2]);
+
+        $b = $this->service->breakdown($this->colonyId, $this->tick);
+
+        $this->assertSame(20, $b['buildings']);
+        $this->assertSame(0, $b['research']);
+        $this->assertSame(0, $b['ships']);
+        $this->assertSame(0, $b['events']);
+        $this->assertSame(-3, $b['hunger']); // base 2 + 1 step
+        $this->assertSame($this->service->calculateTrust($this->colonyId, $this->tick), $b['total']);
+        $this->assertSame(17, $b['total']);
+    }
 }
