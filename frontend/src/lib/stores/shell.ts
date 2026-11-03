@@ -31,6 +31,7 @@ export type Shell = {
 	staffing_share?: number;
 	resource_flow?: { regolith: Flow; organika: Flow; credits: Flow };
 	hunger_penalty?: number;
+	trust_breakdown?: { buildings: number; research: number; ships: number; events: number; hunger: number; total: number };
 	ap_breakdown?: { base: number; advisor: number; multiplier: number; plague_multiplier?: number } | null;
 	active_hint?: { key: string; text: string; target_url: string } | null;
 	active_encounter_notices?: { text: string }[];

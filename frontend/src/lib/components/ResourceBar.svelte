@@ -27,12 +27,12 @@
 		pairs.filter(([, v]) => keep(v)).map(([label, value]) => ({ label, value }));
 
 	// Per-Sol balance: non-zero sources, then the net (ResourceFlowService::perSol()).
-	const flow = (pairs: [string, number][], net: number): Row[][] => {
+	const flow = (pairs: [string, number][], net: number, netLabel = t('resources.popup_flow_net')): Row[][] => {
 		const lines = rows(pairs.map(([l, v]) => [l, v]), (v) => v !== 0).map((r) => ({
 			...r,
 			value: signed(r.value as number)
 		}));
-		const total = [{ label: t('resources.popup_flow_net'), value: signed(net), strong: true }];
+		const total = [{ label: netLabel, value: signed(net), strong: true }];
 		return lines.length ? [lines, total] : [total];
 	};
 
@@ -141,7 +141,19 @@
 				amount: tr,
 				title: t('resources.popup_trust_title'),
 				desc: t('resources.popup_trust_desc'),
-				extra: s.hunger_penalty ? [rows([[t('resources.popup_trust_hunger'), s.hunger_penalty]])] : [],
+				extra: s.trust_breakdown
+					? flow(
+							[
+								[t('resources.popup_trust_buildings'), s.trust_breakdown.buildings],
+								[t('resources.popup_trust_research'), s.trust_breakdown.research],
+								[t('resources.popup_trust_ships'), s.trust_breakdown.ships],
+								[t('resources.popup_trust_events'), s.trust_breakdown.events],
+								[t('resources.popup_trust_hunger'), s.trust_breakdown.hunger]
+							],
+							s.trust_breakdown.total,
+							t('resources.popup_trust_total')
+						)
+					: [],
 				ap: true
 			});
 		}

@@ -714,6 +714,21 @@ class SolReportTest extends TestCase
         $this->assertSame('neutral', $creditsLine['tone']);
     }
 
+    public function test_trust_line_names_hunger_as_reason(): void
+    {
+        $run = $this->setRunTick(4);
+        $this->setResource(self::RES_TRUST, 50);
+        $before = $this->snapshot($run);
+        $this->setResource(self::RES_TRUST, 47);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 2]);
+
+        $colony = $this->groupByKey($this->service()->buildReport($run, $before), 'colony');
+        $line = collect($colony['lines'])->first(fn ($l) => ($l['from'] ?? null) === 50);
+
+        $this->assertStringContainsString(__('resources.popup_trust_hunger'), $line['reason']);
+        $this->assertStringContainsString('-3', $line['reason']);
+    }
+
     public function test_passive_credits_shows_breakdown_in_colony_group(): void
     {
         $run = $this->setRunTick(7);

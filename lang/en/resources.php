@@ -71,5 +71,10 @@ return [
 
     'popup_trust_title' => 'Trust',
     'popup_trust_desc' => 'What still holds the colonists together. Let this fall too far and nobody gives their best any more — and eventually nobody listens at all.',
+    'popup_trust_buildings' => 'Buildings',
+    'popup_trust_research' => 'Knowledge',
+    'popup_trust_ships' => 'Ships',
+    'popup_trust_events' => 'Events',
+    'popup_trust_total' => 'Trust total',
     'popup_trust_hunger' => 'Hunger',
 ];

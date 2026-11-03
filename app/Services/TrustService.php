@@ -61,14 +61,26 @@ class TrustService
      */
     public function calculateTrust(int $colonyId, int $tick): int
     {
-        $trust = 0;
-        $trust += $this->buildingContribution($colonyId);
-        $trust += $this->researchContribution($colonyId);
-        $trust += $this->shipContribution($colonyId);
-        $trust += $this->eventContribution($colonyId, $tick);
-        $trust += $this->hungerPenalty($colonyId);
+        return $this->breakdown($colonyId, $tick)['total'];
+    }
 
-        return max(-100, min(100, $trust));
+    /**
+     * Trust split by source (single source for calculateTrust() and the trust popup:
+     * displayed number = acting number). `total` is the clamped sum.
+     *
+     * @return array{buildings:int,research:int,ships:int,events:int,hunger:int,total:int}
+     */
+    public function breakdown(int $colonyId, int $tick): array
+    {
+        $parts = [
+            'buildings' => $this->buildingContribution($colonyId),
+            'research' => $this->researchContribution($colonyId),
+            'ships' => $this->shipContribution($colonyId),
+            'events' => $this->eventContribution($colonyId, $tick),
+            'hunger' => $this->hungerPenalty($colonyId),
+        ];
+
+        return $parts + ['total' => max(-100, min(100, array_sum($parts)))];
     }
 
     /**

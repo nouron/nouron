@@ -56,6 +56,7 @@ class SolReportService
         private readonly ColonyService $colonyService,
         private readonly ResourcesService $resourcesService,
         private readonly ResourceFlowService $resourceFlowService,
+        private readonly TrustService $trustService,
     ) {}
 
     /**
@@ -132,6 +133,23 @@ class SolReportService
     }
 
     /**
+     * The volatile trust sources acting now (events, hunger) as "Label +n, Label -n", so the
+     * Sol report says why trust moved. Stable sources (buildings, knowledge, ships) are in the popup.
+     */
+    private function trustReason(int $colonyId, int $tick): string
+    {
+        $b = $this->trustService->breakdown($colonyId, $tick);
+        $parts = [];
+        foreach (['events' => 'popup_trust_events', 'hunger' => 'popup_trust_hunger'] as $key => $lang) {
+            if ($b[$key] !== 0) {
+                $parts[] = __('resources.'.$lang).' '.$this->signed($b[$key]);
+            }
+        }
+
+        return implode(', ', $parts);
+    }
+
+    /**
      * Build the report for a run after its tick has been processed.
      *
      * @param  array  $before  Snapshot taken before the tick (see snapshot()).
@@ -161,7 +179,7 @@ class SolReportService
         }
 
         $groups[] = $this->productionGroup($colonyId, $userId, $before);
-        $groups[] = $this->colonyGroup($colonyId, $userId, $before, $events);
+        $groups[] = $this->colonyGroup($colonyId, $userId, $before, $events, $tick);
 
         $finale = $this->finale($run);
         if ($finale === null) {
@@ -463,7 +481,7 @@ class SolReportService
 
     // ── Group 4: colony & personnel ───────────────────────────────────────────
 
-    private function colonyGroup(int $colonyId, int $userId, array $before, array $events): array
+    private function colonyGroup(int $colonyId, int $userId, array $before, array $events, int $tick): array
     {
         $lines = [];
 
@@ -477,6 +495,7 @@ class SolReportService
         $lines[] = [
             'label' => __('resources.res_trust'),
             'detail' => $this->signed($trustDelta),
+            'reason' => $this->trustReason($colonyId, $tick),
             'tone' => $trustDelta > 0 ? 'good' : ($trustDelta < 0 ? 'danger' : 'neutral'),
             'from' => $trustFrom,
             'to' => $trustAfter,

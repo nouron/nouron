@@ -222,6 +222,12 @@
     font-weight: 600;
 }
 
+.sol-report__reason {
+    margin-left: 0.3em;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
 /* Tone colors — aligned with res-chip / advisor semantic palette */
 .sol-report__line--good .sol-report__detail,
 .sol-report__line--good .sol-report__counter {

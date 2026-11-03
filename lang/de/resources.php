@@ -71,5 +71,10 @@ return [
 
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
+    'popup_trust_buildings' => 'Gebäude',
+    'popup_trust_research' => 'Kenntnisse',
+    'popup_trust_ships' => 'Schiffe',
+    'popup_trust_events' => 'Ereignisse',
+    'popup_trust_total' => 'Vertrauen gesamt',
     'popup_trust_hunger' => 'Hunger',
 ];

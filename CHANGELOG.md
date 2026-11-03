@@ -2,6 +2,7 @@
 
 ## 2026-11-03
 
+- T52 Vertrauen nachvollziehbar: Vertrauens-Popup der Ressourcenleiste zeigt die Quellen einzeln (Gebäude, Kenntnisse, Schiffe, Ereignisse, Hunger, Summe); die Sol-Übersicht nennt Ereignisse und Hunger als Grund der Änderung (`TrustService::breakdown()`).
 - T46 Mission Control: Abbruch setzt `fail_reason = abandoned` (Ergebnisseite zeigte fälschlich „Laufzeit verstrichen", `nexus_debt` fehlte ebenfalls); Ergebnis-Button führt zurück zur Mission Control; eigener Bestätigungsdialog statt Browser-`confirm`; Diagonale der Run-Karten gezeichnet.
 
 ## 2026-11-02
