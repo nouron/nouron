@@ -1,48 +1,49 @@
-const { chromium } = require('/home/mg/workspace/nouron/node_modules/playwright');
-// Vorlage fuer Browser-Checks mit tools/uicheck/uicheck (Login Bart/test123, Port aus UICHECK_PORT, Standard 8012).
+// Vorlage fuer Browser-Checks des SvelteKit-Frontends gegen die Wegwerf-DB von tools/uicheck/uicheck.
+//
+// Vorbereitung:
+//   tools/uicheck/uicheck start fresh            # API auf Port 8012, Wegwerf-DB, Login Bart/test123
+//   cd frontend && VITE_API_URL=http://127.0.0.1:8012/api/v1 npm run dev -- --port 5173 --strictPort --host localhost
+//     (Port 5173 ist Pflicht: die CORS-Freigabe der API gilt nur dafuer)
+//   Playwright: `npm i playwright-core` in einem Wegwerf-Ordner (nicht im Repo), Pfad per PLAYWRIGHT_PATH,
+//     z. B. PLAYWRIGHT_PATH=/tmp/pw/node_modules/playwright-core. Chromium kommt aus ~/.cache/ms-playwright.
 // Aufruf: node tools/uicheck/example.js <ausgabeverzeichnis>   (Screenshots landen dort)
-const PORT = process.env.UICHECK_PORT || '8012';
-const BASE = `http://127.0.0.1:${PORT}`;
+// Danach: uicheck stop und den Vite-Prozess per PID beenden (nie `pkill -f`).
+const { chromium } = require(process.env.PLAYWRIGHT_PATH || 'playwright-core');
+const BASE = process.env.UICHECK_FRONTEND || 'http://localhost:5173';
 const out = (process.argv[2] || '.').replace(/\/?$/, '/');
+
 (async () => {
     const b = await chromium.launch();
-    const p = await b.newPage({ viewport: { width: 1500, height: 900 } });
-    p.on('response', async (r) => {
-        if (r.url().includes('/colony/') && r.request().method() === 'POST')
-            console.log('POST', r.url(), r.status(), (await r.text()).slice(0, 300));
+    const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
+    // Mitschreiben, was das Frontend an die API schickt (zeigt z. B. gebuendelte Anfragen).
+    p.on('request', (r) => {
+        if (r.method() === 'POST') console.log('POST', r.url().split('/api/v1')[1], r.postData() ?? '');
     });
+
     await p.goto(`${BASE}/login`);
-    await p.fill('input[name=username]', 'Bart');
-    await p.fill('input[type=password]', 'test123');
-    await p.keyboard.press('Enter');
-    await p.waitForLoadState('networkidle');
-    await p.goto(`${BASE}/lobby`);
-    await p.click('text=Mission starten');
-    await p.waitForLoadState('networkidle');
-    await p.goto(`${BASE}/colony/view`);
     await p.waitForTimeout(1500);
-    console.log('url', p.url());
-    await p.screenshot({ path: out + '1-start.png' });
-    await p.click('g[data-q="1"][data-r="0"]');
-    await p.waitForTimeout(500);
-    await p.screenshot({ path: out + '2-harvester-selected.png' });
-    const mv = p.locator('button', { hasText: 'verlegen' });
-    console.log('move buttons', await mv.count());
-    if (await mv.count()) {
-        await mv.first().click();
-        await p.waitForTimeout(500);
-        await p.screenshot({ path: out + '3-move-mode.png' });
-        const t = p.locator('g[data-q="-3"][data-r="1"]');
-        await t.click();
-        await p.waitForTimeout(400);
-        const box = await t.boundingBox();
-        await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await p.mouse.down();
-        await p.waitForTimeout(1300);
-        await p.screenshot({ path: out + '4-holding.png' });
-        await p.mouse.up();
-        await p.waitForTimeout(1500);
-        await p.screenshot({ path: out + '5-after-move.png' });
+    await p.locator('input').first().fill('Bart');
+    await p.locator('input[type=password]').fill('test123');
+    await p.keyboard.press('Enter');
+    await p.waitForTimeout(2000);
+
+    // Mission Control: eine bereitstehende Mission starten (falls noetig).
+    await p.goto(`${BASE}/lobby`);
+    await p.waitForTimeout(1500);
+    const start = p.locator('button', { hasText: 'Mission starten' });
+    if (await start.count()) {
+        await start.click();
+        await p.waitForTimeout(2500);
     }
+
+    await p.goto(`${BASE}/colony`);
+    await p.waitForTimeout(2500);
+    await p.screenshot({ path: out + '1-colony.png' });
+
+    // Hex-Feld anklicken (Bildschirmkoordinaten) und das Seitenpanel ansehen.
+    await p.mouse.click(405, 497);
+    await p.waitForTimeout(1000);
+    await p.screenshot({ path: out + '2-tile-panel.png' });
+
     await b.close();
 })();

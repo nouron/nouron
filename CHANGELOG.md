@@ -4,6 +4,7 @@
 
 - Spielerbegriff „Pfadgebäude“ → „Schwerpunkt“: Marken Forschung / Raumfahrt / Begegnungen & Handel in Baumenü, Techtree und Nexus-DB, dazu Tooltip „Eines von drei Schwerpunkten“; Sperr- und Fehlermeldungen angepasst, Glossar ergänzt.
 - T56 (Teil): Nexus-DB hat den Reiter „Gebäude“ — alle Gebäude mit Beschreibung, Voraussetzung, Kosten und Stufentabelle, unabhängig vom Baustatus.
+- R16: Beschreibungen der Uplink-Station und des Handelspostens versprechen nur noch Effekte, die es gibt (Handelsverbindungen, Abschlussübertragung Lv3, Konsul-Effizienz entfernt).
 - T48/T47 Rest: Pfadgebäude (Labor, Hangar, Cantina) sind auch im Techtree markiert (`is_path`).
 - T52 Vertrauen nachvollziehbar: Vertrauens-Popup der Ressourcenleiste zeigt die Quellen einzeln (Gebäude, Kenntnisse, Schiffe, Ereignisse, Hunger, Summe); die Sol-Übersicht nennt Ereignisse und Hunger als Grund der Änderung (`TrustService::breakdown()`).
 - T54 AP-Klicks bündeln: schnelle Mehrfachklicks auf Ausbauen/Erforschen senden eine Anfrage mit n AP statt n Anfragen (`ap`-Parameter bei Gebäude-Ausbau, Techtree rechnet auf das Machbare herunter).
