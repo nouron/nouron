@@ -125,7 +125,7 @@
                     label: '',
                     sub: '',
                     tag: '',
-                    path: false,
+                    path: '',
                     isRoot: it.band === 0,
                 };
                 IDS.push(it.key);
@@ -200,7 +200,7 @@
                 n.label = d.label;
                 n.sub = d.sub;
                 n.tag = d.tag || '';
-                n.path = !!d.path;
+                n.path = d.path || '';
                 n.status = d.status;
                 n.pulse = !!d.pulse;
             });
@@ -567,7 +567,7 @@
                 ctx.textAlign = 'left';
                 ctx.fillStyle = P.accent;
                 ctx.font = '700 10px ' + FONT;
-                ctx.fillText(labels.path || 'Path', x0 + 10, y1 - 6);
+                ctx.fillText(n.path, x0 + 10, y1 - 6);
                 ctx.textAlign = 'center';
             }
             ctx.globalAlpha = 1;

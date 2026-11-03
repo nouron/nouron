@@ -26,7 +26,7 @@ return [
     'building_col_level' => 'Stufe',
     'building_col_ap' => 'AP',
     'building_col_regolith' => 'Regolith',
-    'building_path_note' => 'Pfadgebäude',
+    'building_focus_note' => 'Eines von drei Schwerpunkten — deine Wahl prägt den Run.',
 
     'concept_supply_title' => 'Kolonisten-Kapazität',
     'concept_supply_body' => 'Die Kolonisten-Kapazität bezeichnet, wie viele Menschen deine Siedlung tragen kann — abstrahiert aus Unterkunft, Strom, Wasser und Infrastruktur. Jedes Gebäude und jede Forschung bindet pro Ausbaustufe eine feste Zahl davon; ein größeres Labor braucht mehr Leute als ein kleines. Ist die Kapazität erreicht, kann nichts Neues in Betrieb genommen werden; bestehende Einheiten bleiben aktiv. Wird sie überschritten, verfällt alles schneller. Mehr Kapazität bringen höherstufige Kommandozentralen, zusätzliche Wohnhabitate und Kenntnisse.',

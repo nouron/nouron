@@ -26,7 +26,7 @@ return [
     'building_col_level' => 'Level',
     'building_col_ap' => 'AP',
     'building_col_regolith' => 'Regolith',
-    'building_path_note' => 'Path building',
+    'building_focus_note' => 'One of three focus areas — your choice shapes the run.',
 
     'concept_supply_title' => 'Supply',
     'concept_supply_body' => 'Supply denotes the colony-wide operational capacity, abstracted from power, water, and personnel infrastructure. Each commissioned unit occupies a fixed share of that capacity. Once the capacity limit is reached, no further unit can be commissioned; existing units remain unaffected. Capacity expansion is achieved through higher-level Command Centers or additional Residential Habitats.',

@@ -71,9 +71,10 @@
 		<div class="nexusdb-accordion">
 			{#each buildings as b (b.key)}
 				<details class="nexusdb-item">
-					<summary class="nexusdb-item-title">{b.label}{#if b.is_path}<small class="nexusdb-path"> · {t('nexusdb.building_path_note')}</small>{/if}</summary>
+					<summary class="nexusdb-item-title"><span>{b.label}{#if b.is_path}<small class="nexusdb-path"> · {t('colony.focus_' + b.key)}</small>{/if}</span></summary>
 					<div class="nexusdb-item-body">
 						<p>{b.description}</p>
+						{#if b.is_path}<p class="nexusdb-focus-note">{t('nexusdb.building_focus_note')}</p>{/if}
 						<dl class="nexusdb-facts">
 							<dt>{t('nexusdb.building_requires')}</dt>
 							<dd>{requirement(b)}</dd>

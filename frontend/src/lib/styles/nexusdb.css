@@ -179,3 +179,10 @@
     padding: 0.2rem 0.5rem 0.2rem 0;
     border-bottom: 1px solid #eee;
 }
+
+.nexusdb-focus-note {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-accent, #8c2030);
+}
