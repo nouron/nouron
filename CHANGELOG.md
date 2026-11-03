@@ -2,7 +2,7 @@
 
 ## 2026-11-03
 
-- T48/T47 Rest: Pfadgebäude (Labor, Hangar, Cantina) sind auch im Techtree markiert (`is_path`); neuer Nexus-DB-Eintrag „Baukosten“ erklärt Bau + Stufe 1.
+- T48/T47 Rest: Pfadgebäude (Labor, Hangar, Cantina) sind auch im Techtree markiert (`is_path`).
 - T52 Vertrauen nachvollziehbar: Vertrauens-Popup der Ressourcenleiste zeigt die Quellen einzeln (Gebäude, Kenntnisse, Schiffe, Ereignisse, Hunger, Summe); die Sol-Übersicht nennt Ereignisse und Hunger als Grund der Änderung (`TrustService::breakdown()`).
 - T54 AP-Klicks bündeln: schnelle Mehrfachklicks auf Ausbauen/Erforschen senden eine Anfrage mit n AP statt n Anfragen (`ap`-Parameter bei Gebäude-Ausbau, Techtree rechnet auf das Machbare herunter).
 - Playtest-Feinschliff (T47–T53): Baumenü zeigt bei fehlenden Voraussetzungen nur die Voraussetzung, „KOL“ statt Langtext und kein Kostendetail mehr; Pfadgebäude markiert und oben sortiert; Uplink-Station im Techtree in Reihe 1; Sol-Limit-Balken der Kenntnisse (nur dort) schon vor dem ersten AP; „Verstanden“-Button und Sol-Übersicht ohne Höhensprung; Puls-Effekt bei Erkunden und Harvester-Umzug; Hint-Texte (32) sprachlich überarbeitet, Erkunden-, Reparatur- und Umzug-Hint sachlich korrigiert; der Verschleiß-Hint nennt das beschädigte Gebäude.

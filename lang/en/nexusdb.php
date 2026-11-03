@@ -30,9 +30,6 @@ return [
     'concept_repair_title' => 'Repair',
     'concept_repair_body' => 'Repair measures increase a building\'s status value through targeted AP and resource expenditure. Each repair operation raises the status value toward its maximum. Repairs to colony buildings (excluding Command Center and Harvester) additionally require Regolith. Without regular maintenance, status continues to decline until the building becomes inoperable.',
 
-    'concept_build_cost_title' => 'Construction costs',
-    'concept_build_cost_body' => 'Placing a building charges the whole amount at once: the erection ("Build") and the Regolith for the first upgrade level ("Level 1"). The build list shows only this total. Every further level asks for its Regolith when that upgrade starts, not when it finishes. Regolith already paid is not refunded when a construction site is cancelled or a building is scaled back. AP costs are separate and are charged per point invested.',
-
     'concept_nexus_title' => 'Nexus',
     'concept_nexus_body' => 'The Nexus is the interstellar administrative authority holding concession sovereignty over all recognised colonies. Infrastructure and ship requests are processed against Credits or Nexus credit. The Director is obligated to settle all credit liabilities within the concession period. In the event of credit limit breach or failure to meet concession objectives, the Nexus reserves the right to revoke the operating licence.',
 

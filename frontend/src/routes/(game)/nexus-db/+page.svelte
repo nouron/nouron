@@ -6,7 +6,7 @@
 	import { t } from '#lib/i18n.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 
-	const CONCEPTS = ['supply', 'trust', 'sol', 'ap', 'decay', 'repair', 'build_cost', 'nexus', 'colonists'];
+	const CONCEPTS = ['supply', 'trust', 'sol', 'ap', 'decay', 'repair', 'nexus', 'colonists'];
 	let firstVisit = $state(false);
 	onMount(() => {
 		api<{ first_visit: boolean }>('/nexus-db')

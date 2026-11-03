@@ -30,9 +30,6 @@ return [
     'concept_repair_title' => 'Reparatur',
     'concept_repair_body' => 'Reparaturmaßnahmen erhöhen den Statuswert eines Gebäudes durch gezielten AP- und Ressourceneinsatz. Jeder Reparaturvorgang erhöht den Statuswert in Richtung des Maximalwerts. Reparaturen an Koloniegebäuden (ausgenommen Kommandozentrale und Harvester) erfordern zusätzlich Regolith. Ohne regelmäßige Instandhaltung sinkt der Status weiter bis zur Betriebsunfähigkeit.',
 
-    'concept_build_cost_title' => 'Baukosten',
-    'concept_build_cost_body' => 'Beim Platzieren eines Gebäudes wird sofort der gesamte Betrag fällig: die Errichtung („Bau") und das Regolith für die erste Ausbaustufe („Stufe 1"). Die Bauliste zeigt nur diese Summe. Jede weitere Ausbaustufe verlangt ihr Regolith zu Beginn des jeweiligen Ausbaus, nicht erst bei Fertigstellung. Bereits gezahltes Regolith wird beim Abbruch einer Baustelle oder beim Rückbau nicht erstattet. AP-Kosten sind davon getrennt und fallen pro eingesetztem Punkt an.',
-
     'concept_nexus_title' => 'Nexus',
     'concept_nexus_body' => 'Der Nexus ist die interstellare Verwaltungsbehörde mit Konzessionshoheit über alle anerkannten Kolonien. Infrastruktur- und Schiffsanforderungen werden gegen Credits oder Nexus-Kredit abgewickelt. Der Direktor ist verpflichtet, alle Kreditverbindlichkeiten innerhalb der Konzessionslaufzeit zu begleichen. Bei Überschreitung des Kreditlimits oder Nichterfüllung der Konzessionsziele behält sich der Nexus den Entzug der Betriebsgenehmigung vor.',
 
