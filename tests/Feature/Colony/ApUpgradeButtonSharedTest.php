@@ -105,8 +105,9 @@ class ApUpgradeButtonSharedTest extends TestCase
         $js = $this->frontend('lib/js/ap-bar.js');
 
         // Level start (ap_spend 0): plain bar and no marker; reached-state stays independent.
-        $this->assertStringContainsString('if (!cap || spend === 0)', $js);
-        $this->assertStringContainsString('row.ap_spend === 0', $js);
+        // Knowledge opts in via cap_at_start (T49) and shows it from the start.
+        $this->assertStringContainsString('if (!cap || (spend === 0 && !row.cap_at_start))', $js);
+        $this->assertStringContainsString('row.ap_spend === 0 && !row.cap_at_start', $js);
         $this->assertMatchesRegularExpression('/apCapReached\(row\) \{\s*return !!row\?\.ap_cap && row\.ap_cap\.remaining <= 0;/', $js);
     }
 

@@ -275,9 +275,12 @@
 	const fail = (res: ActionResult) => showToast(res.message ?? res.error ?? '', 'error');
 
 	async function explore(tile: Tile) {
+		const pos = positions.get(key(tile));
 		const res = await act('/colony/tile/explore', { q: tile.q, r: tile.r });
-		if (res.ok) await apply(res);
-		else fail(res);
+		if (!res.ok) return fail(res);
+		await apply(res);
+		await tick();
+		pulseRing(pos);
 	}
 
 	async function deepScan(tile: Tile) {
@@ -350,7 +353,8 @@
 		const res = await api<{ buildings?: AvailableBuilding[] }>('/colony/buildings/available').catch(() => ({
 			buildings: []
 		}));
-		availableBuildings = res.buildings ?? [];
+		// Path buildings (Labor, Hangar, Cantina) first: the choice that shapes the run.
+		availableBuildings = [...(res.buildings ?? [])].sort((a, b) => +!!b.is_path - +!!a.is_path);
 	}
 
 	async function redrawSoon() {
@@ -485,6 +489,28 @@
 			await new Promise((r) => setTimeout(r, 400));
 		}
 		await apply(res);
+		await tick();
+		pulseRing(newPos, '#f59e0b');
+	}
+
+	// Expanding ring on a tile (explore reveal, harvester arrival); CSS .tile-pulse in colony-view.css.
+	function pulseRing(pos: { cx: number; cy: number } | undefined, color = '#c0392b') {
+		const svg = gridEl?.querySelector('svg');
+		if (!svg || !pos) return;
+		const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+		for (const [k, v] of Object.entries({
+			cx: pos.cx,
+			cy: pos.cy,
+			r: 14,
+			fill: 'none',
+			stroke: color,
+			'stroke-width': 3,
+			'pointer-events': 'none',
+			class: 'tile-pulse'
+		}))
+			ring.setAttribute(k, String(v));
+		svg.appendChild(ring);
+		setTimeout(() => ring.remove(), 700);
 	}
 
 	// Amber dot sliding old → new tile (CSS .hv-move-dot in colony-view.css).
@@ -703,6 +729,9 @@
 						{#each availableBuildings as b (b.building_id)}
 							{@const ok = canPlaceBuilding(b)}
 							{@const reasons = buildMissingReasons(b)}
+							<!-- Missing resources/colonists are already marked on the cost chips; only gates and AP get a line. -->
+							{@const shownReasons = reasons.filter((r) => r.kind === 'locked' || r.kind === 'ap')}
+							{@const gated = reasons.some((r) => r.kind === 'locked')}
 							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 							<li
 								class="building-list-item"
@@ -720,9 +749,12 @@
 										/></span
 									>
 									<span class="building-list-row-right"
-										><span class="building-list-ap">{b.ap_for_levelup} AP</span></span
+										>{#if b.is_path}<span class="building-list-path" title={t('colony.path_badge_tip')}
+												>{t('colony.path_badge')}</span
+											>{/if}<span class="building-list-ap">{b.ap_for_levelup} AP</span></span
 									>
 								</div>
+								{#if !gated}
 								<div class="building-list-row building-list-row--costs">
 									{#if (b.supply_cost ?? 0) > 0}
 										<span
@@ -744,24 +776,16 @@
 											>{b.placement_cost[3]} Rg</span
 										>
 									{/if}
-									{#if b.build_cost?.[3] && (b.first_level_regolith ?? 0) > 0}
-										<span class="building-list-cost-breakdown"
-											>({b.build_cost[3]} {t('colony.build_cost_erect')} + {b.first_level_regolith}
-											{t('colony.build_cost_first_level')})</span
-										>
-									{/if}
 									{#if b.build_cost?.[4]}
 										<span class="building-list-cost building-list-cost--compounds">{b.build_cost[4]} Wk</span>
 									{/if}
 								</div>
 								{#if b.notice}<p class="building-list-notice">{b.notice}</p>{/if}
-								{#if reasons.length}
+								{/if}
+								{#if shownReasons.length}
 									<ul class="building-list-reasons">
-										{#each reasons as r (r.kind)}
-											<li class="building-list-reason building-list-reason--missing building-list-reason--{r.kind}">
-												<i class="bi bi-x-circle-fill" aria-hidden="true"></i>
-												<span>{r.text}</span>
-											</li>
+										{#each shownReasons as r (r.kind)}
+											<li class="building-list-reason building-list-reason--{r.kind}">{r.text}</li>
 										{/each}
 									</ul>
 								{/if}

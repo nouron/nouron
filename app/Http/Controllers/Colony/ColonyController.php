@@ -400,6 +400,7 @@ class ColonyController extends BaseController
                 'max_level' => $b->max_level,
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
+                'is_path' => PathBuildingGateService::isPathBuilding((int) $b->id),
                 'supply_cost' => (int) $b->supply_cost,
                 // Colonists a finished level makes available at once (Wohnhabitat, T43-G8).
                 'colonists_gain' => (int) $b->id === BuildingId::Housing->value ? (int) config('buildings.housingComplex.supply_cap', 8) : 0,

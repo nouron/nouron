@@ -1345,17 +1345,11 @@ dialog.discovery-dialog {
 }
 
 .building-list-reason {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
     margin: 0;
-    padding: 0 0.45rem;
+    padding: 0;
     font-size: 0.72rem;
-    font-weight: 600;
-    color: #a32020;
-    background: #fdecec;
-    border: 1px solid #e8a8a8;
-    border-radius: 10px;
+    font-weight: 500;
+    color: var(--color-text-secondary, #777);
 }
 
 /* Svelte only: the legend chevron PicoCSS drew on <summary> in Blade. */
@@ -1371,4 +1365,40 @@ dialog.discovery-dialog {
 }
 .hex-legend[open] > summary::after {
     transform: rotate(90deg);
+}
+
+/* Path building marker (Labor, Hangar, Cantina) in the build list. */
+.building-list-path {
+    margin-right: 0.4rem;
+    padding: 0 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-accent, #8c2030);
+    border: 1px solid var(--color-accent, #8c2030);
+    border-radius: 10px;
+}
+
+/* Ring pulse on a tile: explore reveal / harvester arrival. */
+@keyframes tile-pulse {
+    from {
+        r: 12px;
+        opacity: 0.9;
+    }
+    to {
+        r: 46px;
+        opacity: 0;
+    }
+}
+
+.tile-pulse {
+    animation: tile-pulse 650ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tile-pulse {
+        animation: none;
+        opacity: 0;
+    }
 }

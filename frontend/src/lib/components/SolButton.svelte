@@ -202,8 +202,8 @@
 				</header>
 				<div class="sol-report__groups">
 					{#each r.groups as group, gi (group.key)}
-						{#if gi <= visibleGroup}
-							<article class="sol-report__group">
+						<!-- Always rendered (so the card does not grow group by group); revealed by fading in. -->
+							<article class="sol-report__group" class:sol-report__group--pending={gi > visibleGroup}>
 								<h3 class="sol-report__group-title">
 									<i class="bi bi-{group.icon}"></i>
 									<span>{group.title}</span>
@@ -229,21 +229,21 @@
 									{/each}
 								</ul>
 							</article>
-						{/if}
 					{/each}
 				</div>
 				<footer class="sol-report__footer">
-					{#if finished}
-						<button
+					<!-- Always laid out (hidden until finished) so the card does not grow at the end. -->
+					<button
 							type="button"
 							class="sol-btn sol-btn--primary sol-report__continue"
+							class:sol-report__continue--pending={!finished}
+							tabindex={finished ? 0 : -1}
 							onclick={(e) => {
 								e.stopPropagation();
 								clearTimers();
 								screen = r.phase_transition ? 'success' : 2;
 							}}>{t('colony.sol_report_next_screen')}</button
 						>
-					{/if}
 				</footer>
 			</div>
 		{:else if screen === 'success' && r.phase_transition}

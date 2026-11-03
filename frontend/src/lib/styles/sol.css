@@ -511,3 +511,25 @@
     }
 }
 
+
+/* Groups are laid out from the start and fade in one by one: no jumping card height. */
+.sol-report__group {
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
+}
+
+.sol-report__group--pending {
+    opacity: 0;
+    transform: translateY(6px);
+    visibility: hidden;
+}
+
+.sol-report__continue {
+    transition: opacity 0.3s ease;
+}
+
+.sol-report__continue--pending {
+    opacity: 0;
+    visibility: hidden;
+}

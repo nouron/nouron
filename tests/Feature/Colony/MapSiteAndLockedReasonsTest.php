@@ -36,7 +36,9 @@ class MapSiteAndLockedReasonsTest extends TestCase
         $page = $this->colonyPage();
 
         $this->assertStringContainsString('buildMissingReasons(b)', $page);
-        $this->assertStringContainsString('building-list-reason--missing', $page);
+        // Only gates (locked) and AP get a line; missing resources/colonists are marked on the cost chips (T47).
+        $this->assertStringContainsString('shownReasons', $page);
+        $this->assertStringNotContainsString('building-list-reason--missing', $page);
         $this->assertStringContainsString('building-list-reasons', $page);
     }
 
