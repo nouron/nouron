@@ -26,11 +26,13 @@ return [
     'result_fail_trust' => 'The colonists have lost faith in their leadership. Trust has fallen too far.',
     'result_fail_time' => 'The concession period has lapsed without the objective being reached.',
     'result_fail_phase1_deadline' => 'The foundation phase was not completed in time. The Nexus pulled the plug.',
+    'result_fail_nexus_debt' => 'The debt limit was exceeded. Nexus revoked the concession.',
+    'result_fail_abandoned' => 'The mission was abandoned.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Reached in Sol :current of :limit',
     'result_objective_fulfilled' => 'Fulfilled',
     'result_objective_open' => 'Not fulfilled',
-    'result_btn_new_run' => 'Start new mission',
+    'result_btn_new_run' => 'Back to Mission Control',
     'new_run_preparing' => 'New run being prepared — feature coming in Phase 4.',
 
     // New-run flow (Feature 2)

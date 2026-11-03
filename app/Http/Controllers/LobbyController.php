@@ -117,6 +117,7 @@ class LobbyController extends Controller
 
         $run->update([
             'status' => 'failed',
+            'fail_reason' => 'abandoned',
             'ended_at' => now(),
         ]);
 
