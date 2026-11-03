@@ -12,6 +12,7 @@
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
 	import { refreshShell, setAp, setHint, shell, type Shell } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
+	import { clickBatcher } from '#lib/js/clickBatch.ts';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import EntityChip from '#lib/components/EntityChip.svelte';
 	import TileTerrain from './TileTerrain.svelte';
@@ -314,9 +315,22 @@
 		else fail(res);
 	}
 
-	async function investAp(b: Building) {
-		if (busy) return; // ignore clicks while the previous invest is still on its way
-		const res = await act('/colony/building/invest', { building_id: b.building_id, instance_id: b.instance_id ?? 1 });
+	// Quick repeated clicks go out as one request with the AP count (clickBatcher).
+	const investBatchers = new Map<string, () => void>();
+	const latestBuilding = new Map<string, Building>();
+	function investAp(b: Building) {
+		const key = `${b.building_id}:${b.instance_id ?? 1}`;
+		latestBuilding.set(key, b);
+		let click = investBatchers.get(key);
+		if (!click) {
+			click = clickBatcher((n) => sendInvest(latestBuilding.get(key)!, n));
+			investBatchers.set(key, click);
+		}
+		click();
+	}
+
+	async function sendInvest(b: Building, ap: number) {
+		const res = await act('/colony/building/invest', { building_id: b.building_id, instance_id: b.instance_id ?? 1, ap });
 		if (!res.ok) {
 			if (res.error === 'building_ap_cap' && b.ap_cap) {
 				// Server says today's allowance is gone: lock the bar without a reload.

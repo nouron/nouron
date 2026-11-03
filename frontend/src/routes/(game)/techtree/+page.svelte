@@ -11,6 +11,7 @@
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import { t } from '#lib/i18n.ts';
+	import { clickBatcher } from '#lib/js/clickBatch.ts';
 
 	type TechType = 'building' | 'research' | 'ship' | 'personell';
 	type EffectLine = { text?: string; chip?: { cls: string; abbr: string; value: string | number } };
@@ -212,18 +213,27 @@
 		toastTimer = setTimeout(() => (toast = null), 3500);
 	}
 
-	// Invest 1 AP; the server levels up by itself once the threshold is reached and
+	// Invest AP; the server levels up by itself once the threshold is reached and
 	// re-derives every node's gate status (phases_update), so the whole graph stays current.
-	// Ignores clicks while the previous invest is still on its way.
-	let investing = false;
-	async function investAp(tech: Tech) {
-		if (investing) return;
-		investing = true;
+	// Quick repeated clicks go out as one request with the AP count (clickBatcher).
+	const investBatchers = new Map<number, () => void>();
+	const latestTech = new Map<number, Tech>();
+	function investAp(tech: Tech) {
+		latestTech.set(tech.id, tech);
+		let click = investBatchers.get(tech.id);
+		if (!click) {
+			click = clickBatcher((n) => sendInvest(latestTech.get(tech.id)!, n));
+			investBatchers.set(tech.id, click);
+		}
+		click();
+	}
+
+	async function sendInvest(tech: Tech, ap: number) {
 		const json = await api<OrderResponse>(`/techtree/research/${tech.id}/order`, {
 			method: 'POST',
-			body: { order: 'add', ap: 1 },
+			body: { order: 'add', ap },
 			allowError: true
-		}).finally(() => (investing = false));
+		});
 		if (!json.success) return showToast(json.message ?? t('techtree.toast_invest_failed'));
 
 		if (json.tech) Object.assign(tech, json.tech);

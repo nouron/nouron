@@ -69,12 +69,13 @@ class BuildingInvestTest extends TestCase
             ->first();
     }
 
-    private function invest(int $buildingId = self::CC_ID)
+    private function invest(int $buildingId = self::CC_ID, ?int $ap = null)
     {
         return $this->actingAs($this->makeUser(self::BART_USER_ID))
-            ->postJson(route('colony.building.invest'), [
+            ->postJson(route('colony.building.invest'), array_filter([
                 'building_id' => $buildingId,
-            ]);
+                'ap' => $ap,
+            ]));
     }
 
     public function test_invest_increments_ap_progress_without_levelup(): void
@@ -87,6 +88,44 @@ class BuildingInvestTest extends TestCase
         $response->assertJsonPath('leveled_up', false);
         $this->assertSame(1, (int) $this->ccRow()->ap_spend);
         $this->assertSame(1, (int) $this->ccRow()->level);
+    }
+
+    public function test_invest_with_ap_param_spends_several_ap_in_one_request(): void
+    {
+        $this->setCcState(['level' => 1, 'ap_spend' => 0]);
+
+        $response = $this->invest(self::CC_ID, 3);
+
+        $response->assertOk()->assertJsonPath('ok', true)->assertJsonPath('applied', 3);
+        $this->assertSame(3, (int) $this->ccRow()->ap_spend);
+    }
+
+    public function test_invest_batch_stops_at_levelup_without_overshoot(): void
+    {
+        $this->setCcState(['level' => 1, 'ap_spend' => self::CC_AP_FOR_LEVELUP - 2]);
+
+        $response = $this->invest(self::CC_ID, 5);
+
+        $response->assertOk()->assertJsonPath('leveled_up', true)->assertJsonPath('applied', 2);
+        $row = $this->ccRow();
+        $this->assertSame(2, (int) $row->level);
+        $this->assertSame(0, (int) $row->ap_spend, 'the 3 surplus AP must not start the next cycle');
+    }
+
+    public function test_invest_batch_returns_partial_success_when_a_gate_closes(): void
+    {
+        $this->setCcState(['level' => 1, 'ap_spend' => 0]);
+
+        // Far more than one Sol allows (per-building AP cap / available AP): the batch applies what
+        // fits, stops at the first rejected step and still answers ok.
+        $response = $this->invest(self::CC_ID, 20);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+        $applied = (int) $response->json('applied');
+        $this->assertGreaterThanOrEqual(1, $applied);
+        $this->assertLessThan(20, $applied);
+        $this->assertNotNull($response->json('stopped_by'));
+        $this->assertSame($applied, (int) $this->ccRow()->ap_spend);
     }
 
     public function test_invest_levels_up_at_threshold(): void
