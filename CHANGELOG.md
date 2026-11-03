@@ -2,6 +2,7 @@
 
 ## 2026-11-03
 
+- T54 AP-Klicks bündeln: schnelle Mehrfachklicks auf Ausbauen/Erforschen senden eine Anfrage mit n AP statt n Anfragen (`ap`-Parameter bei Gebäude-Ausbau, Techtree rechnet auf das Machbare herunter).
 - T46 Mission Control: Abbruch setzt `fail_reason = abandoned` (Ergebnisseite zeigte fälschlich „Laufzeit verstrichen", `nexus_debt` fehlte ebenfalls); Ergebnis-Button führt zurück zur Mission Control; eigener Bestätigungsdialog statt Browser-`confirm`; Diagonale der Run-Karten gezeichnet.
 
 ## 2026-11-02

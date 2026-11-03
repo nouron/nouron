@@ -719,7 +719,41 @@ class ColonyController extends BaseController
         return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)]);
     }
 
+    /**
+     * Invests `ap` (default 1) construction AP in one request, so quick repeated clicks arrive as a
+     * single call. Every step runs through the single-AP path, so all gates and side effects apply
+     * per AP; the batch stops at a level-up or at the first rejected step. A rejection after at
+     * least one applied AP still answers ok, with `applied` and `stopped_by`.
+     */
     public function investBuilding(Request $request): JsonResponse
+    {
+        $request->validate(['ap' => 'sometimes|integer|min:1|max:20']);
+        $want = (int) $request->input('ap', 1);
+
+        $payload = null;
+        $applied = 0;
+        $stoppedBy = null;
+        for ($i = 0; $i < $want; $i++) {
+            $res = $this->investBuildingOnce($request);
+            $step = $res->getData(true);
+            if (! ($step['ok'] ?? false)) {
+                if ($applied === 0) {
+                    return $res;
+                }
+                $stoppedBy = $step['error'] ?? null;
+                break;
+            }
+            $payload = $step;
+            $applied++;
+            if ($step['leveled_up'] ?? false) {
+                break;
+            }
+        }
+
+        return response()->json($payload + ['applied' => $applied, 'stopped_by' => $stoppedBy]);
+    }
+
+    private function investBuildingOnce(Request $request): JsonResponse
     {
         $data = $request->validate([
             'building_id' => 'required|integer',

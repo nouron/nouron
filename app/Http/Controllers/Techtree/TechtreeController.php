@@ -408,6 +408,14 @@ class TechtreeController extends BaseController
 
         $service = $this->researchService;
 
+        // The UI batches quick clicks into one request (ap = click count). Invest what fits (AP pool,
+        // Sol cap) instead of refusing the whole batch; a single AP keeps its own blocker message.
+        if ($order === 'add') {
+            while ($ap > 1 && $service->investBlocker($colonyId, $id, $order, $ap) !== null) {
+                $ap--;
+            }
+        }
+
         $result = match ($order) {
             'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
             'levelup' => $service->levelup($colonyId, $id),

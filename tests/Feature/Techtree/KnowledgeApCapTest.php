@@ -56,6 +56,16 @@ class KnowledgeApCapTest extends TestCase
         $this->assertSame(3, $this->apSpend($this->knowledgeId));
     }
 
+    public function test_order_batch_invests_what_fits_instead_of_refusing_all(): void
+    {
+        // Three quick clicks (ap=5 asked, cap 3): the batch must apply the 3 that fit.
+        $this->actingAs(User::where('user_id', 3)->firstOrFail())
+            ->postJson("/api/v1/techtree/research/{$this->knowledgeId}/order", ['order' => 'add', 'ap' => 5])
+            ->assertOk()->assertJsonPath('success', true);
+
+        $this->assertSame(3, $this->apSpend($this->knowledgeId));
+    }
+
     public function test_cap_is_per_knowledge(): void
     {
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 3);
