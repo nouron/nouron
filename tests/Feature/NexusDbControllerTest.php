@@ -112,4 +112,30 @@ class NexusDbControllerTest extends TestCase
         $this->assertTrue($hangar['is_path']);
         $this->assertSame([], $b['building_harvester']['placement_cost']);
     }
+
+    public function test_catalog_lists_knowledge_ships_and_advisors_with_costs_and_requirements(): void
+    {
+        $json = $this->actingAs($this->bart())->getJson(route('nexusdb.index'))->assertOk()->json();
+
+        $knowledge = collect($json['knowledge'])->keyBy('key');
+        $this->assertCount(7, $knowledge);
+        $geology = $knowledge['knowledge_geology'];
+        $this->assertSame(__('techtree.knowledge_geology'), $geology['label']);
+        $this->assertNotSame('', $geology['description']);
+        $this->assertSame(
+            [['label' => __('techtree.building_sciencelab'), 'level' => 2], ['label' => __('techtree.building_harvester'), 'level' => 1]],
+            $geology['requires']
+        );
+        $this->assertSame(config('knowledge.geology.levelup_costs'), collect($geology['levels'])->pluck('ap', 'level')->all());
+
+        $ships = collect($json['ships'])->keyBy('key');
+        $this->assertCount(3, $ships);
+        $this->assertSame(config('ships.corvette.nexus_cost'), $ships['ship_corvette']['nexus_cost']);
+        $this->assertSame([['label' => __('techtree.building_hangar'), 'level' => 3]], $ships['ship_corvette']['requires']);
+
+        $advisors = collect($json['advisors'])->keyBy('key');
+        $this->assertCount(5, $advisors);
+        $this->assertSame(config('advisors.pilot.credits'), $advisors['techs_pilot']['hire_cost']);
+        $this->assertSame(__('advisors.pilot'), $advisors['techs_pilot']['label']);
+    }
 }

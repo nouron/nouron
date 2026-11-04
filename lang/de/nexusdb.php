@@ -14,6 +14,13 @@ return [
     // Concept cards
     'tab_concepts' => 'Konzepte',
     'tab_buildings' => 'Gebäude',
+    'tab_knowledge' => 'Kenntnisse',
+    'tab_ships' => 'Schiffe',
+    'tab_advisors' => 'Berater',
+    'asset_hire_cost' => 'Einstellungskosten',
+    'asset_nexus_cost' => 'Nexus-Preis',
+    'asset_delivery' => 'Lieferzeit',
+    'asset_delivery_value' => ':count Sol',
     'building_requires' => 'Voraussetzung',
     'building_requires_none' => 'keine',
     'building_requires_cc' => 'Kommandozentrale Lv:level',
