@@ -25,6 +25,9 @@ class NexusDbController extends Controller
         return response()->json([
             'first_visit' => $userId ? $this->onboardingHintService->checkFirstVisit('nexusdb', $userId) : false,
             'buildings' => $this->buildingCatalog(),
+            'knowledge' => $this->knowledgeCatalog(),
+            'ships' => $this->shipCatalog(),
+            'advisors' => $this->advisorCatalog(),
         ]);
     }
 
@@ -74,5 +77,87 @@ class NexusDbController extends Controller
                 'is_path' => PathBuildingGateService::isPathBuilding($id),
             ];
         })->values()->all();
+    }
+
+    /** @return array<int, string> building id => name */
+    private function buildingNames(): array
+    {
+        return DB::table('buildings')->pluck('name', 'id')->all();
+    }
+
+    /**
+     * Building requirements of a reference row (primary plus optional second one) as label/level pairs.
+     *
+     * @return list<array{label: string, level: int}>
+     */
+    private function requirements(object $row): array
+    {
+        $names = $this->buildingNames();
+        $out = [];
+        foreach ([['required_building_id', 'required_building_level'], ['required_building2_id', 'required_building2_level']] as [$idCol, $lvlCol]) {
+            $id = $row->{$idCol} ?? null;
+            if ($id !== null && isset($names[$id])) {
+                $out[] = ['label' => __('techtree.'.$names[$id]), 'level' => (int) ($row->{$lvlCol} ?? 1)];
+            }
+        }
+
+        return $out;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function knowledgeCatalog(): array
+    {
+        return DB::table('researches')->where('is_active', 1)->orderBy('phase')->orderBy('row')->orderBy('column')->get()
+            ->map(function ($r) {
+                $k = preg_replace('/^knowledge_/', '', $r->name);
+                $levels = [];
+                foreach ((array) config("knowledge.{$k}.levelup_costs", []) as $level => $ap) {
+                    $levels[] = ['level' => (int) $level, 'ap' => (int) $ap];
+                }
+
+                return [
+                    'key' => $r->name,
+                    'label' => __('techtree.'.$r->name),
+                    'description' => __('knowledge.'.$k.'_desc'),
+                    'requires' => $this->requirements($r),
+                    'max_level' => count($levels),
+                    'levels' => $levels,
+                ];
+            })->values()->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function shipCatalog(): array
+    {
+        return DB::table('ships')->where('is_active', 1)->orderBy('phase')->orderBy('row')->orderBy('column')->get()
+            ->map(function ($r) {
+                $k = preg_replace('/^ship_/', '', $r->name);
+
+                return [
+                    'key' => $r->name,
+                    'label' => __('ships.'.$k),
+                    'description' => __('ships.'.$k.'_desc'),
+                    'requires' => $this->requirements($r),
+                    'nexus_cost' => (int) config("ships.{$k}.nexus_cost"),
+                    'delivery_sols' => (int) config("ships.{$k}.nexus_delivery_ticks"),
+                ];
+            })->values()->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function advisorCatalog(): array
+    {
+        return DB::table('personell')->where('is_active', 1)->orderBy('phase')->orderBy('row')->orderBy('column')->get()
+            ->map(function ($r) {
+                $k = preg_replace('/^techs_/', '', $r->name);
+
+                return [
+                    'key' => $r->name,
+                    'label' => __('advisors.'.$k),
+                    'description' => __('advisors.'.$k.'_desc'),
+                    'requires' => $this->requirements($r),
+                    'hire_cost' => (int) config("advisors.{$k}.credits"),
+                ];
+            })->values()->all();
     }
 }

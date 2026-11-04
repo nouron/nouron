@@ -114,6 +114,7 @@
 /* Tabs: Konzepte / Gebäude */
 .nexusdb-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin: 0 0 1rem;
 }
