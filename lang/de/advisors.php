@@ -4,23 +4,23 @@ return [
 
     'engineer' => 'Baumeister',
     'engineer_plural' => 'Baumeister',
-    'engineer_desc' => 'Er kennt jeden Bolzen in dieser Anlage. Ohne Baumeister steht der Ausbau still — mit ihm kommen Gebäude hoch und bleiben in Schuss.',
+    'engineer_desc' => 'Er kennt jeden Bolzen dieser Anlage. Ohne Baumeister steht der Ausbau still; mit ihm kommen Gebäude hoch und bleiben in Schuss.',
 
     'scientist' => 'Analytiker',
     'scientist_plural' => 'Analytiker',
-    'scientist_desc' => 'Sie denkt in Modellen, Messwerten und Fragen, die noch niemand gestellt hat. Der Analytiker treibt das Forschungslabor voran — ohne sie bleiben die Kenntnisse auf dem Stand von gestern.',
+    'scientist_desc' => 'Sie denkt in Modellen, Messwerten und Fragen, die noch niemand gestellt hat. Ohne Analytiker bleiben die Kenntnisse auf dem Stand von gestern.',
 
     'pilot' => 'Raumfahrer',
     'pilot_plural' => 'Raumfahrer',
-    'pilot_desc' => 'Er kennt das System besser als die meisten die Karte kennen. Ohne Raumfahrer bleibt die Erkundung auf ein paar Felder beschränkt — mit ihm reicht der Blick über die Koloniezone hinaus.',
+    'pilot_desc' => 'Er kennt das System besser, als andere ihre Karte kennen. Ohne Raumfahrer bleibt die Erkundung auf ein paar Felder beschränkt; mit ihm reicht der Blick weit über die Koloniezone hinaus.',
 
     'trader' => 'Konsul',
     'trader_plural' => 'Konsuln',
-    'trader_desc' => 'Sie verhandelt, als käme der nächste Frachter nie wieder. Der Konsul öffnet Handelskanäle und spart Credits, wo andere Credits ausgeben.',
+    'trader_desc' => 'Sie verhandelt, als käme der nächste Frachter nie wieder. Der Konsul öffnet Handelskanäle und spart Credits, wo andere welche ausgeben.',
 
     'strategist' => 'Stratege',
     'strategist_plural' => 'Strategen',
-    'strategist_desc' => 'Ruhig, präzise, selten zu hören — bis etwas schiefläuft. Der Stratege koordiniert Schutzmaßnahmen und hält Zwischenfälle klein, bevor sie eskalieren.',
+    'strategist_desc' => 'Ruhig, präzise, selten zu hören — bis etwas schiefläuft. Der Stratege koordiniert den Schutz und hält Zwischenfälle klein.',
 
     // AP label (unified pool — no AP types since 2026-08-02)
     'ap_label' => 'Aktionspunkte',
