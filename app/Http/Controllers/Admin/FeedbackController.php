@@ -43,17 +43,23 @@ class FeedbackController extends Controller
             'bypass' => config('game.bypass'),
             'env' => app()->environment(),
             'config' => [
-                'Tick' => ['length' => config('game.tick.length').'h'],
-                'Supply' => [
-                    'cap_max' => config('game.supply.cap_max'),
-                    'cc_flat' => config('buildings.commandCenter.supply_cap'),
-                    'per_housing' => config('buildings.housingComplex.supply_cap'),
+                // Sols are ended by hand (SolController::next); no real-time tick length applies.
+                'Sol' => [
+                    'Sol-Limit' => config('game.run.tick_limit'),
+                    'AP-Basis' => config('game.ap.base'),
+                    'AP-Deckel Gebäude' => config('game.build.ap_cap_per_sol.base'),
+                    'AP-Deckel Kenntnis' => config('game.knowledge_ap_cap_per_sol.base'),
+                ],
+                'Kolonisten' => [
+                    'Maximum' => config('game.supply.cap_max'),
+                    'Kommandozentrale' => config('buildings.commandCenter.supply_cap'),
+                    'je Wohnhabitat' => config('buildings.housingComplex.supply_cap'),
                 ],
                 'Credits' => [
                     'nexus_subsidy' => config('game.credits.nexus_subsidy').' Cr',
                     'relay_bonus_per_uplink_level' => config('game.credits.relay_bonus_per_uplink_level').' Cr',
                 ],
-                'Trust Events' => config('game.trust.events'),
+                'Vertrauen' => config('game.trust.events'),
             ],
         ]);
     }
