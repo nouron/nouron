@@ -753,6 +753,7 @@
 								class:building-list-item--disabled={!ok}
 								onclick={() => ok && selectPendingBuilding(b)}
 							>
+								{#if b.is_path}<span class="building-list-focus" title={t('colony.focus_tip')}>{t('colony.focus_' + b.key)}</span>{/if}
 								<div class="building-list-row">
 									<span class="building-list-name"
 										><EntityChip
@@ -763,9 +764,7 @@
 										/></span
 									>
 									<span class="building-list-row-right"
-										>{#if b.is_path}<span class="building-list-path" title={t('colony.focus_tip')}
-												>{t('colony.focus_' + b.key)}</span
-											>{/if}<span class="building-list-ap">{b.ap_for_levelup} AP</span></span
+										><span class="building-list-ap">{b.ap_for_levelup} AP</span></span
 									>
 								</div>
 								{#if !gated}

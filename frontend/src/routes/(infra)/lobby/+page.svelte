@@ -45,10 +45,11 @@
 	let names = $state<Record<number, string>>({});
 	let busy = $state(false);
 
-	async function load() {
+	// jump: only right after abandoning a run — then its result is shown. A plain visit (or the result
+	// page's "back to Mission Control") must stay on the lobby, otherwise it can never be reached.
+	async function load(jump = false) {
 		const r = await api<Data>('/lobby');
-		// Like Blade: the latest run just ended and nothing is active → straight to its result.
-		if (r.resultRunId) return goto(`/run/${r.resultRunId}`, { replaceState: true });
+		if (jump && r.resultRunId) return goto(`/run/${r.resultRunId}`, { replaceState: true });
 		d = r;
 		names = Object.fromEntries(r.pending.map((p) => [p.id, p.colony_name]));
 	}
@@ -87,19 +88,11 @@
 		const res = await send(`/lobby/${id}/abandon`);
 		alert = { type: res.ok ? 'success' : 'error', text: res.message ?? '' };
 		await refreshShell();
-		await load();
+		await load(true);
 	}
 
-	function newRun() {
-		pending = {
-			title: t('lobby.new_run_button'),
-			message: t('lobby.new_run_confirm'),
-			label: t('lobby.new_run_button'),
-			run: doNewRun
-		};
-	}
-
-	async function doNewRun() {
+	// No confirmation: the button only exists while no run is active or pending, so nothing is lost.
+	async function newRun() {
 		const res = await send('/run/new');
 		alert = { type: res.ok ? 'success' : 'error', text: res.message ?? '' };
 		await load();
@@ -187,39 +180,10 @@
 			</div>
 		{/if}
 
-		<!-- Shown when the game allows multiple runs and none is pending or active. -->
-		{#if d.allowMultiple && !d.pending.length && !d.active.length}
+		<!-- Whenever no run is pending or active: the way to start the next mission (the result page links here). -->
+		{#if !d.pending.length && !d.active.length}
 			<div class="lobby-new-run-row">
 				<button class="primary" disabled={busy} onclick={newRun}>{t('lobby.new_run_button')}</button>
-			</div>
-		{/if}
-
-		{#if d.finished.length}
-			<h2 class="lobby-section-heading">{t('lobby.finished_runs')}</h2>
-			<div class="lobby-run-grid">
-				{#each d.finished as run (run.id)}
-					{@const bypass = activeBypass(run)}
-					<article class="lobby-run-card">
-						<header>
-							<h3>{t('lobby.run_number', { id: run.id })} &mdash; {run.colony_name}</h3>
-							<span class="lobby-status-pill lobby-status-pill--{pill(run.status)}">{statusLabel(run.status)}</span>
-						</header>
-						<p class="lobby-sol-progress">{t('lobby.sol_progress', { current: run.current_tick, limit: run.tick_limit })}</p>
-						<p class="lobby-sol-progress">
-							{t('lobby.played_from_to', { from: run.started_at ?? '—', to: run.ended_at ?? '—' })}
-						</p>
-						<details>
-							<summary>{t('lobby.settings_detail')}</summary>
-							<ul class="lobby-details-meta">
-								<li>{t('lobby.tick_limit')}: <strong>{run.tick_limit}</strong></li>
-								{#if run.supply_cap !== null}<li>{t('lobby.supply_cap')}: <strong>{run.supply_cap}</strong></li>{/if}
-								{#each bypass as [key] (key)}
-									<li><span class="lobby-bypass-badge">{t('lobby.bypass_active')}: {key}</span></li>
-								{/each}
-							</ul>
-						</details>
-					</article>
-				{/each}
 			</div>
 		{/if}
 

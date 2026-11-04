@@ -13,18 +13,15 @@ return [
     'page_subtitle' => 'Übersicht deiner laufenden und abgeschlossenen Missionen.',
     'active_runs' => 'Aktive Missionen',
     'pending_runs' => 'Bereit zum Start',
-    'finished_runs' => 'Abgeschlossene Missionen',
     'continue_button' => 'Mission fortsetzen',
     'new_run_button' => 'Neue Mission starten',
     'coming_soon' => 'Noch nicht verfügbar',
     'no_runs' => 'Keine Missionen vorhanden.',
     'sol_progress' => 'Sol :current / :limit',
     'started_at' => 'Gestartet',
-    'played_from_to' => 'Gespielt von :from bis :to',
     'status_completed' => 'Abgeschlossen',
     'status_failed' => 'Gescheitert',
     'bypass_warning' => 'Bypass aktiv',
-    'settings_detail' => 'Missionsdetails',
     'tick_limit' => 'Sol-Limit',
     'supply_cap' => 'Kolonisten-Kapazität',
     'bypass_active' => 'Bypass',
@@ -45,7 +42,6 @@ return [
     'highscore_ended' => 'Beendet: :date',
 
     // New run button (Feature 2)
-    'new_run_confirm' => 'Neuen Run starten — Kolonie wird zurückgesetzt. Fortfahren?',
 
     // Abandon run
     'abandon_button' => 'Mission abbrechen',

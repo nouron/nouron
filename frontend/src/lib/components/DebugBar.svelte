@@ -14,7 +14,7 @@
 	const FLAGS: [string, string][] = [
 		['ap_checks', 'AP'],
 		['resource_costs', 'Res'],
-		['supply_checks', 'Sup']
+		['supply_checks', 'KOL']
 	];
 
 	let d = $state<Debug | null>(null);
@@ -58,8 +58,8 @@
 						{#each Object.entries(values) as [k, v] (k)}
 							<div>
 								<span class="mut">{k}:</span>
-								<span class={typeof v === 'number' && group === 'Trust Events' ? (v >= 0 ? 'ok' : 'bad') : ''}
-									>{typeof v === 'number' && v > 0 && group === 'Trust Events' ? '+' : ''}{v}</span
+								<span class={typeof v === 'number' && group === 'Vertrauen' ? (v >= 0 ? 'ok' : 'bad') : ''}
+									>{typeof v === 'number' && v > 0 && group === 'Vertrauen' ? '+' : ''}{v}</span
 								>
 							</div>
 						{/each}

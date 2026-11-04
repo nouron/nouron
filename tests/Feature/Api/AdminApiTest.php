@@ -70,6 +70,7 @@ class AdminApiTest extends TestCase
                 'bypass' => config('game.bypass'),
                 'env' => app()->environment(),
             ])
-            ->assertJsonStructure(['config' => ['Tick', 'Supply', 'Credits', 'Trust Events']]);
+            ->assertJsonStructure(['config' => ['Sol', 'Kolonisten', 'Credits', 'Vertrauen']])
+            ->assertJsonMissingPath('config.Tick');
     }
 }
