@@ -14,6 +14,13 @@ return [
     // Concept cards
     'tab_concepts' => 'Concepts',
     'tab_buildings' => 'Buildings',
+    'tab_knowledge' => 'Knowledge',
+    'tab_ships' => 'Ships',
+    'tab_advisors' => 'Advisors',
+    'asset_hire_cost' => 'Hiring cost',
+    'asset_nexus_cost' => 'Nexus price',
+    'asset_delivery' => 'Delivery time',
+    'asset_delivery_value' => ':count Sol',
     'building_requires' => 'Requirement',
     'building_requires_none' => 'none',
     'building_requires_cc' => 'Command Center Lv:level',

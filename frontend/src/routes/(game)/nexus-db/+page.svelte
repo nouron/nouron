@@ -18,17 +18,36 @@
 		levels: { level: number; ap: number; regolith: number }[];
 		is_path: boolean;
 	};
+	type Req = { label: string; level: number };
+	type AssetEntry = {
+		key: string;
+		label: string;
+		description: string;
+		requires: Req[];
+		max_level?: number;
+		levels?: { level: number; ap: number }[];
+		nexus_cost?: number;
+		delivery_sols?: number;
+		hire_cost?: number;
+	};
+	type Tab = 'concepts' | 'buildings' | 'knowledge' | 'ships' | 'advisors';
+	const TABS: Tab[] = ['concepts', 'buildings', 'knowledge', 'ships', 'advisors'];
 	let firstVisit = $state(false);
 	let buildings = $state<BuildingEntry[]>([]);
-	let tab = $state<'concepts' | 'buildings'>('concepts');
+	let assets = $state<Record<'knowledge' | 'ships' | 'advisors', AssetEntry[]>>({ knowledge: [], ships: [], advisors: [] });
+	let tab = $state<Tab>('concepts');
 	onMount(() => {
-		api<{ first_visit: boolean; buildings: BuildingEntry[] }>('/nexus-db')
+		api<{ first_visit: boolean; buildings: BuildingEntry[]; knowledge: AssetEntry[]; ships: AssetEntry[]; advisors: AssetEntry[] }>('/nexus-db')
 			.then((d) => {
 				firstVisit = d.first_visit;
 				buildings = d.buildings ?? [];
+				assets = { knowledge: d.knowledge ?? [], ships: d.ships ?? [], advisors: d.advisors ?? [] };
 			})
 			.catch(() => {});
 	});
+
+	const reqText = (rs: Req[]) =>
+		rs.map((r) => t('nexusdb.building_requires_building', { name: r.label, level: r.level })).join(', ') || t('nexusdb.building_requires_none');
 
 	const requirement = (b: BuildingEntry) =>
 		[
@@ -51,12 +70,9 @@
 <div class="nexusdb-page">
 	<p class="nexusdb-intro">{t('nexusdb.page_subtitle')}</p>
 	<div class="nexusdb-tabs" role="tablist">
-		<button role="tab" aria-selected={tab === 'concepts'} class:active={tab === 'concepts'} onclick={() => (tab = 'concepts')}
-			>{t('nexusdb.tab_concepts')}</button
-		>
-		<button role="tab" aria-selected={tab === 'buildings'} class:active={tab === 'buildings'} onclick={() => (tab = 'buildings')}
-			>{t('nexusdb.tab_buildings')}</button
-		>
+		{#each TABS as k (k)}
+			<button role="tab" aria-selected={tab === k} class:active={tab === k} onclick={() => (tab = k)}>{t(`nexusdb.tab_${k}`)}</button>
+		{/each}
 	</div>
 	{#if tab === 'concepts'}
 		<div class="nexusdb-accordion">
@@ -67,7 +83,7 @@
 				</details>
 			{/each}
 		</div>
-	{:else}
+	{:else if tab === 'buildings'}
 		<div class="nexusdb-accordion">
 			{#each buildings as b (b.key)}
 				<details class="nexusdb-item">
@@ -98,6 +114,48 @@
 								{/each}
 							</tbody>
 						</table>
+					</div>
+				</details>
+			{/each}
+		</div>
+	{:else}
+		<div class="nexusdb-accordion">
+			{#each assets[tab] as a (a.key)}
+				<details class="nexusdb-item">
+					<summary class="nexusdb-item-title"><span>{a.label}</span></summary>
+					<div class="nexusdb-item-body">
+						<p>{a.description}</p>
+						<dl class="nexusdb-facts">
+							<dt>{t('nexusdb.building_requires')}</dt>
+							<dd>{reqText(a.requires)}</dd>
+							{#if a.hire_cost !== undefined}
+								<dt>{t('nexusdb.asset_hire_cost')}</dt>
+								<dd>{a.hire_cost} Cr</dd>
+							{/if}
+							{#if a.nexus_cost !== undefined}
+								<dt>{t('nexusdb.asset_nexus_cost')}</dt>
+								<dd>{a.nexus_cost} Cr</dd>
+								<dt>{t('nexusdb.asset_delivery')}</dt>
+								<dd>{t('nexusdb.asset_delivery_value', { count: a.delivery_sols ?? 0 })}</dd>
+							{/if}
+							{#if a.max_level}
+								<dt>{t('nexusdb.building_max_level')}</dt>
+								<dd>{a.max_level}</dd>
+							{/if}
+						</dl>
+						{#if a.levels?.length}
+							<table class="nexusdb-levels">
+								<caption>{t('nexusdb.building_levels')}</caption>
+								<thead>
+									<tr><th>{t('nexusdb.building_col_level')}</th><th>{t('nexusdb.building_col_ap')}</th></tr>
+								</thead>
+								<tbody>
+									{#each a.levels as l (l.level)}
+										<tr><td>{l.level}</td><td>{l.ap}</td></tr>
+									{/each}
+								</tbody>
+							</table>
+						{/if}
 					</div>
 				</details>
 			{/each}
