@@ -195,35 +195,6 @@
 			</div>
 		{/if}
 
-		{#if d.finished.length}
-			<h2 class="lobby-section-heading">{t('lobby.finished_runs')}</h2>
-			<div class="lobby-run-grid">
-				{#each d.finished as run (run.id)}
-					{@const bypass = activeBypass(run)}
-					<article class="lobby-run-card">
-						<header>
-							<h3>{t('lobby.run_number', { id: run.id })} &mdash; {run.colony_name}</h3>
-							<span class="lobby-status-pill lobby-status-pill--{pill(run.status)}">{statusLabel(run.status)}</span>
-						</header>
-						<p class="lobby-sol-progress">{t('lobby.sol_progress', { current: run.current_tick, limit: run.tick_limit })}</p>
-						<p class="lobby-sol-progress">
-							{t('lobby.played_from_to', { from: run.started_at ?? '—', to: run.ended_at ?? '—' })}
-						</p>
-						<details>
-							<summary>{t('lobby.settings_detail')}</summary>
-							<ul class="lobby-details-meta">
-								<li>{t('lobby.tick_limit')}: <strong>{run.tick_limit}</strong></li>
-								{#if run.supply_cap !== null}<li>{t('lobby.supply_cap')}: <strong>{run.supply_cap}</strong></li>{/if}
-								{#each bypass as [key] (key)}
-									<li><span class="lobby-bypass-badge">{t('lobby.bypass_active')}: {key}</span></li>
-								{/each}
-							</ul>
-						</details>
-					</article>
-				{/each}
-			</div>
-		{/if}
-
 		<h2 class="lobby-section-heading lobby-highscore-heading">{t('lobby.highscore_title')}</h2>
 		{#if d.finishedRuns.length}
 			<div class="lobby-highscore-scroll">
