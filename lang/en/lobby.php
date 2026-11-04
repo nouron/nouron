@@ -42,7 +42,6 @@ return [
     'highscore_ended' => 'Ended: :date',
 
     // New run button (Feature 2)
-    'new_run_confirm' => 'Start new run — colony will be reset. Continue?',
 
     // Abandon run
     'abandon_button' => 'Abandon mission',

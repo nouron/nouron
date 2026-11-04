@@ -42,7 +42,6 @@ return [
     'highscore_ended' => 'Beendet: :date',
 
     // New run button (Feature 2)
-    'new_run_confirm' => 'Neuen Run starten — Kolonie wird zurückgesetzt. Fortfahren?',
 
     // Abandon run
     'abandon_button' => 'Mission abbrechen',

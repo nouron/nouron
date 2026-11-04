@@ -91,16 +91,8 @@
 		await load(true);
 	}
 
-	function newRun() {
-		pending = {
-			title: t('lobby.new_run_button'),
-			message: t('lobby.new_run_confirm'),
-			label: t('lobby.new_run_button'),
-			run: doNewRun
-		};
-	}
-
-	async function doNewRun() {
+	// No confirmation: the button only exists while no run is active or pending, so nothing is lost.
+	async function newRun() {
 		const res = await send('/run/new');
 		alert = { type: res.ok ? 'success' : 'error', text: res.message ?? '' };
 		await load();

@@ -2,7 +2,7 @@
 
 ## 2026-11-04
 
-- Fix Mission Control: Die Lobby sprang bei beendetem Run immer wieder zur Ergebnisseite („Zurück zur Mission Control“ war eine Endlosschleife); der Sprung erfolgt jetzt nur noch direkt nach „Mission abbrechen“, und „Neue Mission starten“ steht in der Lobby, sobald keine Mission läuft oder bereitsteht; der doppelte Bereich „Abgeschlossene Missionen“ (Karten) entfällt, die Tabelle „Vergangene Missionen“ bleibt.
+- Fix Mission Control: Die Lobby sprang bei beendetem Run immer wieder zur Ergebnisseite („Zurück zur Mission Control“ war eine Endlosschleife); der Sprung erfolgt jetzt nur noch direkt nach „Mission abbrechen“, und „Neue Mission starten“ steht in der Lobby, sobald keine Mission läuft oder bereitsteht; der doppelte Bereich „Abgeschlossene Missionen“ (Karten) entfällt, die Tabelle „Vergangene Missionen“ bleibt; „Neue Mission starten“ fragt nicht mehr nach (es läuft ja keine Mission).
 
 ## 2026-11-03
 
