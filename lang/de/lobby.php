@@ -2,7 +2,6 @@
 
 return [
     // Existing keys — kept as-is
-    'subtitle' => 'Deine Kolonie wartet auf dich.',
     'colony_ready' => 'Kolonie bereit zum Start',
     'start_button' => 'Mission starten',
     'no_run' => 'Kein aktiver Run gefunden. Bitte neu einloggen.',
@@ -15,7 +14,6 @@ return [
     'pending_runs' => 'Bereit zum Start',
     'continue_button' => 'Mission fortsetzen',
     'new_run_button' => 'Neue Mission starten',
-    'coming_soon' => 'Noch nicht verfügbar',
     'no_runs' => 'Keine Missionen vorhanden.',
     'sol_progress' => 'Sol :current / :limit',
     'started_at' => 'Gestartet',
@@ -25,8 +23,6 @@ return [
     'tick_limit' => 'Sol-Limit',
     'supply_cap' => 'Kolonisten-Kapazität',
     'bypass_active' => 'Bypass',
-    'show_details' => 'Details anzeigen',
-    'hide_details' => 'Details ausblenden',
     'run_number' => 'Mission #:id',
     'colony_unnamed' => '(Unbenannt)',
     'ended_at' => 'Beendet',
