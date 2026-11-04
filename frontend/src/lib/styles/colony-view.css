@@ -1367,17 +1367,14 @@ dialog.discovery-dialog {
     transform: rotate(90deg);
 }
 
-/* Path building marker (Labor, Hangar, Cantina) in the build list. */
-.building-list-path {
-    margin-right: 0.4rem;
-    padding: 0 0.4rem;
+/* Focus marker (Labor, Hangar, Cantina) above the name in the build list: quiet dark gray. */
+.building-list-focus {
+    display: block;
+    margin-bottom: 0.15rem;
     font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-accent, #8c2030);
-    border: 1px solid var(--color-accent, #8c2030);
-    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #555;
 }
 
 /* Ring pulse on a tile: explore reveal / harvester arrival. */
