@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-04
+
+- Fix Mission Control: Die Lobby sprang bei beendetem Run immer wieder zur Ergebnisseite („Zurück zur Mission Control“ war eine Endlosschleife); der Sprung erfolgt jetzt nur noch direkt nach „Mission abbrechen“, und „Neue Mission starten“ steht in der Lobby, sobald keine Mission läuft oder bereitsteht.
+
 ## 2026-11-03
 
 - Spielerbegriff „Pfadgebäude“ → „Schwerpunkt“: Marken Forschung / Raumfahrt / Begegnungen & Handel in Baumenü, Techtree und Nexus-DB, dazu Tooltip „Eines von drei Schwerpunkten“; Sperr- und Fehlermeldungen angepasst, Glossar ergänzt.
