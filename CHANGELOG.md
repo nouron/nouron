@@ -6,6 +6,7 @@
 - Nexus-DB: Berater mit Rang-Tabelle (Kosten, Unterhalt, Wirkung, Fokus-Gebäude), Stratege ausgeblendet; Kenntnisse mit Wirkung je Stufe; Gebäude mit „Platzieren“/„Kolonisten“ in der Kostentabelle und neuem Fokus-Hinweis; neues Konzept „Fokus-Gebäude“.
 - Sol-Übersicht: „Zielvereinbarungen“ mit umbenannten Zielen; Ressourcenleiste zeigt Kolonisten als beschäftigt/gesamt; Hint-Leiste ohne „Vorschlag“/Pfeil, auf Mobil eine Zeile mit Laufschrift.
 - Menü: „Techtree“ heißt „Labor“; gesperrte Einträge (Labor, Cantina, Hangar) nennen die fehlende Voraussetzung nicht mehr im Mobilmenü.
+- Labor-Techtree (Phase 2): Analytiker, Raumfahrer und Konsul stehen direkt unter ihrem Fokus-Gebäude, die Kenntnisse und die Drohne rücken eine Zeile nach unten.
 
 ## 2026-11-04
 
