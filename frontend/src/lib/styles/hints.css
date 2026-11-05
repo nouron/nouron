@@ -100,30 +100,48 @@
     line-height: 1.3;
 }
 
-.hint-bar__badge {
-    flex-shrink: 0;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #92400e;
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid #fde68a;
-    border-radius: 999px;
-    padding: 0.05rem 0.45rem;
-    cursor: help;
-}
-
 .hint-bar__link {
-    flex-shrink: 0;
-    color: #92400e;
-    font-weight: 700;
-    text-decoration: underline;
-    white-space: nowrap;
+    text-decoration: none;
+    min-width: 0;
 }
 
 .hint-bar__link:hover {
-    color: #78350f;
+    text-decoration: underline;
+}
+
+.hint-bar__marquee {
+    display: inline;
+}
+
+@media (max-width: 640px) {
+    /* One line only; long text scrolls slowly (marquee). */
+    .hint-bar__text {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .hint-bar__marquee {
+        display: inline-block;
+        padding-left: 100%;
+        animation: hint-bar-marquee 18s linear infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .hint-bar__text {
+            white-space: normal;
+        }
+        .hint-bar__marquee {
+            animation: none;
+            padding-left: 0;
+        }
+    }
+}
+
+@keyframes hint-bar-marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
 }
 
 .hint-bar__dismiss {

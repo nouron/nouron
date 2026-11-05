@@ -533,6 +533,41 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     g.appendChild(polygon);
 
+    // Construction progress: clock-wedge fill, clockwise from 12 o'clock, clipped to the hex.
+    if (building && isConstructionSite(building)) {
+        const total = Math.max(1, building.ap_for_levelup ?? 1);
+        const spent = Math.min(total, building.ap_spend ?? 0);
+        if (spent > 0) {
+            const frac = spent / total;
+            let d;
+            if (frac >= 1) {
+                d = `M ${points.join(' L ')} Z`;
+            } else {
+                const R = size * 1.2;
+                const ang = 2 * Math.PI * frac;
+                const ex = cx + R * Math.sin(ang);
+                const ey = cy - R * Math.cos(ang);
+                d = `M ${cx} ${cy} L ${cx} ${cy - R} A ${R} ${R} 0 ${frac > 0.5 ? 1 : 0} 1 ${ex} ${ey} Z`;
+            }
+            const clipId = `site-clip-${tile.q}-${tile.r}`;
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            clip.setAttribute('id', clipId);
+            const clipPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            clipPoly.setAttribute('points', points.join(' '));
+            clip.appendChild(clipPoly);
+            g.appendChild(clip);
+            const wedge = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            wedge.setAttribute('d', d);
+            wedge.setAttribute('fill', '#f59e0b');
+            wedge.setAttribute('fill-opacity', '0.55');
+            wedge.setAttribute('clip-path', `url(#${clipId})`);
+            const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            tip.textContent = (opts.siteMarkerTooltip ?? '').replace(':spent', spent).replace(':total', total);
+            wedge.appendChild(tip);
+            g.appendChild(wedge);
+        }
+    }
+
     if (opts.polygonMap) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
     }
@@ -738,8 +773,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         }
     }
 
-    // Construction-site marker (T43-C5): dashed inset hex outline + small progress ring
-    // (top-right) with an "n/m AP" tooltip, for a placed level-0 building or a running upgrade.
+    // Construction-site marker (T43-C5): dashed inset hex outline for a placed level-0
+    // building or a running upgrade. Progress is the clock-wedge fill drawn under the label.
     if (building && isConstructionSite(building)) {
         const inset = hexCorners(cx, cy, size * 0.84);
         const dash = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -753,31 +788,6 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         dash.setAttribute('pointer-events', 'none');
         g.appendChild(dash);
 
-        const total = Math.max(1, building.ap_for_levelup ?? 1);
-        const spent = Math.min(total, building.ap_spend ?? 0);
-        const rr = 5;
-        const circ = 2 * Math.PI * rr;
-        const rx = cx + size * 0.38;
-        const ry = cy - size * 0.38;
-        const ring = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        ring.setAttribute('class', 'tile-site-marker__ring');
-        const track = svgCircle(rx, ry, rr, '#fff', '#f59e0b');
-        track.setAttribute('stroke-width', '1.5');
-        ring.appendChild(track);
-        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        arc.setAttribute('cx', rx);
-        arc.setAttribute('cy', ry);
-        arc.setAttribute('r', rr);
-        arc.setAttribute('fill', 'none');
-        arc.setAttribute('stroke', '#b45309');
-        arc.setAttribute('stroke-width', '3');
-        arc.setAttribute('stroke-dasharray', `${(circ * spent) / total} ${circ}`);
-        arc.setAttribute('transform', `rotate(-90 ${rx} ${ry})`);
-        ring.appendChild(arc);
-        const tip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        tip.textContent = (opts.siteMarkerTooltip ?? '').replace(':spent', spent).replace(':total', total);
-        ring.appendChild(tip);
-        g.appendChild(ring);
     }
 
     // Event indicator dot (top-left, orange — only when deep-scanned)
