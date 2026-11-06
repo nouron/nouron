@@ -41,9 +41,9 @@
 		{#key s.active_hint.key}
 			<div class="hint-bar hint-bar--enter">
 				<span class="hint-bar__icon" aria-hidden="true" title={t('colony.hint_not_mandatory')}>!</span>
-				<span class="hint-bar__text">{s.active_hint.text}</span>
-				<span class="hint-bar__badge" title={t('colony.hint_not_mandatory')}>{t('colony.hint_suggestion_label')}</span>
-				<a class="hint-bar__link" href={s.active_hint.target_url}>→</a>
+				<a class="hint-bar__text hint-bar__link" href={s.active_hint.target_url} title={t('colony.hint_not_mandatory')}
+					><span class="hint-bar__marquee">{s.active_hint.text}</span></a
+				>
 				<button
 					class="hint-bar__dismiss"
 					aria-label={t('techtree.detail_close')}

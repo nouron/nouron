@@ -43,6 +43,15 @@ Quelle des A/C-Katalogs: `docs/audit-implementierungsstand-2026-09-06.md` (Kateg
 - **Aufwand-Label:** ausschließlich Klein / Mittel / Groß. Frühere Varianten „Hoch"/„Niedrig" wurden auf Groß/Klein abgebildet, „Mittel/Groß" auf Groß vereinheitlicht (höhere Schätzung als sicherere Seite), „Mittel, spät" auf „Mittel (spät liegend)" — „spät liegend" ist ein Zusatzhinweis, kein Teil des Aufwand-Werts.
 - Sub-Schritte (wie bei A13) nur bei echtem Bedarf, 2-Space-Einrückung, eigene Checkbox.
 
+### UI-Umbau (Owner-Feedback 2026-11-05)
+
+Größere Layout-Umbauten, erst nach Design-Entwurf (`game-designer` + `ui-specialist`), nicht vor dem Rest des Feedbacks:
+
+- [ ] **Labor-Vorschau ohne Analytiklabor:** Techtree grob (wenig Infos) schon vor dem Bau des Analytiklabors sichtbar, das Labor schaltet die Features frei; Menüpunkt heißt „Labor“ (Aufwand: Mittel, vorher Design mit `game-designer`)
+- [ ] **Sidebar auf Mobil als Vollbild-Popup** (Aufwand: Mittel)
+- [ ] **Ressourcenleiste links**, transparenter Hintergrund — Owner überlegt noch (Aufwand: Mittel)
+- [ ] **Navigation unten als Kacheln** (Daumenbedienung), für Desktop und Mobil gleich, optional Subnav darüber (Aufwand: Groß)
+
 ### Pacing & Balance (aktiv — vorher unter „zurückgestellt“ einsortiert)
 
 Diese Punkte laufen seit Oktober aktiv (Handtests, Bot-Messungen, Specs) und gehörten nie in „Nach der Beta“. Inhalt unverändert aus dem Abschnitt „Zurückgestellte A/T-Punkte“ verschoben.

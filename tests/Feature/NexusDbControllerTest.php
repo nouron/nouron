@@ -134,8 +134,46 @@ class NexusDbControllerTest extends TestCase
         $this->assertSame([['label' => __('techtree.building_hangar'), 'level' => 3]], $ships['ship_corvette']['requires']);
 
         $advisors = collect($json['advisors'])->keyBy('key');
-        $this->assertCount(5, $advisors);
+        // The Strategist is hidden (postponed, may return with the Uplink building).
+        $this->assertCount(4, $advisors);
+        $this->assertFalse($advisors->has('techs_strategist'));
         $this->assertSame(config('advisors.pilot.credits'), $advisors['techs_pilot']['hire_cost']);
         $this->assertSame(__('advisors.pilot'), $advisors['techs_pilot']['label']);
+    }
+
+    public function test_advisor_ranks_carry_upkeep_hire_cost_and_bonuses(): void
+    {
+        $advisors = collect($this->actingAs($this->bart())->getJson(route('nexusdb.index'))->assertOk()->json('advisors'))->keyBy('key');
+
+        $engineer = $advisors['techs_engineer'];
+        $this->assertCount(3, $engineer['ranks']);
+        $this->assertSame(config('game.advisor.upkeep'), collect($engineer['ranks'])->pluck('upkeep', 'rank')->all());
+        $this->assertSame(config('advisors.engineer.credits'), $engineer['ranks'][0]['cost']);
+        $this->assertSame(config('game.advisor.promotion_costs.2'), $engineer['ranks'][1]['cost']);
+        // AP per Sol plus the engineer-only AP cap bonus.
+        $this->assertCount(2, $engineer['ranks'][1]['bonuses']);
+        $this->assertCount(2, $engineer['ranks'][0]['bonuses']);
+        // The cap is shown as the total (base + rank bonus), not as a surcharge.
+        $total = (int) config('game.build.ap_cap_per_sol.base') + (int) config('game.build.ap_cap_per_sol.engineer_bonus_per_rank.2');
+        $this->assertStringContainsString((string) $total, $engineer['ranks'][1]['bonuses'][1]);
+        $this->assertStringNotContainsString('+', $engineer['ranks'][1]['bonuses'][1]);
+        // The scientist has the AP line only.
+        $this->assertCount(1, $advisors['techs_scientist']['ranks'][2]['bonuses']);
+        // Pilot rank 3: 3 x pilot_rank_bonus_pct (5 %) = +15 %.
+        $this->assertStringContainsString('15', $advisors['techs_pilot']['ranks'][2]['bonuses'][1]);
+        $this->assertSame('building_sciencelab', $advisors['techs_scientist']['focus_building']);
+        $this->assertNull($engineer['focus_building']);
+    }
+
+    public function test_knowledge_levels_list_their_effects(): void
+    {
+        $k = collect($this->actingAs($this->bart())->getJson(route('nexusdb.index'))->assertOk()->json('knowledge'))->keyBy('key');
+
+        // construction: AP reduction on level 1 (2 %).
+        $this->assertNotEmpty($k['knowledge_construction']['levels'][0]['effects']);
+        // agronomy: trust per level on every level.
+        foreach ($k['knowledge_agronomy']['levels'] as $l) {
+            $this->assertNotEmpty($l['effects']);
+        }
     }
 }

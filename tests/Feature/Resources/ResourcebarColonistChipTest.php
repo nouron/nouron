@@ -49,7 +49,9 @@ class ResourcebarColonistChipTest extends TestCase
 
         $bar = $this->resourceBar();
         $this->assertStringContainsString("abbr: 'KOL'", $bar);
-        $this->assertStringContainsString('amount: fmt(b ? (c?.colonists ?? b.cap)', $bar);
+        // Shown as employed/total; without the overview it falls back to the plain total.
+        $this->assertStringContainsString('${fmt(c.employed)}/${fmt(c.colonists)}', $bar);
+        $this->assertStringContainsString('fmt(b ? (c?.colonists ?? b.cap)', $bar);
     }
 
     public function test_chip_is_flagged_when_workplaces_are_unfilled(): void
