@@ -204,8 +204,6 @@ return [
     'legend_locked' => 'Gesperrt',
     'legend_available' => 'Verfügbar',
     'legend_built' => 'Gebaut / erforscht / angestellt',
-    'legend_focus_sample' => 'Fokus',
-    'legend_focus' => 'Fokus-Gebäude (eines gehört zum Grundaufbau)',
     'band_start' => 'Start',
     'band_cc' => 'CC Lv :level',
     'zoom_in' => 'Vergrößern',

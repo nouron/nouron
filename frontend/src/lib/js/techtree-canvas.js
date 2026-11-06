@@ -198,7 +198,6 @@
                     d = describe(n.item);
                 n.label = d.label;
                 n.sub = d.sub;
-                n.path = d.path || '';
                 n.status = d.status;
                 n.pulse = !!d.pulse;
             });
@@ -429,7 +428,6 @@
                 text2: g('--tt-text-2', '#6b6b7a'),
                 border: g('--tt-border', '#e8e8ec'),
                 accent: g('--tt-accent', '#8c2030'),
-                focus: g('--tt-focus', '#555555'),
                 anth: g('--tt-anthracite', '#333333'),
                 b: { c: g('--tt-cb', '#5599dd'), fg: g('--tt-cb-fg', '#1e40af'), bg: g('--tt-cb-bg', '#dbeafe') },
                 k: { c: g('--tt-ck', '#27ae60'), fg: g('--tt-ck-fg', '#166534'), bg: g('--tt-ck-bg', '#dcfce7') },
@@ -547,7 +545,7 @@
             var locked = n.status === 'locked',
                 built = n.status === 'built';
             // Three states, told apart by lightness/opacity/stroke/marker only (never by hue):
-            // locked = pale fill + grey border + padlock, available = white + category border,
+            // locked = pale fill + faded category border + padlock, available = white + category border,
             // built = category tint + bar on the left. Active/hover only thickens the border.
             ctx.globalAlpha = alpha * (locked ? 0.6 : 1);
             notchPath(x0, y0, x1, y1, NOTCH);
@@ -560,9 +558,10 @@
             }
             notchPath(x0, y0, x1, y1, NOTCH);
             ctx.lineJoin = 'miter';
-            ctx.lineWidth = n.isRoot ? 3.5 : isActive ? 4 : 2.5;
-            ctx.strokeStyle = n.isRoot ? P.accent : locked ? P.text2 : c.c;
-            if (locked) ctx.globalAlpha = alpha * 0.5;
+            ctx.lineWidth = isActive ? 4 : 2.5;
+            // Locked keeps its category hue (faded via alpha) so the kind stays readable.
+            ctx.strokeStyle = c.c;
+            if (locked) ctx.globalAlpha = alpha * 0.6;
             ctx.stroke();
             ctx.globalAlpha = alpha;
             if (locked) drawLock(x0 + 11, y0 + 7);
@@ -574,14 +573,6 @@
             ctx.fillStyle = locked ? P.text2 : c.fg;
             fitText(n.sub, 400, 12.5, NW * 2 - 24);
             ctx.fillText(n.sub, n.x, n.y + 16);
-            // Path building (Labor/Hangar/Cantina): quiet grey focus label in the lower-left corner.
-            if (n.path) {
-                ctx.textAlign = 'left';
-                ctx.fillStyle = P.focus;
-                ctx.font = '600 11px ' + FONT;
-                ctx.fillText(n.path, x0 + 14, y1 - 4);
-                ctx.textAlign = 'center';
-            }
             ctx.globalAlpha = 1;
         }
 

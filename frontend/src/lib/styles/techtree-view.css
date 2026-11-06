@@ -16,7 +16,6 @@
     --tt-border-strong: #d0d0dc;
     --tt-accent: var(--color-accent, #8c2030);
     --tt-anthracite: #333333;
-    --tt-focus: #555555;
     --tt-cb: #5599dd;
     --tt-cb-fg: #1e40af;
     --tt-cb-bg: #dbeafe;
@@ -99,10 +98,6 @@
 .tt-ns--built {
     background: var(--tt-cb-bg);
     box-shadow: inset 5px 0 0 var(--tt-cb);
-}
-.tt-leg-focus {
-    font-weight: 600;
-    color: var(--tt-focus);
 }
 
 @media (max-width: 720px) {

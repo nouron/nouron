@@ -202,8 +202,6 @@ return [
     'legend_locked' => 'Locked',
     'legend_available' => 'Available',
     'legend_built' => 'Built / researched / hired',
-    'legend_focus_sample' => 'Focus',
-    'legend_focus' => 'Focus building (one belongs to the base setup)',
     'band_start' => 'Start',
     'band_cc' => 'CC Lv :level',
     'zoom_in' => 'Zoom in',
