@@ -4,23 +4,23 @@ return [
 
     'engineer' => 'Engineer',
     'engineer_plural' => 'Engineers',
-    'engineer_desc' => 'He knows every bolt in this installation. Without an Engineer, construction stalls — with one, buildings go up and stay in shape.',
+    'engineer_desc' => 'He knows every bolt in this installation. Without an Engineer, construction stalls; with one, buildings go up and stay in shape.',
 
     'scientist' => 'Analyst',
     'scientist_plural' => 'Analysts',
-    'scientist_desc' => 'She thinks in models, measurements, and questions nobody has asked yet. The Analyst drives the research lab forward — without her, knowledge stays at yesterday\'s level.',
+    'scientist_desc' => 'She thinks in models, measurements and questions nobody has asked yet. Without an Analyst, knowledge stays at yesterday\'s level.',
 
     'pilot' => 'Pilot',
     'pilot_plural' => 'Pilots',
-    'pilot_desc' => 'He knows this system better than most people know the map. Without a Pilot, exploration is limited to a few tiles — with one, the view reaches far beyond the colony zone.',
+    'pilot_desc' => 'He knows this system better than others know their maps. Without a Pilot, exploration stays limited to a few tiles; with one, the view reaches far beyond the colony zone.',
 
     'trader' => 'Consul',
     'trader_plural' => 'Consuls',
-    'trader_desc' => 'She negotiates as if the next freighter is never coming back. The Consul opens trade channels and saves Credits where others spend them.',
+    'trader_desc' => 'She negotiates as if the next freighter is never coming back. The Consul opens trade channels and saves Credits where others would spend them.',
 
     'strategist' => 'Strategist',
     'strategist_plural' => 'Strategists',
-    'strategist_desc' => 'Quiet, precise, rarely heard — until something goes wrong. The Strategist coordinates protective measures and keeps incidents small before they escalate.',
+    'strategist_desc' => 'Quiet, precise, rarely heard — until something goes wrong. The Strategist coordinates protection and keeps incidents small.',
 
     // AP label (unified pool — no AP types since 2026-08-02)
     'ap_label' => 'Action Points',

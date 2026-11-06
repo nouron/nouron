@@ -29,19 +29,19 @@ return [
     'tier_tradingPost_3' => 'Personal Contact',
 
     // ── Building descriptions (desc_techs_* keys) ─────────────────────────────
-    'desc_techs_commandCenter' => 'Everything converges here — reports, plans, decisions. The Command Center is not a glamorous building; it is the nervous system of the colony. Its level determines how far the colony can grow.',
-    'desc_techs_housingComplex' => 'A residential habitat is more than shelter — it is the promise that this is not a temporary camp. Every new unit increases the supply capacity of the entire installation.',
-    'desc_techs_harvester' => 'Day and night it breaks Regolith from the ground — somewhere beyond the colony zone, tireless, without pause. Without the Harvester, every construction plan is just paper.',
-    'desc_techs_bioFacility' => 'Beneath the dome grows what the colony needs to survive. The Agrarian Dome produces Organics — and is a mandatory prerequisite for the colony to grow further at all.',
-    'desc_techs_sciencelab' => 'This is where those who ask sit. The Analytics Lab translates measurement data into insights — and insights into progress. Without it, the tech tree stays closed.',
-    'desc_techs_infirmary' => 'Not every accident happens during construction. The Medical Station tends to injured colonists and stabilises Trust in difficult phases — the place everyone hopes never to truly need.',
-    'desc_techs_bar' => 'The Cantina is the only place where colonists can forget, just for a moment, how thin the air is outside. Strangers from transit bring news, goods — and sometimes offers worth hearing.',
-    'desc_techs_hangar' => 'Ships need a place to land, refuel, and be maintained. The Hangar is the starting point of every mission and gives the colony eyes to the outside.',
-    'desc_techs_temple' => 'Some things cannot be paid for in Regolith and Credits. The Sacred Site provides space for what keeps colonists sane — ritual, community, a moment of stillness.',
-    'desc_techs_monument' => 'At some point you ask yourself: what is all this for? The Colonial Monument provides an answer — visible, lasting, for everyone. It anchors the history of this colony in the soil of the planet.',
-    'desc_techs_securityHub' => 'No Response Center makes the colony invulnerable — but it ensures that incidents don\'t escalate. Its operation dampens negative events and gives colonists the feeling that someone is watching.',
-    'desc_techs_uplinkStation' => 'Without an Uplink Station the colony is silent to the Nexus — and the Nexus only acts on request. It unlocks direct Compound import and keeps the only communication channel open.',
-    'desc_techs_tradingPost' => 'A well-maintained Trading Post signals to all travellers that this colony does business. The Travelling Merchant trades on better terms.',
+    'desc_techs_commandCenter' => 'Everything comes together here: reports, plans, decisions. The Command Center is not a glamorous building, but it is the colony\'s nervous system. Its level decides how far the colony can grow.',
+    'desc_techs_housingComplex' => 'A residential habitat is more than a roof overhead. It says: this is no temporary camp. Every level makes room for more colonists.',
+    'desc_techs_harvester' => 'Day and night it breaks Regolith out of the ground, somewhere beyond the colony zone. Without it, every building plan stays paper.',
+    'desc_techs_bioFacility' => 'Under the dome grows what the colony needs to survive. The Agrarian Dome supplies Organics, and without it the colony cannot grow any further.',
+    'desc_techs_sciencelab' => 'This is where the ones who ask questions sit. The lab turns measurements into insight and insight into progress. Without it, knowledge stays locked.',
+    'desc_techs_infirmary' => 'Not every accident happens on a building site. The Medical Station tends injured colonists and steadies Trust in bad times. You hope never to need it.',
+    'desc_techs_bar' => 'In the Cantina, colonists can forget for a moment how thin the air is outside. People passing through bring news and goods, and sometimes an offer worth listening to.',
+    'desc_techs_hangar' => 'Ships need a place to land, refuel and be serviced. The Hangar is the starting point of every mission and the colony\'s eyes on the outside.',
+    'desc_techs_temple' => 'Some things cannot be paid for in Regolith and Credits. The Sacred Site gives colonists room for ritual, company and a moment of stillness.',
+    'desc_techs_monument' => 'Sooner or later you ask what all this is for. The Colonial Monument answers: visible, lasting, for everyone. It roots the colony\'s history in the planet\'s soil.',
+    'desc_techs_securityHub' => 'No Response Center makes the colony invulnerable. But it keeps incidents from escalating and dampens negative events. The colonists know: someone is watching.',
+    'desc_techs_uplinkStation' => 'Without an Uplink Station the colony is silent to the Nexus, and the Nexus only acts on request. It unlocks direct Compound import and keeps the only line to the outside open.',
+    'desc_techs_tradingPost' => 'A well-kept Trading Post gets around among travellers: business is done here. The Travelling Merchant offers better terms.',
 
     // ── Knowledge ────────────────────────────────────────────────────────────
     'knowledge_construction' => 'Construction',
@@ -53,13 +53,13 @@ return [
     'knowledge_defense' => 'Defence',
 
     // ── Knowledge descriptions ────────────────────────────────────────────────
-    'desc_techs_construction' => 'Everything the colony builds holds better when the right people know how. Construction improves building processes and reduces the ongoing effort for maintenance.',
-    'desc_techs_cartography' => 'The planet is vast, the maps are incomplete. Cartography extends the reach of exploration — and gives the colony a clearer view of what lies out there.',
-    'desc_techs_geology' => 'Beneath the dust lies everything the colony needs — if you know where to dig. Geology improves extraction rates and helps identify resource deposits earlier.',
-    'desc_techs_agronomy' => 'The Agrarian Dome yields more when the work is guided by knowledge. Agronomy increases Organics output and stabilises the supply situation long-term.',
-    'desc_techs_health' => 'Healthy colonists are productive colonists. Medicine & Wellbeing improves recovery rates, strengthens Trust, and makes the workforce more resilient against crisis periods.',
+    'desc_techs_construction' => 'What the colony builds lasts longer when people know how. Construction improves building processes and cuts the ongoing effort of maintenance.',
+    'desc_techs_cartography' => 'The planet is vast, the maps are patchy. Cartography extends the reach of exploration and shows more clearly what lies out there.',
+    'desc_techs_geology' => 'Under the dust lies what the colony needs. You just have to know where to dig. Geology improves extraction rates and helps find deposits sooner.',
+    'desc_techs_agronomy' => 'The Agrarian Dome yields more when knowledge guides the work. Agronomy raises Organics output and secures the food supply for the long run.',
+    'desc_techs_health' => 'Healthy colonists work better. Medicine & Wellbeing speeds up recovery, strengthens Trust and makes the workforce more resilient in a crisis.',
     'desc_techs_trade' => 'Those who know the market trade better. Trade & Logistics improves terms with the Travelling Merchant and makes Cantina deals more rewarding.',
-    'desc_techs_defense' => 'Patrolling costs AP — but good protective knowledge makes every deployment more efficient. Defence reduces the impact of incidents and strengthens colony resilience.',
+    'desc_techs_defense' => 'Patrolling costs AP, but with good protective know-how every outing pays off more. Defence softens the impact of incidents and makes the colony more resilient.',
 
     // ── Ships ─────────────────────────────────────────────────────────────────
     'ship_drone' => 'Drone',
@@ -67,9 +67,9 @@ return [
     'ship_freighter' => 'Freighter',
 
     // ── Ship descriptions ─────────────────────────────────────────────────────
-    'desc_techs_drone' => 'Small, autonomous, tireless — the Drone needs no hangar and no pilot. It scouts, transmits data, and returns. For anything beyond that, it falls short.',
-    'desc_techs_corvette' => 'The Corvette is the only ship that can show force — but a patrolling Corvette doesn\'t trade, and a trading Corvette doesn\'t patrol. That trade-off is the Director\'s to make.',
-    'desc_techs_freighter' => 'No glamorous ship — but without a Freighter the colony is left to its own devices. It transports, delivers, and collects what the colony could not obtain alone.',
+    'desc_techs_drone' => 'Small, autonomous, tireless: the Drone flies without a crew. It scouts, radios data home and returns. For anything more, it falls short.',
+    'desc_techs_corvette' => 'The Corvette is the only ship that can show force. But a patrolling Corvette doesn\'t trade, and a trading one doesn\'t patrol. That trade-off is the Director\'s to make.',
+    'desc_techs_freighter' => 'Not a glamorous ship, but without a Freighter the colony is on its own. It brings and fetches what the colony cannot obtain alone.',
 
     // ── Personnel (advisor type keys) ─────────────────────────────────────────
     'techs_engineer' => 'Engineer',

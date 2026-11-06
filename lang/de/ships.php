@@ -5,16 +5,16 @@ return [
     // ── Unmanned ──────────────────────────────────────────────────────────────
 
     'drone' => 'Drohne',
-    'drone_desc' => 'Unbemanntes Erkundungsfahrzeug. Schnell, günstig und ohne Besatzungsaufwand. Einsetzbar für Erkundung, Überwachung und wissenschaftliche Messungen. Kann durch Strahlungsfelder, Kampfhandlungen oder unbekannte Gefahren verloren gehen.',
+    'drone_desc' => 'Unbemanntes Erkundungsfahrzeug: schnell, günstig, ohne Besatzung. Es erkundet, überwacht und misst. Strahlungsfelder, Zwischenfälle oder unbekannte Gefahren können die Drohne kosten.',
 
     // ── Military ──────────────────────────────────────────────────────────────
 
     'corvette' => 'Korvette',
-    'corvette_desc' => 'Leichtes Kampfschiff für Patrouille und Kolonieverteidigung. Klein genug für eine junge Kolonie, stark genug um Bedrohungen abzuwehren. Benötigt einen eigenen Hangar.',
+    'corvette_desc' => 'Leichtes Schiff für Patrouille und Schutz der Kolonie. Klein genug für eine junge Kolonie, stark genug, um Bedrohungen abzuschrecken. Braucht einen eigenen Hangar.',
 
     // ── Transport ─────────────────────────────────────────────────────────────
 
     'freighter' => 'Frachter',
-    'freighter_desc' => 'Zuverlässiges Transportschiff für Handelsrouten und Versorgungsläufe. Rückgrat der kolonialen Wirtschaft. Benötigt einen eigenen Hangar.',
+    'freighter_desc' => 'Verlässliches Transportschiff für Handelsrouten und Versorgungsflüge. Ohne Frachter keine Kolonialwirtschaft. Braucht einen eigenen Hangar.',
 
 ];

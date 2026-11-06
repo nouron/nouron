@@ -14,6 +14,7 @@
 
 ## 2026-11-04
 
+- T55: Beschreibungstexte (Gebäude, Kenntnisse, Schiffe, Berater, Techtree) und „Sol beenden“-Hint sprachlich überarbeitet; dabei überholte Angaben korrigiert (Industriemine → Harvester, Drohne „braucht keinen Hangar“, Korvetten-Aufstellung).
 - Aufräumen Mission Control: tote Lang-Schlüssel (`lobby.subtitle`, `coming_soon`, `show_details`, `hide_details`) und ungenutzte CSS-Regeln entfernt.
 - T56: Nexus-DB hat jetzt auch die Reiter „Kenntnisse“, „Schiffe“ und „Berater“ (Beschreibung, Voraussetzungen, Kosten bzw. Stufentabelle), immer sichtbar.
 - Fix Mission Control: Die Lobby sprang bei beendetem Run immer wieder zur Ergebnisseite („Zurück zur Mission Control“ war eine Endlosschleife); der Sprung erfolgt jetzt nur noch direkt nach „Mission abbrechen“, und „Neue Mission starten“ steht in der Lobby, sobald keine Mission läuft oder bereitsteht; der doppelte Bereich „Abgeschlossene Missionen“ (Karten) entfällt, die Tabelle „Vergangene Missionen“ bleibt; „Neue Mission starten“ fragt nicht mehr nach (es läuft ja keine Mission). Debug-Leiste (Admin): Gruppe „Tick“ (24 h) entfernt, da Sole von Hand beendet werden; „Supply“ heißt „Kolonisten“, neue Gruppe „Sol“ (Limit, AP-Basis, AP-Deckel), „Trust Events“ → „Vertrauen“. Schwerpunkt-Marke im Baumenü dezent dunkelgrau über dem Gebäudenamen, benannt „Focus: Kenntnisse / Missionen / Beziehungen“.

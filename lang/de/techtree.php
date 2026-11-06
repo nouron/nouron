@@ -29,19 +29,19 @@ return [
     'tier_tradingPost_3' => 'Persönlicher Kontakt',
 
     // ── Gebäude-Beschreibungen (desc_techs_* Keys) ────────────────────────────
-    'desc_techs_commandCenter' => 'Alles läuft hier zusammen — Berichte, Pläne, Entscheidungen. Die Kommandozentrale ist kein glamouröses Gebäude; sie ist das Nervensystem der Kolonie. Ihr Level bestimmt, wie weit die Kolonie wachsen kann.',
-    'desc_techs_housingComplex' => 'Ein Wohnhabitat ist mehr als Unterkunft — es ist die Zusage, dass das hier kein vorübergehendes Lager ist. Jede neue Einheit erhöht die Versorgungskapazität der gesamten Anlage.',
-    'desc_techs_harvester' => 'Tag und Nacht bricht er Regolith aus dem Boden — irgendwo jenseits der Koloniezone, unermüdlich, ohne Pause. Ohne den Harvester wäre jeder Bauplan nur Papier.',
-    'desc_techs_bioFacility' => 'Unter der Kuppel wächst, was die Kolonie zum Überleben braucht. Der Agrardom produziert Organika — und ist Pflichtvoraussetzung dafür, dass die Kolonie überhaupt weiter wachsen kann.',
-    'desc_techs_sciencelab' => 'Hier sitzen die, die fragen. Das Analytik-Labor übersetzt Messdaten in Erkenntnisse — und Erkenntnisse in Fortschritt. Ohne es bleibt der Techtree geschlossen.',
-    'desc_techs_infirmary' => 'Nicht jeder Unfall passiert beim Bau. Die Krankenstation versorgt verletzte Kolonisten und stabilisiert das Vertrauen in schlechten Phasen — der Ort, auf den alle hoffen, nie wirklich angewiesen zu sein.',
-    'desc_techs_bar' => 'Die Cantina ist der einzige Ort, wo Kolonisten für einen Moment vergessen dürfen, wie dünn die Luft draußen ist. Fremde aus dem Transit bringen Nachrichten, Waren — und manchmal Angebote, die es wert sind zu hören.',
-    'desc_techs_hangar' => 'Schiffe brauchen einen Ort zum Landen, Auftanken, Warten. Der Hangar ist Ausgangspunkt jeder Mission und verleiht der Kolonie Augen nach draußen.',
-    'desc_techs_temple' => 'Manche Dinge lassen sich nicht mit Regolith und Credits bezahlen. Die Religiöse Stätte bietet Raum für das, was Kolonisten bei Verstand hält — Ritual, Gemeinschaft, Innehalten.',
-    'desc_techs_monument' => 'Irgendwann fragt man sich: wofür das alles? Das Kolonialdenkmal gibt eine Antwort — sichtbar, dauerhaft, für alle. Es verankert die Geschichte dieser Kolonie im Boden des Planeten.',
-    'desc_techs_securityHub' => 'Keine Leitstelle macht die Kolonie unverwundbar — aber sie sorgt dafür, dass Zwischenfälle nicht eskalieren. Ihr Betrieb dämpft negative Ereignisse und gibt den Kolonisten das Gefühl, dass jemand aufpasst.',
-    'desc_techs_uplinkStation' => 'Ohne Uplink-Station ist die Kolonie stumm gegenüber dem Nexus — und der Nexus handelt nur auf Anfrage. Sie schaltet den Werkstoff-Direktimport frei und hält den einzigen Kommunikationskanal offen.',
-    'desc_techs_tradingPost' => 'Ein gut gepflegter Handelsposten ist ein Signal an alle Durchreisenden, dass diese Kolonie Geschäfte macht. Der Reisende Händler handelt zu besseren Konditionen.',
+    'desc_techs_commandCenter' => 'Hier läuft alles zusammen: Berichte, Pläne, Entscheidungen. Die Kommandozentrale ist kein glamouröses Gebäude, aber das Nervensystem der Kolonie. Ihre Ausbaustufe bestimmt, wie weit die Kolonie wachsen kann.',
+    'desc_techs_housingComplex' => 'Ein Wohnhabitat ist mehr als ein Dach über dem Kopf. Es sagt: Das hier ist kein Übergangslager. Jede Stufe schafft Platz für mehr Kolonisten.',
+    'desc_techs_harvester' => 'Tag und Nacht bricht er Regolith aus dem Boden, irgendwo jenseits der Koloniezone. Ohne ihn bleibt jeder Bauplan Papier.',
+    'desc_techs_bioFacility' => 'Unter der Kuppel wächst, was die Kolonie zum Überleben braucht. Der Agrardom liefert Organika, und ohne ihn wächst auch die Kolonie nicht weiter.',
+    'desc_techs_sciencelab' => 'Hier sitzen die, die fragen. Das Labor macht aus Messdaten Erkenntnisse und aus Erkenntnissen Fortschritt. Ohne es bleiben die Kenntnisse verschlossen.',
+    'desc_techs_infirmary' => 'Nicht jeder Unfall passiert beim Bau. Die Krankenstation versorgt verletzte Kolonisten und stützt das Vertrauen in schlechten Zeiten. Man hofft, sie nie zu brauchen.',
+    'desc_techs_bar' => 'In der Cantina dürfen Kolonisten kurz vergessen, wie dünn die Luft draußen ist. Durchreisende bringen Nachrichten und Waren mit, und manchmal ein Angebot, das man sich anhören sollte.',
+    'desc_techs_hangar' => 'Schiffe brauchen einen Platz zum Landen, Auftanken und Warten. Der Hangar ist Ausgangspunkt jeder Mission und die Augen der Kolonie nach draußen.',
+    'desc_techs_temple' => 'Manches lässt sich nicht mit Regolith und Credits bezahlen. Die Religiöse Stätte gibt den Kolonisten Raum für Ritual, Gemeinschaft und Innehalten.',
+    'desc_techs_monument' => 'Irgendwann fragt man sich, wofür das alles ist. Das Kolonialdenkmal antwortet: sichtbar, dauerhaft, für alle. Es verankert die Geschichte der Kolonie im Boden des Planeten.',
+    'desc_techs_securityHub' => 'Keine Leitstelle macht die Kolonie unverwundbar. Aber sie sorgt dafür, dass Zwischenfälle nicht eskalieren, und dämpft negative Ereignisse. Die Kolonisten wissen: Jemand passt auf.',
+    'desc_techs_uplinkStation' => 'Ohne Uplink-Station ist die Kolonie für den Nexus stumm, und der Nexus handelt nur auf Anfrage. Sie schaltet den Werkstoff-Direktimport frei und hält den einzigen Kanal nach draußen offen.',
+    'desc_techs_tradingPost' => 'Ein gepflegter Handelsposten spricht sich unter Durchreisenden herum: Hier wird Handel getrieben. Der Reisende Händler bietet bessere Konditionen.',
 
     // ── Kenntnisse ───────────────────────────────────────────────────────────
     'knowledge_construction' => 'Baukunde',
@@ -53,13 +53,13 @@ return [
     'knowledge_defense' => 'Verteidigung',
 
     // ── Kenntnisse-Beschreibungen ────────────────────────────────────────────
-    'desc_techs_construction' => 'Alles, was die Kolonie baut, hält besser, wenn die richtigen Leute wissen wie. Baukunde verbessert Bauprozesse und senkt den laufenden Aufwand für Instandhaltung.',
-    'desc_techs_cartography' => 'Der Planet ist groß, die Karten sind lückenhaft. Kartographie erweitert die Reichweite der Erkundung — und gibt der Kolonie einen klareren Blick auf das, was da draußen liegt.',
-    'desc_techs_geology' => 'Unter dem Staub liegt alles, was die Kolonie braucht — wenn man weiß, wo man graben muss. Geologie verbessert Abbauraten und hilft, Ressourcenvorkommen früher zu identifizieren.',
-    'desc_techs_agronomy' => 'Der Agrardom bringt mehr, wenn die Arbeit von Wissen geleitet wird. Agronomie erhöht den Organika-Ertrag und stabilisiert die Versorgungslage langfristig.',
-    'desc_techs_health' => 'Gesunde Kolonisten sind produktive Kolonisten. Medizin & Wohlbefinden verbessert Genesungsraten, stärkt das Vertrauen und macht die Belegschaft widerstandsfähiger gegen Krisenperioden.',
+    'desc_techs_construction' => 'Was die Kolonie baut, hält länger, wenn die Leute wissen, wie. Baukunde verbessert die Bauprozesse und senkt den laufenden Aufwand für Instandhaltung.',
+    'desc_techs_cartography' => 'Der Planet ist groß, die Karten sind lückenhaft. Kartographie erweitert die Reichweite der Erkundung und zeigt klarer, was da draußen liegt.',
+    'desc_techs_geology' => 'Unter dem Staub liegt, was die Kolonie braucht. Man muss nur wissen, wo man graben soll. Geologie verbessert die Abbauraten und hilft, Vorkommen früher zu finden.',
+    'desc_techs_agronomy' => 'Der Agrardom trägt mehr, wenn Wissen die Arbeit leitet. Agronomie steigert den Organika-Ertrag und sichert die Versorgung auf Dauer.',
+    'desc_techs_health' => 'Gesunde Kolonisten arbeiten besser. Medizin & Wohlbefinden beschleunigt die Genesung, stärkt das Vertrauen und macht die Belegschaft in Krisen widerstandsfähiger.',
     'desc_techs_trade' => 'Wer den Markt kennt, handelt besser. Handel & Logistik verbessert die Konditionen beim Reisenden Händler und macht Cantina-Angebote ergiebiger.',
-    'desc_techs_defense' => 'Patrouillieren kostet AP — aber gutes Schutzwissen macht jeden Einsatz effizienter. Verteidigung reduziert die Auswirkungen von Zwischenfällen und stärkt die Widerstandsfähigkeit der Kolonie.',
+    'desc_techs_defense' => 'Patrouillieren kostet AP, aber mit gutem Schutzwissen lohnt sich jeder Einsatz mehr. Verteidigung mildert die Folgen von Zwischenfällen und macht die Kolonie widerstandsfähiger.',
 
     // ── Schiffe ──────────────────────────────────────────────────────────────
     'ship_drone' => 'Drohne',
@@ -67,9 +67,9 @@ return [
     'ship_freighter' => 'Frachter',
 
     // ── Schiffs-Beschreibungen ───────────────────────────────────────────────
-    'desc_techs_drone' => 'Klein, autonom, ausdauernd — die Drohne braucht keinen Hangar und keinen Piloten. Sie erkundet, sendet Daten und kehrt zurück. Für alles Weitere reicht sie nicht.',
-    'desc_techs_corvette' => 'Die Korvette ist das einzige Schiff, das Stärke zeigen kann — aber eine patrouillierte Korvette handelt nicht, und eine handelnde Korvette patrouilliert nicht. Diese Abwägung liegt beim Direktor.',
-    'desc_techs_freighter' => 'Kein glamouröses Schiff — aber ohne Frachter bleibt die Kolonie auf sich gestellt. Er transportiert, liefert und holt ab, was die Kolonie alleine nicht beschaffen könnte.',
+    'desc_techs_drone' => 'Klein, autonom, ausdauernd: Die Drohne fliegt ohne Besatzung. Sie erkundet, funkt Daten heim und kehrt zurück. Für mehr reicht sie nicht.',
+    'desc_techs_corvette' => 'Die Korvette ist das einzige Schiff, das Stärke zeigen kann. Aber eine patrouillierende Korvette handelt nicht, und eine handelnde patrouilliert nicht. Diese Abwägung liegt beim Direktor.',
+    'desc_techs_freighter' => 'Kein glamouröses Schiff, aber ohne Frachter ist die Kolonie auf sich gestellt. Er bringt und holt, was die Kolonie allein nicht beschaffen kann.',
 
     // ── Personal (advisor type keys) ─────────────────────────────────────────
     'techs_engineer' => 'Baumeister',

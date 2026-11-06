@@ -118,7 +118,7 @@ return [
     'onboarding_hint_invest_site' => 'Lass AP nicht verfallen, steck sie in eine laufende Baustelle. Jede nimmt pro Sol nur begrenzt AP auf, aber was eingezahlt ist, bleibt, und der Abschluss rückt näher.',
     'onboarding_hint_explore' => 'Setz AP für die Erkundung ein (:ring2 AP pro Feld in Ring 2, :ring3 AP in Ring 3). Jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
     'onboarding_hint_encounter' => 'Gebäude in schlechtem Zustand sind anfälliger für Zwischenfälle. Regelmäßig zu reparieren zahlt sich doppelt aus.',
-    'onboarding_end_sol' => 'Sol beenden — alle sinnvollen Aktionen getätigt. Nächster Sol bringt frische Aktionspunkte und neue Entwicklungen.',
+    'onboarding_end_sol' => 'Sol beenden, wenn nichts Sinnvolles mehr zu tun ist. Der nächste Sol bringt frische Aktionspunkte und Neues.',
     'onboarding_hint_spend_ap_construction' => 'Du hast noch AP übrig. Steck sie in ein Gebäude oder finanziere den CC-Ausbau vor — am Sol-Ende verfallen sie.',
     'onboarding_hint_spend_ap_research' => 'Du hast noch AP übrig. Weise sie im Techtree einer Kenntnis zu, bevor der Sol endet.',
     'onboarding_hint_spend_ap_navigation' => 'Du hast noch AP übrig. Da draußen liegt unentdecktes Gelände — je weiter ein Feld entfernt ist, desto mehr AP kostet es.',

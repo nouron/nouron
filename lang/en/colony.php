@@ -117,7 +117,7 @@ return [
     'onboarding_hint_invest_site' => 'Don\'t let AP go to waste, put it into a running construction project. Each takes only a limited amount of AP per Sol, but what is invested stays, and completion gets closer.',
     'onboarding_hint_explore' => 'Spend AP on exploration (:ring2 AP per tile in ring 2, :ring3 AP in ring 3). Regolith deposits and unknown signals wait beyond the zone.',
     'onboarding_hint_encounter' => 'Buildings in poor condition are more vulnerable to incidents. Repairing regularly pays off twice.',
-    'onboarding_end_sol' => 'End the Sol — all sensible actions taken. The next Sol brings fresh action points and new developments.',
+    'onboarding_end_sol' => 'End the Sol once there is nothing sensible left to do. The next Sol brings fresh action points and something new.',
     'onboarding_hint_spend_ap_construction' => 'You still have AP left. Put it into a building or pre-fund the CC upgrade — it expires at Sol end.',
     'onboarding_hint_spend_ap_research' => 'You still have AP left. Assign it to a knowledge field in the tech tree before the Sol ends.',
     'onboarding_hint_spend_ap_navigation' => 'You still have AP left. Unexplored terrain lies out there — the farther a tile is, the more AP it costs.',
