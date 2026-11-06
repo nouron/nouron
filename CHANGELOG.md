@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-06
+
+- Labor-Techtree: Zustände klar getrennt (gesperrt blass mit Schloss, verfügbar weiß, gebaut getönt mit Balken), Pfeile zu unerfüllten Voraussetzungen aufgehellt, „CC N“-Label entfernt, Fokus-Label entfernt, gesperrte Kästchen behalten die Kategoriefarbe, Kommandozentrale ohne roten Dauerrahmen, alle Voraussetzungs-Pfeile durchgezogen; Legende auf die vier Kategorien reduziert und unter den Techtree verschoben; der Techtree lässt sich nicht mehr senkrecht ins Leere ziehen.
+
 ## 2026-11-05
 
 - Hexkarte: Baufortschritt einer Baustelle füllt jetzt das Hexfeld wie ein Uhrzeiger im Uhrzeigersinn (ab 12 Uhr) in Orange; der kleine Fortschrittsring entfällt.
@@ -7,7 +11,6 @@
 - Sol-Übersicht: „Zielvereinbarungen“ mit umbenannten Zielen; Ressourcenleiste zeigt Kolonisten als beschäftigt/gesamt; Hint-Leiste ohne „Vorschlag“/Pfeil, auf Mobil eine Zeile mit Laufschrift.
 - Menü: „Techtree“ heißt „Labor“; gesperrte Einträge (Labor, Cantina, Hangar) nennen die fehlende Voraussetzung nicht mehr im Mobilmenü.
 - Labor-Techtree (Phase 2): Analytiker, Raumfahrer und Konsul stehen direkt unter ihrem Fokus-Gebäude, die Kenntnisse und die Drohne rücken eine Zeile nach unten.
-- Labor-Techtree: Zustände klar getrennt (gesperrt blass mit Schloss, verfügbar weiß, gebaut getönt mit Balken), Pfeile zu unerfüllten Voraussetzungen aufgehellt, „CC N“-Label entfernt, Fokus-Label entfernt, gesperrte Kästchen behalten die Kategoriefarbe, Kommandozentrale ohne roten Dauerrahmen, alle Voraussetzungs-Pfeile durchgezogen; Legende auf die vier Kategorien reduziert und unter den Techtree verschoben; der Techtree lässt sich nicht mehr senkrecht ins Leere ziehen.
 
 ## 2026-11-04
 
