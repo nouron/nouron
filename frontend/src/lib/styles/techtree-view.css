@@ -16,6 +16,7 @@
     --tt-border-strong: #d0d0dc;
     --tt-accent: var(--color-accent, #8c2030);
     --tt-anthracite: #333333;
+    --tt-focus: #555555;
     --tt-cb: #5599dd;
     --tt-cb-fg: #1e40af;
     --tt-cb-bg: #dbeafe;
@@ -81,14 +82,32 @@
     background: repeating-linear-gradient(90deg, var(--tt-text-2) 0 12px, transparent 12px 20px);
 }
 
+/* Node-state swatches mirror the canvas: locked = pale + grey border, available = white + coloured border,
+   built = tinted + bar on the left. */
+.tt-ns {
+    width: 20px;
+    height: 12px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border: 2px solid var(--tt-cb);
+    background: var(--tt-raised);
+}
+.tt-ns--locked {
+    border-color: rgba(107, 107, 122, 0.5);
+    background: rgba(247, 247, 245, 0.6);
+}
+.tt-ns--built {
+    background: var(--tt-cb-bg);
+    box-shadow: inset 5px 0 0 var(--tt-cb);
+}
+.tt-leg-focus {
+    font-weight: 600;
+    color: var(--tt-focus);
+}
+
 @media (max-width: 720px) {
-    .techtree-legend {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-    .techtree-legend::-webkit-scrollbar {
-        display: none;
+    .tt-leg {
+        white-space: normal;
     }
 }
 

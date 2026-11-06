@@ -293,7 +293,6 @@
 					describe: (item: { ref: Tech & { pulse?: unknown } }) => ({
 						label: item.ref.name,
 						sub: statusLabel(item.ref),
-						tag: item.ref.req_cc ? t('techtree.cc_tag', { level: item.ref.req_cc }) : '',
 						path: item.ref.is_path && item.ref.key ? t('colony.focus_' + item.ref.key) : '',
 						status: item.ref.status,
 						pulse: item.ref.pulse
@@ -372,7 +371,10 @@
 		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--s"></span>{t('techtree.legend_ship')}</span>
 		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--a"></span>{t('techtree.legend_advisor')}</span>
 		<span class="tt-leg" role="listitem"><span class="tt-st"></span>{t('techtree.legend_required')}</span>
-		<span class="tt-leg" role="listitem"><span class="tt-st tt-st--dash"></span>{t('techtree.legend_second')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-ns tt-ns--locked"></span>{t('techtree.legend_locked')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-ns tt-ns--available"></span>{t('techtree.legend_available')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-ns tt-ns--built"></span>{t('techtree.legend_built')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-leg-focus">{t('techtree.legend_focus_sample')}</span>{t('techtree.legend_focus')}</span>
 	</div>
 
 	<div class="techtree-stage" bind:this={stage}>
