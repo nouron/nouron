@@ -711,7 +711,11 @@
         function clampView() {
             var m = 140;
             view.tx = Math.min(vw - m, Math.max(m - W * view.s, view.tx));
-            view.ty = Math.min(vh - m, Math.max(m - H * view.s, view.ty));
+            // Vertical: never drag the tree away from the viewport edges (no empty space above/below);
+            // when it is shorter than the viewport it stays centred.
+            var pad = 14,
+                th = H * view.s;
+            view.ty = th + 2 * pad <= vh ? (vh - th) / 2 : Math.min(pad, Math.max(vh - th - pad, view.ty));
         }
         function startScale() {
             return MODE === 'narrow' ? Math.min(1.1, Math.max(0.85, vw / 400)) : Math.min(1.1, Math.max(0.8, vw / W));
