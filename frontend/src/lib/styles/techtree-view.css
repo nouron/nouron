@@ -40,7 +40,7 @@
     align-items: center;
     gap: 0.35rem 1.1rem;
     padding: 0.55rem 16px;
-    border-bottom: 1px solid var(--tt-border);
+    border-top: 1px solid var(--tt-border);
     font-size: 0.78rem;
     color: var(--tt-text-2);
 }
@@ -69,35 +69,6 @@
 }
 .tt-sw--a {
     background: var(--tt-ca);
-}
-
-.tt-st {
-    width: 30px;
-    height: 8px;
-    background: var(--tt-text-2);
-    flex-shrink: 0;
-}
-.tt-st--dash {
-    background: repeating-linear-gradient(90deg, var(--tt-text-2) 0 12px, transparent 12px 20px);
-}
-
-/* Node-state swatches mirror the canvas: locked = pale + grey border, available = white + coloured border,
-   built = tinted + bar on the left. */
-.tt-ns {
-    width: 20px;
-    height: 12px;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    border: 2px solid var(--tt-cb);
-    background: var(--tt-raised);
-}
-.tt-ns--locked {
-    border-color: rgba(107, 107, 122, 0.5);
-    background: rgba(247, 247, 245, 0.6);
-}
-.tt-ns--built {
-    background: var(--tt-cb-bg);
-    box-shadow: inset 5px 0 0 var(--tt-cb);
 }
 
 @media (max-width: 720px) {
