@@ -1,6 +1,6 @@
 # Nouron — Roadmap
 
-Stand: 2026-10-22
+Stand: 2026-11-06
 
 Aktueller Stand: Laravel 12 + MySQL 8, Phase 3 („Das Spiel zeigen“) abgeschlossen, Singleplayer Roguelike Mini-4X. **Fokus (Owner-Entscheidung 2026-09-30): Closed Beta** — gehostet, ca. 10–20 eingeladene Tester. Parallel läuft die Pacing-/Eröffnungs-Arbeit (T30, T35, T36) mit Handtests und Bot-Messungen. `PlaytestBot`/`game:playtest` bleibt das Balance-Werkzeug, ergänzt um menschliches Feedback. **Vor jedem Bot-Batch beim Owner nachfragen** (Dauer, Läufe).
 
@@ -10,7 +10,7 @@ Abgeschlossene Arbeit liegt in den Archiv-Dateien:
 
 ---
 
-## Aktuelle Prioritäten (Vorschlag, Stand 2026-10-22 — Owner passt die Reihenfolge an)
+## Aktuelle Prioritäten (Vorschlag, Stand 2026-11-06 — Owner passt die Reihenfolge an)
 
 Hinweis: Neu ist T41 (Pfad-Vertiefung per AP-Investition, Spec überarbeitet 2026-10-24, P1–P7 offen) unter „Aktive Arbeit“; die Einordnung in diese Tabelle entscheidet der Owner.
 
@@ -26,6 +26,8 @@ Hinweis: Neu ist T41 (Pfad-Vertiefung per AP-Investition, Spec überarbeitet 202
 | 8 | Closed Beta: Spielerlebnis | R13 Durchspiel-Runs, R14 Intro-Seite, C17/Onboarding-Texte, R16 Unfertiges | Owner |
 
 Erledigt 2026-11-02: Frontend-Migration auf SvelteKit (ADR 0006, PR #444, Stufen 0–5e) — alle Bildschirme im neuen Frontend, Blade/Alpine/PicoCSS entfernt, Laravel ist reine JSON-API. **Offen (Stufe 5f, eigener Schritt):** Auslieferung (`play.nouron.de` + API, gehört zu R4) und Prüfung, ob der Login-Token im `localStorage` für die Beta reicht.
+
+Erledigt 2026-11-05/06 (PR #452, #454): Nexus-DB als Asset-Datenbank (T55/T56), Owner-Feedback zu Nexus-DB, Zielvereinbarungen, Ressourcenleiste und Hint-Leiste, Hex-Baufortschritt als Uhrzeiger, Techtree-Überarbeitung (Berater unter ihren Fokus-Gebäuden, Knotenzustände, blasse Kanten, reduzierte Legende), Begriff „Fokus-Gebäude“ einheitlich.
 
 ---
 
@@ -48,6 +50,7 @@ Quelle des A/C-Katalogs: `docs/audit-implementierungsstand-2026-09-06.md` (Kateg
 Größere Layout-Umbauten, erst nach Design-Entwurf (`game-designer` + `ui-specialist`), nicht vor dem Rest des Feedbacks:
 
 - [ ] **Labor-Vorschau ohne Analytiklabor:** Techtree grob (wenig Infos) schon vor dem Bau des Analytiklabors sichtbar, das Labor schaltet die Features frei; Menüpunkt heißt „Labor“ (Aufwand: Mittel, vorher Design mit `game-designer`)
+- [ ] **Techtree-Feinschliff:** Knoten per Tastatur anwählbar (Tab/Pfeile) bzw. Textäquivalent mit Status; Schriften im Canvas auf Mobil mindestens 11 px; Abdunklung unbeteiligter Knoten bei Auswahl abmildern (Aufwand: Mittel)
 - [ ] **Sidebar auf Mobil als Vollbild-Popup** (Aufwand: Mittel)
 - [ ] **Ressourcenleiste links**, transparenter Hintergrund — Owner überlegt noch (Aufwand: Mittel)
 - [ ] **Navigation unten als Kacheln** (Daumenbedienung), für Desktop und Mobil gleich, optional Subnav darüber (Aufwand: Groß)
