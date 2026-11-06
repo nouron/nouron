@@ -2,6 +2,7 @@
 
 ## 2026-11-06
 
+- Aufräumen: veraltete `cookie.txt` (localhost-Session) aus dem Repo entfernt, ROADMAP-Stand aktualisiert, Techtree-Feinschliff als offener Punkt eingetragen.
 - Labor-Techtree: Zustände klar getrennt (gesperrt blass mit Schloss, verfügbar weiß, gebaut getönt mit Balken), Pfeile zu unerfüllten Voraussetzungen aufgehellt, „CC N“-Label entfernt, Fokus-Label entfernt, gesperrte Kästchen behalten die Kategoriefarbe, Kommandozentrale ohne roten Dauerrahmen, alle Voraussetzungs-Pfeile durchgezogen; Legende auf die vier Kategorien reduziert und unter den Techtree verschoben; der Techtree lässt sich nicht mehr senkrecht ins Leere ziehen.
 
 ## 2026-11-05
