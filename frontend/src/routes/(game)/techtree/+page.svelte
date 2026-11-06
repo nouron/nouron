@@ -83,6 +83,7 @@
 
 	let page = $state<HTMLDivElement>();
 	let stage = $state<HTMLDivElement>();
+	let legendEl = $state<HTMLDivElement>();
 	let canvas = $state<HTMLCanvasElement>();
 	let dots = $state<HTMLDivElement>();
 	let panel = $state<HTMLElement>();
@@ -179,7 +180,7 @@
 		if (!page || !stage) return;
 		const top = Math.max(0, stage.getBoundingClientRect().top);
 		page.style.setProperty('--tt-top', `${top}px`);
-		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top))}px`;
+		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0) - 2))}px`;
 	}
 
 	function onResize() {
@@ -264,6 +265,8 @@
 		const header = document.querySelector('.app-header');
 		const ro = new ResizeObserver(() => fit());
 		if (header) ro.observe(header);
+		// The hint bar and other late-loading rows above the stage change the page height, not the header's.
+		ro.observe(document.body);
 
 		api<{ phases: Phases; edges: Edge[]; first_visit: boolean }>('/techtree')
 			.then(async (data) => {
@@ -293,8 +296,6 @@
 					describe: (item: { ref: Tech & { pulse?: unknown } }) => ({
 						label: item.ref.name,
 						sub: statusLabel(item.ref),
-						tag: item.ref.req_cc ? t('techtree.cc_tag', { level: item.ref.req_cc }) : '',
-						path: item.ref.is_path && item.ref.key ? t('colony.focus_' + item.ref.key) : '',
 						status: item.ref.status,
 						pulse: item.ref.pulse
 					}),
@@ -366,15 +367,6 @@
 		</div>
 	{/if}
 
-	<div class="techtree-legend" role="list" aria-label={t('techtree.legend_label')}>
-		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--b"></span>{t('techtree.legend_building')}</span>
-		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--k"></span>{t('techtree.legend_research')}</span>
-		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--s"></span>{t('techtree.legend_ship')}</span>
-		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--a"></span>{t('techtree.legend_advisor')}</span>
-		<span class="tt-leg" role="listitem"><span class="tt-st"></span>{t('techtree.legend_required')}</span>
-		<span class="tt-leg" role="listitem"><span class="tt-st tt-st--dash"></span>{t('techtree.legend_second')}</span>
-	</div>
-
 	<div class="techtree-stage" bind:this={stage}>
 		<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role (same as Blade: focusable canvas, list below is the accessible path) -->
 		<canvas class="techtree-canvas" bind:this={canvas} tabindex="0" role="img" aria-label={t('techtree.canvas_label')}
@@ -393,6 +385,13 @@
 			<button class="tt-btn" type="button" onclick={() => tree?.overview()}>{t('techtree.view_overview')}</button>
 		</div>
 		<div class="techtree-dots" bind:this={dots} hidden role="group" aria-label={t('techtree.columns_label')}></div>
+	</div>
+
+	<div class="techtree-legend" bind:this={legendEl} role="list" aria-label={t('techtree.legend_label')}>
+		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--b"></span>{t('techtree.legend_building')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--k"></span>{t('techtree.legend_research')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--s"></span>{t('techtree.legend_ship')}</span>
+		<span class="tt-leg" role="listitem"><span class="tt-sw tt-sw--a"></span>{t('techtree.legend_advisor')}</span>
 	</div>
 
 	<!-- Text alternative to the canvas: keyboard / screen-reader way to open a node -->

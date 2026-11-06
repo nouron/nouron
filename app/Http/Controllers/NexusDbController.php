@@ -6,6 +6,7 @@ use App\Enums\BuildingId;
 use App\Services\BuildingCostService;
 use App\Services\OnboardingHintService;
 use App\Services\PathBuildingGateService;
+use App\Services\Techtree\KnowledgeEffectDescriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ class NexusDbController extends Controller
     public function __construct(
         private readonly OnboardingHintService $onboardingHintService,
         private readonly BuildingCostService $buildingCosts,
+        private readonly KnowledgeEffectDescriptionService $knowledgeEffects,
     ) {}
 
     /** First-visit flag plus the building catalog; concept texts come from the lang files. */
@@ -111,8 +113,13 @@ class NexusDbController extends Controller
             ->map(function ($r) {
                 $k = preg_replace('/^knowledge_/', '', $r->name);
                 $levels = [];
+                $trust = (int) config("knowledge.{$k}.trust_per_lv", 0);
                 foreach ((array) config("knowledge.{$k}.levelup_costs", []) as $level => $ap) {
-                    $levels[] = ['level' => (int) $level, 'ap' => (int) $ap];
+                    $effects = array_map(fn ($line) => $line['text'].($line['chip'] ? ' '.$line['chip']['value'] : ''), $this->knowledgeEffects->effectsAtLevel($k, (int) $level));
+                    if ($trust !== 0) {
+                        $effects[] = __('nexusdb.effect_trust', ['n' => ($trust > 0 ? '+' : '').$trust]);
+                    }
+                    $levels[] = ['level' => (int) $level, 'ap' => (int) $ap, 'effects' => $effects];
                 }
 
                 return [
@@ -144,10 +151,19 @@ class NexusDbController extends Controller
             })->values()->all();
     }
 
+    /** Focus building (Fokus-Gebäude) an advisor comes with; the engineer is fixed and has none. */
+    private const ADVISOR_FOCUS_BUILDING = [
+        'scientist' => 'building_sciencelab',
+        'pilot' => 'building_hangar',
+        'trader' => 'building_bar',
+    ];
+
     /** @return list<array<string, mixed>> */
     private function advisorCatalog(): array
     {
         return DB::table('personell')->where('is_active', 1)->orderBy('phase')->orderBy('row')->orderBy('column')->get()
+            // Strategist is postponed (GDD §13.6) and may return with the Uplink building: hidden, not removed.
+            ->reject(fn ($r) => $r->name === 'techs_strategist')
             ->map(function ($r) {
                 $k = preg_replace('/^techs_/', '', $r->name);
 
@@ -157,7 +173,39 @@ class NexusDbController extends Controller
                     'description' => __('advisors.'.$k.'_desc'),
                     'requires' => $this->requirements($r),
                     'hire_cost' => (int) config("advisors.{$k}.credits"),
+                    'focus_building' => self::ADVISOR_FOCUS_BUILDING[$k] ?? null,
+                    'ranks' => $this->advisorRanks($k),
                 ];
             })->values()->all();
+    }
+
+    /**
+     * Per rank: one-time cost (hire at rank 1, promotion above), upkeep per Sol and the bonuses valid at that rank.
+     *
+     * @return list<array{rank: int, cost: int, upkeep: int, bonuses: list<string>}>
+     */
+    private function advisorRanks(string $k): array
+    {
+        $ranks = [];
+        foreach ((array) config('game.advisor.upkeep') as $rank => $upkeep) {
+            $rank = (int) $rank;
+            $bonuses = [__('nexusdb.bonus_ap', ['n' => (int) config("game.advisor.ap_per_rank.{$rank}", 0)])];
+            if ($k === 'engineer') {
+                $bonuses[] = __('nexusdb.bonus_ap_cap', ['n' => (int) config('game.build.ap_cap_per_sol.base', 0) + (int) config("game.build.ap_cap_per_sol.engineer_bonus_per_rank.{$rank}", 0)]);
+            } elseif ($k === 'pilot') {
+                $bonuses[] = __('nexusdb.bonus_mission_chance', ['n' => (int) round($rank * (float) config('game.missions.difficulty.pilot_rank_bonus_pct', 0) * 100)]);
+            } elseif ($k === 'trader') {
+                $bonuses[] = __('nexusdb.bonus_ship_discount', ['n' => (int) config("game.hangar.consul_ap_discount.{$rank}", 0)]);
+                $bonuses[] = __('nexusdb.bonus_merchant_forecast', ['n' => (int) config("game.merchant.forecast_sols.{$rank}", 0)]);
+            }
+            $ranks[] = [
+                'rank' => $rank,
+                'cost' => $rank === 1 ? (int) config("advisors.{$k}.credits") : (int) config("game.advisor.promotion_costs.{$rank}", 0),
+                'upkeep' => (int) $upkeep,
+                'bonuses' => $bonuses,
+            ];
+        }
+
+        return $ranks;
     }
 }

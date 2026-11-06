@@ -85,7 +85,7 @@
             dotsEl = opts.dots || null,
             rootEl = opts.root || stage;
         var labels = opts.labels || {};
-        // describe(item) -> { label, sub, tag, status, pulse }, re-read on refresh().
+        // describe(item) -> { label, sub, path, status, pulse }, re-read on refresh().
         var describe = opts.describe;
         var onSelect = opts.onSelect || function () {};
 
@@ -124,7 +124,6 @@
                     item: it,
                     label: '',
                     sub: '',
-                    tag: '',
                     path: '',
                     isRoot: it.band === 0,
                 };
@@ -140,7 +139,7 @@
                     i: i,
                     f: e.from,
                     t: e.to,
-                    dashed: !!e.dashed,
+                    dashed: false, // all prerequisites are equal (AND); fading by `met` shows which one is missing
                     met: e.met !== false,
                     z: N[e.to].cat,
                     pts: null,
@@ -199,8 +198,6 @@
                     d = describe(n.item);
                 n.label = d.label;
                 n.sub = d.sub;
-                n.tag = d.tag || '';
-                n.path = d.path || '';
                 n.status = d.status;
                 n.pulse = !!d.pulse;
             });
@@ -528,6 +525,17 @@
             }
         }
 
+        // Small padlock (body + shackle) centred at (cx, cy).
+        function drawLock(cx, cy) {
+            ctx.fillStyle = P.text2;
+            ctx.strokeStyle = P.text2;
+            ctx.lineWidth = 1.8;
+            ctx.fillRect(cx - 4, cy - 1, 8, 6);
+            ctx.beginPath();
+            ctx.arc(cx, cy - 1, 2.6, Math.PI, 0);
+            ctx.stroke();
+        }
+
         function drawNode(n, alpha, isActive) {
             var c = P[n.cat],
                 x0 = n.x - NW,
@@ -536,16 +544,27 @@
                 y1 = n.y + NH;
             var locked = n.status === 'locked',
                 built = n.status === 'built';
-            ctx.globalAlpha = alpha;
+            // Three states, told apart by lightness/opacity/stroke/marker only (never by hue):
+            // locked = pale fill + faded category border + padlock, available = white + category border,
+            // built = category tint + bar on the left. Active/hover only thickens the border.
+            ctx.globalAlpha = alpha * (locked ? 0.6 : 1);
             notchPath(x0, y0, x1, y1, NOTCH);
-            ctx.fillStyle = isActive || built ? c.bg : locked ? P.surface : P.raised;
+            ctx.fillStyle = locked ? P.surface : built ? c.bg : P.raised;
             ctx.fill();
+            ctx.globalAlpha = alpha;
+            if (built) {
+                ctx.fillStyle = c.c;
+                ctx.fillRect(x0, y0, 7, y1 - y0);
+            }
+            notchPath(x0, y0, x1, y1, NOTCH);
             ctx.lineJoin = 'miter';
-            ctx.lineWidth = n.isRoot ? 3.5 : isActive ? 3.5 : 2.5;
-            ctx.strokeStyle = n.isRoot ? P.accent : c.c;
-            if (locked && !isActive) ctx.globalAlpha = alpha * 0.55;
+            ctx.lineWidth = isActive ? 4 : 2.5;
+            // Locked keeps its category hue (faded via alpha) so the kind stays readable.
+            ctx.strokeStyle = c.c;
+            if (locked) ctx.globalAlpha = alpha * 0.6;
             ctx.stroke();
             ctx.globalAlpha = alpha;
+            if (locked) drawLock(x0 + 11, y0 + 7);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'alphabetic';
             ctx.fillStyle = locked ? P.text2 : P.text;
@@ -554,22 +573,6 @@
             ctx.fillStyle = locked ? P.text2 : c.fg;
             fitText(n.sub, 400, 12.5, NW * 2 - 24);
             ctx.fillText(n.sub, n.x, n.y + 16);
-            // Small, quiet Command Center requirement in the lower-right corner.
-            if (n.tag) {
-                ctx.textAlign = 'right';
-                ctx.fillStyle = P.text2;
-                ctx.font = '600 11px ' + FONT;
-                ctx.fillText(n.tag, x1 - 8, y1 - 6);
-                ctx.textAlign = 'center';
-            }
-            // Path building (Labor/Hangar/Cantina): quiet accent marker in the lower-left corner.
-            if (n.path) {
-                ctx.textAlign = 'left';
-                ctx.fillStyle = P.accent;
-                ctx.font = '700 10px ' + FONT;
-                ctx.fillText(n.path, x0 + 10, y1 - 6);
-                ctx.textAlign = 'center';
-            }
             ctx.globalAlpha = 1;
         }
 
@@ -606,12 +609,21 @@
             });
 
             var rel = relatedSets(activeId());
-            EDGES.forEach(function (e, i) {
-                if (!rel || !rel.edges[i]) drawEdge(e, rel ? 0.1 : e.dashed ? 0.8 : 0.92);
+            // Edges whose source prerequisite is not met are drawn pale and first, met ones on top.
+            function baseAlpha(e) {
+                return e.met ? (e.dashed ? 0.8 : 0.92) : e.dashed ? 0.3 : 0.35;
+            }
+            [false, true].forEach(function (met) {
+                EDGES.forEach(function (e, i) {
+                    if (e.met !== met || (rel && rel.edges[i])) return;
+                    drawEdge(e, rel ? Math.min(0.1, baseAlpha(e)) : baseAlpha(e));
+                });
             });
             if (rel)
-                EDGES.forEach(function (e, i) {
-                    if (rel.edges[i]) drawEdge(e, 1);
+                [false, true].forEach(function (met) {
+                    EDGES.forEach(function (e, i) {
+                        if (e.met === met && rel.edges[i]) drawEdge(e, met ? 1 : 0.55);
+                    });
                 });
             hasPulse = false;
             IDS.forEach(function (id) {
@@ -699,7 +711,11 @@
         function clampView() {
             var m = 140;
             view.tx = Math.min(vw - m, Math.max(m - W * view.s, view.tx));
-            view.ty = Math.min(vh - m, Math.max(m - H * view.s, view.ty));
+            // Vertical: never drag the tree away from the viewport edges (no empty space above/below);
+            // when it is shorter than the viewport it stays centred.
+            var pad = 14,
+                th = H * view.s;
+            view.ty = th + 2 * pad <= vh ? (vh - th) / 2 : Math.min(pad, Math.max(vh - th - pad, view.ty));
         }
         function startScale() {
             return MODE === 'narrow' ? Math.min(1.1, Math.max(0.85, vw / 400)) : Math.min(1.1, Math.max(0.8, vw / W));

@@ -97,7 +97,6 @@ return [
 
     // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
 
-    'hint_suggestion_label' => 'Vorschlag',
     'hint_not_mandatory' => 'Vorschlag, kein Zwang — andere Baureihenfolgen sind möglich.',
     'onboarding_hint_1' => 'Kein Baumeister an Bord, die AP laufen auf Minimum. Stell im Berater-Screen einen ein, bevor der nächste Sol verstreicht.',
     'onboarding_hint_repair' => ':building ist deutlich verschlissen. Repariere es, bevor der Verfall teurer wird: Gebäude antippen, „Reparieren" wählen — das kostet AP und etwas Regolith.',
@@ -129,7 +128,7 @@ return [
     // Svelte frontend (ADR 0006): nav labels, formerly hardcoded in layouts/colony.blade.php
     'nav_colony' => 'Kolonie',
     'nav_advisors' => 'Berater',
-    'nav_techtree' => 'Techtree',
+    'nav_techtree' => 'Labor',
     'nav_cantina' => 'Cantina',
     'nav_log' => 'Protokoll',
     'nav_nexusdb' => 'Nexus-DB',
@@ -170,7 +169,7 @@ return [
 
     // ── Error messages ────────────────────────────────────────────────────────
 
-    'error_path_building_gate' => 'Ein weiterer Schwerpunkt (Labor, Hangar oder Cantina) erst ab Kommandozentrale Lv:level.',
+    'error_path_building_gate' => 'Ein weiteres Fokus-Gebäude (Labor, Hangar oder Cantina) erst ab Kommandozentrale Lv:level.',
     'error_building_ap_cap' => 'Mehr als :cap AP schafft die Baucrew an diesem Gebäude nicht pro Sol. Morgen geht es weiter — oder an einem anderen Gebäude.',
     'ap_cap_chip' => 'heute :spent/:cap',
     'ap_cap_tooltip' => 'Mehr Arbeit nimmt dieses Gebäude pro Sol nicht auf. Ein Baumeister erweitert die Grenze mit jedem Rang.',
@@ -185,12 +184,12 @@ return [
     'built_popup_uplink_title' => 'Uplink-Station fertig',
     'built_popup_uplink_text' => 'Die Station bringt jeden Sol Relaisvergütung in Credits und schaltet den Nexus-Import frei — Werkstoffe, Regolith und Organika gegen Credits.',
     'build_locked_cc' => 'Braucht Kommandozentrale Lv:level',
-    'focus_building_sciencelab' => 'Focus: Kenntnisse',
-    'focus_building_hangar' => 'Focus: Missionen',
-    'focus_building_bar' => 'Focus: Beziehungen',
-    'focus_tip' => 'Eines von drei Schwerpunkten — Labor, Hangar und Cantina prägen den Run. Eines davon gehört zum Grundaufbau.',
-    'path_building_locked' => 'Weiterer Schwerpunkt ab CC Lv:level',
-    'error_agrardom_required' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für jeden Schwerpunkt (Labor, Hangar, Cantina).',
+    'focus_building_sciencelab' => 'Fokus: Kenntnisse',
+    'focus_building_hangar' => 'Fokus: Missionen',
+    'focus_building_bar' => 'Fokus: Beziehungen',
+    'focus_tip' => 'Eines von drei Fokus-Gebäuden — Labor, Hangar und Cantina prägen den Run. Eines davon gehört zum Grundaufbau.',
+    'path_building_locked' => 'Weiteres Fokus-Gebäude ab CC Lv:level',
+    'error_agrardom_required' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für jedes Fokus-Gebäude (Labor, Hangar, Cantina).',
     'error_tile_not_found' => 'Tile nicht gefunden.',
     'error_ring_locked' => 'Ring nicht freigeschaltet.',
     'error_already_explored' => 'Tile bereits erkundet.',
@@ -713,16 +712,16 @@ return [
     'sol_report_continue' => 'Weiter zu Sol :sol',
 
     // Screen 2 — Phase progress
-    'sol_report_screen2_title' => 'Fortschritt der Phase',
+    'sol_report_screen2_title' => 'Zielvereinbarungen',
     'sol_report_phase1_title' => 'Phase 1 — Grundaufbau',
     'sol_report_phase2_title' => 'Phase 2 — Nexus-Direktiven',
-    'sol_report_phase1_cc_level' => 'Kommandozentrale auf Stufe 2',
+    'sol_report_phase1_cc_level' => 'Ausbau der Kommandozentrale (Stufe 2)',
     'sol_report_phase1_harvester' => 'Harvester gebaut',
     'sol_report_phase1_housing' => 'Wohnhabitat gebaut',
     'sol_report_phase1_agrardom' => 'Agrardom gebaut',
-    'sol_report_phase1_uplink' => 'Uplink-Station gebaut',
-    'sol_report_phase1_path_building' => 'Einen Schwerpunkt gebaut (Labor, Hangar oder Cantina)',
-    'sol_report_phase1_advisors' => '2 aktive Berater',
+    'sol_report_phase1_uplink' => 'Konstruktion der Uplink-Station (Stufe 1)',
+    'sol_report_phase1_path_building' => 'Konstruktion von Labor, Hangar oder Cantina (Stufe 1)',
+    'sol_report_phase1_advisors' => 'Zwei aktive Berater',
     'sol_report_phase2_objective_hidden' => 'Direktive noch unbekannt — im Spielverlauf erspielt',
     'sol_report_phase2_objective_done' => 'Erfüllt',
     'sol_report_phase_success_title' => 'Phase 1 abgeschlossen',

@@ -117,7 +117,7 @@
 				key: 'sup',
 				cls: `res-chip res-Sup${unfilledNone ? '' : ' res-chip--warning'}`,
 				abbr: 'KOL',
-				amount: fmt(b ? (c?.colonists ?? b.cap) : (p[2].amount ?? 0)),
+				amount: c && b ? `${fmt(c.employed)}/${fmt(c.colonists)}` : fmt(b ? (c?.colonists ?? b.cap) : (p[2].amount ?? 0)),
 				title: t('resources.popup_sup_title'),
 				desc: t('resources.popup_sup_desc'),
 				extra

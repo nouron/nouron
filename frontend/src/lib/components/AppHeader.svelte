@@ -129,9 +129,7 @@
 						{#each nav as item (item.key)}
 							{#if item.locked}
 								<span class="menu-item locked"
-									><i class="bi {item.icon}"></i><span
-										>{item.label}<small class="locked-hint">{item.locked}</small></span
-									></span
+									><i class="bi {item.icon}"></i><span>{item.label}</span></span
 								>
 							{:else}
 								<a href={item.href} class="menu-item" class:active={isActive(item)}
@@ -296,11 +294,6 @@
 		align-items: flex-start;
 		white-space: normal;
 		opacity: 0.55;
-	}
-	.locked-hint {
-		display: block;
-		font-size: 0.75rem;
-		color: var(--color-text-secondary);
 	}
 	.divider {
 		height: 1px;

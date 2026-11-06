@@ -17,7 +17,6 @@ return [
     'tab_knowledge' => 'Knowledge',
     'tab_ships' => 'Ships',
     'tab_advisors' => 'Advisors',
-    'asset_hire_cost' => 'Hiring cost',
     'asset_nexus_cost' => 'Nexus price',
     'asset_delivery' => 'Delivery time',
     'asset_delivery_value' => ':count Sol',
@@ -33,7 +32,25 @@ return [
     'building_col_level' => 'Level',
     'building_col_ap' => 'AP',
     'building_col_regolith' => 'Regolith',
-    'building_focus_note' => 'One of three focus areas — your choice shapes the run.',
+    'building_focus_note' => 'This is one of three focus buildings. You choose where the focus lies first: knowledge, relations or missions.',
+
+    // Advisor ranks and knowledge effects (Nexus-DB tabs)
+    'advisor_ranks' => 'Ranks',
+    'advisor_col_rank' => 'Rank',
+    'advisor_col_cost' => 'One-time (Cr)',
+    'advisor_col_upkeep' => 'Upkeep (Cr/Sol)',
+    'advisor_col_bonus' => 'Effect',
+    'advisor_cost_hire' => 'Hiring',
+    'advisor_cost_promotion' => 'Promotion',
+    'advisor_focus' => 'Belongs to focus building',
+    'bonus_ap' => ':n AP per Sol',
+    'bonus_ap_cap' => 'AP cap: :n AP per building and Sol',
+    'bonus_mission_chance' => '+:n % mission success chance',
+    'bonus_ship_discount' => 'Ship negotiation: :n Cr discount per invested AP',
+    'bonus_merchant_forecast' => 'Merchant visit announced :n Sol ahead',
+    'effect_trust' => ':n trust',
+    'knowledge_col_effect' => 'Effect',
+    'knowledge_effect_none' => '—',
 
     'concept_supply_title' => 'Supply',
     'concept_supply_body' => 'Supply denotes the colony-wide operational capacity, abstracted from power, water, and personnel infrastructure. Each commissioned unit occupies a fixed share of that capacity. Once the capacity limit is reached, no further unit can be commissioned; existing units remain unaffected. Capacity expansion is achieved through higher-level Command Centers or additional Residential Habitats.',
@@ -58,5 +75,8 @@ return [
 
     'concept_colonists_title' => 'Colonists',
     'concept_colonists_body' => 'Colonists denote the workforce and inhabitants of a concession colony. The aggregated approval index (Trust) is the primary social metric; individuals are not tracked in the system. Declining approval reduces workforce readiness and thereby colony-wide production output. Critical Trust values trigger performance deductions in the concession assessment.',
+
+    'concept_focus_title' => 'Focus buildings',
+    'concept_focus_body' => 'Lab, Hangar and Cantina are the three focus buildings. Each stands for its own focus: the Lab for knowledge, the Hangar for missions and ships, the Cantina for relations — encounters, trade and requests. One focus building is part of the basic setup of the first phase; you choose which one to build first, and that shapes the run. You can build the second and third only once the Command Center is upgraded far enough. Each focus building has an advisor assigned: Analyst to the Lab, Pilot to the Hangar, Consul to the Cantina. Their advisor slot can only be filled once the building stands. The Engineer belongs to no focus building — he is the fixed first advisor and takes care of construction.',
 
 ];

@@ -96,7 +96,6 @@ return [
 
     // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
 
-    'hint_suggestion_label' => 'Suggestion',
     'hint_not_mandatory' => 'Suggestion, not mandatory — other build orders are possible.',
     'onboarding_hint_1' => 'No Engineer on board, so AP is running at minimum. Hire one in the Advisor screen before another Sol slips by.',
     'onboarding_hint_repair' => ':building is badly worn. Repair it before the decay gets more expensive: tap the building, choose "Repair" — it costs AP and a little Regolith.',
@@ -128,7 +127,7 @@ return [
     // Svelte frontend (ADR 0006): nav labels, formerly hardcoded in layouts/colony.blade.php
     'nav_colony' => 'Colony',
     'nav_advisors' => 'Advisors',
-    'nav_techtree' => 'Techtree',
+    'nav_techtree' => 'Labor',
     'nav_cantina' => 'Cantina',
     'nav_log' => 'Log',
     'nav_nexusdb' => 'Nexus DB',
@@ -169,7 +168,7 @@ return [
 
     // ── Error messages ────────────────────────────────────────────────────────
 
-    'error_path_building_gate' => 'Another focus area (Lab, Hangar or Cantina) requires Command Center Lv:level.',
+    'error_path_building_gate' => 'Another focus building (Lab, Hangar or Cantina) requires Command Center Lv:level.',
     'error_building_ap_cap' => 'The construction crew can only put :cap AP into this building per Sol. It continues tomorrow — or at another building.',
     'ap_cap_chip' => 'today :spent/:cap',
     'ap_cap_tooltip' => 'This building takes no more work per Sol. An Engineer raises the limit with every rank.',
@@ -187,9 +186,9 @@ return [
     'focus_building_sciencelab' => 'Focus: Knowledge',
     'focus_building_hangar' => 'Focus: Missions',
     'focus_building_bar' => 'Focus: Relationships',
-    'focus_tip' => 'One of three focus areas — Lab, Hangar and Cantina shape the run. One of them belongs to the foundation phase.',
-    'path_building_locked' => 'Another focus area from CC Lv:level',
-    'error_agrardom_required' => 'Build the Agrarian Dome first — mandatory prerequisite for every focus area (Lab, Hangar, Cantina).',
+    'focus_tip' => 'One of three focus buildings — Lab, Hangar and Cantina shape the run. One of them belongs to the foundation phase.',
+    'path_building_locked' => 'Another focus building from CC Lv:level',
+    'error_agrardom_required' => 'Build the Agrarian Dome first — mandatory prerequisite for every focus building (Lab, Hangar, Cantina).',
     'error_tile_not_found' => 'Tile not found.',
     'error_ring_locked' => 'Ring not unlocked.',
     'error_already_explored' => 'Tile already explored.',
@@ -709,16 +708,16 @@ return [
     'sol_report_continue' => 'Continue to Sol :sol',
 
     // Screen 2 — Phase progress
-    'sol_report_screen2_title' => 'Phase Progress',
+    'sol_report_screen2_title' => 'Agreed Objectives',
     'sol_report_phase1_title' => 'Phase 1 — Foundation',
     'sol_report_phase2_title' => 'Phase 2 — Nexus Directives',
-    'sol_report_phase1_cc_level' => 'Command Center at Level 2',
+    'sol_report_phase1_cc_level' => 'Upgrade the Command Center (Level 2)',
     'sol_report_phase1_harvester' => 'Harvester built',
     'sol_report_phase1_housing' => 'Housing complex built',
     'sol_report_phase1_agrardom' => 'Agrardom built',
-    'sol_report_phase1_uplink' => 'Uplink station built',
-    'sol_report_phase1_path_building' => 'One focus area built (Sciencelab, Hangar or Cantina)',
-    'sol_report_phase1_advisors' => '2 active advisors',
+    'sol_report_phase1_uplink' => 'Construct the Uplink Station (Level 1)',
+    'sol_report_phase1_path_building' => 'Construct a Sciencelab, Hangar or Cantina (Level 1)',
+    'sol_report_phase1_advisors' => 'Two active advisors',
     'sol_report_phase2_objective_hidden' => 'Directive not yet known — unlocked during play',
     'sol_report_phase2_objective_done' => 'Fulfilled',
     'sol_report_phase_success_title' => 'Phase 1 complete',
