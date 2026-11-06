@@ -180,7 +180,7 @@
 		if (!page || !stage) return;
 		const top = Math.max(0, stage.getBoundingClientRect().top);
 		page.style.setProperty('--tt-top', `${top}px`);
-		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0)))}px`;
+		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0) - 2))}px`;
 	}
 
 	function onResize() {
@@ -265,6 +265,8 @@
 		const header = document.querySelector('.app-header');
 		const ro = new ResizeObserver(() => fit());
 		if (header) ro.observe(header);
+		// The hint bar and other late-loading rows above the stage change the page height, not the header's.
+		ro.observe(document.body);
 
 		api<{ phases: Phases; edges: Edge[]; first_visit: boolean }>('/techtree')
 			.then(async (data) => {
