@@ -27,8 +27,7 @@
 			key: 'techtree',
 			icon: 'bi-diagram-3',
 			label: t('colony.nav_techtree'),
-			href: '/techtree',
-			locked: s.sciencelab_built ? undefined : t('colony.nav_techtree_locked')
+			href: '/techtree'
 		},
 		{
 			key: 'cantina',
