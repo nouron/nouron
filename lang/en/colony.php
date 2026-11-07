@@ -135,7 +135,6 @@ return [
     'user_nav_profile' => 'Profile',
     'user_nav_settings' => 'Settings',
     'user_nav_logout' => 'Log out',
-    'nav_techtree_locked' => 'Analytics Lab required.',
     'nav_cantina_locked' => 'Cantina not built — Residential Habitat lv1 required.',
 
     // ── First-visit popups (Techtree / Nexus-DB / Cantina / Hangar) ──────────

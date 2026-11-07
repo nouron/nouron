@@ -71,6 +71,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | **AP-Deckel** | `ap_cap` | Ein Ziel (Gebäude) nimmt pro Sol nur begrenzt Ausbau-AP auf: Grundwert plus Beitrag des passenden Beraters. Zeit-Bremse ohne Eingriff ins Regolith-Einkommen. Reparieren, Platzieren und Belohnungs-AP sind ausgenommen. |
 | Supply-Kappe | `supply_cap` | Obergrenze der Kolonisten: CC fest plus Wohnhabitat-Stufen. |
 | Kenntnis | `knowledge`/`research` | Erforschbarer Effekt (z. B. Baukunde, Kartographie, Geologie). „Forschung“ ist die Tätigkeit, „Kenntnis“ das Ergebnis. |
+| Labor-Vorschau | `preview` | Der Techtree („Labor“ im Menü) vor dem Bau des Analytik-Labors: gleiches Gitter, Kenntnisse gesperrt und ohne Zahlen, keine Forschung. |
 | Hunger | `hunger_streak` | Organika reicht nicht; Vertrauens-Malus, der mit jeder Folge-Runde wächst. |
 | Signal / Tiefenscan / Bergung | – | Verstecktes Signal auf einem Feld, Scan zeigt den Inhalt, Bergung holt ihn. |
 | Nexus | `nexus_debt` | Die Fraktion hinter Subvention, Kredit und Schulden; „Nexus-DB“ im UI ist dagegen die Enzyklopädie. |

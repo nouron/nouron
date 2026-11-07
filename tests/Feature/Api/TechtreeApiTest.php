@@ -6,6 +6,7 @@ use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -58,14 +59,122 @@ class TechtreeApiTest extends TestCase
         }
     }
 
-    public function test_techtree_without_sciencelab_answers_locked(): void
+    private function withoutLab(int $level = 0): void
     {
-        DB::table('colony_buildings')->where(['colony_id' => self::COLONY_ID, 'building_id' => 31])->update(['level' => 0]);
+        DB::table('colony_buildings')->where(['colony_id' => self::COLONY_ID, 'building_id' => 31])->update(['level' => $level]);
+        Sanctum::actingAs(User::find(self::USER_ID));
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function items(TestResponse $response): array
+    {
+        return collect($response->json('phases'))->flatMap(fn ($p) => $p['items'])->all();
+    }
+
+    public function test_techtree_without_sciencelab_answers_preview(): void
+    {
+        $this->withoutLab();
+
+        $this->getJson('/api/v1/techtree')->assertOk()->assertJson(['preview' => true]);
+    }
+
+    public function test_techtree_with_sciencelab_is_not_preview(): void
+    {
         Sanctum::actingAs(User::find(self::USER_ID));
 
-        $this->getJson('/api/v1/techtree')
-            ->assertStatus(409)
-            ->assertJson(['error' => 'techtree_locked']);
+        $this->getJson('/api/v1/techtree')->assertOk()->assertJson(['preview' => false]);
+    }
+
+    public function test_preview_has_same_nodes_and_edges_as_full_view(): void
+    {
+        Sanctum::actingAs(User::find(self::USER_ID));
+        $full = $this->getJson('/api/v1/techtree')->assertOk();
+        $this->withoutLab();
+        $preview = $this->getJson('/api/v1/techtree')->assertOk();
+
+        $keys = fn ($r) => collect($this->items($r))->map(fn ($i) => $i['type'].':'.$i['id'])->sort()->values()->all();
+        $this->assertSame($keys($full), $keys($preview));
+        // `met` follows the colony's lab level, which this test changes; the edge set itself must match.
+        $strip = fn ($r) => array_map(fn ($e) => array_diff_key($e, ['met' => 1]), $r->json('edges'));
+        $this->assertSame($strip($full), $strip($preview));
+    }
+
+    public function test_preview_knowledge_is_locked_and_stripped(): void
+    {
+        DB::table('colony_researches')->where('colony_id', self::COLONY_ID)->delete();
+        $this->withoutLab();
+
+        $research = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->where('type', 'research');
+        $this->assertNotEmpty($research);
+        foreach ($research as $item) {
+            $this->assertSame('locked', $item['status']);
+            $this->assertSame('sciencelab', $item['lock_reason']);
+            $this->assertNull($item['description']);
+            $this->assertSame('', $item['required_desc']);
+            $this->assertSame([], $item['required_list']);
+            $this->assertSame([], $item['unlocks_next_level']);
+            $this->assertSame([], $item['effects_current_level']);
+            $this->assertNull($item['max_level']);
+            $this->assertNull($item['ap_cap']);
+            $this->assertSame(0, $item['ap_spend']);
+            $this->assertSame(0, $item['ap_for_levelup']);
+            $this->assertSame(0, $item['ap_available']);
+            $this->assertNotSame('', $item['name']);
+        }
+    }
+
+    public function test_preview_keeps_building_ship_advisor_items_unchanged(): void
+    {
+        Sanctum::actingAs(User::find(self::USER_ID));
+        $full = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->where('type', '!=', 'research')->reject(fn ($i) => $i['type'] === 'building' && $i['id'] === 31);
+        $this->withoutLab();
+        $preview = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->where('type', '!=', 'research')->reject(fn ($i) => $i['type'] === 'building' && $i['id'] === 31);
+
+        $norm = fn ($c) => $c->map(fn ($i) => $i['type'].':'.$i['id'])->combine($c->map(fn ($i) => collect($i)->except(['status', 'required_desc', 'required_list'])->all()));
+        // Lab-dependent statuses of non-knowledge items may legitimately differ; every other field must match.
+        $this->assertEquals($norm($full)->sortKeys()->all(), $norm($preview)->sortKeys()->all());
+        foreach ($preview as $item) {
+            $this->assertArrayNotHasKey('lock_reason', $item);
+        }
+    }
+
+    public function test_preview_keeps_reached_knowledge_level(): void
+    {
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 91],
+            ['level' => 2, 'ap_spend' => 0, 'status_points' => 20]
+        );
+        $this->withoutLab();
+
+        $item = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->first(fn ($i) => $i['type'] === 'research' && $i['id'] === 91);
+        $this->assertSame(2, $item['level']);
+        $this->assertSame('built', $item['status']);
+        $this->assertSame('sciencelab', $item['lock_reason']);
+    }
+
+    public function test_preview_does_not_consume_first_visit(): void
+    {
+        $this->withoutLab();
+        $this->getJson('/api/v1/techtree')->assertOk()->assertJson(['first_visit' => false]);
+
+        DB::table('colony_buildings')->where(['colony_id' => self::COLONY_ID, 'building_id' => 31])->update(['level' => 1]);
+        $this->getJson('/api/v1/techtree')->assertOk()->assertJson(['preview' => false, 'first_visit' => true]);
+    }
+
+    public function test_order_without_lab_answers_lab_required_and_changes_nothing(): void
+    {
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 91],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
+        );
+        $this->withoutLab();
+
+        $response = $this->postJson('/api/v1/techtree/research/91/order', ['order' => 'add', 'ap' => 1])
+            ->assertStatus(422)
+            ->assertJson(['success' => false, 'error' => 'lab_required']);
+        $this->assertNotSame('techtree.error_lab_required', $response->json('message'));
+        $this->assertNotSame('', $response->json('message'));
+        $this->assertSame(0, (int) DB::table('colony_researches')->where(['colony_id' => self::COLONY_ID, 'research_id' => 91])->value('ap_spend'));
     }
 
     public function test_order_invests_ap_in_own_colony(): void

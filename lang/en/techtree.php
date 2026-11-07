@@ -188,6 +188,7 @@ return [
     'error_entity_not_found' => 'Unknown entity.',
     'error_invalid_mode' => 'Invalid action.',
     'error_unknown_type' => 'Unknown techtree type.',
+    'error_lab_required' => 'Research needs an Analytics Lab.',
     'error_unknown_order' => 'Unknown order.',
     'error_order_failed' => 'The order could not be carried out.',
 
@@ -206,4 +207,11 @@ return [
     'view_overview' => 'Overview',
     'column_n' => 'Column :n of :total',
     'columns_label' => 'Columns',
+    // Lab preview (no Analytics Lab yet): neutral notice, knowledge nodes show title only
+    'preview_notice' => 'Preview: knowledge items and their details are unlocked with the Analytics Lab.',
+    'preview_to_lab' => 'To the lab',
+    'preview_lab_needed' => 'Lab required',
+    'preview_reason_label' => 'Requirement',
+    'preview_reason_lab' => 'Analytics Lab',
+    'preview_reason_lab_needs' => 'The Analytics Lab itself still needs: :list',
 ];
