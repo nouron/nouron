@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Enums\BuildingId;
 use App\Services\AdvisorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,11 @@ class BotSessionColonyIsolationTest extends TestCase
 
         $bot2 = BotSession::boot($this, seed: 2);
         $this->assertNotSame($bot1->colonyId, $bot2->colonyId);
+        // Research orders need a built Analytics Lab (lab_required otherwise).
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $bot2->colonyId, 'building_id' => BuildingId::Sciencelab->value, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => -1, 'tile_y' => 1]
+        );
 
         $res = $bot2->act('probe', 'POST', '/techtree/research/91/order', ['order' => 'add', 'ap' => 1]);
 
