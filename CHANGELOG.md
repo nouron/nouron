@@ -2,7 +2,7 @@
 
 ## 2026-11-08
 
-- Entwurf Nexus-DB + Codex: Freischaltsystem (Codex-Fortschritt, GDD §17.3 Almanach) und Regel „wichtige Artikel nie gesperrt“ ergänzt.
+- Entwurf Nexus-DB + Codex: Freischaltsystem (Codex-Fortschritt, GDD §17.3 Almanach) und Regel „wichtige Artikel nie gesperrt“ ergänzt. Owner-Entscheidung: Option C, Wissensbonus vorerst gestrichen.
 - Entwurf Nexus-DB + Codex zusammenführen (Spec `2026-11-08-nexusdb-codex-zusammenfuehren-entwurf.md`, Owner-Entscheidung offen).
 - Techtree: Vorschau-Hinweisband entfernt (Grund steht im Detailpanel); kein roter Rahmen mehr um den Techtree bei Tastaturfokus.
 - UI-Umbau PR 5: Die Kolonie-Karte passt auf dem Desktop (ab 900 px) in die Höhe, kein Seitenscroll mehr (bestand schon vorher); bei ausgeklappter Ressourcenleiste rückt die Karte nach rechts.

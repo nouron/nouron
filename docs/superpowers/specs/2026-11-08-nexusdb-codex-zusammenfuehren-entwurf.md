@@ -1,6 +1,12 @@
 # Nexus-DB + Codex zusammenführen — Entwurf (Stand 2026-11-08)
 
-Status: **Entwurf, nicht umgesetzt.** Annahmen sind als solche gekennzeichnet. Owner-Entscheidung steht aus.
+Status: **Entwurf, nicht umgesetzt.** Annahmen sind als solche gekennzeichnet.
+
+> **Owner-Entscheidungen 2026-11-08:**
+> 1. **Option C** (echte Verschmelzung): Nexus-DB und Codex werden ein Datenarchiv mit gemeinsamem Freischaltmodell; Figuren-Einträge erscheinen eingebettet bei den zugehörigen Artikeln. Option A (Tab „Figuren“) ist höchstens Zwischenschritt.
+> 2. **Wissensbonus beim ersten Lesen (GDD §17.3) entfällt vorerst**, späterer Evaluationspunkt.
+> 3. **Grundmechaniken sind immer offen** (nie gesperrt).
+> Weiter offen: genaue Liste „immer verfügbar“, Persistenz run- vs. nutzerweit, Navigationsname, Redaktionskonzept für C (welche Figuren-Einträge zu welchen Artikeln).
 
 ## Ist-Stand
 
@@ -39,7 +45,7 @@ Das allgemeine Konzept steht schon im GDD: `docs/gdd/progressive-discovery.md` �
 - drei Kategorien: **immer verfügbar** / **fortschrittsabhängig** / **entdeckungsabhängig**
 - Trigger-Typen (`sol_reached`, `building_built`, `objective_revealed`, `encounter_event`, `advisor_dialog`, `always`)
 - gesperrt = grauer Eintrag mit „Wird nach … freigeschaltet“, Inhalt verborgen; Badge „Neu“ + Protokollmeldung bei Freischaltung
-- optional einmaliger Wissensbonus beim ersten Lesen (nur wenn der Owner das weiterhin will)
+- einmaliger Wissensbonus beim ersten Lesen — **vorerst gestrichen (Owner), später neu evaluieren**
 
 **Übernahme in die Verschmelzung (Annahmen, Empfehlung):**
 
@@ -53,11 +59,11 @@ Folge für Alternativen: Option A („Tab Figuren“) allein reicht dann nicht; 
 
 ## Offene Fragen an den Owner
 
-1. A, B oder C?
+1. ~~A, B oder C?~~ entschieden: C.
 2. Soll der Tab „Figuren“ ungelesene neue Einträge markieren (Punkt am Tab)? (Annahme: ja, später.)
 3. Heißt das Ziel in der Navigation weiter „Nexus-DB“ oder „Datenarchiv“? (GLOSSAR: „Nexus-DB“ ≠ Nexus-Schulden; Verwechslungsgefahr bleibt bei „Nexus-DB“.)
 5. Welche Artikel zählen zu „immer verfügbar“? (Vorschlag der Grundmechanik-Liste oben; Freigabe nötig.)
-6. Wissensbonus beim ersten Lesen (GDD §17.3) mit übernehmen oder streichen?
+6. ~~Wissensbonus~~ entschieden: entfällt vorerst.
 4. Gehören die Kenntnis-Einträge der Kenntnis-Ziehung (geplant, siehe `2026-11-08-kenntnis-ziehung-entwurf.md`) später als eigener Tab oder in „Kenntnisse“?
 
 ## Nicht Teil dieses Entwurfs
