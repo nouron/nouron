@@ -16,6 +16,8 @@
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import EntityChip from '#lib/components/EntityChip.svelte';
 	import { notifyTileTap } from '#lib/stores/rail.ts';
+	import { isPhone } from '#lib/stores/viewport.ts';
+	import MobileSheet from '#lib/components/MobileSheet.svelte';
 	import TileTerrain from './TileTerrain.svelte';
 	import LeveldownDialog, { type LeveldownResult } from './LeveldownDialog.svelte';
 	import type { ActionResult, AvailableBuilding, Building, ColonyData, Tile } from './types.ts';
@@ -35,6 +37,8 @@
 	let data = $state<ColonyData | null>(null);
 	let loadError = $state('');
 	let selectedTile = $state<Tile | null>(null);
+	// Phones (< 600 px): the tile panel is a full-screen sheet; this flag is its open state (desktop ignores it).
+	let sheetOpen = $state(false);
 	let gridEl = $state<HTMLElement>();
 	let toast = $state<{ msg: string; type: 'error' | 'info' } | null>(null);
 	let levelupNotice = $state<string | null>(null);
@@ -172,6 +176,7 @@
 		}
 		if (buildMode && pendingBuilding) {
 			if (hex.isBuildableTile(tile) && !buildingForTile(tile)) placeBuilding(tile);
+			else if ($isPhone) sheetOpen = true; // build menu (with Cancel) instead of a silent no-op
 			return;
 		}
 		// A free, buildable tile opens the build menu straight away (saves a click).
@@ -179,6 +184,21 @@
 		if (hex.isBuildableTile(tile) && !buildingForTile(tile)) startBuildForTile(tile);
 		else if (buildMode) cancelBuildMode();
 	}
+
+	// Sheet header on phones: the mode wins, else the building (with tier) or the tile heading.
+	function sheetTitle(tile: Tile | null, b: Building | null, building: boolean, moving: boolean) {
+		if (moving) return t('colony.harvester_move');
+		if (building) return t('colony.build_mode_title');
+		if (!tile) return '';
+		if (!b) return tileHeading(tile);
+		const lvl = b.level > 0 ? (b.tier_label ? ` ${roman(b.level)} – ${b.tier_label}` : ` | ${b.level}`) : '';
+		return buildingLabel(b.building_key) + lvl;
+	}
+
+	// Sheet without content (tile vanished, nothing selected) closes itself.
+	$effect(() => {
+		if (sheetOpen && !selectedTile && !buildMode && !harvesterMoveMode) sheetOpen = false;
+	});
 
 	function selectTile(tile: Tile) {
 		if (selectedTile) {
@@ -188,6 +208,7 @@
 		}
 		selectedTile = tile;
 		highlight(tile);
+		if ($isPhone && !harvesterMoveMode) sheetOpen = true;
 	}
 
 	// Deep link ?building=ID&instance=N (techtree detail panel, building chips): select that
@@ -423,6 +444,7 @@
 		pendingBuilding = null;
 		buildTargetTile = null;
 		selectedTile = tile;
+		sheetOpen = false; // placed: back to the map, the tile stays highlighted
 		await apply(res);
 	}
 
@@ -467,6 +489,8 @@
 		buildMode = false;
 		pendingBuilding = null;
 		selectedTile = null;
+		sheetOpen = false; // pick the target on the map; a floating Cancel button stays reachable on phones
+		if ($isPhone) showToast(t('colony.harvester_move_mode_hint'), 'info');
 		redrawSoon();
 	}
 
@@ -500,6 +524,7 @@
 		harvesterMoveMode = false;
 		movingHarvesterInstanceId = null;
 		selectedTile = tile;
+		sheetOpen = false;
 		if (oldPos && newPos) {
 			animateHarvesterMove(oldPos, newPos);
 			await new Promise((r) => setTimeout(r, 400));
@@ -607,6 +632,7 @@
 					if (match && !match.locked) {
 						buildMode = true;
 						pendingBuilding = match;
+						if ($isPhone) sheetOpen = true; // show the picked building and Cancel
 						redrawSoon();
 					} else showToast(t('colony.build_link_unavailable'), 'info');
 				}
@@ -638,7 +664,7 @@
 				<div class="supply-banner" role="alert">{t('colony.onboarding_trigger_supply_full')}</div>
 			{/if}
 
-			<div class="hex-canvas" bind:this={gridEl}></div>
+			<div class="hex-canvas" bind:this={gridEl} tabindex="-1"></div>
 
 			{#if data}
 				<div class="canvas-info-bar">
@@ -659,7 +685,7 @@
 			{/if}
 		</div>
 
-		<aside class="tile-panel">
+		{#snippet panel()}
 			{#if harvesterMoveMode && data}
 				<div class="tile-panel-action-strip">
 					<div class="tile-actions">
@@ -1058,9 +1084,29 @@
 					<div class="tile-panel-empty"><p>{t('colony.click_tile_hint')}</p></div>
 				</div>
 			{/if}
-		</aside>
+		{/snippet}
+
+		{#if $isPhone}
+			<MobileSheet
+				open={sheetOpen}
+				title={sheetTitle(selectedTile, selectedBuilding, buildMode, harvesterMoveMode)}
+				onclose={() => (sheetOpen = false)}
+				returnFocus={() => gridEl}
+				bodyClass="tile-panel tile-panel--sheet"
+			>
+				{@render panel()}
+			</MobileSheet>
+		{:else}
+			<aside class="tile-panel">{@render panel()}</aside>
+		{/if}
 	</div>
 </div>
+
+{#if $isPhone && harvesterMoveMode && !sheetOpen}
+	<button type="button" class="harvester-move-cancel" onclick={cancelHarvesterMove}>
+		{t('colony.harvester_move_cancel_float')}
+	</button>
+{/if}
 
 {#if leveldownOf}
 	<LeveldownDialog

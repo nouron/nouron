@@ -32,6 +32,8 @@ return [
 
     'build' => 'Bauen',
     'cancel' => 'Abbrechen',
+    'sheet_close' => 'Schließen',
+    'harvester_move_cancel_float' => 'Verlegen abbrechen',
     'select_tile_hint' => 'Tile anklicken zum Platzieren',
 
     // ── Sidebar labels ────────────────────────────────────────────────────────
