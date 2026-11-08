@@ -1,7 +1,8 @@
 # Changelog
 
-## 2026-11-08
 
+## 2026-11-08
+- Entwurf Nexus-DB + Codex zusammenführen (Spec `2026-11-08-nexusdb-codex-zusammenfuehren-entwurf.md`, Owner-Entscheidung offen).
 - Techtree: Vorschau-Hinweisband entfernt (Grund steht im Detailpanel); kein roter Rahmen mehr um den Techtree bei Tastaturfokus.
 - UI-Umbau PR 5: Die Kolonie-Karte passt auf dem Desktop (ab 900 px) in die Höhe, kein Seitenscroll mehr (bestand schon vorher); bei ausgeklappter Ressourcenleiste rückt die Karte nach rechts.
 - UI-Umbau PR 4: Auf dem Handy (unter 600 px) öffnet ein Tipp auf ein Kolonie-Tile die Details als Vollbild-Dialog (Schließen-Knopf, Esc, Fokus-Falle); nach dem Platzieren schließt er, das Tile bleibt markiert. Desktop unverändert.
