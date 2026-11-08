@@ -1084,7 +1084,7 @@ dialog.discovery-dialog {
  */
 .colony-toast {
     position: fixed;
-    bottom: 1.5rem;
+    bottom: calc(var(--app-bottom-h) + 1.5rem);
     left: 50%;
     transform: translateX(-50%);
     max-width: 320px;
@@ -1112,7 +1112,7 @@ dialog.discovery-dialog {
 
 .colony-levelup-notice {
     position: fixed;
-    bottom: 25vh;
+    bottom: calc(var(--app-bottom-h) + 25vh);
     left: 50%;
     transform: translateX(-50%);
     display: flex;

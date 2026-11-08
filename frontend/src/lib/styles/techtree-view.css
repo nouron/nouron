@@ -223,7 +223,7 @@
     position: fixed;
     top: var(--tt-top, 0px);
     right: 0;
-    bottom: 0;
+    bottom: var(--app-bottom-h);
     width: 300px;
     background: #fff;
     border-left: 1px solid var(--color-border, #e8e8ec);
@@ -246,7 +246,7 @@
         top: auto;
         left: 0;
         right: 0;
-        bottom: 0;
+        bottom: var(--app-bottom-h);
         width: 100%;
         height: auto;
         max-height: 60vh;
@@ -748,7 +748,7 @@ a.technology.personell.notexists {
 
 .techtree-toast {
     position: fixed;
-    bottom: 1.5rem;
+    bottom: calc(var(--app-bottom-h) + 1.5rem);
     left: 50%;
     transform: translateX(-50%);
     max-width: 320px;

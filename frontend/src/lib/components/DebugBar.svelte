@@ -4,6 +4,9 @@
 	import { api } from '#lib/stores/auth.ts';
 	import { solEpoch } from '#lib/stores/shell.ts';
 
+	// docked: sits in a parent container (game layout bottom chrome) instead of fixed to the viewport edge.
+	let { docked = false }: { docked?: boolean } = $props();
+
 	type Debug = {
 		run: { id: number; current_tick: number; status: string } | null;
 		tick_limit: number;
@@ -19,7 +22,22 @@
 
 	let d = $state<Debug | null>(null);
 	let open = $state(false);
-	let closed = $state(false);
+	// Collapsed to a thin handle by default; the choice is remembered (storage may be blocked).
+	const KEY = 'nouron.debugbar.expanded';
+	let expanded = $state(false);
+	try {
+		expanded = localStorage.getItem(KEY) === '1';
+	} catch {
+		/* ignore */
+	}
+	function toggleExpanded() {
+		expanded = !expanded;
+		try {
+			localStorage.setItem(KEY, expanded ? '1' : '0');
+		} catch {
+			/* ignore */
+		}
+	}
 
 	$effect(() => {
 		void $solEpoch; // reload after each Sol
@@ -27,8 +45,12 @@
 	});
 </script>
 
-{#if d && !closed}
-	<div class="debug">
+{#if d && !expanded}
+	<div class="debug" class:docked>
+		<button class="handle" onclick={toggleExpanded} aria-expanded="false" aria-label="DEBUG">⚙ DEBUG ▴</button>
+	</div>
+{:else if d}
+	<div class="debug" class:docked>
 		<div class="row">
 			<span class="tag">⚙ DEBUG</span>
 			<span class="sep">|</span>
@@ -48,7 +70,7 @@
 			<span class="mut">env:</span>
 			<span class={d.env === 'production' ? 'bad' : 'ok'}>{d.env}</span>
 			<button class="push" onclick={() => (open = !open)}>Config {open ? '▴' : '▾'}</button>
-			<button onclick={() => (closed = true)} aria-label="close">×</button>
+			<button onclick={toggleExpanded} aria-expanded="true" aria-label="collapse">▾</button>
 		</div>
 		{#if open}
 			<div class="panel">
@@ -82,6 +104,20 @@
 		color: #ccc;
 		font: 11px monospace;
 		border-top: 1px solid #2a2a2a;
+	}
+	.debug.docked {
+		position: static;
+	}
+	.handle {
+		display: block;
+		width: 100%;
+		background: none;
+		border: none;
+		color: #ff0;
+		font: 10px monospace;
+		line-height: 14px;
+		padding: 0;
+		cursor: pointer;
 	}
 	.row {
 		display: flex;
@@ -135,7 +171,7 @@
 	.push {
 		margin-left: auto;
 	}
-	/* Keep the feedback button above the bar (it sits fixed at the bottom right too). */
+	/* Keep the floating feedback button (infra layout) above the bar. */
 	:global(body:has(.debug) .feedback-trigger) {
 		bottom: 2.5rem;
 	}

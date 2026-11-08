@@ -3,18 +3,17 @@
 
 /* Layout heights, defined in ONE place.
    Measured by routes/(game)/+layout.svelte (ResizeObserver), 0px until measured / outside the run:
-   --app-header-h  whole sticky header (nav + resource bar + hint bar; grows when chips wrap or a hint shows)
-   --app-bottom-h  fixed bottom chrome (admin debug bar today, bottom nav later)
-   Static legacy estimates (pre-measurement, px guesses of the header height kept pixel-identical in PR 1;
-   follow-up PRs should replace them by calc(100dvh - var(--app-header-h) - var(--app-bottom-h) - ...)): */
+   --app-header-h  whole sticky header (top bar + resource bar + hint bar; grows when chips wrap or a hint shows)
+   --app-bottom-h  fixed bottom chrome (bottom navigation + collapsed/expanded admin debug bar, incl. safe-area inset)
+   --page-offset-*  chrome that page content must subtract from 100dvh = header + bottom + the page's own padding/heading. */
 :root {
 	--app-header-h: 0px;
 	--app-bottom-h: 0px;
-	--page-offset-page: 84px; /* colony hex layout min-height, advisors mobile page */
-	--page-offset-card: 230px; /* hangar/advisor card (nav + page padding + header + dots) */
-	--page-offset-card-narrow: 200px; /* same, <900px */
-	--page-offset-slide: 100px; /* hangar mobile full-screen page */
-	--page-offset-cantina: 105px; /* cantina viewport, mobile */
+	--page-offset-page: calc(var(--app-header-h) + var(--app-bottom-h)); /* colony hex layout, advisors/hangar mobile page */
+	--page-offset-card: calc(var(--page-offset-page) + 146px); /* hangar/advisor card (page padding + header + dots) */
+	--page-offset-card-narrow: calc(var(--page-offset-page) + 120px); /* same, <900px */
+	--page-offset-slide: var(--page-offset-page); /* hangar mobile full-screen page */
+	--page-offset-cantina: var(--page-offset-page); /* cantina viewport, mobile */
 }
 
 *,

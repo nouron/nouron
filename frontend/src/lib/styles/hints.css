@@ -168,7 +168,7 @@
  * color — this is a one-time explanation, not an action prompt. */
 .first-visit-popup {
     position: fixed;
-    bottom: 1.5rem;
+    bottom: calc(var(--app-bottom-h) + 1.5rem);
     right: 1.5rem;
     z-index: 50;
     max-width: 22rem;

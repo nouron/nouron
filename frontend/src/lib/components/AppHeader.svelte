@@ -1,6 +1,5 @@
 <script lang="ts">
-	// Port of the header in resources/views/layouts/colony.blade.php (nav, user menu, resource bar).
-	import { page } from '$app/state';
+	// Slim header: logo, Sol button, user menu; below it resource bar and hint bar. Navigation lives in BottomNav.
 	import { t } from '#lib/i18n.ts';
 	import { logout } from '#lib/stores/auth.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
@@ -8,145 +7,61 @@
 	import ResourceBar from './ResourceBar.svelte';
 	import SolButton from './SolButton.svelte';
 
-	let { s }: { s: Shell } = $props();
+	let { s, onfeedback }: { s: Shell; onfeedback: () => void } = $props();
 
-	let menuOpen = $state(false);
 	let userOpen = $state(false);
-
-	type NavItem = { key: string; icon: string; label: string; href: string; locked?: string; badge?: number };
-	const nav = $derived<NavItem[]>([
-		{ key: 'colony', icon: 'bi-hexagon', label: t('colony.nav_colony'), href: '/colony' },
-		{
-			key: 'cc',
-			icon: 'bi-diagram-2',
-			label: t('command_center.nav_label'),
-			href: '/command-center'
-		},
-		{ key: 'advisors', icon: 'bi-people', label: t('colony.nav_advisors'), href: '/advisors' },
-		{
-			key: 'techtree',
-			icon: 'bi-diagram-3',
-			label: t('colony.nav_techtree'),
-			href: '/techtree'
-		},
-		{
-			key: 'cantina',
-			icon: 'bi-cup-hot',
-			label: t('colony.nav_cantina'),
-			href: '/cantina',
-			locked: s.bar_built ? undefined : t('colony.nav_cantina_locked')
-		},
-		{
-			key: 'hangar',
-			icon: 'bi-rocket',
-			label: t('colony.nav_hangar'),
-			href: '/hangar',
-			locked: s.hangar_built ? undefined : t('colony.nav_hangar_locked')
-		},
-		{
-			key: 'log',
-			icon: 'bi-journal-text',
-			label: t('colony.nav_log'),
-			href: '/comm-log',
-			badge: s.unread_nexus_count
-		},
-		{ key: 'nexusdb', icon: 'bi-database', label: t('colony.nav_nexusdb'), href: '/nexus-db' }
-	]);
+	let userBtn = $state<HTMLButtonElement>();
 
 	const userNav = $derived([
 		{ icon: 'bi-list-check', label: t('lobby.nav_runs'), href: '/lobby' },
 		{ icon: 'bi-gear', label: t('colony.user_nav_settings'), href: '/settings' },
-		{ icon: 'bi-journal-bookmark', label: t('colony.user_nav_codex'), href: '/codex' },
 		...(s.is_admin ? [{ icon: 'bi-chat-left-text', label: t('feedback.admin_title'), href: '/admin/feedback' }] : [])
 	]);
-
-	const isActive = (item: NavItem) => item.href.startsWith('/') && page.url.pathname.startsWith(item.href);
 </script>
 
 <svelte:window
-	onclick={() => {
-		menuOpen = false;
-		userOpen = false;
+	onclick={() => (userOpen = false)}
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && userOpen) {
+			userOpen = false;
+			userBtn?.focus();
+		}
 	}}
 />
 
 <header class="app-header">
-	<nav>
+	<div class="topbar">
 		<a href="/" class="logo">Nouron</a>
 
-		<ul class="nav-desktop">
-			{#each nav as item (item.key)}
-				<li>
-					{#if item.locked}
-						<span class="nav-link locked" title={item.locked}
-							><i class="bi {item.icon}"></i><span class="label">{item.label}</span></span
-						>
-					{:else}
-						<a href={item.href} class="nav-link" class:active={isActive(item)}>
-							<i class="bi {item.icon}"></i><span class="label">{item.label}</span>
-							{#if item.badge}<span class="badge">{item.badge}</span>{/if}
-						</a>
-					{/if}
-				</li>
-			{/each}
-		</ul>
-
 		<div class="right">
-			<!-- On phones only on the colony view, like Blade (body.page-colony). -->
-			{#if s.in_active_run}<div class="sol-wrap" class:on-colony={page.url.pathname === '/colony'}>
-					<SolButton />
-				</div>{/if}
-			<div class="user nav-desktop-only">
+			{#if s.in_active_run}<SolButton />{/if}
+			<div class="user">
 				<button
 					class="plain"
+					bind:this={userBtn}
 					onclick={(e) => {
 						e.stopPropagation();
 						userOpen = !userOpen;
 					}}
-					aria-expanded={userOpen}>{s.username}</button
+					aria-expanded={userOpen}
+					aria-haspopup="true"
+					aria-label="{t('colony.nav_user_menu')}: {s.username}"
+					><i class="bi bi-person-circle" aria-hidden="true"></i><span class="uname">{s.username}</span></button
 				>
 				{#if userOpen}
 					<div class="menu">
-						{#each userNav as u (u.href)}<a href={u.href} class="menu-item">{u.label}</a>{/each}
-						<button class="menu-item" onclick={logout}>{t('colony.user_nav_logout')}</button>
-					</div>
-				{/if}
-			</div>
-
-			<div class="nav-mobile">
-				<button
-					class="plain burger"
-					onclick={(e) => {
-						e.stopPropagation();
-						menuOpen = !menuOpen;
-					}}
-					aria-expanded={menuOpen}
-					aria-label={t('colony.nav_menu')}><i class="bi bi-list"></i></button
-				>
-				{#if menuOpen}
-					<div class="menu">
-						{#each nav as item (item.key)}
-							{#if item.locked}
-								<span class="menu-item locked"
-									><i class="bi {item.icon}"></i><span>{item.label}</span></span
-								>
-							{:else}
-								<a href={item.href} class="menu-item" class:active={isActive(item)}
-									><i class="bi {item.icon}"></i>
-									{item.label}
-									{#if item.badge}<span class="badge">{item.badge}</span>{/if}</a
-								>
-							{/if}
-						{/each}
-						<div class="divider"></div>
 						{#each userNav as u (u.href)}<a href={u.href} class="menu-item"><i class="bi {u.icon}"></i> {u.label}</a
 							>{/each}
+						<button class="menu-item" onclick={onfeedback}
+							><i class="bi bi-chat-left-text"></i> {t('feedback.button')}</button
+						>
+						<div class="divider"></div>
 						<button class="menu-item" onclick={logout}><i class="bi bi-power"></i> {t('colony.user_nav_logout')}</button>
 					</div>
 				{/if}
 			</div>
 		</div>
-	</nav>
+	</div>
 
 	<div class="resbar"><ResourceBar {s} /></div>
 	<HintBar {s} />
@@ -159,7 +74,7 @@
 		z-index: 100;
 		background: var(--color-navbar-bg);
 	}
-	nav {
+	.topbar {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -179,57 +94,6 @@
 	.logo:hover {
 		color: var(--color-accent);
 	}
-	ul {
-		display: flex;
-		flex: 1;
-		justify-content: center;
-		min-width: 0;
-		gap: 0.25rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.nav-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-		padding: 0 10px;
-		line-height: 40px;
-		font-size: var(--text-nav-size);
-		color: #4a4a58;
-		text-decoration: none;
-		white-space: nowrap;
-		border-radius: 6px;
-		position: relative;
-	}
-	a.nav-link:hover {
-		color: var(--color-text-primary);
-		background: rgba(0, 0, 0, 0.04);
-	}
-	.nav-link.active,
-	.menu-item.active {
-		color: var(--color-accent);
-		font-weight: 600;
-		background: var(--color-accent-tint);
-	}
-	.locked {
-		opacity: 0.45;
-		cursor: default;
-	}
-	.badge {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 1.1em;
-		height: 1.1em;
-		padding: 0 0.25em;
-		border-radius: var(--radius-round);
-		background: var(--color-danger);
-		color: #fff;
-		font-size: 0.65em;
-		font-weight: 700;
-		line-height: 1;
-	}
 	.right {
 		display: flex;
 		align-items: center;
@@ -237,6 +101,10 @@
 		position: relative;
 	}
 	.plain {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 44px;
 		background: none;
 		border: none;
 		font: inherit;
@@ -244,13 +112,18 @@
 		color: #4a4a58;
 		cursor: pointer;
 		padding: 0 var(--space-sm);
-		line-height: 40px;
 	}
 	.plain:hover {
 		color: var(--color-text-primary);
 	}
-	.burger {
-		font-size: 1.3rem;
+	.plain .bi {
+		font-size: 1.2rem;
+	}
+	.uname {
+		max-width: 10rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.user {
 		position: relative;
@@ -289,11 +162,6 @@
 	.menu-item:hover {
 		background: var(--color-surface);
 	}
-	.menu-item.locked {
-		align-items: flex-start;
-		white-space: normal;
-		opacity: 0.55;
-	}
 	.divider {
 		height: 1px;
 		background: var(--color-border);
@@ -305,36 +173,10 @@
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 	}
 
-	/* Breakpoints: docs/design-system (mobile ≤599, icon-only nav <1100). */
-	.nav-mobile {
-		display: none;
-	}
-	@media (max-width: 1099px) {
-		.label {
-			display: none;
-		}
-		.nav-link {
-			width: 2.5rem;
-			justify-content: center;
-			padding: 0;
-		}
-		.nav-link .badge {
-			position: absolute;
-			top: 4px;
-			right: -2px;
-		}
-	}
+	/* Phones: the user menu shows the icon only. */
 	@media (max-width: 599px) {
-		.nav-desktop,
-		.nav-desktop-only,
-		.sol-wrap {
+		.uname {
 			display: none;
-		}
-		.nav-mobile {
-			display: block;
-		}
-		.sol-wrap.on-colony {
-			display: block;
 		}
 	}
 </style>

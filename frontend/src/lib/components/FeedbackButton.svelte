@@ -1,5 +1,6 @@
 <script lang="ts">
-	// Port of partials/feedback.blade.php (R15, closed beta): fixed button → beveled dialog → POST /feedback.
+	// Port of partials/feedback.blade.php (R15, closed beta): trigger → beveled dialog → POST /feedback.
+	// floating=false renders only the dialog; the owner (user menu) calls open().
 	import '#lib/styles/dialogs.css';
 	import '#lib/styles/feedback.css';
 	import { page } from '$app/state';
@@ -7,7 +8,13 @@
 	import { api, ApiError } from '#lib/stores/auth.ts';
 	import Button from './Button.svelte';
 
+	let { floating = true }: { floating?: boolean } = $props();
+
 	let dialog = $state<HTMLDialogElement>();
+
+	export function open() {
+		dialog?.showModal();
+	}
 	let category = $state('bug');
 	let message = $state('');
 	let sending = $state(false);
@@ -39,10 +46,12 @@
 	}
 </script>
 
-<button type="button" class="feedback-trigger" title={t('feedback.button_title')} onclick={() => dialog?.showModal()}>
-	<i class="bi bi-chat-left-text" aria-hidden="true"></i>
-	<span>{t('feedback.button')}</span>
-</button>
+{#if floating}
+	<button type="button" class="feedback-trigger" title={t('feedback.button_title')} onclick={open}>
+		<i class="bi bi-chat-left-text" aria-hidden="true"></i>
+		<span>{t('feedback.button')}</span>
+	</button>
+{/if}
 
 <dialog bind:this={dialog} class="sol-modal feedback-dialog" onclose={reset}>
 	<article>

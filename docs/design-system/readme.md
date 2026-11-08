@@ -58,8 +58,8 @@ A second pass added the **Dialog** (`dialogs.css`'s `.sol-modal` — beveled cor
 - **Corner radii:** small and consistent — 4px for cards/buttons/inputs, full pill (999px/20px) for chips and badges. Nothing large or "friendly-rounded". **Sci-fi bevel update (by request):** Button and Card now use a clipped angular corner (small diagonal cut, red accent on Card) echoing the Dialog's beveled shape, in place of a rounded corner on that one edge — a deliberate divergence from the flat-corner baseline above, applied consistently across the three "panel" primitives (Dialog, Card, Button).
 - **Transparency & blur:** reserved for modal/dialog scrims (`rgba(26,26,30,.55–.78)` + `backdrop-filter: blur(2–3px)`) and the Cantina surface panel — never for everyday surfaces.
 - **Imagery:** illustrated/hand-drawn WebP artwork (buildings, advisor portraits, NPC characters, starfields, cantina scenes) — no photography, no pixel art. Warm-neutral, painterly, 2× HiDPI-delivered. See `docs/adr/0001-graphics-asset-format.md` in the source repo for the full spec.
-- **Layout:** fixed navbar + resource bar + optional subnav stack at the top of every in-run screen; content area uses generous section spacing (32px between sections). Lobby is a centered 56rem column. Colony view is a two-column grid (canvas + fixed 320px sidebar) that stacks on mobile.
-- **Responsive breakpoints (fixed set, do not add more):** mobile ≤599px, tablet ≤767px, desktop ≥768px, wide ≥900px. Navigation collapses to icon-only at <1100px and a hamburger flyout at <600px.
+- **Layout:** slim top bar (wordmark, Sol button, user menu) + resource bar at the top and a fixed tile navigation at the bottom of every in-run screen (groups with a sub-row that opens above the bar); content area uses generous section spacing (32px between sections). Lobby is a centered 56rem column. Colony view is a two-column grid (canvas + fixed 320px sidebar) that stacks on mobile.
+- **Responsive breakpoints (fixed set, do not add more):** mobile ≤599px, tablet ≤767px, desktop ≥768px, wide ≥900px. The bottom navigation is identical on desktop and mobile (no nav-specific breakpoints).
 
 ## Iconography
 
