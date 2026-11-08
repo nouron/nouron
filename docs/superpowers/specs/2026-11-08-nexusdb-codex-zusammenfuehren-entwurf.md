@@ -1,6 +1,6 @@
 # Nexus-DB + Codex zusammenführen — Entwurf (Stand 2026-11-08)
 
-Status: **Entwurf, nicht umgesetzt.** Annahmen sind als solche gekennzeichnet.
+Status: **Entscheidungen getroffen, nicht umgesetzt.** Annahmen sind als solche gekennzeichnet.
 
 > **Owner-Entscheidungen 2026-11-08:**
 > 1. **Option C** (echte Verschmelzung): Nexus-DB und Codex werden ein Datenarchiv mit gemeinsamem Freischaltmodell; Figuren-Einträge erscheinen eingebettet bei den zugehörigen Artikeln. Option A (Tab „Figuren“) ist höchstens Zwischenschritt.
@@ -9,7 +9,8 @@ Status: **Entwurf, nicht umgesetzt.** Annahmen sind als solche gekennzeichnet.
 > 4. **Freischaltungen spielerweit** (bleiben über Runs erhalten, wie der Codex heute).
 > 5. **Name „Datenarchiv“**; „Nexus-DB“ darf als Alias und als Name in der Lore weiterleben (GLOSSAR-Eintrag nötig).
 > 6. **Redaktionskonzept** (welche Figuren-Einträge zu welchen Artikeln) wird separat besprochen.
-> Weiter offen: Freigabe der Liste „immer verfügbar“ (Vorschlag unten).
+> 7. **Liste „immer verfügbar“ freigegeben** (Regeln offen, Lore gesperrt; Tempel/Denkmal-Regelartikel ebenfalls offen).
+> Weiter offen: nur das Redaktionskonzept.
 
 ## Ist-Stand
 
