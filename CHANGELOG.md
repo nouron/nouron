@@ -3,6 +3,7 @@
 ## 2026-11-08
 
 - Techtree: Vorschau-Hinweisband entfernt (Grund steht im Detailpanel); kein roter Rahmen mehr um den Techtree bei Tastaturfokus.
+- UI-Umbau PR 1: Layout-Höhen als zentrale CSS-Variablen (gemessene Header-/Unterkanten-Höhe, bisherige Seiten-Offsets unverändert), Ressourcen-Chips sind echte Buttons (Tastatur/Screenreader); Design-Entwurf Ressourcenleiste links.
 - UI-Umbau: Owner-Entscheidungen zum Entwurf festgehalten (Navigation 1B, Ressourcenleiste links, Vollbild-Sidebar); Kenntnis-Ziehung als geplantes Feature vorgemerkt.
 - Techtree-Feinschliff: Schrift auf dem Bildschirm nie unter 11 px (lange Namen mit „…“), unbeteiligte Knoten bei Auswahl weniger stark abgedunkelt, Knoten per Tastatur wählbar (Pfeile, Enter, Esc, sichtbarer Fokusring), Debug-Leiste verdeckt die Legende nicht mehr.
 - Labor-Vorschau: Hinweistext präzisiert („Kenntnisse zeigen nur ihren Titel“), Schreibweise „Analytik-Labor“ in den Berater-Texten vereinheitlicht.

@@ -129,8 +129,8 @@
 /* On mobile, full-bleed viewport — breaks out of any parent padding */
 @media (max-width: 767px) {
     .cantina-viewport {
-        height: calc(100vh - 105px); /* fallback for browsers without dvh */
-        height: calc(100dvh - 105px);
+        height: calc(100vh - var(--page-offset-cantina)); /* fallback for browsers without dvh */
+        height: calc(100dvh - var(--page-offset-cantina));
         aspect-ratio: unset;
         border-radius: 0;
         border: none;

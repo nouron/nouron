@@ -12,8 +12,8 @@
     display: grid;
     grid-template-columns: 1fr 320px;
     align-items: start;
-    min-height: calc(100vh - 84px); /* fallback for browsers without dvh */
-    min-height: calc(100dvh - 84px); /* dynamic viewport — mobile address bar safe */
+    min-height: calc(100vh - var(--page-offset-page)); /* fallback for browsers without dvh */
+    min-height: calc(100dvh - var(--page-offset-page)); /* dynamic viewport — mobile address bar safe */
 }
 
 /* ── Canvas wrap (left column) ───────────────────────────────────────────── */
