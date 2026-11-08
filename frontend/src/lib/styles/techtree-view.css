@@ -109,8 +109,8 @@
     cursor: pointer;
 }
 .techtree-canvas:focus-visible {
-    outline: 2px solid var(--tt-accent);
-    outline-offset: -2px;
+    /* The focused node gets its own ring in the canvas; no frame around the whole stage. */
+    outline: none;
 }
 
 .techtree-controls {
