@@ -1,5 +1,18 @@
 # UI-Umbau — ENTWURF (kein Beschluss)
 
+> **Owner-Entscheidungen 2026-11-08 (gelten vor dem Rest dieses Entwurfs):**
+> 1. **Navigation 1B** (Gruppen mit aufklappender Subnav): *Kolonie* (Kommandozentrale, Karte, Berater), *Labor*, *Cantina*, *Hangar*, *Datenarchiv* (Log, Nexus-DB, Codex). Offene Idee: Nexus-DB und Codex zusammenführen — zu klären (Inhalte, Navigation).
+> 2. Schlanke Kopfzeile oben: Logo, SolButton, Nutzermenü. SolButton **nicht** unten.
+> 3. Gesperrte Ziele (Labor-Vorschau ausgenommen): grau, Voraussetzung im Tooltip.
+> 4. **Ressourcenleiste links, einheitlich auf Desktop und Mobil**, transparenter Hintergrund; darf die Kolonieansicht überlagern. Auf den anderen Screens eingeklappt (überlagert nichts), auf Wunsch vom linken Rand ausklappbar. Der `ui-specialist` entwirft das Verhalten.
+> 5. Halbtransparent (mit Blur) zum Ausprobieren.
+> 6. Hint-Leiste bleibt oben.
+> 7. Mobil-Sidebar: Vollbild (3A).
+> 8. Debug-Leiste: ganz unten unter allem oder ganz oben über allem, und einklappbar.
+> 9. Feedback-Button ins Nutzermenü.
+> 10. PR 1 (CSS-Variablen für Layout-Höhen) sofort; Rest in kleinen PRs danach.
+
+
 Stand: 2026-11-08. **Alles in diesem Dokument ist ein Vorschlag.** Nichts davon ist vom Owner entschieden oder im Code umgesetzt. Grundlage sind die Owner-Ideen vom 2026-11-05:
 
 1. Navigation am unteren Bildschirmrand als Kacheln (Daumenbedienung), Desktop und Mobil gleich, ggf. klappt eine Subnav darüber auf.

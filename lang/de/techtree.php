@@ -210,7 +210,6 @@ return [
     'column_n' => 'Spalte :n von :total',
     'columns_label' => 'Spalten',
     // Lab preview (no Analytics Lab yet): neutral notice, knowledge nodes show title only
-    'preview_notice' => 'Vorschau: Kenntnisse zeigen nur ihren Titel. Details und Forschung gibt es mit dem Analytik-Labor.',
     'preview_to_lab' => 'Zum Labor',
     'preview_lab_needed' => 'Labor nötig',
     'preview_reason_label' => 'Voraussetzung',

@@ -261,12 +261,20 @@
 				open = open === chip.key ? null : chip.key;
 			}}
 		>
-			{#if chip.ap}
-				<span>{chip.label} <span class="res-amount">{chip.amount}</span></span>
-			{:else}
-				<span class="res-abbr">{chip.abbr}</span>
-				<span class="res-amount">{chip.amount}</span>
-			{/if}
+			<!-- Real button inside the chip: keyboard/AT access; mouse clicks anywhere on the chip bubble to the span. -->
+			<button
+				type="button"
+				class="chip-btn"
+				class:chip-btn--inline={chip.ap}
+				aria-expanded={open === chip.key}
+			>
+				{#if chip.ap}
+					<span>{chip.label} <span class="res-amount">{chip.amount}</span></span>
+				{:else}
+					<span class="res-abbr">{chip.abbr}</span>
+					<span class="res-amount">{chip.amount}</span>
+				{/if}
+			</button>
 			{#if open === chip.key}
 				<div class="res-popup" {@attach clamp}>
 					<div class="res-popup-header">{chip.title}</div>
@@ -289,3 +297,28 @@
 		</span>
 	{/each}
 </div>
+
+<style>
+	/* Invisible button: the chip span keeps all visuals; the button only adds role, focus and keyboard activation. */
+	.chip-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: inherit;
+		font: inherit;
+		letter-spacing: inherit;
+		cursor: inherit;
+		border-radius: 20px;
+	}
+	.chip-btn--inline {
+		display: inline;
+	}
+	.chip-btn:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+	}
+</style>

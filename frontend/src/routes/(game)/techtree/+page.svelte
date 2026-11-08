@@ -423,13 +423,6 @@
 		</div>
 	{/if}
 
-	{#if preview}
-		<div class="preview-band" role="note">
-			<span>{t('techtree.preview_notice')}</span>
-			<button type="button" class="preview-band-link" onclick={focusLab}>{t('techtree.preview_to_lab')} &rarr;</button>
-		</div>
-	{/if}
-
 	<div class="techtree-stage" bind:this={stage}>
 		<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role (same as Blade: focusable canvas, list below is the accessible path) -->
 		<canvas class="techtree-canvas" bind:this={canvas} tabindex="0" role="img" aria-label={t('techtree.canvas_label')}
@@ -618,18 +611,6 @@
 	.load-error {
 		margin: var(--space-md);
 	}
-	.preview-band {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-sm) var(--space-md);
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-surface);
-		border-bottom: 1px solid var(--color-border);
-		font-size: 0.875rem;
-		color: var(--color-text-primary);
-	}
-	.preview-band-link,
 	.preview-reason-link {
 		background: none;
 		border: none;
@@ -639,7 +620,6 @@
 		cursor: pointer;
 		text-align: left;
 	}
-	.preview-band-link:hover,
 	.preview-reason-link:hover {
 		text-decoration: underline;
 	}
