@@ -208,7 +208,7 @@ return [
     'column_n' => 'Column :n of :total',
     'columns_label' => 'Columns',
     // Lab preview (no Analytics Lab yet): neutral notice, knowledge nodes show title only
-    'preview_notice' => 'Preview: knowledge items and their details are unlocked with the Analytics Lab.',
+    'preview_notice' => 'Preview: knowledge items show only their title. Details and research require the Analytics Lab.',
     'preview_to_lab' => 'To the lab',
     'preview_lab_needed' => 'Lab required',
     'preview_reason_label' => 'Requirement',
