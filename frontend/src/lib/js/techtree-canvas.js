@@ -445,6 +445,7 @@
             pinned = null,
             raf = 0,
             curDot = -1,
+            kfocus = null, // node focused via keyboard (arrow keys inside the canvas)
             anim = 0,
             insetBottom = 0;
         var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -515,14 +516,23 @@
             ctx.globalAlpha = 1;
         }
 
+        // Fits txt into maxW and sets the font; returns the text to draw. Text never drops below MIN_PX on screen
+        // (readable on phones): it shrinks only down to that floor, then gets an ellipsis. In the zoomed-out
+        // overview (s < 0.6) legibility is lost anyway, so the old floor of 9 world px applies without ellipsis.
+        var MIN_PX = 11;
         function fitText(txt, weight, size, maxW) {
             var s = size;
             ctx.font = weight + ' ' + s + 'px ' + FONT;
             var w = ctx.measureText(txt).width;
-            if (w > maxW) {
-                s = Math.max(9, (size * maxW) / w);
-                ctx.font = weight + ' ' + s + 'px ' + FONT;
-            }
+            if (w <= maxW) return txt;
+            var readable = view.s >= 0.6,
+                floor = readable ? Math.min(size, Math.max(9, MIN_PX / view.s)) : 9;
+            s = Math.max(floor, (size * maxW) / w);
+            ctx.font = weight + ' ' + s + 'px ' + FONT;
+            if (!readable || ctx.measureText(txt).width <= maxW) return txt;
+            var cut = txt;
+            while (cut.length > 1 && ctx.measureText(cut + '\u2026').width > maxW) cut = cut.slice(0, -1);
+            return cut.replace(/\s+$/, '') + '\u2026';
         }
 
         // Small padlock (body + shackle) centred at (cx, cy).
@@ -568,11 +578,9 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'alphabetic';
             ctx.fillStyle = locked ? P.text2 : P.text;
-            fitText(n.label, 600, 16, NW * 2 - 24);
-            ctx.fillText(n.label, n.x, n.y - 3);
+            ctx.fillText(fitText(n.label, 600, 16, NW * 2 - 24), n.x, n.y - 3);
             ctx.fillStyle = locked ? P.text2 : c.fg;
-            fitText(n.sub, 400, 12.5, NW * 2 - 24);
-            ctx.fillText(n.sub, n.x, n.y + 16);
+            ctx.fillText(fitText(n.sub, 400, 12.5, NW * 2 - 24), n.x, n.y + 16);
             ctx.globalAlpha = 1;
         }
 
@@ -616,7 +624,7 @@
             [false, true].forEach(function (met) {
                 EDGES.forEach(function (e, i) {
                     if (e.met !== met || (rel && rel.edges[i])) return;
-                    drawEdge(e, rel ? Math.min(0.1, baseAlpha(e)) : baseAlpha(e));
+                    drawEdge(e, rel ? Math.min(0.15, baseAlpha(e)) : baseAlpha(e));
                 });
             });
             if (rel)
@@ -629,12 +637,28 @@
             IDS.forEach(function (id) {
                 var n = N[id],
                     on = !rel || rel.nodes[id];
-                drawNode(n, on ? 1 : 0.16, id === activeId());
+                drawNode(n, on ? 1 : 0.3, id === activeId());
                 if (n.pulse && n.status === 'available' && on) {
                     hasPulse = true;
                     if (!reduced) drawPulse(n, now || 0);
                 }
             });
+
+            if (kfocus && N[kfocus]) {
+                var fn = N[kfocus],
+                    o = 7;
+                // White halo + accent line so the ring reads on every band colour.
+                [
+                    ['#ffffff', 7],
+                    [P.accent, 3.5],
+                ].forEach(function (st) {
+                    notchPath(fn.x - NW - o, fn.y - NH - o, fn.x + NW + o, fn.y + NH + o, NOTCH + o);
+                    ctx.lineJoin = 'miter';
+                    ctx.lineWidth = st[1];
+                    ctx.strokeStyle = st[0];
+                    ctx.stroke();
+                });
+            }
 
             // Band marks stay at the left edge while panning.
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -948,9 +972,77 @@
                 dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
             zoomAt(p[0], p[1], Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0016)), false);
         }
+        // Nearest node in a direction: primary-axis distance plus a penalty for drifting off the axis,
+        // so left/right prefers the same row and up/down the same column.
+        function neighbour(from, dx, dy) {
+            var f = N[from],
+                best = null,
+                bs = Infinity;
+            IDS.forEach(function (id) {
+                if (id === from) return;
+                var n = N[id],
+                    ax = (n.x - f.x) * dx,
+                    ay = (n.y - f.y) * dy;
+                var main = dx ? ax : ay,
+                    cross = Math.abs(dx ? n.y - f.y : n.x - f.x);
+                if (main <= 0) return;
+                var sc = main + 2 * cross;
+                if (sc < bs) {
+                    bs = sc;
+                    best = id;
+                }
+            });
+            return best;
+        }
+        function nearestToCenter() {
+            var cx = (vw / 2 - view.tx) / view.s,
+                cy = (vh / 2 - view.ty) / view.s,
+                best = null,
+                bd = Infinity;
+            IDS.forEach(function (id) {
+                var d = Math.hypot(N[id].x - cx, N[id].y - cy);
+                if (d < bd) {
+                    bd = d;
+                    best = id;
+                }
+            });
+            return best;
+        }
+        function setKFocus(id) {
+            kfocus = id;
+            if (id) {
+                focusNode(id, { bottom: insetBottom });
+                var n = N[id];
+                if (live) live.textContent = n.label + ', ' + n.sub;
+            }
+            requestDraw();
+        }
+        function onBlur() {
+            if (kfocus) {
+                kfocus = null;
+                requestDraw();
+            }
+        }
         function onKey(e) {
             var step = 80,
                 handled = true;
+            var dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+            if (e.key === 'Enter' || e.key === ' ') {
+                if (!kfocus) setKFocus(pinned || nearestToCenter());
+                else {
+                    pinned = kfocus;
+                    requestDraw();
+                    onSelect(pinned);
+                }
+                e.preventDefault();
+                return;
+            }
+            if (dir && kfocus) {
+                var nb = neighbour(kfocus, dir[0], dir[1]);
+                if (nb) setKFocus(nb);
+                e.preventDefault();
+                return;
+            }
             if (e.key === 'ArrowLeft') {
                 if (MODE === 'narrow') goToCol(Math.max(0, colAtCenter() - 1));
                 else view.tx += step;
@@ -962,6 +1054,7 @@
             else if (e.key === '+' || e.key === '=') zoomAt(vw / 2, vh / 2, 1.2, false);
             else if (e.key === '-') zoomAt(vw / 2, vh / 2, 1 / 1.2, false);
             else if (e.key === 'Escape') {
+                if (!pinned && kfocus) kfocus = null;
                 pinned = null;
                 requestDraw();
                 onSelect(null);
@@ -980,6 +1073,13 @@
         cv.addEventListener('pointerleave', onLeave);
         cv.addEventListener('wheel', onWheel, { passive: false });
         cv.addEventListener('keydown', onKey);
+        cv.addEventListener('blur', onBlur);
+        // Announces the keyboard-focused node (name + status) to screen readers.
+        var live = document.createElement('div');
+        live.setAttribute('aria-live', 'polite');
+        live.style.cssText =
+            'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap';
+        stage.appendChild(live);
         var onWinResize = function () {
             resize();
         };
@@ -1040,6 +1140,8 @@
                 cv.removeEventListener('pointerleave', onLeave);
                 cv.removeEventListener('wheel', onWheel);
                 cv.removeEventListener('keydown', onKey);
+                cv.removeEventListener('blur', onBlur);
+                if (live.parentNode) live.parentNode.removeChild(live);
             },
         };
     }
