@@ -2,6 +2,7 @@
 
 ## 2026-11-08
 
+- Techtree-Feinschliff: Schrift auf dem Bildschirm nie unter 11 px (lange Namen mit „…“), unbeteiligte Knoten bei Auswahl weniger stark abgedunkelt, Knoten per Tastatur wählbar (Pfeile, Enter, Esc, sichtbarer Fokusring), Debug-Leiste verdeckt die Legende nicht mehr.
 - Labor-Vorschau: Hinweistext präzisiert („Kenntnisse zeigen nur ihren Titel“), Schreibweise „Analytik-Labor“ in den Berater-Texten vereinheitlicht.
 - Entwürfe (kein Beschluss): Kenntnis-Ziehung „5 von 7“ (Wiedervorlage zu F6) und UI-Umbau (Navigation unten, Ressourcenleiste links, Mobil-Sidebar) als Specs mit Varianten und Owner-Fragen.
 

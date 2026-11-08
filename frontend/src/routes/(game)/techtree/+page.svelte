@@ -187,12 +187,18 @@
 	const showSubhead = (tech: Tech) =>
 		(tech.type === 'building' && !tech.is_instanced && tech.level > 0) || (tech.type === 'research' && tech.level > 0);
 
+	// The admin debug bar is fixed to the bottom edge and would cover the legend: reserve its height.
+	function debugH() {
+		const el = document.querySelector<HTMLElement>('.debug');
+		return el ? el.offsetHeight : 0;
+	}
+
 	// Size the stage to the viewport below whatever sits above it; the side panel starts at the same line.
 	function fit() {
 		if (!page || !stage) return;
 		const top = Math.max(0, stage.getBoundingClientRect().top);
 		page.style.setProperty('--tt-top', `${top}px`);
-		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0) - 2))}px`;
+		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0) - debugH() - 2))}px`;
 	}
 
 	function onResize() {
@@ -338,6 +344,17 @@
 		if (header) ro.observe(header);
 		// The hint bar and other late-loading rows above the stage change the page height, not the header's.
 		ro.observe(document.body);
+		// The debug bar (admins only) mounts after its API call and changes height when its config opens.
+		let debugEl: Element | null = null;
+		const mo = new MutationObserver(() => {
+			const el = document.querySelector('.debug');
+			if (el === debugEl) return;
+			if (debugEl) ro.unobserve(debugEl);
+			debugEl = el;
+			if (el) ro.observe(el);
+			fit();
+		});
+		mo.observe(document.body, { childList: true, subtree: true });
 
 		loadTree()
 			.catch((e) => {
@@ -348,6 +365,7 @@
 		return () => {
 			window.removeEventListener('resize', onResize);
 			ro.disconnect();
+			mo.disconnect();
 		};
 	});
 </script>
