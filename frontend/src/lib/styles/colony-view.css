@@ -69,6 +69,39 @@
     }
 }
 
+/* Desktop: the map fits the height between header and bottom nav (no page scroll). The SVG keeps its viewBox
+ * aspect ratio (preserveAspectRatio default = meet), so it shrinks to whichever of width/height is tighter.
+ * The tile panel scrolls inside its own column. Phones keep the natural, scrolling layout below. */
+@media (min-width: 900px) {
+    .hex-layout {
+        height: calc(100vh - var(--page-offset-page));
+        height: calc(100dvh - var(--page-offset-page));
+        min-height: 0;
+    }
+
+    .hex-canvas-wrap {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .hex-canvas {
+        min-height: 0;
+        overflow: hidden;
+        align-items: stretch;
+    }
+
+    .hex-canvas svg {
+        height: 100%;
+        min-height: 0;
+    }
+
+    /* Pinned resource rail (class set by ResourceRail on <html>, width = rail's 132px at >=900px): keep the map
+     * out from under it. Instant, no transition, so tiles do not slide under the pointer. */
+    html.rail-pinned .hex-canvas {
+        padding-left: calc(1.5rem + 132px);
+    }
+}
+
 .hex-canvas svg polygon {
     transition: filter 0.1s ease;
 }

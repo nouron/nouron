@@ -34,6 +34,12 @@
 	const pinned = $derived(folded ? false : (choice[group] ?? group === 'colony'));
 	const shown = $derived(pinned || peek);
 
+	// Lets page CSS (colony map padding) react to the pinned rail without prop plumbing.
+	$effect(() => {
+		document.documentElement.classList.toggle('rail-pinned', pinned && group === 'colony');
+		return () => document.documentElement.classList.remove('rail-pinned');
+	});
+
 	function setPinned(v: boolean) {
 		folded = false;
 		peek = false;
