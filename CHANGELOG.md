@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-08
+
+- Labor-Vorschau: Hinweistext präzisiert („Kenntnisse zeigen nur ihren Titel“), Schreibweise „Analytik-Labor“ in den Berater-Texten vereinheitlicht.
+
+## 2026-11-07
+
+- Labor-Vorschau: Der Techtree ist schon ohne Analytik-Labor sichtbar (Kenntnisse nur mit Titel, Funktionen mit dem Labor); Menüpunkt „Labor“ immer anklickbar; Forschungsbefehle ohne Labor weist der Server jetzt ab (422), vorher nur im UI versteckt. Spec: `docs/superpowers/specs/2026-11-06-labor-vorschau.md`.
+
 ## 2026-11-06
 
 - Aufräumen: veraltete `cookie.txt` (localhost-Session) aus dem Repo entfernt, ROADMAP-Stand aktualisiert, Techtree-Feinschliff als offener Punkt eingetragen.

@@ -15,6 +15,8 @@ Der Techtree hat genau zwei Aufgaben:
 1. **Übersicht:** Was gibt es, was ist freigeschaltet, was fehlt noch, und wie hängt alles zusammen?
 2. **Forschung:** Er ist der einzige Ort, an dem Kenntnisse erforscht werden (AP investieren, Stufe abschließen).
 
+Der Techtree ist von Anfang an lesbar. Solange das Analytik-Labor nicht steht (erste Stufe fehlt), zeigt er eine **Vorschau** (§11.4): dasselbe Gitter, aber ohne Forschung und ohne die Zahlen der Kenntnisse. Das Labor schaltet die Forschung frei. Der Menüpunkt „Labor“ ist immer erreichbar, damit der Spieler vor der Wahl des ersten Fokus-Gebäudes sieht, was das Labor bringt.
+
 Er ist **keine Verwaltungsansicht für Gebäude**. Jede Gebäude-Aktion — Errichten, Ausbauen, Reparieren, Rückbau — findet ausschließlich im Tile-Panel der Kolonieansicht statt (§11.4). Für Schiffe und Berater gilt dasselbe Prinzip: Der Techtree zeigt Voraussetzungen und Stand, gehandelt wird im Hangar-Screen (§8b) bzw. im Berater-Screen (§13).
 
 **Warum eine Stelle je Aktion:** Zwei Orte für dieselbe Aktion würden zwei Rechenwege für Kolonisten-Gate, Rabatte und Rundung erzwingen, und der Spieler müsste lernen, dass dieselbe Aktion an zwei Orten verschieden aussehen kann. Ein Gebäude ist ein Ort auf der Karte. Also passiert alles, was diesen Ort verändert, auch auf der Karte. Der Techtree beantwortet die Planungsfrage („Was kommt als Nächstes, und was brauche ich dafür?"), die Kolonieansicht die Handlungsfrage („Was tue ich jetzt mit diesem Tile?").
@@ -198,6 +200,8 @@ Alle vier Kategorien liegen in einem einzigen gemeinsamen `<div class="tech-grid
 Ein Klick auf eine Kachel öffnet das Detailpanel. Sein Inhalt hängt vom Entitätstyp ab.
 
 **Kenntnisse** — voll bedienbar. Beschreibung, Effekt je Stufe, Voraussetzungen (Gebäude, CC-Stufen-Cap nach Regel 3), Fortschritt der laufenden Stufe und die Forschungsaktion selbst (AP investieren, Stufe abschließen). Das ist die einzige Stelle im Spiel, an der geforscht wird.
+
+**Vorschau ohne Analytik-Labor.** Steht das Labor nicht, ist die Ansicht eine Vorschau. Ein dauerhaftes Hinweisband sagt, dass es eine Vorschau ist und was fehlt; der Ton ist neutral und empfiehlt das Labor nicht, weil Labor, Hangar und Cantina gleichwertige Eröffnungen sind (§13). Alle Knoten und Kanten aller Phasen bleiben sichtbar (§16.4), auch spätere Phasen; Gebäude, Schiffe und Berater zeigen ihren echten Zustand. Kenntnisse erscheinen als gesperrt mit Name, Kurzbeschreibung und Voraussetzungsliste, aber ohne Effekte je Stufe, Stufenzahl, AP-Kosten, Fortschritt und Forschungsaktion. Im Detailpanel steht stattdessen der Grund „Voraussetzung: Analytik-Labor“ mit Sprung zum Labor-Knoten (fehlt dem Labor die CC-Stufe, nennt der Grund auch diese). Kein Fehlerbild beim Öffnen, kein gesperrter Menüpunkt. Mit der ersten Labor-Stufe wechselt die geöffnete Ansicht ohne Neuladen auf die Vollansicht; wird das Labor auf Stufe 0 zurückgebaut, fällt sie zurück, und erreichte Kenntnis-Stufen bleiben (Bestandsschutz, §11.5). Details und Akzeptanzkriterien: `docs/superpowers/specs/2026-11-06-labor-vorschau.md`.
 
 **Gebäude** — nur lesend, mit Sprung in die Kolonie:
 

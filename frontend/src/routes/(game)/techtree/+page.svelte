@@ -79,6 +79,7 @@
 	const w = window as unknown as {
 		TechtreeCanvas: { create(opts: object): Canvas };
 	};
+	const LAB_ID = 31; // BuildingId::Sciencelab
 	const CAT: Record<TechType, string> = { building: 'b', research: 'k', ship: 's', personell: 'a' };
 
 	let page = $state<HTMLDivElement>();
@@ -95,6 +96,8 @@
 	let sheetMode = $state(false);
 	let loadError = $state('');
 	let firstVisit = $state(false);
+	// Server flag: no Analytics Lab yet -> knowledge nodes carry only title and lock reason.
+	let preview = $state(false);
 	let toast = $state<{ message: string; type: 'error' | 'info' } | null>(null);
 	let tree: Canvas | null = null;
 	let toastTimer: ReturnType<typeof setTimeout>;
@@ -117,7 +120,16 @@
 		);
 	}
 
+	const isPreviewKnowledge = (tech: Tech) => preview && tech.type === 'research' && tech.status === 'locked';
+	const labNode = () => flatItems().find((it) => it.type === 'building' && it.id === LAB_ID);
+
+	function focusLab() {
+		const lab = labNode();
+		if (lab) openDetail(lab);
+	}
+
 	function statusLabel(tech: Tech): string {
+		if (isPreviewKnowledge(tech)) return t('techtree.preview_lab_needed');
 		const gate: Record<string, string> = {
 			available: t('techtree.status_available'),
 			locked: t('techtree.status_locked')
@@ -258,6 +270,65 @@
 		} else if (json.levelup_blocked_message) showToast(json.levelup_blocked_message);
 	}
 
+	type TreeData = { phases: Phases; edges: Edge[]; first_visit: boolean; preview?: boolean };
+
+	// Initial load builds the canvas; later loads (lab built/dismantled) merge into the existing
+	// objects so selection and zoom survive.
+	async function loadTree() {
+		const data = await api<TreeData>('/techtree');
+		for (const [n, phase] of Object.entries(data.phases)) for (const it of phase.items) it.band = Number(n);
+		preview = data.preview === true;
+		edges = data.edges ?? [];
+		if (tree) {
+			for (const [n, phase] of Object.entries(data.phases)) {
+				for (const u of phase.items) {
+					const item = phases[n]?.items.find((i) => i.id === u.id && i.type === u.type);
+					if (item) Object.assign(item, u);
+				}
+			}
+			tree.refresh(null, edges);
+			return;
+		}
+		// Band = phase number; set above (writing state while rendering is not allowed).
+		phases = data.phases;
+		firstVisit = data.first_visit;
+		await tick();
+		fit();
+		tree = w.TechtreeCanvas.create({
+			root: page,
+			stage,
+			canvas,
+			dots,
+			items: flatItems().map((it) => ({
+				key: keyOf(it),
+				cat: CAT[it.type],
+				band: it.band,
+				col: it.grid_col,
+				row: it.grid_row,
+				ref: it
+			})),
+			edges,
+			bandLabels: bandLabels(),
+			labels: { columnN: t('techtree.column_n') },
+			describe: (item: { ref: Tech & { pulse?: unknown } }) => ({
+				label: item.ref.name,
+				sub: statusLabel(item.ref),
+				status: item.ref.status,
+				pulse: item.ref.pulse
+			}),
+			onSelect: selectByKey
+		});
+	}
+
+	// Lab built (level >= 1) or dismantled while the page is open: reload the data.
+	let lastLab: boolean | null = null;
+	$effect(() => {
+		const built = $shell?.sciencelab_built;
+		if (built === undefined) return;
+		if (lastLab !== null && lastLab !== built && tree) loadTree().catch(() => {});
+		lastLab = built;
+	});
+
 	onMount(() => {
 		onResize();
 		window.addEventListener('resize', onResize);
@@ -268,40 +339,7 @@
 		// The hint bar and other late-loading rows above the stage change the page height, not the header's.
 		ro.observe(document.body);
 
-		api<{ phases: Phases; edges: Edge[]; first_visit: boolean }>('/techtree')
-			.then(async (data) => {
-				// Band = phase number; set once here (writing state while rendering is not allowed).
-				for (const [n, phase] of Object.entries(data.phases)) for (const it of phase.items) it.band = Number(n);
-				phases = data.phases;
-				edges = data.edges ?? [];
-				firstVisit = data.first_visit;
-				await tick();
-				fit();
-				tree = w.TechtreeCanvas.create({
-					root: page,
-					stage,
-					canvas,
-					dots,
-					items: flatItems().map((it) => ({
-						key: keyOf(it),
-						cat: CAT[it.type],
-						band: it.band,
-						col: it.grid_col,
-						row: it.grid_row,
-						ref: it
-					})),
-					edges,
-					bandLabels: bandLabels(),
-					labels: { columnN: t('techtree.column_n') },
-					describe: (item: { ref: Tech & { pulse?: unknown } }) => ({
-						label: item.ref.name,
-						sub: statusLabel(item.ref),
-						status: item.ref.status,
-						pulse: item.ref.pulse
-					}),
-					onSelect: selectByKey
-				});
-			})
+		loadTree()
 			.catch((e) => {
 				if (e instanceof ApiError && e.status === 409) loadError = e.message;
 				else if (!(e instanceof ApiError && e.status === 401)) loadError = String(e.message ?? e);
@@ -364,6 +402,13 @@
 	{#if toast}
 		<div class="techtree-toast techtree-toast--{toast.type}" role="status" aria-live="polite" transition:fade>
 			{toast.message}
+		</div>
+	{/if}
+
+	{#if preview}
+		<div class="preview-band" role="note">
+			<span>{t('techtree.preview_notice')}</span>
+			<button type="button" class="preview-band-link" onclick={focusLab}>{t('techtree.preview_to_lab')} &rarr;</button>
 		</div>
 	{/if}
 
@@ -448,7 +493,7 @@
 						</div>
 					</div>
 				{/if}
-				{#if tech.description}
+				{#if tech.description && !isPreviewKnowledge(tech)}
 					<p class="building-detail-description">{tech.description}</p>
 				{/if}
 
@@ -492,6 +537,23 @@
 						{/if}
 						{#if acquireHint(tech)}
 							<p class="detail-ap-hint">{acquireHint(tech)}</p>
+						{/if}
+					{:else if tech.type === 'research' && preview}
+						{#if tech.status === 'locked'}
+							{@const lab = labNode()}
+							<div class="preview-reason">
+								<p><strong>{t('techtree.preview_reason_label')}:</strong> {t('techtree.preview_reason_lab')}</p>
+								{#if lab && lab.status === 'locked' && lab.required_list?.length}
+									<p class="detail-ap-hint">
+										{t('techtree.preview_reason_lab_needs', { list: lab.required_list.join(', ') })}
+									</p>
+								{/if}
+								{#if lab}
+									<button type="button" class="detail-cta-link preview-reason-link" onclick={focusLab}
+										>{t('techtree.preview_to_lab')} &rarr;</button
+									>
+								{/if}
+							</div>
 						{/if}
 					{:else if tech.type === 'research'}
 						{@render effects(tech)}
@@ -537,5 +599,33 @@
 <style>
 	.load-error {
 		margin: var(--space-md);
+	}
+	.preview-band {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-sm) var(--space-md);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-surface);
+		border-bottom: 1px solid var(--color-border);
+		font-size: 0.875rem;
+		color: var(--color-text-primary);
+	}
+	.preview-band-link,
+	.preview-reason-link {
+		background: none;
+		border: none;
+		padding: 0;
+		font: inherit;
+		color: var(--color-accent);
+		cursor: pointer;
+		text-align: left;
+	}
+	.preview-band-link:hover,
+	.preview-reason-link:hover {
+		text-decoration: underline;
+	}
+	.preview-reason p {
+		margin: var(--space-xs) 0;
 	}
 </style>

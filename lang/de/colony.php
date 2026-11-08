@@ -136,7 +136,6 @@ return [
     'user_nav_profile' => 'Profil',
     'user_nav_settings' => 'Einstellungen',
     'user_nav_logout' => 'Abmelden',
-    'nav_techtree_locked' => 'Analytiklabor erforderlich.',
     'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 erforderlich.',
 
     // ── First-visit popups (Techtree/Nexus-DB/Cantina/Hangar) ──────────────────
