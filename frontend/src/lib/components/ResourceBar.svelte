@@ -1,9 +1,9 @@
 <script lang="ts">
-	// Port of resources/views/resources/resourcebar.blade.php — chips + breakdown popups.
+	// Resource chips (vertical list inside ResourceRail) + breakdown popups that open to the right of the rail.
 	import { t } from '#lib/i18n.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
 
-	let { s }: { s: Shell } = $props();
+	let { s, open = $bindable(null) }: { s: Shell; open?: string | null } = $props();
 
 	type Row = { label: string; value: string | number; strong?: boolean; hidden?: boolean };
 	type Chip = {
@@ -19,7 +19,8 @@
 		ap?: boolean;
 	};
 
-	let open = $state<string | null>(null);
+	// Hover opens popups only for real pointers; on touch a tap toggles (a click with a mouse keeps the hover popup open; the rail also handles Esc/outside clicks).
+	const canHover = () => typeof matchMedia === 'function' && matchMedia('(hover: hover)').matches;
 
 	const fmt = (n: number) => Math.round(n).toLocaleString('de-DE');
 	const signed = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
@@ -236,47 +237,49 @@
 		return out;
 	});
 
-	// Keep an open popup inside the viewport (8px margin), like the Blade x-effect.
-	function clamp(el: HTMLElement) {
-		el.style.marginLeft = '';
-		const r = el.getBoundingClientRect();
-		if (r.left < 8) el.style.marginLeft = `${8 - r.left}px`;
-		else if (r.right > window.innerWidth - 8) el.style.marginLeft = `${window.innerWidth - 8 - r.right}px`;
+	// Place a popup right of the rail panel (position: fixed escapes the panel's scroll clipping).
+	// Vertically clamped between the header and the bottom chrome; falls back to covering the panel when too narrow.
+	function place(el: HTMLElement) {
+		const host = el.parentElement!.getBoundingClientRect();
+		const panel = el.closest('.rail-panel')!.getBoundingClientRect();
+		const root = getComputedStyle(document.documentElement);
+		const top = parseFloat(root.getPropertyValue('--app-header-h')) || 0;
+		const bottom = parseFloat(root.getPropertyValue('--app-bottom-h')) || 0;
+		let left = panel.right + 8;
+		let width = Math.min(280, window.innerWidth - left - 8);
+		if (width < 200) {
+			left = 8;
+			width = Math.min(280, window.innerWidth - 16);
+		}
+		el.style.left = `${left}px`;
+		el.style.width = `${width}px`;
+		const h = el.offsetHeight;
+		const max = window.innerHeight - bottom - 8 - h;
+		el.style.top = `${Math.max(top + 8, Math.min(host.top, max))}px`;
 	}
 </script>
 
-<svelte:window onclick={() => (open = null)} />
-
-<div class="res-bar-wrap resource-bar">
+<div class="chips resource-bar">
 	{#each chips as chip (chip.key)}
 		{#if chip.dividerBefore}<span class="res-divider" aria-hidden="true"></span>{/if}
-		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-		<span
-			class={chip.cls}
-			style="position: relative; cursor: default"
-			onmouseenter={() => (open = chip.key)}
-			onmouseleave={() => (open = null)}
-			onclick={(e) => {
-				e.stopPropagation();
-				open = open === chip.key ? null : chip.key;
-			}}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="rc"
+			onmouseenter={() => canHover() && (open = chip.key)}
+			onmouseleave={() => canHover() && open === chip.key && (open = null)}
 		>
-			<!-- Real button inside the chip: keyboard/AT access; mouse clicks anywhere on the chip bubble to the span. -->
 			<button
 				type="button"
-				class="chip-btn"
-				class:chip-btn--inline={chip.ap}
+				class="{chip.cls} chip-btn"
 				aria-expanded={open === chip.key}
+				aria-controls="rail-popup-{chip.key}"
+				onclick={() => (open = open === chip.key && !canHover() ? null : chip.key)}
 			>
-				{#if chip.ap}
-					<span>{chip.label} <span class="res-amount">{chip.amount}</span></span>
-				{:else}
-					<span class="res-abbr">{chip.abbr}</span>
-					<span class="res-amount">{chip.amount}</span>
-				{/if}
+				<span class={chip.ap ? 'ap-label' : 'res-abbr'}>{chip.abbr ?? chip.label}</span>
+				<span class="res-amount">{chip.amount}</span>
 			</button>
 			{#if open === chip.key}
-				<div class="res-popup" {@attach clamp}>
+				<div class="rail-popup" id="rail-popup-{chip.key}" role="tooltip" {@attach place}>
 					<div class="res-popup-header">{chip.title}</div>
 					<div class="res-popup-body">{chip.desc}</div>
 					{#if chip.extra?.some((g) => g.length)}
@@ -294,31 +297,80 @@
 					{/if}
 				</div>
 			{/if}
-		</span>
+		</div>
 	{/each}
 </div>
 
 <style>
-	/* Invisible button: the chip span keeps all visuals; the button only adds role, focus and keyboard activation. */
-	.chip-btn {
-		display: inline-flex;
-		align-items: center;
+	.chips {
+		display: flex;
+		flex-direction: column;
 		gap: 4px;
-		margin: 0;
-		padding: 0;
-		border: 0;
-		background: none;
-		color: inherit;
-		font: inherit;
-		letter-spacing: inherit;
-		cursor: inherit;
-		border-radius: 20px;
+		text-align: left;
 	}
-	.chip-btn--inline {
-		display: inline;
+	.rc {
+		position: relative;
+	}
+	/* The chip itself is the button: reset button chrome, keep the chip visuals from resources.css. */
+	.chip-btn {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		width: 100%;
+		min-height: 36px;
+		margin: 0;
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 700;
+		cursor: pointer;
+		/* Chips are rounded pills; a full-width pill reads fine at rail width. */
+		border-radius: var(--radius-pill);
 	}
 	.chip-btn:focus-visible {
 		outline: 2px solid var(--color-accent);
-		outline-offset: 3px;
+		outline-offset: 2px;
+	}
+	/* AP chips (trust, AP) have no border in resources.css; keep the same box as the resource chips. */
+	.chip-btn:global(.ap-chip) {
+		border: 1px solid rgba(0, 0, 0, 0.1);
+	}
+	.chip-btn:global(.res-chip--sol) {
+		border-color: transparent;
+	}
+	.ap-label {
+		font-size: 0.72rem;
+	}
+	.res-divider {
+		width: auto;
+		height: 1px;
+		margin: 2px 6px;
+		align-self: stretch;
+	}
+	@media (pointer: coarse) {
+		.chip-btn {
+			min-height: 44px;
+		}
+	}
+
+	/* Popup: opaque (it holds table rows), fixed so the scrolling panel cannot clip it; coordinates set by place(). */
+	.rail-popup {
+		position: fixed;
+		z-index: 1;
+		background: var(--color-bg);
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		box-shadow: var(--shadow-flyout);
+		padding: 0.5rem 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		pointer-events: none;
+		animation: ds-slide-fade-in var(--duration-fast) ease-out;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.rail-popup {
+			animation: none;
+		}
 	}
 </style>

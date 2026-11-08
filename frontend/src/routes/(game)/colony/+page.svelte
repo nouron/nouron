@@ -15,6 +15,7 @@
 	import { clickBatcher } from '#lib/js/clickBatch.ts';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import EntityChip from '#lib/components/EntityChip.svelte';
+	import { notifyTileTap } from '#lib/stores/rail.ts';
 	import TileTerrain from './TileTerrain.svelte';
 	import LeveldownDialog, { type LeveldownResult } from './LeveldownDialog.svelte';
 	import type { ActionResult, AvailableBuilding, Building, ColonyData, Tile } from './types.ts';
@@ -162,6 +163,7 @@
 	}
 
 	function onTileClick(tile: Tile) {
+		notifyTileTap(); // phones: folds the resource rail in
 		// Move mode: a click only selects (the renderer shows the preview arrow); pressing
 		// and holding a valid target does the move. Invalid targets still get feedback.
 		if (harvesterMoveMode) {

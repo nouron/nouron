@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Frame of every in-run screen: header + resource bar, page, bottom navigation (+ admin debug bar), page transition.
+	// Frame of every in-run screen: header, resource rail (left overlay), page, bottom navigation (+ admin debug bar), page transition.
 	import '#lib/styles/resources.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -7,6 +7,7 @@
 	import BottomNav from '#lib/components/BottomNav.svelte';
 	import AppHeader from '#lib/components/AppHeader.svelte';
 	import DebugBar from '#lib/components/DebugBar.svelte';
+	import ResourceRail from '#lib/components/ResourceRail.svelte';
 	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
 	import { token } from '#lib/stores/auth.ts';
 	import { refreshShell, shell, solEpoch } from '#lib/stores/shell.ts';
@@ -56,7 +57,11 @@
 	});
 </script>
 
-{#if $shell}<AppHeader s={$shell} onfeedback={() => feedback?.open()} />{/if}
+{#if $shell}
+	<AppHeader s={$shell} onfeedback={() => feedback?.open()} />
+	<!-- Fixed left overlay; kept outside the {#key} so its state survives page changes. -->
+	<ResourceRail s={$shell} />
+{/if}
 
 {#key page.url.pathname + page.url.search + ':' + $solEpoch}
 	<main in:fade={{ duration: 150 }}>{@render children()}</main>

@@ -3,7 +3,7 @@
 
 /* Layout heights, defined in ONE place.
    Measured by routes/(game)/+layout.svelte (ResizeObserver), 0px until measured / outside the run:
-   --app-header-h  whole sticky header (top bar + resource bar + hint bar; grows when chips wrap or a hint shows)
+   --app-header-h  whole sticky header (top bar + hint bar; grows when a hint shows). The resource rail is a fixed left overlay and not part of it
    --app-bottom-h  fixed bottom chrome (bottom navigation + collapsed/expanded admin debug bar, incl. safe-area inset)
    --page-offset-*  chrome that page content must subtract from 100dvh = header + bottom + the page's own padding/heading. */
 :root {

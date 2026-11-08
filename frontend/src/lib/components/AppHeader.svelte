@@ -1,10 +1,9 @@
 <script lang="ts">
-	// Slim header: logo, Sol button, user menu; below it resource bar and hint bar. Navigation lives in BottomNav.
+	// Slim header: logo, Sol button, user menu; below it the hint bar. The resource bar is the left overlay ResourceRail. Navigation lives in BottomNav.
 	import { t } from '#lib/i18n.ts';
 	import { logout } from '#lib/stores/auth.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
 	import HintBar from './HintBar.svelte';
-	import ResourceBar from './ResourceBar.svelte';
 	import SolButton from './SolButton.svelte';
 
 	let { s, onfeedback }: { s: Shell; onfeedback: () => void } = $props();
@@ -63,7 +62,6 @@
 		</div>
 	</div>
 
-	<div class="resbar"><ResourceBar {s} /></div>
 	<HintBar {s} />
 </header>
 
@@ -166,11 +164,6 @@
 		height: 1px;
 		background: var(--color-border);
 		margin: var(--space-xs) 0;
-	}
-	.resbar {
-		border-bottom: 1px solid var(--color-border);
-		padding: 5px 12px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 	}
 
 	/* Phones: the user menu shows the icon only. */

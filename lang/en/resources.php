@@ -77,4 +77,10 @@ return [
     'popup_trust_events' => 'Events',
     'popup_trust_total' => 'Trust total',
     'popup_trust_hunger' => 'Hunger',
+
+    // Resource rail (left overlay)
+    'rail_label' => 'Resource bar',
+    'rail_toggle' => 'Expand or collapse resource bar (key R)',
+    'rail_toggle_ap' => 'Expand or collapse resource bar, :ap AP',
+    'rail_warning' => 'Warning',
 ];

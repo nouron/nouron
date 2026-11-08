@@ -3,6 +3,7 @@
 ## 2026-11-08
 
 - Techtree: Vorschau-Hinweisband entfernt (Grund steht im Detailpanel); kein roter Rahmen mehr um den Techtree bei Tastaturfokus.
+- UI-Umbau PR 3: Ressourcenleiste liegt links als halbtransparentes Overlay (Desktop und Mobil): in der Kolonie ausgeklappt, sonst eingeklappt (Griff mit AP-Wert), Hover-Vorschau, Taste `R`; Popups öffnen nach rechts; auf Mobil klappt sie beim ersten Tippen auf ein Tile ein.
 - UI-Umbau PR 2: schlanke Kopfzeile (Logo, Sol-Button, Nutzermenü inkl. Feedback), Navigation unten als Kacheln (Kolonie ▲ [Kommandozentrale, Karte, Berater], Labor, Cantina, Hangar, Datenarchiv ▲ [Log, Nexus-DB, Codex]), Debug-Leiste einklappbar ganz unten, Seiten-Offsets nutzen die gemessenen Layout-Höhen.
 - UI-Umbau PR 1: Layout-Höhen als zentrale CSS-Variablen (gemessene Header-/Unterkanten-Höhe, bisherige Seiten-Offsets unverändert), Ressourcen-Chips sind echte Buttons (Tastatur/Screenreader); Design-Entwurf Ressourcenleiste links.
 - UI-Umbau: Owner-Entscheidungen zum Entwurf festgehalten (Navigation 1B, Ressourcenleiste links, Vollbild-Sidebar); Kenntnis-Ziehung als geplantes Feature vorgemerkt.

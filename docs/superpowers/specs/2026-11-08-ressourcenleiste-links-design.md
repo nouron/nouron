@@ -3,6 +3,8 @@
 > **Hinweis 2026-11-08 (Hauptagent):** PR 1 führte `--app-header-h` und `--app-bottom-h` ein (gemessen, in `frontend/src/app.css`/`(game)/+layout.svelte`), nicht `--content-top`/`--content-bottom`. Beim Umsetzen die Namen angleichen. Die Seiten-Offsets sind noch nicht auf die Messvariablen umgestellt (PR 2, ändert die Optik).
 
 
+**Status: umgesetzt in PR 3 (Branch `feat/ui-umbau-3-rail`; Scheiben A–G in einem PR). Owner-Entscheidungen zu §9: Griff-only, Kolonie startet ausgeklappt (Mobil: Auto-Einklappen beim ersten Tile-Tippen), Taste `R` ja, Rand-Swipe nein, Sol-Chip bleibt; Kartenausschnitt (PR F, Startausschnitt gegen Panelbreite) noch offen.**
+
 Stand: 2026-11-08. **Alles hier ist ein Vorschlag des `ui-specialist`, nichts ist beschlossen oder umgesetzt.** Angaben mit „Annahme“ sind nicht geprüft und stehen zur Bestätigung.
 
 Grundlage: Owner-Entscheidungen 4 und 5 in `docs/superpowers/specs/2026-11-08-ui-umbau-entwurf.md`:

@@ -77,4 +77,10 @@ return [
     'popup_trust_events' => 'Ereignisse',
     'popup_trust_total' => 'Vertrauen gesamt',
     'popup_trust_hunger' => 'Hunger',
+
+    // Resource rail (left overlay)
+    'rail_label' => 'Ressourcenleiste',
+    'rail_toggle' => 'Ressourcenleiste ein- oder ausklappen (Taste R)',
+    'rail_toggle_ap' => 'Ressourcenleiste ein- oder ausklappen, :ap AP',
+    'rail_warning' => 'Warnung',
 ];
