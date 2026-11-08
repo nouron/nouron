@@ -3,6 +3,7 @@
 ## 2026-11-08
 
 - Labor-Vorschau: Hinweistext präzisiert („Kenntnisse zeigen nur ihren Titel“), Schreibweise „Analytik-Labor“ in den Berater-Texten vereinheitlicht.
+- Entwürfe (kein Beschluss): Kenntnis-Ziehung „5 von 7“ (Wiedervorlage zu F6) und UI-Umbau (Navigation unten, Ressourcenleiste links, Mobil-Sidebar) als Specs mit Varianten und Owner-Fragen.
 
 ## 2026-11-07
 
