@@ -1,9 +1,10 @@
 <script lang="ts">
-	// Frame of every in-run screen: header + resource bar, page transition.
+	// Frame of every in-run screen: header + resource bar, page, bottom navigation (+ admin debug bar), page transition.
 	import '#lib/styles/resources.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
+	import BottomNav from '#lib/components/BottomNav.svelte';
 	import AppHeader from '#lib/components/AppHeader.svelte';
 	import DebugBar from '#lib/components/DebugBar.svelte';
 	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
@@ -11,6 +12,7 @@
 	import { refreshShell, shell, solEpoch } from '#lib/stores/shell.ts';
 
 	let { children } = $props();
+	let feedback = $state<FeedbackButton>();
 
 	$effect(() => {
 		if (!$token) goto('/login');
@@ -32,14 +34,14 @@
 		const root = document.documentElement;
 		const apply = () => {
 			const h = document.querySelector<HTMLElement>('.app-header');
-			const d = document.querySelector<HTMLElement>('.debug');
+			const d = document.querySelector<HTMLElement>('.bottom-chrome');
 			root.style.setProperty('--app-header-h', `${h ? h.offsetHeight : 0}px`);
 			root.style.setProperty('--app-bottom-h', `${d ? d.offsetHeight : 0}px`);
 		};
 		const ro = new ResizeObserver(apply);
 		const sync = () => {
 			ro.disconnect();
-			document.querySelectorAll('.app-header, .debug').forEach((el) => ro.observe(el));
+			document.querySelectorAll('.app-header, .bottom-chrome').forEach((el) => ro.observe(el));
 			apply();
 		};
 		const mo = new MutationObserver(sync);
@@ -54,11 +56,31 @@
 	});
 </script>
 
-{#if $shell}<AppHeader s={$shell} />{/if}
+{#if $shell}<AppHeader s={$shell} onfeedback={() => feedback?.open()} />{/if}
 
 {#key page.url.pathname + page.url.search + ':' + $solEpoch}
 	<main in:fade={{ duration: 150 }}>{@render children()}</main>
 {/key}
 
-{#if $shell}<FeedbackButton />{/if}
-{#if $shell?.is_admin}<DebugBar />{/if}
+{#if $shell}
+	<FeedbackButton bind:this={feedback} floating={false} />
+	<!-- Fixed bottom chrome: navigation, with the collapsible admin debug bar underneath. -->
+	<div class="bottom-chrome">
+		<BottomNav s={$shell} />
+		{#if $shell.is_admin}<DebugBar docked />{/if}
+	</div>
+{/if}
+
+<style>
+	.bottom-chrome {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 200;
+	}
+	/* Reserve the measured height of the fixed bottom chrome so content never hides behind it. */
+	main {
+		padding-bottom: var(--app-bottom-h);
+	}
+</style>

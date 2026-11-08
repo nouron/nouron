@@ -187,18 +187,15 @@
 	const showSubhead = (tech: Tech) =>
 		(tech.type === 'building' && !tech.is_instanced && tech.level > 0) || (tech.type === 'research' && tech.level > 0);
 
-	// The admin debug bar is fixed to the bottom edge and would cover the legend: reserve its height.
-	function debugH() {
-		const el = document.querySelector<HTMLElement>('.debug');
-		return el ? el.offsetHeight : 0;
-	}
+	// Fixed bottom chrome (navigation + debug bar), published by the (game) layout.
+	const bottomH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-bottom-h')) || 0;
 
 	// Size the stage to the viewport below whatever sits above it; the side panel starts at the same line.
 	function fit() {
 		if (!page || !stage) return;
 		const top = Math.max(0, stage.getBoundingClientRect().top);
 		page.style.setProperty('--tt-top', `${top}px`);
-		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0) - debugH() - 2))}px`;
+		stage.style.height = `${Math.max(320, Math.round(window.innerHeight - top - (legendEl?.offsetHeight ?? 0) - bottomH() - 2))}px`;
 	}
 
 	function onResize() {
