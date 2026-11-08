@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-08
+
+- Entwürfe (kein Beschluss): Kenntnis-Ziehung „5 von 7“ (Wiedervorlage zu F6) und UI-Umbau (Navigation unten, Ressourcenleiste links, Mobil-Sidebar) als Specs mit Varianten und Owner-Fragen.
+
 ## 2026-11-06
 
 - Aufräumen: veraltete `cookie.txt` (localhost-Session) aus dem Repo entfernt, ROADMAP-Stand aktualisiert, Techtree-Feinschliff als offener Punkt eingetragen.

@@ -51,6 +51,7 @@ Größere Layout-Umbauten, erst nach Design-Entwurf (`game-designer` + `ui-speci
 
 - [ ] **Labor-Vorschau ohne Analytiklabor:** Techtree grob (wenig Infos) schon vor dem Bau des Analytiklabors sichtbar, das Labor schaltet die Features frei; Menüpunkt heißt „Labor“ (Aufwand: Mittel, vorher Design mit `game-designer`)
 - [ ] **Techtree-Feinschliff:** Knoten per Tastatur anwählbar (Tab/Pfeile) bzw. Textäquivalent mit Status; Schriften im Canvas auf Mobil mindestens 11 px; Abdunklung unbeteiligter Knoten bei Auswahl abmildern (Aufwand: Mittel)
+- **Entwürfe 2026-11-08 (warten auf Owner-Entscheidung):** UI-Umbau `docs/superpowers/specs/2026-11-08-ui-umbau-entwurf.md` (10 Owner-Fragen, 6 kleine PRs vorgeschlagen); Kenntnis-Ziehung `docs/superpowers/specs/2026-11-08-kenntnis-ziehung-entwurf.md` (Wiedervorlage zu F6, Empfehlung: erst nach stabiler Eröffnungs-Messung)
 - [ ] **Sidebar auf Mobil als Vollbild-Popup** (Aufwand: Mittel)
 - [ ] **Ressourcenleiste links**, transparenter Hintergrund — Owner überlegt noch (Aufwand: Mittel)
 - [ ] **Navigation unten als Kacheln** (Daumenbedienung), für Desktop und Mobil gleich, optional Subnav darüber (Aufwand: Groß)
