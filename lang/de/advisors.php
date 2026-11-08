@@ -38,13 +38,13 @@ return [
     'error_promotion_not_eligible' => 'Dieser Berater hat die nötige Erfahrung für eine Beförderung noch nicht erreicht.',
     'error_promotion_max_rank' => 'Dieser Berater hat bereits den höchsten Rang erreicht.',
     'error_promotion_insufficient_credits' => 'Nicht genug Credits für diese Beförderung.',
-    'desc_path_open' => 'Noch kein Fokus-Gebäude gebaut — erst Analytiklabor, Hangar oder Cantina errichten, um diesen Slot freizuschalten.',
+    'desc_path_open' => 'Noch kein Fokus-Gebäude gebaut — erst Analytik-Labor, Hangar oder Cantina errichten, um diesen Slot freizuschalten.',
 
     // Path choice descriptions shown in the advisor carousel for path_open slots
     'path_label_scientist' => 'Analytiker-Fokus',
     'path_label_pilot' => 'Raumfahrer-Fokus',
     'path_label_trader' => 'Konsul-Fokus',
-    'path_choice_scientist' => 'Analytiklabor bauen, dann Analytiker einstellen — öffnet den Techtree und gibt AP. Die erste Grundlage für wissenschaftlichen Fortschritt.',
+    'path_choice_scientist' => 'Analytik-Labor bauen, dann Analytiker einstellen — öffnet den Techtree und gibt AP. Die erste Grundlage für wissenschaftlichen Fortschritt.',
     'path_choice_pilot' => 'Hangar bauen, dann Raumfahrer einstellen — öffnet Erkundungsmissionen und AP für Erkundung. Der erste Schritt raus aus der Koloniezone.',
     'path_choice_trader' => 'Cantina bauen, dann Konsul einstellen — öffnet Handelsangebote und AP. Der schnellste Weg zu Werkstoffen und Extraeinnahmen.',
     'path_unlock_scientist' => 'Techtree + Kenntnisforschung + AP',

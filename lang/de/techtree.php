@@ -190,6 +190,7 @@ return [
     'error_entity_not_found' => 'Unbekannte Entität.',
     'error_invalid_mode' => 'Ungültige Aktion.',
     'error_unknown_type' => 'Unbekannter Techtree-Typ.',
+    'error_lab_required' => 'Ohne Analytik-Labor lässt sich nicht forschen.',
     'error_unknown_order' => 'Unbekannte Order.',
     'error_order_failed' => 'Die Order konnte nicht ausgeführt werden.',
 
@@ -208,4 +209,11 @@ return [
     'view_overview' => 'Übersicht',
     'column_n' => 'Spalte :n von :total',
     'columns_label' => 'Spalten',
+    // Lab preview (no Analytics Lab yet): neutral notice, knowledge nodes show title only
+    'preview_notice' => 'Vorschau: Kenntnisse zeigen nur ihren Titel. Details und Forschung gibt es mit dem Analytik-Labor.',
+    'preview_to_lab' => 'Zum Labor',
+    'preview_lab_needed' => 'Labor nötig',
+    'preview_reason_label' => 'Voraussetzung',
+    'preview_reason_lab' => 'Analytik-Labor',
+    'preview_reason_lab_needs' => 'Das Analytik-Labor braucht noch: :list',
 ];

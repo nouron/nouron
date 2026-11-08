@@ -41,25 +41,21 @@ class TechtreeController extends BaseController
     }
 
     /**
-     * Same data as index() as JSON, for the SvelteKit frontend (ADR 0006).
-     * The locked case answers 409 with a machine code, like the other JSON endpoints.
+     * Techtree data as JSON for the SvelteKit frontend (ADR 0006).
+     * Without a sciencelab it answers a stripped preview (`preview: true`) instead of an error.
      */
     public function data(): JsonResponse
     {
         $colonyId = $this->resolveColonyId();
 
-        if (! $this->sciencelabBuilt($colonyId)) {
-            return response()->json([
-                'error' => 'techtree_locked',
-                'message' => __('colony.nav_techtree_locked'),
-            ], 409);
-        }
-
+        $preview = ! $this->sciencelabBuilt($colonyId);
         $userId = Auth::id();
 
         return response()->json([
-            ...$this->buildPhases($colonyId),
-            'first_visit' => $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false,
+            ...$this->buildPhases($colonyId, $preview),
+            'preview' => $preview,
+            // The intro hint is saved for the full view: a preview must not consume it.
+            'first_visit' => ! $preview && $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false,
         ]);
     }
 
@@ -83,7 +79,7 @@ class TechtreeController extends BaseController
      * one place avoids duplicating it in JS, where the client doesn't even have the
      * required_building_id/level fields needed to re-evaluate it itself.
      */
-    private function buildPhases(int $colonyId): array
+    private function buildPhases(int $colonyId, bool $preview = false): array
     {
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
@@ -133,7 +129,7 @@ class TechtreeController extends BaseController
                     : null;
                 $advisorCfg = $advisorKey ? config("advisors.{$advisorKey}", []) : [];
 
-                $phases[$phaseNum]['items'][] = [
+                $item = [
                     'id' => $id,
                     'type' => $type,
                     'name' => __('techtree.'.$tech['name']),
@@ -221,6 +217,27 @@ class TechtreeController extends BaseController
                     // Per-Sol lab cap for this knowledge (T43-G1); null = rule off / not a knowledge.
                     'ap_cap' => $type === 'research' ? $this->researchService->apCapState($colonyId, (int) $id) : null,
                 ];
+
+                if ($preview && $type === 'research') {
+                    // Preview shows title and position only; a reached level stays (grandfathered).
+                    $item = [
+                        ...$item,
+                        'status' => $item['level'] > 0 ? 'built' : 'locked',
+                        'description' => null,
+                        'required_desc' => '',
+                        'required_list' => [],
+                        'unlocks_next_level' => [],
+                        'effects_current_level' => [],
+                        'max_level' => null,
+                        'ap_spend' => 0,
+                        'ap_for_levelup' => 0,
+                        'ap_available' => 0,
+                        'ap_cap' => null,
+                        'lock_reason' => 'sciencelab',
+                    ];
+                }
+
+                $phases[$phaseNum]['items'][] = $item;
             }
         }
 
@@ -407,6 +424,10 @@ class TechtreeController extends BaseController
 
         if (! in_array($order, ['add', 'repair', 'remove', 'levelup', 'leveldown'], true)) {
             return $this->orderFailed('unknown_order', $order);
+        }
+
+        if (! $this->sciencelabBuilt($colonyId)) {
+            return $this->orderFailed('lab_required', $order);
         }
 
         $service = $this->researchService;

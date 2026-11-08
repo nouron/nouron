@@ -2,7 +2,12 @@
 
 ## 2026-11-08
 
+- Labor-Vorschau: Hinweistext präzisiert („Kenntnisse zeigen nur ihren Titel“), Schreibweise „Analytik-Labor“ in den Berater-Texten vereinheitlicht.
 - Entwürfe (kein Beschluss): Kenntnis-Ziehung „5 von 7“ (Wiedervorlage zu F6) und UI-Umbau (Navigation unten, Ressourcenleiste links, Mobil-Sidebar) als Specs mit Varianten und Owner-Fragen.
+
+## 2026-11-07
+
+- Labor-Vorschau: Der Techtree ist schon ohne Analytik-Labor sichtbar (Kenntnisse nur mit Titel, Funktionen mit dem Labor); Menüpunkt „Labor“ immer anklickbar; Forschungsbefehle ohne Labor weist der Server jetzt ab (422), vorher nur im UI versteckt. Spec: `docs/superpowers/specs/2026-11-06-labor-vorschau.md`.
 
 ## 2026-11-06
 
