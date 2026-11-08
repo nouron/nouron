@@ -168,6 +168,8 @@ Neu freigeschaltete Artikel werden mit einem Badge "Neu" markiert und erscheinen
 
 #### Wissensbonus beim Lesen
 
+> **Entscheidung 2026-11-08:** Der Wissensbonus entfällt vorerst (Owner); spätere Neubewertung. Der Abschnitt bleibt als Entwurf stehen. Die Almanach-Freischaltung wird mit der Nexus-DB/Codex-Verschmelzung umgesetzt (`docs/superpowers/specs/2026-11-08-nexusdb-codex-zusammenfuehren-entwurf.md`); Grundmechaniken sind immer offen.
+
 Wenn ein Spieler einen Artikel mit einem Wissensbonus öffnet und vollständig liest (Scroll-Threshold oder expliziter "Gelesen"-Button), erhält er einmalig pro Run einen kleinen Vorteil. Der Bonus ist thematisch mit dem Artikel-Inhalt verknüpft.
 
 **Bonus-Typen:**
