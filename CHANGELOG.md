@@ -2,6 +2,7 @@
 
 ## 2026-11-09
 
+- Datenarchiv: Entwürfe Anlass-/Schwellenliste und Redaktionsideen (Lore-Stufen, Orin, Platzhaltertexte, GLOSSAR-Vorschlag) als Doku, nicht umgesetzt.
 - UI-Umbau Playtest-Fixes: Ressourcenleiste nur per Klick, transparent mit dezenten Chips, Karte bewegt sich beim Umschalten nicht mehr; Kolonie-Karte mobil füllt den Platz; Berater mobil als Vollbild-Portrait mit Glas-Infos; dezentere Pfeile in der Bottom-Nav; Techtree-Detail mobil als Vollbild-Sheet.
 - Datenarchiv-Entwurf: Redaktionskonzept entschieden (Figuren eigener Bereich, Lore-Schicht, max. 3 Stufen); Freischalt-Budget 4–5 erfolgreiche Runs bis alles offen; Runs zählen unabhängig vom Ausgang (Hades-Prinzip), kein Gesamtzähler.
 
