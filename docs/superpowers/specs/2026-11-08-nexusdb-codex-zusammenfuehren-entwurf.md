@@ -10,7 +10,9 @@ Status: **Entscheidungen getroffen, nicht umgesetzt.** Annahmen sind als solche 
 > 5. **Name „Datenarchiv“**; „Nexus-DB“ darf als Alias und als Name in der Lore weiterleben (GLOSSAR-Eintrag nötig).
 > 6. **Redaktionskonzept** (welche Figuren-Einträge zu welchen Artikeln) wird separat besprochen.
 > 7. **Liste „immer verfügbar“ freigegeben** (Regeln offen, Lore gesperrt; Tempel/Denkmal-Regelartikel ebenfalls offen).
-> Weiter offen: nur das Redaktionskonzept.
+> 8. **Redaktionskonzept (Owner 2026-11-09):** Figuren-Einträge als eigener Bereich mit Querverweisen, zweite Lore-Schicht bei Regelartikeln, Freischalt-Anlässe (max. 3 Stufen pro Artikel), Spoiler-Regel, zunächst nur `de` — alles wie vorgeschlagen. Texte macht `content-writer`; zunächst nur grobe Ideen/Platzhalter, Feinschliff später.
+> 9. **Freischalt-Budget:** In einem einzelnen Run lässt sich nicht alles freischalten. Für die vollständige Freischaltung braucht es **4–5 komplette, erfolgreiche Runs**. Folge: Anlässe und Stufen müssen über Runs verteilt sein (pro Run erreichbar nur ein Teil), Fortschritt zählt nur bei erfolgreichem Run-Abschluss oder ist daran gekoppelt (Präzisiert unten: Runs zählen unabhängig vom Ausgang, Hades-Prinzip.). Messung/Plan: Anzahl Anlässe gesamt ÷ pro Run realistisch erreichbare ≈ 4–5.
+> Weiter offen: Detailfragen zu 9 (siehe unten), kein Umsetzungsstart.
 
 ## Ist-Stand
 
@@ -90,3 +92,26 @@ Offene Rückfrage an den Owner: Reichen Regelartikel immer offen und Lore gesper
 ## Nicht Teil dieses Entwurfs
 
 Inhalte der Codex-Einträge, neue Figuren, Spoiler-Regeln für Nexus-DB-Spalten.
+
+## Redaktionskonzept — Stand 2026-11-09
+
+Angenommen/entschieden: siehe Kasten oben (Punkte 8–9). Offene Detailfragen zu Punkt 9:
+
+**Entschieden 2026-11-09:**
+
+1. **Freischaltungen aus verlorenen/abgebrochenen Runs zählen.**
+2. **Hades-Prinzip, abgeschwächt:** Der Spieler scheitert anfangs oft und schaltet trotzdem laufend mehr Charakter-Informationen frei. Manche Einträge brauchen zusätzlich eine **Mindestzahl an (auch gescheiterten) Runs**. Kein Eintrag ist nur durch einen Sieg erreichbar. Neuer Trigger-Typ `runs_played:{n}` (spielerweit gezählt, Ausgang egal) neben den Ereignis-Triggern; Muster: Eintrag n = Ereignis-Anlass **und** `runs_played ≥ Schwelle(n)`.
+3. **Kein Gesamtzähler** im Datenarchiv; nur Zähler pro Artikel/Figur (wie heute `x / max`).
+
+*Annahme (Auflösung zu Punkt 9 im Kasten):* Das Budget „4–5 komplette Runs“ meint Runs, die zu Ende gespielt wurden (Sieg oder Niederlage), nicht nur Siege. Die Schwellen `Schwelle(n)` werden so gesetzt, dass alles frühestens nach 4–5 Runs offen ist; das wird mit `game-designer` festgelegt.
+
+### Owner-Entscheidungen zur Evaluation (2026-11-09, `2026-11-09-datenarchiv-freischalt-evaluation.md`)
+
+1. Ein Lauf zählt für `runs_played` ab **Sol 30** (statt Sol 20) oder bei regulärem Ende; früherer Abbruch zählt nicht.
+2. **Kein Ansparen:** Ein Anlass, bei dem die Run-Schwelle noch fehlt, verfällt (schaltet nichts frei und wird nicht gemerkt). Folge: Der Spieler braucht später einen weiteren Anlass. Hinweis: Die Evaluation warnt, dass dann bei Story-Figuren (viele Anlässe pro Lauf) Anlässe verloren gehen; das ist gewollt, die Schwellen bremsen bewusst.
+3. Läufe ohne Cantina zählen für den Lauf-Zähler mit.
+4. Schwellen global je Eintragsposition (Annahme, nach Erklärung zu bestätigen): z. B. Eintrag 3 gilt für alle Figuren ab demselben Lauf.
+5. Tomas’ Eintrag 5 ohne Run-Schwelle, wird aber erst ausgelöst, wenn ein Gespräch mit Tomas stattfindet (nicht schon bei Erreichen von Cantina-Stufe 5).
+6. Orin bekommt einen Auslöser (Content-Frage für `content-writer`).
+7. Platzhaltertexte („noch nicht begegnet“, „hält etwas zurück, später mehr“) und Hinweis auf der Ergebnisseite ohne Zahl: freigegeben.
+8. „4–5 Läufe“ ist eine **Untergrenze**; Messung der Anlässe pro Lauf vor der Feinjustierung nur mit Freigabe für einen Bot-Batch.
