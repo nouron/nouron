@@ -11,7 +11,7 @@ Status: **Entscheidungen getroffen, nicht umgesetzt.** Annahmen sind als solche 
 > 6. **Redaktionskonzept** (welche Figuren-Einträge zu welchen Artikeln) wird separat besprochen.
 > 7. **Liste „immer verfügbar“ freigegeben** (Regeln offen, Lore gesperrt; Tempel/Denkmal-Regelartikel ebenfalls offen).
 > 8. **Redaktionskonzept (Owner 2026-11-09):** Figuren-Einträge als eigener Bereich mit Querverweisen, zweite Lore-Schicht bei Regelartikeln, Freischalt-Anlässe (max. 3 Stufen pro Artikel), Spoiler-Regel, zunächst nur `de` — alles wie vorgeschlagen. Texte macht `content-writer`; zunächst nur grobe Ideen/Platzhalter, Feinschliff später.
-> 9. **Freischalt-Budget:** In einem einzelnen Run lässt sich nicht alles freischalten. Für die vollständige Freischaltung braucht es **4–5 komplette, erfolgreiche Runs**. Folge: Anlässe und Stufen müssen über Runs verteilt sein (pro Run erreichbar nur ein Teil), Fortschritt zählt nur bei erfolgreichem Run-Abschluss oder ist daran gekoppelt (Detail offen: zählen auch Freischaltungen aus abgebrochenen/verlorenen Runs?). Messung/Plan: Anzahl Anlässe gesamt ÷ pro Run realistisch erreichbare ≈ 4–5.
+> 9. **Freischalt-Budget:** In einem einzelnen Run lässt sich nicht alles freischalten. Für die vollständige Freischaltung braucht es **4–5 komplette, erfolgreiche Runs**. Folge: Anlässe und Stufen müssen über Runs verteilt sein (pro Run erreichbar nur ein Teil), Fortschritt zählt nur bei erfolgreichem Run-Abschluss oder ist daran gekoppelt (Präzisiert unten: Runs zählen unabhängig vom Ausgang, Hades-Prinzip.). Messung/Plan: Anzahl Anlässe gesamt ÷ pro Run realistisch erreichbare ≈ 4–5.
 > Weiter offen: Detailfragen zu 9 (siehe unten), kein Umsetzungsstart.
 
 ## Ist-Stand
@@ -97,6 +97,10 @@ Inhalte der Codex-Einträge, neue Figuren, Spoiler-Regeln für Nexus-DB-Spalten.
 
 Angenommen/entschieden: siehe Kasten oben (Punkte 8–9). Offene Detailfragen zu Punkt 9:
 
-1. Zählen Freischaltungen aus verlorenen oder abgebrochenen Runs? (Empfehlung: ja für Begegnungs-Anlässe, damit Verlust nicht „bestraft“; nein für Run-Abschluss-Anlässe.)
-2. Gibt es Anlässe, die nur ein erfolgreicher Abschluss auslöst (z. B. letzte Stufe jedes Artikels)? Das würde die 4–5 Runs sichern.
-3. Soll der Spieler im Datenarchiv sehen, wie viel noch fehlt (Gesamtzähler) oder nur pro Artikel?
+**Entschieden 2026-11-09:**
+
+1. **Freischaltungen aus verlorenen/abgebrochenen Runs zählen.**
+2. **Hades-Prinzip, abgeschwächt:** Der Spieler scheitert anfangs oft und schaltet trotzdem laufend mehr Charakter-Informationen frei. Manche Einträge brauchen zusätzlich eine **Mindestzahl an (auch gescheiterten) Runs**. Kein Eintrag ist nur durch einen Sieg erreichbar. Neuer Trigger-Typ `runs_played:{n}` (spielerweit gezählt, Ausgang egal) neben den Ereignis-Triggern; Muster: Eintrag n = Ereignis-Anlass **und** `runs_played ≥ Schwelle(n)`.
+3. **Kein Gesamtzähler** im Datenarchiv; nur Zähler pro Artikel/Figur (wie heute `x / max`).
+
+*Annahme (Auflösung zu Punkt 9 im Kasten):* Das Budget „4–5 komplette Runs“ meint Runs, die zu Ende gespielt wurden (Sieg oder Niederlage), nicht nur Siege. Die Schwellen `Schwelle(n)` werden so gesetzt, dass alles frühestens nach 4–5 Runs offen ist; das wird mit `game-designer` festgelegt.
