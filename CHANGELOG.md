@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-09
+
+- Datenarchiv-Entwurf: Redaktionskonzept entschieden (Figuren eigener Bereich, Lore-Schicht, max. 3 Stufen); Freischalt-Budget 4–5 erfolgreiche Runs bis alles offen.
+
 ## 2026-11-08
 
 - Entwurf Nexus-DB + Codex: Freischaltsystem (Codex-Fortschritt, GDD §17.3 Almanach) und Regel „wichtige Artikel nie gesperrt“ ergänzt. Owner-Entscheidung: Option C, Wissensbonus vorerst gestrichen, Name Datenarchiv, Freischaltungen spielerweit; Vorschlagsliste „immer verfügbar“.

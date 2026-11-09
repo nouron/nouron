@@ -10,7 +10,9 @@ Status: **Entscheidungen getroffen, nicht umgesetzt.** Annahmen sind als solche 
 > 5. **Name „Datenarchiv“**; „Nexus-DB“ darf als Alias und als Name in der Lore weiterleben (GLOSSAR-Eintrag nötig).
 > 6. **Redaktionskonzept** (welche Figuren-Einträge zu welchen Artikeln) wird separat besprochen.
 > 7. **Liste „immer verfügbar“ freigegeben** (Regeln offen, Lore gesperrt; Tempel/Denkmal-Regelartikel ebenfalls offen).
-> Weiter offen: nur das Redaktionskonzept.
+> 8. **Redaktionskonzept (Owner 2026-11-09):** Figuren-Einträge als eigener Bereich mit Querverweisen, zweite Lore-Schicht bei Regelartikeln, Freischalt-Anlässe (max. 3 Stufen pro Artikel), Spoiler-Regel, zunächst nur `de` — alles wie vorgeschlagen. Texte macht `content-writer`; zunächst nur grobe Ideen/Platzhalter, Feinschliff später.
+> 9. **Freischalt-Budget:** In einem einzelnen Run lässt sich nicht alles freischalten. Für die vollständige Freischaltung braucht es **4–5 komplette, erfolgreiche Runs**. Folge: Anlässe und Stufen müssen über Runs verteilt sein (pro Run erreichbar nur ein Teil), Fortschritt zählt nur bei erfolgreichem Run-Abschluss oder ist daran gekoppelt (Detail offen: zählen auch Freischaltungen aus abgebrochenen/verlorenen Runs?). Messung/Plan: Anzahl Anlässe gesamt ÷ pro Run realistisch erreichbare ≈ 4–5.
+> Weiter offen: Detailfragen zu 9 (siehe unten), kein Umsetzungsstart.
 
 ## Ist-Stand
 
@@ -90,3 +92,11 @@ Offene Rückfrage an den Owner: Reichen Regelartikel immer offen und Lore gesper
 ## Nicht Teil dieses Entwurfs
 
 Inhalte der Codex-Einträge, neue Figuren, Spoiler-Regeln für Nexus-DB-Spalten.
+
+## Redaktionskonzept — Stand 2026-11-09
+
+Angenommen/entschieden: siehe Kasten oben (Punkte 8–9). Offene Detailfragen zu Punkt 9:
+
+1. Zählen Freischaltungen aus verlorenen oder abgebrochenen Runs? (Empfehlung: ja für Begegnungs-Anlässe, damit Verlust nicht „bestraft“; nein für Run-Abschluss-Anlässe.)
+2. Gibt es Anlässe, die nur ein erfolgreicher Abschluss auslöst (z. B. letzte Stufe jedes Artikels)? Das würde die 4–5 Runs sichern.
+3. Soll der Spieler im Datenarchiv sehen, wie viel noch fehlt (Gesamtzähler) oder nur pro Artikel?
