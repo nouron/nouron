@@ -104,3 +104,14 @@ Angenommen/entschieden: siehe Kasten oben (Punkte 8–9). Offene Detailfragen zu
 3. **Kein Gesamtzähler** im Datenarchiv; nur Zähler pro Artikel/Figur (wie heute `x / max`).
 
 *Annahme (Auflösung zu Punkt 9 im Kasten):* Das Budget „4–5 komplette Runs“ meint Runs, die zu Ende gespielt wurden (Sieg oder Niederlage), nicht nur Siege. Die Schwellen `Schwelle(n)` werden so gesetzt, dass alles frühestens nach 4–5 Runs offen ist; das wird mit `game-designer` festgelegt.
+
+### Owner-Entscheidungen zur Evaluation (2026-11-09, `2026-11-09-datenarchiv-freischalt-evaluation.md`)
+
+1. Ein Lauf zählt für `runs_played` ab **Sol 30** (statt Sol 20) oder bei regulärem Ende; früherer Abbruch zählt nicht.
+2. **Kein Ansparen:** Ein Anlass, bei dem die Run-Schwelle noch fehlt, verfällt (schaltet nichts frei und wird nicht gemerkt). Folge: Der Spieler braucht später einen weiteren Anlass. Hinweis: Die Evaluation warnt, dass dann bei Story-Figuren (viele Anlässe pro Lauf) Anlässe verloren gehen; das ist gewollt, die Schwellen bremsen bewusst.
+3. Läufe ohne Cantina zählen für den Lauf-Zähler mit.
+4. Schwellen global je Eintragsposition (Annahme, nach Erklärung zu bestätigen): z. B. Eintrag 3 gilt für alle Figuren ab demselben Lauf.
+5. Tomas’ Eintrag 5 ohne Run-Schwelle, wird aber erst ausgelöst, wenn ein Gespräch mit Tomas stattfindet (nicht schon bei Erreichen von Cantina-Stufe 5).
+6. Orin bekommt einen Auslöser (Content-Frage für `content-writer`).
+7. Platzhaltertexte („noch nicht begegnet“, „hält etwas zurück, später mehr“) und Hinweis auf der Ergebnisseite ohne Zahl: freigegeben.
+8. „4–5 Läufe“ ist eine **Untergrenze**; Messung der Anlässe pro Lauf vor der Feinjustierung nur mit Freigabe für einen Bot-Batch.
