@@ -8,6 +8,8 @@
 	import { fly, fade } from 'svelte/transition';
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
 	import { refreshShell, setAp, shell } from '#lib/stores/shell.ts';
+	import MobileSheet from '#lib/components/MobileSheet.svelte';
+	import { isPhone } from '#lib/stores/viewport.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
 	import { t } from '#lib/i18n.ts';
@@ -87,13 +89,11 @@
 	let legendEl = $state<HTMLDivElement>();
 	let canvas = $state<HTMLCanvasElement>();
 	let dots = $state<HTMLDivElement>();
-	let panel = $state<HTMLElement>();
 
 	let phases = $state<Phases>({});
 	let edges: Edge[] = [];
 	let selected = $state<Tech | null>(null);
 	const apAvailable = $derived($shell?.colony_ap ?? 0);
-	let sheetMode = $state(false);
 	let loadError = $state('');
 	let firstVisit = $state(false);
 	// Server flag: no Analytics Lab yet -> knowledge nodes carry only title and lock reason.
@@ -199,7 +199,6 @@
 	}
 
 	function onResize() {
-		sheetMode = window.innerWidth < 600;
 		fit();
 	}
 
@@ -209,7 +208,7 @@
 		if (syncCanvas) tree?.select(key);
 		await tick();
 		tree?.resize();
-		tree?.focusNode(key, { bottom: sheetMode && panel ? panel.offsetHeight : 0 });
+		tree?.focusNode(key, { bottom: 0 });
 	}
 
 	async function closeDetail(syncCanvas = true) {
@@ -409,6 +408,142 @@
 
 {#if firstVisit}<FirstVisit screen="techtree" />{/if}
 
+{#snippet detail(tech: Tech)}
+		<div class="detail-inner detail-cat-{tech.type}">
+			<div class="detail-head">
+				<div class="detail-badges">
+					<span class="detail-type-badge">{t('techtree.type_' + tech.type)}</span>
+					{#if !showSubhead(tech)}
+						<span class="tech-status-chip chip-{tech.status}">{statusLabel(tech)}</span>
+					{/if}
+				</div>
+				<button class="detail-x" onclick={() => closeDetail()} aria-label={t('techtree.detail_close')}
+					>&#215;</button
+				>
+			</div>
+
+			<h3 class="detail-title">{tech.name}</h3>
+
+			{#if showSubhead(tech)}
+				<div class="detail-subhead">
+					<span class="detail-subhead-label">{t('techtree.detail_level')}</span>
+					<span class="detail-subhead-value">{tech.level}{tech.max_level ? ' / ' + tech.max_level : ''}</span>
+				</div>
+			{/if}
+
+			{#if tech.image_slug}
+				<div class="building-detail-wrap">
+					<div class="building-detail-img-wrap">
+						<img
+							class="building-detail-img"
+							src="{BACKEND_URL}/img/buildings/{tech.image_slug}.webp"
+							alt={tech.name}
+							onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
+						/>
+					</div>
+				</div>
+			{/if}
+			{#if tech.description && !isPreviewKnowledge(tech)}
+				<p class="building-detail-description">{tech.description}</p>
+			{/if}
+
+			<div class="detail-body">
+				{#if tech.type === 'personell'}
+					{@render effects(tech)}
+					<a href="/advisors" class="detail-cta-link">{t('techtree.detail_advisor_link')} &rarr;</a>
+				{:else if tech.type === 'building'}
+					{#if tech.is_instanced && tech.instances.length > 0}
+						<div class="detail-row">
+							<span class="detail-row-label">{t('techtree.detail_instances')}</span>
+							<span class="detail-instance-count">{instanceCountLabel(tech)}</span>
+						</div>
+					{/if}
+					{#if tech.instances.length > 0}
+						<div class="detail-row detail-row--instances">
+							<span class="detail-row-label">{t('techtree.detail_instance_list')}</span>
+							<ul class="detail-instance-list">
+								{#each tech.instances as inst (inst.instance_id)}
+									<li class="detail-instance">
+										<span class="detail-instance-level">{instanceLevelLabel(inst)}</span>
+										{#if inst.level > 0}
+											<span class="detail-instance-condition"
+												>{t('techtree.detail_instance_condition', {
+													sp: inst.status_points,
+													max: inst.max_status_points
+												})}</span
+											>
+										{/if}
+										<a class="detail-instance-link" href={colonyLink({ building: tech.id, instance: inst.instance_id })}
+											>{t('techtree.detail_instance_tile_link')} &rarr;</a
+										>
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{/if}
+					{@render effects(tech)}
+					{#if canBuildMore(tech)}
+						<a href={colonyLink({ build: tech.id })} class="detail-cta-link">{t('techtree.detail_colony_link')} &rarr;</a>
+					{/if}
+					{#if acquireHint(tech)}
+						<p class="detail-ap-hint">{acquireHint(tech)}</p>
+					{/if}
+				{:else if tech.type === 'research' && preview}
+					{#if tech.status === 'locked'}
+						{@const lab = labNode()}
+						<div class="preview-reason">
+							<p><strong>{t('techtree.preview_reason_label')}:</strong> {t('techtree.preview_reason_lab')}</p>
+							{#if lab && lab.status === 'locked' && lab.required_list?.length}
+								<p class="detail-ap-hint">
+									{t('techtree.preview_reason_lab_needs', { list: lab.required_list.join(', ') })}
+								</p>
+							{/if}
+							{#if lab}
+								<button type="button" class="detail-cta-link preview-reason-link" onclick={focusLab}
+									>{t('techtree.preview_to_lab')} &rarr;</button
+								>
+							{/if}
+						</div>
+					{/if}
+				{:else if tech.type === 'research'}
+					{@render effects(tech)}
+					{#if tech.ap_for_levelup > 0 && tech.status !== 'locked'}
+						<div class="detail-ap-section">
+							<ApUpgradeButton
+								row={tech}
+								capAtStart
+								label="{t('techtree.detail_ap_invest')} {tech.ap_spend}/{tech.ap_for_levelup}"
+								chip="research"
+								blocked={apAvailable <= 0 || tech.ap_spend >= tech.ap_for_levelup}
+								capTip={t('techtree.knowledge_ap_cap_tooltip')}
+								tipId="ap-cap-tip-tech"
+								onclick={() => investAp(tech)}
+							/>
+							{#if tech.ap_cap && tech.ap_spend < tech.ap_for_levelup}
+								<p class="detail-ap-hint">
+									{t('techtree.knowledge_ap_cap_today', { spent: tech.ap_cap.spent, cap: tech.ap_cap.cap })}
+								</p>
+							{/if}
+							{#if apAvailable <= 0 && tech.ap_spend < tech.ap_for_levelup}
+								<p class="detail-ap-hint">{t('techtree.hint_no_research_ap')}</p>
+							{/if}
+						</div>
+					{/if}
+				{:else if tech.type === 'ship'}
+					{#if tech.level > 0}
+						<div class="detail-row">
+							<span class="detail-row-label">{t('techtree.detail_count')}</span>
+							<span>{tech.level}{tech.hangar_cap ? ' / ' + tech.hangar_cap : ''}</span>
+						</div>
+					{/if}
+					{@render effects(tech)}
+				{/if}
+			</div>
+
+			<button class="detail-close" onclick={() => closeDetail()}>{t('techtree.detail_close')}</button>
+		</div>
+{/snippet}
+
 {#if loadError}
 	<p class="error load-error" role="alert">{loadError}</p>
 {/if}
@@ -461,146 +596,22 @@
 	</ul>
 
 	{#if selected}
-		{@const tech = selected}
-		<aside
-			class="tech-panel"
-			bind:this={panel}
-			transition:fly={sheetMode ? { y: 400, duration: 200 } : { x: 300, duration: 200 }}
-		>
-			<div class="detail-inner detail-cat-{tech.type}">
-				<div class="detail-head">
-					<div class="detail-badges">
-						<span class="detail-type-badge">{t('techtree.type_' + tech.type)}</span>
-						{#if !showSubhead(tech)}
-							<span class="tech-status-chip chip-{tech.status}">{statusLabel(tech)}</span>
-						{/if}
-					</div>
-					<button class="detail-x" onclick={() => closeDetail()} aria-label={t('techtree.detail_close')}
-						>&#215;</button
-					>
-				</div>
-
-				<h3 class="detail-title">{tech.name}</h3>
-
-				{#if showSubhead(tech)}
-					<div class="detail-subhead">
-						<span class="detail-subhead-label">{t('techtree.detail_level')}</span>
-						<span class="detail-subhead-value">{tech.level}{tech.max_level ? ' / ' + tech.max_level : ''}</span>
-					</div>
-				{/if}
-
-				{#if tech.image_slug}
-					<div class="building-detail-wrap">
-						<div class="building-detail-img-wrap">
-							<img
-								class="building-detail-img"
-								src="{BACKEND_URL}/img/buildings/{tech.image_slug}.webp"
-								alt={tech.name}
-								onerror={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')}
-							/>
-						</div>
-					</div>
-				{/if}
-				{#if tech.description && !isPreviewKnowledge(tech)}
-					<p class="building-detail-description">{tech.description}</p>
-				{/if}
-
-				<div class="detail-body">
-					{#if tech.type === 'personell'}
-						{@render effects(tech)}
-						<a href="/advisors" class="detail-cta-link">{t('techtree.detail_advisor_link')} &rarr;</a>
-					{:else if tech.type === 'building'}
-						{#if tech.is_instanced && tech.instances.length > 0}
-							<div class="detail-row">
-								<span class="detail-row-label">{t('techtree.detail_instances')}</span>
-								<span class="detail-instance-count">{instanceCountLabel(tech)}</span>
-							</div>
-						{/if}
-						{#if tech.instances.length > 0}
-							<div class="detail-row detail-row--instances">
-								<span class="detail-row-label">{t('techtree.detail_instance_list')}</span>
-								<ul class="detail-instance-list">
-									{#each tech.instances as inst (inst.instance_id)}
-										<li class="detail-instance">
-											<span class="detail-instance-level">{instanceLevelLabel(inst)}</span>
-											{#if inst.level > 0}
-												<span class="detail-instance-condition"
-													>{t('techtree.detail_instance_condition', {
-														sp: inst.status_points,
-														max: inst.max_status_points
-													})}</span
-												>
-											{/if}
-											<a class="detail-instance-link" href={colonyLink({ building: tech.id, instance: inst.instance_id })}
-												>{t('techtree.detail_instance_tile_link')} &rarr;</a
-											>
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/if}
-						{@render effects(tech)}
-						{#if canBuildMore(tech)}
-							<a href={colonyLink({ build: tech.id })} class="detail-cta-link">{t('techtree.detail_colony_link')} &rarr;</a>
-						{/if}
-						{#if acquireHint(tech)}
-							<p class="detail-ap-hint">{acquireHint(tech)}</p>
-						{/if}
-					{:else if tech.type === 'research' && preview}
-						{#if tech.status === 'locked'}
-							{@const lab = labNode()}
-							<div class="preview-reason">
-								<p><strong>{t('techtree.preview_reason_label')}:</strong> {t('techtree.preview_reason_lab')}</p>
-								{#if lab && lab.status === 'locked' && lab.required_list?.length}
-									<p class="detail-ap-hint">
-										{t('techtree.preview_reason_lab_needs', { list: lab.required_list.join(', ') })}
-									</p>
-								{/if}
-								{#if lab}
-									<button type="button" class="detail-cta-link preview-reason-link" onclick={focusLab}
-										>{t('techtree.preview_to_lab')} &rarr;</button
-									>
-								{/if}
-							</div>
-						{/if}
-					{:else if tech.type === 'research'}
-						{@render effects(tech)}
-						{#if tech.ap_for_levelup > 0 && tech.status !== 'locked'}
-							<div class="detail-ap-section">
-								<ApUpgradeButton
-									row={tech}
-									capAtStart
-									label="{t('techtree.detail_ap_invest')} {tech.ap_spend}/{tech.ap_for_levelup}"
-									chip="research"
-									blocked={apAvailable <= 0 || tech.ap_spend >= tech.ap_for_levelup}
-									capTip={t('techtree.knowledge_ap_cap_tooltip')}
-									tipId="ap-cap-tip-tech"
-									onclick={() => investAp(tech)}
-								/>
-								{#if tech.ap_cap && tech.ap_spend < tech.ap_for_levelup}
-									<p class="detail-ap-hint">
-										{t('techtree.knowledge_ap_cap_today', { spent: tech.ap_cap.spent, cap: tech.ap_cap.cap })}
-									</p>
-								{/if}
-								{#if apAvailable <= 0 && tech.ap_spend < tech.ap_for_levelup}
-									<p class="detail-ap-hint">{t('techtree.hint_no_research_ap')}</p>
-								{/if}
-							</div>
-						{/if}
-					{:else if tech.type === 'ship'}
-						{#if tech.level > 0}
-							<div class="detail-row">
-								<span class="detail-row-label">{t('techtree.detail_count')}</span>
-								<span>{tech.level}{tech.hangar_cap ? ' / ' + tech.hangar_cap : ''}</span>
-							</div>
-						{/if}
-						{@render effects(tech)}
-					{/if}
-				</div>
-
-				<button class="detail-close" onclick={() => closeDetail()}>{t('techtree.detail_close')}</button>
-			</div>
-		</aside>
+		{#if $isPhone}
+			<!-- Phones: full-screen sheet like the colony detail (close button, Esc, focus trap). -->
+			<MobileSheet
+				open={true}
+				title={selected.name}
+				onclose={() => closeDetail()}
+				returnFocus={() => canvas}
+				bodyClass="tech-panel tech-panel--sheet"
+			>
+				{@render detail(selected)}
+			</MobileSheet>
+		{:else}
+			<aside class="tech-panel" transition:fly={{ x: 300, duration: 200 }}>
+				{@render detail(selected)}
+			</aside>
+		{/if}
 	{/if}
 </div>
 

@@ -241,26 +241,21 @@
     transform: translateX(0);
 }
 
-@media (max-width: 599px) {
-    .tech-panel {
-        top: auto;
-        left: 0;
-        right: 0;
-        bottom: var(--app-bottom-h);
-        width: 100%;
-        height: auto;
-        max-height: 60vh;
-        border-left: none;
-        border-top: 1px solid #ddd;
-        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
-        border-radius: 12px 12px 0 0;
-    }
-    .tech-panel-hidden {
-        transform: translateY(100%);
-    }
-    .tech-panel-visible {
-        transform: translateY(0);
-    }
+/* Phones (<600px): the detail lives in MobileSheet (full-screen dialog); its body carries .tech-panel--sheet, which
+   only cancels the sidebar positioning. Title, X and bottom close button are provided by the sheet header. */
+.tech-panel--sheet {
+    position: static;
+    width: auto;
+    border: none;
+    box-shadow: none;
+    z-index: auto;
+    transition: none;
+    overflow-y: auto;
+}
+.tech-panel.tech-panel--sheet .detail-x,
+.tech-panel.tech-panel--sheet .detail-title,
+.tech-panel.tech-panel--sheet .detail-close {
+    display: none;
 }
 
 .tech-panel .detail-inner {
@@ -606,26 +601,6 @@
     color: var(--color-text-secondary, #9a9aa4);
     margin: 0.6rem 0 0;
     line-height: 1.4;
-}
-
-@media (max-width: 599px) {
-    .tech-panel .detail-inner {
-        padding: 1.5rem 1.25rem 1.75rem;
-    }
-
-    /* Grabber handle for the mobile bottom sheet — signals "swipeable panel"
-       without needing extra markup or JS. */
-    .tech-panel .detail-inner::before {
-        content: "";
-        position: absolute;
-        top: 0.55rem;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 36px;
-        height: 4px;
-        border-radius: var(--radius-round, 999px);
-        background: var(--color-border-strong, #d0d0dc);
-    }
 }
 
 /* ── Technology buttons (legacy tree used in technology.blade.php) ──────── */

@@ -1040,3 +1040,159 @@ dialog.advisor-dialog h3 {
     background: #2e2e4e;
     color: #fff;
 }
+
+/* ── Phone: full-screen portrait with glass overlays ───────────────────────────────────────────────────────────────
+ * The portrait fills the card (between header/hint bar and bottom navigation); the info block sits as light glass over
+ * its lower part, the building prerequisite is a small tag in the top-right corner, the slot count a small tag at the
+ * top centre (the rail handle owns the top-left). Swipe + dot pager are untouched (carousel.css / Carousel). */
+@media (max-width: 767px) {
+    .advisors-page {
+        position: relative;
+    }
+
+    .advisors-header {
+        position: absolute;
+        top: 0.5rem;
+        left: 3.5rem;
+        right: 7rem;
+        z-index: 5;
+        padding: 0;
+        border: none;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+    /* Page title and AP chips are redundant on the full-screen card (AP is on each card); keep the title for screen readers. */
+    .advisors-header h2 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .advisors-header > div {
+        display: none !important;
+    }
+
+    .advisors-header .slot-badge {
+        margin: 0;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.85);
+        color: #555;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+
+    .advisor-card {
+        position: relative;
+        height: calc(100vh - var(--page-offset-page));
+        height: calc(100dvh - var(--page-offset-page));
+        justify-content: flex-end;
+        background: #f5f5f8;
+        overflow: hidden;
+    }
+
+    .advisor-card--current {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .advisor-portrait {
+        position: absolute;
+        inset: 0;
+        flex: none;
+        z-index: 0;
+    }
+
+    .advisor-card__prereq {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 3;
+        flex: none;
+        width: auto;
+        max-width: 7rem;
+        padding: 0.25rem 0.4rem;
+        border: none;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .advisor-card__prereq .prereq-section-label {
+        display: none;
+    }
+
+    .advisor-card__prereq .prereq-cc-img {
+        width: 26px;
+        height: 26px;
+    }
+
+    .advisor-card__prereq .prereq-main-img {
+        width: 30px;
+        height: 30px;
+    }
+
+    .advisor-card__prereq .prereq-cc-label,
+    .advisor-card__prereq .prereq-main-name {
+        font-size: 0.55rem;
+    }
+
+    .advisor-card__prereq .prereq-plus {
+        margin-bottom: 0.6rem;
+    }
+
+    .advisor-info,
+    .advisor-card__effects {
+        position: relative;
+        z-index: 2;
+        flex: 0 0 auto;
+        border-top: none;
+        background: rgba(255, 255, 255, 0.94);
+    }
+
+    /* Soft upper edge so the portrait fades into the glass. */
+    .advisor-info {
+        padding-top: 1.6rem;
+        overflow: visible;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.94) 1.4rem);
+    }
+
+    .advisor-info .stat-label,
+    .advisor-info .advisor-subtitle,
+    .advisor-card__effects .effects-section-label {
+        color: #777;
+    }
+
+    /* Room for the dot pager that floats over the bottom edge. */
+    .advisor-card__effects {
+        padding-bottom: 1.9rem;
+    }
+
+    .carousel-dots {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 4;
+        margin: 0;
+        pointer-events: none;
+    }
+
+    .carousel-dots .carousel-dot {
+        pointer-events: auto;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .advisors-header .slot-badge,
+    .advisor-card__prereq,
+    .advisor-info,
+    .advisor-card__effects {
+        background: #fff;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

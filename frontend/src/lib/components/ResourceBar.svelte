@@ -332,8 +332,28 @@
 		outline-offset: 2px;
 	}
 	/* AP chips (trust, AP) have no border in resources.css; keep the same box as the resource chips. */
+	.chip-btn:global(.res-chip--sol) {
+		border-color: transparent;
+	}
+	/* Rail look: chips are subtle glass tags (barely any border, light translucent fill); colour stays only as a hairline
+	   tint and on warning/danger. The rail sets --rail-chip-bg (opaque fallback for reduced transparency). */
+	.chip-btn:global(.res-chip),
 	.chip-btn:global(.ap-chip) {
-		border: 1px solid rgba(0, 0, 0, 0.1);
+		background: var(--rail-chip-bg, rgba(255, 255, 255, 0.5)) !important;
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		box-shadow: none;
+		color: var(--color-text-primary);
+		text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
+	}
+	.chip-btn:global(.res-chip:hover) {
+		box-shadow: none;
+		background: rgba(255, 255, 255, 0.7) !important;
+	}
+	.chip-btn:global(.res-chip--warning) {
+		border-color: var(--color-warning) !important;
+	}
+	.chip-btn:global(.res-chip--danger) {
+		border-color: var(--color-danger) !important;
 	}
 	.chip-btn:global(.res-chip--sol) {
 		border-color: transparent;

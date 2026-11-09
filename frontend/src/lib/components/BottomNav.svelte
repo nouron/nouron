@@ -221,7 +221,8 @@
 	.caret {
 		line-height: 1;
 		margin-left: 0.25em;
-		font-size: 0.6em;
+		font-size: 0.45em;
+		opacity: 0.4;
 		transition: transform var(--duration-fast);
 	}
 	.caret.flipped {

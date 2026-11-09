@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Resource rail: fixed overlay on the left edge (docs/superpowers/specs/2026-11-08-ressourcenleiste-links-design.md).
-	// Expanded = panel with all chips; collapsed = only a handle (chevron + AP); peek = collapsed but briefly open
-	// on mouse hover / keyboard focus. Never part of the layout flow, so toggling never resizes the page.
+	// Expanded = panel with all chips; collapsed = only a handle (chevron + AP). Toggles ONLY on click/tap/key (R),
+	// never on hover. Pure overlay, never part of the layout flow, so toggling never moves or resizes the page.
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
 	import { tileTaps } from '#lib/stores/rail.ts';
@@ -26,23 +26,15 @@
 	}
 	// Temporary fold-in (phone tile tap, outside tap); never stored, cleared when the screen group changes.
 	let folded = $state(false);
-	let peek = $state(false);
 	let open = $state<string | null>(null);
 	let panelEl = $state<HTMLElement>();
 	let handleEl = $state<HTMLButtonElement>();
 
 	const pinned = $derived(folded ? false : (choice[group] ?? group === 'colony'));
-	const shown = $derived(pinned || peek);
-
-	// Lets page CSS (colony map padding) react to the pinned rail without prop plumbing.
-	$effect(() => {
-		document.documentElement.classList.toggle('rail-pinned', pinned && group === 'colony');
-		return () => document.documentElement.classList.remove('rail-pinned');
-	});
+	const shown = $derived(pinned);
 
 	function setPinned(v: boolean) {
 		folded = false;
-		peek = false;
 		choice[group] = v;
 		if (!v) open = null;
 		try {
@@ -78,32 +70,6 @@
 		}
 	});
 
-	// Peek: hover (mouse only, 200 ms in / 300 ms out) or keyboard focus on the handle.
-	let peekTimer: ReturnType<typeof setTimeout>;
-	function peekIn(e: PointerEvent) {
-		if (e.pointerType !== 'mouse' || pinned) return;
-		clearTimeout(peekTimer);
-		peekTimer = setTimeout(() => (peek = true), 200);
-	}
-	function peekOut(e: PointerEvent) {
-		if (e.pointerType !== 'mouse') return;
-		clearTimeout(peekTimer);
-		if (peek && !pinned) peekTimer = setTimeout(() => ((peek = false), (open = null)), 300);
-	}
-	function onFocusIn(e: FocusEvent) {
-		if (!pinned && (e.target as HTMLElement).matches(':focus-visible')) {
-			clearTimeout(peekTimer);
-			peek = true;
-		}
-	}
-	function onFocusOut(e: FocusEvent) {
-		const next = e.relatedTarget as Node | null;
-		if (peek && !pinned && !(next && (panelEl?.contains(next) || handleEl?.contains(next)))) {
-			peek = false;
-			open = null;
-		}
-	}
-
 	function isTyping(el: EventTarget | null) {
 		const n = el as HTMLElement | null;
 		return !!n && (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName) || n.isContentEditable);
@@ -116,7 +82,6 @@
 				open = null;
 			} else if (shown && (panelEl?.contains(document.activeElement) || handleEl === document.activeElement)) {
 				if (pinned) setPinned(false);
-				peek = false;
 				handleEl?.focus();
 			}
 		} else if (
@@ -151,7 +116,7 @@
 
 <svelte:window onkeydown={onKey} onclick={onWindowClick} />
 
-<div class="rail" class:rail--shown={shown} onfocusin={onFocusIn} onfocusout={onFocusOut}>
+<div class="rail" class:rail--shown={shown}>
 	<button
 		type="button"
 		class="rail-handle"
@@ -163,8 +128,6 @@
 		aria-label={t('resources.rail_toggle_ap', { ap: s.colony_ap ?? 0 })}
 		title={t('resources.rail_toggle')}
 		onclick={() => setPinned(!pinned)}
-		onpointerenter={peekIn}
-		onpointerleave={peekOut}
 	>
 		<span class="tab">
 			<i class="bi {shown ? 'bi-chevron-left' : 'bi-chevron-right'}" aria-hidden="true"></i>
@@ -179,8 +142,6 @@
 		bind:this={panelEl}
 		aria-label={t('resources.rail_label')}
 		inert={!shown}
-		onpointerenter={peekIn}
-		onpointerleave={peekOut}
 	>
 		<div class="rail-scroll" onscroll={() => (open = null)}>
 			<ResourceBar {s} bind:open />
@@ -192,8 +153,9 @@
 	.rail {
 		--rail-w: 112px;
 		--rail-top: calc(var(--app-header-h) + 8px);
-		--rail-bg: rgba(255, 255, 255, 0.72);
-		--rail-blur: 8px;
+		--rail-bg: transparent;
+		--rail-blur: 0px;
+		--rail-chip-bg: rgba(255, 255, 255, 0.5);
 		position: fixed;
 		inset: 0;
 		z-index: 80;
@@ -213,7 +175,6 @@
 		width: var(--rail-w);
 		box-sizing: border-box;
 		border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
-		box-shadow: var(--shadow-flyout);
 		pointer-events: auto;
 		visibility: hidden;
 		transition:
@@ -226,8 +187,6 @@
 		content: '';
 		position: absolute;
 		inset: 0;
-		border: 1px solid var(--color-border);
-		border-left: 0;
 		border-radius: inherit;
 		background: var(--rail-bg);
 		-webkit-backdrop-filter: blur(var(--rail-blur));
@@ -278,13 +237,13 @@
 		width: 28px;
 		height: 100%;
 		box-sizing: border-box;
-		background: var(--rail-bg);
+		background: var(--rail-chip-bg);
 		-webkit-backdrop-filter: blur(var(--rail-blur));
 		backdrop-filter: blur(var(--rail-blur));
-		border: 1px solid var(--color-border);
+		border: 1px solid rgba(0, 0, 0, 0.06);
 		border-left: 0;
 		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-		box-shadow: var(--shadow-flyout);
+		text-shadow: 0 0 3px #fff, 0 0 6px #fff;
 		color: var(--color-text-primary);
 		font-size: 0.72rem;
 		font-weight: 700;
@@ -293,9 +252,6 @@
 	.rail--shown .tab {
 		height: 44px;
 		margin-top: 0;
-	}
-	.rail-handle:hover .tab {
-		background: var(--color-surface);
 	}
 	.rail-handle:focus-visible {
 		outline: none;
@@ -326,12 +282,14 @@
 	@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
 		.rail {
 			--rail-bg: var(--color-bg);
+			--rail-chip-bg: var(--color-bg);
 			--rail-blur: 0px;
 		}
 	}
 	@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
 		.rail {
 			--rail-bg: var(--color-bg);
+			--rail-chip-bg: var(--color-bg);
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
