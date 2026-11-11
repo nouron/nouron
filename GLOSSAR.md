@@ -23,6 +23,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | **Pfadgebäude** | – | Interner Begriff (Spielerbegriff: **Fokus-Gebäude**, Marke je Gebäude: Kenntnisse, Missionen, Beziehungen; Texte nie „Pfad“ oder „Schwerpunkt“ nennen). Eines der drei Gebäude Labor, Hangar, Cantina. Das erste kommt in Phase 1, das zweite und dritte ab CC Lv3 bzw. Lv4 (Pfadwahl-Gate). |
 | **Vertiefung** | – | Gemeinsame Bauart der Pfadgebäude: mehrere Dinge (Kenntnis, Figur, Missionstyp), jedes in fünf Stufen allein mit AP aus dem gemeinsamen Pool ausbaubar (Ausbau), unabhängig von der Ausführung; nur ein Strukturmodell, nirgends als Raster zu sehen *(Entwurf)*. |
 | **Vertrautheit** | – | Bindung an eine Cantina-Figur (Gesprächslevel); steigt per AP-Investition (Beziehung pflegen), erst nach dem ersten Treffen der Figur im Lauf. Nicht zu verwechseln mit Vertrauen (Kolonie-Stimmung) *(Entwurf)*. |
+| **Beziehungsstufe** | `colony_path_levels` (`character`) | Stufe der Vertrautheit mit einer Figur, im Spiel als Wort: fremd, neu kennengelernt, bekannt, vertraut, befreundet, brüderlich; bei Tomas bestimmt sie die Höhe seines Rats. |
 | **Gespräch** | `conversation_options` | Cantina-Investition in drei Größen (unterschiedlich viele AP) je Figur, begrenzt durch einen Sol-Deckel je Figur; reine AP-Investition in die Vertrautheit, ohne Zusatzertrag *(Entwurf)*. |
 | **Missionserfahrung** | – | Stufe der Kolonie in einer Missionsfamilie; steigt per AP-Investition als Training im Simulator, ohne Einsatz (Vorschlag für das Label, Alternative „Training“; ersetzt den früheren Arbeitsbegriff „Routine“) *(Entwurf)*. |
 | **Pflichtgebäude (Phase 1)** | – | Was Phase 1 abschließt: CC Lv2, Harvester, Wohnhabitat, Agrardom, Uplink-Station, ein Pfadgebäude (je Lv1) und zwei Berater. |
@@ -71,7 +72,8 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | **AP-Deckel** | `ap_cap` | Ein Ziel (Gebäude) nimmt pro Sol nur begrenzt Ausbau-AP auf: Grundwert plus Beitrag des passenden Beraters. Zeit-Bremse ohne Eingriff ins Regolith-Einkommen. Reparieren, Platzieren und Belohnungs-AP sind ausgenommen. |
 | Supply-Kappe | `supply_cap` | Obergrenze der Kolonisten: CC fest plus Wohnhabitat-Stufen. |
 | Kenntnis | `knowledge`/`research` | Erforschbarer Effekt (z. B. Baukunde, Kartographie, Geologie). „Forschung“ ist die Tätigkeit, „Kenntnis“ das Ergebnis. |
-| Labor-Vorschau | `preview` | Der Techtree („Labor“ im Menü) vor dem Bau des Analytik-Labors: gleiches Gitter, Kenntnisse gesperrt und ohne Zahlen, keine Forschung. |
+| Labor-Vorschau | `preview` | Der Techtree („Labor“ im Menü) vor dem Bau des Analytik-Labors: gleiches Gitter, Kenntnisse gesperrt und ohne Zahlen, keine Forschung; erreichte Stufen genau, Bonus-Fortschritt nur grob in Worten. |
+| **Stille Forschung** | `investBonus` | Zweckgebundene Bonus-AP aus der Cantina (Tomas, Sarka, Deva, Lenn) lassen eine Kenntnis von selbst aufsteigen, auch ohne Labor; alle übrigen Sperren gelten. |
 | Hunger | `hunger_streak` | Organika reicht nicht; Vertrauens-Malus, der mit jeder Folge-Runde wächst. |
 | Signal / Tiefenscan / Bergung | – | Verstecktes Signal auf einem Feld, Scan zeigt den Inhalt, Bergung holt ihn. |
 | Nexus | `nexus_debt` | Die Fraktion hinter Subvention, Kredit und Schulden; „Nexus-DB“ im UI ist dagegen die Enzyklopädie. |
