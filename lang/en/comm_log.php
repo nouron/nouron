@@ -23,6 +23,7 @@ return [
         'knowledge' => [
             'bonus_progress' => 'Silent research',
             'bonus_breakthrough' => 'Silent research: breakthrough',
+            'bonus_lapsed' => 'Bonus AP lapsed', // TODO content-writer
         ],
         'merchant' => [
             'visit' => 'Travelling Merchant announced',
@@ -145,6 +146,7 @@ return [
         'knowledge_bonus' => 'from :name quietly went into :knowledge.',
         'knowledge_bonus_breakthrough' => 'from :name quietly went into :knowledge. Breakthrough: level :level reached.',
         'knowledge_bonus_forfeited' => 'The remaining :ap AP lapse — the knowledge is waiting on :reason.',
+        'knowledge_bonus_lapsed' => ':ap AP from :name for :knowledge lapsed — the knowledge is waiting on :reason.', // TODO content-writer
         'pathdepth_character_levelup' => 'invested in the relationship with :name. Level :level reached.',
         'building_leveled_up' => ':ap AP invested in :name. Construction complete — Level :level reached.',
         'level_up' => 'Research :name completed.',

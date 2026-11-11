@@ -488,6 +488,22 @@ class CommLogControllerTest extends TestCase
         $this->assertStringContainsString(__('knowledge.bonus_wait_knowledge_cc_gate'), $text);
     }
 
+    public function test_knowledge_bonus_lapsed_names_mission_ap_and_reason(): void
+    {
+        $this->log('knowledge.bonus_lapsed', [
+            'source' => 'data_sweep', 'knowledge_id' => 90, 'knowledge_key' => 'construction',
+            'ap_invested' => 0, 'level' => 5, 'leveled_up' => false, 'ap_forfeited' => 8, 'block_reason' => 'max_level',
+        ], area: 'knowledge');
+
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries')->first()['segments'];
+        $text = collect($segments)->where('type', 'text')->pluck('value')->implode(' ');
+
+        $this->assertStringContainsString('8', $text);
+        $this->assertStringContainsString(__('missions.mission_data_sweep_name'), $text);
+        $this->assertStringContainsString(__('knowledge.construction'), $text);
+        $this->assertStringContainsString(__('knowledge.bonus_wait_max_level'), $text);
+    }
+
     public function test_building_invested_entries_for_different_buildings_do_not_collapse(): void
     {
         $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 1], tick: 5);

@@ -20,9 +20,10 @@ use App\Services\HangarService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
 use App\Services\PathDepthService;
-use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunProgressService;
+use App\Services\Techtree\KnowledgeBonusJournal;
+use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use App\Services\TrustService;
 use App\Support\RegolithLedger;
@@ -83,12 +84,13 @@ class GameTick extends Command
         private readonly TrustService $trustService,
         private readonly ResourcesService $resourcesService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
-        private readonly ProjectBonusService $projectBonusService,
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
         private readonly PathDepthService $pathDepthService,
+        private readonly ResearchService $researchService,
+        private readonly KnowledgeBonusJournal $knowledgeBonusJournal,
     ) {
         parent::__construct();
     }
@@ -551,7 +553,10 @@ class GameTick extends Command
             } elseif ($type === 'reveal_tiles') {
                 $value = $this->revealTiles($colonyId, (int) $value);
             } elseif ($type === 'research_ap') {
-                $this->grantResearchAp($colonyId, $target, (int) $value);
+                $knowledgeResult = $this->grantResearchAp($colonyId, $target, (int) $value, $tick);
+                if ($knowledgeResult !== null) {
+                    $details['knowledge_result'] = $knowledgeResult;
+                }
             } elseif ($type === 'find_salvage') {
                 // T30 §13.3: own detail keys, deliberately NOT 'regolith' (RunReport topf find_flight).
                 // Hook for §13.6 (Feldproben, Fahrtbericht) — find_type is in the details.
@@ -591,33 +596,24 @@ class GameTick extends Command
     }
 
     /**
-     * Grants research-AP progress on the player-chosen knowledge, capped at the
-     * next levelup threshold (no auto-levelup) — bypasses the AP-gated invest().
+     * Pays a mission's research AP (mission_data_sweep) into the player-chosen knowledge.
+     * They are earmarked reward AP like the Cantina bonuses, so they follow silent research
+     * (ResearchService::investBonus): level-up at the threshold, rest carries over, and AP
+     * a blocked knowledge cannot take lapse with a journal entry instead of being capped.
+     *
+     * @return array<string, mixed>|null the KnowledgeBonusResult payload, null without a target
      */
-    private function grantResearchAp(int $colonyId, ?array $target, int $points): void
+    private function grantResearchAp(int $colonyId, ?array $target, int $points, int $tick): ?array
     {
         $researchId = (int) ($target['research_id'] ?? 0);
         if ($researchId === 0) {
-            return;
+            return null;
         }
 
-        $row = DB::table('colony_researches')
-            ->where('colony_id', $colonyId)
-            ->where('research_id', $researchId)
-            ->first(['level', 'ap_spend']);
+        $result = $this->researchService->investBonus($colonyId, $researchId, $points);
+        $this->knowledgeBonusJournal->record($colonyId, $tick, 'data_sweep', $result);
 
-        $currentLevel = (int) ($row->level ?? 0);
-        $costs = collect(config('knowledge'))->firstWhere('id', $researchId)['levelup_costs'] ?? [];
-        $rawThreshold = (int) ($costs[$currentLevel + 1] ?? PHP_INT_MAX);
-        $threshold = $rawThreshold === PHP_INT_MAX
-            ? PHP_INT_MAX
-            : $this->projectBonusService->effectiveKnowledgeApForLevelup($colonyId, $rawThreshold);
-        $newSpend = min(((int) ($row->ap_spend ?? 0)) + $points, $threshold);
-
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $colonyId, 'research_id' => $researchId],
-            ['ap_spend' => $newSpend, 'level' => $currentLevel]
-        );
+        return $result->toArray();
     }
 
     /**

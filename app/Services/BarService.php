@@ -7,6 +7,7 @@ use App\Models\BarConcern;
 use App\Models\BarEncounter;
 use App\Models\BarInformationEncounter;
 use App\Models\BarOffer;
+use App\Services\Techtree\KnowledgeBonusJournal;
 use App\Services\Techtree\KnowledgeBonusPresenter;
 use App\Services\Techtree\KnowledgeBonusResult;
 use App\Services\Techtree\ResearchService;
@@ -19,11 +20,6 @@ use Illuminate\Support\Facades\Log;
 class BarService
 {
     private const BAR_BUILDING_ID = 52;
-
-    /** Journal events of earmarked knowledge bonus AP (stille Forschung). */
-    public const EVENT_BONUS_PROGRESS = 'knowledge.bonus_progress';
-
-    public const EVENT_BONUS_BREAKTHROUGH = 'knowledge.bonus_breakthrough';
 
     private const TRADER_ADVISOR_ID = 92; // personell.id for 'trader'
 
@@ -51,8 +47,8 @@ class BarService
         private readonly TradeAdvantageService $tradeAdvantageService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly PathDepthService $pathDepthService,
-        private readonly EventService $eventService,
         private readonly KnowledgeBonusPresenter $knowledgeBonusPresenter,
+        private readonly KnowledgeBonusJournal $knowledgeBonusJournal,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -1577,44 +1573,21 @@ class BarService
      */
     public function bartenderToday(int $colonyId, int $currentTick): ?array
     {
-        $entries = DB::table('colony_log')
-            ->where('user', $this->colonyOwner($colonyId))
-            ->where('tick', $currentTick)
-            ->whereIn('event', [self::EVENT_BONUS_PROGRESS, self::EVENT_BONUS_BREAKTHROUGH])
-            ->orderByDesc('id')
-            ->pluck('parameters');
+        $params = $this->knowledgeBonusJournal->latest($colonyId, $currentTick, 'bartender');
 
-        foreach ($entries as $raw) {
-            $params = json_decode((string) $raw, true);
-            if (is_array($params) && ($params['source'] ?? null) === 'bartender' && (int) ($params['colony_id'] ?? 0) === $colonyId) {
-                return $this->knowledgeBonusPresenter->present($colonyId, $params);
-            }
-        }
-
-        return null;
+        return $params !== null ? $this->knowledgeBonusPresenter->present($colonyId, $params) : null;
     }
 
     /**
-     * Journal entry + frontend payload for an accepted knowledge bonus (spec sentences
-     * 17 and 23): knowledge.bonus_breakthrough on a level-up, else knowledge.bonus_progress.
+     * Journal entry + frontend payload for an accepted knowledge bonus (spec sentences 17 and 23).
      *
      * @return array<string, mixed>
      */
     private function recordKnowledgeBonus(int $colonyId, int $tick, string $source, KnowledgeBonusResult $result): array
     {
-        $data = $result->toArray();
+        $this->knowledgeBonusJournal->record($colonyId, $tick, $source, $result);
 
-        if ($result->accepted) {
-            $this->eventService->createEvent([
-                'user' => $this->colonyOwner($colonyId),
-                'tick' => $tick,
-                'event' => $result->leveledUp() ? self::EVENT_BONUS_BREAKTHROUGH : self::EVENT_BONUS_PROGRESS,
-                'area' => 'knowledge',
-                'parameters' => json_encode(['colony_id' => $colonyId, 'source' => $source] + $data),
-            ]);
-        }
-
-        return $this->knowledgeBonusPresenter->present($colonyId, $data);
+        return $this->knowledgeBonusPresenter->present($colonyId, $result->toArray());
     }
 
     /**
@@ -1630,11 +1603,6 @@ class BarService
             'message' => __('colony.knowledge_not_selectable', ['reason' => __("knowledge.bonus_wait_{$blocker}")]),
             'block_reason' => $blocker,
         ];
-    }
-
-    private function colonyOwner(int $colonyId): int
-    {
-        return (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id');
     }
 
     /**
