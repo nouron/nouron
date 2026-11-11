@@ -1,7 +1,13 @@
 # Changelog
 
+## 2026-11-11
+
+- T41 P7: Spec-Entwurf Figuren-Stufenwirkung (Owner-Prinzip: Effekte absolut, klein, additiv); nicht umgesetzt.
+- Datenarchiv-Entwurf: Freischalt-Moment (Ereignis im Lauf, Achievement-Pop-up), Lauf-Zähler am Lauf-Ende, Beziehungswert pro Figur als einfaches System; Sinken des Werts als spätere Idee.
+
 ## 2026-11-09
 
+- Datenarchiv: Entwürfe Anlass-/Schwellenliste und Redaktionsideen (Lore-Stufen, Orin, Platzhaltertexte, GLOSSAR-Vorschlag) als Doku, nicht umgesetzt.
 - UI-Umbau Playtest-Fixes: Ressourcenleiste nur per Klick, transparent mit dezenten Chips, Karte bewegt sich beim Umschalten nicht mehr; Kolonie-Karte mobil füllt den Platz; Berater mobil als Vollbild-Portrait mit Glas-Infos; dezentere Pfeile in der Bottom-Nav; Techtree-Detail mobil als Vollbild-Sheet.
 - Datenarchiv-Entwurf: Redaktionskonzept entschieden (Figuren eigener Bereich, Lore-Schicht, max. 3 Stufen); Freischalt-Budget 4–5 erfolgreiche Runs bis alles offen; Runs zählen unabhängig vom Ausgang (Hades-Prinzip), kein Gesamtzähler.
 
