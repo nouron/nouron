@@ -21,8 +21,8 @@ return [
             'tile_salvaged' => 'Find salvaged',
         ],
         'knowledge' => [
-            'bonus_progress' => 'Advice flows into a knowledge', // TODO content-writer
-            'bonus_breakthrough' => 'Breakthrough in a knowledge', // TODO content-writer
+            'bonus_progress' => 'Silent research',
+            'bonus_breakthrough' => 'Silent research: breakthrough',
         ],
         'merchant' => [
             'visit' => 'Travelling Merchant announced',
@@ -141,10 +141,10 @@ return [
         'pathdepth_family' => 'invested in training :name.',
         'pathdepth_family_levelup' => 'invested in training :name. Level :level reached.',
         'pathdepth_character' => 'invested in the relationship with :name.',
-        // Silent research. TODO content-writer: drafts.
-        'knowledge_bonus' => 'from :name flowed into :knowledge.',
-        'knowledge_bonus_breakthrough' => 'from :name flowed into :knowledge. Breakthrough: level :level reached.',
-        'knowledge_bonus_forfeited' => 'Remaining :ap AP lapse — waiting on :reason.',
+        // Silent research (rendered after an AP chip: "5 AP from Tomas …").
+        'knowledge_bonus' => 'from :name quietly went into :knowledge.',
+        'knowledge_bonus_breakthrough' => 'from :name quietly went into :knowledge. Breakthrough: level :level reached.',
+        'knowledge_bonus_forfeited' => 'The remaining :ap AP lapse — the knowledge is waiting on :reason.',
         'pathdepth_character_levelup' => 'invested in the relationship with :name. Level :level reached.',
         'building_leveled_up' => ':ap AP invested in :name. Construction complete — Level :level reached.',
         'level_up' => 'Research :name completed.',

@@ -21,8 +21,8 @@ return [
             'tile_salvaged' => 'Fund geborgen',
         ],
         'knowledge' => [
-            'bonus_progress' => 'Rat fließt in eine Kenntnis', // TODO content-writer
-            'bonus_breakthrough' => 'Durchbruch in einer Kenntnis', // TODO content-writer
+            'bonus_progress' => 'Stille Forschung',
+            'bonus_breakthrough' => 'Stille Forschung: Durchbruch',
         ],
         'merchant' => [
             'visit' => 'Reisender Händler angekündigt',
@@ -144,10 +144,10 @@ return [
         'pathdepth_family' => 'in Training :name investiert.',
         'pathdepth_family_levelup' => 'in Training :name investiert. Stufe :level erreicht.',
         'pathdepth_character' => 'in Beziehung zu :name investiert.',
-        // Stille Forschung. TODO content-writer: Entwürfe.
-        'knowledge_bonus' => 'von :name in :knowledge geflossen.',
-        'knowledge_bonus_breakthrough' => 'von :name in :knowledge geflossen. Durchbruch: Stufe :level erreicht.',
-        'knowledge_bonus_forfeited' => 'Rest von :ap AP verfällt — wartet auf :reason.',
+        // Stille Forschung (hinter einem AP-Chip: „5 AP von Tomas …").
+        'knowledge_bonus' => 'von :name flossen still in :knowledge.',
+        'knowledge_bonus_breakthrough' => 'von :name flossen still in :knowledge. Durchbruch: Stufe :level erreicht.',
+        'knowledge_bonus_forfeited' => 'Die übrigen :ap AP verfallen — die Kenntnis wartet auf :reason.',
         'pathdepth_character_levelup' => 'in Beziehung zu :name investiert. Stufe :level erreicht.',
         'building_leveled_up' => ':ap AP in :name investiert. Bau abgeschlossen — Level :level erreicht.',
         'level_up' => 'Forschung :name abgeschlossen.',
