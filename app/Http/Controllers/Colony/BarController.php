@@ -13,6 +13,7 @@ use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\PathDepthService;
 use App\Services\ResourcesService;
+use App\Services\Techtree\KnowledgeBonusPresenter;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
 use App\Services\TradeAdvantageService;
@@ -40,6 +41,7 @@ class BarController extends BaseController
         private readonly BarOfferDialogPresenter $offerDialogPresenter,
         private readonly TradeAdvantagePresenter $advantagePresenter,
         private readonly PathDepthService $pathDepthService,
+        private readonly KnowledgeBonusPresenter $knowledgeBonusPresenter,
     ) {
         parent::__construct($tick);
     }
@@ -172,14 +174,10 @@ class BarController extends BaseController
         $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 2);
         $hasConsul = $barLevel > 0 && $this->barService->hasAvailableConsul($colony->id);
 
-        // Knowledge dropdown options shared by Tomas (A40), Sarka's Anliegen (A41)
-        // and Deva's knowledge_boost outcome (A42) — all 7 Kenntnisse are valid
-        // targets for Tomas/Sarka; Deva's choice is further restricted client-side
-        // to game.bar.information_pool.veteran.knowledge_choices.
-        $knowledgeOptions = [];
-        foreach (config('knowledge', []) as $key => $def) {
-            $knowledgeOptions[] = ['id' => $def['id'], 'key' => $key, 'name' => __("knowledge.{$key}")];
-        }
+        // Knowledge choice shared by Tomas (A40), Sarka's Anliegen (A41) and Deva's
+        // knowledge_boost outcome (A42): every knowledge, flagged selectable or
+        // "wartet auf <Grund>" (silent research, spec 2026-11-11-tomas-rat-rueckmeldung).
+        $knowledgeOptions = $this->knowledgeBonusPresenter->options($colony->id);
 
         $concernApCost = $concern ? (int) config("game.bar.concern.ap_cost.{$concern->character_slug}", 0) : null;
 
@@ -190,15 +188,40 @@ class BarController extends BaseController
         ));
 
         $relationships = $barLevel > 0 ? $this->relationships($colony->id, $characters) : [];
+        $bartender = $this->bartenderState($colony->id, $tick);
 
         return compact(
-            'relationships',
+            'relationships', 'bartender',
             'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
             'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
         );
+    }
+
+    /**
+     * Tomas' advice state for the counter and his popup (spec 2026-11-11-tomas-rat-rueckmeldung,
+     * sentence 25): relationship level, the bonus a conversation gives now, whether he was
+     * talked to this Sol and with what result, and whether advice is still open today.
+     *
+     * @return array{relationship_level: int, ap_bonus: int, talked_today: bool, today_result: array<string, mixed>|null, advice_open: bool}
+     */
+    private function bartenderState(int $colonyId, int $tick): array
+    {
+        $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
+        $apBonus = $this->barService->bartenderApBonus($colonyId);
+        $lastTick = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->value('last_interaction_tick');
+        $talkedToday = $lastTick !== null
+            && $tick - (int) $lastTick < (int) config('game.bartender.interaction_cooldown_ticks');
+
+        return [
+            'relationship_level' => $level,
+            'ap_bonus' => $apBonus,
+            'talked_today' => $talkedToday,
+            'today_result' => $talkedToday ? $this->barService->bartenderToday($colonyId, $tick) : null,
+            'advice_open' => $apBonus > 0 && ! $talkedToday,
+        ];
     }
 
     /**

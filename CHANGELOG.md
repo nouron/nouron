@@ -3,6 +3,7 @@
 ## 2026-11-11
 
 - Cantina: „Beziehung pflegen“ ins Figuren-Popup integriert (Desktop 3 Spalten Porträt | Beziehung | Gespräch, Handy untereinander); Beziehungsstufen als Wörter (fremd … brüderlich); unter der Szene nur noch kompakte Figuren-Chips.
+- Stille Forschung (Backend, Spec `2026-11-11-tomas-rat-rueckmeldung`): Bonus-AP von Tomas, Sarka, Deva und Lenn lassen Kenntnisse auch ohne Labor aufsteigen, gesperrte Kenntnisse sind nicht wählbar, verfallene Rest-AP werden gemeldet und protokolliert; Tomas' Rat richtet sich nach der Beziehungsstufe statt nach der Gesprächszahl.
 
 ## 2026-11-09
 
