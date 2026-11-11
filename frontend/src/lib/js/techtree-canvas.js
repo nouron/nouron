@@ -85,7 +85,8 @@
             dotsEl = opts.dots || null,
             rootEl = opts.root || stage;
         var labels = opts.labels || {};
-        // describe(item) -> { label, sub, path, status, pulse }, re-read on refresh().
+        // describe(item) -> { label, sub, path, status, pulse, mark }, re-read on refresh().
+        // mark: small accent badge top-right (lab preview: progress from cantina bonus AP).
         var describe = opts.describe;
         var onSelect = opts.onSelect || function () {};
 
@@ -121,6 +122,7 @@
                     r: it.row,
                     status: 'available',
                     pulse: false,
+                    mark: false,
                     item: it,
                     label: '',
                     sub: '',
@@ -200,6 +202,7 @@
                 n.sub = d.sub;
                 n.status = d.status;
                 n.pulse = !!d.pulse;
+                n.mark = !!d.mark;
             });
         }
 
@@ -581,7 +584,29 @@
             ctx.fillText(fitText(n.label, 600, 16, NW * 2 - 24), n.x, n.y - 3);
             ctx.fillStyle = locked ? P.text2 : c.fg;
             ctx.fillText(fitText(n.sub, 400, 12.5, NW * 2 - 24), n.x, n.y + 16);
+            ctx.globalAlpha = alpha;
+            if (n.mark) drawMark(x1 - 12, y0 + 10);
             ctx.globalAlpha = 1;
+        }
+
+        // Cantina-bonus mark: accent disc with a white four-point spark, never faded by the lock state.
+        function drawMark(cx, cy) {
+            ctx.fillStyle = P.accent;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 5);
+            ctx.lineTo(cx + 1.4, cy - 1.4);
+            ctx.lineTo(cx + 5, cy);
+            ctx.lineTo(cx + 1.4, cy + 1.4);
+            ctx.lineTo(cx, cy + 5);
+            ctx.lineTo(cx - 1.4, cy + 1.4);
+            ctx.lineTo(cx - 5, cy);
+            ctx.lineTo(cx - 1.4, cy - 1.4);
+            ctx.closePath();
+            ctx.fill();
         }
 
         // Onboarding hint: a soft ring that breathes around the nodes the current hint points at.

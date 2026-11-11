@@ -10,6 +10,7 @@
 	import { t } from '#lib/i18n.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import CantinaDialog from './CantinaDialog.svelte';
+	import KnowledgeResultLine, { type KnowledgeResult } from './KnowledgeResultLine.svelte';
 
 	type Pos = { left: number; top: number };
 	type Char = { slug?: string; name?: string; role?: string; game_role?: string };
@@ -37,7 +38,16 @@
 		negotiation_sum: string;
 	};
 	type Encounter = { id: number; type: 'wager' | 'auction' | 'contract'; give_resource_id: number; give_amount: number; credits_amount: number };
-	type Knowledge = { id: number; key: string; name: string };
+	// selectable=false: the knowledge cannot take bonus AP now ("wartet auf <blocked_label>").
+	type Knowledge = { id: number; key: string; name: string; selectable?: boolean; blocked_label?: string | null };
+	// Tomas' advice state (relationship level drives the bonus; level 0 = no advice).
+	type Bartender = {
+		relationship_level: number;
+		ap_bonus: number;
+		talked_today: boolean;
+		today_result: KnowledgeResult | null;
+		advice_open: boolean;
+	};
 	type Relationship = {
 		key: string;
 		name: string;
@@ -75,6 +85,7 @@
 		knowledgeOptions: Knowledge[];
 		devaKnowledgeChoices: Knowledge[];
 		relationships: Relationship[];
+		bartender: Bartender;
 		relationshipGate: Record<string, number>;
 		relationshipMaxLevel: number;
 	};
@@ -110,17 +121,20 @@
 	let encounterError = $state<string | null>(null);
 	let bartenderKnowledgeId = $state<number | null>(null);
 	let bartenderTier = $state<number | null>(null);
+	let bartenderResult = $state<KnowledgeResult | null>(null);
 	let bartenderError = $state<string | null>(null);
 	let bartenderLoading = $state(false);
 	let concernKnowledgeId = $state<number | null>(null);
 	let concernResolved = $state(false);
 	let concernSuccess = $state<boolean | null>(null);
 	let concernError = $state<string | null>(null);
+	let concernKnowledgeResult = $state<KnowledgeResult | null>(null);
 	let concernLoading = $state(false);
 	let informationKnowledgeId = $state<number | null>(null);
 	let informationResolved = $state(false);
 	let informationOutcomeKey = $state<string | null>(null);
 	let informationError = $state<string | null>(null);
+	let informationKnowledgeResult = $state<KnowledgeResult | null>(null);
 	let informationLoading = $state(false);
 	// Relationships
 	let relationLoading = $state<Record<string, boolean>>({});
@@ -304,12 +318,45 @@
 		bartenderError = null;
 		const res = await post('/colony/bar/talk-to-bartender', { knowledge_id: bartenderKnowledgeId });
 		bartenderLoading = false;
-		// ap_added tiers 0–3 map onto the four bartender_dialog_tier_* lines.
 		if (res.ok) {
-			bartenderTier = Math.min(3, (res.ap_added as number) ?? 0);
+			// Tomas' line follows his relationship level (1–5) onto the four bartender_dialog_tier_* lines.
+			bartenderTier = Math.min(3, Math.ceil((d?.bartender.relationship_level ?? 0) / 2));
+			bartenderResult = (res.knowledge_result as KnowledgeResult) ?? null;
+			if (d) d.bartender = { ...d.bartender, talked_today: true, today_result: bartenderResult, advice_open: false };
 			sync();
-		} else
-			bartenderError = t(res.error === 'cooldown_active' ? 'colony.bartender_error_cooldown' : 'colony.bartender_error_generic');
+			refreshKnowledgeState();
+		} else if (res.error === 'cooldown_active') {
+			// Fallback only (e.g. second tab): the popup normally knows this before the click.
+			bartenderError = t('colony.bartender_error_cooldown');
+			refreshKnowledgeState();
+		} else bartenderError = res.message ?? t('colony.bartender_error_generic');
+	}
+
+	/** Opening Tomas' dialog: fresh state, the done-today view comes from d.bartender. */
+	function openBartender() {
+		open('bartender');
+		bartenderTier = null;
+		bartenderResult = null;
+		bartenderError = null;
+	}
+
+	const optionLabel = (opt: Knowledge) =>
+		opt.selectable === false ? t('colony.knowledge_option_waiting', { name: opt.name, reason: opt.blocked_label ?? '?' }) : opt.name;
+	const firstSelectable = (opts: Knowledge[]) => opts.find((o) => o.selectable !== false)?.id ?? null;
+	const isSelectable = (opts: Knowledge[], id: number | null) => id !== null && opts.some((o) => o.id === id && o.selectable !== false);
+
+	// After a bonus or a Tomas relationship step: knowledge selectability and Tomas' state
+	// (bonus, advice open) changed server-side — reload them without touching the scene.
+	async function refreshKnowledgeState() {
+		const r = await api<Data>('/cantina').catch(() => null);
+		if (!r || !d) return;
+		d.knowledgeOptions = r.knowledgeOptions;
+		d.devaKnowledgeChoices = r.devaKnowledgeChoices;
+		d.bartender = r.bartender;
+		if (!isSelectable(r.knowledgeOptions, bartenderKnowledgeId)) bartenderKnowledgeId = firstSelectable(r.knowledgeOptions);
+		if (!isSelectable(r.knowledgeOptions, concernKnowledgeId)) concernKnowledgeId = firstSelectable(r.knowledgeOptions);
+		if (!isSelectable(r.devaKnowledgeChoices, informationKnowledgeId))
+			informationKnowledgeId = firstSelectable(r.devaKnowledgeChoices);
 	}
 
 	async function resolveConcern() {
@@ -323,8 +370,10 @@
 		if (!res.ok) return void (concernError = fail(res));
 		concernResolved = true;
 		concernSuccess = res.success as boolean;
+		concernKnowledgeResult = (res.knowledge_result as KnowledgeResult) ?? null;
 		sync(res.ap_available);
 		refreshRelationships(d.concern.character_slug);
+		if (concernKnowledgeResult) refreshKnowledgeState();
 	}
 
 	// Only Deva's knowledge_boost outcome needs a choice; Lenn's target is fixed.
@@ -342,7 +391,9 @@
 		if (!res.ok) return void (informationError = fail(res));
 		informationResolved = true;
 		informationOutcomeKey = (res.outcome_key as string) ?? null;
+		informationKnowledgeResult = (res.knowledge_result as KnowledgeResult) ?? null;
 		sync();
+		if (informationKnowledgeResult) refreshKnowledgeState();
 		refreshRelationships(d.informationEncounter.character_slug);
 	}
 
@@ -403,6 +454,8 @@
 		Object.assign(rel, { level: res.level, ap_spend: res.ap_spend, ap_for_levelup: res.ap_for_levelup, level_cap: res.level_cap });
 		if (res.conversation) rel.conversation = res.conversation as Relationship['conversation'];
 		sync(res.apAvailable);
+		// Tomas' bonus follows his relationship level: the talk button must show the new number.
+		if (rel.key === 'bartender') refreshKnowledgeState();
 		const required = d.relationshipGate[rel.level + 1];
 		rel.lock_reason =
 			required !== undefined && rel.level >= rel.level_cap
@@ -415,9 +468,9 @@
 			.then((r) => {
 				d = r;
 				negotiated = { ...r.negotiatedOffers };
-				bartenderKnowledgeId = r.knowledgeOptions[0]?.id ?? null;
-				concernKnowledgeId = r.knowledgeOptions[0]?.id ?? null;
-				informationKnowledgeId = r.devaKnowledgeChoices[0]?.id ?? null;
+				bartenderKnowledgeId = firstSelectable(r.knowledgeOptions);
+				concernKnowledgeId = firstSelectable(r.knowledgeOptions);
+				informationKnowledgeId = firstSelectable(r.devaKnowledgeChoices);
 			})
 			.catch((e) => {
 				if (!(e instanceof ApiError && e.status === 401)) loadError = String(e.message ?? e);
@@ -448,11 +501,21 @@
 	</div>
 {/snippet}
 
+<!-- Talk button after today's conversation: off, with the "wieder nächstes Sol" chip. -->
+{#snippet bartenderDoneButton()}
+	<div class="row-end">
+		<button class="tile-action-btn auto" disabled data-bartender-done>
+			<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+			<span class="ap-chip ap-cost-chip ap-chip--neutral">{t('colony.bartender_next_sol')}</span>
+		</button>
+	</div>
+{/snippet}
+
 {#snippet knowledgeSelect(label: string, options: Knowledge[], value: number | null, set: (v: number) => void)}
 	<label class="muted-label">
 		{label}
 		<select value={value} onchange={(e) => set(Number((e.currentTarget as HTMLSelectElement).value))}>
-			{#each options as opt (opt.id)}<option value={opt.id}>{opt.name}</option>{/each}
+			{#each options as opt (opt.id)}<option value={opt.id} disabled={opt.selectable === false}>{optionLabel(opt)}</option>{/each}
 		</select>
 	</label>
 {/snippet}
@@ -598,12 +661,16 @@
 					type="button"
 					class="cantina-bartender"
 					data-bartender-counter
-					onclick={() => {
-						open('bartender');
-						bartenderTier = null;
-						bartenderError = null;
-					}}
+					onclick={openBartender}
 				>
+					{#if data.bartender.advice_open}
+						<!-- Advice open today (relationship level >= 1, not talked yet). -->
+						<span class="hotspot-badge cantina-bartender__badge" data-advice-open title={t('colony.bartender_advice_open')}
+							><i class="bi bi-lightbulb" aria-hidden="true"></i><span class="visually-hidden"
+								>{t('colony.bartender_advice_open')}</span
+							></span
+						>
+					{/if}
 					<img class="cantina-bartender__portrait" src="{portrait('bartender')}.webp" srcset="{portrait('bartender')}.webp 1x, {portrait('bartender')}_lg.webp 2x" alt={data.characters.bartender?.name} />
 					<span class="cantina-bartender__counter">
 						<strong>{data.characters.bartender?.name}</strong>
@@ -879,19 +946,40 @@
 				{#if activeModal === 'bartender'}
 					{@const b = data.characters.bartender ?? {}}
 					<CantinaDialog slug="bartender" name={b.name ?? ''} role={b.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
-						{#if bartenderTier === null}
+						{@const bt = data.bartender}
+						{#if bartenderTier !== null}
+							<!-- Right after the conversation: Tomas' line + today's result. -->
+							<p>{t(`colony.bartender_dialog_tier_${bartenderTier}`)}</p>
+							{#if bartenderResult}<KnowledgeResultLine result={bartenderResult} source={b.name ?? ''} />{/if}
+							{@render bartenderDoneButton()}
+						{:else if bt.talked_today}
+							<p>{t('colony.bartender_done_today')}</p>
+							{#if bt.today_result}<KnowledgeResultLine result={bt.today_result} source={b.name ?? ''} />{/if}
+							{@render bartenderDoneButton()}
+						{:else if bt.relationship_level < 1 || bt.ap_bonus < 1}
+							<!-- "fremd": no advice yet; Beziehung pflegen sits in the same dialog. -->
+							<p>{t('colony.bartender_dialog_intro')}</p>
+							<p class="hint-line" data-bartender-too-low>{t('colony.bartender_relationship_too_low')}</p>
+							<div class="row-end">
+								<button class="tile-action-btn auto" disabled>
+									<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+								</button>
+							</div>
+						{:else}
+							{@const canTalk = isSelectable(data.knowledgeOptions, bartenderKnowledgeId)}
 							<p>{t('colony.bartender_dialog_intro')}</p>
 							<div class="stack">
 								{@render knowledgeSelect(t('colony.bartender_knowledge_label'), data.knowledgeOptions, bartenderKnowledgeId, (v) => (bartenderKnowledgeId = v))}
+								{#if firstSelectable(data.knowledgeOptions) === null}
+									<p class="hint-line">{t('colony.bartender_no_selectable')}</p>
+								{/if}
 								<div class="row-end">
-									<button class="tile-action-btn auto" onclick={talkToBartender} disabled={bartenderLoading || !bartenderKnowledgeId}>
-										<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+									<button class="tile-action-btn auto" onclick={talkToBartender} disabled={bartenderLoading || !canTalk}>
+										<span class="tile-action-btn__body">{t('colony.bartender_talk_button_bonus', { ap: bt.ap_bonus })}</span>
+										<span class="ap-chip ap-cost-chip ap-chip--research" aria-hidden="true">+{bt.ap_bonus} AP</span>
 									</button>
 								</div>
 							</div>
-						{:else}
-							<p>{t(`colony.bartender_dialog_tier_${bartenderTier}`)}</p>
-							{@render closeButton()}
 						{/if}
 						{#if bartenderError}<div class="error-line">{bartenderError}</div>{/if}
 					</CantinaDialog>
@@ -910,7 +998,11 @@
 							{/if}
 							<div class="row-between">
 								<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true">{data.concernApCost ?? 1} AP</span>
-								<button class="tile-action-btn auto" onclick={resolveConcern} disabled={concernLoading}>
+								<button
+									class="tile-action-btn auto"
+									onclick={resolveConcern}
+									disabled={concernLoading || (slug === 'mechanic' && !isSelectable(data.knowledgeOptions, concernKnowledgeId))}
+								>
 									<span class="tile-action-btn__body">{t('colony.bar_concern_resolve')}</span>
 								</button>
 							</div>
@@ -920,6 +1012,7 @@
 							{:else}
 								<p class="ok-line">{t(`colony.bar_concern_${slug}_success`)}</p>
 							{/if}
+							{#if concernKnowledgeResult}<KnowledgeResultLine result={concernKnowledgeResult} source={ch?.name ?? ''} />{/if}
 							{@render closeButton()}
 						{/if}
 						{#if concernError}<div class="error-line">{concernError}</div>{/if}
@@ -945,12 +1038,17 @@
 								</div>
 							{/if}
 							<div class="row-end">
-								<button class="tile-action-btn auto" onclick={resolveInformation} disabled={informationLoading}>
+								<button
+									class="tile-action-btn auto"
+									onclick={resolveInformation}
+									disabled={informationLoading || (infoNeedsChoice && !isSelectable(data.devaKnowledgeChoices, informationKnowledgeId))}
+								>
 									<span class="tile-action-btn__body">{t('colony.bar_information_resolve')}</span>
 								</button>
 							</div>
 						{:else}
 							<p>{data.informationOutcomeLines[informationOutcomeKey ?? ''] ?? ''}</p>
+							{#if informationKnowledgeResult}<KnowledgeResultLine result={informationKnowledgeResult} source={ch?.name ?? ''} />{/if}
 							{@render closeButton()}
 						{/if}
 						{#if informationError}<div class="error-line">{informationError}</div>{/if}
@@ -1072,6 +1170,23 @@
 	.error-line {
 		color: var(--color-danger);
 		font-size: 0.85rem;
+	}
+	.hint-line {
+		color: var(--color-text-secondary);
+		font-size: 0.9rem;
+		font-style: italic;
+	}
+	.cantina-bartender__badge {
+		top: -8px;
+		right: 6px;
+	}
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
 	}
 	.ok-line {
 		color: #166534;
