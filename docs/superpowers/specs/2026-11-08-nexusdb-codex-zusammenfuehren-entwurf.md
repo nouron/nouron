@@ -115,3 +115,13 @@ Angenommen/entschieden: siehe Kasten oben (Punkte 8–9). Offene Detailfragen zu
 6. Orin bekommt einen Auslöser (Content-Frage für `content-writer`).
 7. Platzhaltertexte („noch nicht begegnet“, „hält etwas zurück, später mehr“) und Hinweis auf der Ergebnisseite ohne Zahl: freigegeben.
 8. „4–5 Läufe“ ist eine **Untergrenze**; Messung der Anlässe pro Lauf vor der Feinjustierung nur mit Freigabe für einen Bot-Batch.
+
+### Owner-Präzisierungen 2026-11-11 (Zeitpunkt und Beziehungswert)
+
+- **Frage 1 gelöst:** Der Lauf-Zähler (`runs_played`) steigt am Lauf-Ende (ab Sol 30 oder reguläres Ende) und zählt für den laufenden Lauf nie mit. Die Schwelle prüft nur zuvor beendete Läufe.
+- **Freischalt-Moment:** Ein Eintrag öffnet sich im Moment, in dem das Ereignis im laufenden Lauf erfolgreich abgeschlossen wird; dort erscheint ein kleines Achievement-Pop-up „Neuer Eintrag im Datenarchiv“. Der Hinweis auf der Ergebnisseite entfällt.
+- **Beispielregel:** Beziehung zu Figur X ≥ 65 % **und** mindestens 3 zuvor beendete Läufe (je ≥ Sol 30) → Eintrag öffnet im 4. Lauf, sobald die Beziehung 65 % erreicht.
+- **Beziehungswert (einfaches System, erster Schritt):** pro Figur ein Wert in Prozent, der mit jedem Gespräch/jeder erfolgreichen Begegnung um einen festen Schritt steigt (Beispiel des Owners: 10 aufeinanderfolgende Gespräche, +10 % je Gespräch). Er **sinkt vorerst nicht**.
+- *Annahme (nicht bestätigt):* Der Beziehungswert gilt pro Lauf (startet jeden Lauf bei 0); die Run-Schwelle sorgt für den Fortschritt über Läufe. Alternativ spielerweit — zu klären.
+- **Idee für später (nicht jetzt):** Der Beziehungswert kann auch sinken, z. B. bei Missions-Misserfolg oder durch Konkurrenz/Ablehnung zwischen Figuren. Evaluieren, wenn das einfache System läuft.
+- **Folge:** Die Anlass-Liste (`2026-11-09-datenarchiv-anlassliste.md`) geht von „jeder Anlass öffnet den nächsten Eintrag“ aus und muss vom `game-designer` auf Beziehungsschwellen + Run-Schwelle umgestellt werden. Der Beziehungswert ist eine neue (kleine) Mechanik und braucht ein Design (Schrittgröße, Sichtbarkeit, Zählweise je Anlass-Typ).
