@@ -841,6 +841,11 @@ class BarService
                 continue;
             }
 
+            // Sarka's concern is a knowledge boost: not drawn while no knowledge can take it (A14).
+            if ($slug === 'mechanic' && ! $this->anyKnowledgeSelectable($colonyId, $this->allKnowledgeIds())) {
+                continue;
+            }
+
             $lastCreatedTick = DB::table('bar_concerns')
                 ->where('colony_id', $colonyId)
                 ->where('character_slug', $slug)
@@ -907,6 +912,14 @@ class BarService
         }
 
         $slug = $concern->character_slug;
+
+        // Sarka's bonus must not silently drop into a knowledge that cannot take it:
+        // refuse before any AP is charged (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 18).
+        if ($slug === 'mechanic' && $knowledgeId !== null
+            && ($blocker = $this->researchService->bonusTargetBlocker($colonyId, $knowledgeId)) !== null) {
+            return $this->knowledgeNotSelectable($blocker);
+        }
+
         $apCost = (int) config("game.bar.concern.ap_cost.{$slug}", 0);
 
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
@@ -985,7 +998,7 @@ class BarService
         return match ($slug) {
             'smuggler' => $this->resolveSmugglerConcern($colonyId, $cfg),
             'information_broker' => $this->resolveVoucherConcern($colonyId, $currentTick, 'information_broker', (int) $cfg['discount_pct'], null),
-            'mechanic' => $this->resolveMechanicConcern($colonyId, $cfg, $knowledgeId),
+            'mechanic' => $this->resolveMechanicConcern($colonyId, $cfg, $knowledgeId, $currentTick),
             'doctor' => $this->resolveDoctorConcern($colonyId, $cfg),
             'prospector' => $this->resolveProspectorConcern($colonyId, $success, $cfg, $seed, $currentTick),
             'mercenary' => $this->resolveMercenaryConcern($colonyId, $cfg, $seed, $currentTick),
@@ -1020,7 +1033,7 @@ class BarService
         return ['reward' => 'building_discount_voucher', 'discount_pct' => $discountPct];
     }
 
-    private function resolveMechanicConcern(int $colonyId, array $cfg, ?int $knowledgeId): array
+    private function resolveMechanicConcern(int $colonyId, array $cfg, ?int $knowledgeId, int $currentTick): array
     {
         $apBonus = (int) ($cfg['ap_bonus'] ?? 0);
 
@@ -1030,9 +1043,14 @@ class BarService
 
         // Earmarked, same mechanism as Tomas' bartender bonus (A40) — bypasses
         // the shared pool's availability gate for the bonus itself.
-        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+        $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
 
-        return ['reward' => 'ap_bonus', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+        return [
+            'reward' => 'ap_bonus',
+            'ap_bonus' => $apBonus,
+            'knowledge_id' => $knowledgeId,
+            'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'mechanic', $result),
+        ];
     }
 
     private function resolveDoctorConcern(int $colonyId, array $cfg): array
@@ -1208,11 +1226,19 @@ class BarService
             ? ['drill_buffer' => 'deva_buff_used', 'knowledge_boost' => 'deva_knowledge_used']
             : ['nav_discount' => 'lenn_nav_used', 'knowledge_boost' => 'lenn_knowledge_used'];
 
+        // A knowledge boost whose target(s) cannot take bonus AP right now is not drawn;
+        // it stays unused for later (spec 2026-11-11-tomas-rat-rueckmeldung A12/A13).
+        $boostTargets = $slug === 'veteran' ? $this->devaKnowledgeIds() : [$this->lennKnowledgeId()];
+
         $available = [];
         foreach ($mechanicalKeys as $outcomeKey => $usedField) {
-            if (! ($state->{$usedField} ?? false)) {
-                $available[] = $outcomeKey;
+            if ($state->{$usedField} ?? false) {
+                continue;
             }
+            if ($outcomeKey === 'knowledge_boost' && ! $this->anyKnowledgeSelectable($colonyId, $boostTargets)) {
+                continue;
+            }
+            $available[] = $outcomeKey;
         }
 
         $available[] = 'narrative_1';
@@ -1260,8 +1286,19 @@ class BarService
             return $this->fail('bar_information_expired');
         }
 
-        return DB::transaction(function () use ($encounter, $colonyId, $userId, $knowledgeId): array {
-            $outcome = $this->resolveInformationOutcome($colonyId, $encounter->character_slug, $encounter->outcome_key, $knowledgeId);
+        // A knowledge boost into a knowledge that cannot take it is refused and stays
+        // unused (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 19).
+        if ($encounter->outcome_key === 'knowledge_boost') {
+            $target = $encounter->character_slug === 'ai_researcher'
+                ? $this->lennKnowledgeId()
+                : (in_array($knowledgeId, $this->devaKnowledgeIds(), true) ? $knowledgeId : null);
+            if ($target !== null && ($blocker = $this->researchService->bonusTargetBlocker($colonyId, $target)) !== null) {
+                return $this->knowledgeNotSelectable($blocker);
+            }
+        }
+
+        return DB::transaction(function () use ($encounter, $colonyId, $userId, $knowledgeId, $currentTick): array {
+            $outcome = $this->resolveInformationOutcome($colonyId, $encounter->character_slug, $encounter->outcome_key, $knowledgeId, $currentTick);
 
             $encounter->is_resolved = true;
             $encounter->outcome = $outcome;
@@ -1292,13 +1329,13 @@ class BarService
      * Executes the already-drawn outcome's effect. Runs inside the caller's
      * DB transaction.
      */
-    private function resolveInformationOutcome(int $colonyId, string $slug, string $outcomeKey, ?int $knowledgeId): array
+    private function resolveInformationOutcome(int $colonyId, string $slug, string $outcomeKey, ?int $knowledgeId, int $currentTick): array
     {
         return match ([$slug, $outcomeKey]) {
             ['veteran', 'drill_buffer'] => $this->resolveDrillBufferOutcome($colonyId),
-            ['veteran', 'knowledge_boost'] => $this->resolveVeteranKnowledgeBoostOutcome($colonyId, $knowledgeId),
+            ['veteran', 'knowledge_boost'] => $this->resolveVeteranKnowledgeBoostOutcome($colonyId, $knowledgeId, $currentTick),
             ['ai_researcher', 'nav_discount'] => $this->resolveNavDiscountOutcome($colonyId),
-            ['ai_researcher', 'knowledge_boost'] => $this->resolveAiResearcherKnowledgeBoostOutcome($colonyId),
+            ['ai_researcher', 'knowledge_boost'] => $this->resolveAiResearcherKnowledgeBoostOutcome($colonyId, $currentTick),
             default => ['reward' => 'narrative'], // narrative_1/narrative_2 — flavor only
         };
     }
@@ -1318,24 +1355,27 @@ class BarService
         return ['reward' => 'drill_buffer'];
     }
 
-    private function resolveVeteranKnowledgeBoostOutcome(int $colonyId, ?int $knowledgeId): array
+    private function resolveVeteranKnowledgeBoostOutcome(int $colonyId, ?int $knowledgeId, int $currentTick): array
     {
         $apBonus = (int) config('game.bar.information_pool.veteran.knowledge_boost_ap', 0);
-        $choices = config('game.bar.information_pool.veteran.knowledge_choices', []);
-        $allowedIds = array_map(fn ($key) => (int) config("knowledge.{$key}.id"), $choices);
 
-        if ($knowledgeId === null || ! in_array($knowledgeId, $allowedIds, true)) {
+        if ($knowledgeId === null || ! in_array($knowledgeId, $this->devaKnowledgeIds(), true)) {
             return ['reward' => 'knowledge_boost', 'ap_bonus' => 0, 'error' => 'knowledge_id_required'];
         }
 
-        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+        $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
 
         $this->ensureInformationPoolStateRow($colonyId);
         DB::table('colony_information_pool_state')
             ->where('colony_id', $colonyId)
             ->update(['deva_knowledge_used' => true]);
 
-        return ['reward' => 'knowledge_boost', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+        return [
+            'reward' => 'knowledge_boost',
+            'ap_bonus' => $apBonus,
+            'knowledge_id' => $knowledgeId,
+            'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'veteran', $result),
+        ];
     }
 
     private function resolveNavDiscountOutcome(int $colonyId): array
@@ -1348,20 +1388,62 @@ class BarService
         return ['reward' => 'nav_discount'];
     }
 
-    private function resolveAiResearcherKnowledgeBoostOutcome(int $colonyId): array
+    private function resolveAiResearcherKnowledgeBoostOutcome(int $colonyId, int $currentTick): array
     {
         $apBonus = (int) config('game.bar.information_pool.ai_researcher.knowledge_boost_ap', 0);
-        $target = config('game.bar.information_pool.ai_researcher.knowledge_target', 'cartography');
-        $knowledgeId = (int) config("knowledge.{$target}.id");
+        $knowledgeId = $this->lennKnowledgeId();
 
-        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+        $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
 
         $this->ensureInformationPoolStateRow($colonyId);
         DB::table('colony_information_pool_state')
             ->where('colony_id', $colonyId)
             ->update(['lenn_knowledge_used' => true]);
 
-        return ['reward' => 'knowledge_boost', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+        return [
+            'reward' => 'knowledge_boost',
+            'ap_bonus' => $apBonus,
+            'knowledge_id' => $knowledgeId,
+            'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'ai_researcher', $result),
+        ];
+    }
+
+    /** @return list<int> Deva's two allowed knowledge ids (game.bar.information_pool.veteran.knowledge_choices). */
+    private function devaKnowledgeIds(): array
+    {
+        return array_values(array_map(
+            fn ($key) => (int) config("knowledge.{$key}.id"),
+            config('game.bar.information_pool.veteran.knowledge_choices', []),
+        ));
+    }
+
+    /** Lenn's fixed knowledge target (game.bar.information_pool.ai_researcher.knowledge_target). */
+    private function lennKnowledgeId(): int
+    {
+        $target = config('game.bar.information_pool.ai_researcher.knowledge_target', 'cartography');
+
+        return (int) config("knowledge.{$target}.id");
+    }
+
+    /** @return list<int> */
+    private function allKnowledgeIds(): array
+    {
+        return array_values(array_map(
+            fn ($def) => (int) $def['id'],
+            array_filter(config('knowledge', []), fn ($def) => is_array($def) && isset($def['id'])),
+        ));
+    }
+
+    /** @param  list<int>  $knowledgeIds */
+    private function anyKnowledgeSelectable(int $colonyId, array $knowledgeIds): bool
+    {
+        foreach ($knowledgeIds as $id) {
+            if ($this->researchService->bonusTargetBlocker($colonyId, $id) === null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int

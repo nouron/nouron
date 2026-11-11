@@ -321,6 +321,76 @@ class BarConcernTest extends TestCase
         $this->assertSame(0, $result['ap_bonus']);
     }
 
+    // ── Stille Forschung (spec 2026-11-11-tomas-rat-rueckmeldung, sentences 18, 22, 23) ──
+
+    /** Puts every knowledge on its top level (CC Lv5 so the CC gate is not the reason). */
+    private function maxOutAllKnowledges(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->update(['level' => 5]);
+        foreach (config('knowledge') as $def) {
+            DB::table('colony_researches')->updateOrInsert(
+                ['colony_id' => self::COLONY_ID, 'research_id' => $def['id']],
+                ['level' => max(array_keys($def['levelup_costs'])), 'ap_spend' => 0],
+            );
+        }
+    }
+
+    public function test_resolve_mechanic_with_unselectable_knowledge_is_refused_without_charging_ap(): void
+    {
+        $this->maxOutAllKnowledges();
+        $id = $this->insertConcern(['character_slug' => 'mechanic']);
+        $apBefore = $this->app->make(AdvisorService::class)->getAvailableActionPoints(self::COLONY_ID);
+
+        $result = $this->barService->resolveConcern(self::COLONY_ID, $id, self::USER_ID, 10, self::KNOWLEDGE_ID);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('knowledge_not_selectable', $result['error']);
+        $this->assertSame('max_level', $result['block_reason']);
+        $this->assertSame($apBefore, $this->app->make(AdvisorService::class)->getAvailableActionPoints(self::COLONY_ID));
+        $this->assertFalse((bool) DB::table('bar_concerns')->where('id', $id)->value('is_resolved'));
+    }
+
+    public function test_resolve_mechanic_reports_knowledge_result_and_writes_journal_entry(): void
+    {
+        $id = $this->insertConcern(['character_slug' => 'mechanic']);
+
+        $result = $this->barService->resolveConcern(self::COLONY_ID, $id, self::USER_ID, 10, self::KNOWLEDGE_ID);
+
+        $this->assertSame(self::KNOWLEDGE_ID, $result['knowledge_result']['knowledge_id']);
+        $this->assertSame((int) config('game.bar.concern.mechanic.ap_bonus'), $result['knowledge_result']['ap_invested']);
+        $entry = DB::table('colony_log')->where('user', self::USER_ID)->where('tick', 10)
+            ->whereIn('event', ['knowledge.bonus_progress', 'knowledge.bonus_breakthrough'])->first();
+        $this->assertNotNull($entry);
+        $this->assertSame('mechanic', json_decode($entry->parameters, true)['source']);
+    }
+
+    public function test_generate_skips_mechanic_while_no_knowledge_is_selectable(): void
+    {
+        $this->setBarLevel(5);
+        config([
+            'game.bar.concern.spawn_chance_per_level' => [5 => 1.0],
+            'game.bar.concern.character_weights' => ['mechanic' => 1],
+        ]);
+        $this->maxOutAllKnowledges();
+
+        $this->barService->generateConcernForColony(self::COLONY_ID, 10, false);
+
+        $this->assertSame(0, DB::table('bar_concerns')->where('colony_id', self::COLONY_ID)->count());
+    }
+
+    public function test_generate_draws_mechanic_while_a_knowledge_is_selectable(): void
+    {
+        $this->setBarLevel(5);
+        config([
+            'game.bar.concern.spawn_chance_per_level' => [5 => 1.0],
+            'game.bar.concern.character_weights' => ['mechanic' => 1],
+        ]);
+
+        $this->barService->generateConcernForColony(self::COLONY_ID, 10, false);
+
+        $this->assertSame('mechanic', DB::table('bar_concerns')->where('colony_id', self::COLONY_ID)->value('character_slug'));
+    }
+
     // ── RESOLVE — doctor (Maret) ─────────────────────────────────────────────────
 
     public function test_resolve_doctor_grants_compounds_scaled_by_bar_level(): void
