@@ -240,6 +240,7 @@ class CommLogController extends BaseController
             'colony.building_placed' => $this->descBuildingPlaced($params),
             'colony.building_invested' => $this->descBuildingInvested($params),
             'colony.pathdepth_invested' => $this->descPathDepthInvested($params),
+            'knowledge.bonus_progress', 'knowledge.bonus_breakthrough' => $this->descKnowledgeBonus($params),
             'colony.building_repaired' => $this->descBuildingRepaired($params),
             'colony.tile_explored' => [$this->seg(__('comm_log.desc.tile_explored'))],
             'colony.tile_deep_scanned' => $this->descTileDeepScanned($params),
@@ -394,6 +395,37 @@ class CommLogController extends BaseController
     }
 
     /** @return array<int, array<string, mixed>> */
+    /**
+     * Earmarked knowledge bonus ("stille Forschung"): AP chip, source character and
+     * knowledge; a breakthrough names the reached level, a forfeit the rest and reason.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function descKnowledgeBonus(array $params): array
+    {
+        $key = (string) ($params['knowledge_key'] ?? '');
+        $source = (string) ($params['source'] ?? '');
+        $replace = [
+            'name' => (string) (config("characters.{$source}.name") ?? config("characters.{$source}.role", $source)),
+            'knowledge' => $key !== '' ? __("knowledge.{$key}") : '?',
+            'level' => (int) ($params['level'] ?? 0),
+        ];
+        $text = __('comm_log.desc.knowledge_bonus'.(! empty($params['leveled_up']) ? '_breakthrough' : ''), $replace);
+
+        $forfeited = (int) ($params['ap_forfeited'] ?? 0);
+        if ($forfeited > 0 && ! empty($params['block_reason'])) {
+            $text .= ' '.__('comm_log.desc.knowledge_bonus_forfeited', [
+                'ap' => $forfeited,
+                'reason' => __('knowledge.bonus_wait_'.$params['block_reason']),
+            ]);
+        }
+
+        return [
+            $this->amountSeg('AP', (int) ($params['ap_invested'] ?? 0), 'ap'),
+            $this->seg(' '.$text),
+        ];
+    }
+
     private function descPathDepthInvested(array $params): array
     {
         $kind = (string) ($params['kind'] ?? '');

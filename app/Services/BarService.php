@@ -7,6 +7,8 @@ use App\Models\BarConcern;
 use App\Models\BarEncounter;
 use App\Models\BarInformationEncounter;
 use App\Models\BarOffer;
+use App\Services\Techtree\KnowledgeBonusPresenter;
+use App\Services\Techtree\KnowledgeBonusResult;
 use App\Services\Techtree\ResearchService;
 use App\Support\RunSeed;
 use App\Support\SeededRandom;
@@ -17,6 +19,11 @@ use Illuminate\Support\Facades\Log;
 class BarService
 {
     private const BAR_BUILDING_ID = 52;
+
+    /** Journal events of earmarked knowledge bonus AP (stille Forschung). */
+    public const EVENT_BONUS_PROGRESS = 'knowledge.bonus_progress';
+
+    public const EVENT_BONUS_BREAKTHROUGH = 'knowledge.bonus_breakthrough';
 
     private const TRADER_ADVISOR_ID = 92; // personell.id for 'trader'
 
@@ -44,6 +51,8 @@ class BarService
         private readonly TradeAdvantageService $tradeAdvantageService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly PathDepthService $pathDepthService,
+        private readonly EventService $eventService,
+        private readonly KnowledgeBonusPresenter $knowledgeBonusPresenter,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -1422,15 +1431,21 @@ class BarService
     /**
      * "Mit Tomas reden" (Cantina-Barkeeper, A40, GDD §12). Costs no AP and never
      * locks or checks the shared colony pool — Tomas injects AP directly into the
-     * chosen knowledge via ResearchService::investBonus(). Gated by a once-per-tick cooldown;
-     * the bonus tier is resolved from the colony's cumulative, run-persistent
-     * interaction_count as it stood BEFORE this interaction, then the counter
-     * is incremented regardless of whether a bonus tier was reached.
+     * chosen knowledge via ResearchService::investBonus() ("stille Forschung").
+     * The bonus follows Tomas' relationship level (game.bartender.
+     * ap_bonus_by_relationship_level); at level 0 he gives no advice and the
+     * conversation is refused without using the Sol. Gated by a once-per-tick
+     * cooldown; interaction_count is kept as a statistic only.
      *
-     * @return array{success: bool, ap_added?: int, interaction_count?: int, error?: string}
+     * @return array{success: bool, ap_added?: int, interaction_count?: int, knowledge_result?: array<string, mixed>, error?: string, message?: string, block_reason?: string}
      */
     public function talkToBartender(int $colonyId, int $knowledgeId, int $currentTick): array
     {
+        $apAdded = $this->bartenderApBonus($colonyId);
+        if ($apAdded <= 0) {
+            return ['success' => false, 'error' => 'relationship_too_low', 'message' => __('colony.bartender_relationship_too_low')];
+        }
+
         $state = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->first();
 
         $cooldownTicks = (int) config('game.bartender.interaction_cooldown_ticks');
@@ -1440,8 +1455,11 @@ class BarService
             return ['success' => false, 'error' => 'cooldown_active'];
         }
 
+        if (($blocker = $this->researchService->bonusTargetBlocker($colonyId, $knowledgeId)) !== null) {
+            return $this->knowledgeNotSelectable($blocker) + ['success' => false];
+        }
+
         $countBefore = $state->interaction_count ?? 0;
-        $apAdded = $this->bartenderApBonus($countBefore);
 
         return DB::transaction(function () use ($colonyId, $knowledgeId, $currentTick, $countBefore, $apAdded): array {
             DB::table('colony_bartender_state')->updateOrInsert(
@@ -1449,34 +1467,92 @@ class BarService
                 ['interaction_count' => $countBefore + 1, 'last_interaction_tick' => $currentTick],
             );
 
-            if ($apAdded > 0) {
-                // Tomas' bonus AP is earmarked, not drawn from the shared colony pool —
-                // investBonus() skips that pool's availability gate so the bonus can
-                // never silently evaporate because the pool happens to be near-empty.
-                $this->researchService->investBonus($colonyId, $knowledgeId, $apAdded);
-            }
+            $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apAdded);
 
             return [
                 'success' => true,
                 'ap_added' => $apAdded,
                 'interaction_count' => $countBefore + 1,
+                'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'bartender', $result),
             ];
         });
     }
 
-    /** AP bonus for the given interaction_count, per config/game.php → bartender.ap_bonus_tiers. */
-    private function bartenderApBonus(int $interactionCount): int
+    /** Tomas' AP bonus at the colony's current relationship level with him (0 = no advice). */
+    public function bartenderApBonus(int $colonyId): int
     {
-        $tiers = config('game.bartender.ap_bonus_tiers', []);
-        $bonus = 0;
+        $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
 
-        foreach ($tiers as $threshold => $tierBonus) {
-            if ($interactionCount >= $threshold) {
-                $bonus = $tierBonus;
+        return (int) config("game.bartender.ap_bonus_by_relationship_level.{$level}", 0);
+    }
+
+    /**
+     * Result of today's conversation with Tomas (the knowledge_result payload), or null
+     * when he has not been talked to this Sol. Read back from the journal entry the
+     * conversation wrote, so it needs no state of its own.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function bartenderToday(int $colonyId, int $currentTick): ?array
+    {
+        $entries = DB::table('colony_log')
+            ->where('user', $this->colonyOwner($colonyId))
+            ->where('tick', $currentTick)
+            ->whereIn('event', [self::EVENT_BONUS_PROGRESS, self::EVENT_BONUS_BREAKTHROUGH])
+            ->orderByDesc('id')
+            ->pluck('parameters');
+
+        foreach ($entries as $raw) {
+            $params = json_decode((string) $raw, true);
+            if (is_array($params) && ($params['source'] ?? null) === 'bartender' && (int) ($params['colony_id'] ?? 0) === $colonyId) {
+                return $this->knowledgeBonusPresenter->present($colonyId, $params);
             }
         }
 
-        return $bonus;
+        return null;
+    }
+
+    /**
+     * Journal entry + frontend payload for an accepted knowledge bonus (spec sentences
+     * 17 and 23): knowledge.bonus_breakthrough on a level-up, else knowledge.bonus_progress.
+     *
+     * @return array<string, mixed>
+     */
+    private function recordKnowledgeBonus(int $colonyId, int $tick, string $source, KnowledgeBonusResult $result): array
+    {
+        $data = $result->toArray();
+
+        if ($result->accepted) {
+            $this->eventService->createEvent([
+                'user' => $this->colonyOwner($colonyId),
+                'tick' => $tick,
+                'event' => $result->leveledUp() ? self::EVENT_BONUS_BREAKTHROUGH : self::EVENT_BONUS_PROGRESS,
+                'area' => 'knowledge',
+                'parameters' => json_encode(['colony_id' => $colonyId, 'source' => $source] + $data),
+            ]);
+        }
+
+        return $this->knowledgeBonusPresenter->present($colonyId, $data);
+    }
+
+    /**
+     * Refusal for a knowledge that cannot take bonus AP right now (spec sentence 15).
+     *
+     * @return array{ok: false, error: string, message: string, block_reason: string}
+     */
+    private function knowledgeNotSelectable(string $blocker): array
+    {
+        return [
+            'ok' => false,
+            'error' => 'knowledge_not_selectable',
+            'message' => __('colony.knowledge_not_selectable', ['reason' => __("knowledge.bonus_wait_{$blocker}")]),
+            'block_reason' => $blocker,
+        ];
+    }
+
+    private function colonyOwner(int $colonyId): int
+    {
+        return (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id');
     }
 
     /**

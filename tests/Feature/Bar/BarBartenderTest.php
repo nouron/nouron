@@ -3,23 +3,15 @@
 namespace Tests\Feature\Bar;
 
 /**
- * BarService::talkToBartender() feature tests (Cantina-Barkeeper Tomas, A40).
- *
- * Covered scenarios:
- *  TALK TO BARTENDER
- *    - test_talk_injects_no_ap_bonus_below_first_tier
- *    - test_talk_injects_ap_bonus_once_tier_reached
- *    - test_talk_increments_interaction_count_even_without_bonus
- *    - test_talk_uses_correct_tier_based_on_count_before_interaction
- *    - test_talk_enforces_once_per_tick_cooldown
- *    - test_talk_allows_interaction_again_on_next_tick
- *    - test_talk_does_not_lock_or_consume_shared_ap_pool
- *    - test_talk_caps_bonus_at_highest_tier
- *    - test_talk_injects_bonus_ap_even_when_shared_pool_is_empty
+ * BarService::talkToBartender() feature tests (Cantina-Barkeeper Tomas, A40; since
+ * 2026-11-11 the bonus follows his relationship level, spec
+ * 2026-11-11-tomas-rat-rueckmeldung sentences 13–17).
  */
 
 use App\Services\AdvisorService;
 use App\Services\BarService;
+use App\Services\PathDepthService;
+use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,6 +32,7 @@ class BarBartenderTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        config(['game.bartender.ap_bonus_by_relationship_level' => [0 => 0, 1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 3]]);
         $this->barService = $this->app->make(BarService::class);
     }
 
@@ -73,59 +66,87 @@ class BarBartenderTest extends TestCase
         );
     }
 
-    // ── talkToBartender ─────────────────────────────────────────────────────
-
-    public function test_talk_injects_no_ap_bonus_below_first_tier(): void
+    private function setRelationship(int $level): void
     {
-        $this->mockTick(10);
+        DB::table('colony_path_levels')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'kind' => PathDepthService::KIND_CHARACTER, 'entity_key' => 'bartender'],
+            ['level' => $level, 'ap_spend' => 0],
+        );
+    }
+
+    // ── 13: relationship level 0 ─────────────────────────────────────────────
+
+    public function test_talk_at_relationship_zero_is_refused_without_using_the_sol(): void
+    {
+        $this->setInteractionCount(40, lastTick: 5);
 
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
-        $this->assertTrue($result['success']);
-        $this->assertSame(0, $result['ap_added']);
+        $this->assertFalse($result['success']);
+        $this->assertSame('relationship_too_low', $result['error']);
+        $this->assertNotEmpty($result['message']);
+        $this->assertSame(40, $this->interactionCount());
+        $this->assertSame(5, (int) DB::table('colony_bartender_state')->where('colony_id', self::COLONY_ID)->value('last_interaction_tick'));
         $this->assertSame(0, $this->apSpend());
-        $this->assertSame(1, $this->interactionCount());
     }
 
-    public function test_talk_injects_ap_bonus_once_tier_reached(): void
+    // ── 14: bonus by relationship level ──────────────────────────────────────
+
+    public function test_bonus_follows_relationship_level_not_conversation_count(): void
     {
-        $this->mockTick(10);
-        $this->setInteractionCount(5, lastTick: 5);
+        $this->setRelationship(1);
 
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
         $this->assertTrue($result['success']);
         $this->assertSame(1, $result['ap_added']);
         $this->assertSame(1, $this->apSpend());
-        $this->assertSame(6, $this->interactionCount());
+        $this->assertSame(1, $this->interactionCount());
     }
 
-    public function test_talk_increments_interaction_count_even_without_bonus(): void
+    public function test_higher_relationship_level_gives_the_configured_bonus(): void
     {
-        $this->mockTick(10);
-        $this->setInteractionCount(2, lastTick: 5);
-
-        $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
-
-        $this->assertSame(3, $this->interactionCount());
-    }
-
-    public function test_talk_uses_correct_tier_based_on_count_before_interaction(): void
-    {
-        $this->mockTick(10);
-        // count = 4 before the interaction -> still tier 0 (threshold is 5), even
-        // though the count becomes 5 afterwards.
-        $this->setInteractionCount(4, lastTick: 5);
+        $this->setRelationship(5);
+        $this->setInteractionCount(0, lastTick: 5);
 
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
-        $this->assertSame(0, $result['ap_added']);
-        $this->assertSame(5, $this->interactionCount());
+        $this->assertSame(3, $result['ap_added']);
+        $this->assertSame(3, $this->apSpend());
     }
+
+    public function test_bartender_ap_bonus_reads_the_relationship_table(): void
+    {
+        $this->assertSame(0, $this->barService->bartenderApBonus(self::COLONY_ID));
+        $this->setRelationship(3);
+        $this->assertSame(2, $this->barService->bartenderApBonus(self::COLONY_ID));
+    }
+
+    // ── 15: not selectable ───────────────────────────────────────────────────
+
+    public function test_talk_with_unselectable_knowledge_is_refused_without_using_the_sol(): void
+    {
+        $this->setRelationship(1);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 90],
+            ['level' => ResearchService::maxKnowledgeLevel(90), 'ap_spend' => 0],
+        );
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->update(['level' => 5]);
+
+        $result = $this->barService->talkToBartender(self::COLONY_ID, 90, 10);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('knowledge_not_selectable', $result['error']);
+        $this->assertSame('max_level', $result['block_reason']);
+        $this->assertSame(0, $this->interactionCount());
+        $this->assertNull($this->barService->bartenderToday(self::COLONY_ID, 10));
+    }
+
+    // ── cooldown / pool (unchanged rules) ────────────────────────────────────
 
     public function test_talk_enforces_once_per_tick_cooldown(): void
     {
-        $this->mockTick(10);
+        $this->setRelationship(1);
 
         $first = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
         $second = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
@@ -138,10 +159,9 @@ class BarBartenderTest extends TestCase
 
     public function test_talk_allows_interaction_again_on_next_tick(): void
     {
-        $this->mockTick(10);
+        $this->setRelationship(1);
         $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
-        $this->mockTick(11);
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 11);
 
         $this->assertTrue($result['success']);
@@ -150,8 +170,7 @@ class BarBartenderTest extends TestCase
 
     public function test_talk_does_not_lock_or_consume_shared_ap_pool(): void
     {
-        $this->mockTick(10);
-        $this->setInteractionCount(5, lastTick: 5);
+        $this->setRelationship(3);
 
         $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
@@ -164,40 +183,17 @@ class BarBartenderTest extends TestCase
         $this->assertSame(0, $locked);
     }
 
-    public function test_talk_caps_bonus_at_highest_tier(): void
-    {
-        $this->mockTick(10);
-        $this->setInteractionCount(30, lastTick: 5);
-
-        $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
-
-        $this->assertSame(3, $result['ap_added']);
-
-        $this->setInteractionCount(500, lastTick: 5);
-        $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
-
-        $this->assertSame(3, $result['ap_added']);
-    }
-
     /**
-     * Tomas' bonus AP is a separate, earmarked channel — it does not come out of
-     * the shared colony pool and must therefore never be blocked by the pool's
-     * current availability. Regression test for the bug where talkToBartender()
-     * silently dropped the bonus because ResearchService::invest() ran its normal
-     * investBlocker() pool-availability gate on it.
+     * Earmarked channel: never blocked by the shared pool's availability (regression,
+     * see ResearchService::investBonus()).
      */
     public function test_talk_injects_bonus_ap_even_when_shared_pool_is_empty(): void
     {
         config(['game.bypass.ap_checks' => false]);
         $this->mockTick(10);
-        // Re-resolve barService now that TickService(10) is bound — the instance
-        // built in setUp() would otherwise keep referencing the TickService
-        // resolved before this test's mockTick() call (readonly constructor
-        // injection, not re-resolved on rebind).
         $this->barService = $this->app->make(BarService::class);
-        $this->setInteractionCount(5, lastTick: 5);
+        $this->setRelationship(1);
 
-        // Drain the shared AP pool to exactly 0.
         $advisorService = $this->app->make(AdvisorService::class);
         $totalAp = $advisorService->getTotalActionPoints(self::COLONY_ID);
         $advisorService->lockActionPoints(self::COLONY_ID, $totalAp);
@@ -208,5 +204,64 @@ class BarBartenderTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertSame(1, $result['ap_added']);
         $this->assertSame(1, $this->apSpend());
+    }
+
+    // ── 9 / 16: result and today's result ────────────────────────────────────
+
+    public function test_talk_returns_the_knowledge_result(): void
+    {
+        $this->setRelationship(1);
+
+        $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
+
+        $this->assertSame(self::KNOWLEDGE_ID, $result['knowledge_result']['knowledge_id']);
+        $this->assertSame(1, $result['knowledge_result']['ap_invested']);
+        $this->assertFalse($result['knowledge_result']['leveled_up']);
+        $this->assertSame(0, $result['knowledge_result']['ap_forfeited']);
+    }
+
+    public function test_todays_result_is_available_until_the_next_sol(): void
+    {
+        $this->setRelationship(1);
+        $this->assertNull($this->barService->bartenderToday(self::COLONY_ID, 10));
+
+        $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
+
+        $today = $this->barService->bartenderToday(self::COLONY_ID, 10);
+        $this->assertNotNull($today);
+        $this->assertSame(self::KNOWLEDGE_ID, $today['knowledge_id']);
+        $this->assertSame(1, $today['ap_invested']);
+        $this->assertNull($this->barService->bartenderToday(self::COLONY_ID, 11));
+    }
+
+    // ── 17: journal entry ────────────────────────────────────────────────────
+
+    public function test_talk_writes_a_journal_entry(): void
+    {
+        $this->setRelationship(1);
+
+        $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
+
+        $entry = DB::table('colony_log')->where('user', 3)->where('tick', 10)->where('event', 'knowledge.bonus_progress')->first();
+        $this->assertNotNull($entry);
+        $params = json_decode($entry->parameters, true);
+        $this->assertSame('bartender', $params['source']);
+        $this->assertSame(self::COLONY_ID, $params['colony_id']);
+        $this->assertSame(self::KNOWLEDGE_ID, $params['knowledge_id']);
+    }
+
+    public function test_breakthrough_gets_its_own_journal_event(): void
+    {
+        $this->setRelationship(1);
+        $threshold = $this->app->make(ResearchService::class)->knowledgeLevelupCost(self::COLONY_ID, self::KNOWLEDGE_ID);
+        DB::table('colony_researches')
+            ->where('colony_id', self::COLONY_ID)->where('research_id', self::KNOWLEDGE_ID)
+            ->update(['ap_spend' => $threshold - 1]);
+
+        $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
+
+        $this->assertTrue($result['knowledge_result']['leveled_up']);
+        $this->assertTrue(DB::table('colony_log')->where('tick', 10)->where('event', 'knowledge.bonus_breakthrough')->exists());
+        $this->assertFalse(DB::table('colony_log')->where('tick', 10)->where('event', 'knowledge.bonus_progress')->exists());
     }
 }

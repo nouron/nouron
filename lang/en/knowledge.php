@@ -29,4 +29,16 @@ return [
     'defense' => 'Defence & Survival Tactics',
     'defense_desc' => 'How the colony protects itself from dangers outside, from securing the facilities to how colonists behave in an emergency.',
 
+    // Silent research (spec 2026-11-11-tomas-rat-rueckmeldung). TODO content-writer: drafts.
+    'rough_progress_1' => 'first ideas',
+    'rough_progress_2' => 'taking shape',
+    'rough_progress_3' => 'close to a breakthrough',
+    'bonus_wait_max_level' => 'top level',
+    'bonus_wait_knowledge_cc_gate' => 'command center',
+    'bonus_wait_requires_building' => 'building',
+    'bonus_wait_insufficient_resources' => 'resources',
+    'bonus_wait_insufficient_supply' => 'supply',
+    'bonus_wait_entity_not_found' => 'unknown',
+    'bonus_wait_order_failed' => 'error',
+
 ];

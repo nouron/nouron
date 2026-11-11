@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\DB;
  */
 class ResearchService extends AbstractTechnologyService
 {
+    /** True while investBonus() levels a knowledge up: waives the lab prerequisite. */
+    private bool $silentResearch = false;
+
     public function __construct(
         TickService $tickService,
         ResourcesService $resourcesService,
@@ -115,26 +118,220 @@ class ResearchService extends AbstractTechnologyService
     }
 
     /**
-     * Inject earmarked bonus AP directly into a knowledge's ap_spend, bypassing the
-     * shared-colony-pool availability gate that invest() normally runs.
+     * Inject earmarked bonus AP into a knowledge ("stille Forschung", spec
+     * 2026-11-11-tomas-rat-rueckmeldung): bypasses the shared-colony-pool gate and the
+     * per-Sol lab cap, and levels the knowledge up on its own whenever the threshold is
+     * reached — with or without a sciencelab.
      *
      * This is the official entry point for "bonus AP that never came out of the
-     * player's shared AP pool" — e.g. Cantina-Barkeeper Tomas' interaction-tier
-     * bonus (A40, BarService::talkToBartender()), a character concern's one-off
-     * knowledge boost (A41, Sarka), or a character's knowledge-progress-boost trait
-     * (A42, Deva/Lenn). Such sources are zweckgebunden: they are earned outside the
-     * pool and must never fail or evaporate just because the pool happens to be at
-     * or near 0 when the player triggers them. Do not route these through invest()
-     * with a manual pre-check instead — that still leaves the pool-locking side
-     * effect in place, which would incorrectly debit AP the colony never had drawn.
+     * player's shared AP pool" — Tomas' advice (BarService::talkToBartender()),
+     * Sarka's concern, Deva's and Lenn's knowledge boost. Do not route these through
+     * invest(): that locks pool AP the colony never had drawn.
      *
-     * Only the 'add' semantics apply here (ap_spend toward the next levelup) — this
-     * mirrors invest($action = 'add') but skips both the pool-availability gate and
-     * the pool-locking side effect, since the AP was never in the pool to begin with.
+     * A knowledge that is not selectable (bonusTargetBlocker()) refuses the bonus and
+     * stays untouched. AP beyond a threshold carry into the next level; if that level
+     * is blocked, the rest is forfeited and the result names amount and reason.
      */
-    public function investBonus(int $colonyId, int $entityId, int $points = 1): bool
+    public function investBonus(int $colonyId, int $entityId, int $points = 1): KnowledgeBonusResult
     {
-        return $this->_invest($colonyId, $entityId, 'add', $points, bypassPoolCheck: true);
+        $key = self::knowledgeKey($entityId);
+        $levelBefore = $this->knowledgeLevel($colonyId, $entityId);
+
+        if (($blocker = $this->bonusTargetBlocker($colonyId, $entityId)) !== null) {
+            return KnowledgeBonusResult::refused($entityId, $key, $levelBefore, $blocker);
+        }
+
+        return DB::transaction(function () use ($colonyId, $entityId, $key, $levelBefore, $points): KnowledgeBonusResult {
+            $entity = DB::table($this->masterTable())->find($entityId);
+            $remaining = max(0, $points);
+            $invested = 0;
+            $reason = null;
+
+            while ($remaining > 0) {
+                $level = $this->knowledgeLevel($colonyId, $entityId);
+                $apSpend = (int) ($this->getColonyEntity($colonyId, $entityId)->ap_spend ?? 0);
+                $threshold = $this->resolveApForLevelup($colonyId, $entityId, $entity);
+                $need = max(0, $threshold - $apSpend);
+
+                if ($need > $remaining) {
+                    $this->writeProgress($colonyId, $entityId, $level, $apSpend + $remaining);
+                    $invested += $remaining;
+                    $remaining = 0;
+                    break;
+                }
+
+                $this->writeProgress($colonyId, $entityId, $level, $apSpend + $need);
+                $invested += $need;
+                $remaining -= $need;
+
+                if (! $this->silentLevelup($colonyId, $entityId)) {
+                    $reason = $this->withSilentResearch(fn () => $this->levelupBlocker($colonyId, $entityId)) ?? 'order_failed';
+                    break;
+                }
+
+                if ($remaining > 0 && ($reason = $this->bonusTargetBlocker($colonyId, $entityId)) !== null) {
+                    break;
+                }
+            }
+
+            return new KnowledgeBonusResult(
+                accepted: true,
+                knowledgeId: $entityId,
+                knowledgeKey: $key,
+                apInvested: $invested,
+                levelBefore: $levelBefore,
+                levelAfter: $this->knowledgeLevel($colonyId, $entityId),
+                apForfeited: $reason !== null ? $remaining : 0,
+                blockReason: $reason,
+            );
+        });
+    }
+
+    /**
+     * Why earmarked bonus AP may not flow into this knowledge right now, or null when it
+     * is selectable: every gate except the AP threshold itself (spec sentence 12). The
+     * sciencelab prerequisite does not count — silent research needs no lab — but a
+     * second techtree prerequisite (e.g. the hangar for cartography) does.
+     *
+     * @return string|null one of: entity_not_found, max_level, knowledge_cc_gate,
+     *                     requires_building, insufficient_resources, insufficient_supply
+     */
+    public function bonusTargetBlocker(int $colonyId, int $entityId): ?string
+    {
+        $entity = DB::table($this->masterTable())->find($entityId);
+        if (! $entity || ($entity->purpose ?? '') !== 'knowledge') {
+            return 'entity_not_found';
+        }
+
+        $level = $this->knowledgeLevel($colonyId, $entityId);
+
+        return match (true) {
+            $level >= self::maxKnowledgeLevel($entityId) => 'max_level',
+            $this->ccGateBlocks($colonyId, $level + 1) => 'knowledge_cc_gate',
+            ! $this->secondPrerequisiteMet($colonyId, $entity) => 'requires_building',
+            ! $this->checkRequiredResourcesByEntityId($colonyId, $entityId) => 'insufficient_resources',
+            ! $this->checkRequiredSupplyByEntityId($colonyId, $entityId) => 'insufficient_supply',
+            default => null,
+        };
+    }
+
+    /**
+     * Rough progress word index shown without a lab (spec A8): 1–3 by the bands in
+     * game.knowledge_rough_progress_bands, null at no progress.
+     */
+    public function roughProgressBand(int $apSpend, int $threshold): ?int
+    {
+        if ($apSpend <= 0 || $threshold <= 0) {
+            return null;
+        }
+
+        $fraction = $apSpend / $threshold;
+        $band = 1;
+        foreach (config('game.knowledge_rough_progress_bands', []) as $upperBound) {
+            if ($fraction < (float) $upperBound) {
+                return $band;
+            }
+            $band++;
+        }
+
+        return $band;
+    }
+
+    /** Highest knowledge level = highest target level in config/knowledge.php → levelup_costs. */
+    public static function maxKnowledgeLevel(int $entityId): int
+    {
+        $costs = collect(config('knowledge'))->firstWhere('id', $entityId)['levelup_costs'] ?? [];
+
+        return $costs === [] ? 0 : (int) max(array_keys($costs));
+    }
+
+    /** config/knowledge.php key of a knowledge id, null if none. */
+    public static function knowledgeKey(int $entityId): ?string
+    {
+        foreach (config('knowledge', []) as $key => $def) {
+            if (is_array($def) && (int) ($def['id'] ?? 0) === $entityId) {
+                return (string) $key;
+            }
+        }
+
+        return null;
+    }
+
+    /** The lab prerequisite is waived while a bonus levels a knowledge up (silent research). */
+    public function checkRequiredBuildingsByEntityId(int $colonyId, int $entityId): bool
+    {
+        if (! $this->silentResearch) {
+            return parent::checkRequiredBuildingsByEntityId($colonyId, $entityId);
+        }
+
+        $entity = DB::table($this->masterTable())->find($entityId);
+
+        return ! is_object($entity) || $this->secondPrerequisiteMet($colonyId, $entity);
+    }
+
+    private function silentLevelup(int $colonyId, int $entityId): bool
+    {
+        return $this->withSilentResearch(fn () => $this->levelup($colonyId, $entityId));
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    private function withSilentResearch(callable $callback): mixed
+    {
+        $this->silentResearch = true;
+        try {
+            return $callback();
+        } finally {
+            $this->silentResearch = false;
+        }
+    }
+
+    private function writeProgress(int $colonyId, int $entityId, int $level, int $apSpend): void
+    {
+        DB::table($this->colonyTable())->updateOrInsert(
+            ['colony_id' => $colonyId, $this->entityIdKey() => $entityId],
+            ['level' => $level, 'ap_spend' => $apSpend],
+        );
+    }
+
+    private function knowledgeLevel(int $colonyId, int $entityId): int
+    {
+        return (int) ($this->getColonyEntity($colonyId, $entityId)->level ?? 0);
+    }
+
+    /** Second techtree prerequisite (required_building2_*), the one silent research keeps. */
+    private function secondPrerequisiteMet(int $colonyId, object $entity): bool
+    {
+        if (empty($entity->required_building2_id)) {
+            return true;
+        }
+
+        $level = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', (int) $entity->required_building2_id)
+            ->max('level');
+
+        return $level !== null && (int) $level >= (int) ($entity->required_building2_level ?? 1);
+    }
+
+    /** Whether the CommandCenter level is too low for a knowledge to reach $targetLevel. */
+    private function ccGateBlocks(int $colonyId, int $targetLevel): bool
+    {
+        $caps = config('game.knowledge_cc_level_cap', []);
+        if (! isset($caps[$targetLevel])) {
+            return false;
+        }
+
+        $ccLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->value('level') ?? 0);
+
+        return $ccLevel < $caps[$targetLevel];
     }
 
     /**
@@ -149,21 +346,9 @@ class ResearchService extends AbstractTechnologyService
     {
         $entity = DB::table($this->masterTable())->find($entityId);
 
-        if ($entity && ($entity->purpose ?? '') === 'knowledge') {
-            $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
-            $targetLevel = ($colonyEntity ? (int) $colonyEntity->level : 0) + 1;
-
-            $caps = config('game.knowledge_cc_level_cap', []);
-            if (isset($caps[$targetLevel])) {
-                $ccLevel = (int) (DB::table('colony_buildings')
-                    ->where('colony_id', $colonyId)
-                    ->where('building_id', BuildingId::CommandCenter->value)
-                    ->value('level') ?? 0);
-
-                if ($ccLevel < $caps[$targetLevel]) {
-                    return 'knowledge_cc_gate';
-                }
-            }
+        if ($entity && ($entity->purpose ?? '') === 'knowledge'
+            && $this->ccGateBlocks($colonyId, $this->knowledgeLevel($colonyId, $entityId) + 1)) {
+            return 'knowledge_cc_gate';
         }
 
         return parent::levelupBlocker($colonyId, $entityId, $instanceId);

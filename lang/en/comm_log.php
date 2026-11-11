@@ -20,6 +20,10 @@ return [
             'tile_deep_scanned' => 'Deep scan performed',
             'tile_salvaged' => 'Find salvaged',
         ],
+        'knowledge' => [
+            'bonus_progress' => 'Advice flows into a knowledge', // TODO content-writer
+            'bonus_breakthrough' => 'Breakthrough in a knowledge', // TODO content-writer
+        ],
         'merchant' => [
             'visit' => 'Travelling Merchant announced',
         ],
@@ -137,6 +141,10 @@ return [
         'pathdepth_family' => 'invested in training :name.',
         'pathdepth_family_levelup' => 'invested in training :name. Level :level reached.',
         'pathdepth_character' => 'invested in the relationship with :name.',
+        // Silent research. TODO content-writer: drafts.
+        'knowledge_bonus' => 'from :name flowed into :knowledge.',
+        'knowledge_bonus_breakthrough' => 'from :name flowed into :knowledge. Breakthrough: level :level reached.',
+        'knowledge_bonus_forfeited' => 'Remaining :ap AP lapse — waiting on :reason.',
         'pathdepth_character_levelup' => 'invested in the relationship with :name. Level :level reached.',
         'building_leveled_up' => ':ap AP invested in :name. Construction complete — Level :level reached.',
         'level_up' => 'Research :name completed.',
@@ -176,6 +184,7 @@ return [
         'galaxy' => 'bi-stars',
         'run' => 'bi-flag',
         'encounter' => 'bi-exclamation-triangle',
+        'knowledge' => 'bi-lightbulb',
         'nexus' => 'bi-broadcast-pin',
         'merchant' => 'bi-bag',
         'default' => 'bi-journal-text',

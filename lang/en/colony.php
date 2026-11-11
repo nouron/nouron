@@ -761,6 +761,9 @@ return [
     'bartender_knowledge_label' => 'Which knowledge field does the tip go into?',
     'bartender_error_cooldown' => 'Tomas has already given you advice for today — try again next Sol.',
     'bartender_error_generic' => 'The conversation did not happen.',
+    // Silent research (spec 2026-11-11-tomas-rat-rueckmeldung). TODO content-writer: drafts.
+    'bartender_relationship_too_low' => 'Tomas barely knows you yet — build the relationship and he will share his advice.',
+    'knowledge_not_selectable' => 'This knowledge is waiting on :reason.',
     'bar_concern_knowledge_label' => 'Which knowledge field should the help go into?',
     'bar_information_knowledge_label' => 'Which knowledge field should benefit?',
     'codex_page_intro' => 'Every figure in the Cantina leaves traces — the more often you meet, the more you learn about them. Unlocked entries stay with you beyond the end of a run.',

@@ -765,6 +765,9 @@ return [
     'bartender_knowledge_label' => 'In welche Kenntnis fließt der Hinweis?',
     'bartender_error_cooldown' => 'Tomas hat dir für heute schon einen Rat mitgegeben — versuch es nächstes Sol wieder.',
     'bartender_error_generic' => 'Das Gespräch kam nicht zustande.',
+    // Stille Forschung (spec 2026-11-11-tomas-rat-rueckmeldung). TODO content-writer: Entwürfe.
+    'bartender_relationship_too_low' => 'Tomas kennt dich noch kaum — pflege die Beziehung, dann rückt er mit Ratschlägen heraus.',
+    'knowledge_not_selectable' => 'Diese Kenntnis wartet auf :reason.',
     'bar_concern_knowledge_label' => 'In welche Kenntnis soll die Hilfe fließen?',
     'bar_information_knowledge_label' => 'Welche Kenntnis soll profitieren?',
     'codex_page_intro' => 'Jede Figur der Cantina hinterlässt Spuren — je öfter ihr euch begegnet, desto mehr erfährst du über sie. Freigeschaltete Einträge bleiben dir über das Ende eines Runs hinaus erhalten.',

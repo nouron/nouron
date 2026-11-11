@@ -457,6 +457,37 @@ class CommLogControllerTest extends TestCase
         $this->assertStringContainsString('Tomas', $segments[1]['value']);
     }
 
+    public function test_knowledge_bonus_progress_names_source_and_knowledge(): void
+    {
+        $this->log('knowledge.bonus_progress', [
+            'source' => 'bartender', 'knowledge_id' => 90, 'knowledge_key' => 'construction',
+            'ap_invested' => 2, 'level' => 0, 'leveled_up' => false, 'ap_forfeited' => 0, 'block_reason' => null,
+        ], area: 'knowledge');
+
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries')->first()['segments'];
+
+        $this->assertSame('amount', $segments[0]['type']);
+        $this->assertSame(2, $segments[0]['value']);
+        $this->assertStringContainsString('Tomas', $segments[1]['value']);
+        $this->assertStringContainsString(__('knowledge.construction'), $segments[1]['value']);
+    }
+
+    public function test_knowledge_bonus_breakthrough_names_level_and_forfeit(): void
+    {
+        $this->log('knowledge.bonus_breakthrough', [
+            'source' => 'mechanic', 'knowledge_id' => 90, 'knowledge_key' => 'construction',
+            'ap_invested' => 2, 'level' => 3, 'leveled_up' => true, 'ap_forfeited' => 3, 'block_reason' => 'knowledge_cc_gate',
+        ], area: 'knowledge');
+
+        $segments = $this->actingAs($this->user())->get(route('comm.log'))->collect('entries')->first()['segments'];
+        $text = $segments[1]['value'];
+
+        $this->assertStringContainsString('3', $text);
+        $this->assertStringContainsString(__('knowledge.construction'), $text);
+        $this->assertStringContainsString((string) config('characters.mechanic.name'), $text);
+        $this->assertStringContainsString(__('knowledge.bonus_wait_knowledge_cc_gate'), $text);
+    }
+
     public function test_building_invested_entries_for_different_buildings_do_not_collapse(): void
     {
         $this->log('colony.building_invested', ['building_id' => 25, 'ap_spend' => 1], tick: 5);
