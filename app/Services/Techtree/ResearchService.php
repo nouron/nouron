@@ -103,6 +103,12 @@ class ResearchService extends AbstractTechnologyService
 
     public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false, ?int $instanceId = null): ?string
     {
+        // No progress beyond the top level (last key of config/knowledge.php levelup_costs).
+        if ($this->isCappedKnowledge($entityId, $action)
+            && $this->knowledgeLevel($colonyId, $entityId) >= self::maxKnowledgeLevel($entityId)) {
+            return 'max_level';
+        }
+
         if (! $bypassPoolCheck && $this->isCappedKnowledge($entityId, $action)
             && app(DailyApCapService::class)->wouldExceed($colonyId, self::capKey($entityId), $this->apCap(), abs($points))) {
             return 'knowledge_ap_cap';
@@ -138,30 +144,35 @@ class ResearchService extends AbstractTechnologyService
         $levelBefore = $this->knowledgeLevel($colonyId, $entityId);
 
         if (($blocker = $this->bonusTargetBlocker($colonyId, $entityId)) !== null) {
-            return KnowledgeBonusResult::refused($entityId, $key, $levelBefore, $blocker);
+            return KnowledgeBonusResult::refused($entityId, $key, $levelBefore, $blocker, $points);
         }
 
         return DB::transaction(function () use ($colonyId, $entityId, $key, $levelBefore, $points): KnowledgeBonusResult {
             $entity = DB::table($this->masterTable())->find($entityId);
             $remaining = max(0, $points);
-            $invested = 0;
+            $total = $remaining;
             $reason = null;
 
             while ($remaining > 0) {
                 $level = $this->knowledgeLevel($colonyId, $entityId);
                 $apSpend = (int) ($this->getColonyEntity($colonyId, $entityId)->ap_spend ?? 0);
                 $threshold = $this->resolveApForLevelup($colonyId, $entityId, $entity);
-                $need = max(0, $threshold - $apSpend);
+                if ($apSpend > $threshold) {
+                    // Bar already over the threshold (e.g. a discount lowered it): the
+                    // surplus carries on like bonus AP instead of being cut off.
+                    $remaining += $apSpend - $threshold;
+                    $total += $apSpend - $threshold;
+                    $apSpend = $threshold;
+                }
+                $need = $threshold - $apSpend;
 
                 if ($need > $remaining) {
                     $this->writeProgress($colonyId, $entityId, $level, $apSpend + $remaining);
-                    $invested += $remaining;
                     $remaining = 0;
                     break;
                 }
 
                 $this->writeProgress($colonyId, $entityId, $level, $apSpend + $need);
-                $invested += $need;
                 $remaining -= $need;
 
                 if (! $this->silentLevelup($colonyId, $entityId)) {
@@ -178,7 +189,8 @@ class ResearchService extends AbstractTechnologyService
                 accepted: true,
                 knowledgeId: $entityId,
                 knowledgeKey: $key,
-                apInvested: $invested,
+                // Only the bonus counts as invested, not a carried surplus of the bar.
+                apInvested: min(max(0, $points), $total - $remaining),
                 levelBefore: $levelBefore,
                 levelAfter: $this->knowledgeLevel($colonyId, $entityId),
                 apForfeited: $reason !== null ? $remaining : 0,
@@ -208,7 +220,7 @@ class ResearchService extends AbstractTechnologyService
         return match (true) {
             $level >= self::maxKnowledgeLevel($entityId) => 'max_level',
             $this->ccGateBlocks($colonyId, $level + 1) => 'knowledge_cc_gate',
-            ! $this->secondPrerequisiteMet($colonyId, $entity) => 'requires_building',
+            ! $this->withSilentResearch(fn () => $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) => 'requires_building',
             ! $this->checkRequiredResourcesByEntityId($colonyId, $entityId) => 'insufficient_resources',
             ! $this->checkRequiredSupplyByEntityId($colonyId, $entityId) => 'insufficient_supply',
             default => null,
@@ -266,7 +278,11 @@ class ResearchService extends AbstractTechnologyService
 
         $entity = DB::table($this->masterTable())->find($entityId);
 
-        return ! is_object($entity) || $this->secondPrerequisiteMet($colonyId, $entity);
+        return ! is_object($entity) || BuildingPrerequisites::met(
+            $entity,
+            fn (int $buildingId): int => $this->buildingLevel($colonyId, $buildingId),
+            waive: [BuildingId::Sciencelab->value],
+        );
     }
 
     private function silentLevelup(int $colonyId, int $entityId): bool
@@ -303,21 +319,6 @@ class ResearchService extends AbstractTechnologyService
         return (int) ($this->getColonyEntity($colonyId, $entityId)->level ?? 0);
     }
 
-    /** Second techtree prerequisite (required_building2_*), the one silent research keeps. */
-    private function secondPrerequisiteMet(int $colonyId, object $entity): bool
-    {
-        if (empty($entity->required_building2_id)) {
-            return true;
-        }
-
-        $level = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', (int) $entity->required_building2_id)
-            ->max('level');
-
-        return $level !== null && (int) $level >= (int) ($entity->required_building2_level ?? 1);
-    }
-
     /** Whether the CommandCenter level is too low for a knowledge to reach $targetLevel. */
     private function ccGateBlocks(int $colonyId, int $targetLevel): bool
     {
@@ -346,9 +347,14 @@ class ResearchService extends AbstractTechnologyService
     {
         $entity = DB::table($this->masterTable())->find($entityId);
 
-        if ($entity && ($entity->purpose ?? '') === 'knowledge'
-            && $this->ccGateBlocks($colonyId, $this->knowledgeLevel($colonyId, $entityId) + 1)) {
-            return 'knowledge_cc_gate';
+        if ($entity && ($entity->purpose ?? '') === 'knowledge') {
+            $level = $this->knowledgeLevel($colonyId, $entityId);
+            if ($level >= self::maxKnowledgeLevel($entityId)) {
+                return 'max_level';
+            }
+            if ($this->ccGateBlocks($colonyId, $level + 1)) {
+                return 'knowledge_cc_gate';
+            }
         }
 
         return parent::levelupBlocker($colonyId, $entityId, $instanceId);
@@ -385,6 +391,12 @@ class ResearchService extends AbstractTechnologyService
 
         $targetLevel = $currentLevel + 1;
         $costs = collect(config('knowledge'))->firstWhere('id', $entityId)['levelup_costs'] ?? [];
+
+        // A configured knowledge has no level beyond its cost curve: never fall back to the
+        // DB seed value there (it would make level 6+ reachable for a handful of AP).
+        if ($costs !== [] && ! isset($costs[$targetLevel])) {
+            return 0;
+        }
 
         $rawCost = (int) ($costs[$targetLevel] ?? $fallback);
 

@@ -22,9 +22,10 @@ final readonly class KnowledgeBonusResult
         public ?string $blockReason,
     ) {}
 
-    public static function refused(int $knowledgeId, ?string $knowledgeKey, int $level, string $reason): self
+    /** Nothing landed: all $points are reported as forfeited (a caller that pre-checks never gets here). */
+    public static function refused(int $knowledgeId, ?string $knowledgeKey, int $level, string $reason, int $points = 0): self
     {
-        return new self(false, $knowledgeId, $knowledgeKey, 0, $level, $level, 0, $reason);
+        return new self(false, $knowledgeId, $knowledgeKey, 0, $level, $level, max(0, $points), $reason);
     }
 
     public function leveledUp(): bool

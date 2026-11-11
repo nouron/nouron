@@ -9,6 +9,7 @@ use App\Services\AdvisorService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\PathBuildingGateService;
+use App\Services\Techtree\BuildingPrerequisites;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
 use App\Services\Techtree\KnowledgeEffectDescriptionService;
@@ -189,7 +190,10 @@ class TechtreeController extends BaseController
                         ),
                         default => [],
                     },
-                    'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
+                    // Knowledges have no max_level column: their top level is the end of the cost curve.
+                    'max_level' => $type === 'research'
+                        ? (ResearchService::maxKnowledgeLevel((int) $id) ?: null)
+                        : (isset($tech['max_level']) ? (int) $tech['max_level'] : null),
                     'key' => $type === 'building' ? $tech['name'] : null,
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
                     'hire_cost' => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
@@ -310,25 +314,9 @@ class TechtreeController extends BaseController
             return 'built';
         }
 
-        if (! empty($tech['required_building_id'])) {
-            $reqId = (int) $tech['required_building_id'];
-            $reqLevel = (int) ($tech['required_building_level'] ?? 1);
-            $reqBuilding = $techtree['building'][$reqId] ?? null;
-            if (! $reqBuilding || (int) ($reqBuilding['level'] ?? 0) < $reqLevel) {
-                return 'locked';
-            }
-        }
+        $levelOf = fn (int $buildingId): int => (int) ($techtree['building'][$buildingId]['level'] ?? 0);
 
-        if (! empty($tech['required_building2_id'])) {
-            $req2Id = (int) $tech['required_building2_id'];
-            $req2Level = (int) ($tech['required_building2_level'] ?? 1);
-            $req2Building = $techtree['building'][$req2Id] ?? null;
-            if (! $req2Building || (int) ($req2Building['level'] ?? 0) < $req2Level) {
-                return 'locked';
-            }
-        }
-
-        return 'available';
+        return BuildingPrerequisites::met($tech, $levelOf) ? 'available' : 'locked';
     }
 
     /**

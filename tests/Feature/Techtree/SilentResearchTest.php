@@ -135,6 +135,18 @@ class SilentResearchTest extends TestCase
         $this->assertSame(2, $result->apInvested);
     }
 
+    public function test_an_overfull_bar_carries_its_surplus_into_the_next_level(): void
+    {
+        $this->removeLab();
+        $t1 = $this->thresholdFrom(self::CONSTRUCTION, 0);
+        $this->setKnowledge(self::CONSTRUCTION, 0, $t1 + 2); // e.g. a discount lowered the threshold
+
+        $result = $this->service->investBonus(self::COLONY_ID, self::CONSTRUCTION, 3);
+
+        $this->assertSame(['level' => 1, 'ap_spend' => 5], $this->state(self::CONSTRUCTION));
+        $this->assertSame(3, $result->apInvested);
+    }
+
     // ── 4–5: refusals ────────────────────────────────────────────────────────
 
     public function test_bonus_is_refused_when_the_cc_gate_blocks_the_next_level(): void

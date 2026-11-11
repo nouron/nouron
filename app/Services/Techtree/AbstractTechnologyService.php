@@ -129,26 +129,27 @@ abstract class AbstractTechnologyService
     // ── Prerequisite checks ───────────────────────────────────────────────────
 
     /**
-     * Check whether the colony has built the required building at the required level.
-     * Returns true if the entity has no required building.
+     * Check whether the colony has built the required buildings (both prerequisite slots)
+     * at the required levels — the shared BuildingPrerequisites rule the techtree display
+     * uses too. Returns true if the entity has no required building.
      */
     public function checkRequiredBuildingsByEntityId(int $colonyId, int $entityId): bool
     {
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (! is_object($entity) || ! $entity->required_building_id) {
+        if (! is_object($entity)) {
             return true;
         }
 
-        $maxLevel = DB::table('colony_buildings')
+        return BuildingPrerequisites::met($entity, fn (int $buildingId): int => $this->buildingLevel($colonyId, $buildingId));
+    }
+
+    /** Highest level of a building in the colony, 0 if not placed. */
+    protected function buildingLevel(int $colonyId, int $buildingId): int
+    {
+        return (int) (DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', $entity->required_building_id)
-            ->max('level');
-
-        if ($maxLevel === null) {
-            return false;
-        }
-
-        return (int) $maxLevel >= (int) $entity->required_building_level;
+            ->where('building_id', $buildingId)
+            ->max('level') ?? 0);
     }
 
     /**
