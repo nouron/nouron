@@ -2,6 +2,7 @@
 
 ## 2026-11-11
 
+- T41 P7: Spec-Entwurf Figuren-Stufenwirkung (Owner-Prinzip: Effekte absolut, klein, additiv); nicht umgesetzt.
 - Datenarchiv-Entwurf: Freischalt-Moment (Ereignis im Lauf, Achievement-Pop-up), Lauf-Zähler am Lauf-Ende, Beziehungswert pro Figur als einfaches System; Sinken des Werts als spätere Idee.
 
 ## 2026-11-09
