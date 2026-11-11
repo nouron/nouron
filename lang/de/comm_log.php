@@ -23,7 +23,7 @@ return [
         'knowledge' => [
             'bonus_progress' => 'Stille Forschung',
             'bonus_breakthrough' => 'Stille Forschung: Durchbruch',
-            'bonus_lapsed' => 'Bonus-AP verfallen', // TODO content-writer
+            'bonus_lapsed' => 'Stille Forschung: verfallen',
         ],
         'merchant' => [
             'visit' => 'Reisender Händler angekündigt',
@@ -149,7 +149,7 @@ return [
         'knowledge_bonus' => 'von :name flossen still in :knowledge.',
         'knowledge_bonus_breakthrough' => 'von :name flossen still in :knowledge. Durchbruch: Stufe :level erreicht.',
         'knowledge_bonus_forfeited' => 'Die übrigen :ap AP verfallen — die Kenntnis wartet auf :reason.',
-        'knowledge_bonus_lapsed' => ':ap AP von :name für :knowledge verfallen — die Kenntnis wartet auf :reason.', // TODO content-writer
+        'knowledge_bonus_lapsed' => ':ap AP von :name für :knowledge verfallen — die Kenntnis wartet auf :reason.',
         'pathdepth_character_levelup' => 'in Beziehung zu :name investiert. Stufe :level erreicht.',
         'building_leveled_up' => ':ap AP in :name investiert. Bau abgeschlossen — Level :level erreicht.',
         'level_up' => 'Forschung :name abgeschlossen.',
