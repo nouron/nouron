@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-11
+
+- Cantina: „Beziehung pflegen“ ins Figuren-Popup integriert (Desktop 3 Spalten Porträt | Beziehung | Gespräch, Handy untereinander); Beziehungsstufen als Wörter (fremd … brüderlich); unter der Szene nur noch kompakte Figuren-Chips.
+
 ## 2026-11-09
 
 - UI-Umbau Playtest-Fixes: Ressourcenleiste nur per Klick, transparent mit dezenten Chips, Karte bewegt sich beim Umschalten nicht mehr; Kolonie-Karte mobil füllt den Platz; Berater mobil als Vollbild-Portrait mit Glas-Infos; dezentere Pfeile in der Bottom-Nav; Techtree-Detail mobil als Vollbild-Sheet.
