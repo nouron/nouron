@@ -35,6 +35,15 @@ return [
     'ui_not_met' => 'Noch nicht getroffen',
     'ui_relationship_run_hint' => 'Vertrautheit wächst nur in diesem Lauf. Was du über eine Figur erfährst, bleibt im Kodex stehen.',
     'ui_relationship_met_only' => 'Gelistet sind nur Figuren, mit denen du in diesem Lauf schon gesprochen hast.',
+    // TODO content-writer: Entwurf (ui-specialist), Hinweis im Figuren-Popup für noch nicht getroffene Figuren — bitte texten.
+    'ui_relationship_not_met_hint' => 'Nach dem ersten Gespräch kannst du hier die Beziehung pflegen.',
+    // Relationship level names 0–5 (owner 2026-11-11).
+    'relationship_level_0' => 'fremd',
+    'relationship_level_1' => 'neu kennengelernt',
+    'relationship_level_2' => 'bekannt',
+    'relationship_level_3' => 'vertraut',
+    'relationship_level_4' => 'befreundet',
+    'relationship_level_5' => 'brüderlich',
 
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'Diese Figur nimmt pro Sol nur begrenzt Zeit für Gespräche. Morgen geht es weiter — oder bei jemand anderem.',

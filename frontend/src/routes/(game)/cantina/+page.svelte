@@ -263,6 +263,7 @@
 		if (!res.ok) return void (offerError[id] = fail(res));
 		accepted[id] = true;
 		sync(res.ap_available);
+		refreshRelationships(slug);
 	}
 
 	// A won negotiation flags the offer (bonus on the Get side); Annehmen then books it at 0 AP.
@@ -294,6 +295,7 @@
 		encounterResolved = true;
 		if (res.type === 'wager') encounterResult = res.won ? 'won' : 'lost';
 		sync(res.ap_available);
+		refreshRelationships(scene?.encounter?.slug ?? null);
 	}
 
 	async function talkToBartender() {
@@ -322,6 +324,7 @@
 		concernResolved = true;
 		concernSuccess = res.success as boolean;
 		sync(res.ap_available);
+		refreshRelationships(d.concern.character_slug);
 	}
 
 	// Only Deva's knowledge_boost outcome needs a choice; Lenn's target is fixed.
@@ -340,12 +343,52 @@
 		informationResolved = true;
 		informationOutcomeKey = (res.outcome_key as string) ?? null;
 		sync();
+		refreshRelationships(d.informationEncounter.character_slug);
 	}
 
 	// ── Relationships (path depth of met characters, T41) ──
+	// Shown as the relationship column inside each character dialog; the overview
+	// under the scene only lists met characters and opens their dialog.
+
+	const relFor = (slug: string | null) => (slug ? (d?.relationships.find((r) => r.key === slug) ?? null) : null);
+
+	/** Character behind the open dialog (null for Corvan or a guest without a character). */
+	const activeSlug = $derived.by((): string | null => {
+		const m = activeModal;
+		if (!m || !d || !scene) return null;
+		if (m === 'bartender') return 'bartender';
+		if (m.startsWith('rel_')) return m.slice(4);
+		if (m.startsWith('offer_')) return scene.offers.find((o) => `offer_${o.offer.id}` === m)?.acceptSlug ?? null;
+		if (m === 'encounter') return scene.encounter?.slug ?? null;
+		if (m === 'story') return d.storyEncounterSlug;
+		if (m === 'concern') return d.concern?.character_slug ?? null;
+		if (m === 'information') return d.informationEncounter?.character_slug ?? null;
+		return null;
+	});
+	const hasRelation = $derived(!!activeSlug && !!d?.characters[activeSlug]);
+
+	/** Scene dialog of a character standing in the cantina today, else null. */
+	function modalFor(slug: string): string | null {
+		if (!d || !scene) return null;
+		if (slug === 'bartender') return 'bartender';
+		const offer = scene.offers.find((o) => o.acceptSlug === slug);
+		if (offer) return `offer_${offer.offer.id}`;
+		if (scene.encounter?.slug === slug) return 'encounter';
+		if (d.storyEncounterSlug === slug) return 'story';
+		if (d.concern?.character_slug === slug) return 'concern';
+		if (d.informationEncounter?.character_slug === slug) return 'information';
+		return null;
+	}
+
+	// The first trade/encounter marks a character as met server-side; reload the
+	// relationship list so the open dialog switches from the hint to the options.
+	async function refreshRelationships(slug: string | null) {
+		if (!slug || relFor(slug) || !d?.characters[slug]) return;
+		const r = await api<Data>('/cantina').catch(() => null);
+		if (r && d) d.relationships = r.relationships;
+	}
 
 	function conversationBlock(rel: Relationship, opt: Relationship['conversation']['options'][number]) {
-		if (relationLoading[rel.key]) return t('pathdepth.ui_conversation_cap_tooltip');
 		if (rel.lock_reason) return rel.lock_reason;
 		return opt.capped ? t('pathdepth.ui_conversation_cap_tooltip') : null;
 	}
@@ -412,6 +455,63 @@
 			{#each options as opt (opt.id)}<option value={opt.id}>{opt.name}</option>{/each}
 		</select>
 	</label>
+{/snippet}
+
+<!-- Beziehung pflegen for the character behind the open dialog (T41). -->
+{#snippet relationPanel()}
+	{@const rel = relFor(activeSlug)}
+	{@const max = d?.relationshipMaxLevel ?? 0}
+	<section class="cantina-relation" data-relation={activeSlug}>
+		{#if !rel}
+			<!-- Not met yet: the first trade/encounter with this character unlocks the options. -->
+			<p class="cantina-relation__status">{t('pathdepth.ui_not_met')}</p>
+			<p class="cantina-relation__note">{t('pathdepth.ui_relationship_not_met_hint')}</p>
+		{:else}
+			<div class="cantina-relation__level">
+				<span title={t('pathdepth.ui_level', { level: rel.level, max })}>{t(`pathdepth.relationship_level_${rel.level}`)}</span>
+				<span class="cantina-relation__pips" aria-hidden="true">
+					{#each Array.from({ length: max }, (_, i) => i) as i (i)}
+						<span class="cantina-relation__pip" class:cantina-relation__pip--on={i < rel.level}></span>
+					{/each}
+				</span>
+			</div>
+			{#if rel.ap_for_levelup <= 0}
+				<p class="cantina-relation__note">{t('pathdepth.ui_level_max')}</p>
+			{:else}
+				<div class="cantina-relation__progress">
+					<span>{t('pathdepth.ui_invest_progress', { spent: rel.ap_spend, needed: rel.ap_for_levelup })}</span>
+					<span class="cantina-relation__bar" aria-hidden="true"
+						><span style="width: {Math.min(100, (rel.ap_spend / rel.ap_for_levelup) * 100)}%"></span></span
+					>
+				</div>
+				<div class="bar-conversation">
+					<p class="bar-conversation-caption">
+						{t('pathdepth.ui_get_to_know')}
+						{#if rel.conversation.cap}
+							<span>{t('pathdepth.ui_conversation_today', { spent: rel.conversation.cap.spent, cap: rel.conversation.cap.cap })}</span>
+						{/if}
+					</p>
+					{#each rel.conversation.options as opt (opt.key)}
+						{@const block = conversationBlock(rel, opt)}
+						<button
+							type="button"
+							class="bar-conversation-btn"
+							class:bar-conversation-btn--blocked={block}
+							aria-disabled={block ? 'true' : undefined}
+							disabled={relationLoading[rel.key]}
+							title={block}
+							onclick={() => !block && investRelation(rel, opt)}
+						>
+							<span class="bar-conversation-btn__name">{opt.name}</span>
+							<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{opt.ap} AP</span>
+						</button>
+					{/each}
+				</div>
+				{#if rel.lock_reason}<p class="cantina-relation__note cantina-relation__note--lock">{rel.lock_reason}</p>{/if}
+			{/if}
+			{#if relationError[rel.key]}<p class="bar-relationship-error" role="alert">{relationError[rel.key]}</p>{/if}
+		{/if}
+	</section>
 {/snippet}
 
 {#if loadError}<p class="error load-error" role="alert">{loadError}</p>{/if}
@@ -554,7 +654,12 @@
 				<div class="cantina-modal-backdrop backdrop" onclick={() => open(null)} transition:fade={{ duration: 150 }}></div>
 			{/if}
 
-			<div class="cantina-modal cantina-modal--{activeModal === null ? 'neutral' : 'economy'}" class:open={activeModal !== null} hidden={activeModal === null}>
+			<div
+				class="cantina-modal cantina-modal--{activeModal === null ? 'neutral' : 'economy'}"
+				class:cantina-modal--wide={hasRelation && !activeModal?.startsWith('rel_')}
+				class:open={activeModal !== null}
+				hidden={activeModal === null}
+			>
 				<button onclick={() => open(null)} class="cantina-modal-close" aria-label={t('colony.cancel')}>&times;</button>
 
 				{#if activeModal === 'merchant' && data.merchantVisit}
@@ -593,7 +698,7 @@
 					{@const id = o.offer.id}
 					{@const dlg = data.offerDialogs[id]}
 					{#if activeModal === `offer_${id}`}
-						<CantinaDialog slug={o.slug} name={o.name} role={o.role}>
+						<CantinaDialog slug={o.slug} name={o.name} role={o.role} relation={hasRelation ? relationPanel : undefined}>
 							{@render toastFor(`offer_${id}`)}
 							{#if o.flavor}<p class="flavor">{t(o.flavor)}</p>{/if}
 
@@ -734,7 +839,7 @@
 
 				{#if activeModal === 'encounter' && scene.encounter && data.encounter}
 					{@const e = data.encounter}
-					<CantinaDialog slug={scene.encounter.slug ?? 'stranger'} name={scene.encounter.heading} role={scene.encounter.char?.role ?? ''}>
+					<CantinaDialog slug={scene.encounter.slug ?? 'stranger'} name={scene.encounter.heading} role={scene.encounter.char?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{@render toastFor('encounter')}
 						<p>{scene.encounter.body}</p>
 						{#if e.type === 'contract'}
@@ -765,7 +870,7 @@
 
 				<!-- story_hook encounter: pure flavour, only to dismiss -->
 				{#if activeModal === 'story' && scene.story && data.storyEncounterSlug}
-					<CantinaDialog slug={data.storyEncounterSlug} name={scene.story.char.name ?? '???'} role={scene.story.char.role ?? ''}>
+					<CantinaDialog slug={data.storyEncounterSlug} name={scene.story.char.name ?? '???'} role={scene.story.char.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						<p>{t(`colony.story_encounter_${data.storyEncounterSlug}`)}</p>
 						{@render closeButton()}
 					</CantinaDialog>
@@ -773,7 +878,7 @@
 
 				{#if activeModal === 'bartender'}
 					{@const b = data.characters.bartender ?? {}}
-					<CantinaDialog slug="bartender" name={b.name ?? ''} role={b.role ?? ''}>
+					<CantinaDialog slug="bartender" name={b.name ?? ''} role={b.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{#if bartenderTier === null}
 							<p>{t('colony.bartender_dialog_intro')}</p>
 							<div class="stack">
@@ -795,7 +900,7 @@
 				{#if activeModal === 'concern' && data.concern}
 					{@const slug = data.concern.character_slug}
 					{@const ch = data.characters[slug]}
-					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_concern_heading')} role={ch?.role ?? ''}>
+					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_concern_heading')} role={ch?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{#if !concernResolved}
 							<p>{t(`colony.bar_concern_${slug}_intro`)}</p>
 							{#if slug === 'mechanic'}
@@ -821,10 +926,18 @@
 					</CantinaDialog>
 				{/if}
 
+				<!-- Met earlier, not in the scene today: portrait | relationship only. -->
+				{#if activeModal?.startsWith('rel_') && activeSlug}
+					{@const ch = data.characters[activeSlug]}
+					<CantinaDialog slug={activeSlug} name={ch?.name ?? relFor(activeSlug)?.name ?? '???'} role={ch?.role ?? ''}>
+						{@render relationPanel()}
+					</CantinaDialog>
+				{/if}
+
 				{#if activeModal === 'information' && data.informationEncounter}
 					{@const slug = data.informationEncounter.character_slug}
 					{@const ch = data.characters[slug]}
-					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_information_heading')} role={ch?.role ?? ''}>
+					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_information_heading')} role={ch?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{#if !informationResolved}
 							{#if infoNeedsChoice}
 								<div class="gap-below">
@@ -845,52 +958,34 @@
 				{/if}
 			</div>
 
-			<!-- Beziehung pflegen: path depth of met characters (T41) -->
-			<section class="bar-relationships">
-				<h3 class="bar-relationships-title">{t('pathdepth.ui_relationship_title')}</h3>
-				<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_run_hint')}</p>
-				<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_met_only')}</p>
-				<div class="bar-relationships-grid">
-					{#each data.relationships as rel (rel.key)}
-						<article class="bar-relationship-card" data-character={rel.key}>
-							<header class="bar-relationship-head">
-								<strong>{rel.name}</strong>
-								<span class="bar-relationship-level">{t('pathdepth.ui_level', { level: rel.level, max: data.relationshipMaxLevel })}</span>
-							</header>
-							<p class="bar-relationship-progress">
-								{rel.ap_for_levelup <= 0
-									? t('pathdepth.ui_level_max')
-									: t('pathdepth.ui_invest_progress', { spent: rel.ap_spend, needed: rel.ap_for_levelup })}
-							</p>
-							{#if rel.ap_for_levelup > 0}
-								<div class="bar-conversation">
-									<p class="bar-conversation-caption">
-										{t('pathdepth.ui_get_to_know')}
-										{#if rel.conversation.cap}
-											<span>{t('pathdepth.ui_conversation_today', { spent: rel.conversation.cap.spent, cap: rel.conversation.cap.cap })}</span>
-										{/if}
-									</p>
-									{#each rel.conversation.options as opt (opt.key)}
-										{@const block = conversationBlock(rel, opt)}
-										<button
-											type="button"
-											class="bar-conversation-btn"
-											class:bar-conversation-btn--blocked={block}
-											aria-disabled={block ? 'true' : undefined}
-											title={block}
-											onclick={() => !block && investRelation(rel, opt)}
+			<!-- Beziehung pflegen overview: met characters; each opens their dialog (T41). -->
+			{#if data.relationships.length}
+				<section class="bar-relationships">
+					<h3 class="bar-relationships-title">{t('pathdepth.ui_relationship_title')}</h3>
+					<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_met_only')}</p>
+					<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_run_hint')}</p>
+					<ul class="bar-relationships-list">
+						{#each data.relationships as rel (rel.key)}
+							<li>
+								<button
+									type="button"
+									class="bar-relationship-chip"
+									data-character={rel.key}
+									onclick={() => open(modalFor(rel.key) ?? `rel_${rel.key}`)}
+								>
+									<img src="{portrait(rel.key)}.webp" alt="" />
+									<span class="bar-relationship-chip__text">
+										<strong>{rel.name}</strong>
+										<span class="bar-relationship-chip__level"
+											>{t(`pathdepth.relationship_level_${rel.level}`)}</span
 										>
-											<span class="bar-conversation-btn__name">{opt.name}</span>
-											<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{opt.ap} AP</span>
-										</button>
-									{/each}
-								</div>
-							{/if}
-							{#if relationError[rel.key]}<p class="bar-relationship-error">{relationError[rel.key]}</p>{/if}
-						</article>
-					{/each}
-				</div>
-			</section>
+									</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/if}
 		{/if}
 	</div>
 
@@ -939,26 +1034,6 @@
 		.cantina-dots {
 			display: none;
 		}
-	}
-	/* Blade drew these with PicoCSS (white <article> card, filled buttons); here on design tokens. */
-	.bar-relationship-card {
-		background: var(--color-bg);
-		border-radius: var(--radius-sm);
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.08),
-			0 0 0 1px rgba(0, 0, 0, 0.03);
-	}
-	.bar-conversation-btn {
-		font: inherit;
-		font-size: 0.875rem;
-		color: #fff;
-		background: var(--color-accent);
-		border: none;
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-	}
-	.bar-conversation-btn:hover:not(.bar-conversation-btn--blocked) {
-		background: var(--color-accent-hover);
 	}
 	/* Former inline styles from bar.blade.php, on design tokens. */
 	.empty-text {

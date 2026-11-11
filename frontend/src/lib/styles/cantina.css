@@ -379,7 +379,8 @@
 }
 
 /* ── Dialog (portrait fills the left side, name/role/body on the right) —
-   shared by the offer dialog and the merchant dialog ── */
+   shared by every cantina dialog. Character dialogs add a relationship column
+   (.cantina-dialog--relation): wide screens portrait | relationship | interaction. ── */
 
 .cantina-dialog {
     display: flex;
@@ -411,6 +412,11 @@
     overflow-y: auto;
 }
 
+.cantina-dialog__head {
+    /* Keep the name clear of the close button. */
+    padding-right: 1.5rem;
+}
+
 .cantina-dialog__name {
     margin: 0;
     font-size: 1.25rem;
@@ -422,26 +428,164 @@
     margin-bottom: 0.5rem;
 }
 
+.cantina-dialog__columns {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
 .cantina-dialog__content {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    min-width: 0;
 }
 
-/* Mobile: stack — portrait on top (fixed height), body below */
+/* Wide modal for character dialogs (portrait | relationship | interaction). */
+@media (min-width: 768px) {
+    .cantina-modal.cantina-modal--wide {
+        width: 1040px;
+    }
+    .cantina-dialog--relation .cantina-dialog__portrait {
+        flex-basis: 30%;
+    }
+}
+
+@media (min-width: 900px) {
+    .cantina-dialog--relation .cantina-dialog__portrait {
+        flex: 0 0 260px;
+    }
+    .cantina-dialog--relation .cantina-dialog__columns {
+        display: grid;
+        grid-template-columns: 15rem minmax(0, 1fr);
+        grid-template-areas: "rel main";
+        align-items: start;
+        gap: var(--space-lg);
+    }
+    /* Subtle divider between relationship and interaction. */
+    .cantina-dialog--relation .cantina-dialog__content {
+        grid-area: main;
+        align-self: stretch;
+        padding-left: var(--space-lg);
+        border-left: 1px solid var(--color-border);
+    }
+    .cantina-dialog--relation .cantina-dialog__relation {
+        grid-area: rel;
+    }
+}
+
+/* Phones/narrow tablets: bottom drawer, compact header (thumbnail + name/role),
+   then the interaction, then the relationship. The whole dialog scrolls. */
 @media (max-width: 767px) {
     .cantina-dialog {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        grid-template-areas:
+            "thumb head"
+            "body  body";
+        column-gap: var(--space-md);
+        align-items: center;
         max-height: 85vh;
-    }
-    .cantina-dialog__portrait {
-        flex: 0 0 auto;
-        width: 100%;
-        height: 12rem;
-    }
-    .cantina-dialog__body {
+        overflow-y: auto;
         padding: 1.25rem 1.25rem 1.75rem;
     }
+    .cantina-dialog__portrait {
+        grid-area: thumb;
+        width: 4.5rem;
+        height: 4.5rem;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+    /* Flatten the body so the header can sit next to the thumbnail. */
+    .cantina-dialog__body {
+        display: contents;
+    }
+    .cantina-dialog__head {
+        grid-area: head;
+    }
+    .cantina-dialog__role {
+        margin-bottom: 0;
+    }
+    .cantina-dialog__columns {
+        grid-area: body;
+        padding-top: var(--space-md);
+    }
+    .cantina-dialog__relation {
+        border-top: 1px solid var(--color-border);
+        padding-top: var(--space-md);
+    }
+}
+
+/* ── Relationship column (Beziehung pflegen) ── */
+
+.cantina-relation {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.cantina-relation__level {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Segmented level strip (ProgressBar "segmented" pattern). */
+.cantina-relation__pips {
+    display: flex;
+    gap: 3px;
+}
+
+.cantina-relation__pip {
+    width: 1.1rem;
+    height: 0.4rem;
+    border-radius: 2px;
+    background: var(--color-border-strong);
+}
+
+.cantina-relation__pip--on {
+    background: var(--color-accent);
+}
+
+.cantina-relation__progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    font-size: var(--text-meta-size);
+    color: var(--color-text-secondary);
+}
+
+.cantina-relation__bar {
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--color-border);
+    overflow: hidden;
+}
+
+.cantina-relation__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--color-accent);
+    transition: width var(--duration-base) var(--ease-standard);
+}
+
+.cantina-relation__note {
+    margin: 0;
+    font-size: var(--text-meta-size);
+    color: var(--color-text-secondary);
+}
+
+.cantina-relation__note--lock {
+    color: var(--color-warning-fg);
+}
+
+.cantina-relation__status {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .cantina-modal-close {
@@ -717,52 +861,71 @@
 }
 
 
-/* Cantina: relationship panel (path depth, T41) */
+/* Compact overview of met characters under the scene; each entry opens the
+   character's dialog (relationship column included). */
 .bar-relationships {
-    margin: var(--space-4, 1rem) 0;
+    margin: var(--space-md) 0;
 }
 
 .bar-relationships-title {
-    margin-bottom: 0;
+    margin: 0;
     font-size: 1.125rem;
 }
 
 .bar-relationships-hint {
-    margin: 0 0 var(--space-2, 0.5rem);
-    color: var(--color-text-muted, #666);
+    margin: 0 0 var(--space-sm);
+    color: var(--color-text-secondary);
     font-size: 0.875rem;
 }
 
-.bar-relationships-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-    gap: var(--space-3, 0.75rem);
-}
-
-.bar-relationship-card {
-    margin: 0;
-    padding: var(--space-3, 0.75rem);
-}
-
-.bar-relationship-head {
+.bar-relationships-list {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-.bar-relationship-level,
-.bar-relationship-progress {
+.bar-relationship-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 44px;
+    margin: 0;
+    padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-xs);
+    font: inherit;
     font-size: 0.875rem;
-    color: var(--color-text-muted, #666);
+    color: var(--color-text-primary);
+    text-align: left;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
 }
 
-.bar-relationship-level {
-    white-space: nowrap;
+.bar-relationship-chip:hover {
+    background: var(--color-surface);
 }
 
-.bar-relationship-progress {
-    margin: 0.25rem 0 0.5rem;
+.bar-relationship-chip img {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    background: #f0f0f2;
+}
+
+.bar-relationship-chip__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.bar-relationship-chip__level {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
 }
 
 .bar-conversation {
@@ -774,7 +937,7 @@
 .bar-conversation-caption {
     margin: 0;
     font-size: 0.8rem;
-    color: var(--color-text-muted, #666);
+    color: var(--color-text-secondary);
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
@@ -786,13 +949,25 @@
     align-items: center;
     gap: 0.5rem;
     width: 100%;
+    min-height: 2.5rem;
     margin: 0;
     padding: 0.4rem 0.6rem;
+    font: inherit;
     font-size: 0.875rem;
     text-align: left;
+    color: #fff;
+    background: var(--color-accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
 }
 
-.bar-conversation-btn--blocked {
+.bar-conversation-btn:hover:not(.bar-conversation-btn--blocked):not(:disabled) {
+    background: var(--color-accent-hover);
+}
+
+.bar-conversation-btn--blocked,
+.bar-conversation-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -803,7 +978,7 @@
 
 .bar-relationship-error {
     margin: 0.25rem 0 0;
-    color: var(--pico-del-color);
+    color: var(--color-danger);
     font-size: 0.85rem;
 }
 

@@ -35,6 +35,15 @@ return [
     'ui_not_met' => 'Not met yet',
     'ui_relationship_run_hint' => 'Familiarity grows only within this run. What you learn about a character stays in the codex.',
     'ui_relationship_met_only' => 'Only characters you have already spoken to in this run are listed.',
+    // TODO content-writer: draft (ui-specialist), hint in the character dialog for characters not met yet — please write.
+    'ui_relationship_not_met_hint' => 'After your first conversation you can nurture the relationship here.',
+    // Relationship level names 0–5 (owner 2026-11-11).
+    'relationship_level_0' => 'stranger',
+    'relationship_level_1' => 'newly met',
+    'relationship_level_2' => 'acquainted',
+    'relationship_level_3' => 'familiar',
+    'relationship_level_4' => 'friends',
+    'relationship_level_5' => 'like family',
 
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'This character only has so much time for conversation per Sol. Tomorrow is another day — or talk to someone else.',
