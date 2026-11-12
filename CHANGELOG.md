@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-12
+
+- Stille Forschung: Bonus-AP von Tomas, Sarka, Deva, Lenn und Daten-Sweep lassen Kenntnisse auch ohne Labor aufsteigen, verfallene Rest-AP werden gemeldet; Tomas' Rat hängt an der Beziehungsstufe, Popup zeigt Ergebnis und „wieder nächstes Sol“ (Spec `2026-11-11-tomas-rat-rueckmeldung`).
+- Kenntnisse: Höchststufe aus der Kostenkurve gilt auch im Labor; Labor-Aufstieg prüft die zweite Gebäude-Voraussetzung.
+
 ## 2026-11-11
 
 - Cantina: „Beziehung pflegen“ ins Figuren-Popup integriert (Desktop 3 Spalten Porträt | Beziehung | Gespräch, Handy untereinander); Beziehungsstufen als Wörter (fremd … brüderlich); unter der Szene nur noch kompakte Figuren-Chips.

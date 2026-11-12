@@ -3,6 +3,8 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
+use App\Services\Techtree\KnowledgeEffectDescriptionService;
+use App\Services\Techtree\ResearchService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -119,8 +121,48 @@ class TechtreeApiTest extends TestCase
             $this->assertSame(0, $item['ap_spend']);
             $this->assertSame(0, $item['ap_for_levelup']);
             $this->assertSame(0, $item['ap_available']);
+            $this->assertNull($item['rough_progress']);
+            $this->assertFalse($item['bonus_progress']);
             $this->assertNotSame('', $item['name']);
         }
+    }
+
+    // ── Stille Forschung (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 26) ──
+
+    public function test_preview_shows_rough_bonus_progress_without_numbers(): void
+    {
+        config(['game.knowledge_rough_progress_bands' => [0.34, 0.67]]);
+        $this->withoutLab();
+        $threshold = app(ResearchService::class)->knowledgeLevelupCost(self::COLONY_ID, 90);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 90],
+            ['level' => 0, 'ap_spend' => intdiv($threshold, 2), 'status_points' => 20]
+        );
+
+        $item = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->first(fn ($i) => $i['type'] === 'research' && $i['id'] === 90);
+
+        $this->assertSame(2, $item['rough_progress']);
+        $this->assertSame(__('knowledge.rough_progress_2'), $item['rough_progress_label']);
+        $this->assertTrue($item['bonus_progress']);
+        $this->assertSame(0, $item['ap_spend']);
+        $this->assertSame(0, $item['ap_for_levelup']);
+    }
+
+    public function test_preview_shows_the_effect_of_the_reached_level_only(): void
+    {
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 90],
+            ['level' => 2, 'ap_spend' => 0, 'status_points' => 20]
+        );
+        $this->withoutLab();
+
+        $item = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->first(fn ($i) => $i['type'] === 'research' && $i['id'] === 90);
+
+        $expected = app(KnowledgeEffectDescriptionService::class)->effectsAtLevel('construction', 2);
+        $this->assertNotEmpty($expected);
+        $this->assertSame($expected, $item['effects_current_level']);
+        $this->assertSame([], $item['unlocks_next_level']);
+        $this->assertFalse($item['bonus_progress']);
     }
 
     public function test_preview_keeps_building_ship_advisor_items_unchanged(): void

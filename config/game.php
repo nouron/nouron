@@ -271,6 +271,12 @@ return [
         'base' => 4,
     ],
 
+    // Rough progress words shown without a sciencelab ("stille Forschung", spec
+    // 2026-11-11-tomas-rat-rueckmeldung A8): upper bounds (fraction of the levelup
+    // threshold) of word 1 and word 2; above that word 3; no word at 0. PROPOSAL.
+    // See ResearchService::roughProgressBand().
+    'knowledge_rough_progress_bands' => [0.34, 0.67],
+
     // Path-building build gate (GDD §16 "Slot-System", Gate-Logik; server rule since
     // 2026-10-14): a NEW path building (sciencelab/hangar/bar) may only be placed while
     // placed path buildings < CC level − cc_level_offset. With 1: CC Lv2 → one, Lv3 →
@@ -714,9 +720,11 @@ return [
     // cumulative, run-persistent interaction_count (never reset per tick).
     'bartender' => [
         'interaction_cooldown_ticks' => 1,
-        // Keyed by the interaction_count threshold (evaluated against the count
-        // BEFORE the current interaction) -> AP bonus injected via ResearchService::invest().
-        'ap_bonus_tiers' => [0 => 0, 5 => 1, 15 => 2, 30 => 3],
+        // Tomas' earmarked AP bonus per conversation, keyed by his relationship level
+        // (colony_path_levels, kind 'character', key 'bartender', 0–5), injected via
+        // ResearchService::investBonus(). Level 0 ("fremd") gives no advice at all — the
+        // conversation is refused. PROPOSAL pending measurement (spec 2026-11-11 §7).
+        'ap_bonus_by_relationship_level' => [0 => 0, 1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 3],
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).

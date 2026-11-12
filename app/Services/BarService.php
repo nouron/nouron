@@ -7,6 +7,9 @@ use App\Models\BarConcern;
 use App\Models\BarEncounter;
 use App\Models\BarInformationEncounter;
 use App\Models\BarOffer;
+use App\Services\Techtree\KnowledgeBonusJournal;
+use App\Services\Techtree\KnowledgeBonusPresenter;
+use App\Services\Techtree\KnowledgeBonusResult;
 use App\Services\Techtree\ResearchService;
 use App\Support\RunSeed;
 use App\Support\SeededRandom;
@@ -44,6 +47,8 @@ class BarService
         private readonly TradeAdvantageService $tradeAdvantageService,
         private readonly ProjectBonusService $projectBonusService,
         private readonly PathDepthService $pathDepthService,
+        private readonly KnowledgeBonusPresenter $knowledgeBonusPresenter,
+        private readonly KnowledgeBonusJournal $knowledgeBonusJournal,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -832,6 +837,11 @@ class BarService
                 continue;
             }
 
+            // Sarka's concern is a knowledge boost: not drawn while no knowledge can take it (A14).
+            if ($slug === 'mechanic' && ! $this->anyKnowledgeSelectable($colonyId, $this->allKnowledgeIds())) {
+                continue;
+            }
+
             $lastCreatedTick = DB::table('bar_concerns')
                 ->where('colony_id', $colonyId)
                 ->where('character_slug', $slug)
@@ -898,6 +908,14 @@ class BarService
         }
 
         $slug = $concern->character_slug;
+
+        // Sarka's bonus must not silently drop into a knowledge that cannot take it:
+        // refuse before any AP is charged (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 18).
+        if ($slug === 'mechanic' && $knowledgeId !== null
+            && ($blocker = $this->researchService->bonusTargetBlocker($colonyId, $knowledgeId)) !== null) {
+            return $this->knowledgeNotSelectable($blocker);
+        }
+
         $apCost = (int) config("game.bar.concern.ap_cost.{$slug}", 0);
 
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
@@ -976,7 +994,7 @@ class BarService
         return match ($slug) {
             'smuggler' => $this->resolveSmugglerConcern($colonyId, $cfg),
             'information_broker' => $this->resolveVoucherConcern($colonyId, $currentTick, 'information_broker', (int) $cfg['discount_pct'], null),
-            'mechanic' => $this->resolveMechanicConcern($colonyId, $cfg, $knowledgeId),
+            'mechanic' => $this->resolveMechanicConcern($colonyId, $cfg, $knowledgeId, $currentTick),
             'doctor' => $this->resolveDoctorConcern($colonyId, $cfg),
             'prospector' => $this->resolveProspectorConcern($colonyId, $success, $cfg, $seed, $currentTick),
             'mercenary' => $this->resolveMercenaryConcern($colonyId, $cfg, $seed, $currentTick),
@@ -1011,7 +1029,7 @@ class BarService
         return ['reward' => 'building_discount_voucher', 'discount_pct' => $discountPct];
     }
 
-    private function resolveMechanicConcern(int $colonyId, array $cfg, ?int $knowledgeId): array
+    private function resolveMechanicConcern(int $colonyId, array $cfg, ?int $knowledgeId, int $currentTick): array
     {
         $apBonus = (int) ($cfg['ap_bonus'] ?? 0);
 
@@ -1021,9 +1039,14 @@ class BarService
 
         // Earmarked, same mechanism as Tomas' bartender bonus (A40) — bypasses
         // the shared pool's availability gate for the bonus itself.
-        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+        $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
 
-        return ['reward' => 'ap_bonus', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+        return [
+            'reward' => 'ap_bonus',
+            'ap_bonus' => $apBonus,
+            'knowledge_id' => $knowledgeId,
+            'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'mechanic', $result),
+        ];
     }
 
     private function resolveDoctorConcern(int $colonyId, array $cfg): array
@@ -1199,11 +1222,19 @@ class BarService
             ? ['drill_buffer' => 'deva_buff_used', 'knowledge_boost' => 'deva_knowledge_used']
             : ['nav_discount' => 'lenn_nav_used', 'knowledge_boost' => 'lenn_knowledge_used'];
 
+        // A knowledge boost whose target(s) cannot take bonus AP right now is not drawn;
+        // it stays unused for later (spec 2026-11-11-tomas-rat-rueckmeldung A12/A13).
+        $boostTargets = $slug === 'veteran' ? $this->devaKnowledgeIds() : [$this->lennKnowledgeId()];
+
         $available = [];
         foreach ($mechanicalKeys as $outcomeKey => $usedField) {
-            if (! ($state->{$usedField} ?? false)) {
-                $available[] = $outcomeKey;
+            if ($state->{$usedField} ?? false) {
+                continue;
             }
+            if ($outcomeKey === 'knowledge_boost' && ! $this->anyKnowledgeSelectable($colonyId, $boostTargets)) {
+                continue;
+            }
+            $available[] = $outcomeKey;
         }
 
         $available[] = 'narrative_1';
@@ -1251,8 +1282,19 @@ class BarService
             return $this->fail('bar_information_expired');
         }
 
-        return DB::transaction(function () use ($encounter, $colonyId, $userId, $knowledgeId): array {
-            $outcome = $this->resolveInformationOutcome($colonyId, $encounter->character_slug, $encounter->outcome_key, $knowledgeId);
+        // A knowledge boost into a knowledge that cannot take it is refused and stays
+        // unused (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 19).
+        if ($encounter->outcome_key === 'knowledge_boost') {
+            $target = $encounter->character_slug === 'ai_researcher'
+                ? $this->lennKnowledgeId()
+                : (in_array($knowledgeId, $this->devaKnowledgeIds(), true) ? $knowledgeId : null);
+            if ($target !== null && ($blocker = $this->researchService->bonusTargetBlocker($colonyId, $target)) !== null) {
+                return $this->knowledgeNotSelectable($blocker);
+            }
+        }
+
+        return DB::transaction(function () use ($encounter, $colonyId, $userId, $knowledgeId, $currentTick): array {
+            $outcome = $this->resolveInformationOutcome($colonyId, $encounter->character_slug, $encounter->outcome_key, $knowledgeId, $currentTick);
 
             $encounter->is_resolved = true;
             $encounter->outcome = $outcome;
@@ -1283,13 +1325,13 @@ class BarService
      * Executes the already-drawn outcome's effect. Runs inside the caller's
      * DB transaction.
      */
-    private function resolveInformationOutcome(int $colonyId, string $slug, string $outcomeKey, ?int $knowledgeId): array
+    private function resolveInformationOutcome(int $colonyId, string $slug, string $outcomeKey, ?int $knowledgeId, int $currentTick): array
     {
         return match ([$slug, $outcomeKey]) {
             ['veteran', 'drill_buffer'] => $this->resolveDrillBufferOutcome($colonyId),
-            ['veteran', 'knowledge_boost'] => $this->resolveVeteranKnowledgeBoostOutcome($colonyId, $knowledgeId),
+            ['veteran', 'knowledge_boost'] => $this->resolveVeteranKnowledgeBoostOutcome($colonyId, $knowledgeId, $currentTick),
             ['ai_researcher', 'nav_discount'] => $this->resolveNavDiscountOutcome($colonyId),
-            ['ai_researcher', 'knowledge_boost'] => $this->resolveAiResearcherKnowledgeBoostOutcome($colonyId),
+            ['ai_researcher', 'knowledge_boost'] => $this->resolveAiResearcherKnowledgeBoostOutcome($colonyId, $currentTick),
             default => ['reward' => 'narrative'], // narrative_1/narrative_2 — flavor only
         };
     }
@@ -1309,24 +1351,27 @@ class BarService
         return ['reward' => 'drill_buffer'];
     }
 
-    private function resolveVeteranKnowledgeBoostOutcome(int $colonyId, ?int $knowledgeId): array
+    private function resolveVeteranKnowledgeBoostOutcome(int $colonyId, ?int $knowledgeId, int $currentTick): array
     {
         $apBonus = (int) config('game.bar.information_pool.veteran.knowledge_boost_ap', 0);
-        $choices = config('game.bar.information_pool.veteran.knowledge_choices', []);
-        $allowedIds = array_map(fn ($key) => (int) config("knowledge.{$key}.id"), $choices);
 
-        if ($knowledgeId === null || ! in_array($knowledgeId, $allowedIds, true)) {
+        if ($knowledgeId === null || ! in_array($knowledgeId, $this->devaKnowledgeIds(), true)) {
             return ['reward' => 'knowledge_boost', 'ap_bonus' => 0, 'error' => 'knowledge_id_required'];
         }
 
-        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+        $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
 
         $this->ensureInformationPoolStateRow($colonyId);
         DB::table('colony_information_pool_state')
             ->where('colony_id', $colonyId)
             ->update(['deva_knowledge_used' => true]);
 
-        return ['reward' => 'knowledge_boost', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+        return [
+            'reward' => 'knowledge_boost',
+            'ap_bonus' => $apBonus,
+            'knowledge_id' => $knowledgeId,
+            'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'veteran', $result),
+        ];
     }
 
     private function resolveNavDiscountOutcome(int $colonyId): array
@@ -1339,20 +1384,62 @@ class BarService
         return ['reward' => 'nav_discount'];
     }
 
-    private function resolveAiResearcherKnowledgeBoostOutcome(int $colonyId): array
+    private function resolveAiResearcherKnowledgeBoostOutcome(int $colonyId, int $currentTick): array
     {
         $apBonus = (int) config('game.bar.information_pool.ai_researcher.knowledge_boost_ap', 0);
-        $target = config('game.bar.information_pool.ai_researcher.knowledge_target', 'cartography');
-        $knowledgeId = (int) config("knowledge.{$target}.id");
+        $knowledgeId = $this->lennKnowledgeId();
 
-        $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
+        $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apBonus);
 
         $this->ensureInformationPoolStateRow($colonyId);
         DB::table('colony_information_pool_state')
             ->where('colony_id', $colonyId)
             ->update(['lenn_knowledge_used' => true]);
 
-        return ['reward' => 'knowledge_boost', 'ap_bonus' => $apBonus, 'knowledge_id' => $knowledgeId];
+        return [
+            'reward' => 'knowledge_boost',
+            'ap_bonus' => $apBonus,
+            'knowledge_id' => $knowledgeId,
+            'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'ai_researcher', $result),
+        ];
+    }
+
+    /** @return list<int> Deva's two allowed knowledge ids (game.bar.information_pool.veteran.knowledge_choices). */
+    private function devaKnowledgeIds(): array
+    {
+        return array_values(array_map(
+            fn ($key) => (int) config("knowledge.{$key}.id"),
+            config('game.bar.information_pool.veteran.knowledge_choices', []),
+        ));
+    }
+
+    /** Lenn's fixed knowledge target (game.bar.information_pool.ai_researcher.knowledge_target). */
+    private function lennKnowledgeId(): int
+    {
+        $target = config('game.bar.information_pool.ai_researcher.knowledge_target', 'cartography');
+
+        return (int) config("knowledge.{$target}.id");
+    }
+
+    /** @return list<int> */
+    private function allKnowledgeIds(): array
+    {
+        return array_values(array_map(
+            fn ($def) => (int) $def['id'],
+            array_filter(config('knowledge', []), fn ($def) => is_array($def) && isset($def['id'])),
+        ));
+    }
+
+    /** @param  list<int>  $knowledgeIds */
+    private function anyKnowledgeSelectable(int $colonyId, array $knowledgeIds): bool
+    {
+        foreach ($knowledgeIds as $id) {
+            if ($this->researchService->bonusTargetBlocker($colonyId, $id) === null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int
@@ -1422,15 +1509,21 @@ class BarService
     /**
      * "Mit Tomas reden" (Cantina-Barkeeper, A40, GDD §12). Costs no AP and never
      * locks or checks the shared colony pool — Tomas injects AP directly into the
-     * chosen knowledge via ResearchService::investBonus(). Gated by a once-per-tick cooldown;
-     * the bonus tier is resolved from the colony's cumulative, run-persistent
-     * interaction_count as it stood BEFORE this interaction, then the counter
-     * is incremented regardless of whether a bonus tier was reached.
+     * chosen knowledge via ResearchService::investBonus() ("stille Forschung").
+     * The bonus follows Tomas' relationship level (game.bartender.
+     * ap_bonus_by_relationship_level); at level 0 he gives no advice and the
+     * conversation is refused without using the Sol. Gated by a once-per-tick
+     * cooldown; interaction_count is kept as a statistic only.
      *
-     * @return array{success: bool, ap_added?: int, interaction_count?: int, error?: string}
+     * @return array{success: bool, ap_added?: int, interaction_count?: int, knowledge_result?: array<string, mixed>, error?: string, message?: string, block_reason?: string}
      */
     public function talkToBartender(int $colonyId, int $knowledgeId, int $currentTick): array
     {
+        $apAdded = $this->bartenderApBonus($colonyId);
+        if ($apAdded <= 0) {
+            return ['success' => false, 'error' => 'relationship_too_low', 'message' => __('colony.bartender_relationship_too_low')];
+        }
+
         $state = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->first();
 
         $cooldownTicks = (int) config('game.bartender.interaction_cooldown_ticks');
@@ -1440,8 +1533,11 @@ class BarService
             return ['success' => false, 'error' => 'cooldown_active'];
         }
 
+        if (($blocker = $this->researchService->bonusTargetBlocker($colonyId, $knowledgeId)) !== null) {
+            return $this->knowledgeNotSelectable($blocker) + ['success' => false];
+        }
+
         $countBefore = $state->interaction_count ?? 0;
-        $apAdded = $this->bartenderApBonus($countBefore);
 
         return DB::transaction(function () use ($colonyId, $knowledgeId, $currentTick, $countBefore, $apAdded): array {
             DB::table('colony_bartender_state')->updateOrInsert(
@@ -1449,34 +1545,64 @@ class BarService
                 ['interaction_count' => $countBefore + 1, 'last_interaction_tick' => $currentTick],
             );
 
-            if ($apAdded > 0) {
-                // Tomas' bonus AP is earmarked, not drawn from the shared colony pool —
-                // investBonus() skips that pool's availability gate so the bonus can
-                // never silently evaporate because the pool happens to be near-empty.
-                $this->researchService->investBonus($colonyId, $knowledgeId, $apAdded);
-            }
+            $result = $this->researchService->investBonus($colonyId, $knowledgeId, $apAdded);
 
             return [
                 'success' => true,
                 'ap_added' => $apAdded,
                 'interaction_count' => $countBefore + 1,
+                'knowledge_result' => $this->recordKnowledgeBonus($colonyId, $currentTick, 'bartender', $result),
             ];
         });
     }
 
-    /** AP bonus for the given interaction_count, per config/game.php → bartender.ap_bonus_tiers. */
-    private function bartenderApBonus(int $interactionCount): int
+    /** Tomas' AP bonus at the colony's current relationship level with him (0 = no advice). */
+    public function bartenderApBonus(int $colonyId): int
     {
-        $tiers = config('game.bartender.ap_bonus_tiers', []);
-        $bonus = 0;
+        $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
 
-        foreach ($tiers as $threshold => $tierBonus) {
-            if ($interactionCount >= $threshold) {
-                $bonus = $tierBonus;
-            }
-        }
+        return (int) config("game.bartender.ap_bonus_by_relationship_level.{$level}", 0);
+    }
 
-        return $bonus;
+    /**
+     * Result of today's conversation with Tomas (the knowledge_result payload), or null
+     * when he has not been talked to this Sol. Read back from the journal entry the
+     * conversation wrote, so it needs no state of its own.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function bartenderToday(int $colonyId, int $currentTick): ?array
+    {
+        $params = $this->knowledgeBonusJournal->latest($colonyId, $currentTick, 'bartender');
+
+        return $params !== null ? $this->knowledgeBonusPresenter->present($colonyId, $params) : null;
+    }
+
+    /**
+     * Journal entry + frontend payload for an accepted knowledge bonus (spec sentences 17 and 23).
+     *
+     * @return array<string, mixed>
+     */
+    private function recordKnowledgeBonus(int $colonyId, int $tick, string $source, KnowledgeBonusResult $result): array
+    {
+        $this->knowledgeBonusJournal->record($colonyId, $tick, $source, $result);
+
+        return $this->knowledgeBonusPresenter->present($colonyId, $result->toArray());
+    }
+
+    /**
+     * Refusal for a knowledge that cannot take bonus AP right now (spec sentence 15).
+     *
+     * @return array{ok: false, error: string, message: string, block_reason: string}
+     */
+    private function knowledgeNotSelectable(string $blocker): array
+    {
+        return [
+            'ok' => false,
+            'error' => 'knowledge_not_selectable',
+            'message' => __('colony.knowledge_not_selectable', ['reason' => __("knowledge.bonus_wait_{$blocker}")]),
+            'block_reason' => $blocker,
+        ];
     }
 
     /**

@@ -82,7 +82,7 @@ class KnowledgeApCapTest extends TestCase
     public function test_bonus_ap_bypasses_and_does_not_consume_cap(): void
     {
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 3);
-        $this->assertTrue($this->service->investBonus($this->colonyId, $this->knowledgeId, 2));
+        $this->assertTrue($this->service->investBonus($this->colonyId, $this->knowledgeId, 2)->accepted);
         $this->assertSame(5, $this->apSpend($this->knowledgeId));
 
         $cap = app(DailyApCapService::class);

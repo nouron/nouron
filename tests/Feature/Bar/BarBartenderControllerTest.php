@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class BarBartenderControllerTest extends TestCase
@@ -45,6 +46,14 @@ class BarBartenderControllerTest extends TestCase
         $this->app->instance(TickService::class, new TickService($tick));
     }
 
+    private function befriendTomas(int $level = 1): void
+    {
+        DB::table('colony_path_levels')->updateOrInsert(
+            ['colony_id' => 1, 'kind' => 'character', 'entity_key' => 'bartender'],
+            ['level' => $level, 'ap_spend' => 0],
+        );
+    }
+
     public function test_talk_requires_auth(): void
     {
         $response = $this->postJson(route('colony.bar.talk-to-bartender'), ['knowledge_id' => self::KNOWLEDGE_ID]);
@@ -54,18 +63,35 @@ class BarBartenderControllerTest extends TestCase
     public function test_talk_returns_ok_with_success_payload(): void
     {
         $this->mockTick(10);
+        $this->befriendTomas();
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.bar.talk-to-bartender'), ['knowledge_id' => self::KNOWLEDGE_ID]);
 
         $response->assertOk()
             ->assertJson(['ok' => true])
-            ->assertJsonStructure(['ok', 'ap_added', 'interaction_count']);
+            ->assertJsonStructure(['ok', 'ap_added', 'interaction_count', 'knowledge_result' => [
+                'knowledge_id', 'knowledge_name', 'ap_invested', 'level', 'leveled_up', 'ap_forfeited',
+                'block_reason', 'block_label', 'has_lab', 'ap_spend', 'ap_for_levelup', 'rough_progress', 'effects',
+            ]]);
+    }
+
+    public function test_talk_while_tomas_is_a_stranger_answers_relationship_too_low(): void
+    {
+        $this->mockTick(10);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.talk-to-bartender'), ['knowledge_id' => self::KNOWLEDGE_ID]);
+
+        $response->assertStatus(422)
+            ->assertJson(['ok' => false, 'error' => 'relationship_too_low'])
+            ->assertJsonPath('message', __('colony.bartender_relationship_too_low'));
     }
 
     public function test_talk_returns_cooldown_error_within_same_tick(): void
     {
         $this->mockTick(10);
+        $this->befriendTomas();
 
         $this->actingAs($this->bart())
             ->postJson(route('colony.bar.talk-to-bartender'), ['knowledge_id' => self::KNOWLEDGE_ID]);

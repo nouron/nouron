@@ -35,8 +35,8 @@ return [
     'ui_not_met' => 'Noch nicht getroffen',
     'ui_relationship_run_hint' => 'Vertrautheit wächst nur in diesem Lauf. Was du über eine Figur erfährst, bleibt im Kodex stehen.',
     'ui_relationship_met_only' => 'Gelistet sind nur Figuren, mit denen du in diesem Lauf schon gesprochen hast.',
-    // TODO content-writer: Entwurf (ui-specialist), Hinweis im Figuren-Popup für noch nicht getroffene Figuren — bitte texten.
-    'ui_relationship_not_met_hint' => 'Nach dem ersten Gespräch kannst du hier die Beziehung pflegen.',
+    // Hinweis im Figuren-Popup für noch nicht getroffene Figuren.
+    'ui_relationship_not_met_hint' => 'Ihr habt noch kein Wort gewechselt. Nach dem ersten Gespräch kannst du hier die Beziehung pflegen.',
     // Relationship level names 0–5 (owner 2026-11-11).
     'relationship_level_0' => 'fremd',
     'relationship_level_1' => 'neu kennengelernt',

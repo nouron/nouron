@@ -20,6 +20,11 @@ return [
             'tile_deep_scanned' => 'Deep scan performed',
             'tile_salvaged' => 'Find salvaged',
         ],
+        'knowledge' => [
+            'bonus_progress' => 'Silent research',
+            'bonus_breakthrough' => 'Silent research: breakthrough',
+            'bonus_lapsed' => 'Silent research: lapsed',
+        ],
         'merchant' => [
             'visit' => 'Travelling Merchant announced',
         ],
@@ -137,6 +142,11 @@ return [
         'pathdepth_family' => 'invested in training :name.',
         'pathdepth_family_levelup' => 'invested in training :name. Level :level reached.',
         'pathdepth_character' => 'invested in the relationship with :name.',
+        // Silent research (rendered after an AP chip: "5 AP from Tomas …").
+        'knowledge_bonus' => 'from :name quietly went into :knowledge.',
+        'knowledge_bonus_breakthrough' => 'from :name quietly went into :knowledge. Breakthrough: level :level reached.',
+        'knowledge_bonus_forfeited' => 'The remaining :ap AP lapse — the knowledge is waiting on :reason.',
+        'knowledge_bonus_lapsed' => ':ap AP from :name for :knowledge lapsed — the knowledge is waiting on :reason.',
         'pathdepth_character_levelup' => 'invested in the relationship with :name. Level :level reached.',
         'building_leveled_up' => ':ap AP invested in :name. Construction complete — Level :level reached.',
         'level_up' => 'Research :name completed.',
@@ -176,6 +186,7 @@ return [
         'galaxy' => 'bi-stars',
         'run' => 'bi-flag',
         'encounter' => 'bi-exclamation-triangle',
+        'knowledge' => 'bi-lightbulb',
         'nexus' => 'bi-broadcast-pin',
         'merchant' => 'bi-bag',
         'default' => 'bi-journal-text',

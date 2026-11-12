@@ -9,6 +9,7 @@ use App\Services\AdvisorService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
 use App\Services\PathBuildingGateService;
+use App\Services\Techtree\BuildingPrerequisites;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
 use App\Services\Techtree\KnowledgeEffectDescriptionService;
@@ -189,7 +190,10 @@ class TechtreeController extends BaseController
                         ),
                         default => [],
                     },
-                    'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
+                    // Knowledges have no max_level column: their top level is the end of the cost curve.
+                    'max_level' => $type === 'research'
+                        ? (ResearchService::maxKnowledgeLevel((int) $id) ?: null)
+                        : (isset($tech['max_level']) ? (int) $tech['max_level'] : null),
                     'key' => $type === 'building' ? $tech['name'] : null,
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
                     'hire_cost' => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
@@ -218,8 +222,19 @@ class TechtreeController extends BaseController
                     'ap_cap' => $type === 'research' ? $this->researchService->apCapState($colonyId, (int) $id) : null,
                 ];
 
+                if ($type === 'research') {
+                    // Rough progress word (silent research): only filled in the preview, where
+                    // all progress comes from earmarked bonus AP; the full view shows numbers.
+                    $item['rough_progress'] = null;
+                    $item['rough_progress_label'] = null;
+                    $item['bonus_progress'] = false;
+                }
+
                 if ($preview && $type === 'research') {
-                    // Preview shows title and position only; a reached level stays (grandfathered).
+                    // Preview shows title and position only; a reached level stays with its own
+                    // effect, and bonus progress shows as a rough word without AP numbers
+                    // (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 26).
+                    $rough = $this->researchService->roughProgressBand($item['ap_spend'], $item['ap_for_levelup']);
                     $item = [
                         ...$item,
                         'status' => $item['level'] > 0 ? 'built' : 'locked',
@@ -227,7 +242,10 @@ class TechtreeController extends BaseController
                         'required_desc' => '',
                         'required_list' => [],
                         'unlocks_next_level' => [],
-                        'effects_current_level' => [],
+                        'effects_current_level' => $item['level'] > 0 ? $item['effects_current_level'] : [],
+                        'rough_progress' => $rough,
+                        'rough_progress_label' => $rough !== null ? __("knowledge.rough_progress_{$rough}") : null,
+                        'bonus_progress' => $item['ap_spend'] > 0,
                         'max_level' => null,
                         'ap_spend' => 0,
                         'ap_for_levelup' => 0,
@@ -296,25 +314,9 @@ class TechtreeController extends BaseController
             return 'built';
         }
 
-        if (! empty($tech['required_building_id'])) {
-            $reqId = (int) $tech['required_building_id'];
-            $reqLevel = (int) ($tech['required_building_level'] ?? 1);
-            $reqBuilding = $techtree['building'][$reqId] ?? null;
-            if (! $reqBuilding || (int) ($reqBuilding['level'] ?? 0) < $reqLevel) {
-                return 'locked';
-            }
-        }
+        $levelOf = fn (int $buildingId): int => (int) ($techtree['building'][$buildingId]['level'] ?? 0);
 
-        if (! empty($tech['required_building2_id'])) {
-            $req2Id = (int) $tech['required_building2_id'];
-            $req2Level = (int) ($tech['required_building2_level'] ?? 1);
-            $req2Building = $techtree['building'][$req2Id] ?? null;
-            if (! $req2Building || (int) ($req2Building['level'] ?? 0) < $req2Level) {
-                return 'locked';
-            }
-        }
-
-        return 'available';
+        return BuildingPrerequisites::met($tech, $levelOf) ? 'available' : 'locked';
     }
 
     /**

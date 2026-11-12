@@ -329,6 +329,109 @@ class BarInformationPoolTest extends TestCase
         $this->assertTrue((bool) $this->poolState()->lenn_knowledge_used);
     }
 
+    // ── Stille Forschung (spec 2026-11-11-tomas-rat-rueckmeldung, sentences 19–21, 23) ──
+
+    private function removeBuilding(int $buildingId): void
+    {
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', $buildingId)
+            ->delete();
+    }
+
+    /** @return list<string> outcome keys drawn over many Sols for the forced character */
+    private function drawnOutcomes(float $split): array
+    {
+        $this->setBarLevel(1);
+        config([
+            'game.bar.information_pool.spawn_chance_per_tick' => 1.0,
+            'game.bar.information_pool.character_split' => $split,
+        ]);
+
+        $drawn = [];
+        for ($tick = 10; $tick < 60; $tick++) {
+            DB::table('bar_information_encounters')->where('colony_id', self::COLONY_ID)->delete();
+            $this->barService->generateInformationEncounterForColony(self::COLONY_ID, $tick);
+            $drawn[] = (string) DB::table('bar_information_encounters')->where('colony_id', self::COLONY_ID)->value('outcome_key');
+        }
+
+        return $drawn;
+    }
+
+    public function test_lenn_knowledge_boost_is_drawn_while_cartography_is_selectable(): void
+    {
+        $this->assertContains('knowledge_boost', $this->drawnOutcomes(0.0));
+    }
+
+    public function test_lenn_knowledge_boost_is_not_drawn_while_cartography_is_blocked(): void
+    {
+        $this->removeBuilding(44); // hangar — cartography's second prerequisite
+
+        $this->assertNotContains('knowledge_boost', $this->drawnOutcomes(0.0));
+        $this->assertFalse((bool) ($this->poolState()->lenn_knowledge_used ?? false));
+    }
+
+    public function test_deva_knowledge_boost_is_not_drawn_while_neither_choice_is_selectable(): void
+    {
+        $this->removeBuilding(27); // harvester — geology
+        $this->removeBuilding(46); // health
+
+        $this->assertNotContains('knowledge_boost', $this->drawnOutcomes(1.0));
+    }
+
+    public function test_deva_knowledge_boost_is_drawn_while_one_choice_is_selectable(): void
+    {
+        $this->removeBuilding(27); // geology blocked, health still selectable
+
+        $this->assertContains('knowledge_boost', $this->drawnOutcomes(1.0));
+    }
+
+    public function test_deva_knowledge_boost_with_unselectable_choice_is_refused_and_not_used_up(): void
+    {
+        $this->removeBuilding(27);
+        $id = $this->insertEncounter(['character_slug' => 'veteran', 'outcome_key' => 'knowledge_boost']);
+
+        $result = $this->barService->resolveInformationEncounter(
+            self::COLONY_ID, $id, self::USER_ID, 10, self::KNOWLEDGE_GEOLOGY_ID
+        );
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('knowledge_not_selectable', $result['error']);
+        $this->assertSame('requires_building', $result['block_reason']);
+        $this->assertFalse((bool) DB::table('bar_information_encounters')->where('id', $id)->value('is_resolved'));
+        $this->assertFalse((bool) ($this->poolState()->deva_knowledge_used ?? false));
+        $this->assertSame(0, $this->knowledgeApSpend(self::KNOWLEDGE_GEOLOGY_ID));
+    }
+
+    public function test_lenn_knowledge_boost_with_blocked_cartography_is_refused(): void
+    {
+        $this->removeBuilding(44);
+        $id = $this->insertEncounter(['character_slug' => 'ai_researcher', 'outcome_key' => 'knowledge_boost']);
+
+        $result = $this->barService->resolveInformationEncounter(self::COLONY_ID, $id, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('knowledge_not_selectable', $result['error']);
+        $this->assertFalse((bool) ($this->poolState()->lenn_knowledge_used ?? false));
+    }
+
+    public function test_knowledge_boost_reports_result_and_writes_journal_entry(): void
+    {
+        $id = $this->insertEncounter(['character_slug' => 'ai_researcher', 'outcome_key' => 'knowledge_boost']);
+
+        $result = $this->barService->resolveInformationEncounter(self::COLONY_ID, $id, self::USER_ID, 10);
+
+        $this->assertSame(self::KNOWLEDGE_CARTOGRAPHY_ID, $result['knowledge_result']['knowledge_id']);
+        $this->assertSame(
+            (int) config('game.bar.information_pool.ai_researcher.knowledge_boost_ap'),
+            $result['knowledge_result']['ap_invested'],
+        );
+        $entry = DB::table('colony_log')->where('user', self::USER_ID)->where('tick', 10)
+            ->whereIn('event', ['knowledge.bonus_progress', 'knowledge.bonus_breakthrough'])->first();
+        $this->assertNotNull($entry);
+        $this->assertSame('ai_researcher', json_decode($entry->parameters, true)['source']);
+    }
+
     // ── RESOLVE — Charakter-Kodex hookup ─────────────────────────────────────
 
     public function test_resolve_records_codex_progress_for_the_character(): void

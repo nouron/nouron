@@ -29,4 +29,19 @@ return [
     'defense' => 'Verteidigung & Überlebenstaktik',
     'defense_desc' => 'Wie sich die Kolonie vor Gefahren von außen schützt, von der Absicherung der Anlagen bis zum Verhalten der Kolonisten im Ernstfall.',
 
+    // Stille Forschung (spec 2026-11-11-tomas-rat-rueckmeldung).
+    // Grobe Fortschrittsworte ohne Labor (game.knowledge_rough_progress_bands).
+    'rough_progress_1' => 'erste Ansätze',
+    'rough_progress_2' => 'nimmt Gestalt an',
+    'rough_progress_3' => 'kurz vor dem Durchbruch',
+    // Sperrgrund, angezeigt als „wartet auf …" (Suffix = Code aus
+    // ResearchService::bonusTargetBlocker()).
+    'bonus_wait_max_level' => 'nichts mehr (Höchststufe)',
+    'bonus_wait_knowledge_cc_gate' => 'den Ausbau der Kommandozentrale',
+    'bonus_wait_requires_building' => 'ein fehlendes Gebäude',
+    'bonus_wait_insufficient_resources' => 'Rohstoffe',
+    'bonus_wait_insufficient_supply' => 'freie Versorgung',
+    'bonus_wait_entity_not_found' => 'Klärung',
+    'bonus_wait_order_failed' => 'einen neuen Versuch',
+
 ];
