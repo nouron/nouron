@@ -2,6 +2,7 @@
 
 ## 2026-11-12
 
+- Sol-Abschluss-Übersicht liegt jetzt über der unteren Navigationsleiste (Overlay wird direkt an `body` gehängt).
 - Stille Forschung: Bonus-AP von Tomas, Sarka, Deva, Lenn und Daten-Sweep lassen Kenntnisse auch ohne Labor aufsteigen, verfallene Rest-AP werden gemeldet; Tomas' Rat hängt an der Beziehungsstufe, Popup zeigt Ergebnis und „wieder nächstes Sol“ (Spec `2026-11-11-tomas-rat-rueckmeldung`).
 - Kenntnisse: Höchststufe aus der Kostenkurve gilt auch im Labor; Labor-Aufstieg prüft die zweite Gebäude-Voraussetzung.
 
