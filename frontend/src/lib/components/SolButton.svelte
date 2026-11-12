@@ -141,6 +141,13 @@
 	}
 
 	const counterValue = (g: Group, li: number) => counters[`${g.key}:${li}`] ?? g.lines[li].from ?? '';
+
+	// The button lives inside the header's stacking context (z-index 100), so its overlays
+	// would sit below the bottom navigation (200). Moving them to <body> lets z-index 9999 apply.
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return { destroy: () => node.remove() };
+	}
 </script>
 
 <button type="button" class="btn-sol" onclick={handleClick} disabled={loading}>
@@ -149,7 +156,7 @@
 </button>
 
 {#if confirmAp !== null}
-	<div class="sol-overlay">
+	<div class="sol-overlay" use:portal>
 		<div class="sol-dialog">
 			<h3 class="sol-dialog__title">{t('colony.sol_confirm_title')}</h3>
 			<p class="sol-dialog__body">{t('colony.sol_confirm_body', { ap: confirmAp })}</p>
@@ -167,7 +174,7 @@
 {/if}
 
 {#if loading}
-	<div class="sol-overlay sol-overlay--loading">
+	<div class="sol-overlay sol-overlay--loading" use:portal>
 		<div class="sol-loading">
 			<div class="sol-spinner"></div>
 			<p class="sol-loading__text">{t('colony.sol_loading')}</p>
@@ -179,7 +186,7 @@
 {#if report}
 	{@const r = report}
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div class="sol-overlay sol-overlay--report" onclick={() => screen === 1 && !finished && finishNow()}>
+	<div class="sol-overlay sol-overlay--report" use:portal onclick={() => screen === 1 && !finished && finishNow()}>
 		{#if r.finale}
 			<div class="sol-report sol-report--finale sol-report--finale-{r.finale.outcome}" onclick={(e) => e.stopPropagation()}>
 				<div class="sol-finale__glyph">

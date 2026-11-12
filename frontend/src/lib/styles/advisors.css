@@ -1186,6 +1186,89 @@ dialog.advisor-dialog h3 {
     }
 }
 
+/* ── Desktop/tablet: portrait fills the card, info fades in below it ───────────────────────────────────────────────
+ * Same idea as the phone layout: the 3:4 portrait covers the whole card (anchored at the top, sides cropped instead of
+ * head/shoulders), the building prerequisite shrinks to a light tag in the top-right corner, and the info + effects
+ * blocks sit as a soft-edged glass panel over the lower part of the image. The info block only takes its content height,
+ * so the empty stretch between stats and footer disappears. Phone (< 768 px) rules above stay untouched. */
+@media (min-width: 768px) {
+    .advisor-card {
+        position: relative;
+        justify-content: flex-end;
+        background: #f5f5f8;
+    }
+
+    .advisor-portrait {
+        position: absolute;
+        inset: 0;
+        flex: none;
+        z-index: 0;
+    }
+
+    .advisor-card__prereq {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 3;
+        flex: none;
+        width: auto;
+        max-width: 11rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid rgba(26, 26, 46, 0.06);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .advisor-card__prereq .prereq-section-label {
+        display: none;
+    }
+
+    .advisor-card__prereq .prereq-cc-img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .advisor-card__prereq .prereq-main-img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .advisor-card__prereq .prereq-cc-label,
+    .advisor-card__prereq .prereq-main-name {
+        font-size: 0.6rem;
+    }
+
+    .advisor-card__prereq .prereq-plus {
+        margin-bottom: 0.6rem;
+    }
+
+    .advisor-info,
+    .advisor-card__effects {
+        position: relative;
+        z-index: 2;
+        flex: 0 0 auto;
+        border-top: none;
+        background: rgba(255, 255, 255, 0.94);
+    }
+
+    /* Soft upper edge so the portrait fades into the info panel instead of ending on a hard line. */
+    .advisor-info {
+        padding-top: 2.4rem;
+        overflow: visible;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.94) 2.2rem);
+    }
+
+    .advisor-info .advisor-stats {
+        flex: 0 0 auto;
+    }
+
+    .advisor-info .stat-label,
+    .advisor-info .advisor-subtitle,
+    .advisor-card__effects .effects-section-label {
+        color: #777;
+    }
+}
+
 @media (prefers-reduced-transparency: reduce) {
     .advisors-header .slot-badge,
     .advisor-card__prereq,
