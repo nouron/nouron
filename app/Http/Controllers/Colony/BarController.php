@@ -7,6 +7,7 @@ use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\BarOfferDialogPresenter;
 use App\Services\BarService;
+use App\Services\CantinaPresenceService;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
@@ -17,7 +18,6 @@ use App\Services\Techtree\KnowledgeBonusPresenter;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
 use App\Services\TradeAdvantageService;
-use App\Support\RunSeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +42,7 @@ class BarController extends BaseController
         private readonly TradeAdvantagePresenter $advantagePresenter,
         private readonly PathDepthService $pathDepthService,
         private readonly KnowledgeBonusPresenter $knowledgeBonusPresenter,
+        private readonly CantinaPresenceService $cantinaPresence,
     ) {
         parent::__construct($tick);
     }
@@ -145,29 +146,9 @@ class BarController extends BaseController
             ? $this->merchantService->getForecast($colony->id, $tick)
             : null;
 
-        $hotspotsFile = base_path('data/cantina_hotspots.json');
-        $hotspots = file_exists($hotspotsFile)
-            ? (json_decode(file_get_contents($hotspotsFile), true) ?: [])
-            : [];
-
-        $run = Run::where('colony_id', $colony->id)->active()->first();
-        // The run's rng_seed, not the run/colony id (R5b): ids depend on start order in
-        // a shared database — see App\Support\RunSeed.
-        $seed = RunSeed::forColony($colony->id);
+        $hotspots = $this->cantinaPresence->hotspots();
         $characters = config('characters');
-
-        $characterAssignment = [];
-        foreach ($hotspots as $spotKey => $spot) {
-            if (empty($spot['characters'])) {
-                continue;
-            }
-            $idx = abs(crc32($seed.$spotKey)) % count($spot['characters']);
-            $slug = $spot['characters'][$idx];
-            $char = $characters[$slug] ?? null;
-            if ($char) {
-                $characterAssignment[$spotKey] = ['slug' => $slug] + $char;
-            }
-        }
+        $characterAssignment = $this->cantinaPresence->characterAssignment($colony->id);
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
         $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
@@ -187,7 +168,9 @@ class BarController extends BaseController
             fn ($opt) => in_array($opt['key'], $devaKnowledgeChoiceKeys, true),
         ));
 
-        $relationships = $barLevel > 0 ? $this->relationships($colony->id, $characters) : [];
+        $relationships = $barLevel > 0
+            ? $this->relationships($colony->id, $characters, $this->cantinaPresence->presentCharacters($colony->id, $tick))
+            : [];
         $bartender = $this->bartenderState($colony->id, $tick);
 
         return compact(
@@ -225,23 +208,28 @@ class BarController extends BaseController
     }
 
     /**
-     * Path-depth state of every character met in this run (Tomas always), for the
-     * "Beziehung pflegen" panel (T41). Unmet characters are not listed.
+     * Path-depth state of every character met in this run (Tomas always) or sitting in
+     * the cantina today, for the "Beziehung pflegen" panel (T41). A present, unmet
+     * character is listed at level 0 with its options (owner 2026-11-13); absent, unmet
+     * characters are not listed. `present` tells whether the character is here today.
      *
      * @param  array<string, array<string, mixed>>  $characters
+     * @param  list<string>  $present
      * @return list<array<string, mixed>>
      */
-    private function relationships(int $colonyId, array $characters): array
+    private function relationships(int $colonyId, array $characters, array $present): array
     {
         // No relationship-level gate by cantina level (owner 2026-11-13): the conversation
         // options carry their own cantina requirement (PathDepthService::conversation()).
         $rows = [];
         foreach ($characters as $slug => $char) {
             $state = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, $slug);
-            if (! $state['met']) {
+            $isPresent = in_array($slug, $present, true);
+            if (! $state['met'] && ! $isPresent) {
                 continue;
             }
             $rows[] = $state + [
+                'present' => $isPresent,
                 'conversation' => $this->pathDepthService->conversation($colonyId, $slug),
                 'key' => $slug,
                 'name' => $char['name'] ?? $char['role'],

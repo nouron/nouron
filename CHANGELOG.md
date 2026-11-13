@@ -2,7 +2,7 @@
 
 ## 2026-11-13
 
-- Cantina: keine Stufensperre mehr für Beziehungen; die Cantina-Stufe schaltet die Gesprächsoptionen frei (kurz immer, normal ab 2, ausführlich ab 3), gesperrte Optionen tragen eine Figurenzeile. Debug-Leiste (Admin) liefert die genauen Kenntnis-Werte für die stille Forschung.
+- Cantina: keine Stufensperre mehr für Beziehungen; die Cantina-Stufe schaltet die Gesprächsoptionen frei (kurz immer, normal ab 2, ausführlich ab 3), gesperrte Optionen tragen eine Figurenzeile; anwesende Figuren lassen sich schon vor dem ersten Handel ansprechen. Debug-Leiste (Admin) liefert die genauen Kenntnis-Werte für die stille Forschung.
 
 ## 2026-11-12
 

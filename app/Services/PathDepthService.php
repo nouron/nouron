@@ -77,15 +77,20 @@ class PathDepthService
     /**
      * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, ap_cap:array{cap:int, spent:int, remaining:int}|null, unlock_level:int|null, locked_until:int|null, leveled_up:bool, points:int}
      *
+     * $present: the character sits in the cantina today (CantinaPresenceService), which
+     * counts as met for this conversation.
+     *
      * @throws GameRuleException unknown_entity|not_met|training_locked|max_level|building_level_cap|conversation_option_locked|training_ap_cap|conversation_ap_cap|insufficient_ap
      */
-    public function invest(int $colonyId, string $kind, string $key, int $points = 1): array
+    public function invest(int $colonyId, string $kind, string $key, int $points = 1, bool $present = false): array
     {
-        return DB::transaction(function () use ($colonyId, $kind, $key, $points): array {
+        return DB::transaction(function () use ($colonyId, $kind, $key, $points, $present): array {
             $this->assertKnown($kind, $key);
             $state = $this->state($colonyId, $kind, $key);
 
-            if (! $state['met']) {
+            // A character sitting in the cantina today can be talked to before the first
+            // trade (owner 2026-11-13); the conversation below creates the relationship row.
+            if (! $state['met'] && ! ($present && $kind === self::KIND_CHARACTER)) {
                 throw $this->error('not_met');
             }
             if ($state['locked_until'] !== null) {

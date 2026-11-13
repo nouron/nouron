@@ -47,6 +47,15 @@ class BarRelationshipViewTest extends TestCase
         return collect($this->data()['relationships'])->keyBy('key')->all();
     }
 
+    /** Nobody but Tomas sits in the cantina today: present guests are listed even unmet (owner 2026-11-13). */
+    private function emptyCantina(): void
+    {
+        foreach (['bar_offers', 'bar_encounters', 'bar_concerns', 'bar_information_encounters'] as $table) {
+            DB::table($table)->where('colony_id', self::COLONY_ID)->delete();
+        }
+        config(['game.bar.story_encounter.chance' => 0.0]);
+    }
+
     private function met(string $slug, int $level = 0, int $apSpend = 0): void
     {
         DB::table('colony_path_levels')->insert([
@@ -76,6 +85,7 @@ class BarRelationshipViewTest extends TestCase
 
     public function test_only_bartender_listed_when_nobody_met(): void
     {
+        $this->emptyCantina();
         $this->assertSame(['bartender'], array_keys($this->relationships()));
 
         $html = $this->cantinaPage();
@@ -86,6 +96,7 @@ class BarRelationshipViewTest extends TestCase
 
     public function test_met_characters_are_listed_and_unmet_are_not(): void
     {
+        $this->emptyCantina();
         $this->met('smuggler');
         $rows = $this->relationships();
 
