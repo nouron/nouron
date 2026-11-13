@@ -90,6 +90,38 @@ class KnowledgeBonusPresenter
         ];
     }
 
+    /**
+     * Exact knowledge state for the admin debug bar: lets the owner check silent research
+     * (level-ups without a lab) that players only see as a rough word. Admin-only caller.
+     *
+     * @return list<array{id: int, key: string, name: string, level: int, ap_spend: int, ap_for_levelup: int, max_level: int, blocker: string|null, blocker_label: string|null}>
+     */
+    public function debugRows(int $colonyId): array
+    {
+        $rows = [];
+        foreach (config('knowledge', []) as $key => $def) {
+            if (! is_array($def) || ! isset($def['id'])) {
+                continue;
+            }
+            $id = (int) $def['id'];
+            $entity = $this->researchService->getColonyEntity($colonyId, $id);
+            $blocker = $this->researchService->bonusTargetBlocker($colonyId, $id);
+            $rows[] = [
+                'id' => $id,
+                'key' => (string) $key,
+                'name' => __("knowledge.{$key}"),
+                'level' => (int) ($entity->level ?? 0),
+                'ap_spend' => (int) ($entity->ap_spend ?? 0),
+                'ap_for_levelup' => $this->researchService->knowledgeLevelupCost($colonyId, $id),
+                'max_level' => ResearchService::maxKnowledgeLevel($id),
+                'blocker' => $blocker,
+                'blocker_label' => $blocker !== null ? $this->blockLabel($blocker) : null,
+            ];
+        }
+
+        return $rows;
+    }
+
     public function hasSciencelab(int $colonyId): bool
     {
         return DB::table('colony_buildings')
