@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-13
+
+- Cantina: keine Stufensperre mehr für Beziehungen; die Cantina-Stufe schaltet die Gesprächsoptionen frei (kurz immer, normal ab 2, ausführlich ab 3), gesperrte Optionen tragen eine Figurenzeile; anwesende Figuren lassen sich schon vor dem ersten Handel ansprechen. Debug-Leiste (Admin) liefert die genauen Kenntnis-Werte für die stille Forschung.
+- Oberfläche dazu: gesperrte Gesprächsoptionen grau mit Schloss, die Figurenzeile einmal kursiv darunter; Figuren-Chips unter der Szene nur für bereits getroffene Figuren; Debug-Leiste mit Kenntnis-Tabelle. Beraterkarten Desktop: Infobereiche aller Karten gleich hoch und bündig.
+
 ## 2026-11-12
 
 - Sol-Abschluss-Übersicht liegt jetzt über der unteren Navigationsleiste (Overlay wird direkt an `body` gehängt).

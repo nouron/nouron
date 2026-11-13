@@ -12,6 +12,7 @@ return [
 
     'error_conversation_ap_cap' => 'This character will not take more than :cap AP today. The conversation continues tomorrow — or talk to someone else.',
     'error_invalid_option' => 'No such conversation size.',
+    'error_conversation_option_locked' => 'There is no room for a conversation this long. The cantina needs level :level for it.',
 
     // ── Hangar: training
     'ui_training_title' => 'Training',
@@ -61,4 +62,88 @@ return [
     'family_supply' => 'Supply',
     'family_trade' => 'Trade',
     'family_protection' => 'Protection',
+
+    // ── Cantina: line of a character for a locked conversation option (owner 2026-11-13).
+    'option_locked_lines' => [
+        'default' => [
+            'You can hardly hear yourself think in here. Another time, when the cantina has more room.',
+            'There is no room for a proper talk here. Expand the cantina, and I will sit down with you.',
+            'Not here, not this cramped. Maybe once the cantina is bigger.',
+        ],
+        'bartender' => [
+            'I have no room for more here — expand the cantina.',
+            'Barely any elbow room behind this counter. More space, more time for you.',
+            'Long evenings? I need a bigger cantina for that first.',
+        ],
+        'smuggler' => [
+            'Too many ears in too little room. When the cantina grows, we talk properly.',
+            '…not here. Everyone is breathing down everyone\'s neck. Give me a corner nobody can see into.',
+            'What I have to say does not stay secret long with the next table listening. Build on.',
+        ],
+        'information_broker' => [
+            'What I have to say needs a quiet corner. There is none here yet.',
+            'A complete briefing requires a table without listeners. As soon as the cantina offers one, gladly.',
+            'I do not discuss details between the door and the counter. Expand the cantina, and I will make the time.',
+        ],
+        'mechanic' => [
+            'I am stuck between the door and the counter. Get me a table, then we talk.',
+            'Long talks? Here? Might as well do it in a vent shaft — never mind. Expand first.',
+            'Too cramped. Too loud. Once the cantina is bigger, I will explain everything. Maybe.',
+        ],
+        'corporate_rep' => [
+            'A conversation of this length calls for appropriate facilities.',
+            'I value our cooperation greatly. For more in-depth talks, however, an expanded cantina would be desirable.',
+            'Good cooperation needs the right setting. This room does not quite offer it yet.',
+        ],
+        'founder' => [
+            'My story is a long one. It needs more than this corner.',
+            'Back then, five of us sat on crates and talked anyway. But for what I want to tell you, expand the cantina.',
+            'Back then there was only a counter here. It has grown already. A little more, and I will sit down with you.',
+        ],
+        'gambler' => [
+            'Nobody plays long at a crowded table. Build on, and I will stay seated.',
+            'My big game needs a stage, Director, not a spot standing at the counter! Make the cantina bigger.',
+            'Enough for a quick round. For the long night? That takes more room.',
+        ],
+        'ai_researcher' => [
+            'Too loud, too cramped. My head needs more room than this.',
+            'I wanted to tell you about the — no, wait, not here, I cannot think in here. When the cantina is bigger.',
+            'Long thoughts need a quiet table. This cantina does not have one. Not yet.',
+        ],
+        'veteran' => [
+            'No back to the wall, no clear view. I do not stay that long here.',
+            'Short, yes. Long, no. Too cramped. Expand.',
+            'Too many people, too little distance. Bigger cantina, then I stay.',
+        ],
+        'stranger' => [
+            '…not here. Not like this.',
+            '…more room. Then.',
+            'This place is… still too small. For what there would be to say.',
+        ],
+        'doctor' => [
+            'I barely have room to sit. For a long talk we need more space.',
+            'I would like to listen to you longer. But in this crowd nobody truly listens. When the cantina grows.',
+            'A good conversation needs rest, like a wound does. There is none to be found here yet.',
+        ],
+        'preacher' => [
+            'Even the word needs a place where it can breathe.',
+            'Every community grows with its rooms. When this cantina grows, so will our conversations.',
+            'What needs saying does not bear a crowd. Give it a larger room.',
+        ],
+        'prospector' => [
+            'More room, more stories. This cramped, I only tell the short ones.',
+            'You do not explain the good sites standing up. Expand the cantina, and I will spread out the map.',
+            'My bag does not even fit under the table here. Longer talks need more space.',
+        ],
+        'mercenary' => [
+            'Short works. For anything else, this place is too cramped.',
+            'I do not talk long where everyone listens in. Bigger cantina, then we talk.',
+            'Give me a table with some distance. This cantina does not have one yet.',
+        ],
+        'scrap_dealer' => [
+            'Everything is piled up in here. Make room, then we can talk longer.',
+            'I would have so much to tell you — about valves, about seals, about everything! But I cannot even get my elbows apart in here. Expand!',
+            'A long talk needs room for the samples, Director. More cantina, more Voss!',
+        ],
+    ],
 ];

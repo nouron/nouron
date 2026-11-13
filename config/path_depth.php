@@ -15,10 +15,13 @@ return [
         'character' => [1 => 4, 2 => 6, 3 => 8, 4 => 10, 5 => 12],
     ],
 
-    // Minimum building level required to reach level N.
+    // Minimum hangar level required to reach mission family level N. Mission families only:
+    // cantina characters have no level gate (owner 2026-11-13), their conversation options
+    // are staged by cantina level instead (conversation_option_cantina_level below).
     'building_gate' => [1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 3],
 
-    // Building (BuildingId value) whose level caps each kind: Hangar = 44, Bar (cantina) = 52.
+    // Building (BuildingId value) per kind: Hangar = 44 caps family levels (building_gate),
+    // Bar (cantina) = 52 unlocks the conversation options.
     'buildings' => [
         'mission_family' => 44,
         'character' => 52,
@@ -60,6 +63,11 @@ return [
     // Conversation option key => AP spent (progress is proportional to AP; no bulk discount,
     // no extra yield). Display names come from a pool in lang pathdepth.conversation_names.<key>.
     'conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 4],
+
+    // Cantina level each conversation option needs (owner decision 2026-11-13): without
+    // expansion a relationship still grows, only slower. An amount between two option
+    // costs needs the level of the next larger option.
+    'conversation_option_cantina_level' => ['short' => 1, 'normal' => 2, 'long' => 3],
 
     // AP one character accepts per Sol (shared counter DailyApCapService, key
     // "conversation:<character>"). null switches the rule off. Earmarked bonus AP is exempt.

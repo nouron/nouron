@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Feedback;
 use App\Models\Run;
+use App\Services\Techtree\KnowledgeBonusPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -31,14 +32,20 @@ class FeedbackController extends Controller
         ]));
     }
 
-    /** Debug bar data for admins: active run, bypass flags, environment, key config values. */
-    public function debug(Request $request): JsonResponse
+    /**
+     * Debug bar data for admins: active run, bypass flags, environment, key config values
+     * and the exact knowledge progress of the run's colony (silent research check).
+     */
+    public function debug(Request $request, KnowledgeBonusPresenter $knowledge): JsonResponse
     {
         abort_unless($request->user()->isAdmin(), 403);
 
+        $run = Run::where('user_id', $request->user()->user_id)->where('status', 'active')
+            ->first(['id', 'current_tick', 'status', 'colony_id']);
+
         return response()->json([
-            'run' => Run::where('user_id', $request->user()->user_id)->where('status', 'active')
-                ->first(['id', 'current_tick', 'status']),
+            'run' => $run?->only(['id', 'current_tick', 'status']),
+            'knowledge' => $run?->colony_id !== null ? $knowledge->debugRows((int) $run->colony_id) : [],
             'tick_limit' => config('game.run.tick_limit'),
             'bypass' => config('game.bypass'),
             'env' => app()->environment(),

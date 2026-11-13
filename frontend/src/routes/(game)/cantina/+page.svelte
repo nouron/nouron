@@ -55,8 +55,23 @@
 		level_cap: number;
 		ap_spend: number;
 		ap_for_levelup: number;
-		lock_reason: string | null;
-		conversation: { cap: { spent: number; cap: number } | null; options: { key: string; name: string; ap: number; cost: number; capped?: boolean }[] };
+		met: boolean;
+		// In the cantina today (scene dialog) — false for characters only reachable via the overview chips.
+		present: boolean;
+		conversation: { cap: { spent: number; cap: number } | null; options: ConversationOption[] };
+	};
+	// available=false: the cantina level does not allow this option yet; locked_line is the
+	// character's in-voice line for it (resolved server-side), null when available.
+	type ConversationOption = {
+		key: string;
+		name: string;
+		ap: number;
+		cost: number;
+		capped?: boolean;
+		available: boolean;
+		requires_cantina_level: number;
+		locked_line_key: string | null;
+		locked_line: string | null;
 	};
 	type Data = {
 		barLevel: number;
@@ -86,7 +101,7 @@
 		devaKnowledgeChoices: Knowledge[];
 		relationships: Relationship[];
 		bartender: Bartender;
-		relationshipGate: Record<string, number>;
+		conversationOptionCantinaLevel: Record<string, number>;
 		relationshipMaxLevel: number;
 	};
 	type Result = { ok: boolean; message?: string; error?: string; [k: string]: unknown };
@@ -416,7 +431,8 @@
 		if (m === 'information') return d.informationEncounter?.character_slug ?? null;
 		return null;
 	});
-	const hasRelation = $derived(!!activeSlug && !!d?.characters[activeSlug]);
+	// Every character in the scene today has a relationship row (level 0 before the first talk).
+	const hasRelation = $derived(!!activeSlug && !!d?.characters[activeSlug] && !!relFor(activeSlug));
 
 	/** Scene dialog of a character standing in the cantina today, else null. */
 	function modalFor(slug: string): string | null {
@@ -431,20 +447,27 @@
 		return null;
 	}
 
-	// The first trade/encounter marks a character as met server-side; reload the
-	// relationship list so the open dialog switches from the hint to the options.
+	// The first trade/encounter/talk marks a character as met server-side; reload the
+	// relationship list so the overview chips pick the character up.
 	async function refreshRelationships(slug: string | null) {
-		if (!slug || relFor(slug) || !d?.characters[slug]) return;
+		if (!slug || relFor(slug)?.met || !d?.characters[slug]) return;
 		const r = await api<Data>('/cantina').catch(() => null);
 		if (r && d) d.relationships = r.relationships;
 	}
 
-	function conversationBlock(rel: Relationship, opt: Relationship['conversation']['options'][number]) {
-		if (rel.lock_reason) return rel.lock_reason;
+	function conversationBlock(opt: ConversationOption) {
+		if (!opt.available) return opt.locked_line ?? '';
 		return opt.capped ? t('pathdepth.ui_conversation_cap_tooltip') : null;
 	}
 
-	async function investRelation(rel: Relationship, opt: Relationship['conversation']['options'][number]) {
+	/** In-voice line of the lowest locked option — shown once under the options. */
+	function lockedLine(rel: Relationship): string | null {
+		const locked = rel.conversation.options.filter((o) => !o.available && o.locked_line);
+		if (!locked.length) return null;
+		return locked.reduce((a, b) => (b.requires_cantina_level < a.requires_cantina_level ? b : a)).locked_line;
+	}
+
+	async function investRelation(rel: Relationship, opt: ConversationOption) {
 		if (relationLoading[rel.key] || !d) return;
 		relationLoading[rel.key] = true;
 		relationError[rel.key] = '';
@@ -456,11 +479,12 @@
 		sync(res.apAvailable);
 		// Tomas' bonus follows his relationship level: the talk button must show the new number.
 		if (rel.key === 'bartender') refreshKnowledgeState();
-		const required = d.relationshipGate[rel.level + 1];
-		rel.lock_reason =
-			required !== undefined && rel.level >= rel.level_cap
-				? t('pathdepth.ui_locked_building', { building: t('buildings.bar'), level: required })
-				: null;
+		// First talk with a present character: the server now lists them as met.
+		if (!rel.met) {
+			rel.met = true;
+			const r = await api<Data>('/cantina').catch(() => null);
+			if (r && d) d.relationships = r.relationships;
+		}
 	}
 
 	onMount(() => {
@@ -525,11 +549,7 @@
 	{@const rel = relFor(activeSlug)}
 	{@const max = d?.relationshipMaxLevel ?? 0}
 	<section class="cantina-relation" data-relation={activeSlug}>
-		{#if !rel}
-			<!-- Not met yet: the first trade/encounter with this character unlocks the options. -->
-			<p class="cantina-relation__status">{t('pathdepth.ui_not_met')}</p>
-			<p class="cantina-relation__note">{t('pathdepth.ui_relationship_not_met_hint')}</p>
-		{:else}
+		{#if rel}
 			<div class="cantina-relation__level">
 				<span title={t('pathdepth.ui_level', { level: rel.level, max })}>{t(`pathdepth.relationship_level_${rel.level}`)}</span>
 				<span class="cantina-relation__pips" aria-hidden="true">
@@ -555,22 +575,28 @@
 						{/if}
 					</p>
 					{#each rel.conversation.options as opt (opt.key)}
-						{@const block = conversationBlock(rel, opt)}
+						{@const block = conversationBlock(opt)}
 						<button
 							type="button"
 							class="bar-conversation-btn"
-							class:bar-conversation-btn--blocked={block}
-							aria-disabled={block ? 'true' : undefined}
-							disabled={relationLoading[rel.key]}
-							title={block}
-							onclick={() => !block && investRelation(rel, opt)}
+							class:bar-conversation-btn--blocked={block !== null}
+							class:bar-conversation-btn--locked={!opt.available}
+							aria-disabled={block !== null && opt.available ? 'true' : undefined}
+							disabled={!opt.available || relationLoading[rel.key]}
+							title={block || undefined}
+							data-option={opt.key}
+							data-available={opt.available ? 'true' : 'false'}
+							onclick={() => block === null && investRelation(rel, opt)}
 						>
-							<span class="bar-conversation-btn__name">{opt.name}</span>
+							<span class="bar-conversation-btn__name"
+								>{#if !opt.available}<i class="bi bi-lock-fill" aria-hidden="true"></i> {/if}{opt.name}</span
+							>
 							<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{opt.ap} AP</span>
 						</button>
 					{/each}
 				</div>
-				{#if rel.lock_reason}<p class="cantina-relation__note cantina-relation__note--lock">{rel.lock_reason}</p>{/if}
+				{@const line = lockedLine(rel)}
+				{#if line}<p class="cantina-relation__quote" data-locked-line>{line}</p>{/if}
 			{/if}
 			{#if relationError[rel.key]}<p class="bar-relationship-error" role="alert">{relationError[rel.key]}</p>{/if}
 		{/if}
@@ -1057,13 +1083,13 @@
 			</div>
 
 			<!-- Beziehung pflegen overview: met characters; each opens their dialog (T41). -->
-			{#if data.relationships.length}
+			{#if data.relationships.some((r) => r.met)}
 				<section class="bar-relationships">
 					<h3 class="bar-relationships-title">{t('pathdepth.ui_relationship_title')}</h3>
 					<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_met_only')}</p>
 					<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_run_hint')}</p>
 					<ul class="bar-relationships-list">
-						{#each data.relationships as rel (rel.key)}
+						{#each data.relationships.filter((r) => r.met) as rel (rel.key)}
 							<li>
 								<button
 									type="button"

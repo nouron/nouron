@@ -582,6 +582,17 @@
     color: var(--color-warning-fg);
 }
 
+/* Character's own line for conversation options the cantina level does not allow yet:
+   quoted in their voice, quiet — no warning colour. */
+.cantina-relation__quote {
+    margin: 0;
+    padding-left: var(--space-sm);
+    border-left: 2px solid var(--color-border);
+    font-size: var(--text-meta-size);
+    font-style: italic;
+    color: var(--color-text-secondary);
+}
+
 .cantina-relation__status {
     margin: 0;
     font-weight: 600;
@@ -974,6 +985,19 @@
 
 .bar-conversation-btn__name {
     min-width: 0;
+}
+
+/* Option the cantina level does not allow yet: visible, but clearly out of reach. */
+.bar-conversation-btn--locked,
+.bar-conversation-btn--locked:disabled {
+    opacity: 1;
+    color: var(--color-text-secondary);
+    background: var(--color-border);
+}
+
+.bar-conversation-btn--locked .bi-lock-fill {
+    margin-right: 0.35rem;
+    font-size: 0.75rem;
 }
 
 .bar-relationship-error {

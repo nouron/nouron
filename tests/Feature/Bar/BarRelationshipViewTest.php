@@ -47,6 +47,15 @@ class BarRelationshipViewTest extends TestCase
         return collect($this->data()['relationships'])->keyBy('key')->all();
     }
 
+    /** Nobody but Tomas sits in the cantina today: present guests are listed even unmet (owner 2026-11-13). */
+    private function emptyCantina(): void
+    {
+        foreach (['bar_offers', 'bar_encounters', 'bar_concerns', 'bar_information_encounters'] as $table) {
+            DB::table($table)->where('colony_id', self::COLONY_ID)->delete();
+        }
+        config(['game.bar.story_encounter.chance' => 0.0]);
+    }
+
     private function met(string $slug, int $level = 0, int $apSpend = 0): void
     {
         DB::table('colony_path_levels')->insert([
@@ -76,16 +85,18 @@ class BarRelationshipViewTest extends TestCase
 
     public function test_only_bartender_listed_when_nobody_met(): void
     {
+        $this->emptyCantina();
         $this->assertSame(['bartender'], array_keys($this->relationships()));
 
         $html = $this->cantinaPage();
         $this->assertStringContainsString("t('pathdepth.ui_relationship_title')", $html);
-        $this->assertStringContainsString('{#each data.relationships as rel (rel.key)}', $html);
+        $this->assertStringContainsString('{#each data.relationships.filter((r) => r.met) as rel (rel.key)}', $html);
         $this->assertStringContainsString('data-character={rel.key}', $html);
     }
 
     public function test_met_characters_are_listed_and_unmet_are_not(): void
     {
+        $this->emptyCantina();
         $this->met('smuggler');
         $rows = $this->relationships();
 
@@ -113,16 +124,20 @@ class BarRelationshipViewTest extends TestCase
         $row = $this->relationships()['smuggler'];
 
         $this->assertSame(3, $row['ap_spend']);
-        $this->assertSame(2, $row['level_cap']);
+        // Characters have no cantina level gate any more (owner 2026-11-13).
+        $this->assertSame((int) config('path_depth.max_level'), $row['level_cap']);
     }
 
-    public function test_building_cap_names_cantina_as_reason(): void
+    public function test_small_cantina_locks_options_not_the_relationship(): void
     {
         $this->met('smuggler', 2);
         $row = $this->relationships()['smuggler'];
 
-        $reason = __('pathdepth.ui_locked_building', ['building' => __('buildings.bar'), 'level' => 2]);
-        $this->assertSame($reason, $row['lock_reason']);
+        $this->assertArrayNotHasKey('lock_reason', $row);
+        $options = collect($row['conversation']['options'])->keyBy('key');
+        $this->assertTrue($options['short']['available']);
+        $this->assertFalse($options['normal']['available']);
+        $this->assertNotNull($options['normal']['locked_line']);
     }
 
     public function test_run_and_overall_labels_are_separated_and_codex_page_unchanged(): void

@@ -67,6 +67,11 @@
         min-width: 0;
         max-width: 380px;
     }
+
+    /* All cards sit side by side here: no lift for the carousel's current card, so the row stays flush. */
+    .advisor-card.advisor-card--current {
+        transform: none;
+    }
 }
 
 /* ── Advisor card ─────────────────────────────────────────────────────────── */
@@ -1258,8 +1263,22 @@ dialog.advisor-dialog h3 {
         background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.94) 2.2rem);
     }
 
+    /* Equal info panels across the row (owner 2026-11-13): hired, vacant and locked cards share one fixed panel
+     * height, so the portrait area above and the panel edges line up. The footer (status + button) sits at the
+     * panel's bottom via margin-top: auto; shorter content leaves the space above it. */
+    .advisor-info {
+        flex: 0 0 13.5rem;
+        box-sizing: border-box;
+    }
+
     .advisor-info .advisor-stats {
-        flex: 0 0 auto;
+        flex: 1 1 auto;
+    }
+
+    /* Effects line: room for two lines in every card, so a wrapping text does not lift its info panel. */
+    .advisor-card__effects {
+        min-height: 3.6rem;
+        box-sizing: border-box;
     }
 
     .advisor-info .stat-label,
