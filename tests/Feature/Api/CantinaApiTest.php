@@ -41,7 +41,7 @@ class CantinaApiTest extends TestCase
             'hotspots', 'characterAssignment', 'characters', 'firstVisit', 'offerApCost', 'negotiateApCost',
             'encounter', 'storyEncounterSlug', 'concern', 'concernHasFailureLine', 'informationEncounter',
             'informationOutcomeLines', 'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
-            'relationships', 'relationshipGate', 'relationshipMaxLevel',
+            'relationships', 'conversationOptionCantinaLevel', 'relationshipMaxLevel',
             'bartender' => ['relationship_level', 'ap_bonus', 'talked_today', 'today_result', 'advice_open'],
         ]);
     }

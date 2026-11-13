@@ -131,9 +131,9 @@ Alle Werte Platzhalter (Owner 2026-10-24), nicht per Bot gemessen. Quelle: `conf
 | Art | AP für Stufe 1/2/3/4/5 | Σ AP | Deckel-Gebäude |
 |---|---|---|---|
 | Missionsfamilie (Hangar „Training“) | 6/9/12/16/20 | 63 | Hangar |
-| Figur (Cantina „Beziehung pflegen“) | 4/6/8/10/12 | 40 | Cantina (Bar) |
+| Figur (Cantina „Beziehung pflegen“) | 4/6/8/10/12 | 40 | — (Gesprächsoptionen nach Cantina-Stufe) |
 
-- **Gebäude-Deckel:** Stufe 1–2 ab Gebäudestufe 1, Stufe 3–4 ab 2, Stufe 5 ab 3.
+- **Gebäude-Deckel** (`path_depth.building_gate`, nur Missionsfamilien): Stufe 1–2 ab Hangarstufe 1, Stufe 3–4 ab 2, Stufe 5 ab 3. Figuren haben seit 2026-11-13 keinen Gebäude-Deckel mehr.
 - **Hangar-Ertrag:** Faktor 1 + 0,05 × Familienstufe auf skalierbare Belohnungstypen.
 - **Familien:** exploration, salvage, supply, trade, protection (Zuordnung in `config/path_depth.php`).
 - **Training-Sol-Limit** (T43-G2, `path_depth.training_ap_cap_per_sol.base` = 4, **Platzhalter**: Annahme = Labor-Deckel, Höhe nach Messung; `null` schaltet aus): je Familie und Sol, Zählerschlüssel `training:<Familie>` in `colony_daily_ap` (`DailyApCapService`); Fehlercode `training_ap_cap`. Im Hangar gibt es keine zweckgebundenen Bonus-AP, daher keine Ausnahme.
@@ -142,6 +142,7 @@ Alle Werte Platzhalter (Owner 2026-10-24), nicht per Bot gemessen. Quelle: `conf
 - **Tomas' Rat nach Beziehungsstufe** (seit 2026-11-11, `game.bartender.ap_bonus_by_relationship_level`, **Vorschlag**, ersetzt die Staffel nach Gesprächszahl `ap_bonus_tiers`): Stufe 0/1/2/3/4/5 = 0/1/1/2/2/3 Bonus-AP je Gespräch; bei Stufe 0 kein Gespräch (Fehlercode `relationship_too_low`). Ein Gespräch je Sol (`interaction_cooldown_ticks` = 1); der Gesprächszähler ist nur noch Statistik.
 - Nur AP aus dem gemeinsamen Pool; Ausführung von Mission/Gespräch kostet unverändert.
 - **Cantina-Gespräche** (T43-G4, **Platzhalter**, `path_depth.conversation_options`): kurz/normal/ausführlich = 1/2/4 AP; Fortschritt proportional zu den AP (kein Rabatt, kein Zusatzertrag); eine Option kostet nie mehr als der Rest bis zur nächsten Stufe. Namen je Größe aus einem Pool (`lang/*/pathdepth.php` → `conversation_names`), pro Sol rotierend.
+- **Gesprächsoptionen nach Cantina-Stufe** (Owner 2026-11-13, `path_depth.conversation_option_cantina_level`): kurz ab Cantina-Stufe 1, normal ab 2, ausführlich ab 3. Ein AP-Betrag zwischen zwei Optionen braucht die Stufe der nächstgrößeren. Fehlercode `conversation_option_locked` (mit `requires_cantina_level`); gesperrte Option zeigt eine Figurenzeile aus `lang/*/pathdepth.php` → `option_locked_lines.<Figur>` (Fallback `default`), pro Sol rotierend.
 - **Gesprächs-Deckel** (`path_depth.conversation_ap_cap_per_sol.base` = 6, **Platzhalter**, `null` = aus): AP je Figur und Sol, Zähler `conversation:<Figur>` in `colony_daily_ap`; Option über dem Rest-Deckel ist ausgegraut (Annahme: statt gekürzter Kosten); Fehlercode `conversation_ap_cap`.
 
 ---

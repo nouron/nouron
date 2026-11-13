@@ -38,7 +38,7 @@ class PathDepthController extends BaseController
         try {
             $result = $this->pathDepthService->invest($colony->id, $kind, $key, $ap);
         } catch (GameRuleException $e) {
-            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()], 422);
+            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()] + $e->context, 422);
         }
 
         $this->eventService->createEvent([

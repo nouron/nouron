@@ -12,6 +12,7 @@ return [
 
     'error_conversation_ap_cap' => 'This character will not take more than :cap AP today. The conversation continues tomorrow — or talk to someone else.',
     'error_invalid_option' => 'No such conversation size.',
+    'error_conversation_option_locked' => 'This conversation needs cantina level :level.',
 
     // ── Hangar: training
     'ui_training_title' => 'Training',
@@ -61,4 +62,19 @@ return [
     'family_supply' => 'Supply',
     'family_trade' => 'Trade',
     'family_protection' => 'Protection',
+
+    // ── Cantina: line of a character for a locked conversation option (owner 2026-11-13).
+    // TODO content-writer: drafts — wording may vary freely, pools may grow.
+    'option_locked_lines' => [
+        'default' => [
+            'You can hardly hear yourself think in here. Another time, when there is more room.',
+            'There is no room for a proper talk here. Expand the cantina.',
+            'Not here, not this cramped. Maybe once the cantina is bigger.',
+        ],
+        'bartender' => [
+            'I have no room for more here — expand the cantina.',
+            'Barely any elbow room behind this counter. More space, more time for you.',
+            'Long evenings? I need a bigger cantina for that first.',
+        ],
+    ],
 ];

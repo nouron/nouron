@@ -12,6 +12,7 @@ return [
 
     'error_conversation_ap_cap' => 'Mehr als :cap AP nimmt diese Figur heute nicht an. Morgen geht das Gespräch weiter — oder sprich mit jemand anderem.',
     'error_invalid_option' => 'Diese Gesprächsgröße gibt es nicht.',
+    'error_conversation_option_locked' => 'Für dieses Gespräch braucht die Cantina Stufe :level.',
 
     // ── Hangar: Training
     'ui_training_title' => 'Training',
@@ -53,6 +54,37 @@ return [
         'short' => ['Kurz grüßen', 'Nur nicken', 'Ein Wort wechseln', 'Das Glas heben', 'Am Tisch vorbeischauen', 'Fragen, wie es läuft'],
         'normal' => ['Bei einem Getränk reden', 'Zuhören', 'Zusammen sitzen', 'Den Tisch teilen', 'Geschichten austauschen', 'Sich alles anhören'],
         'long' => ['Den Abend nehmen', 'Tief eintauchen', 'Bis zur Sperrstunde bleiben', 'Die halbe Nacht reden', 'Die Schicht hinter sich lassen', 'Noch eine Runde bestellen'],
+    ],
+
+    // ── Cantina: line of a character for a conversation option the cantina level does not
+    // allow yet (owner 2026-11-13). Pool per character slug, fallback "default"; one entry is
+    // picked per Sol. :level = required cantina level (optional in the text).
+    // TODO content-writer: Entwürfe — Wortlaut darf vielfältig variieren, Pools beliebig erweitern.
+    'option_locked_lines' => [
+        'default' => [
+            'Hier drin hört man ja sein eigenes Wort nicht. Ein andermal, wenn mehr Platz ist.',
+            'Für ein richtiges Gespräch fehlt hier der Raum. Bau die Cantina aus.',
+            'Nicht hier, nicht so eng. Vielleicht, wenn die Cantina größer ist.',
+        ],
+        'bartender' => [
+            'Für mehr fehlt mir hier der Platz — bau die Cantina aus.',
+            'Ich hab hinter dem Tresen kaum Ellbogenfreiheit. Mehr Raum, mehr Zeit für dich.',
+            'Lange Abende? Dafür brauch ich erst eine größere Cantina.',
+        ],
+        'smuggler' => ['Zu viele Ohren auf zu wenig Raum. Wenn die Cantina wächst, reden wir richtig.'],
+        'information_broker' => ['Was ich zu sagen habe, braucht eine ruhige Ecke. Die gibt es hier noch nicht.'],
+        'mechanic' => ['Ich steh hier zwischen Tür und Tresen. Gib mir einen Tisch, dann reden wir.'],
+        'corporate_rep' => ['Ein Gespräch dieser Länge verlangt angemessene Räumlichkeiten.'],
+        'founder' => ['Meine Geschichte ist lang. Dafür braucht es mehr als diesen Winkel.'],
+        'gambler' => ['Am vollen Tisch spielt keiner lange. Bau an, dann bleib ich sitzen.'],
+        'ai_researcher' => ['Zu laut, zu eng. Mein Kopf braucht mehr Raum als das hier.'],
+        'veteran' => ['Kein Rücken frei, keine Wand im Blick. So lange bleib ich hier nicht.'],
+        'stranger' => ['…nicht hier. Nicht so.'],
+        'doctor' => ['Ich hab kaum Platz zum Sitzen. Für ein langes Gespräch brauchen wir mehr Raum.'],
+        'preacher' => ['Auch das Wort braucht einen Ort, an dem es atmen kann.'],
+        'prospector' => ['Mehr Platz, mehr Geschichten. So eng erzähl ich nur die kurzen.'],
+        'mercenary' => ['Kurz geht. Für alles andere ist mir das hier zu eng.'],
+        'scrap_dealer' => ['Hier stapelt sich ja alles. Mach Platz, dann reden wir länger.'],
     ],
 
     // ── Missionsfamilien

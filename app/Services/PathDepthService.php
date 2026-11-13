@@ -47,18 +47,22 @@ class PathDepthService
         ];
     }
 
-    /** Highest level the building currently allows; 0 without the building. */
+    /**
+     * Highest level the building currently allows; 0 without the building. Characters have
+     * no building gate (owner 2026-11-13) — their conversation options are staged instead.
+     */
     public function levelCap(int $colonyId, string $kind): int
     {
+        if ($kind === self::KIND_CHARACTER) {
+            return $this->maxLevel();
+        }
+
         $buildingId = config("path_depth.buildings.{$kind}");
         if ($buildingId === null) {
             return 0;
         }
 
-        $buildingLevel = (int) (DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', (int) $buildingId)
-            ->max('level') ?? 0);
+        $buildingLevel = $this->buildingLevel($colonyId, (int) $buildingId);
 
         $cap = 0;
         foreach (config('path_depth.building_gate') as $level => $required) {
@@ -73,7 +77,7 @@ class PathDepthService
     /**
      * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, ap_cap:array{cap:int, spent:int, remaining:int}|null, unlock_level:int|null, locked_until:int|null, leveled_up:bool, points:int}
      *
-     * @throws GameRuleException unknown_entity|not_met|training_locked|max_level|building_level_cap|training_ap_cap|conversation_ap_cap|insufficient_ap
+     * @throws GameRuleException unknown_entity|not_met|training_locked|max_level|building_level_cap|conversation_option_locked|training_ap_cap|conversation_ap_cap|insufficient_ap
      */
     public function invest(int $colonyId, string $kind, string $key, int $points = 1): array
     {
@@ -92,6 +96,13 @@ class PathDepthService
             }
             if ($state['level'] >= $state['level_cap']) {
                 throw $this->error('building_level_cap');
+            }
+
+            if ($kind === self::KIND_CHARACTER && $points >= 1) {
+                $required = $this->requiredCantinaLevel($points);
+                if ($this->cantinaLevel($colonyId) < $required) {
+                    throw $this->error('conversation_option_locked', ['level' => $required], ['requires_cantina_level' => $required]);
+                }
             }
 
             $points = min($points, $state['ap_for_levelup'] - $state['ap_spend']);
@@ -155,7 +166,11 @@ class PathDepthService
      * (an option never costs more than the rest to the next level); "capped" marks options
      * that no longer fit into today's cap (shown greyed out, annahme: simpler than shortening).
      *
-     * @return array{cap: array{cap:int, spent:int, remaining:int}|null, options: list<array{key:string, name:string, ap:int, cost:int, capped:bool}>}
+     * available / requires_cantina_level: the option is unlocked by the cantina level
+     * (path_depth.conversation_option_cantina_level); a locked option carries a line of the
+     * character (locked_line_key + resolved locked_line), otherwise both are null.
+     *
+     * @return array{cap: array{cap:int, spent:int, remaining:int}|null, options: list<array{key:string, name:string, ap:int, cost:int, capped:bool, available:bool, requires_cantina_level:int, locked_line_key:string|null, locked_line:string|null}>}
      */
     public function conversation(int $colonyId, string $characterSlug): array
     {
@@ -163,22 +178,79 @@ class PathDepthService
         $cap = $this->dailyApCap->state($colonyId, self::conversationCapKey($characterSlug), $this->conversationCap());
         $toNextLevel = max(0, $state['ap_for_levelup'] - $state['ap_spend']);
         $tick = app(TickService::class)->getTickCount();
+        $cantinaLevel = $this->cantinaLevel($colonyId);
 
         $options = [];
         if ($toNextLevel > 0) {
             foreach ((array) config('path_depth.conversation_options') as $optionKey => $cost) {
                 $ap = min((int) $cost, $toNextLevel);
+                $required = $this->optionCantinaLevel((string) $optionKey);
+                $available = $cantinaLevel >= $required;
+                $lineKey = $available ? null : $this->lockedLineKey($colonyId, $characterSlug, (string) $optionKey, $tick);
                 $options[] = [
                     'key' => (string) $optionKey,
                     'name' => $this->conversationName($colonyId, $characterSlug, (string) $optionKey, $tick),
                     'ap' => $ap,
                     'cost' => (int) $cost,
                     'capped' => $cap !== null && $cap['remaining'] < $ap,
+                    'available' => $available,
+                    'requires_cantina_level' => $required,
+                    'locked_line_key' => $lineKey,
+                    'locked_line' => $lineKey !== null ? __($lineKey, ['level' => $required]) : null,
                 ];
             }
         }
 
         return ['cap' => $cap, 'options' => $options];
+    }
+
+    /** Current cantina level (0 without a cantina). */
+    public function cantinaLevel(int $colonyId): int
+    {
+        return $this->buildingLevel($colonyId, (int) config('path_depth.buildings.'.self::KIND_CHARACTER));
+    }
+
+    /** Cantina level a conversation option needs (path_depth.conversation_option_cantina_level). */
+    public function optionCantinaLevel(string $optionKey): int
+    {
+        return (int) config("path_depth.conversation_option_cantina_level.{$optionKey}", 1);
+    }
+
+    /**
+     * Cantina level a conversation of $points AP needs: the level of the cheapest option
+     * whose cost covers the amount, or of the largest option when none does.
+     */
+    public function requiredCantinaLevel(int $points): int
+    {
+        $costs = array_map('intval', (array) config('path_depth.conversation_options'));
+        asort($costs);
+        $chosen = array_key_last($costs);
+        foreach ($costs as $optionKey => $cost) {
+            if ($cost >= $points) {
+                $chosen = $optionKey;
+                break;
+            }
+        }
+
+        return $chosen === null ? 1 : $this->optionCantinaLevel((string) $chosen);
+    }
+
+    /**
+     * Lang key of a character line for a locked option: from the character's own pool
+     * (pathdepth.option_locked_lines.<slug>) or the default pool; stable within a Sol,
+     * rotating from Sol to Sol.
+     */
+    private function lockedLineKey(int $colonyId, string $characterSlug, string $optionKey, int $tick): string
+    {
+        $pool = trans("pathdepth.option_locked_lines.{$characterSlug}");
+        $poolKey = is_array($pool) && $pool !== [] ? $characterSlug : 'default';
+        $keys = array_keys((array) trans("pathdepth.option_locked_lines.{$poolKey}"));
+        if ($keys === []) {
+            return 'pathdepth.error_conversation_option_locked';
+        }
+        $pick = $keys[(crc32($colonyId.'|'.$characterSlug.'|'.$optionKey.'|locked') + $tick) % count($keys)];
+
+        return "pathdepth.option_locked_lines.{$poolKey}.{$pick}";
     }
 
     /** Pool pick: stable within a Sol and for a colony/character, rotating from Sol to Sol (annahme). */
@@ -255,9 +327,14 @@ class PathDepthService
 
     private function hangarLevel(int $colonyId): int
     {
+        return $this->buildingLevel($colonyId, (int) config('path_depth.buildings.'.self::KIND_FAMILY));
+    }
+
+    private function buildingLevel(int $colonyId, int $buildingId): int
+    {
         return (int) (DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', (int) config('path_depth.buildings.'.self::KIND_FAMILY))
+            ->where('building_id', $buildingId)
             ->max('level') ?? 0);
     }
 
@@ -285,9 +362,12 @@ class PathDepthService
         }
     }
 
-    /** @param  array<string, mixed>  $replace */
-    private function error(string $code, array $replace = []): GameRuleException
+    /**
+     * @param  array<string, mixed>  $replace
+     * @param  array<string, mixed>  $context
+     */
+    private function error(string $code, array $replace = [], array $context = []): GameRuleException
     {
-        return new GameRuleException($code, __("pathdepth.error_{$code}", $replace));
+        return new GameRuleException($code, __("pathdepth.error_{$code}", $replace), $context);
     }
 }

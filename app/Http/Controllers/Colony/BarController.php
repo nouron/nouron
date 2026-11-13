@@ -69,7 +69,7 @@ class BarController extends BaseController
             'characters' => config('characters'),
             'concernHasFailureLine' => $concernFailureKey !== null && Lang::has($concernFailureKey),
             'informationOutcomeLines' => (object) $informationLines,
-            'relationshipGate' => config('path_depth.building_gate'),
+            'conversationOptionCantinaLevel' => config('path_depth.conversation_option_cantina_level'),
             'relationshipMaxLevel' => (int) config('path_depth.max_level'),
         ]);
     }
@@ -233,21 +233,18 @@ class BarController extends BaseController
      */
     private function relationships(int $colonyId, array $characters): array
     {
-        $gate = config('path_depth.building_gate');
+        // No relationship-level gate by cantina level (owner 2026-11-13): the conversation
+        // options carry their own cantina requirement (PathDepthService::conversation()).
         $rows = [];
         foreach ($characters as $slug => $char) {
             $state = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, $slug);
             if (! $state['met']) {
                 continue;
             }
-            $nextRequired = $gate[$state['level'] + 1] ?? null;
             $rows[] = $state + [
                 'conversation' => $this->pathDepthService->conversation($colonyId, $slug),
                 'key' => $slug,
                 'name' => $char['name'] ?? $char['role'],
-                'lock_reason' => $nextRequired !== null && $state['level'] >= $state['level_cap']
-                    ? __('pathdepth.ui_locked_building', ['building' => __('buildings.bar'), 'level' => $nextRequired])
-                    : null,
             ];
         }
 

@@ -113,16 +113,20 @@ class BarRelationshipViewTest extends TestCase
         $row = $this->relationships()['smuggler'];
 
         $this->assertSame(3, $row['ap_spend']);
-        $this->assertSame(2, $row['level_cap']);
+        // Characters have no cantina level gate any more (owner 2026-11-13).
+        $this->assertSame((int) config('path_depth.max_level'), $row['level_cap']);
     }
 
-    public function test_building_cap_names_cantina_as_reason(): void
+    public function test_small_cantina_locks_options_not_the_relationship(): void
     {
         $this->met('smuggler', 2);
         $row = $this->relationships()['smuggler'];
 
-        $reason = __('pathdepth.ui_locked_building', ['building' => __('buildings.bar'), 'level' => 2]);
-        $this->assertSame($reason, $row['lock_reason']);
+        $this->assertArrayNotHasKey('lock_reason', $row);
+        $options = collect($row['conversation']['options'])->keyBy('key');
+        $this->assertTrue($options['short']['available']);
+        $this->assertFalse($options['normal']['available']);
+        $this->assertNotNull($options['normal']['locked_line']);
     }
 
     public function test_run_and_overall_labels_are_separated_and_codex_page_unchanged(): void
