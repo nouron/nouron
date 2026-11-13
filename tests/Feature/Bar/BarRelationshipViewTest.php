@@ -90,7 +90,7 @@ class BarRelationshipViewTest extends TestCase
 
         $html = $this->cantinaPage();
         $this->assertStringContainsString("t('pathdepth.ui_relationship_title')", $html);
-        $this->assertStringContainsString('{#each data.relationships as rel (rel.key)}', $html);
+        $this->assertStringContainsString('{#each data.relationships.filter((r) => r.met) as rel (rel.key)}', $html);
         $this->assertStringContainsString('data-character={rel.key}', $html);
     }
 
