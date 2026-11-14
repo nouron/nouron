@@ -48,7 +48,7 @@ return [
     'securityHub_desc' => 'Hier laufen die Meldungen zusammen, wenn draußen etwas schiefgeht. Weil jemand rechtzeitig reagiert, richten Zwischenfälle weniger Schaden an, und Rückschläge erschüttern die Kolonisten weniger. Als Bergungsdienst holt die Mannschaft außerdem einen Teil der verbauten Materialien zurück, wenn ein Gebäude durch Verfall eine Stufe verliert. Schon das Wissen, dass jemand aufpasst, stärkt das Vertrauen.',
 
     'uplinkStation' => 'Uplink-Station',
-    'uplinkStation_desc' => 'Eine starke Kommunikations- und Scananlage. Sie schaltet den Nexus-Import frei, bringt jeden Sol Relaisvergütung in Credits ein und macht ab der zweiten Ausbaustufe Tiefenscans günstiger.',
+    'uplinkStation_desc' => 'Eine starke Kommunikations- und Scananlage. Sie schaltet den Nexus-Import frei, bringt jeden Sol Relaisvergütung in Credits ein und macht ab der zweiten Ausbaustufe den ersten Tiefenscan jedes Sols kostenlos.',
 
     'tradingPost' => 'Handelsposten',
     'tradingPost_desc' => 'Fester Anlaufpunkt für reisende Händler. Wer einen eingerichteten Posten vorfindet, macht bessere Angebote als bei einem Treffen in der Cantina.',

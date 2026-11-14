@@ -45,6 +45,8 @@ return [
     'advisor_focus' => 'Gehört zum Fokus-Gebäude',
     'bonus_ap' => ':n AP pro Sol',
     'bonus_ap_cap' => 'AP-Deckel: :n AP je Gebäude und Sol',
+    'bonus_ap_cap_lab' => 'Labor-Deckel: :n AP je Kenntnis und Sol',
+    'bonus_ap_cap_training' => 'Training-Deckel: :n AP je Training und Sol',
     'bonus_mission_chance' => '+:n % Erfolgschance bei Missionen',
     'bonus_ship_discount' => 'Schiffsverhandlung: :n Cr Rabatt je investiertem AP',
     'bonus_merchant_forecast' => 'Händlerbesuch :n Sol im Voraus angekündigt',

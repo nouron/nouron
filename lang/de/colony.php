@@ -396,16 +396,17 @@ return [
 
     // ── Cantina-Barkeeper Tomas (A40) ────────────────────────────────────────
     // "Mit Tomas reden" — kostenlose Interaktion, kein AP-Kosten-Check. Die 4
-    // Tier-Varianten spiegeln config('game.bartender.ap_bonus_tiers') (0/5/15/30
-    // Interaktionen -> 0/1/2/3 AP) und werden wärmer, je vertrauter Tomas den
-    // Direktor kennt.
+    // Tier-Varianten folgen seiner Beziehungsstufe (Frontend: ceil(Stufe / 2)). Der Rat
+    // bringt immer gleich viele AP; die Beziehung macht ihn häufiger
+    // (game.bartender.advice_every_sols_by_relationship_level). Die Zeilen werden wärmer,
+    // je vertrauter Tomas den Direktor kennt.
     'bartender_counter_role' => 'Barkeeper',
     'bartender_talk_button' => 'Mit Tomas reden',
     'bartender_dialog_intro' => 'Tomas hört zu, während er ein Glas poliert — bei ihm ist kein Wort verschwendet, aber jedes zählt.',
     'bartender_dialog_tier_0' => '„Erzähl mir, was dich umtreibt." Er nickt knapp und hört zu — mehr nicht, noch kennt er dich nicht gut genug.',
     'bartender_dialog_tier_1' => 'Tomas hält kurz inne. „Dich seh ich öfter." Er schiebt dir wortlos einen Gedanken zu, der weiterhilft.',
-    'bartender_dialog_tier_2' => 'Er stellt das Glas ab und setzt sich für einen Moment hin. „Für dich hab ich immer einen Moment." Was er dir mitgibt, wiegt mehr als sonst.',
-    'bartender_dialog_tier_3' => 'Tomas lächelt kurz — selten genug, dass es auffällt. „Du gehörst zu uns. Ganz." Er gibt dir mehr, als er den meisten je gegeben hat.',
+    'bartender_dialog_tier_2' => 'Er stellt das Glas ab und setzt sich für einen Moment hin. „Für dich hab ich öfter einen Moment als für die meisten." Inzwischen hat er jeden zweiten Abend etwas für dich.',
+    'bartender_dialog_tier_3' => 'Tomas lächelt kurz — selten genug, dass es auffällt. „Du gehörst zu uns. Ganz." Kein Abend vergeht mehr, an dem er dir nicht etwas mitgibt.',
 
     // ── Charakter-Anliegen (A41) ────────────────────────────────────────────────
     // Je Figur eine Ansprache-Zeile + Erfolgs-Zeile; eine Fehlschlag-Zeile nur

@@ -45,6 +45,8 @@ return [
     'advisor_focus' => 'Belongs to focus building',
     'bonus_ap' => ':n AP per Sol',
     'bonus_ap_cap' => 'AP cap: :n AP per building and Sol',
+    'bonus_ap_cap_lab' => 'Lab cap: :n AP per knowledge and Sol',
+    'bonus_ap_cap_training' => 'Training cap: :n AP per training and Sol',
     'bonus_mission_chance' => '+:n % mission success chance',
     'bonus_ship_discount' => 'Ship negotiation: :n Cr discount per invested AP',
     'bonus_merchant_forecast' => 'Merchant visit announced :n Sol ahead',
@@ -62,7 +64,7 @@ return [
     'concept_sol_body' => 'Sol denotes the standard time unit of a concession operation — defined as one complete planetary day at the colony\'s location. Each Sol executes a full calculation cycle: resource production, wear calculation, pending deliveries, event processing. All time-related parameters in the colony ledger are expressed in Sols.',
 
     'concept_ap_title' => 'Action Points',
-    'concept_ap_body' => 'Action Points are provided per Sol by assigned advisor personnel and are allocated to the respective functional domain. Different advisor types deliver different AP types. Unused AP expire at Sol end — carry-over to subsequent Sols is not provided. Without sufficient AP availability, construction, research, and maintenance measures cannot be performed.',
+    'concept_ap_body' => 'Action Points are provided per Sol by assigned advisor personnel and feed a single colony-bound pool. Construction, research, exploration and trade measures are all funded from this pool alike. Unused AP expire at Sol end — carry-over to subsequent Sols is not provided. Without sufficient AP availability, construction, research, and maintenance measures cannot be performed.',
 
     'concept_decay_title' => 'Decay',
     'concept_decay_body' => 'All colony buildings are subject to continuous status loss through regular operational wear. A building\'s status value decreases automatically each Sol by a fixed amount. When the status value reaches zero, the building loses one operational level. Regular Construction AP input from Engineer personnel is required to compensate for status loss.',

@@ -392,16 +392,18 @@ return [
     'bar_encounter_accept' => 'Accept',
 
     // ── Cantina bartender Tomas (A40) ─────────────────────────────────────────
-    // "Talk to Tomas" — free interaction, no AP cost check. The 4 tier variants
-    // mirror config('game.bartender.ap_bonus_tiers') (0/5/15/30 interactions ->
-    // 0/1/2/3 AP) and grow warmer the better Tomas knows the Director.
+    // "Talk to Tomas" — free interaction, no AP cost check. The 4 tier variants follow
+    // his relationship level (frontend: ceil(level / 2)). The advice always brings the
+    // same AP; the relationship makes it more frequent
+    // (game.bartender.advice_every_sols_by_relationship_level). The lines grow warmer
+    // the better Tomas knows the Director.
     'bartender_counter_role' => 'Bartender',
     'bartender_talk_button' => 'Talk to Tomas',
     'bartender_dialog_intro' => 'Tomas listens while polishing a glass — no word wasted with him, but every one counts.',
     'bartender_dialog_tier_0' => '"Tell me what\'s weighing on you." He nods curtly and listens — nothing more, he doesn\'t know you well enough yet.',
     'bartender_dialog_tier_1' => 'Tomas pauses. "I see you around." Without a word he slides a thought your way that actually helps.',
-    'bartender_dialog_tier_2' => 'He sets the glass down and sits for a moment. "For you I always have a moment." What he passes on weighs more than usual.',
-    'bartender_dialog_tier_3' => 'Tomas smiles briefly — rare enough that you notice. "You\'re one of us. All the way." He gives you more than he has given most people.',
+    'bartender_dialog_tier_2' => 'He sets the glass down and sits for a moment. "For you I have a moment more often than for most." By now he has something for you every other evening.',
+    'bartender_dialog_tier_3' => 'Tomas smiles briefly — rare enough that you notice. "You\'re one of us. All the way." Not an evening goes by now without him passing you something.',
 
     // ── Character concerns (A41) ──────────────────────────────────────────────
     // One approach line + one success line per character; a failure line only
