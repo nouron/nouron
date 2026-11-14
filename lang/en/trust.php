@@ -2,11 +2,11 @@
 
 return [
     // Trust bands (displayed in colony overview and tooltips)
-    'band_euphorisch' => 'Euphoric',
-    'band_zufrieden' => 'Content',
-    'band_stabil' => 'Stable',
-    'band_unruhig' => 'Uneasy',
-    'band_aufruhr' => 'Unrest',
+    'band_riot' => 'Unrest',
+    'band_restless' => 'Uneasy',
+    'band_stable' => 'Stable',
+    'band_content' => 'Content',
+    'band_euphoric' => 'Euphoric',
 
     // Trust event descriptions (shown in INNN event log)
     'event_building_level_up' => 'A building was upgraded — the population is pleased.',
@@ -21,4 +21,7 @@ return [
     'event_stipend_small' => 'Colonist Stipend (Small) paid out.',
     'event_stipend_medium' => 'Colonist Stipend (Medium) paid out.',
     'event_stipend_large' => 'Colonist Stipend (Large) paid out.',
+    'event_story_concern_resolved' => 'A Cantina concern was resolved — people speak well of the leadership.',
+    'event_story_concern_failed' => 'A Cantina concern went unanswered — the disappointment is making the rounds.',
+    'event_merchant_trust_boost' => 'Trust boost — the merchant\'s wares are the talk of the colony, and the good mood lasts a few Sols.',
 ];

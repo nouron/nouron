@@ -685,7 +685,7 @@ return [
     'sol_report_instability_detail' => 'After :sols Sols without a change of location: Harvester yield disrupted.',
     'sol_report_event_plague' => 'Outbreak of disease',
     'sol_report_plague_detail_hunger' => 'Food shortage (:streak Sols without supplies) triggered the outbreak — action points temporarily reduced.',
-    'sol_report_plague_detail_trust' => 'Critical Trust (:trust) triggered the outbreak — action points temporarily reduced.',
+    'sol_report_plague_detail_trust' => 'Trust has fallen to ":trust" — the turmoil triggered the outbreak — action points temporarily reduced.',
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',

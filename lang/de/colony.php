@@ -688,7 +688,7 @@ return [
     'sol_report_instability_detail' => 'Nach :sols Solen ohne Standortwechsel: Harvester-Ertrag gestört.',
     'sol_report_event_plague' => 'Seuchenausbruch',
     'sol_report_plague_detail_hunger' => 'Nahrungsknappheit (:streak Sole ohne Vorräte) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
-    'sol_report_plague_detail_trust' => 'Kritisches Vertrauen (:trust) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
+    'sol_report_plague_detail_trust' => 'Vertrauen auf „:trust“ gefallen — die Unruhe hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',

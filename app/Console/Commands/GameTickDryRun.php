@@ -154,11 +154,9 @@ class GameTickDryRun extends Command
 
         $production = config('game.production_curve', []);
         $trust = $this->trustService->getTrust($cid);
-        $trustMultiplier = $this->trustService->getProductionMultiplier($trust);
         // Staffing share (GDD §5/§6, T43-G9): unfilled workplaces scale raw-material
-        // production, like GameTick::generateResources().
-        $staffing = $this->resourcesService->staffingShare((int) $cid);
-        $multiplier = $trustMultiplier * $staffing;
+        // production, like GameTick::generateResources(). Trust has no production factor (T59).
+        $multiplier = $this->resourcesService->staffingShare((int) $cid);
 
         $resNames = [3 => 'Regolith', 4 => 'Werkstoffe', 5 => 'Organika'];
         $this->line('  Resources:');
@@ -179,10 +177,11 @@ class GameTickDryRun extends Command
             $this->line(sprintf('    %-14s %6d → %6d  (%s)', $rname.':', $cur, $new, $yieldStr));
         }
 
-        $trustColor = $trust >= 0 ? 'green' : 'red';
+        $trustAp = $this->trustService->getApBonus($trust);
+        $trustColor = $trustAp > 0 ? 'green' : ($trustAp < 0 ? 'red' : 'gray');
         $this->line(sprintf(
-            '    Trust:        <fg=%s>%d</> (production ×%.2f)',
-            $trustColor, $trust, $trustMultiplier
+            '    Trust:        <fg=%s>%d</> (%s, %+d AP)',
+            $trustColor, $trust, $this->trustService->bandKey($trust), $trustAp
         ));
 
         // ── Building decay ──────────────────────────────────────────────

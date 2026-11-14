@@ -548,12 +548,12 @@ class RunProgressServiceTest extends TestCase
     {
         $run = $this->makeRun(['current_tick' => 10]);
 
-        // Default threshold is -20; set trust to -25 (below)
-        $this->setTrust(-25);
+        // Threshold is 5 (T59 0..100 scale); set trust to 4 (below)
+        $this->setTrust(4);
 
         $result = $this->service->checkFailStates($run);
 
-        $this->assertEquals('trust_collapse', $result, 'Must return trust_collapse when trust < -20');
+        $this->assertEquals('trust_collapse', $result, 'Must return trust_collapse when trust < 5');
     }
 
     public function test_check_fail_states_returns_time_limit_when_tick_equals_tick_limit(): void
@@ -1215,7 +1215,7 @@ class RunProgressServiceTest extends TestCase
             ['user_id' => $this->userId],
             ['credits' => 0, 'supply' => 10]
         );
-        $this->setTrust(-100); // -100 × 5 = -500 offset; tick bonus = (100-99)×10 = 10 → net negative
+        $this->setTrust(-100); // not reachable on the 0..100 scale — pure formula edge case: -500 offset, tick bonus 10 → net negative
 
         $score = $this->service->calculateScore($run);
 
@@ -1376,7 +1376,7 @@ class RunProgressServiceTest extends TestCase
     public function test_trust_critical_nexus_warning_fires_below_threshold(): void
     {
         $run = $this->makeRun(['started_at' => now()->subHour()]);
-        $this->setTrust(-19);
+        $this->setTrust(9);
 
         $this->service->checkTrustWarnings($run);
 
@@ -1387,7 +1387,7 @@ class RunProgressServiceTest extends TestCase
     public function test_trust_critical_nexus_warning_does_not_fire_at_threshold(): void
     {
         $run = $this->makeRun(['started_at' => now()->subHour()]);
-        $this->setTrust(-18);
+        $this->setTrust(10);
 
         $this->service->checkTrustWarnings($run);
 
@@ -1397,7 +1397,7 @@ class RunProgressServiceTest extends TestCase
     public function test_trust_critical_nexus_warning_fires_only_once_per_run(): void
     {
         $run = $this->makeRun(['started_at' => now()->subHour()]);
-        $this->setTrust(-19);
+        $this->setTrust(9);
 
         $this->service->checkTrustWarnings($run);
         $this->service->checkTrustWarnings($run);
@@ -1408,7 +1408,7 @@ class RunProgressServiceTest extends TestCase
     public function test_trust_critical_nexus_warning_is_skipped_when_run_already_fails_on_trust(): void
     {
         $run = $this->makeRun(['started_at' => now()->subHour()]);
-        $this->setTrust(-21);
+        $this->setTrust(4);
 
         $this->service->checkTrustWarnings($run);
 

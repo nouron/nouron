@@ -110,10 +110,10 @@
 		}
 	}
 
-	// Warning mark on the handle (not colour alone): nexus debt >= 80 %, trust below the red threshold, unfilled workplaces.
+	// Warning mark on the handle (not colour alone): nexus debt >= 80 %, trust at riot (T59 §4), unfilled workplaces.
 	const warn = $derived.by(() => {
 		const nx = s.nexus_debt !== null && s.nexus_debt_max > 0 ? (s.nexus_debt / s.nexus_debt_max) * 100 : 0;
-		const danger = nx >= 95 || (s.trust !== undefined && s.trust < s.trust_chip_red);
+		const danger = nx >= 95 || s.trust?.band === 'riot';
 		const warning = nx >= 80 || (s.colonists_overview?.unfilled ?? 0) > 0;
 		return danger ? 'danger' : warning ? 'warning' : null;
 	});

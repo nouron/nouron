@@ -93,7 +93,6 @@ class ColonyController extends BaseController
             'werkstoffe' => $d['werkstoffe'],
             'organika' => $d['organika'],
             'freeSupply' => (int) $d['freeSupply'],
-            'trust' => $d['trust'],
             'currentSol' => $d['currentSol'],
             'solLimit' => $d['solLimit'],
             'activeHint' => $d['activeHint'],
@@ -152,16 +151,15 @@ class ColonyController extends BaseController
             ->keyBy(fn ($tile) => $tile->q.','.$tile->r);
 
         // A25 (docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md
-        // §2): "≈N Sole bis Erschöpfung" estimate needs the same geology/trust
-        // inputs GameTick::generateHarvesterYield() uses — computed once here,
+        // §2): "≈N Sole bis Erschöpfung" estimate needs the same geology
+        // input GameTick::generateHarvesterYield() uses — computed once here,
         // not per tile.
         $geologyLevel = (int) DB::table('colony_researches')
             ->where('colony_id', $colony->id)
             ->where('research_id', (int) config('knowledge.geology.id', 92))
             ->value('level');
-        $trustMultiplier = $this->trustService->getProductionMultiplier($this->trustService->getTrust($colony->id));
 
-        $tiles = $tiles->map(function ($tile) use ($activeRegolithTiles, $geologyLevel, $trustMultiplier) {
+        $tiles = $tiles->map(function ($tile) use ($activeRegolithTiles, $geologyLevel) {
             $active = $activeRegolithTiles->get($tile['q'].','.$tile['r']);
             if ($active !== null) {
                 $tile['regolith_remaining'] = $active->resource_amount;
@@ -170,8 +168,7 @@ class ColonyController extends BaseController
                     $active->tile_type,
                     $active->resource_amount,
                     $active->resource_max,
-                    $geologyLevel,
-                    $trustMultiplier
+                    $geologyLevel
                 );
             }
 
@@ -254,7 +251,6 @@ class ColonyController extends BaseController
         $fireds = json_decode(DB::table('user_preferences')->where('user_id', Auth::id())->value('fired_triggers') ?? '[]', true) ?? [];
         $supplyCapFull = in_array('supply_cap_full', $fireds);
 
-        $trust = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount') ?? 0);
         // Build-chip affordability check (greys out unaffordable buildings).
         $regolith = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 3)->value('amount') ?? 0);
         $werkstoffe = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 4)->value('amount') ?? 0);
@@ -280,7 +276,7 @@ class ColonyController extends BaseController
             ],
         ]);
 
-        return compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp', 'freeExploreToday', 'buildingChipData');
+        return compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp', 'freeExploreToday', 'buildingChipData');
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────

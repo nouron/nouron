@@ -5,7 +5,8 @@
 
 	let { s, open = $bindable(null) }: { s: Shell; open?: string | null } = $props();
 
-	type Row = { label: string; value: string | number; strong?: boolean; hidden?: boolean };
+	type Row = { label: string; value: string | number; strong?: boolean; hidden?: boolean; note?: boolean; plain?: boolean };
+	type Rung = { key: string; label: string; ap: string; tone: string; current: boolean };
 	type Chip = {
 		key: string;
 		cls: string;
@@ -17,13 +18,25 @@
 		extra?: Row[][];
 		dividerBefore?: boolean;
 		ap?: boolean;
+		/** Trust: band word + effect line above the band ladder. */
+		lead?: string;
+		ladder?: Rung[];
+		/** Two-line chip (label above the value) for values longer than a number. */
+		stack?: boolean;
+		/** Value drawn as two parts (word, effect) that may wrap at rail width; `amount` stays the accessible text. */
+		split?: [string, string];
 	};
+
+	// Trust band -> chip tone (T59 §4): riot negative, restless warning, stable neutral, content/euphoric positive.
+	const TRUST_TONE: Record<string, string> = { riot: 'neg', restless: 'warn', stable: 'neu', content: 'pos', euphoric: 'pos' };
 
 	// Hover opens popups only for real pointers; on touch a tap toggles (a click with a mouse keeps the hover popup open; the rail also handles Esc/outside clicks).
 	const canHover = () => typeof matchMedia === 'function' && matchMedia('(hover: hover)').matches;
 
 	const fmt = (n: number) => Math.round(n).toLocaleString('de-DE');
 	const signed = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+	// AP effects read "±0" at zero (spec table), so the stable band still states its (non-)effect.
+	const signedAp = (n: number) => (n === 0 ? '±0' : signed(n));
 	const rows = (pairs: [string, number | string][], keep = (v: number | string) => !!v): Row[] =>
 		pairs.filter(([, v]) => keep(v)).map(([label, value]) => ({ label, value }));
 
@@ -127,34 +140,44 @@
 
 		if (s.trust !== undefined) {
 			const tr = s.trust;
-			const mod =
-				tr >= 20
-					? 'ap-chip--trust-pos'
-					: tr < s.trust_chip_red
-						? 'ap-chip--trust-neg'
-						: tr < 0
-							? 'ap-chip--trust-warn'
-							: 'ap-chip--trust-neu';
+			const bandWord = (key: string) => t(`trust.band_${key}`);
+			const bandEffect = t('resources.popup_trust_band_effect', { band: t(`trust.band_${tr.band}`), ap: signedAp(tr.ap) });
+			// Sources: names only without a science lab (amounts would reveal the number, T59 F3).
+			// With a lab, silent sources (0) are left out like in the other balances; the base always stays.
+			const sources: Row[] = tr.sources.filter((src) => !tr.lab || src.key === 'base' || src.value !== 0).map((src) => ({
+				label: t(`resources.popup_trust_${src.key}`),
+				value: tr.lab && src.value !== undefined ? signed(src.value) : ''
+			}));
+			const bandMin = (key: string) => tr.bands.find((b) => b.key === key)?.min ?? 0;
+			const totalLine = (total: number, band: string) =>
+				t('resources.popup_trust_total', { total, band: bandWord(band), min: bandMin(band) });
+			const footer: Row[] = [];
+			if (tr.lab && tr.total !== undefined) footer.push({ label: totalLine(tr.total, tr.band), value: '', plain: true });
+			// Preview of the next Sol (TrustService::view): with a lab the new total, without one only a band change.
+			if (tr.next_band !== undefined) {
+				const value = tr.lab && tr.next_total !== undefined ? totalLine(tr.next_total, tr.next_band) : bandWord(tr.next_band);
+				footer.push({ label: t('resources.popup_trust_next', { value }), value: '', plain: true, note: true });
+			}
+			// The locked hint only explains amounts that are missing; no sources (no stored breakdown yet) -> no hint.
+			if (!tr.lab && sources.length) footer.push({ label: t('resources.popup_trust_numbers_locked'), value: '', plain: true, note: true });
 			out.push({
 				key: 'trust',
-				cls: `ap-chip ${mod}`,
+				cls: `ap-chip ap-chip--trust-${TRUST_TONE[tr.band] ?? 'neu'}`,
 				label: t('resources.res_trust'),
-				amount: tr,
+				amount: bandEffect,
 				title: t('resources.popup_trust_title'),
 				desc: t('resources.popup_trust_desc'),
-				extra: s.trust_breakdown
-					? flow(
-							[
-								[t('resources.popup_trust_buildings'), s.trust_breakdown.buildings],
-								[t('resources.popup_trust_research'), s.trust_breakdown.research],
-								[t('resources.popup_trust_ships'), s.trust_breakdown.ships],
-								[t('resources.popup_trust_events'), s.trust_breakdown.events],
-								[t('resources.popup_trust_hunger'), s.trust_breakdown.hunger]
-							],
-							s.trust_breakdown.total,
-							t('resources.popup_trust_total')
-						)
-					: [],
+				lead: bandEffect,
+				ladder: tr.bands.map((b) => ({
+					key: b.key,
+					label: bandWord(b.key),
+					ap: signedAp(b.ap),
+					tone: TRUST_TONE[b.key] ?? 'neu',
+					current: b.key === tr.band
+				})),
+				extra: [sources, footer],
+				stack: true,
+				split: [t(`trust.band_${tr.band}`), `${signedAp(tr.ap)} AP`],
 				ap: true
 			});
 		}
@@ -206,7 +229,7 @@
 							...rows(
 								[
 									[t('resources.popup_ap_advisor'), ab.advisor],
-									[t('resources.popup_ap_trust'), ab.trust_ap],
+									[`${t('resources.popup_ap_trust')} (${t(`trust.band_${s.trust.band}`)})`, ab.trust_ap],
 									[t('resources.popup_ap_plague'), ab.plague_ap]
 								],
 								(v) => v !== 0
@@ -263,25 +286,55 @@
 			<button
 				type="button"
 				class="{chip.cls} chip-btn"
+				class:chip-btn--stack={chip.stack}
 				aria-expanded={open === chip.key}
 				aria-controls="rail-popup-{chip.key}"
 				onclick={() => (open = open === chip.key && !canHover() ? null : chip.key)}
 			>
 				<span class={chip.ap ? 'ap-label' : 'res-abbr'}>{chip.abbr ?? chip.label}</span>
-				<span class="res-amount">{chip.amount}</span>
+				{#if chip.split}
+					<span class="res-amount res-amount--split" aria-label={String(chip.amount)}
+						><span>{chip.split[0]}</span><span>{chip.split[1]}</span></span
+					>
+				{:else}
+					<span class="res-amount">{chip.amount}</span>
+				{/if}
 			</button>
 			{#if open === chip.key}
 				<div class="rail-popup" id="rail-popup-{chip.key}" role="tooltip" {@attach place}>
 					<div class="res-popup-header">{chip.title}</div>
 					<div class="res-popup-body">{chip.desc}</div>
+					{#if chip.lead}<div class="trust-lead">{chip.lead}</div>{/if}
+					{#if chip.ladder}
+						<ol class="trust-ladder" aria-label={chip.title}>
+							{#each chip.ladder as rung (rung.key)}
+								<li
+									class="trust-rung trust-rung--{rung.tone}"
+									class:trust-rung--current={rung.current}
+									aria-current={rung.current ? 'true' : undefined}
+									title={rung.label}
+								>
+									<span class="trust-rung__bar"></span>
+									<span class="trust-rung__ap">{rung.ap}</span>
+								</li>
+							{/each}
+						</ol>
+					{/if}
 					{#if chip.extra?.some((g) => g.length)}
 						<div class="res-popup-extra">
 							{#each chip.extra.filter((g) => g.length) as group, gi (gi)}
 								{#if gi > 0}<div class="res-popup-extra"></div>{/if}
 								{#each group as row, ri (ri)}
-									<div class="res-popup-row" style:display={row.hidden ? 'none' : undefined}>
+									<div
+										class="res-popup-row"
+										class:res-popup-row--plain={row.plain}
+										class:res-popup-row--note={row.note}
+										style:display={row.hidden ? 'none' : undefined}
+									>
 										<span class="res-popup-label">{row.label}</span>
-										{#if row.strong}<span><strong>{row.value}</strong></span>{:else}<span>{row.value}</span>{/if}
+										{#if row.value !== ''}
+											{#if row.strong}<span><strong>{row.value}</strong></span>{:else}<span>{row.value}</span>{/if}
+										{/if}
 									</div>
 								{/each}
 							{/each}
@@ -352,6 +405,129 @@
 	}
 	.ap-label {
 		font-size: 0.72rem;
+	}
+	/* Trust chip: "Zufrieden · +1 AP" does not fit beside the label at rail width — label on top, value below. */
+	.chip-btn--stack {
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 0;
+		padding-top: 0.25rem;
+		padding-bottom: 0.25rem;
+		line-height: 1.25;
+	}
+	.chip-btn--stack .ap-label {
+		font-size: 0.66rem;
+		opacity: 0.7;
+	}
+	/* Band word left, AP effect right; at the narrow (112 px) rail the effect drops to its own line instead of clipping. */
+	.res-amount--split {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		column-gap: 6px;
+		width: 100%;
+		white-space: nowrap;
+	}
+	/* Band tone survives the glass look as text colour of the value and a hairline (not colour alone: the word says it). */
+	.chip-btn:global(.ap-chip--trust-pos) .res-amount {
+		color: var(--color-success-fg);
+	}
+	.chip-btn:global(.ap-chip--trust-warn) {
+		border-color: var(--color-warning) !important;
+	}
+	.chip-btn:global(.ap-chip--trust-warn) .res-amount {
+		color: var(--color-warning-fg);
+	}
+	.chip-btn:global(.ap-chip--trust-neg) {
+		border-color: var(--color-danger) !important;
+	}
+	.chip-btn:global(.ap-chip--trust-neg) .res-amount {
+		color: var(--color-danger-fg);
+	}
+
+	/* Trust popup: band effect, then the five-band ladder with the current band marked. */
+	.trust-lead {
+		font-weight: 700;
+		font-size: 0.85rem;
+	}
+	.trust-ladder {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 3px;
+		margin: 0.15rem 0 0.25rem;
+		padding: 0;
+		list-style: none;
+	}
+	.trust-rung {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2px;
+		font-size: 0.68rem;
+		color: var(--color-text-secondary);
+		font-variant-numeric: tabular-nums;
+	}
+	.trust-rung__bar {
+		display: block;
+		width: 100%;
+		height: 8px;
+		border-radius: var(--radius-pill);
+		background: var(--color-locked);
+	}
+	.trust-rung--neg .trust-rung__bar {
+		background: var(--color-danger-bg);
+		box-shadow: inset 0 0 0 1px var(--color-danger);
+	}
+	.trust-rung--warn .trust-rung__bar {
+		background: var(--color-warning-bg);
+		box-shadow: inset 0 0 0 1px var(--color-warning);
+	}
+	.trust-rung--neu .trust-rung__bar {
+		background: var(--ap-neutral-bg);
+		box-shadow: inset 0 0 0 1px var(--color-border-strong);
+	}
+	.trust-rung--pos .trust-rung__bar {
+		background: var(--color-success-bg);
+		box-shadow: inset 0 0 0 1px var(--color-success);
+	}
+	.trust-rung--current {
+		color: var(--color-text-primary);
+		font-weight: 700;
+	}
+	.trust-rung--current .trust-rung__bar {
+		height: 12px;
+		margin-top: -2px;
+		box-shadow: inset 0 0 0 2px var(--color-anthracite);
+	}
+	.trust-rung--current.trust-rung--neg .trust-rung__bar {
+		background: var(--color-danger);
+	}
+	.trust-rung--current.trust-rung--warn .trust-rung__bar {
+		background: var(--color-warning);
+	}
+	.trust-rung--current.trust-rung--neu .trust-rung__bar {
+		background: var(--color-border-strong);
+	}
+	.trust-rung--current.trust-rung--pos .trust-rung__bar {
+		background: var(--color-success);
+	}
+	.trust-rung--current .trust-rung__ap::before {
+		content: '▲ ';
+		font-size: 0.55rem;
+	}
+	/* Sentence rows (trust total, locked hint): normal case, full strength, not a table label. */
+	.res-popup-row--plain :global(.res-popup-label) {
+		text-transform: none;
+		letter-spacing: 0;
+		opacity: 1;
+		font-size: 0.78rem;
+		font-weight: 600;
+	}
+	.res-popup-row--note :global(.res-popup-label) {
+		color: var(--color-text-secondary);
+		font-style: italic;
+		font-weight: 400;
 	}
 	.res-divider {
 		width: auto;

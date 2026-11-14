@@ -3,64 +3,14 @@
 namespace Tests\Feature;
 
 /**
- * TrustServiceTest — comprehensive feature tests for TrustService.
+ * TrustServiceTest — feature tests for TrustService source arithmetic.
  *
- * Covered scenarios:
+ * Bands, AP, base value, clamp, Security Hub mitigation and the player view of the
+ * T59 scale (0..100) live in TrustScaleTest. Here every expected value is
+ * base + source amounts, with the amounts read from config where possible.
  *
- * getBand():
- *   - All five bands with exact lower/upper boundary values; assertions use __() so
- *     they stay locale-agnostic and pass regardless of APP_LOCALE
- *   - Boundary note: the code uses `>= -61` for Unruhig, so -61 maps to Unruhig and
- *     Aufruhr starts at -62 (the docblock in TrustService has a typo — code wins)
- *   - Locale-switch test: switching to a hypothetical 'en' locale returns English strings
- *     (or falls back gracefully to the translation key if no en file exists)
- *
- * getProductionMultiplier() / getApBonus():
- *   - Neutral trust (0) returns 1.0×
- *   - Euphorisch trust (80) returns the configured factor
- *   - Aufruhr trust (-80) returns the configured factor
- *   - Out-of-range trust that misses all bands falls back to 1.0
- *
- * getTrust():
- *   - Returns 0 when no colony_resources row exists for resource_id=12
- *   - Returns the stored integer value when the row exists
- *   - Handles stored negative trust correctly
- *
- * fireEvent():
- *   - Known event inserts a row into trust_events with correct colony_id/tick/event_type
- *   - Unknown event type is silently ignored (no row inserted)
- *   - Default tick is current tick + 1 when no tick is passed
- *   - Explicit tick is respected when passed
- *
- * calculateTrust() — building contribution:
- *   - A positive-trust building (hospital, id=46) adds level × 3 to trust
- *   - Building with status_points=0 is excluded from calculation
- *
- * calculateTrust() — research contribution:
- *   - A positive-trust research (health, id=94) adds level × 2
- *   - A positive-trust research (defense, id=96) adds level × 1
- *
- * calculateTrust() — ship contribution:
- *   - A positive-trust ship (frachter, id=47) adds level × 1
- *   - A negative-trust ship (korvette, id=37) subtracts level × 1
- *   - Total ship contribution is capped at ±30 before global clamp
- *
- * calculateTrust() — event contribution:
- *   - A fired event contributes its delta at the matching tick
- *   - Same event type fired twice is counted only once (no stacking)
- *   - Events for a different tick are NOT included
- *   - Multiple distinct event types are summed
- *
- * calculateTrust() — global clamp:
- *   - Result is clamped to +100 even when raw sum exceeds 100
- *   - Result is clamped to -100 even when raw sum exceeds -100
- *   - Both clamp-boundary tests use health (id=94) with a negative level for
- *     the negative-trust scenario, since defense can no longer go negative
- *
- * calculateAndStore():
- *   - Persists the calculated trust in colony_resources (resource_id=12)
- *   - Updates existing row rather than inserting a duplicate
- *   - Returns the clamped integer value
+ * Covered: getTrust(), fireEvent(), building/research/ship/event contributions,
+ * ship cap, global clamp, calculateAndStore(), breakdown().
  */
 
 use App\Models\Colony;
@@ -109,156 +59,22 @@ class TrustServiceTest extends TestCase
         DB::table('colony_ships')->where('colony_id', $this->colonyId)->delete();
     }
 
-    // ── getBand() ─────────────────────────────────────────────────────────────
-    //
-    // Assertions compare against __('trust.band_*') so they pass regardless of which
-    // locale is active — the translation layer is tested separately below.
-
-    public function test_get_band_returns_aufruhr_at_minus100(): void
+    private function base(): int
     {
-        $this->assertSame(__('trust.band_aufruhr'), $this->service->getBand(-100));
+        return (int) config('game.trust.base');
     }
 
-    public function test_get_band_returns_unruhig_at_minus61(): void
+    private function perLv(string $file, string $key): int
     {
-        // The code uses `>= -61` for Unruhig, so -61 is the lower boundary of Unruhig.
-        // The docblock in TrustService is incorrect — the implementation is the source of truth.
-        $this->assertSame(__('trust.band_unruhig'), $this->service->getBand(-61));
-    }
-
-    public function test_get_band_returns_aufruhr_at_minus62(): void
-    {
-        // Aufruhr starts at -62 (first value where `$trust >= -61` is false).
-        $this->assertSame(__('trust.band_aufruhr'), $this->service->getBand(-62));
-    }
-
-    public function test_get_band_returns_unruhig_at_minus60(): void
-    {
-        $this->assertSame(__('trust.band_unruhig'), $this->service->getBand(-60));
-    }
-
-    public function test_get_band_returns_unruhig_at_minus21(): void
-    {
-        $this->assertSame(__('trust.band_unruhig'), $this->service->getBand(-21));
-    }
-
-    public function test_get_band_returns_stabil_at_minus20(): void
-    {
-        $this->assertSame(__('trust.band_stabil'), $this->service->getBand(-20));
-    }
-
-    public function test_get_band_returns_stabil_at_zero(): void
-    {
-        $this->assertSame(__('trust.band_stabil'), $this->service->getBand(0));
-    }
-
-    public function test_get_band_returns_stabil_at20(): void
-    {
-        $this->assertSame(__('trust.band_stabil'), $this->service->getBand(20));
-    }
-
-    public function test_get_band_returns_zufrieden_at21(): void
-    {
-        $this->assertSame(__('trust.band_zufrieden'), $this->service->getBand(21));
-    }
-
-    public function test_get_band_returns_zufrieden_at60(): void
-    {
-        $this->assertSame(__('trust.band_zufrieden'), $this->service->getBand(60));
-    }
-
-    public function test_get_band_returns_euphorisch_at61(): void
-    {
-        $this->assertSame(__('trust.band_euphorisch'), $this->service->getBand(61));
-    }
-
-    public function test_get_band_returns_euphorisch_at100(): void
-    {
-        $this->assertSame(__('trust.band_euphorisch'), $this->service->getBand(100));
-    }
-
-    // ── getBand() — locale translation ───────────────────────────────────────
-
-    public function test_get_band_de_locale_returns_german_strings(): void
-    {
-        app()->setLocale('de');
-
-        $this->assertSame('Euphorisch', $this->service->getBand(100));
-        $this->assertSame('Zufrieden', $this->service->getBand(40));
-        $this->assertSame('Stabil', $this->service->getBand(0));
-        $this->assertSame('Unruhig', $this->service->getBand(-40));
-        $this->assertSame('Aufruhr', $this->service->getBand(-100));
-    }
-
-    public function test_get_band_unknown_locale_falls_back_to_english(): void
-    {
-        // A locale with no translation file of its own (config('app.fallback_locale')
-        // is 'en') resolves via lang/en/trust.php rather than returning the raw key —
-        // lang/en/trust.php didn't exist when this test was first written; it does now.
-        app()->setLocale('xx');
-
-        $this->assertSame('Euphoric', $this->service->getBand(100));
-        $this->assertSame('Unrest', $this->service->getBand(-100));
-    }
-
-    // ── getProductionMultiplier() ─────────────────────────────────────────────
-
-    public function test_get_production_multiplier_neutral_trust_returns_one(): void
-    {
-        $this->assertSame(1.0, $this->service->getProductionMultiplier(0));
-    }
-
-    public function test_get_production_multiplier_euphorisch_returns_one_pt_two(): void
-    {
-        // config: min=61, max=100, factor=1.20
-        $this->assertSame(1.20, $this->service->getProductionMultiplier(80));
-    }
-
-    public function test_get_production_multiplier_aufruhr_returns_zero_pt_seven(): void
-    {
-        // config: min=-100, max=-61, factor=0.70
-        $this->assertSame(0.70, $this->service->getProductionMultiplier(-80));
-    }
-
-    public function test_get_production_multiplier_zufrieden_returns_one_pt_one(): void
-    {
-        // config: min=21, max=60, factor=1.10
-        $this->assertSame(1.10, $this->service->getProductionMultiplier(40));
-    }
-
-    public function test_get_production_multiplier_unruhig_returns_zero_pt_eight_five(): void
-    {
-        // config: min=-60, max=-21, factor=0.85
-        $this->assertSame(0.85, $this->service->getProductionMultiplier(-40));
-    }
-
-    // ── getApBonus() (AP scale 2026-11-13 §4: absolute AP per trust band) ────
-
-    public function test_get_ap_bonus_neutral_trust_is_zero(): void
-    {
-        $this->assertSame(0, $this->service->getApBonus(0));
-    }
-
-    public function test_get_ap_bonus_follows_configured_bands(): void
-    {
-        config(['game.trust.ap_bonus' => [
-            ['min' => 61, 'max' => 100, 'ap' => 1],
-            ['min' => -20, 'max' => 60, 'ap' => 0],
-            ['min' => -100, 'max' => -21, 'ap' => -1],
-        ]]);
-
-        $this->assertSame(1, $this->service->getApBonus(80));
-        $this->assertSame(0, $this->service->getApBonus(40));
-        $this->assertSame(-1, $this->service->getApBonus(-30));
-        $this->assertSame(-1, $this->service->getApBonus(-80));
+        return (int) config("{$file}.{$key}.trust_per_lv");
     }
 
     // ── getTrust() ───────────────────────────────────────────────────────────
 
-    public function test_get_trust_returns_zero_when_no_row_exists(): void
+    public function test_get_trust_returns_base_when_no_row_exists(): void
     {
         // setUp already deleted all resource_id=12 rows
-        $this->assertSame(0, $this->service->getTrust($this->colonyId));
+        $this->assertSame($this->base(), $this->service->getTrust($this->colonyId));
     }
 
     public function test_get_trust_returns_stored_positive_value(): void
@@ -272,20 +88,20 @@ class TrustServiceTest extends TestCase
         $this->assertSame(42, $this->service->getTrust($this->colonyId));
     }
 
-    public function test_get_trust_returns_stored_negative_value(): void
+    public function test_get_trust_returns_stored_low_value(): void
     {
         DB::table('colony_resources')->insert([
             'resource_id' => TrustService::RESOURCE_ID,
             'colony_id' => $this->colonyId,
-            'amount' => -35,
+            'amount' => 3,
         ]);
 
-        $this->assertSame(-35, $this->service->getTrust($this->colonyId));
+        $this->assertSame(3, $this->service->getTrust($this->colonyId));
     }
 
-    public function test_get_trust_returns_zero_for_unknown_colony(): void
+    public function test_get_trust_returns_base_for_unknown_colony(): void
     {
-        $this->assertSame(0, $this->service->getTrust(99999));
+        $this->assertSame($this->base(), $this->service->getTrust(99999));
     }
 
     // ── fireEvent() ──────────────────────────────────────────────────────────
@@ -340,7 +156,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_positive_building_contribution(): void
     {
-        // hospital (id=46): +5 per level (2026-09-14, A37-Folge task_colony_prosperity); level=4 → +20
+        // infirmary (id=46): trust_per_lv × level 4
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -351,7 +167,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(20, $trust);
+        $this->assertSame($this->base() + 4 * $this->perLv('buildings', 'infirmary'), $trust);
     }
 
     public function test_calculate_trust_building_with_zero_status_points_is_excluded(): void
@@ -367,7 +183,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $trust);
+        $this->assertSame($this->base(), $trust);
     }
 
     public function test_calculate_trust_building_not_in_config_is_ignored(): void
@@ -383,14 +199,14 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $trust);
+        $this->assertSame($this->base(), $trust);
     }
 
     // ── calculateTrust() — research contribution ─────────────────────────────
 
     public function test_calculate_trust_positive_research_contribution(): void
     {
-        // health (id=94): +3 per level (2026-09-14, A37-Folge task_colony_prosperity); level=3 → +9
+        // health (id=94): trust_per_lv × level 3
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 94,
@@ -401,13 +217,12 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(9, $trust);
+        $this->assertSame($this->base() + 3 * $this->perLv('knowledge', 'health'), $trust);
     }
 
     public function test_calculate_trust_positive_defense_contribution(): void
     {
-        // defense (id=96): +2 per level (Owner-Entscheidung 2026-08-27, verstärkt
-        // 2026-09-14 A37-Folge task_colony_prosperity); level=10 → +20
+        // defense (id=96): trust_per_lv × level 10
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 96,
@@ -418,7 +233,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(20, $trust);
+        $this->assertSame($this->base() + 10 * $this->perLv('knowledge', 'defense'), $trust);
     }
 
     public function test_calculate_trust_research_not_in_config_is_ignored(): void
@@ -434,14 +249,14 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $trust);
+        $this->assertSame($this->base(), $trust);
     }
 
     // ── calculateTrust() — ship contribution ─────────────────────────────────
 
     public function test_calculate_trust_positive_ship_contribution(): void
     {
-        // frachter (id=47): +2 per unit (2026-09-14, A37-Folge task_colony_prosperity); level=6 → +12
+        // freighter (id=47): trust_per_unit × 6
         DB::table('colony_ships')->insert([
             'colony_id' => $this->colonyId,
             'ship_id' => 47,
@@ -452,7 +267,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(12, $trust);
+        $this->assertSame($this->base() + 6 * (int) config('ships.freighter.trust_per_unit'), $trust);
     }
 
     public function test_calculate_trust_corvette_is_neutral(): void
@@ -468,12 +283,12 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $trust);
+        $this->assertSame($this->base(), $trust);
     }
 
-    public function test_calculate_trust_ship_contribution_is_cappped_at_positive30(): void
+    public function test_calculate_trust_ship_contribution_is_capped(): void
     {
-        // frachter (id=47): +1 per unit; level=100 → raw +100, capped to +30
+        // freighter (id=47): level=100 → raw far above ships_cap, capped
         DB::table('colony_ships')->insert([
             'colony_id' => $this->colonyId,
             'ship_id' => 47,
@@ -484,13 +299,13 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(30, $trust);
+        $this->assertSame($this->base() + (int) config('game.trust.ships_cap'), $trust);
     }
 
-    public function test_calculate_trust_ship_contribution_is_capped_at_negative30(): void
+    public function test_calculate_trust_ship_contribution_cap_holds_for_mid_fleet(): void
     {
         // With corvette neutral (0) and only frachter positive, negative cap is unreachable.
-        // Test verifies the positive cap still works as a boundary at +30.
+        // Test verifies the positive cap still works as a boundary at ships_cap.
         DB::table('colony_ships')->insert([
             'colony_id' => $this->colonyId,
             'ship_id' => 47,
@@ -501,7 +316,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(30, $trust);
+        $this->assertSame($this->base() + (int) config('game.trust.ships_cap'), $trust);
     }
 
     // ── calculateTrust() — event contribution ────────────────────────────────
@@ -513,7 +328,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(2, $trust);
+        $this->assertSame($this->base() + (int) config('game.trust.events.trade_success'), $trust);
     }
 
     public function test_calculate_trust_same_event_type_fired_twice_counts_only_once(): void
@@ -533,7 +348,7 @@ class TrustServiceTest extends TestCase
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
         // trade_success = +2, counted once
-        $this->assertSame(2, $trust);
+        $this->assertSame($this->base() + (int) config('game.trust.events.trade_success'), $trust);
     }
 
     public function test_calculate_trust_event_for_different_tick_is_not_included(): void
@@ -547,12 +362,12 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $trust);
+        $this->assertSame($this->base(), $trust);
     }
 
     public function test_calculate_trust_multiple_distinct_events_are_summed(): void
     {
-        // trade_success (+2) + research_level_up (+2) + treaty_signed (+3) = +7
+        // trade_success + research_level_up + treaty_signed, all summed
         DB::table('trust_events')->insert([
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'trade_success'],
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'research_level_up'],
@@ -561,7 +376,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(7, $trust);
+        $this->assertSame($this->base() + (int) config('game.trust.events.trade_success') + (int) config('game.trust.events.research_level_up') + (int) config('game.trust.events.treaty_signed'), $trust);
     }
 
     public function test_calculate_trust_negative_event_contribution(): void
@@ -571,15 +386,15 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-4, $trust);
+        $this->assertSame($this->base() + (int) config('game.trust.events.encounter_lost'), $trust);
     }
 
     // ── calculateTrust() — global clamp ──────────────────────────────────────
 
     public function test_calculate_trust_is_clamped_to_positive100(): void
     {
-        // Insert many positive-trust hospitals to push raw sum well above 100
-        // hospital (id=46): +3/level; level=50 → raw building contribution = 150
+        // Insert many positive-trust infirmaries to push raw sum well above 100
+        // infirmary (id=46): level=50 → raw building contribution far above 100
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -593,9 +408,9 @@ class TrustServiceTest extends TestCase
         $this->assertSame(100, $trust);
     }
 
-    public function test_calculate_trust_is_clamped_to_negative100(): void
+    public function test_calculate_trust_is_clamped_to_zero(): void
     {
-        // health (id=94): +2/level; level=-100 → raw -200, clamped to -100.
+        // health (id=94): level=-100 → raw sum far below 0, clamped to 0.
         // Negatives Level ist kein erreichbarer Spielzustand — reiner
         // Formel-Grenzfall-Test der Clamp-Logik selbst, unabhängig von einer
         // bestimmten Kenntnis. Ersetzt den vorigen defense-basierten Aufbau
@@ -611,14 +426,14 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-100, $trust);
+        $this->assertSame(0, $trust);
     }
 
     // ── calculateAndStore() ───────────────────────────────────────────────────
 
     public function test_calculate_and_store_persists_trust_in_colony_resources(): void
     {
-        // hospital (id=46): +5/level (2026-09-14, A37-Folge task_colony_prosperity); level=5 → trust = +25
+        // infirmary (id=46): trust_per_lv × level 5
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -630,12 +445,12 @@ class TrustServiceTest extends TestCase
         $colony = Colony::find($this->colonyId);
         $result = $this->service->calculateAndStore($colony, $this->tick);
 
-        $this->assertSame(25, $result);
+        $this->assertSame($this->base() + 5 * $this->perLv('buildings', 'infirmary'), $result);
 
         $this->assertDatabaseHas('colony_resources', [
             'colony_id' => $this->colonyId,
             'resource_id' => TrustService::RESOURCE_ID,
-            'amount' => 25,
+            'amount' => $result,
         ]);
     }
 
@@ -648,11 +463,11 @@ class TrustServiceTest extends TestCase
             'amount' => 99,
         ]);
 
-        // No buildings/events → trust = 0
+        // No buildings/events → trust = base
         $colony = Colony::find($this->colonyId);
         $result = $this->service->calculateAndStore($colony, $this->tick);
 
-        $this->assertSame(0, $result);
+        $this->assertSame($this->base(), $result);
 
         // Must update, not insert a second row
         $count = DB::table('colony_resources')
@@ -665,14 +480,14 @@ class TrustServiceTest extends TestCase
         $this->assertDatabaseHas('colony_resources', [
             'colony_id' => $this->colonyId,
             'resource_id' => TrustService::RESOURCE_ID,
-            'amount' => 0,
+            'amount' => $this->base(),
         ]);
     }
 
     public function test_calculate_and_store_returns_clamped_value(): void
     {
-        // health (id=94): +2/level; level=-100 → raw -200, clamped to -100.
-        // Siehe test_calculate_trust_is_clamped_to_negative100() für die
+        // health (id=94): level=-100 → raw sum far below 0, clamped to 0.
+        // Siehe test_calculate_trust_is_clamped_to_zero() für die
         // Begründung, warum health statt defense (defense ist seit
         // 2026-08-27 positiv).
         DB::table('colony_researches')->insert([
@@ -686,12 +501,12 @@ class TrustServiceTest extends TestCase
         $colony = Colony::find($this->colonyId);
         $result = $this->service->calculateAndStore($colony, $this->tick);
 
-        $this->assertSame(-100, $result);
+        $this->assertSame(0, $result);
     }
 
     public function test_calculate_and_store_return_value_matches_stored_value(): void
     {
-        // health (id=94): +3/level (2026-09-14, A37-Folge task_colony_prosperity); level=7 → +21
+        // health (id=94): trust_per_lv × level 7
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 94,
@@ -704,7 +519,7 @@ class TrustServiceTest extends TestCase
         $returned = $this->service->calculateAndStore($colony, $this->tick);
         $stored = $this->service->getTrust($this->colonyId);
 
-        $this->assertSame(21, $returned);
+        $this->assertSame($this->base() + 7 * $this->perLv('knowledge', 'health'), $returned);
         $this->assertSame($returned, $stored);
     }
 
@@ -712,7 +527,7 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_combines_all_sources(): void
     {
-        // hospital (id=46): +5/level (2026-09-14, A37-Folge task_colony_prosperity); level=2 → +10
+        // infirmary (id=46): level=2
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 46,
@@ -721,7 +536,7 @@ class TrustServiceTest extends TestCase
             'ap_spend' => 0,
         ]);
 
-        // health (id=94): +3/level; level=3 → +9
+        // health (id=94): level=3
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 94,
@@ -730,7 +545,7 @@ class TrustServiceTest extends TestCase
             'ap_spend' => 0,
         ]);
 
-        // frachter (id=47): +2/unit; level=2 → +4
+        // freighter (id=47): level=2
         DB::table('colony_ships')->insert([
             'colony_id' => $this->colonyId,
             'ship_id' => 47,
@@ -748,8 +563,8 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        // +10 (buildings) + +9 (researches) + +4 (ships) + +2 (events) = +25
-        $this->assertSame(25, $trust);
+        // base + buildings + researches + ships + events
+        $this->assertSame($this->base() + 2 * $this->perLv('buildings', 'infirmary') + 3 * $this->perLv('knowledge', 'health') + 2 * (int) config('ships.freighter.trust_per_unit') + (int) config('game.trust.events.trade_success'), $trust);
     }
 
     public function test_breakdown_lists_each_source_and_sums_to_calculate_trust(): void
@@ -761,12 +576,12 @@ class TrustServiceTest extends TestCase
 
         $b = $this->service->breakdown($this->colonyId, $this->tick);
 
-        $this->assertSame(20, $b['buildings']);
+        $this->assertSame(4 * $this->perLv('buildings', 'infirmary'), $b['buildings']);
         $this->assertSame(0, $b['research']);
         $this->assertSame(0, $b['ships']);
         $this->assertSame(0, $b['events']);
-        $this->assertSame(-3, $b['hunger']); // base 2 + 1 step
+        $this->assertSame(-((int) config('game.food.hunger_base_malus') + (int) config('game.food.hunger_step')), $b['hunger']); // base + 1 step
         $this->assertSame($this->service->calculateTrust($this->colonyId, $this->tick), $b['total']);
-        $this->assertSame(17, $b['total']);
+        $this->assertSame($this->base() + $b['buildings'] + $b['hunger'], $b['total']);
     }
 }

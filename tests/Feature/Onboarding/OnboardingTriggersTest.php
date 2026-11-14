@@ -29,10 +29,10 @@ use Tests\TestCase;
  *   - Already fired: trigger in fired_triggers → no duplicate update
  *   - Below cap: used supply < cap → trigger does NOT fire
  *
- * Trigger 3 — onboarding_trust (trust crosses from >= 0 to < 0)
- *   - Happy path:  trust was 0, TrustService drives it negative → INNN event + markFired
+ * Trigger 3 — onboarding_trust (trust drops into the first AP-malus band, T59: >= 40 → < 40)
+ *   - Happy path:  trust was 40, TrustService drives it below 40 → INNN event + markFired
  *   - Already fired: trigger in fired_triggers → no second event
- *   - Already negative before tick: trust was -1 before tick → no event (transition already happened)
+ *   - Already below before tick: trust was 35 before tick → no event (transition already happened)
  *   - NPC colony (user_id = null): trust going negative must NOT fire trigger
  */
 class OnboardingTriggersTest extends TestCase
@@ -83,11 +83,11 @@ class OnboardingTriggersTest extends TestCase
             'supply' => 10,
         ]);
 
-        // Trust resource (resource_id = 12) starts at 0.
+        // Trust resource (resource_id = 12) starts at the lower edge of band "stable" (40).
         DB::table('colony_resources')->insertOrIgnore([
             'colony_id' => $this->colonyId,
             'resource_id' => 12,
-            'amount' => 0,
+            'amount' => 40,
         ]);
 
         // CommandCenter at level 1 (required for supply calculation and general sanity).
@@ -364,20 +364,20 @@ class OnboardingTriggersTest extends TestCase
     // ══════════════════════════════════════════════════════════════════════════
 
     /**
-     * When trust (resource_id=12) transitions from >= 0 (before tick) to < 0 (after
+     * When trust (resource_id=12) transitions from >= 40 (before tick) to < 40 (after
      * TrustService recalculates), the trigger must emit an onboarding_trust INNN event.
      *
-     * We drive trust negative by inserting a 'encounter_lost' trust event (value = -4)
-     * into the trust_events table at the pinned tick (500) for this colony.
-     * After the tick, TrustService will store trust = -5 in colony_resources, which
-     * satisfies the onboarding_trust trigger condition (trustBefore=0 >= 0, trustAfter=-5 < 0).
+     * The base value is lowered to 40 for this test, and an 'encounter_lost' trust event
+     * at the pinned tick (500) pulls the recalculated value below 40
+     * (trustBefore=40 >= 40, trustAfter < 40).
      */
-    public function test_trust_trigger_fires_when_trust_crosses_zero_to_negative(): void
+    public function test_trust_trigger_fires_when_trust_drops_into_malus_band(): void
     {
-        // Trust starts at 0 (set in setUp); trigger not yet fired.
+        // Trust starts at 40 (set in setUp); trigger not yet fired.
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_trust'));
+        config(['game.trust.base' => 40]);
 
-        // Insert a negative trust event at the pinned tick so TrustService produces -4.
+        // Insert a negative trust event at the pinned tick.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500, // matches the tick pinned in setUp
@@ -391,13 +391,13 @@ class OnboardingTriggersTest extends TestCase
             ->where('resource_id', 12)
             ->value('amount');
 
-        $this->assertLessThan(0, $trustAfter, 'Trust must be negative after encounter_lost trust event');
+        $this->assertLessThan(40, $trustAfter, 'Trust must be below 40 after encounter_lost trust event');
 
         $event = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
             ->first();
 
-        $this->assertNotNull($event, 'onboarding_trust INNN event must be created when trust crosses 0→negative');
+        $this->assertNotNull($event, 'onboarding_trust INNN event must be created when trust drops below 40');
         $this->assertEquals('colony', $event->area);
 
         $params = json_decode($event->parameters, true);
@@ -436,22 +436,19 @@ class OnboardingTriggersTest extends TestCase
     }
 
     /**
-     * When trust is already negative BEFORE the tick, the trigger must not fire —
-     * the transition (>= 0 → < 0) already happened in an earlier tick.
-     *
-     * GameTick only reads trustBefore when hasFired() is false AND trustBefore >= 0.
-     * When trustBefore < 0 the condition `trustBefore >= 0` is false, so the event
-     * check is skipped entirely.
+     * When trust is already below 40 BEFORE the tick, the trigger must not fire —
+     * the transition (>= 40 → < 40) already happened in an earlier tick.
      */
-    public function test_trust_trigger_silent_when_trust_was_already_negative(): void
+    public function test_trust_trigger_silent_when_trust_was_already_below(): void
     {
-        // Overwrite trust to be already negative before the tick starts.
+        // Overwrite trust to be already below 40 before the tick starts.
         DB::table('colony_resources')
             ->where('colony_id', $this->colonyId)
             ->where('resource_id', 12)
-            ->update(['amount' => -5]);
+            ->update(['amount' => 35]);
+        config(['game.trust.base' => 30]);
 
-        // Also insert a trust event so the result stays negative after recalculation.
+        // Also insert a trust event so the result stays below after recalculation.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
@@ -464,7 +461,7 @@ class OnboardingTriggersTest extends TestCase
             ->where('event', 'onboarding_trust')
             ->count();
 
-        $this->assertEquals(0, $count, 'onboarding_trust must NOT fire when trust was already negative before the tick');
+        $this->assertEquals(0, $count, 'onboarding_trust must NOT fire when trust was already below 40 before the tick');
     }
 
     /**

@@ -37,7 +37,8 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Regolith (Rg) | `regolith` | Baumaterial; Baukosten werden beim Platzieren voll gezahlt. |
 | Werkstoffe (Co) | `compounds`/`werkstoffe` | Material für spätere Gebäude, per Uplink-Station importierbar. |
 | Organika (Or) | `organics`/`organika` | Nahrung der Kolonisten; Proviant für Missionen. Zielbild: 1 Einheit ernährt 1 Kolonisten pro Sol (ROADMAP T36). |
-| Vertrauen | `trust` (früher `moral`) | Stimmung der Kolonie; Hunger senkt sie, ebenso Unterbesetzung *(Entwurf, nicht geprüft)*. |
+| Vertrauen | `trust` (früher `moral`) | Stimmung der Kolonie, jeden Sol neu als Grundwert plus Quellen (Gebäude, Kenntnisse, Frachter, Ereignisse, Hunger) berechnet; wirkt nur über ihre Stufe auf die AP, als Zahl erst mit Analytik-Labor sichtbar. |
+| Vertrauensstufe | `trust.bands` | Eine von fünf Stufen des Vertrauens (Aufruhr, Unruhig, Stabil, Zufrieden, Euphorisch), jede mit festem AP-Zuschlag oder -Abzug; der Spieler sieht Wort und Wirkung statt der Zahl. |
 | Action Points (AP) | `ap` | Ein gemeinsamer Pool für die ganze Kolonie (Grundwert plus Berater). |
 | **Idle-AP** | – | AP, die am Sol-Ende ungenutzt verfallen. Messgröße, kein Spielbegriff. |
 

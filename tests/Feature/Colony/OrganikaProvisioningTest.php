@@ -150,15 +150,21 @@ class OrganikaProvisioningTest extends TestCase
         $this->setHungerStreak(0);
         $base = $trust->calculateTrust(self::COLONY_ID, 11410);
 
-        foreach ([1 => 2, 2 => 3, 5 => 6, 20 => 8] as $streak => $expectedPenalty) {
+        $first = (int) config('game.food.hunger_base_malus');
+        $step = (int) config('game.food.hunger_step');
+        $cap = (int) config('game.food.hunger_cap');
+        foreach ([1, 2, 5, 20] as $streak) {
+            $expectedPenalty = min($first + ($streak - 1) * $step, $cap);
             $this->setHungerStreak($streak);
             $withHunger = $trust->calculateTrust(self::COLONY_ID, 11410);
             $this->assertSame(
                 $base - $expectedPenalty,
                 $withHunger,
-                "streak {$streak} must subtract {$expectedPenalty} trust (cap 8)"
+                "streak {$streak} must subtract {$expectedPenalty} trust (cap {$cap})"
             );
         }
+        $this->assertSame(1, $first, 'T59: first hungry Sol costs 1 trust');
+        $this->assertSame(4, $cap, 'T59: hunger penalty capped at 4');
     }
 
     // ── Mission dispatch provisions (catalog missions, GDD §8b) ────────────────

@@ -105,6 +105,12 @@ class RunTaskCatalog
             }
         }
 
+        if ($this->param($taskKey, 'min_band') !== null) {
+            // Trust band word instead of a number (T59: the raw trust value is hidden).
+            // 'threshold' carries the same word until the label text uses :min_band.
+            $replace['min_band'] = __('trust.band_'.$this->param($taskKey, 'min_band'));
+            $replace['threshold'] ??= $replace['min_band'];
+        }
         if ($taskKey === 'task_expedition_coverage') {
             $replace['min_difficulty'] = __('missions.difficulty_'.$this->param($taskKey, 'min_difficulty', 'normal'));
         }

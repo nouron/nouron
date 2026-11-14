@@ -36,6 +36,16 @@ class TrustAftereffectTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', $this->colonyId)->delete();
         DB::table('colony_researches')->where('colony_id', $this->colonyId)->delete();
         DB::table('colony_ships')->where('colony_id', $this->colonyId)->delete();
+
+        // Profile arithmetic in isolation: no base value, event deltas pinned to the
+        // values the expectations below are written for (real values: config/game.php).
+        config([
+            'game.trust.base' => 0,
+            'game.trust.min' => -100,
+            'game.trust.events.research_level_up' => 2,
+            'game.trust.events.trade_success' => 2,
+            'game.trust.events.encounter_lost' => -4,
+        ]);
     }
 
     private function useProfile(string $eventType, array $percentages): void
@@ -129,6 +139,6 @@ class TrustAftereffectTest extends TestCase
 
         $sum = array_sum(array_column($this->service->eventLines($this->colonyId, $this->tick), 'value'));
 
-        $this->assertSame($sum, $this->service->calculateTrust($this->colonyId, $this->tick));
+        $this->assertSame($sum, $this->service->breakdown($this->colonyId, $this->tick)['events']);
     }
 }

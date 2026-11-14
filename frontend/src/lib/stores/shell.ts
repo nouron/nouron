@@ -4,6 +4,22 @@ import { useLocale } from '#lib/i18n.ts';
 
 type Flow = { sources: Record<string, number>; net: number; consumption?: number; upkeep?: number };
 
+/**
+ * Trust as the player may see it (TrustService::view(), T59): band word + AP effect always;
+ * the number (`total`) and source amounts only with a science lab (`lab`).
+ */
+export type TrustView = {
+	band: string;
+	ap: number;
+	bands: { key: string; min: number; max: number; ap: number }[];
+	lab: boolean;
+	sources: { key: string; value?: number }[];
+	total?: number;
+	/** Next Sol's value if it differs: total with a lab, otherwise only a band change. */
+	next_total?: number;
+	next_band?: string;
+};
+
 /** GET /api/v1/shell — header data of every in-run screen (App\Services\ShellStateService). */
 export type Shell = {
 	username: string;
@@ -14,13 +30,12 @@ export type Shell = {
 	sol_limit: number;
 	nexus_debt: number | null;
 	nexus_debt_max: number;
-	trust_chip_red: number;
 	in_active_run: boolean;
 	bar_built: boolean;
 	hangar_built: boolean;
 	sciencelab_built: boolean;
 	unread_nexus_count: number;
-	trust?: number;
+	trust?: TrustView;
 	colony_ap?: number;
 	supply_breakdown?: {
 		cap: number;
@@ -31,7 +46,6 @@ export type Shell = {
 	staffing_share?: number;
 	resource_flow?: { regolith: Flow; organika: Flow; credits: Flow };
 	hunger_penalty?: number;
-	trust_breakdown?: { buildings: number; research: number; ships: number; events: number; hunger: number; total: number };
 	ap_breakdown?: { base: number; advisor: number; trust_ap: number; plague_ap: number; total: number } | null;
 	active_hint?: { key: string; text: string; target_url: string } | null;
 	active_encounter_notices?: { text: string }[];

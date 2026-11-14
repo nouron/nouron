@@ -16,7 +16,6 @@ use App\Services\RunTaskCatalog;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
-use App\Services\TrustService;
 use App\Support\HangarBays;
 use Illuminate\Support\Facades\DB;
 
@@ -1518,9 +1517,7 @@ class BotStrategy
     private static function projectedOrganics(BotSession $b, int $level): int
     {
         $curve = config('game.production_curve.'.self::BIO_FACILITY.'.'.self::RES_ORGANICS, []);
-        $trust = app(TrustService::class)->getTrust($b->colonyId);
-        $multiplier = app(TrustService::class)->getProductionMultiplier($trust)
-            * app(ResourcesService::class)->staffingShare($b->colonyId);
+        $multiplier = app(ResourcesService::class)->staffingShare($b->colonyId);
 
         return (int) round(GameTick::cumulativeCurveYield($curve, $level) * $multiplier);
     }
