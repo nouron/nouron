@@ -919,7 +919,7 @@ class OnboardingHintService
     private function checkHint5(int $colonyId, int $currentTick): bool
     {
         $minTicks = (int) config('game.onboarding.hint_trust_min_ticks', 5);
-        $threshold = (int) config('game.onboarding.hint_trust_threshold', -20);
+        $threshold = (int) config('game.onboarding.hint_trust_threshold', 40);
 
         if ($currentTick < $minTicks) {
             return false;
@@ -928,7 +928,7 @@ class OnboardingHintService
         $trust = (int) (DB::table('colony_resources')
             ->where('colony_id', $colonyId)
             ->where('resource_id', 12)
-            ->value('amount') ?? 0);
+            ->value('amount') ?? config('game.trust.base', 50));
 
         return $trust < $threshold;
     }

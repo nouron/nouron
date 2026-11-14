@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Read-only per-Sol balance of the colony resources Regolith, Organika and Werkstoffe,
  * for the resource-bar popups. Mirrors exactly what game:tick books next
- * (GameTick::generateResources() + processFoodConsumption()): trust production
- * multiplier x staffing share, the Harvester per tile (geology Kenntnis once per colony),
+ * (GameTick::generateResources() + processFoodConsumption()): staffing share
+ * (no trust factor, T59), the Harvester per tile (geology Kenntnis once per colony),
  * the Agrardom curve plus the agronomy Kenntnis, and the Organika the colonists eat.
  * Parity with the tick is pinned by ResourceFlowServiceTest.
  *
@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 class ResourceFlowService
 {
     public function __construct(
-        private readonly TrustService $trustService,
         private readonly ResourcesService $resourcesService,
         private readonly TickService $tickService,
     ) {}
@@ -35,8 +34,7 @@ class ResourceFlowService
     public function perSol(int $colonyId): array
     {
         $tick = $this->tickService->getTickCount();
-        $multiplier = $this->trustService->getProductionMultiplier($this->trustService->getTrust($colonyId))
-            * $this->resourcesService->staffingShare($colonyId);
+        $multiplier = $this->resourcesService->staffingShare($colonyId);
 
         [$harvester, $geology] = $this->harvesterYield($colonyId, $tick, $multiplier);
 

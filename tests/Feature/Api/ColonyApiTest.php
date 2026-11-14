@@ -44,7 +44,7 @@ class ColonyApiTest extends TestCase
             'colony' => ['id', 'name'],
             'ccLevel', 'buildingCcLevelOffset', 'ccGateTemplate', 'ccBuildingId',
             'buildings', 'buildingCatalog', 'apAvailable', 'regolith', 'werkstoffe', 'organika',
-            'freeSupply', 'trust', 'currentSol', 'solLimit', 'activeHint', 'merchantVisit',
+            'freeSupply', 'currentSol', 'solLimit', 'activeHint', 'merchantVisit',
             'merchantItems', 'exploreCostPerRing', 'exploreCostDefault', 'tileYields',
             'repairDisplayThreshold', 'damagedThresholdPct', 'criticalThresholdPct',
             'deepScanAp', 'relocateApPerHex', 'phaseProgress', 'regolithFallbackTiles', 'supplyCapFull', 'findTotal',

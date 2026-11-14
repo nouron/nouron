@@ -232,7 +232,7 @@ return [
         // Entscheidung, den Threshold NICHT zu senken, sondern die Trust-Quellen
         // selbst zu verstärken. Infirmary bekommt den stärksten Bump ("Fürsorge"
         // trägt thematisch am plausibelsten hohe Vertrauenswerte).
-        'trust_per_lv' => 5,
+        'trust_per_lv' => 3,       // 5→3 (T59 0..100 scale, halved)
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
@@ -275,7 +275,7 @@ return [
         // 6 (unverändert seit 2026-06-28) — jetzt zugleich der gemeinsame supply_cost
         // aller drei Pfadgebäude (Owner, 2026-08-11, provisorisch, s. Hangar/Sciencelab).
         'supply_cost' => 6,
-        'trust_per_lv' => 3,       // social hub — leisure in an otherwise bleak colony life; 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life; 3→2 (T59 0..100 scale, halved)
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
@@ -289,7 +289,7 @@ return [
         'id' => 50,
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 2,
-        'trust_per_lv' => 3,       // 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // 3→2 (T59 0..100 scale, halved)
         // Klasse "Robust" (GDD §13.7, 2026-08-03): 50 Sole bis Level-Down.
         'decay_rate' => 0.40,
         'max_status_points' => 20,
@@ -303,7 +303,7 @@ return [
         'id' => 32,
         'build_cost' => [3 => 50, 4 => 15],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 4,
-        'trust_per_lv' => 3,       // 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // 3→2 (T59 0..100 scale, halved)
         // Klasse "Fragil" (GDD §13.7, 2026-08-03): 17 Sole bis Level-Down — bewusst der
         // teuerste Unterhalt im Spiel, sie zahlt in Vertrauen statt Funktion.
         'decay_rate' => 1.20,
@@ -321,19 +321,20 @@ return [
     // Effects:
     //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).
     //   2. Event mitigation: negative trust events (encounter_lost,
-    //      colony_threatened, ...) reduced by 25% when Hub active
-    //      (TrustService::eventContribution()).
+    //      colony_threatened, ...) move `trust_event_mitigation` points closer
+    //      to 0 when the Hub is active (absolute, T59 §3.4; TrustService::eventLines()).
+    //      Encounter SP loss in the Beschaedigt tier is reduced by sp_loss_mitigation_pct.
     //   3. recycle_pct: on building level-down by decay, return 10% of build
     //      cost in tradeable resources (GameTick, only from recycle_min_level on).
     //
     // Former defend-order discount removed with the fleet/galaxy layer 2026-06.
-    // TODO Balance: trust_per_lv, event_mitigation_pct, recycle_pct, supply_cost
+    // TODO Balance: trust_per_lv, trust_event_mitigation, sp_loss_mitigation_pct, recycle_pct, supply_cost
     //               all to be calibrated after first playtest.
     'securityHub' => [
         'id' => 53,
         'build_cost' => [3 => 80, 4 => 25],   // Regolith + Werkstoffe (Compounds gate accepted — see GDD §4)
         'supply_cost' => 8,
-        'trust_per_lv' => 2,                   // +2 trust per level (Lv3 max = +6); 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 1,                   // +1 trust per level (Lv3 max = +3); 2→1 (T59 0..100 scale, halved)
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
         'decay_rate' => 0.60,
         'max_status_points' => 20,
@@ -344,7 +345,8 @@ return [
         'tiers' => [3],
         'recycle_min_level' => 3,              // recycling only from this Ausbaustufe on (keep in sync with tiers)
         'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
-        'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TrustService::eventContribution())
+        'trust_event_mitigation' => 1,         // negative trust events 1 point closer to 0 (TrustService::eventLines())
+        'sp_loss_mitigation_pct' => 0.25,      // 25% less SP loss in the Beschaedigt encounter tier (EncounterService)
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).

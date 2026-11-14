@@ -36,7 +36,7 @@ INSERT INTO colony_buildings (colony_id,building_id,level,status_points,ap_spend
 INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(3,1,250);
 INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(4,1,50);
 INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(5,1,50);
-INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(12,1,0);
+INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(12,1,50);
 -- colony_buildings: one hangar hall (building_id=44) for colony 1 (Springfield), B1 (T30 §13.2).
 -- Lv3 = three bays and every class active: drone bay 1, freighter bay 2, corvette bay 3.
 INSERT INTO colony_buildings (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,1,3,20,0,1);

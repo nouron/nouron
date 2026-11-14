@@ -79,7 +79,7 @@ class RunObjectivesTest extends TestCase
         $this->assertSame(35, config('game.run.tasks.task_self_sufficiency.target'));
         $this->assertSame(8, config('game.run.tasks.task_trade_volume.target'));
         $this->assertSame(7, config('game.run.tasks.task_research_lead.target'));
-        $this->assertSame(40, config('game.run.tasks.task_colony_prosperity.threshold'));
+        $this->assertSame('content', config('game.run.tasks.task_colony_prosperity.min_band'));
         $this->assertSame(12, config('game.run.tasks.task_colony_prosperity.target'));
     }
 
@@ -279,19 +279,19 @@ class RunObjectivesTest extends TestCase
         $this->assertSame(1, $objective->refresh()->streak_value, 'credits >= threshold counts');
     }
 
-    public function test_colony_prosperity_threshold_comes_from_config(): void
+    public function test_colony_prosperity_band_comes_from_config(): void
     {
-        config(['game.run.tasks.task_colony_prosperity.threshold' => 10]);
+        config(['game.run.tasks.task_colony_prosperity.min_band' => 'euphoric']);
         $run = $this->makeRun();
         $objective = $this->makeObjective($run, 'task_colony_prosperity', 10, streak: 3);
 
-        $this->setColonyResource(12, 11);
+        $this->setColonyResource(12, 80);
         $this->service->updateObjectiveProgress($run);
-        $this->assertSame(4, $objective->refresh()->streak_value, 'trust above threshold extends the streak');
+        $this->assertSame(4, $objective->refresh()->streak_value, 'trust at the band lower bound extends the streak');
 
-        $this->setColonyResource(12, 10);
+        $this->setColonyResource(12, 79);
         $this->service->updateObjectiveProgress($run);
-        $this->assertSame(0, $objective->refresh()->streak_value, 'trust at the threshold resets the streak');
+        $this->assertSame(0, $objective->refresh()->streak_value, 'trust below the band resets the streak');
     }
 
     public function test_research_lead_min_level_comes_from_config(): void
@@ -361,7 +361,7 @@ class RunObjectivesTest extends TestCase
     public function test_best_streak_is_tracked_for_every_streak_task(): void
     {
         $run = $this->makeRun();
-        config(['game.run.tasks.task_colony_prosperity.threshold' => 0]);
+        config(['game.run.tasks.task_colony_prosperity.min_band' => 'riot']);
         $this->setColonyResource(12, 50);
         $objective = $this->makeObjective($run, 'task_colony_prosperity', 10, streak: 6);
 
@@ -376,7 +376,7 @@ class RunObjectivesTest extends TestCase
     {
         config([
             'game.run.tasks.task_credit_reserve.threshold' => 4321,
-            'game.run.tasks.task_colony_prosperity.threshold' => 66,
+            'game.run.tasks.task_colony_prosperity.min_band' => 'euphoric',
             'game.run.tasks.task_senior_advisors.min_rank' => 3,
         ]);
         $catalog = app(RunTaskCatalog::class);
@@ -385,7 +385,7 @@ class RunObjectivesTest extends TestCase
         $this->assertStringContainsString('4.321', $credit);
         $this->assertStringContainsString('12', $credit);
 
-        $this->assertStringContainsString('66', $catalog->label('task_colony_prosperity', 9));
+        $this->assertStringContainsString(__('trust.band_euphoric'), $catalog->label('task_colony_prosperity', 9));
 
         $senior = $catalog->label('task_senior_advisors', 4);
         $this->assertStringContainsString('4', $senior);

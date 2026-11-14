@@ -346,7 +346,7 @@ return [
         'nexus_credit_min_cc_level' => 2,
 
         // Trust penalty when using Nexus-Kredit (one-shot event)
-        'nexus_credit_trust_penalty' => -5,
+        'nexus_credit_trust_penalty' => -3,
 
         // Ticks before an unassigned (pending) ship decays and is removed
         'pending_decay_ticks' => 5,
@@ -400,7 +400,8 @@ return [
             'outage_sols' => 3,               // Harvester produces nothing for N Sols on trigger
         ],
         'plague' => [
-            'chance_per_sol_when_emergent' => 0.05,   // only rolled when hunger_streak≥3 or trust<-20
+            'chance_per_sol_when_emergent' => 0.05,   // only rolled when hunger_streak≥3 or trust<trust_below
+            'trust_below' => 15,               // trust branch: band "riot" (T59)
             'debuff_sols' => 5,
             'ap_reduction' => 1,               // AP taken off the pool while active (absolute, AP scale 2026-11-13 §4)
         ],
@@ -737,61 +738,64 @@ return [
         'advice_every_sols_by_relationship_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 1],
     ],
 
-    // Trust system — formula and multiplier bands (see GDD §13).
-    // Formula: clamp(Σbuildings + Σresearches + clamp(Σships, -30, +30) + events, -100, +100)
+    // Trust system (GDD §14, T59 spec 2026-11-14-vertrauen-skala.md).
+    // Formula: clamp(base + Σbuildings + Σresearches + clamp(Σships, ±ships_cap) + events + hunger, min, max)
+    // Trust is recalculated every Sol from these sources, it is not a stored balance.
     // Per-entity trust_per_lv / trust_per_unit values live in config/buildings.php,
-    // config/techs.php and config/ships.php — TrustService reads from those files.
+    // config/knowledge.php and config/ships.php — TrustService reads from those files.
+    // No factors (Owner 2026-11-14): trust acts only through the absolute AP of its band.
     'trust' => [
         // resource_id in colony_resources where the trust value is stored (res_trust).
         'resource_id' => 12,
+        // Scale 0..100, base value 50 is part of every sum (start = base).
+        'min' => 0,
+        'max' => 100,
+        'base' => 50,
+        // Bands, ascending; lower bound inclusive, each band runs up to the next one's min.
+        // ap = absolute AP added to (or taken from) the colony pool.
+        'bands' => [
+            ['key' => 'riot', 'min' => 0, 'ap' => -2],
+            ['key' => 'restless', 'min' => 15, 'ap' => -1],
+            ['key' => 'stable', 'min' => 40, 'ap' => 0],
+            ['key' => 'content', 'min' => 60, 'ap' => 1],
+            ['key' => 'euphoric', 'min' => 80, 'ap' => 2],
+        ],
         // Hard cap for total ship trust contribution (before global clamp).
-        'ships_cap' => 30,
-        // Production multipliers by trust band (see GDD §14 "Effekte des Vertrauens").
-        'production_multiplier' => [
-            ['min' => 61, 'max' => 100, 'factor' => 1.20],
-            ['min' => 21, 'max' => 60, 'factor' => 1.10],
-            ['min' => -20, 'max' => 20, 'factor' => 1.00],
-            ['min' => -60, 'max' => -21, 'factor' => 0.85],
-            ['min' => -100, 'max' => -61, 'factor' => 0.70],
-        ],
-        // AP added to the pool by trust band (absolute, AP scale 2026-11-13 §4 — a
-        // percentage does nothing on a pool of 5-9 AP).
-        'ap_bonus' => [
-            ['min' => 61, 'max' => 100, 'ap' => 1],
-            ['min' => 21, 'max' => 60, 'ap' => 0],
-            ['min' => -20, 'max' => 20, 'ap' => 0],
-            ['min' => -60, 'max' => -21, 'ap' => -1],
-            ['min' => -100, 'max' => -61, 'ap' => -1],
-        ],
+        'ships_cap' => 15,
         // Aftereffect profiles (T40): share of an event's delta per Sol of age (index 0 = the Sol it
-        // takes effect). 'instant' = one Sol only (the original behaviour). 'fade5' is prepared for
-        // the measurement step and not assigned to any event yet.
+        // takes effect). 'instant' = one Sol only. 'merchant_boost' turns +8 into 8, 6, 5, 3, 2.
+        // 'fade5' is prepared for the measurement step and not assigned to any event yet.
         'event_profiles' => [
             'instant' => [100],
             'fade5' => [100, 80, 60, 40, 20],
+            'merchant_boost' => [100, 75, 63, 38, 25],
         ],
         // Profile per event type; types not listed use 'instant'.
-        'event_profile' => [],
+        'event_profile' => [
+            'merchant_trust_boost' => 'merchant_boost',
+        ],
         // Cap on the summed event part of trust (± value); null = no cap. Height pending measurement.
         'event_cap' => null,
-        // Event trust effects (one-shot; the profile above decides how many Sols they last).
+        // Event trust effects (the profile above decides how many Sols they last).
         // Multiple events of the same key fired in one tick do NOT stack — strongest wins;
         // the same key fired in different Sols adds up while their aftereffects overlap.
+        // Values halved for the 0..100 scale (T59 §2.3), ladders kept distinguishable.
         'events' => [
             'building_level_up' => 1,
-            'research_level_up' => 2,
-            'trade_success' => 2,
-            'treaty_signed' => 3,
-            'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
-            'well_fed' => 2,       // colony's Organika stock covered the food need this Sol; 1→2 (2026-09-14, A37-Folge task_colony_prosperity — the only daily-repeatable positive event, deliberately weighted heavier)
-            'encounter_won' => 2,  // successful protective/aid action (e.g. mission_aid_transport)
-            'encounter_lost' => -4,        // damaged outcome (GDD §9, 33-65% SP)
-            'colony_threatened' => -5,     // critical outcome (GDD §9, <33% SP)
-            'stipend_small' => 2,  // Kolonisten-Zulage (GDD §14) — see stipend.tiers above
-            'stipend_medium' => 3,
-            'stipend_large' => 4,
-            'story_concern_resolved' => 3,  // Sorel/preacher Cantina-Anliegen (A41) resolved successfully
-            'story_concern_failed' => -2,   // Sorel/preacher Cantina-Anliegen (A41) failed
+            'research_level_up' => 1,
+            'trade_success' => 1,
+            'treaty_signed' => 2,
+            'nexus_credit' => -3,  // trust penalty when ship is acquired on Nexus-Kredit
+            'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
+            'encounter_won' => 1,  // successful protective/aid action (e.g. mission_aid_transport)
+            'encounter_lost' => -2,        // damaged outcome (GDD §9, 33-65% SP)
+            'colony_threatened' => -3,     // critical outcome (GDD §9, <33% SP)
+            'stipend_small' => 1,  // Kolonisten-Zulage (GDD §14) — see stipend.tiers above
+            'stipend_medium' => 2,
+            'stipend_large' => 3,
+            'story_concern_resolved' => 2,  // Sorel/preacher Cantina-Anliegen (A41) resolved successfully
+            'story_concern_failed' => -1,   // Sorel/preacher Cantina-Anliegen (A41) failed
+            'merchant_trust_boost' => 8,    // merchant item trust_boost (fades via event_profile)
         ],
     ],
 
@@ -804,9 +808,9 @@ return [
     'food' => [
         'supply_per_eater' => 1,     // 1 Organika per colonist per Sol (T43-G7, 2026-10-25) → food_need = employed
         'well_fed_trust' => 1,       // (documented; actual bonus via trust.events.well_fed)
-        'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
+        'hunger_base_malus' => 1,    // trust penalty on the first hungry Sol (halved for the 0..100 scale, T59)
         'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol
-        'hunger_cap' => 8,           // max penalty
+        'hunger_cap' => 4,           // max penalty
         // mission dispatch costs moved to config/missions.php (ap_per_sol, organika_per_sol)
     ],
 
@@ -831,12 +835,11 @@ return [
     'run' => [
         'allow_multiple' => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
         'tick_limit' => 100,    // total ticks per run (60–100, default 100)
-        'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
-        // Trust warning levels below 0 (GDD §18.2): the header chip turns red below `chip_red`,
-        // a one-time Nexus-Funk warning fires below `nexus_warning`. Both must stay above trust_fail_threshold.
+        'trust_fail_threshold' => 5,    // instant fail when trust drops below this value (0..100 scale, T59)
+        // Trust warning (GDD §18.2): a one-time Nexus-Funk warning fires below `nexus_warning`.
+        // Must stay above trust_fail_threshold. The header chip colour follows the trust band.
         'trust_warning' => [
-            'chip_red' => -10,
-            'nexus_warning' => -18,
+            'nexus_warning' => 10,
         ],
         'nexus_debt_fail_threshold' => 12000,  // instant fail when nexus_debt exceeds this value
         'phase1_deadline_sol' => 20,    // hard fail if Phase 1 isn't complete by this Sol (checkFailStates)
@@ -882,8 +885,9 @@ return [
             'task_credit_reserve' => ['category' => 'economy', 'type' => 'streak', 'target' => 20, 'threshold' => 6000],
             // R1 (Owner 2026-10-01): confirmed by the batch 2026-10-01 — 8/8 completed
             // at Sol 82–95 for incidental and targeted play alike (old threshold 70
-            // was unreachable). Trust > threshold for `target` Sols.
-            'task_colony_prosperity' => ['category' => 'diplomacy', 'type' => 'streak', 'target' => 12, 'threshold' => 40],
+            // was unreachable). T59 (Owner 2026-11-14): trust at least in band
+            // `min_band` for `target` Sols — the raw number is hidden from the player.
+            'task_colony_prosperity' => ['category' => 'diplomacy', 'type' => 'streak', 'target' => 12, 'min_band' => 'content'],
             // R1 (Owner 2026-10-01): confirmed — targeted play reaches 7 knowledges at
             // Lv5 around Sol 68, incidental play tops out at 6. `target` knowledges
             // at level >= min_level.
@@ -990,7 +994,8 @@ return [
             // case 'information'), not a system-wide map.
             'information' => ['label' => 'Vollständige Kartierung (alle Kacheln)',   'cost' => 1200],
             'repair_kit' => ['label' => 'Reparatur-Kit (+30 SP)',    'cost' => 400,  'sp_amount' => 30],
-            'trust_boost' => ['label' => 'Vertrauensschub (+15)',     'cost' => 600,  'trust_amount' => 15],
+            // Fires trust event merchant_trust_boost (+8, fading over 5 Sols, T59 F5).
+            'trust_boost' => ['label' => 'Vertrauensschub',     'cost' => 600],
         ],
 
         // Corvan's Alltagsgeschäft (GDD §4b "Pfad-C-Hebel: von Regolith zu Credits",
@@ -1040,7 +1045,7 @@ return [
         'hint_no_knowledge_after_tick' => 8,
 
         // Trust value below which Rank-5 hint fires
-        'hint_trust_threshold' => -20,
+        'hint_trust_threshold' => 40,   // entry into band "restless" (first AP malus, T59)
 
         // Minimum ticks elapsed before trust hint can fire (avoids day-1 trigger)
         'hint_trust_min_ticks' => 5,

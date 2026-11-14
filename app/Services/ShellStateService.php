@@ -27,6 +27,9 @@ class ShellStateService
     public function forUser(int $userId, ?int $colonyId): array
     {
         $possessions = $colonyId ? $this->resources->getPossessionsByColonyId($colonyId) : [];
+        // Trust leaves the API only through `trust` (TrustService::view(), T59 F3): the raw
+        // number is visible with a science lab only.
+        unset($possessions[(int) config('game.trust.resource_id', TrustService::RESOURCE_ID)]);
         $resourceTypes = $this->resources->getResources()->keyBy('id');
         foreach ($possessions as $resId => $poss) {
             if (isset($resourceTypes[$resId])) {
@@ -59,7 +62,6 @@ class ShellStateService
             'solLimit' => $solLimit,
             'nexusDebt' => $activeRun?->nexus_debt,
             'nexusDebtMax' => (int) config('game.run.nexus_debt_fail_threshold', 12000),
-            'trustChipRed' => (int) config('game.run.trust_warning.chip_red', -10),
             'inActiveRun' => $activeRun !== null,
             'barBuilt' => $built(BuildingId::Bar),
             'hangarBuilt' => $built(BuildingId::Hangar),
@@ -76,15 +78,15 @@ class ShellStateService
             $hint['text'] = __($hint['text_key'], $hint['text_params']);
         }
 
-        return $state + [
-            'trust' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 12)->value('amount') ?? 0),
+        $trustView = $this->trust->view($colonyId, (int) $activeRunTick);
+
+        $colonyState = [
+            'trust' => $trustView,
             'colonyAp' => $this->advisors->getAvailableActionPoints($colonyId),
             'supplyBreakdown' => $this->resources->getSupplyBreakdown($colonyId),
             'colonistsOverview' => $this->resources->colonistsOverview($colonyId),
             'staffingShare' => $this->resources->staffingShare($colonyId),
             'resourceFlow' => $this->resourceFlow->perSol($colonyId),
-            'hungerPenalty' => $this->trust->hungerPenalty($colonyId),
-            'trustBreakdown' => $this->trust->breakdown($colonyId, (int) $activeRunTick),
             'apBreakdown' => $this->advisors->getApBreakdown($colonyId),
             'activeHint' => $hint,
             // Danger notices (GDD §9) on the same clock as the Sol chip.
@@ -92,5 +94,11 @@ class ShellStateService
                 ? $this->notices->activeNotices($colonyId, (int) $activeRunTick)
                 : [],
         ];
+        // The hunger trust penalty is a source amount: only with a science lab (T59 F3).
+        if ($trustView['lab']) {
+            $colonyState['hungerPenalty'] = $this->trust->hungerPenalty($colonyId);
+        }
+
+        return $state + $colonyState;
     }
 }

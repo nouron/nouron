@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Events\TrustEventFired;
 use App\Models\Colony;
 use Illuminate\Support\Facades\DB;
@@ -9,24 +10,19 @@ use Illuminate\Support\Facades\DB;
 /**
  * TrustService — calculates and stores colony trust.
  *
- * Trust ranges from -100 to +100 (neutral = 0, start = 0).
- * It is recalculated every tick from static factors (buildings, researches, ships)
- * and one-shot events (stored in trust_events for the current tick).
+ * Trust ranges from 0 to 100 (config game.trust.min/max); the base value 50
+ * (game.trust.base) is part of every sum. It is recalculated every tick from static
+ * sources (buildings, researches, ships), events (trust_events, with aftereffect
+ * profiles) and the hunger penalty — it is not a stored balance.
  *
  * Stored in colony_resources.amount WHERE resource_id = 12 (res_trust).
  *
- * Bands:
- *   +61 .. +100  Euphorisch
- *   +21 .. +60   Zufrieden
- *   -20 .. +20   Stabil
- *   -21 .. -60   Unruhig
- *   -61 .. -100  Aufruhr
+ * Bands (game.trust.bands, lower bound inclusive) give absolute AP:
+ *   0-14 riot -2 · 15-39 restless -1 · 40-59 stable 0 · 60-79 content +1 · 80-100 euphoric +2
+ * No production factor (T59, Owner 2026-11-14).
  *
- * Effects (applied by callers):
- *   - Production multiplier: 0.70× (Aufruhr) .. 1.20× (Euphorisch)
- *   - AP multiplier:         0.80× (Aufruhr) .. 1.10× (Euphorisch)
- *
- * See GDD §13 for full design documentation.
+ * The raw number is shown to the player only with a science lab (view()).
+ * See GDD §14 and docs/superpowers/specs/2026-11-14-vertrauen-skala.md.
  */
 class TrustService
 {
@@ -68,11 +64,12 @@ class TrustService
      * Trust split by source (single source for calculateTrust() and the trust popup:
      * displayed number = acting number). `total` is the clamped sum.
      *
-     * @return array{buildings:int,research:int,ships:int,events:int,hunger:int,total:int}
+     * @return array{base:int,buildings:int,research:int,ships:int,events:int,hunger:int,total:int}
      */
     public function breakdown(int $colonyId, int $tick): array
     {
         $parts = [
+            'base' => $this->baseValue(),
             'buildings' => $this->buildingContribution($colonyId),
             'research' => $this->researchContribution($colonyId),
             'ships' => $this->shipContribution($colonyId),
@@ -80,7 +77,17 @@ class TrustService
             'hunger' => $this->hungerPenalty($colonyId),
         ];
 
-        return $parts + ['total' => max(-100, min(100, array_sum($parts)))];
+        return $parts + ['total' => $this->clamp(array_sum($parts))];
+    }
+
+    private function baseValue(): int
+    {
+        return (int) config('game.trust.base', 50);
+    }
+
+    private function clamp(int $trust): int
+    {
+        return max((int) config('game.trust.min', 0), min((int) config('game.trust.max', 100), $trust));
     }
 
     /**
@@ -97,15 +104,15 @@ class TrustService
             return 0;
         }
 
-        $base = (int) config('game.food.hunger_base_malus', 2);
+        $base = (int) config('game.food.hunger_base_malus', 1);
         $step = (int) config('game.food.hunger_step', 1);
-        $cap = (int) config('game.food.hunger_cap', 8);
+        $cap = (int) config('game.food.hunger_cap', 4);
 
         return -min($base + ($streak - 1) * $step, $cap);
     }
 
     /**
-     * Read the current stored trust for a colony (-100..+100).
+     * Read the current stored trust for a colony (0..100); the base value when no row exists.
      */
     public function getTrust(int $colonyId): int
     {
@@ -114,7 +121,7 @@ class TrustService
             ->where('resource_id', $this->resourceId())
             ->first();
 
-        return $row ? (int) $row->amount : 0;
+        return $row ? (int) $row->amount : $this->baseValue();
     }
 
     private function resourceId(): int
@@ -122,28 +129,83 @@ class TrustService
         return (int) config('game.trust.resource_id', self::RESOURCE_ID);
     }
 
-    // ── Multipliers ───────────────────────────────────────────────────────────
+    // ── Bands ─────────────────────────────────────────────────────────────────
 
     /**
-     * Return the production multiplier for the given trust value.
+     * All bands ascending, each with its inclusive range and AP (single source: game.trust.bands).
+     *
+     * @return list<array{key: string, min: int, max: int, ap: int}>
      */
-    public function getProductionMultiplier(int $trust): float
+    public function bands(): array
     {
-        return $this->lookupMultiplier($trust, 'production_multiplier');
+        $bands = collect(config('game.trust.bands', []))->sortBy('min')->values();
+        $max = (int) config('game.trust.max', 100);
+
+        return $bands->map(fn (array $band, int $i) => [
+            'key' => (string) $band['key'],
+            'min' => (int) $band['min'],
+            'max' => isset($bands[$i + 1]) ? (int) $bands[$i + 1]['min'] - 1 : $max,
+            'ap' => (int) $band['ap'],
+        ])->all();
     }
 
     /**
-     * AP the trust band adds to (or takes from) the colony pool — absolute, game.trust.ap_bonus.
+     * The band a trust value falls into (lowest band for values below every lower bound).
+     *
+     * @return array{key: string, min: int, max: int, ap: int}
      */
-    public function getApBonus(int $trust): int
+    public function band(int $trust): array
     {
-        foreach (config('game.trust.ap_bonus', []) as $band) {
-            if ($trust >= $band['min'] && $trust <= $band['max']) {
-                return (int) $band['ap'];
+        $bands = $this->bands();
+        $match = $bands[0];
+        foreach ($bands as $band) {
+            if ($trust >= $band['min']) {
+                $match = $band;
             }
         }
 
-        return 0;
+        return $match;
+    }
+
+    public function bandKey(int $trust): string
+    {
+        return $this->band($trust)['key'];
+    }
+
+    /**
+     * Lower bound of a band by key (e.g. 'content' for the prosperity objective).
+     */
+    public function bandMin(string $key): int
+    {
+        foreach ($this->bands() as $band) {
+            if ($band['key'] === $key) {
+                return $band['min'];
+            }
+        }
+
+        throw new \InvalidArgumentException("Unknown trust band: {$key}");
+    }
+
+    /**
+     * Lowest trust value whose band has no AP malus; below it the colony loses AP.
+     */
+    public function malusBelow(): int
+    {
+        foreach ($this->bands() as $band) {
+            if ($band['ap'] >= 0) {
+                return $band['min'];
+            }
+        }
+
+        return (int) config('game.trust.max', 100) + 1;
+    }
+
+    /**
+     * AP the trust band adds to (or takes from) the colony pool — absolute, game.trust.bands.
+     */
+    public function getApBonus(int $trust): int
+    {
+        return $this->band($trust)['ap'];
     }
 
     /**
@@ -151,20 +213,60 @@ class TrustService
      */
     public function getBand(int $trust): string
     {
-        if ($trust >= 61) {
-            return __('trust.band_euphorisch');
-        }
-        if ($trust >= 21) {
-            return __('trust.band_zufrieden');
-        }
-        if ($trust >= -20) {
-            return __('trust.band_stabil');
-        }
-        if ($trust >= -61) {
-            return __('trust.band_unruhig');
+        return __('trust.band_'.$this->bandKey($trust));
+    }
+
+    // ── Player view ───────────────────────────────────────────────────────────
+
+    /**
+     * Whether the colony may see trust as a number: a science lab at level >= 1
+     * (T59 F3, Owner 2026-11-14). Without it no total and no source amount leaves the API.
+     */
+    public function numbersVisible(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Sciencelab->value)
+            ->where('level', '>=', 1)
+            ->exists();
+    }
+
+    /**
+     * Trust as the player may see it. Band, AP and the band list always; with a science lab
+     * also the total (the stored, acting value) and every source with its amount. Without a
+     * lab the sources are names only, and only those that currently act (base always).
+     *
+     * @return array{band: string, ap: int, bands: list<array{key: string, min: int, max: int, ap: int}>, lab: bool, sources: list<array{key: string, value?: int}>, total?: int}
+     */
+    public function view(int $colonyId, int $tick): array
+    {
+        $trust = $this->getTrust($colonyId);
+        $band = $this->band($trust);
+        $lab = $this->numbersVisible($colonyId);
+        $parts = $this->breakdown($colonyId, $tick);
+        unset($parts['total']);
+
+        $sources = [];
+        foreach ($parts as $key => $value) {
+            if ($lab) {
+                $sources[] = ['key' => $key, 'value' => $value];
+            } elseif ($key === 'base' || $value !== 0) {
+                $sources[] = ['key' => $key];
+            }
         }
 
-        return __('trust.band_aufruhr');
+        $view = [
+            'band' => $band['key'],
+            'ap' => $band['ap'],
+            'bands' => $this->bands(),
+            'lab' => $lab,
+            'sources' => $sources,
+        ];
+        if ($lab) {
+            $view['total'] = $trust;
+        }
+
+        return $view;
     }
 
     // ── Events ────────────────────────────────────────────────────────────────
@@ -278,7 +380,7 @@ class TrustService
             $sum += ($cfg[$s->ship_id] ?? 0) * $s->level;
         }
 
-        $cap = (int) config('game.trust.ships_cap', 30);
+        $cap = (int) config('game.trust.ships_cap', 15);
 
         return max(-$cap, min($cap, $sum));
     }
@@ -302,7 +404,7 @@ class TrustService
      * Event rows that still act at $tick, one line per (type, fired Sol), with the value they
      * contribute now and the values still to come. Single source for calculateTrust() and the
      * trust popup (displayed number = acting number). Same type fired in the same Sol: strongest
-     * wins; different Sols add up. Security Hub mitigation applies to the delta before the profile.
+     * wins; different Sols add up. Security Hub mitigation (absolute) applies to the delta before the profile.
      *
      * @return list<array{type: string, tick: int, age: int, value: int, following: list<int>}>
      */
@@ -334,9 +436,9 @@ class TrustService
             }
         }
 
-        // SecurityHub (building_id=53) mitigates negative trust events by 25%.
-        $mitigationPct = (float) config('buildings.securityHub.event_mitigation_pct', 0);
-        $mitigate = $mitigationPct > 0 && DB::table('colony_buildings')
+        // SecurityHub (building_id=53) moves negative trust events a fixed amount closer to 0.
+        $mitigation = (int) config('buildings.securityHub.trust_event_mitigation', 0);
+        $mitigate = $mitigation > 0 && DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 53)
             ->where('level', '>', 0)
@@ -346,7 +448,7 @@ class TrustService
         foreach ($byKey as $e) {
             $delta = $e['delta'];
             if ($mitigate && $delta < 0) {
-                $delta = (int) round($delta * (1 - $mitigationPct));
+                $delta = min(0, $delta + $mitigation);
             }
 
             $profile = $profileOf($e['type']);
@@ -371,16 +473,5 @@ class TrustService
         }
 
         return $lines;
-    }
-
-    private function lookupMultiplier(int $trust, string $configKey): float
-    {
-        foreach (config("game.trust.{$configKey}", []) as $band) {
-            if ($trust >= $band['min'] && $trust <= $band['max']) {
-                return (float) $band['factor'];
-            }
-        }
-
-        return 1.0;
     }
 }

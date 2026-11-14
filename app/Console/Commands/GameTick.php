@@ -48,7 +48,7 @@ use Illuminate\Support\Facades\DB;
  *  2. Hangar missions     — resolve dispatched missions (complete/abort), apply rewards
  *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
- *  5. Resource generation — produce colony resources per industry building level (trust multiplier × staffing share)
+ *  5. Resource generation — produce colony resources per industry building level (× staffing share)
  *  6. Food consumption    — deduct Organics per employed colonist; trust penalty on shortfall
  *  7. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
  *  8. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model); runs after
@@ -948,14 +948,11 @@ class GameTick extends Command
         $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
-            // Apply trust production multiplier based on the colony's CURRENT trust
-            // (stored from the previous tick's trust calculation — no circular dependency),
-            // times the staffing share: colonists short of workplaces leave
-            // them unfilled (GDD §5/§6 "Wohnraumverlust", T43-G9). Every consumer below
-            // produces Regolith or Organika only — AP, Credits and trust are unaffected.
-            $trust = $this->trustService->getTrust($colony->id);
-            $multiplier = $this->trustService->getProductionMultiplier($trust)
-                * $this->resourcesService->staffingShare($colony->id);
+            // Staffing share: colonists short of workplaces leave them unfilled
+            // (GDD §5/§6 "Wohnraumverlust", T43-G9). Trust has no production factor
+            // (T59, Owner 2026-11-14). Every consumer below produces Regolith or
+            // Organika only — AP, Credits and trust are unaffected.
+            $multiplier = $this->resourcesService->staffingShare($colony->id);
 
             $harvesterYield = $this->generateHarvesterYield($tick, $colony, $multiplier);
             if ($harvesterYield > 0) {
@@ -1536,7 +1533,7 @@ class GameTick extends Command
 
     /**
      * Seuchenausbruch (GDD §9): emergent, not ambient — only rolls when
-     * hunger_streak≥3 OR Trust<-20 (a healthy colony has 0% base risk, hard-gated,
+     * hunger_streak≥3 OR trust below plague.trust_below (band riot) (a healthy colony has 0% base risk, hard-gated,
      * not just a very low chance). Resolves immediately (no warning/resolution
      * split, matching instability's shape, not storm's) as a colony_threatened Trust
      * hit plus a temporary AP-reduction debuff via glx_colonies.plague_until_tick.
@@ -1546,7 +1543,7 @@ class GameTick extends Command
         $hungerStreak = (int) DB::table('glx_colonies')->where('id', $colony->id)->value('hunger_streak');
         $trust = $this->trustService->getTrust($colony->id);
 
-        if ($hungerStreak < 3 && $trust >= -20) {
+        if ($hungerStreak < 3 && $trust >= (int) config('game.encounter.plague.trust_below', 15)) {
             return 0;   // healthy colony — hard gate, not a chance roll
         }
 
@@ -1609,7 +1606,8 @@ class GameTick extends Command
                 'debuff_until_tick' => $tick + $debuffSols,
                 'reason' => $hungerStreak >= 3 ? 'hunger' : 'trust',
                 'hunger_streak' => $hungerStreak,
-                'trust' => $trust,
+                // Band, not the number: comm-log params reach the client (T59 F3).
+                'trust_band' => $this->trustService->bandKey($trust),
             ]),
         ]);
 
@@ -1670,26 +1668,24 @@ class GameTick extends Command
         $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
-            // Trigger 3 — onboarding_trust: fires once when trust crosses from
-            // non-negative to negative for a real (non-NPC) colony.
+            // Trigger 3 — onboarding_trust: fires once when trust drops into the first
+            // band with an AP malus (T59: from >= 40 to < 40) for a real (non-NPC) colony.
             $userId = $colony->user_id ?? null;
+            $malusBelow = $this->trustService->malusBelow();
             $trustBefore = null;
             if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_trust')) {
                 $trustBefore = (int) (DB::table('colony_resources')
                     ->where('colony_id', $colony->id)
                     ->where('resource_id', 12)
-                    ->value('amount') ?? 0);
+                    ->value('amount') ?? $this->trustService->getTrust($colony->id));
             }
 
             $this->trustService->calculateAndStore($colony, $tick);
 
-            if ($userId !== null && $trustBefore !== null && $trustBefore >= 0) {
-                $trustAfter = (int) (DB::table('colony_resources')
-                    ->where('colony_id', $colony->id)
-                    ->where('resource_id', 12)
-                    ->value('amount') ?? 0);
+            if ($userId !== null && $trustBefore !== null && $trustBefore >= $malusBelow) {
+                $trustAfter = $this->trustService->getTrust($colony->id);
 
-                if ($trustAfter < 0) {
+                if ($trustAfter < $malusBelow) {
                     $this->eventService->createEvent([
                         'user' => $userId,
                         'tick' => $tick,

@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * A6 (GDD §18.2): the trust chip escalates — neutral, amber below 0, red below -10.
+ * A6 (GDD §18.2): the trust chip escalates. T59: the shell delivers the band; the
+ * Svelte regex below still pins the pre-T59 chip and changes with the frontend step.
  */
 class ResourcebarTrustChipTest extends TestCase
 {
@@ -38,20 +39,15 @@ class ResourcebarTrustChipTest extends TestCase
         return file_get_contents(base_path('frontend/src/lib/components/ResourceBar.svelte'));
     }
 
-    public function test_shell_delivers_trust_and_red_threshold(): void
+    public function test_shell_delivers_trust_band_and_ap_instead_of_red_threshold(): void
     {
-        foreach ([0, -5, -10, -11, 25] as $trust) {
+        // T59: the chip colour follows the band; chip_red is gone.
+        foreach ([10 => ['riot', -2], 30 => ['restless', -1], 50 => ['stable', 0], 70 => ['content', 1], 90 => ['euphoric', 2]] as $trust => [$band, $ap]) {
             $shell = $this->shellForTrust($trust);
-            $this->assertSame($trust, $shell['trust']);
-            $this->assertSame(-10, $shell['trust_chip_red']);
+            $this->assertSame($band, $shell['trust']['band']);
+            $this->assertSame($ap, $shell['trust']['ap']);
+            $this->assertArrayNotHasKey('trust_chip_red', $shell);
         }
-    }
-
-    public function test_red_threshold_follows_config(): void
-    {
-        config(['game.run.trust_warning.chip_red' => -20]);
-
-        $this->assertSame(-20, $this->shellForTrust(-15)['trust_chip_red']);
     }
 
     /**

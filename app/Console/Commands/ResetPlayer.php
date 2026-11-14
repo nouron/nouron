@@ -32,7 +32,7 @@ use function Laravel\Prompts\table;
  *   fresh           Sol 1 clean start (default)
  *   pre-phase2      CC Lv3 + Agrardom Lv2 + Sciencelab Lv1 + 2 advisors — Phase-1 Grundaufbau met, Phase 2 starts on the next Sol
  *   phase2          Phase 2 active (tick 15), 3 objectives drawn, realistic early-Phase-2 state
- *   near-fail-trust Phase 2, trust = −15 (threshold −20), depleted Organika reserves
+ *   near-fail-trust Phase 2, trust = 8 (threshold < 5, band riot), depleted Organika reserves
  *   near-deadline   Phase 2, tick = 95 (5 sols left), upgraded buildings, 1 objective done
  *   objectives-done Phase 2, tick = 60, all 3 objectives completed, strong economy
  *
@@ -66,7 +66,7 @@ class ResetPlayer extends Command
         'fresh' => 'Sol 1          — Neustart (Standard)',
         'pre-phase2' => 'Pre-Phase 2    — Grundaufbau erfüllt, Phase 2 startet beim nächsten Sol',
         'phase2' => 'Phase 2        — Tick 15, 3 Objectives offen, frühe Phase 2',
-        'near-fail-trust' => 'Vertrauenskrise — Trust −15 (Grenze −20), Tick 30, Org-Reserven leer',
+        'near-fail-trust' => 'Vertrauenskrise — Trust 8 (Grenze < 5), Tick 30, Org-Reserven leer',
         'near-deadline' => 'Deadline       — Tick 95 (5 Sols verbleibend), 1 Objective erledigt',
         'objectives-done' => 'Fertig         — Tick 60, alle 3 Objectives abgeschlossen',
     ];
@@ -512,7 +512,7 @@ class ResetPlayer extends Command
             regolith: 150,
             organika: 120,
             werkstoffe: 0,
-            trust: 25,
+            trust: 62,
             credits: 2400,
             supply: 34,
         );
@@ -552,7 +552,7 @@ class ResetPlayer extends Command
             regolith: 60,
             organika: 170,
             werkstoffe: 0,
-            trust: 25,
+            trust: 62,
             credits: 1900,
             supply: 39,
         );
@@ -565,15 +565,16 @@ class ResetPlayer extends Command
     }
 
     /**
-     * Tick 30 — Trust crisis, 5 points above fail threshold.
+     * Tick 30 — Trust crisis, 3 points above fail threshold (band riot, T59 0..100 scale).
      *
-     * 15 more Sols than phase2. Trust dropped to -15 through recurring food shortfalls
+     * 15 more Sols than phase2. Trust dropped to 8 through recurring food shortfalls
      * (hunger_streak penalties). Organika depleted to 50 (the shortage that caused it).
      * Regolith accumulated (no new buildings to spend on): +150.
      * Credits: emergency merchant purchases + low AP efficiency → 800.
      * Supply: unchanged (no new buildings).
-     * Kenntnisse: research slowed by trust crisis (AP multiplier 1.0 in this band,
-     * but player distracted recovering food): construction Lv3, cartography Lv1.
+     * Kenntnisse: research slowed by trust crisis (band riot: -2 AP,
+     * player distracted recovering food): construction Lv3, cartography Lv1.
+     * Note: the next tick recalculates trust from its sources and overwrites this value.
      * Hangar placed at tick 12 (path gate for pilot slot).
      */
     private function scenarioNearFailTrust(Colony $colony, Run $run): void
@@ -588,7 +589,7 @@ class ResetPlayer extends Command
             regolith: 210,
             organika: 50,
             werkstoffe: 0,
-            trust: -15,
+            trust: 8,
             credits: 800,
             supply: 42,
         );
@@ -652,7 +653,7 @@ class ResetPlayer extends Command
             regolith: 500,
             organika: 600,
             werkstoffe: 30,
-            trust: 60,
+            trust: 75,
             credits: 7000,
             supply: 95,
         );
@@ -747,7 +748,7 @@ class ResetPlayer extends Command
             regolith: 300,
             organika: 350,
             werkstoffe: 20,
-            trust: 60,
+            trust: 75,
             credits: 10000,
             supply: 78,
         );

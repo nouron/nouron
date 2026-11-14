@@ -64,7 +64,7 @@ final class BotContext
         $creditDemand = $upkeep * 10 + (isset($objectives['task_credit_reserve'])
             ? (int) round((int) config('game.run.tasks.task_credit_reserve.threshold', 4000) * $w['credit_reserve_factor'])
             : 0);
-        $trustDanger = $trust - (int) config('game.run.trust_fail_threshold', -20) <= (int) $w['trust_danger_margin'];
+        $trustDanger = $trust - (int) config('game.run.trust_fail_threshold', 5) <= (int) $w['trust_danger_margin'];
 
         $prices = [
             'credits' => (float) $w['price']['credits'] * Valuation::scarcity($creditDemand, $credits, $lo, $hi),

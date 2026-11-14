@@ -40,13 +40,15 @@ class ShellApiTest extends TestCase
             'username', 'resource_bar_possessions', 'current_sol', 'sol_limit', 'nexus_debt', 'nexus_debt_max',
             'in_active_run', 'bar_built', 'hangar_built', 'sciencelab_built', 'unread_nexus_count',
             'trust', 'colony_ap', 'supply_breakdown', 'colonists_overview', 'staffing_share', 'resource_flow',
-            'hunger_penalty', 'trust_breakdown' => ['buildings', 'research', 'ships', 'events', 'hunger', 'total'], 'ap_breakdown', 'active_hint', 'active_encounter_notices',
+            'hunger_penalty', 'ap_breakdown', 'active_hint', 'active_encounter_notices',
         ]);
+        $response->assertJsonStructure(['trust' => ['band', 'ap', 'bands', 'lab', 'sources', 'total']]);
         $response->assertJsonPath('in_active_run', true);
         $response->assertJsonPath('sciencelab_built', true);
+        // Bart's colony has a science lab: the number is visible (T59 F3).
         $this->assertSame(
             (int) DB::table('colony_resources')->where(['colony_id' => 1, 'resource_id' => 12])->value('amount'),
-            $response->json('trust')
+            $response->json('trust.total')
         );
     }
 
@@ -70,7 +72,7 @@ class ShellApiTest extends TestCase
 
         $this->getJson('/api/v1/shell')
             ->assertOk()
-            ->assertJsonPath('trust', (int) DB::table('colony_resources')->where(['colony_id' => 1, 'resource_id' => 12])->value('amount'));
+            ->assertJsonPath('trust.total', (int) DB::table('colony_resources')->where(['colony_id' => 1, 'resource_id' => 12])->value('amount'));
     }
 
     public function test_shell_works_for_a_user_without_a_colony(): void

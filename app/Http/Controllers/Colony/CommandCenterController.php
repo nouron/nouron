@@ -105,7 +105,12 @@ class CommandCenterController extends BaseController
             ])
             ->values();
 
+        // T59 F3: trust amounts (Sol delta, event values) only with a science lab.
+        $trustNumbers = $this->trustService->numbersVisible($colony->id);
         $lastSolDeltas = Cache::get("colony:{$colony->id}:last_sol_deltas");
+        if (! $trustNumbers && is_array($lastSolDeltas)) {
+            unset($lastSolDeltas['trust']);
+        }
 
         $advisorTypeByPersonellId = collect(config('advisors', []))
             ->mapWithKeys(fn ($cfg, $key) => [$cfg['id'] => $key]);
@@ -142,7 +147,9 @@ class CommandCenterController extends BaseController
             ->values();
         $trustEventsSum = $trustLines->sum('delta');
         $trustEventCap = config('game.trust.event_cap');
-        $trustEvents = $trustLines;
+        $trustEvents = $trustNumbers
+            ? $trustLines
+            : $trustLines->map(fn (array $line) => ['tick' => $line['tick'], 'description' => $line['description']]);
 
         // Nexus-Import widget (GDD §3) — gated by Uplink-Station Lv1, checked server-side
         // in ColonyController::nexusImportCompounds() too; here only for the disabled UI state.
@@ -159,7 +166,7 @@ class CommandCenterController extends BaseController
 
         $colonists = $this->resourcesService->colonistsOverview($colony->id);
 
-        return compact(
+        $data = compact(
             'colonists',
             'phaseProgress',
             'stipendTiers',
@@ -178,5 +185,11 @@ class CommandCenterController extends BaseController
             'uplinkLevel',
             'nexusImport',
         );
+        if (! $trustNumbers) {
+            unset($data['trustEventsSum'], $data['trustEventCap']);
+        }
+        $data['trustNumbersVisible'] = $trustNumbers;
+
+        return $data;
     }
 }
