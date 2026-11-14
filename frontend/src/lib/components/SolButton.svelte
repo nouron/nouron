@@ -8,7 +8,19 @@
 	import { page } from '$app/state';
 	import { refreshShell, solEpoch } from '#lib/stores/shell.ts';
 
-	type Line = { label: string; detail?: string; tone?: string; reason?: string; beat?: boolean; from?: number; to?: number };
+	type Line = {
+		key?: string;
+		label: string;
+		detail?: string;
+		tone?: string;
+		reason?: string;
+		beat?: boolean;
+		from?: number;
+		to?: number;
+		// Trust line (T59): band before/after the Sol; without a science lab there is no from/to.
+		band_from?: string;
+		band_to?: string;
+	};
 	type Group = { key: string; icon: string; title: string; lines: Line[] };
 	type Criterion = { key: string; label: string; done: boolean; current: number; target: number };
 	type Objective = { label: string; done: boolean; revealed: boolean; current: number; target: number };
@@ -140,6 +152,12 @@
 		else await goto('/colony');
 	}
 
+	// Trust without numbers: a band change reads "Stabil → Zufrieden", otherwise the band word the server sent.
+	const lineDetail = (line: Line) =>
+		line.key === 'trust' && line.from === undefined && line.band_from && line.band_to && line.band_from !== line.band_to
+			? `${t(`trust.band_${line.band_from}`)} → ${t(`trust.band_${line.band_to}`)}`
+			: (line.detail ?? '');
+
 	const counterValue = (g: Group, li: number) => counters[`${g.key}:${li}`] ?? g.lines[li].from ?? '';
 
 	// The button lives inside the header's stacking context (z-index 100), so its overlays
@@ -232,7 +250,7 @@
 												{#if line.from !== undefined && line.to !== undefined}
 													<span class="sol-report__counter">{counterValue(group, li)}</span>
 												{/if}
-												<span class="sol-report__detail">{line.detail ?? ''}</span>
+												<span class="sol-report__detail">{lineDetail(line)}</span>
 											</span>
 										</li>
 									{/each}

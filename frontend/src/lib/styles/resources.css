@@ -345,23 +345,23 @@
 }
 
 .ap-chip--trust-pos {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--color-success-bg);
+    color: var(--color-success-fg);
 }
 
 .ap-chip--trust-neu {
-    background: #f3f4f6;
-    color: #374151;
+    background: var(--ap-neutral-bg);
+    color: var(--ap-neutral-fg);
 }
 
 .ap-chip--trust-warn {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-fg);
 }
 
 .ap-chip--trust-neg {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--color-danger-bg);
+    color: var(--color-danger-fg);
 }
 
 /* Pulse when AP pool or resource amount shrinks — value change alone is easy to miss */
