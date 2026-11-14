@@ -34,6 +34,9 @@
 		phase_progress: { phase: number; criteria?: Criterion[]; objectives?: Objective[] };
 	};
 
+	/** All AP of this Sol are spent: the outline pulses gently to point at the next step. */
+	let { ready = false }: { ready?: boolean } = $props();
+
 	let confirmAp = $state<number | null>(null);
 	let loading = $state(false);
 	let report = $state<Report | null>(null);
@@ -168,9 +171,16 @@
 	}
 </script>
 
-<button type="button" class="btn-sol" onclick={handleClick} disabled={loading}>
-	<i class="bi bi-skip-forward-fill"></i>
-	{t('colony.next_sol_button')}
+<button
+	type="button"
+	class="btn-sol"
+	class:btn-sol--ready={ready && !loading}
+	onclick={handleClick}
+	disabled={loading}
+	aria-label={t('colony.next_sol_button')}
+>
+	<i class="bi bi-skip-forward-fill" aria-hidden="true"></i>
+	<span class="btn-sol__label">{t('colony.next_sol_button')}</span>
 </button>
 
 {#if confirmAp !== null}
@@ -378,6 +388,7 @@
 	.btn-sol {
 		display: inline-flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.3rem;
 		padding: 0.2rem 0.65rem;
 		font: 600 0.8rem var(--font-body);
@@ -395,5 +406,29 @@
 	.btn-sol:disabled {
 		opacity: 0.5;
 		cursor: wait;
+	}
+	.btn-sol--ready {
+		animation: sol-ready 1.8s ease-in-out infinite;
+	}
+	@keyframes sol-ready {
+		0%,
+		100% {
+			box-shadow: 0 0 0 0 transparent;
+		}
+		50% {
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 40%, transparent);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.btn-sol--ready {
+			animation: none;
+			box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 40%, transparent);
+		}
+	}
+	/* Phones: icon only (the Sol label sits right above it). */
+	@media (max-width: 599px) {
+		.btn-sol__label {
+			display: none;
+		}
 	}
 </style>

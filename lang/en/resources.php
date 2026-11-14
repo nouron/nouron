@@ -85,6 +85,5 @@ return [
     // Resource rail (left overlay)
     'rail_label' => 'Resource bar',
     'rail_toggle' => 'Expand or collapse resource bar (key R)',
-    'rail_toggle_ap' => 'Expand or collapse resource bar, :ap AP',
     'rail_warning' => 'Warning',
 ];

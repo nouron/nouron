@@ -68,6 +68,13 @@
         max-width: 380px;
     }
 
+    /* No dot pager here: the cards take that height too (the shared offset reserves 32px for the dots). */
+    .advisor-card {
+        height: calc(100vh - var(--page-offset-card) + 32px);
+        height: calc(100dvh - var(--page-offset-card) + 32px);
+        max-height: 820px;
+    }
+
     /* All cards sit side by side here: no lift for the carousel's current card, so the row stays flush. */
     .advisor-card.advisor-card--current {
         transform: none;
@@ -158,13 +165,15 @@
     border-color: #c0c0d8;
 }
 
-/* Locked card: prereq + effects sections stay visible, portrait + info dimmed */
+/* Locked card: prereq + effects sections stay visible, portrait + info content dimmed. The info panel itself is not
+ * dimmed (only its children), so its white glass is as strong as on hired and vacant cards; the lock box with the
+ * requirement stays readable. */
 .advisor-card--locked {
     pointer-events: none;
 }
 
 .advisor-card--locked .advisor-portrait,
-.advisor-card--locked .advisor-info {
+.advisor-card--locked .advisor-info > :not(.advisor-stats):not(.advisor-effects) {
     opacity: 0.38;
     filter: grayscale(1);
 }
@@ -390,33 +399,6 @@
     font-style: italic;
 }
 
-/* ── Section 3: Freigeschaltete Effekte ──────────────────────────────────── */
-
-.advisor-card__effects {
-    flex: 0 0 auto;
-    border-top: 1px solid #eeeef4;
-    background: #fafafe;
-    padding: 0.4rem 0.75rem 0.45rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.08rem;
-}
-
-.effects-section-label {
-    font-size: 0.55rem;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: #bbb;
-    line-height: 1;
-}
-
-.effects-text {
-    font-size: 0.68rem;
-    color: #666;
-    font-weight: 500;
-    line-height: 1.3;
-}
-
 /* ── Info panel — bottom 1/3 of card ─────────────────────────────────────── */
 
 .advisor-info {
@@ -438,15 +420,25 @@
 }
 
 .advisor-name {
-    font-size: 0.73rem;
-    font-weight: 800;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.16em;
     color: #1a1a2e;
     line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.advisor-effects {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #666;
+    line-height: 1.3;
+    margin-bottom: 0.35rem;
 }
 
 .advisor-subtitle {
@@ -571,11 +563,6 @@
     color: #3b5ac6;
     border: 1px solid #c5cff0;
 }
-.advisor-status--locked {
-    background: #f4f4f4;
-    color: #999;
-    border: 1px solid #ddd;
-}
 /* Fleet commander chip: neutral grey, shown when advisor.fleet_id && advisor.is_commander */
 .advisor-status--on-fleet {
     background: #f0f0f4;
@@ -630,11 +617,40 @@
     background: #fff5f5;
 }
 
-/* Full-width hire button used in vacant slot when there is no status chip companion */
+/* Hire on a vacant card: the card's primary action, full card width, comfortable touch height. */
 .btn-hire--full {
     width: 100%;
-    padding: 0.4rem;
-    text-align: center;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    text-align: left;
+    color: #fff;
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    transition: opacity 0.15s;
+}
+
+.btn-hire--full:disabled {
+    /* Only the button face fades; the cost chip stays full strength so a red (unaffordable) chip reads clearly. */
+    background: color-mix(in srgb, var(--color-accent) 40%, #fff);
+    border-color: transparent;
+    cursor: not-allowed;
+}
+
+.btn-hire--full:hover:not(:disabled) {
+    background: var(--color-accent);
+    opacity: 0.88;
+}
+
+@media (max-width: 767px) {
+    .btn-hire--full {
+        min-height: 48px;
+        font-size: 1rem;
+    }
 }
 
 /* ── Hire / fire confirmation dialogs ─────────────────────────────────────── */
@@ -679,92 +695,7 @@ dialog.advisor-dialog h3 {
 }
 
 /* Advisor summary: portrait + name/desc */
-.dialog-advisor {
-    display: flex;
-    gap: 0.85rem;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-
-.dialog-portrait {
-    flex: 0 0 auto;
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
-    background-color: #eceff1;
-    background-size: cover;
-    background-position: center top;
-    border: 2px solid var(--color-border);
-}
-
-.dialog-advisor-info {
-    min-width: 0;
-}
-
-.dialog-advisor-name {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.25rem;
-}
-
-.dialog-advisor-name strong {
-    font-size: 1rem;
-    color: var(--color-anthracite);
-}
-
-.dialog-rank-badge {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.1rem 0.45rem;
-    border-radius: 999px;
-    background: #eceff1;
-    color: #546e7a;
-}
-
-.dialog-advisor-desc {
-    margin: 0;
-    font-size: 0.78rem;
-    line-height: 1.4;
-    color: #777;
-}
-
 /* Stat rows: AP gain, one-time cost, upkeep */
-.dialog-stats {
-    margin: 0 0 0.5rem;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.dialog-stat {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.82rem;
-}
-
-.dialog-stat + .dialog-stat {
-    border-top: 1px solid var(--color-border);
-}
-
-.dialog-stat dt {
-    color: #666;
-}
-
-.dialog-stat dd {
-    margin: 0;
-    font-weight: 700;
-    color: var(--color-anthracite);
-}
-
-.dialog-stat-positive {
-    color: #2e7d32 !important;
-}
-
 .dialog-cost {
     font-size: 0.85rem;
     color: #555;
@@ -791,13 +722,6 @@ dialog.advisor-dialog h3 {
     font-weight: 600;
 }
 
-.btn-confirm-hire {
-    background: #2e7d32;
-    color: #fff;
-}
-.btn-confirm-hire:hover {
-    background: #1b5e20;
-}
 .btn-confirm-fire {
     background: #c0392b;
     color: #fff;
@@ -818,16 +742,6 @@ dialog.advisor-dialog h3 {
     font-size: 0.8rem;
     margin-top: 0.5rem;
     min-height: 1em;
-}
-
-.dialog-warning {
-    color: #8a6d00;
-    background: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 0.25rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-    margin-top: 0.75rem;
 }
 
 /* ── Path-open slot: minimal indicator inside carousel card ────────────── */
@@ -1149,8 +1063,7 @@ dialog.advisor-dialog h3 {
         margin-bottom: 0.6rem;
     }
 
-    .advisor-info,
-    .advisor-card__effects {
+    .advisor-info {
         position: relative;
         z-index: 2;
         flex: 0 0 auto;
@@ -1166,14 +1079,13 @@ dialog.advisor-dialog h3 {
     }
 
     .advisor-info .stat-label,
-    .advisor-info .advisor-subtitle,
-    .advisor-card__effects .effects-section-label {
+    .advisor-info .advisor-subtitle {
         color: #777;
     }
 
     /* Room for the dot pager that floats over the bottom edge. */
-    .advisor-card__effects {
-        padding-bottom: 1.9rem;
+    .advisor-info {
+        padding-bottom: 2.1rem;
     }
 
     .carousel-dots {
@@ -1247,8 +1159,7 @@ dialog.advisor-dialog h3 {
         margin-bottom: 0.6rem;
     }
 
-    .advisor-info,
-    .advisor-card__effects {
+    .advisor-info {
         position: relative;
         z-index: 2;
         flex: 0 0 auto;
@@ -1267,7 +1178,7 @@ dialog.advisor-dialog h3 {
      * height, so the portrait area above and the panel edges line up. The footer (status + button) sits at the
      * panel's bottom via margin-top: auto; shorter content leaves the space above it. */
     .advisor-info {
-        flex: 0 0 13.5rem;
+        flex: 0 0 16.5rem;
         box-sizing: border-box;
     }
 
@@ -1275,15 +1186,8 @@ dialog.advisor-dialog h3 {
         flex: 1 1 auto;
     }
 
-    /* Effects line: room for two lines in every card, so a wrapping text does not lift its info panel. */
-    .advisor-card__effects {
-        min-height: 3.6rem;
-        box-sizing: border-box;
-    }
-
     .advisor-info .stat-label,
-    .advisor-info .advisor-subtitle,
-    .advisor-card__effects .effects-section-label {
+    .advisor-info .advisor-subtitle {
         color: #777;
     }
 }
@@ -1291,8 +1195,7 @@ dialog.advisor-dialog h3 {
 @media (prefers-reduced-transparency: reduce) {
     .advisors-header .slot-badge,
     .advisor-card__prereq,
-    .advisor-info,
-    .advisor-card__effects {
+    .advisor-info {
         background: #fff;
         -webkit-backdrop-filter: none;
         backdrop-filter: none;

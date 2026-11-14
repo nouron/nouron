@@ -1,9 +1,18 @@
 <script lang="ts">
-	// Resource chips (vertical list inside ResourceRail) + breakdown popups that open to the right of the rail.
+	// Resource chips + breakdown popups. Rendered twice: vertically inside ResourceRail (materials; popups open to the
+	// right of the rail) and, with `top`, in the header (Sol, trust, AP ring; popups open below the chip).
 	import { t } from '#lib/i18n.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
 
-	let { s, open = $bindable(null) }: { s: Shell; open?: string | null } = $props();
+	let {
+		s,
+		open = $bindable(null),
+		keys,
+		top = false
+	}: { s: Shell; open?: string | null; /** Header: only these chips. Rail (unset): everything but HEADER_KEYS. */ keys?: string[]; top?: boolean } = $props();
+
+	// Chips that live in the header instead of the rail.
+	const HEADER_KEYS = ['sol', 'trust', 'ap'];
 
 	type Row = { label: string; value: string | number; strong?: boolean; hidden?: boolean; note?: boolean; plain?: boolean };
 	type Rung = { key: string; label: string; ap: string; tone: string; current: boolean };
@@ -50,7 +59,7 @@
 		return lines.length ? [lines, total] : [total];
 	};
 
-	const chips = $derived.by((): Chip[] => {
+	const allChips = $derived.by((): Chip[] => {
 		const out: Chip[] = [];
 		const p = s.resource_bar_possessions ?? {};
 		const f = s.resource_flow;
@@ -252,13 +261,27 @@
 		return out;
 	});
 
+	const chips = $derived(allChips.filter((c) => (keys ? keys.includes(c.key) : !HEADER_KEYS.includes(c.key))));
+
+	// AP ring: one segment per AP of this Sol's budget (bonus AP can exceed it), spent ones first (clockwise from the top).
+	const apLeft = $derived(s.colony_ap ?? 0);
+	const apSegments = $derived(Math.max(s.ap_breakdown?.total ?? 0, apLeft, 1));
+
 	// Place a popup right of the rail panel (position: fixed escapes the panel's scroll clipping).
 	// Vertically clamped between the header and the bottom chrome; falls back to covering the panel when too narrow.
 	function place(el: HTMLElement) {
 		const host = el.parentElement!.getBoundingClientRect();
+		if (top) {
+			// Header: below the chip, right-aligned to it, kept inside the viewport.
+			const w = Math.min(280, window.innerWidth - 16);
+			el.style.width = `${w}px`;
+			el.style.left = `${Math.max(8, Math.min(host.right - w, window.innerWidth - w - 8))}px`;
+			el.style.top = `${host.bottom + 6}px`;
+			return;
+		}
 		const panel = el.closest('.rail-panel')!.getBoundingClientRect();
 		const root = getComputedStyle(document.documentElement);
-		const top = parseFloat(root.getPropertyValue('--app-header-h')) || 0;
+		const headerH = parseFloat(root.getPropertyValue('--app-header-h')) || 0;
 		const bottom = parseFloat(root.getPropertyValue('--app-bottom-h')) || 0;
 		let left = panel.right + 8;
 		let width = Math.min(280, window.innerWidth - left - 8);
@@ -270,13 +293,13 @@
 		el.style.width = `${width}px`;
 		const h = el.offsetHeight;
 		const max = window.innerHeight - bottom - 8 - h;
-		el.style.top = `${Math.max(top + 8, Math.min(host.top, max))}px`;
+		el.style.top = `${Math.max(headerH + 8, Math.min(host.top, max))}px`;
 	}
 </script>
 
-<div class="chips resource-bar">
-	{#each chips as chip (chip.key)}
-		{#if chip.dividerBefore}<span class="res-divider" aria-hidden="true"></span>{/if}
+<div class="chips resource-bar" class:chips--top={top}>
+	{#each chips as chip, ci (chip.key)}
+		{#if chip.dividerBefore && ci > 0 && !top}<span class="res-divider" aria-hidden="true"></span>{/if}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="rc"
@@ -285,12 +308,31 @@
 		>
 			<button
 				type="button"
-				class="{chip.cls} chip-btn"
+				class={top && chip.key === 'ap' ? 'ap-ring' : `${chip.cls} chip-btn`}
 				class:chip-btn--stack={chip.stack}
+				class:ap-ring--empty={apLeft === 0}
 				aria-expanded={open === chip.key}
 				aria-controls="rail-popup-{chip.key}"
+				aria-label={top && chip.key === 'ap' ? `${apLeft} / ${apSegments} AP` : undefined}
 				onclick={() => (open = open === chip.key && !canHover() ? null : chip.key)}
 			>
+				{#if top && chip.key === 'ap'}
+					<svg viewBox="0 0 44 44" aria-hidden="true">
+						{#each { length: apSegments } as _, i (i)}
+							<circle
+								cx="22"
+								cy="22"
+								r="19.5"
+								pathLength={apSegments}
+								stroke-dasharray="{apSegments > 1 ? 0.84 : 1} {apSegments}"
+								stroke-dashoffset={-(i + (apSegments > 1 ? 0.08 : 0))}
+								class:spent={i < apSegments - apLeft}
+							/>
+						{/each}
+					</svg>
+					<span class="ap-ring__n">{apLeft}</span>
+					<span class="ap-ring__u">AP</span>
+				{:else}
 				<span class={chip.ap ? 'ap-label' : 'res-abbr'}>{chip.abbr ?? chip.label}</span>
 				{#if chip.split}
 					<span class="res-amount res-amount--split" aria-label={String(chip.amount)}
@@ -298,6 +340,7 @@
 					>
 				{:else}
 					<span class="res-amount">{chip.amount}</span>
+				{/if}
 				{/if}
 			</button>
 			{#if open === chip.key}
@@ -529,6 +572,83 @@
 		font-style: italic;
 		font-weight: 400;
 	}
+	/* ── Header variant (`top`): chips in a row; Sol is a slim label line, AP a segmented ring. ── */
+	.chips--top {
+		flex-direction: row;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+	/* Above the hint bar that follows in the header. */
+	.chips--top .rail-popup {
+		z-index: 500;
+	}
+	.chips--top .chip-btn {
+		width: auto;
+		border-radius: var(--radius-sm);
+	}
+	.chips--top .chip-btn:global(.res-chip--sol) {
+		width: 100%;
+		min-height: 0;
+		padding: 0 0.3rem;
+		font-size: 0.68rem;
+		line-height: 1.3;
+		text-transform: uppercase;
+		border: 1px solid var(--color-border) !important;
+	}
+	.ap-ring {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		margin: 0;
+		border: 0;
+		border-radius: 50%;
+		background: none;
+		color: var(--color-text-primary);
+		font: 700 0.95rem/1 var(--font-body);
+		font-variant-numeric: tabular-nums;
+		cursor: pointer;
+	}
+	.ap-ring:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+	.ap-ring svg {
+		position: absolute;
+		inset: 0;
+		transform: rotate(-90deg);
+	}
+	.ap-ring circle {
+		fill: none;
+		stroke: var(--color-accent);
+		stroke-width: 3.5;
+		transition: stroke var(--duration-fast);
+	}
+	.ap-ring circle.spent {
+		stroke: var(--color-border);
+	}
+	.ap-ring__u {
+		font-size: 0.55rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+	}
+	.ap-ring--empty .ap-ring__n {
+		color: var(--color-text-secondary);
+	}
+	@media (max-width: 599px) {
+		.chips--top {
+			gap: var(--space-xs);
+		}
+		/* Phones: band word only; the AP effect is in the popup. */
+		.chips--top .res-amount--split span:last-child {
+			display: none;
+		}
+	}
+
 	.res-divider {
 		width: auto;
 		height: 1px;
@@ -536,7 +656,7 @@
 		align-self: stretch;
 	}
 	@media (pointer: coarse) {
-		.chip-btn {
+		.chips:not(.chips--top) .chip-btn {
 			min-height: 44px;
 		}
 	}

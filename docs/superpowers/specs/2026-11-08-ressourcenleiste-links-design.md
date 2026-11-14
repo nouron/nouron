@@ -1,5 +1,7 @@
 # Ressourcenleiste links — Verhaltensentwurf (ENTWURF / Vorschlag)
 
+> **Hinweis 2026-11-14:** Sol, Vertrauen und AP stehen jetzt in der Kopfzeile (AP als Segment-Ring), nicht mehr in der Leiste; der Griff zeigt keinen AP-Wert mehr. Siehe `docs/frontend-conventions.md` (Navigation/Kopfzeile).
+
 > **Hinweis 2026-11-08 (Hauptagent):** PR 1 führte `--app-header-h` und `--app-bottom-h` ein (gemessen, in `frontend/src/app.css`/`(game)/+layout.svelte`), nicht `--content-top`/`--content-bottom`. Beim Umsetzen die Namen angleichen. Die Seiten-Offsets sind noch nicht auf die Messvariablen umgestellt (PR 2, ändert die Optik).
 
 
