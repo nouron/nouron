@@ -2,11 +2,11 @@
 
 return [
     // Trust bands (displayed in colony overview and tooltips)
-    'band_euphorisch' => 'Euphorisch',
-    'band_zufrieden' => 'Zufrieden',
-    'band_stabil' => 'Stabil',
-    'band_unruhig' => 'Unruhig',
-    'band_aufruhr' => 'Aufruhr',
+    'band_riot' => 'Aufruhr',
+    'band_restless' => 'Unruhig',
+    'band_stable' => 'Stabil',
+    'band_content' => 'Zufrieden',
+    'band_euphoric' => 'Euphorisch',
 
     // Trust event descriptions (shown in INNN event log)
     'event_building_level_up' => 'Ein Gebäude wurde ausgebaut – die Bevölkerung ist erfreut.',
@@ -21,4 +21,7 @@ return [
     'event_stipend_small' => 'Kolonisten-Zulage (Klein) ausgeschüttet.',
     'event_stipend_medium' => 'Kolonisten-Zulage (Mittel) ausgeschüttet.',
     'event_stipend_large' => 'Kolonisten-Zulage (Groß) ausgeschüttet.',
+    'event_story_concern_resolved' => 'Ein Anliegen aus der Cantina wurde gelöst – man spricht gut über die Leitung.',
+    'event_story_concern_failed' => 'Ein Anliegen aus der Cantina blieb unerfüllt – die Enttäuschung macht die Runde.',
+    'event_merchant_trust_boost' => 'Vertrauensschub – die Ware des Händlers ist Gesprächsthema, die gute Laune hält noch ein paar Sole.',
 ];

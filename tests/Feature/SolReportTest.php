@@ -636,7 +636,7 @@ class SolReportTest extends TestCase
                 'debuff_until_tick' => 12,
                 'reason' => 'trust',
                 'hunger_streak' => 0,
-                'trust' => -25,
+                'trust_band' => 'riot',
             ]),
             'created_at' => now(),
             'is_read' => 1,
@@ -648,9 +648,9 @@ class SolReportTest extends TestCase
         $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_plague'));
         $this->assertNotNull($line, 'Expected a plague line in the events group');
         $this->assertSame(
-            __('colony.sol_report_plague_detail_trust', ['trust' => -25]),
+            __('colony.sol_report_plague_detail_trust', ['trust' => __('trust.band_riot')]),
             $line['detail'],
-            'the detail line must name the reason (trust value), not just the debuff'
+            'the detail line must name the reason (trust band, T59), not just the debuff'
         );
     }
 
@@ -726,7 +726,7 @@ class SolReportTest extends TestCase
         $line = collect($colony['lines'])->first(fn ($l) => ($l['from'] ?? null) === 50);
 
         $this->assertStringContainsString(__('resources.popup_trust_hunger'), $line['reason']);
-        $this->assertStringContainsString('-3', $line['reason']);
+        $this->assertStringContainsString('-2', $line['reason']); // hunger penalty at streak 2 (T59: base 1 + step 1)
     }
 
     public function test_passive_credits_shows_breakdown_in_colony_group(): void

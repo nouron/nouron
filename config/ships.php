@@ -44,7 +44,7 @@ return [
 
     'freighter' => [
         'id' => 47,         // ex smallTransporter
-        'trust_per_unit' => 2,       // 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_unit' => 1,       // 2→1 (T59 0..100 scale, halved)
         'nexus_cost' => 500,
         'nexus_delivery_ticks' => 2,
         'wear_per_sol' => 1.0,

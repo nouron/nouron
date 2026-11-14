@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
  * Item effects implemented in Phase 3:
  *   - repair_kit   → adds sp_amount to colony_buildings.status_points (capped at max_status_points)
  *                    for the building with the lowest relative condition
- *   - trust_boost  → adds trust_amount to colony_resources (resource_id = 12)
+ *   - trust_boost  → fires trust event merchant_trust_boost (fades over 5 Sols, T59 F5)
  *   - information  → sets colony_tiles.is_explored = 1 for all tiles of the colony
  *
  * Item effects implemented in Phase 4:
@@ -37,8 +37,6 @@ use Illuminate\Support\Facades\Log;
  */
 class MerchantService
 {
-    private const TRUST_RESOURCE_ID = 12;
-
     private const RES_CREDITS = 1;
 
     public function __construct(
@@ -502,7 +500,6 @@ class MerchantService
             'ap_flex' => ['amount' => $def['ap_amount'] ?? 20],
             'ap_targeted' => ['amount' => $def['ap_amount'] ?? 15],
             'repair_kit' => ['sp_amount' => $def['sp_amount'] ?? 30],
-            'trust_boost' => ['trust_amount' => $def['trust_amount'] ?? 15],
             'information' => [],
             default => [],
         };
@@ -514,7 +511,7 @@ class MerchantService
      * Apply the item's game effect.
      *
      * repair_kit   → heal the colony building with the lowest relative SP
-     * trust_boost  → add trust to colony_resources (resource_id = 12)
+     * trust_boost  → fire trust event merchant_trust_boost for the next Sol (T59 F5)
      * information  → reveal all colony_tiles for this colony
      * ap_flex      → distribute AP across advisor types via AdvisorService::creditAp
      * ap_targeted  → credit AP to a specific advisor type via AdvisorService::creditAp
@@ -530,11 +527,9 @@ class MerchantService
                 break;
 
             case 'trust_boost':
-                $amount = (int) ($payload['trust_amount'] ?? 15);
-                DB::table('colony_resources')
-                    ->where('colony_id', $colonyId)
-                    ->where('resource_id', self::TRUST_RESOURCE_ID)
-                    ->increment('amount', $amount);
+                // Trust is recalculated every Sol, so a direct write would vanish with the
+                // next tick — the boost is an event with a fading profile instead.
+                app(TrustService::class)->fireEvent($colonyId, 'merchant_trust_boost');
                 break;
 
             case 'information':

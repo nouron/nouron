@@ -253,64 +253,33 @@ class GameTickResourceGenerationTest extends TestCase
         $this->assertEquals(26, $regolith, 'Yield must stay at the tile fresh value regardless of the stored level');
     }
 
-    // ── Trust multiplier interaction ────────────────────────────────────────────
+    // ── Trust has no production factor (T59, Owner 2026-11-14) ──────────────────
 
     /**
-     * High trust (>60) applies a 1.20× production multiplier.
-     * harvester fresh yield 26 × 1.20 = round(31.2) = 31.
+     * Neither the top nor the bottom trust band changes the harvest: fresh yield 26
+     * lands unchanged at trust 95 (euphoric) and at trust 10 (riot).
      */
-    public function test_high_trust_applies_production_bonus(): void
+    public function test_trust_band_does_not_change_production(): void
     {
-        $this->placeHarvesterOnFreshTile();
-        DB::table('colony_buildings')
-            ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
-            ->update(['level' => 0]);
+        foreach ([95 => 11220, 10 => 11221] as $trust => $tick) {
+            $this->placeHarvesterOnFreshTile();
+            DB::table('colony_buildings')
+                ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
+                ->update(['level' => 0]);
+            DB::table('colony_resources')->updateOrInsert(
+                ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
+                ['amount' => $trust]
+            );
+            DB::table('colony_resources')->updateOrInsert(
+                ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_REGOLITH],
+                ['amount' => 0]
+            );
 
-        // Set trust to 75 (Euphorisch band: +61..+100 → multiplier 1.20)
-        DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
-            ['amount' => 75]
-        );
-        DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_REGOLITH],
-            ['amount' => 0]
-        );
+            Artisan::call('game:tick', ['--tick' => $tick]);
 
-        Artisan::call('game:tick', ['--tick' => 11220]);
-
-        $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // fresh yield 26; yield = round(26 × 1.20) = 31
-        $this->assertEquals(31, $regolith,
-            'Production at trust=75 must apply 1.20× multiplier → 31 Regolith');
-    }
-
-    /**
-     * Low trust (<-60) applies a 0.70× production penalty.
-     * harvester fresh yield 26 × 0.70 = round(18.2) = 18.
-     */
-    public function test_low_trust_applies_production_penalty(): void
-    {
-        $this->placeHarvesterOnFreshTile();
-        DB::table('colony_buildings')
-            ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
-            ->update(['level' => 0]);
-
-        // Set trust to -80 (Aufruhr band: -100..-61 → multiplier 0.70)
-        DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
-            ['amount' => -80]
-        );
-        DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_REGOLITH],
-            ['amount' => 0]
-        );
-
-        Artisan::call('game:tick', ['--tick' => 11221]);
-
-        $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // fresh yield 26; yield = round(26 × 0.70) = 18
-        $this->assertEquals(18, $regolith,
-            'Production at trust=-80 must apply 0.70× penalty → 18 Regolith');
+            $this->assertEquals(26, $this->getColonyResource(self::RES_REGOLITH),
+                "Production at trust={$trust} must stay at the fresh yield 26");
+        }
     }
 
     // ── agronomy Kenntnis bonus ──────────────────────────────────────────────

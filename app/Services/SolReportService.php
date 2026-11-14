@@ -135,14 +135,15 @@ class SolReportService
     /**
      * The volatile trust sources acting now (events, hunger) as "Label +n, Label -n", so the
      * Sol report says why trust moved. Stable sources (buildings, knowledge, ships) are in the popup.
+     * Without a science lab the labels come without amounts (T59 F3).
      */
-    private function trustReason(int $colonyId, int $tick): string
+    private function trustReason(int $colonyId, int $tick, bool $withNumbers): string
     {
         $b = $this->trustService->breakdown($colonyId, $tick);
         $parts = [];
         foreach (['events' => 'popup_trust_events', 'hunger' => 'popup_trust_hunger'] as $key => $lang) {
             if ($b[$key] !== 0) {
-                $parts[] = __('resources.'.$lang).' '.$this->signed($b[$key]);
+                $parts[] = __('resources.'.$lang).($withNumbers ? ' '.$this->signed($b[$key]) : '');
             }
         }
 
@@ -376,7 +377,7 @@ class SolReportService
         foreach ($events['encounter.plague_triggered'] ?? [] as $params) {
             $reason = $params['reason'] ?? 'hunger';
             $detail = $reason === 'trust'
-                ? __('colony.sol_report_plague_detail_trust', ['trust' => (int) ($params['trust'] ?? 0)])
+                ? __('colony.sol_report_plague_detail_trust', ['trust' => __('trust.band_'.($params['trust_band'] ?? $this->trustService->bandKey((int) ($params['trust'] ?? 0))))])
                 : __('colony.sol_report_plague_detail_hunger', ['streak' => (int) ($params['hunger_streak'] ?? 0)]);
 
             $lines[] = [
@@ -485,21 +486,29 @@ class SolReportService
     {
         $lines = [];
 
-        // Trust.
-        $trustAfter = (int) (DB::table('colony_resources')
-            ->where('colony_id', $colonyId)
-            ->where('resource_id', self::RES_TRUST)
-            ->value('amount') ?? 0);
-        $trustFrom = (int) ($before['trust'] ?? 0);
+        // Trust. Numbers (delta, from, to, source amounts) only with a science lab (T59 F3);
+        // without one the line shows the band reached and the tone follows the band change.
+        $trustAfter = $this->trustService->getTrust($colonyId);
+        $trustFrom = (int) ($before['trust'] ?? $trustAfter);
         $trustDelta = $trustAfter - $trustFrom;
-        $lines[] = [
+        $bandFrom = $this->trustService->band($trustFrom);
+        $bandTo = $this->trustService->band($trustAfter);
+        $withNumbers = $this->trustService->numbersVisible($colonyId);
+        $shift = $withNumbers ? $trustDelta : $bandTo['min'] - $bandFrom['min'];
+        $trustLine = [
+            'key' => 'trust',
             'label' => __('resources.res_trust'),
-            'detail' => $this->signed($trustDelta),
-            'reason' => $this->trustReason($colonyId, $tick),
-            'tone' => $trustDelta > 0 ? 'good' : ($trustDelta < 0 ? 'danger' : 'neutral'),
-            'from' => $trustFrom,
-            'to' => $trustAfter,
+            'detail' => $withNumbers ? $this->signed($trustDelta) : __('trust.band_'.$bandTo['key']),
+            'reason' => $this->trustReason($colonyId, $tick, $withNumbers),
+            'tone' => $shift > 0 ? 'good' : ($shift < 0 ? 'danger' : 'neutral'),
+            'band_from' => $bandFrom['key'],
+            'band_to' => $bandTo['key'],
         ];
+        if ($withNumbers) {
+            $trustLine['from'] = $trustFrom;
+            $trustLine['to'] = $trustAfter;
+        }
+        $lines[] = $trustLine;
 
         // Credits (net change over the Sol).
         $creditsAfter = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);

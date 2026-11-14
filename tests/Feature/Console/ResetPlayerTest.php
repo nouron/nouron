@@ -207,7 +207,8 @@ class ResetPlayerTest extends TestCase
         $run = $this->activeRun();
 
         $this->assertSame(30, $run->current_tick);
-        $this->assertSame(-15, DB::table('colony_resources')
+        // T59: 3 points above the fail threshold (< 5), inside band "riot".
+        $this->assertSame(8, DB::table('colony_resources')
             ->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount'));
     }
 

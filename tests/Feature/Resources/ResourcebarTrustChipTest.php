@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * A6 (GDD §18.2): the trust chip escalates — neutral, amber below 0, red below -10.
+ * A6 (GDD §18.2): the trust chip escalates. T59: the shell delivers the band, the
+ * chip shows band word + AP effect and takes its colour from the band.
  */
 class ResourcebarTrustChipTest extends TestCase
 {
@@ -38,34 +39,39 @@ class ResourcebarTrustChipTest extends TestCase
         return file_get_contents(base_path('frontend/src/lib/components/ResourceBar.svelte'));
     }
 
-    public function test_shell_delivers_trust_and_red_threshold(): void
+    public function test_shell_delivers_trust_band_and_ap_instead_of_red_threshold(): void
     {
-        foreach ([0, -5, -10, -11, 25] as $trust) {
+        // T59: the chip colour follows the band; chip_red is gone.
+        foreach ([10 => ['riot', -2], 30 => ['restless', -1], 50 => ['stable', 0], 70 => ['content', 1], 90 => ['euphoric', 2]] as $trust => [$band, $ap]) {
             $shell = $this->shellForTrust($trust);
-            $this->assertSame($trust, $shell['trust']);
-            $this->assertSame(-10, $shell['trust_chip_red']);
+            $this->assertSame($band, $shell['trust']['band']);
+            $this->assertSame($ap, $shell['trust']['ap']);
+            $this->assertArrayNotHasKey('trust_chip_red', $shell);
         }
     }
 
-    public function test_red_threshold_follows_config(): void
-    {
-        config(['game.run.trust_warning.chip_red' => -20]);
-
-        $this->assertSame(-20, $this->shellForTrust(-15)['trust_chip_red']);
-    }
-
     /**
-     * Escalation order in the chip: positive from 20, red below trust_chip_red,
-     * amber below 0, neutral otherwise.
+     * T59 §4: the chip shows band word + AP effect, never the raw number; its colour
+     * follows the band (riot negative, restless warning, stable neutral, content and
+     * euphoric positive). The rail handle warns at riot.
      */
-    public function test_chip_escalates_neutral_amber_red(): void
+    public function test_chip_shows_band_word_and_ap_coloured_by_band(): void
     {
         $bar = $this->resourceBar();
 
-        $this->assertMatchesRegularExpression(
-            "/tr >= 20\s*\?\s*'ap-chip--trust-pos'\s*:\s*tr < s\.trust_chip_red\s*\?\s*'ap-chip--trust-neg'\s*:\s*tr < 0\s*\?\s*'ap-chip--trust-warn'\s*:\s*'ap-chip--trust-neu'/",
-            $bar
-        );
-        $this->assertStringContainsString('cls: `ap-chip ${mod}`', $bar);
+        foreach (['riot' => 'neg', 'restless' => 'warn', 'stable' => 'neu', 'content' => 'pos', 'euphoric' => 'pos'] as $band => $tone) {
+            $this->assertMatchesRegularExpression("/TRUST_TONE[^;]*\\b{$band}: '{$tone}'/s", $bar);
+        }
+        $this->assertStringContainsString('cls: `ap-chip ap-chip--trust-${TRUST_TONE[tr.band] ?? \'neu\'}`', $bar);
+        $this->assertStringContainsString('amount: bandEffect', $bar);
+        $this->assertStringContainsString('t(\'resources.popup_trust_band_effect\', { band: t(`trust.band_${tr.band}`), ap: signedAp(tr.ap) })', $bar);
+        $this->assertStringContainsString('split: [t(`trust.band_${tr.band}`), `${signedAp(tr.ap)} AP`]', $bar);
+        $this->assertStringNotContainsString('amount: tr.total', $bar);
+        $this->assertStringNotContainsString('trust_chip_red', $bar);
+        $this->assertStringNotContainsString('trust_breakdown', $bar);
+
+        $rail = file_get_contents(base_path('frontend/src/lib/components/ResourceRail.svelte'));
+        $this->assertStringContainsString("s.trust?.band === 'riot'", $rail);
+        $this->assertStringNotContainsString('trust_chip_red', $rail);
     }
 }

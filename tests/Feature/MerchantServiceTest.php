@@ -40,7 +40,7 @@ namespace Tests\Feature;
  *    - test_buy_item_success_deducts_credits_and_marks_sold
  *    - test_buy_item_repair_kit_increases_status_points
  *    - test_buy_item_repair_kit_caps_status_points_at_max
- *    - test_buy_item_trust_boost_increments_colony_resource
+ *    - test_buy_item_trust_boost_fires_fading_trust_event
  *    - test_buy_item_information_sets_all_tiles_explored
  *
  *  getItemsForVisit
@@ -93,7 +93,7 @@ class MerchantServiceTest extends TestCase
             'items_count' => 3,
             'items' => [
                 'repair_kit' => ['label' => 'Reparatur-Kit',  'cost' => 100, 'sp_amount' => 30],
-                'trust_boost' => ['label' => 'Vertrauensschub', 'cost' => 150, 'trust_amount' => 15],
+                'trust_boost' => ['label' => 'Vertrauensschub', 'cost' => 150],
                 'information' => ['label' => 'Systemkarte',    'cost' => 200],
             ],
         ];
@@ -630,31 +630,31 @@ class MerchantServiceTest extends TestCase
         $this->assertEquals(self::MAX_SP, $spAfter, 'repair_kit must cap status_points at max_status_points');
     }
 
-    public function test_buy_item_trust_boost_increments_colony_resource(): void
+    public function test_buy_item_trust_boost_fires_fading_trust_event(): void
     {
         $this->mockTick(20);
 
-        $initialTrust = 100;
-        $trustAmount = 15;
+        $initialTrust = 50;
         $this->setColonyResource(self::TRUST_RESOURCE_ID, $initialTrust);
 
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
         $itemId = $this->insertItem($visitId, [
             'item_type' => 'trust_boost',
-            'payload' => json_encode(['trust_amount' => $trustAmount]),
+            'payload' => null,
             'cost_credits' => 150,
         ]);
         $this->setCredits(500);
 
         $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
 
-        $trustAfter = $this->getColonyResource(self::TRUST_RESOURCE_ID);
-
-        $this->assertEquals(
-            $initialTrust + $trustAmount,
-            $trustAfter,
-            'trust_boost effect must increment colony_resources amount for resource_id=12'
-        );
+        // T59 F5: the stored value is recalculated every Sol, so the boost is an event
+        // for the next Sol (profile merchant_boost), not a direct write.
+        $this->assertSame($initialTrust, $this->getColonyResource(self::TRUST_RESOURCE_ID));
+        $this->assertDatabaseHas('trust_events', [
+            'colony_id' => self::COLONY_ID,
+            'tick' => 21,
+            'event_type' => 'merchant_trust_boost',
+        ]);
     }
 
     public function test_buy_item_information_sets_all_tiles_explored(): void

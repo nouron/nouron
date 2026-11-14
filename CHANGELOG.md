@@ -4,6 +4,7 @@
 
 - AP-Skala ÷3 (T58, Spec `docs/superpowers/specs/2026-11-13-ap-skala.md`): Kolonie 4 AP je Sol, Berater-Ränge erhöhen Pool und Fach-Deckel (Baumeister, Analytiker, Raumfahrer), alle Bau-, Kenntnis-, Training-, Handlungs- und Beziehungskosten neu; Vertrauen und Seuche als feste AP statt Faktor, Rabatte als feste AP mit Untergrenzen, Reparatur 1 AP = 3 SP, Tomas' Rat immer 1 AP und je nach Beziehung häufiger. Werte gerechnet, nicht gemessen; laufende Läufe neu starten.
 - Cantina-Gespräche Variante C: ein Gespräch je Figur und Sol (kurz 1 AP, lang 2 AP ab Cantina 3), keine Kostenkürzung, verfallende AP an der Stufengrenze als Warn-Chip mit Hinweiszeile. AP-Popup zeigt Summanden, Reparatur-Knopf zeigt SP je Klick, Debug-Leiste zeigt die Kenntnis-Tabelle ohne Extra-Klick.
+- Vertrauen 0–100 (T59, Spec `docs/superpowers/specs/2026-11-14-vertrauen-skala.md`): Grundwert 50, fünf Stufen Aufruhr bis Euphorisch mit −2 bis +2 AP, Niederlage unter 5, Ereignis- und Quellenbeträge halbiert, kein Produktionsfaktor mehr, Händler-Schub klingt über 5 Sol ab, Kolonieblüte nach Stufe. Anzeige als Stufenwort mit AP-Wirkung; Zahl und Beträge nur mit Analytik-Labor.
 
 ## 2026-11-13
 

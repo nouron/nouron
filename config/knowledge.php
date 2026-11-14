@@ -64,7 +64,7 @@ return [
 
     'agronomy' => [
         'id' => 93,
-        'trust_per_lv' => 2,       // see GDD §13; 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 1,       // see GDD §13; 2→1 (T59 0..100 scale, halved)
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
@@ -73,7 +73,7 @@ return [
 
     'health' => [
         'id' => 94,
-        'trust_per_lv' => 3,       // see GDD §13; 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // see GDD §13; 3→2 (T59 0..100 scale, halved)
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
@@ -110,7 +110,7 @@ return [
         // wie agronomy ursprünglich, nur positiv. 1→2 (2026-09-14, A37-Folge
         // task_colony_prosperity: realistisches Trust-Maximum lag bei ~50, weit
         // unter der 70er-Zielschwelle — Trust-Quellen verstärkt statt Ziel gesenkt).
-        'trust_per_lv' => 2,
+        'trust_per_lv' => 1,       // 2→1 (T59 0..100 scale, halved)
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,

@@ -96,7 +96,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 12 | `hint_3` | **Zustandsbasiert:** Agrardom ≥ Lv1, CC < Lv2, CC-Ausbau noch nicht begonnen (`ap_spend=0` — sonst führt `hint_invest_site`) | "Der Agrardom steht — jetzt die Kommandozentrale auf Level 2 ausbauen." (Text nennt Koloniezone, Beraterslot 2 und die freigeschalteten Pfadgebäude) | Colony-Screen | Sol 3 als Floor (`hint_cc_upgrade_after_tick=2`) |
 | 13 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — AP nutzen." | Colony-Screen | nur Sol 1 |
 | 14 | `hint_4` | Analytik-Labor gebaut (sonst ist der Techtree gesperrt) und keine Kenntnis auf Level > 0 | "Noch keine Kenntnis auf Level 1 — im Techtree AP einer Kenntnis zuweisen." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
-| 15 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5`) |
+| 15 | `hint_5` | Vertrauen in der Stufe Unruhig oder tiefer (erste Stufe mit AP-Abzug, `hint_trust_threshold`) | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5`) |
 | 16 | `hint_spend_remaining_ap` | Mindestens ein **nutzbarer** AP-Pool ungenutzt (Forschung zählt nur mit gebautem Sciencelab, Wirtschaft nur mit gebauter Cantina, Navigation nur mit bezahlbarem Fog-Tile) — Pool mit den meisten Rest-AP gewinnt | "Noch AP übrig — investieren." | poolabhängig | — |
 | 17 | `hint_end_sol` | Fallback — greift nur wenn **kein nutzbarer AP-Pool** mehr übrig ist | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
 | 18 | `hint_encounter` | Die erste Gefahr (Sturm, Instabilität oder Seuche) ist eingetreten; bleibt aktiv, bis sie geschlossen wird | "Gebäude mit niedrigem Zustand sind anfälliger für Zwischenfälle — regelmäßige Reparatur zahlt sich doppelt aus." | Colony-Screen | — |
@@ -264,7 +264,7 @@ Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anz
 |---------|---------|-------------|
 | Decay (Verfall) | Erstes Gebäude fällt auf < 80% Status-Points | Protokoll-Ereignis: "Ihre [Gebäudename] zeigt erste Verfallserscheinungen. Reparatur-AP verlangsamen den Prozess." |
 | Keine freien Kolonisten | `freie_kolonisten` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Keine freien Kolonisten — Neubau und Ausbau ruhen, bis der Wohnraum wächst." |
-| Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | Protokoll-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
+| Vertrauen fällt erstmals von Stabil nach Unruhig | Wechsel in die erste Stufe mit AP-Abzug | Protokoll-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
 | Erstes AP-Limit | Spieler versucht Aktion aber AP = 0 | Tooltip am Button: "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." |
 | Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet AP pro Hex Distanz — er kommt nächsten Sol an und produziert unterwegs nichts." |
 

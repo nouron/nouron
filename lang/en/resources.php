@@ -70,13 +70,17 @@ return [
     'popup_or_desc' => 'Everything the Agrarian Dome grows under its roof: food, medicine, bio-fertiliser. Without enough Organics, colonists go hungry — and Trust breaks down fast.',
 
     'popup_trust_title' => 'Trust',
-    'popup_trust_desc' => 'What still holds the colonists together. Let this fall too far and nobody gives their best any more — and eventually nobody listens at all.',
+    'popup_trust_desc' => 'What still holds the colonists together. People who trust their leadership pitch in, and the shifts go easier. When the mood turns, work is left undone — and eventually nobody listens at all.',
+    'popup_trust_base' => 'Base value',
     'popup_trust_buildings' => 'Buildings',
     'popup_trust_research' => 'Knowledge',
     'popup_trust_ships' => 'Ships',
     'popup_trust_events' => 'Events',
-    'popup_trust_total' => 'Trust total',
+    'popup_trust_total' => ':total points · :band from :min',
     'popup_trust_hunger' => 'Hunger',
+    'popup_trust_band_effect' => ':band · :ap AP',
+    'popup_trust_numbers_locked' => 'Exact values require the Analytics Lab.',
+    'popup_trust_next' => 'From next Sol: :value',
 
     // Resource rail (left overlay)
     'rail_label' => 'Resource bar',

@@ -31,7 +31,7 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | Onboarding-Hinweistexte sprechen von „Bau-AP verfällt" o. ä. | `gdd/onboarding.md` §16.2 |
 | Sol-1–4-Budget-Rechnung rechnet mit getrennten Pools | `gdd/onboarding.md` §16.5 |
 | `locked_actionpoints.personell_type` — Pool-Trennung oder nur Auswertungsmerkmal? | §13 „Implementierung" |
-| AP-Malus bei Aufruhr (−20 %) trifft jetzt die gesamte Kolonie statt einer Domäne | §14 |
+| AP-Abzug der Stufen Unruhig/Aufruhr (fester Betrag, T59) trifft den gemeinsamen Pool; ohne eskalierenden Hunger (T59a) praktisch unerreichbar | §14 |
 
 ## A.3 Nach dem ersten Playtest zu kalibrieren
 
@@ -47,10 +47,10 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | Cantina-Verhandlung: `negotiate_bonus`, `negotiate_success_chance` | §12 |
 | Berater-Außenmissionen: Analytiker-Bonus (stärkster Effekt), Rang-1-Misserfolgsrate | §13 |
 | Konsul: Händler-Einschätzung nicht binär, erster Cantina-Besuch ohne Konsul | §13 |
-| Vertrauen: theoretisches Maximum bei Voll-Ausbau, Kolonisten-Zulage ohne Cooldown, Bauwesen-Events wiederholbar | §14 |
+| Vertrauen (T59, Skala 0–100): Sole je Stufe, Erreichbarkeit von Euphorisch, stärkere AP-Wirkung gegen Sieg-Korridor, Organika ohne Produktionsfaktor, Kolonisten-Zulage ohne Cooldown, Bauwesen-Events wiederholbar | §14 |
 | Run-Aufgabenpool: Wirtschafts-Cluster (1, 7, 9), Kollision Aufgabe 11 mit 2/8 | §15 |
 | Highscore-Formel: Gewichtung | §15 |
-| Fail-State: −20-Trust-Schwelle, `nexus_debt`-Mechanik | §18 |
+| Fail-State: Vertrauens-Niederlagengrenze (heute unerreichbar, T59a), `nexus_debt`-Mechanik | §18 |
 | ~~`task_expedition_coverage: 19` als schwierigster Task-Target-Wert~~ — ✅ behoben 2026-08-14, war unerreichbar, jetzt 16 (s. §18) | §18 |
 | Run-Ende: „Kolonie ansehen" setzt voraus, dass Koloniedaten erhalten bleiben | §18 |
 
