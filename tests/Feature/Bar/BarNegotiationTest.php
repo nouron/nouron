@@ -162,7 +162,7 @@ class BarNegotiationTest extends TestCase
 
     public function test_negotiate_config_values_match_the_owner_decision(): void
     {
-        $this->assertSame(2, (int) config('game.bar.ap_cost_negotiate'));
+        $this->assertSame(1, (int) config('game.bar.ap_cost_negotiate'));
         $this->assertSame((int) config('game.bar.ap_cost_accept'), (int) config('game.bar.ap_cost_negotiate'), 'Verhandeln costs the same AP as Annehmen');
         $this->assertEquals([0 => 0.0, 1 => 0.60, 2 => 0.65, 3 => 0.70], config('game.bar.negotiate_success_chance'));
         $this->assertEquals([0 => 0.0, 1 => 0.20, 2 => 0.20, 3 => 0.20], config('game.bar.negotiate_bonus'));

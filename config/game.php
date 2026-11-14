@@ -38,11 +38,10 @@ return [
     'colony_zone_expansion' => [6, 3, 3, 3, 0],
 
     // Navigation-AP cost to explore a fogged tile, keyed by ring distance from the
-    // CC (ring 0). Staggers the fog-of-war reveal pace: ring 2 costs more than ring 1,
-    // ring 3 more than ring 2 — keeps the full map from being uncovered in a handful
-    // of Sols. Ring 1 stays cheap (already auto-explored at seed time anyway).
+    // CC (ring 0). AP scale 2026-11-13 (spec §11.3, profile kept): rings 1 and 2 cost
+    // the same, ring 3 more — the smaller pool sets the reveal pace.
     'colony' => [
-        'explore_cost_per_ring' => [1 => 1, 2 => 2, 3 => 3],
+        'explore_cost_per_ring' => [1 => 1, 2 => 1, 3 => 2],
         'explore_cost_default' => 1,
     ],
 
@@ -50,13 +49,16 @@ return [
     'finds' => [
         'start_pool' => ['find_large' => 1, 'find_medium' => 1, 'find_small' => 3, 'find_false' => 2],
         'types' => [
-            'find_small' => ['rg' => 4, 'ap' => 3],
-            'find_medium' => ['rg' => 10, 'ap' => 4],
-            'find_large' => ['rg' => 18, 'ap' => 6],
+            // Self-salvage AP (AP scale 2026-11-13 §11.3: 1 / 2 / 2).
+            'find_small' => ['rg' => 4, 'ap' => 1],
+            'find_medium' => ['rg' => 10, 'ap' => 2],
+            'find_large' => ['rg' => 18, 'ap' => 2],
             'find_false' => ['rg' => 0, 'ap' => 0],
         ],
-        'scan_ap' => 2,
-        'scan_ap_uplink' => 1, // Uplink-Station Lv2+
+        'scan_ap' => 1,
+        // From this Uplink-Station level the first deep scan of a Sol costs no AP
+        // (AP scale 2026-11-13 §6: frequency instead of a discount on a 1-AP action).
+        'free_scan_uplink_level' => 2,
         // T30 §13.3: salvage flight (mission_find_salvage). Yield = the find's Rg (no factor);
         // flat ap_cost per flight, Organika per Sol of distance, no ship wear (Owner 2026-10-13).
         // min_hangar_level = lowest hall level whose ship class carries the find (drone 1,
@@ -98,13 +100,14 @@ return [
         41 => [5 => [1 => 16, 2 => 20, 3 => 30, 4 => 9, 5 => 7, 6 => 5, 7 => 3, 8 => 2]],   // bioFacility → Organika (T43-G7: 16/20/30 marginal; Lv4-8 inert, never reached at max_level=3)
     ],
 
-    // Lower bound for additive project-AP discounts (§13.3) — prevents bonuses from
-    // pushing ap_for_levelup to 0. Not binding at the current max discount (15% from
-    // construction fully invested, 40% with an active 25% discount voucher; trade and
-    // cartography are not part of this pool — cartography has its own Navigation-AP
-    // discount); a guard rail for future bonus sources (advisor rank, colony maturity)
-    // that are not yet implemented.
-    'project_min_cost_factor' => 0.5,
+    // Discount rule (AP scale 2026-11-13 §5.1): discounts are absolute AP and additive.
+    // Permanent discounts only apply to costs of at least min_discountable_cost_ap (smaller
+    // costs get frequency or a cap bonus instead). Nothing is discounted below the floor:
+    // projects (levelups) project_min_cost_ap, actions (missions) action_min_cost_ap.
+    // One-off vouchers ignore min_discountable_cost_ap but respect the floor.
+    'min_discountable_cost_ap' => 6,
+    'project_min_cost_ap' => 2,
+    'action_min_cost_ap' => 1,
 
     // Harvester depletion mechanic (GDD §4c "Erschöpfungskurve und Umzugstakt",
     // freigegeben 2026-08-03; konstante Rate seit 2026-09-09, Owner-Entscheidung
@@ -154,9 +157,10 @@ return [
             'regolith_y2_d1' => 240, 'regolith_y2_d2' => 450, 'regolith_y2_d3' => 660,
             'regolith_y3_d1' => 240, 'regolith_y3_d2' => 450,
         ],
-        // Verlegekosten 1 → 2 AP je Hex (GDD §4c, 2026-08-03) — the relocation-frequency
-        // lever, not the depletion curve itself (see GDD §4c "Der eigentliche Regler...").
-        'relocate_ap_per_hex' => 2,
+        // AP per hex of a relocation — the relocation-frequency lever, not the depletion
+        // curve itself (see GDD §4c "Der eigentliche Regler..."). 2 → 1 with the AP scale
+        // 2026-11-13 (§11.3).
+        'relocate_ap_per_hex' => 1,
         // Onboarding warning threshold (Owner-Playtest-Fund 2026-09-04, GDD §4c
         // BALANCE CONCERN): resource_amount / resource_max ratio below which
         // OnboardingHintService::checkHintHarvesterLowRegolith() surfaces the
@@ -251,24 +255,22 @@ return [
         // Per-building per-Sol cap on construction AP invested toward a level-up
         // (Owner decision 2026-10-16): a time brake for Phase 1 that leaves Regolith
         // income alone and stops a building (CC included) from finishing, or gaining
-        // several levels, in a single Sol. Cap = base + engineer bonus for the
-        // advisor's rank (an unavailable engineer adds nothing). base = null switches
-        // the rule off. Repair and placement are not capped.
+        // several levels, in a single Sol. Cap = base + the engineer's specialist bonus
+        // (advisor.cap_bonus_per_rank; an unavailable engineer adds nothing). base = null
+        // switches the rule off. Repair and placement are not capped.
         // See App\Services\BuildingApCapService.
         'ap_cap_per_sol' => [
-            'base' => 4,
-            'engineer_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],
+            'base' => 1,
         ],
     ],
 
     // Lab AP cap per knowledge and Sol (T43-G1, Owner decision 2026-10-25: the
-    // "limited AP per Sol" principle also holds in the lab). PLACEHOLDER: base 4 is
-    // an ASSUMPTION copied from build.ap_cap_per_sol.base; the real height is set
-    // after a measurement. base = null switches the rule off. Earmarked bonus AP
-    // (ResearchService::investBonus, e.g. Barkeeper) is exempt (designer assumption).
-    // See App\Services\DailyApCapService.
+    // "limited AP per Sol" principle also holds in the lab). Cap = base + the scientist's
+    // specialist bonus (advisor.cap_bonus_per_rank, AP scale 2026-11-13 §11.2). base = null
+    // switches the rule off. Earmarked bonus AP (ResearchService::investBonus, e.g.
+    // Barkeeper) is exempt (designer assumption). See App\Services\DailyApCapService.
     'knowledge_ap_cap_per_sol' => [
-        'base' => 4,
+        'base' => 1,
     ],
 
     // Rough progress words shown without a sciencelab ("stille Forschung", spec
@@ -294,10 +296,11 @@ return [
     ],
 
     'repair' => [
-        // 2 → 1 (GDD §13.7, 2026-08-03): with repair also costing 1 Construction-AP,
-        // 1 Rg/click makes Instandhaltung [Rg/Sol] = Instandhaltung [AP/Sol] = Σ decay_rate —
-        // one number drives both currencies, no separate "feels expensive" multiplier needed.
-        'regolith_per_click' => 1,
+        // One repair click costs 1 AP and restores sp_per_click status points (AP scale
+        // 2026-11-13 §6); with fewer points missing only those are restored and paid.
+        'sp_per_click' => 3,
+        // Regolith per restored status point (GDD §13.7): Instandhaltung [Rg/Sol] = Σ decay_rate.
+        'regolith_per_sp' => 1,
 
         // Damage display threshold (fraction of max_status_points): tiles show the
         // damage badge/status tint only below this. The 16/20 (80%) starting damage
@@ -314,7 +317,7 @@ return [
     // 'advisor.ap_per_rank' below). One pool for the whole colony — GDD §13.1
     // ("Ein gemeinsamer AP-Pool", Entscheidung 2026-08-02).
     'ap' => [
-        'base' => 12,
+        'base' => 4,
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
@@ -333,7 +336,7 @@ return [
     // the start gate is the return guarantee HangarBays::flightReadiness(), not a percentage.
     'ship_repair' => [
         'max_status_points' => 20,
-        'sp_per_click' => 2,
+        'sp_per_click' => 6,
         'ap_per_click' => 1,
     ],
 
@@ -350,7 +353,7 @@ return [
 
         // Konsul ship negotiation: credits discount per invested AP, indexed by the
         // Konsul advisor's rank. No Konsul (rank 0) => no negotiation.
-        'consul_ap_discount' => [1 => 50, 2 => 60, 3 => 70],
+        'consul_ap_discount' => [1 => 150, 2 => 180, 3 => 210],
     ],
 
     // Building/ship/research decay: per-entity decay_rate values live in
@@ -399,7 +402,7 @@ return [
         'plague' => [
             'chance_per_sol_when_emergent' => 0.05,   // only rolled when hunger_streak≥3 or trust<-20
             'debuff_sols' => 5,
-            'ap_reduction_pct' => 0.20,        // total AP reduced by this fraction while active
+            'ap_reduction' => 1,               // AP taken off the pool while active (absolute, AP scale 2026-11-13 §4)
         ],
 
         // Outcome tiers (GDD §9 table) — SP% thresholds and consequences.
@@ -416,7 +419,13 @@ return [
         // §18 task_credit_reserve. (Konsul-Handelsvertrag mentioned here originally
         // was removed 2026-09-09, see game.credits above.)
         'rank_thresholds' => [1 => 15, 2 => 45],
-        'ap_per_rank' => [1 => 2, 2 => 3, 3 => 4],
+        // AP scale 2026-11-13 §11.1 option B: rank 1 adds +1 pool and +1 field cap, rank 2
+        // +1 field cap, rank 3 +1 pool. Pool contribution per rank:
+        'ap_per_rank' => [1 => 1, 2 => 1, 3 => 2],
+        // Field cap bonus per rank ("Fach-Deckel"): engineer -> building cap
+        // (build.ap_cap_per_sol), scientist -> lab cap (knowledge_ap_cap_per_sol), pilot ->
+        // training cap (path_depth.training_ap_cap_per_sol). Unavailable advisors add nothing.
+        'cap_bonus_per_rank' => [1 => 1, 2 => 2, 3 => 2],
         // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
         // If user cannot afford it the promotion is deferred until next tick (ROADMAP Phase 3a).
         // Rank-3 cost lowered 400 → 250 (GDD §18.4 Nachtrag 2026-08-14) — up to
@@ -527,7 +536,7 @@ return [
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'regolith_sell_offer_chance_pct' => 12,
         'offer_duration' => 2,  // fallback when bar level unknown
-        'ap_cost_accept' => 2,  // 1→2 with the shared AP pool (GDD §13.6 Handlungs-AP): trades compete with build/knowledge projects
+        'ap_cost_accept' => 1,  // AP scale 2026-11-13: 2 → 1
         'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],
         'level_max_concurrent' => [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
 
@@ -538,7 +547,7 @@ return [
         // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf, nicht AP-Rechnerei.
         // Der Aufschlag ist konstant und wirkt additiv auf die Get-Seite (base x (1 + Handelsvorteil
         // + Aufschlag)); die Chance steigt mit dem Rang (+ trade-Kenntnis, knowledge.php).
-        'ap_cost_negotiate' => 2,  // = ap_cost_accept
+        'ap_cost_negotiate' => 1,  // = ap_cost_accept
         'negotiate_success_chance' => [0 => 0.0, 1 => 0.60, 2 => 0.65, 3 => 0.70],
         'negotiate_bonus' => [0 => 0.0, 1 => 0.20, 2 => 0.20, 3 => 0.20],
 
@@ -554,7 +563,7 @@ return [
             // ×2 (Owner 2026-09-30: events more frequent) — was 0.10/0.14/0.18/0.22/0.26.
             'spawn_chance_per_level' => [1 => 0.20, 2 => 0.28, 3 => 0.36, 4 => 0.44, 5 => 0.52],
             'offer_duration' => 2, // ticks an unaccepted encounter stays available
-            'ap_cost_accept' => 2,
+            'ap_cost_accept' => 1,
 
             // Wette — bound to Zara (Professional Gambler). Stake is lost entirely on failure.
             'wager' => [
@@ -605,13 +614,14 @@ return [
             // Deva (veteran) — Military Veteran.
             'veteran' => [
                 // Mechanical A "Drill-Reaktionspuffer": halves the consequence
-                // of the next triggered Instabilität/Seuche encounter — see
+                // of the next triggered Instabilität (outage) and cancels the AP malus of
+                // the next Seuche (AP scale 2026-11-13 §4) — see
                 // GameTick::rollInstability()/rollPlague() consuming
                 // colony_information_pool_state.active_drill_buffer.
                 'drill_buffer_reduction_pct' => 0.50,
                 // Mechanical B: player picks geology OR health to receive
                 // bonus AP via ResearchService::investBonus().
-                'knowledge_boost_ap' => 15,
+                'knowledge_boost_ap' => 5,
                 'knowledge_choices' => ['geology', 'health'],
             ],
 
@@ -622,7 +632,7 @@ return [
                 // colony_information_pool_state.active_nav_voucher, consumed
                 // by ColonyTileService::exploreTile().
                 // Mechanical B: fixed target (cartography), no player choice.
-                'knowledge_boost_ap' => 15,
+                'knowledge_boost_ap' => 5,
                 'knowledge_target' => 'cartography',
             ],
         ],
@@ -653,9 +663,10 @@ return [
                 'smuggler' => 2, 'prospector' => 2, 'mercenary' => 2, 'founder' => 2, 'preacher' => 2,
                 'information_broker' => 1, 'stranger' => 1,
             ],
+            // AP scale 2026-11-13 §11.3: 2/3 AP -> 1, 4 AP -> 2.
             'ap_cost' => [
-                'smuggler' => 4, 'information_broker' => 3, 'mechanic' => 2, 'doctor' => 3,
-                'prospector' => 2, 'mercenary' => 3, 'founder' => 3, 'preacher' => 3, 'stranger' => 4,
+                'smuggler' => 2, 'information_broker' => 1, 'mechanic' => 1, 'doctor' => 1,
+                'prospector' => 1, 'mercenary' => 1, 'founder' => 1, 'preacher' => 1, 'stranger' => 2,
             ],
             'success_chance' => [
                 'smuggler' => 1.0, 'information_broker' => 1.0, 'mechanic' => 1.0, 'doctor' => 1.0,
@@ -668,17 +679,17 @@ return [
             // level requirement, matches the "off the books" flavor.
             'smuggler' => ['ship_id' => 85],
 
-            // Vesper — insider knowledge on building flaws. One-time voucher,
-            // no expiry, consumed by the next building level-up the colony
-            // completes (ProjectBonusService).
-            'information_broker' => ['discount_pct' => 25],
+            // Vesper — insider knowledge on building flaws. One-time voucher of
+            // discount_ap AP (absolute, AP scale 2026-11-13 §4), no expiry, consumed by
+            // the next building level-up the colony completes (ProjectBonusService).
+            'information_broker' => ['discount_ap' => 2],
 
             // Sarka — needs a hand at the systems. Injected via
             // ResearchService::investBonus() — same earmarked-AP mechanism as
             // Tomas' bartender bonus (A40), bypasses the shared pool's
             // availability gate for the bonus itself (the concern's own AP cost
             // still comes out of the shared pool like any other concern).
-            'mechanic' => ['ap_bonus' => 5],
+            'mechanic' => ['ap_bonus' => 2],
 
             // Maret — spare parts for medical equipment. Compounds, scaled by
             // bar level (same scaling shape as encounter.auction above).
@@ -692,7 +703,7 @@ return [
 
             // Aldra — old founder blueprints. Smaller, time-limited voucher —
             // expires after voucher_expires_sols Sol if unused.
-            'founder' => ['discount_pct' => 15, 'voucher_expires_sols' => 10],
+            'founder' => ['discount_ap' => 1, 'voucher_expires_sols' => 10],
 
             // Sorel — a community dispute to mediate. Trust-only reward/penalty,
             // fired via TrustService (see game.trust.events below), no
@@ -715,16 +726,15 @@ return [
 
     // Cantina-Barkeeper Tomas (A40, GDD §12) — the one permanent Cantina character
     // with no random spawn. "Mit Tomas reden" costs no AP and no pool lock; instead
-    // Tomas injects AP directly into a knowledge investment chosen by the player,
-    // gated by a once-per-tick cooldown. Bonus tiers scale with the colony's
-    // cumulative, run-persistent interaction_count (never reset per tick).
+    // Tomas injects AP directly into a knowledge investment chosen by the player.
     'bartender' => [
-        'interaction_cooldown_ticks' => 1,
-        // Tomas' earmarked AP bonus per conversation, keyed by his relationship level
-        // (colony_path_levels, kind 'character', key 'bartender', 0–5), injected via
-        // ResearchService::investBonus(). Level 0 ("fremd") gives no advice at all — the
-        // conversation is refused. PROPOSAL pending measurement (spec 2026-11-11 §7).
-        'ap_bonus_by_relationship_level' => [0 => 0, 1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 3],
+        // Earmarked AP of one piece of advice, injected via ResearchService::investBonus().
+        'ap_bonus' => 1,
+        // How often Tomas gives advice (every N Sols), keyed by his relationship level
+        // (colony_path_levels, kind 'character', key 'bartender'). Level 0 ("fremd") is
+        // missing on purpose: no advice at all. AP scale 2026-11-13 §6: the relationship
+        // raises the frequency, not the amount.
+        'advice_every_sols_by_relationship_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 1],
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).
@@ -744,13 +754,14 @@ return [
             ['min' => -60, 'max' => -21, 'factor' => 0.85],
             ['min' => -100, 'max' => -61, 'factor' => 0.70],
         ],
-        // AP multipliers by trust band.
-        'ap_multiplier' => [
-            ['min' => 61, 'max' => 100, 'factor' => 1.10],
-            ['min' => 21, 'max' => 60, 'factor' => 1.05],
-            ['min' => -20, 'max' => 20, 'factor' => 1.00],
-            ['min' => -60, 'max' => -21, 'factor' => 0.90],
-            ['min' => -100, 'max' => -61, 'factor' => 0.80],
+        // AP added to the pool by trust band (absolute, AP scale 2026-11-13 §4 — a
+        // percentage does nothing on a pool of 5-9 AP).
+        'ap_bonus' => [
+            ['min' => 61, 'max' => 100, 'ap' => 1],
+            ['min' => 21, 'max' => 60, 'ap' => 0],
+            ['min' => -20, 'max' => 20, 'ap' => 0],
+            ['min' => -60, 'max' => -21, 'ap' => -1],
+            ['min' => -100, 'max' => -61, 'ap' => -1],
         ],
         // Aftereffect profiles (T40): share of an event's delta per Sol of age (index 0 = the Sol it
         // takes effect). 'instant' = one Sol only (the original behaviour). 'fade5' is prepared for
@@ -971,8 +982,8 @@ return [
             'trust_boost' => 'one_time',
         ],
         'items' => [
-            'ap_flex' => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
-            'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 15],
+            'ap_flex' => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 7],
+            'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 5],
             // Label corrected 2026-08-18 — "Systemkarte" was the pre-2026-06-20
             // galaxy map feature (removed); this item actually sets
             // colony_tiles.is_explored=true for every tile (MerchantService::apply(),

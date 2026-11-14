@@ -29,10 +29,12 @@ class KnowledgeEffectDescriptionService
      */
     private const EFFECTS = [
         'construction' => [
-            ['config' => 'knowledge.construction.ap_cost_reduction_per_lv', 'label' => 'AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
+            ['config' => 'knowledge.construction.ap_cost_reduction_per_lv', 'label' => 'Ausbau großer Gebäude', 'unit' => 'AP', 'direction' => self::DIRECTION_REDUCTION],
         ],
         'cartography' => [
-            ['config' => 'knowledge.cartography.nav_ap_reduction_per_lv', 'label' => 'AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
+            // Single-level rules (AP scale 2026-11-13), not curves: see curveOf().
+            ['config' => 'knowledge.cartography.mission_ap_reduction', 'label' => 'lange Missionen', 'unit' => 'AP', 'direction' => self::DIRECTION_REDUCTION],
+            ['config' => 'knowledge.cartography.free_explore_from_level', 'label' => 'kostenlose Erkundung je Sol', 'unit' => '', 'direction' => self::DIRECTION_INCREASE],
         ],
         'geology' => [
             ['config' => 'game.geology_harvester_bonus_per_level', 'label' => 'Harvester-Ertrag', 'unit' => 'Rg/Sol', 'direction' => self::DIRECTION_INCREASE, 'resAbbr' => 'RG', 'resCls' => 'Rg'],
@@ -63,7 +65,7 @@ class KnowledgeEffectDescriptionService
 
         $lines = [];
         foreach (self::EFFECTS[$knowledgeKey] as $effect) {
-            $curve = config($effect['config'], []);
+            $curve = self::curveOf(config($effect['config'], []));
             $delta = (int) ($curve[$level] ?? 0);
             if ($delta === 0) {
                 continue;
@@ -73,6 +75,25 @@ class KnowledgeEffectDescriptionService
         }
 
         return $lines;
+    }
+
+    /**
+     * Per-level curve of a config value: curves pass through; a rule that starts at one
+     * level (['from_level' => n, 'ap' => x]) becomes [n => x]; a bare level number
+     * (e.g. free_explore_from_level) becomes [n => 1].
+     *
+     * @return array<int, int|float>
+     */
+    private static function curveOf(mixed $value): array
+    {
+        if (is_int($value)) {
+            return [$value => 1];
+        }
+        if (is_array($value) && isset($value['from_level'])) {
+            return [(int) $value['from_level'] => (int) ($value['ap'] ?? 0)];
+        }
+
+        return is_array($value) ? $value : [];
     }
 
     /**

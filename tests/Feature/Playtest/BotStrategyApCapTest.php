@@ -19,14 +19,21 @@ use Tests\TestCase;
  */
 class BotStrategyApCapTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
     use UtilityFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     private const BIO = 41;
 
     private function setCap(?int $base): void
     {
-        config(['game.build.ap_cap_per_sol' => ['base' => $base, 'engineer_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4]]]);
+        config(['game.build.ap_cap_per_sol' => ['base' => $base], 'game.advisor.cap_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4]]);
     }
 
     /** Book the whole cap of a building row as spent in the current Sol. */

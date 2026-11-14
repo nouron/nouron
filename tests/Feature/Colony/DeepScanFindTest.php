@@ -42,7 +42,7 @@ class DeepScanFindTest extends TestCase
         return $this->app->make(ColonyTileService::class);
     }
 
-    public function test_scan_reveals_find_and_locks_2_ap(): void
+    public function test_scan_reveals_find_and_locks_the_scan_ap(): void
     {
         $this->signalTile('find_medium');
         $before = $this->navAp();
@@ -53,14 +53,14 @@ class DeepScanFindTest extends TestCase
         $find = $res['tile']['find'];
         unset($find['action']);
         $this->assertSame(
-            ['type' => 'find_medium', 'rg' => 10, 'ap_total' => 4, 'false' => false],
+            ['type' => 'find_medium', 'rg' => 10, 'ap_total' => (int) config('game.finds.types.find_medium.ap'), 'false' => false],
             $find
         );
         $this->assertArrayHasKey('action', $res['tile']['find']);
-        $this->assertSame($before - 2, $this->navAp());
+        $this->assertSame($before - (int) config('game.finds.scan_ap'), $this->navAp());
     }
 
-    public function test_uplink_lv2_scan_costs_1_ap(): void
+    public function test_uplink_lv2_makes_the_first_scan_of_a_sol_free(): void
     {
         DB::table('colony_buildings')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'building_id' => 54, 'instance_id' => 1],
@@ -70,7 +70,7 @@ class DeepScanFindTest extends TestCase
         $before = $this->navAp();
 
         $this->assertTrue($this->svc()->deepScanTile(self::COLONY_ID, 2, 0)['ok']);
-        $this->assertSame($before - 1, $this->navAp());
+        $this->assertSame($before, $this->navAp());
     }
 
     public function test_unscanned_explored_tile_hides_find(): void

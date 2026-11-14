@@ -76,7 +76,7 @@ class ColonyTileExploreNavVoucherTest extends TestCase
         $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 3, 0);
 
         $this->assertTrue($result['ok']);
-        $this->assertSame($before - 3, $this->navAp(), 'the second exploration must be charged full price — voucher already spent');
+        $this->assertSame($before - (int) config('game.colony.explore_cost_per_ring.3'), $this->navAp(), 'the second exploration must be charged full price — voucher already spent');
     }
 
     public function test_exploration_without_active_voucher_charges_normally(): void

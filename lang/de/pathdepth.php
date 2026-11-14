@@ -13,6 +13,7 @@ return [
     'error_conversation_ap_cap' => 'Mehr als :cap AP nimmt diese Figur heute nicht an. Morgen geht das Gespräch weiter — oder sprich mit jemand anderem.',
     'error_invalid_option' => 'Diese Gesprächsgröße gibt es nicht.',
     'error_conversation_option_locked' => 'Für ein so langes Gespräch fehlt der Raum. Die Cantina braucht dafür Stufe :level.',
+    'error_conversation_done_today' => 'Mit dieser Figur hast du heute schon gesprochen. Morgen wieder.',
 
     // ── Hangar: Training
     'ui_training_title' => 'Training',
@@ -49,11 +50,22 @@ return [
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'Diese Figur nimmt pro Sol nur begrenzt Zeit für Gespräche. Morgen geht es weiter — oder bei jemand anderem.',
     'ui_conversation_today' => 'Heute :spent/:cap AP',
-    // Pro Sol wird je Gesprächsgröße ein Name aus dem Pool gewählt (Poolgröße beliebig).
+    // Variante C (2026-11-13): ein Gespräch je Figur und Sol; Überschuss über die nächste
+    // Stufe verfällt mit Warnung.
+    'conversation_done_today' => 'Für heute habt ihr geredet. Morgen wieder.',
+    'conversation_wasted_chip' => ':ap AP · :n verfallen',
+    'conversation_wasted_hint' => 'Nur noch :n AP bis zur nächsten Stufe – darüber verfällt der Rest.',
+    'conversation_wasted_result' => ':n AP sind verfallen.',
+    // Tomas' Rat: Häufigkeit nach Beziehungsstufe (game.bartender.advice_every_sols_by_relationship_level).
+    'bartender_advice_every' => 'Rat alle :n Sol',
+    'bartender_advice_daily' => 'Rat jeden Sol',
+    'bartender_advice_next' => 'Nächster Rat in :n Sol',
+    'bartender_advice_today' => 'Rat heute verfügbar',
+    // Pro Sol wird je Gesprächslänge ein Name aus dem Pool gewählt (Poolgröße beliebig).
+    // short = 1 AP, long = 2 AP (ab Cantina-Stufe 3).
     'conversation_names' => [
         'short' => ['Kurz grüßen', 'Nur nicken', 'Ein Wort wechseln', 'Das Glas heben', 'Am Tisch vorbeischauen', 'Fragen, wie es läuft'],
-        'normal' => ['Bei einem Getränk reden', 'Zuhören', 'Zusammen sitzen', 'Den Tisch teilen', 'Geschichten austauschen', 'Sich alles anhören'],
-        'long' => ['Den Abend nehmen', 'Tief eintauchen', 'Bis zur Sperrstunde bleiben', 'Die halbe Nacht reden', 'Die Schicht hinter sich lassen', 'Noch eine Runde bestellen'],
+        'long' => ['Den Abend nehmen', 'Bei einem Getränk reden', 'Bis zur Sperrstunde bleiben', 'Den Tisch teilen', 'Die Schicht hinter sich lassen', 'Noch eine Runde bestellen'],
     ],
 
     // ── Cantina: line of a character for a conversation option the cantina level does not

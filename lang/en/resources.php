@@ -38,8 +38,8 @@ return [
 
     'popup_ap_base' => 'Base AP',
     'popup_ap_advisor' => 'from advisors',
-    'popup_ap_trust_multiplier' => 'Trust multiplier',
-    'popup_ap_plague_multiplier' => 'Outbreak',
+    'popup_ap_trust' => 'Trust',
+    'popup_ap_plague' => 'Outbreak',
 
     // Per-Sol balance rows in the Regolith/Organika/Werkstoffe popups
     'popup_flow_net' => 'Net per Sol',

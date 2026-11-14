@@ -15,7 +15,7 @@ namespace Tests\Feature;
  *   - Locale-switch test: switching to a hypothetical 'en' locale returns English strings
  *     (or falls back gracefully to the translation key if no en file exists)
  *
- * getProductionMultiplier() / getApMultiplier():
+ * getProductionMultiplier() / getApBonus():
  *   - Neutral trust (0) returns 1.0×
  *   - Euphorisch trust (80) returns the configured factor
  *   - Aufruhr trust (-80) returns the configured factor
@@ -232,23 +232,25 @@ class TrustServiceTest extends TestCase
         $this->assertSame(0.85, $this->service->getProductionMultiplier(-40));
     }
 
-    // ── getApMultiplier() ────────────────────────────────────────────────────
+    // ── getApBonus() (AP scale 2026-11-13 §4: absolute AP per trust band) ────
 
-    public function test_get_ap_multiplier_neutral_trust_returns_one(): void
+    public function test_get_ap_bonus_neutral_trust_is_zero(): void
     {
-        $this->assertSame(1.0, $this->service->getApMultiplier(0));
+        $this->assertSame(0, $this->service->getApBonus(0));
     }
 
-    public function test_get_ap_multiplier_euphorisch_returns_one_pt_one(): void
+    public function test_get_ap_bonus_follows_configured_bands(): void
     {
-        // config: min=61, max=100, factor=1.10
-        $this->assertSame(1.10, $this->service->getApMultiplier(80));
-    }
+        config(['game.trust.ap_bonus' => [
+            ['min' => 61, 'max' => 100, 'ap' => 1],
+            ['min' => -20, 'max' => 60, 'ap' => 0],
+            ['min' => -100, 'max' => -21, 'ap' => -1],
+        ]]);
 
-    public function test_get_ap_multiplier_aufruhr_returns_zero_pt_eight(): void
-    {
-        // config: min=-100, max=-61, factor=0.80
-        $this->assertSame(0.80, $this->service->getApMultiplier(-80));
+        $this->assertSame(1, $this->service->getApBonus(80));
+        $this->assertSame(0, $this->service->getApBonus(40));
+        $this->assertSame(-1, $this->service->getApBonus(-30));
+        $this->assertSame(-1, $this->service->getApBonus(-80));
     }
 
     // ── getTrust() ───────────────────────────────────────────────────────────

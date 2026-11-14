@@ -41,7 +41,7 @@ class PathDepthService
             'ap_for_levelup' => $level >= $this->maxLevel() ? 0 : (int) config("path_depth.levelup_ap.{$kind}.".($level + 1)),
             'level_cap' => $this->levelCap($colonyId, $kind),
             'met' => $kind === self::KIND_FAMILY || $key === self::ALWAYS_MET || $row !== null,
-            'ap_cap' => $kind === self::KIND_FAMILY ? $this->dailyApCap->state($colonyId, self::capKey($key), $this->trainingCap()) : null,
+            'ap_cap' => $kind === self::KIND_FAMILY ? $this->dailyApCap->state($colonyId, self::capKey($key), $this->trainingCap($colonyId)) : null,
             'unlock_level' => $unlock,
             'locked_until' => $unlock !== null && $this->hangarLevel($colonyId) < $unlock ? $unlock : null,
         ];
@@ -75,12 +75,16 @@ class PathDepthService
     }
 
     /**
-     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, ap_cap:array{cap:int, spent:int, remaining:int}|null, unlock_level:int|null, locked_until:int|null, leveled_up:bool, points:int}
+     * @return array{level:int, ap_spend:int, ap_for_levelup:int, level_cap:int, met:bool, ap_cap:array{cap:int, spent:int, remaining:int}|null, unlock_level:int|null, locked_until:int|null, leveled_up:bool, points:int, wasted:int}
      *
      * $present: the character sits in the cantina today (CantinaPresenceService), which
      * counts as met for this conversation.
      *
-     * @throws GameRuleException unknown_entity|not_met|training_locked|max_level|building_level_cap|conversation_option_locked|training_ap_cap|conversation_ap_cap|insufficient_ap
+     * Characters (cantina variant C, 2026-11-13): one conversation per Sol, the full price is
+     * always charged; AP beyond the next level are lost and returned as `wasted`. Families
+     * are still clamped to the rest of the level.
+     *
+     * @throws GameRuleException unknown_entity|not_met|training_locked|max_level|building_level_cap|conversation_option_locked|conversation_done_today|training_ap_cap|conversation_ap_cap|insufficient_ap
      */
     public function invest(int $colonyId, string $kind, string $key, int $points = 1, bool $present = false): array
     {
@@ -110,14 +114,20 @@ class PathDepthService
                 }
             }
 
-            $points = min($points, $state['ap_for_levelup'] - $state['ap_spend']);
-            if ($kind === self::KIND_CHARACTER && $points >= 1
-                && $this->dailyApCap->wouldExceed($colonyId, self::conversationCapKey($key), $this->conversationCap(), $points)) {
-                throw $this->error('conversation_ap_cap', ['cap' => $this->conversationCap()]);
-            }
-            if ($kind === self::KIND_FAMILY
-                && $this->dailyApCap->wouldExceed($colonyId, self::capKey($key), $this->trainingCap(), max(1, $points))) {
-                throw new GameRuleException('training_ap_cap', __('pathdepth.error_training_ap_cap', ['cap' => $this->trainingCap()]));
+            $toNextLevel = $state['ap_for_levelup'] - $state['ap_spend'];
+            if ($kind === self::KIND_CHARACTER) {
+                if ($this->talkedToday($colonyId, $key)) {
+                    throw $this->error('conversation_done_today');
+                }
+                if ($points >= 1 && $this->dailyApCap->wouldExceed($colonyId, self::conversationCapKey($key), $this->conversationCap(), $points)) {
+                    throw $this->error('conversation_ap_cap', ['cap' => $this->conversationCap()]);
+                }
+            } else {
+                $points = min($points, $toNextLevel);
+                $trainingCap = $this->trainingCap($colonyId);
+                if ($this->dailyApCap->wouldExceed($colonyId, self::capKey($key), $trainingCap, max(1, $points))) {
+                    throw new GameRuleException('training_ap_cap', __('pathdepth.error_training_ap_cap', ['cap' => $trainingCap]));
+                }
             }
             $bypass = (bool) config('game.bypass.ap_checks');
             if ($points < 1 || (! $bypass && $this->advisorService->getAvailableActionPoints($colonyId) < $points)) {
@@ -135,6 +145,7 @@ class PathDepthService
             $apSpend = $state['ap_spend'] + $points;
             $level = $state['level'];
             $leveledUp = $apSpend >= $state['ap_for_levelup'];
+            $wasted = max(0, $points - $toNextLevel);
             if ($leveledUp) {
                 $level++;
                 $apSpend = 0;
@@ -149,7 +160,7 @@ class PathDepthService
                 ['level' => $level, 'ap_spend' => $apSpend]
             );
 
-            return $this->state($colonyId, $kind, $key) + ['leveled_up' => $leveledUp, 'points' => $points];
+            return $this->state($colonyId, $kind, $key) + ['leveled_up' => $leveledUp, 'points' => $points, 'wasted' => $wasted];
         });
     }
 
@@ -166,21 +177,30 @@ class PathDepthService
         return $base === null ? null : (int) $base;
     }
 
+    /** True once the character was talked to this Sol (one conversation per Sol, variant C). */
+    public function talkedToday(int $colonyId, string $characterSlug): bool
+    {
+        return $this->dailyApCap->spent($colonyId, self::conversationCapKey($characterSlug)) > 0;
+    }
+
     /**
-     * Conversation options of a character for the cantina panel. "ap" is the real cost
-     * (an option never costs more than the rest to the next level); "capped" marks options
-     * that no longer fit into today's cap (shown greyed out, annahme: simpler than shortening).
+     * Conversation options of a character for the cantina panel (variant C 2026-11-13).
+     * "ap" is the full price an option costs (never clamped); "wasted" is how many of those
+     * AP would be lost because they exceed the rest to the next level (warning chip);
+     * "capped" marks an option that cannot be chosen today — the character was already
+     * talked to this Sol, or the option exceeds the character's per-Sol limit.
      *
      * available / requires_cantina_level: the option is unlocked by the cantina level
      * (path_depth.conversation_option_cantina_level); a locked option carries a line of the
      * character (locked_line_key + resolved locked_line), otherwise both are null.
      *
-     * @return array{cap: array{cap:int, spent:int, remaining:int}|null, options: list<array{key:string, name:string, ap:int, cost:int, capped:bool, available:bool, requires_cantina_level:int, locked_line_key:string|null, locked_line:string|null}>}
+     * @return array{cap: array{cap:int, spent:int, remaining:int}|null, talked_today: bool, to_next_level: int, options: list<array{key:string, name:string, ap:int, cost:int, wasted:int, capped:bool, available:bool, requires_cantina_level:int, locked_line_key:string|null, locked_line:string|null}>}
      */
     public function conversation(int $colonyId, string $characterSlug): array
     {
         $state = $this->state($colonyId, self::KIND_CHARACTER, $characterSlug);
         $cap = $this->dailyApCap->state($colonyId, self::conversationCapKey($characterSlug), $this->conversationCap());
+        $talkedToday = $this->talkedToday($colonyId, $characterSlug);
         $toNextLevel = max(0, $state['ap_for_levelup'] - $state['ap_spend']);
         $tick = app(TickService::class)->getTickCount();
         $cantinaLevel = $this->cantinaLevel($colonyId);
@@ -188,16 +208,17 @@ class PathDepthService
         $options = [];
         if ($toNextLevel > 0) {
             foreach ((array) config('path_depth.conversation_options') as $optionKey => $cost) {
-                $ap = min((int) $cost, $toNextLevel);
+                $cost = (int) $cost;
                 $required = $this->optionCantinaLevel((string) $optionKey);
                 $available = $cantinaLevel >= $required;
                 $lineKey = $available ? null : $this->lockedLineKey($colonyId, $characterSlug, (string) $optionKey, $tick);
                 $options[] = [
                     'key' => (string) $optionKey,
                     'name' => $this->conversationName($colonyId, $characterSlug, (string) $optionKey, $tick),
-                    'ap' => $ap,
-                    'cost' => (int) $cost,
-                    'capped' => $cap !== null && $cap['remaining'] < $ap,
+                    'ap' => $cost,
+                    'cost' => $cost,
+                    'wasted' => max(0, $cost - $toNextLevel),
+                    'capped' => $talkedToday || ($cap !== null && $cap['remaining'] < $cost),
                     'available' => $available,
                     'requires_cantina_level' => $required,
                     'locked_line_key' => $lineKey,
@@ -206,7 +227,7 @@ class PathDepthService
             }
         }
 
-        return ['cap' => $cap, 'options' => $options];
+        return ['cap' => $cap, 'talked_today' => $talkedToday, 'to_next_level' => $toNextLevel, 'options' => $options];
     }
 
     /** Current cantina level (0 without a cantina). */
@@ -314,12 +335,15 @@ class PathDepthService
         return 'training:'.$family;
     }
 
-    /** Per-Sol AP limit per family (path_depth.training_ap_cap_per_sol.base), null = rule off. */
-    public function trainingCap(): ?int
+    /**
+     * Per-Sol AP limit per family: path_depth.training_ap_cap_per_sol.base + the pilot's
+     * field bonus (AP scale 2026-11-13 §11.1); null = rule off.
+     */
+    public function trainingCap(int $colonyId): ?int
     {
         $base = config('path_depth.training_ap_cap_per_sol.base');
 
-        return $base === null ? null : (int) $base;
+        return $base === null ? null : (int) $base + $this->advisorService->specialistCapBonus($colonyId, 'pilot');
     }
 
     /** Hangar level a family needs before it can be trained; null for unmapped keys. */

@@ -69,7 +69,7 @@ class SalvageFindTest extends TestCase
 
     public function test_salvage_is_instant_costs_flat_ap_and_credits_regolith(): void
     {
-        foreach (['find_small' => [3, 4], 'find_medium' => [4, 10], 'find_large' => [6, 18]] as $type => [$apCost, $rgGain]) {
+        foreach (['find_small' => [1, 4], 'find_medium' => [2, 10], 'find_large' => [2, 18]] as $type => [$apCost, $rgGain]) {
             $this->tile(2, $type);
             $ap = $this->navAp();
             $rg = $this->regolith();

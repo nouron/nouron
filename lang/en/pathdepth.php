@@ -13,6 +13,7 @@ return [
     'error_conversation_ap_cap' => 'This character will not take more than :cap AP today. The conversation continues tomorrow — or talk to someone else.',
     'error_invalid_option' => 'No such conversation size.',
     'error_conversation_option_locked' => 'There is no room for a conversation this long. The cantina needs level :level for it.',
+    'error_conversation_done_today' => 'You have already talked to this character today. Tomorrow again.',
 
     // ── Hangar: training
     'ui_training_title' => 'Training',
@@ -49,11 +50,22 @@ return [
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'This character only has so much time for conversation per Sol. Tomorrow is another day — or talk to someone else.',
     'ui_conversation_today' => 'Today :spent/:cap AP',
-    // One name per option size is picked per Sol from these pools (any pool size works).
+    // Variant C (2026-11-13): one conversation per character and Sol; AP beyond the next
+    // level are lost, with a warning.
+    'conversation_done_today' => 'You have talked for today. Tomorrow again.',
+    'conversation_wasted_chip' => ':ap AP · :n lost',
+    'conversation_wasted_hint' => 'Only :n AP left to the next level – anything above that is lost.',
+    'conversation_wasted_result' => ':n AP were lost.',
+    // Tomas' advice: frequency by relationship level (game.bartender.advice_every_sols_by_relationship_level).
+    'bartender_advice_every' => 'Advice every :n Sol',
+    'bartender_advice_daily' => 'Advice every Sol',
+    'bartender_advice_next' => 'Next advice in :n Sol',
+    'bartender_advice_today' => 'Advice available today',
+    // One name per option length is picked per Sol from these pools (any pool size works).
+    // short = 1 AP, long = 2 AP (from cantina level 3).
     'conversation_names' => [
         'short' => ['Say a quick hello', 'Just nod', 'Exchange a word', 'Raise a glass', 'Pass by the table', 'Ask how it is going'],
-        'normal' => ['Talk over a drink', 'Listen', 'Sit together', 'Share a table', 'Trade stories', 'Hear them out'],
-        'long' => ['Take the evening', 'Dive deep', 'Stay until closing time', 'Talk through the night', 'Leave the shift behind', 'Pour another round'],
+        'long' => ['Take the evening', 'Talk over a drink', 'Stay until closing time', 'Share a table', 'Leave the shift behind', 'Pour another round'],
     ],
 
     // ── Mission families

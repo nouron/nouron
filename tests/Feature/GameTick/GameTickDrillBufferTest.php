@@ -90,7 +90,7 @@ class GameTickDrillBufferTest extends TestCase
         $this->assertEquals(11801 + $fullOutage, (int) $harvester->instability_outage_until_tick);
     }
 
-    public function test_active_buffer_halves_plague_ap_reduction_and_shortens_debuff_and_is_consumed(): void
+    public function test_active_buffer_cancels_plague_ap_malus_and_shortens_debuff_and_is_consumed(): void
     {
         config([
             'game.encounter.storm.base_chance' => 0.0,
@@ -112,18 +112,17 @@ class GameTickDrillBufferTest extends TestCase
         $this->assertNotNull($colony->plague_until_tick);
 
         $fullDebuff = (int) config('game.encounter.plague.debuff_sols');
-        $fullReduction = (float) config('game.encounter.plague.ap_reduction_pct');
         $this->assertSame(max(1, $fullDebuff - 1), (int) $colony->plague_until_tick - $tick);
-        $this->assertEqualsWithDelta($fullReduction * 0.5, (float) $colony->plague_ap_reduction_pct, 0.0001);
+        // AP scale 2026-11-13 §4: the plague malus is absolute AP; Deva's buffer cancels it.
+        $this->assertSame(0, (int) $colony->plague_ap_reduction_pct);
 
         $state = DB::table('colony_information_pool_state')->where('colony_id', self::COLONY_ID)->first();
         $this->assertFalse((bool) $state->active_drill_buffer, 'the buffer must be consumed once it applied');
 
-        // AdvisorService must actually use the halved value, not just store it.
+        // AdvisorService must actually use the stored value, not just store it.
         $advisorService = $this->app->make(AdvisorService::class);
         $breakdown = $advisorService->getApBreakdown(self::COLONY_ID);
-        $expectedMultiplier = 1 - $fullReduction * 0.5;
-        $this->assertEqualsWithDelta($expectedMultiplier, $breakdown['plague_multiplier'], 0.0001);
+        $this->assertSame(0, $breakdown['plague_ap']);
     }
 
     public function test_plague_without_active_buffer_uses_full_debuff(): void
@@ -147,8 +146,8 @@ class GameTickDrillBufferTest extends TestCase
         $this->assertNotNull($colony->plague_until_tick);
 
         $fullDebuff = (int) config('game.encounter.plague.debuff_sols');
-        $fullReduction = (float) config('game.encounter.plague.ap_reduction_pct');
         $this->assertSame($fullDebuff, (int) $colony->plague_until_tick - $tick);
-        $this->assertEqualsWithDelta($fullReduction, (float) $colony->plague_ap_reduction_pct, 0.0001);
+        $this->assertSame((int) config('game.encounter.plague.ap_reduction'), (int) $colony->plague_ap_reduction_pct);
+        $this->assertSame(-(int) config('game.encounter.plague.ap_reduction'), $this->app->make(AdvisorService::class)->getApBreakdown(self::COLONY_ID)['plague_ap']);
     }
 }

@@ -11,8 +11,6 @@ class FindFlightService
 {
     public const MISSION_KEY = 'mission_find_salvage';
 
-    public function __construct(private readonly ProjectBonusService $projectBonusService) {}
-
     public function solDistance(int $ring): int
     {
         $byRing = config('missions.catalog.'.self::MISSION_KEY.'.sol_distance_by_ring', []);
@@ -27,7 +25,8 @@ class FindFlightService
 
         return [
             'sol_distance' => $distance,
-            'ap_cost' => $this->projectBonusService->effectiveNavigationApCost($colonyId, (int) config('game.finds.flight.ap_cost')),
+            // Flat 1-AP action: no cartography discount (AP scale 2026-11-13 §5.1.2).
+            'ap_cost' => (int) config('game.finds.flight.ap_cost'),
             'organika' => $distance * (int) config('game.finds.flight.organika_per_sol'),
             'duration' => 2 * $distance,
         ];

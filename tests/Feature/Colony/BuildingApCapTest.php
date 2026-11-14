@@ -48,10 +48,12 @@ class BuildingApCapTest extends TestCase
 
     private function setCap(?int $base): void
     {
-        config(['game.build.ap_cap_per_sol' => [
-            'base' => $base,
-            'engineer_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],
-        ]]);
+        // Mechanism test with the pre-scale numbers; the engineer bonus is the shared field
+        // bonus game.advisor.cap_bonus_per_rank since the AP scale 2026-11-13.
+        config([
+            'game.build.ap_cap_per_sol' => ['base' => $base],
+            'game.advisor.cap_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],
+        ]);
     }
 
     private function invest(int $buildingId = self::CC_ID)

@@ -219,8 +219,8 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_dispatch_blocked_without_nav_ap(): void
     {
-        // Shared colony pool (GDD §13.1) — lock all but 1 AP for this tick,
-        // then attempt mission_courier_run (drone, ungated, needs 1 × 2 = 2 AP).
+        // Shared colony pool (GDD §13.1) — lock every AP for this tick, then attempt
+        // mission_courier_run (drone, ungated, needs missions.ap_by_distance[1] = 1 AP).
         config(['game.bypass.resource_costs' => false, 'game.bypass.ap_checks' => false]);
         $svc = $this->setupDockedShip(self::SHIP_DRONE);
         $this->setOrganika(999); // plenty of provisions
@@ -231,7 +231,7 @@ class OrganikaProvisioningTest extends TestCase
             'scope_type' => 'colony',
             'scope_id' => self::COLONY_ID,
             'personell_id' => 89, // pilot (config/advisors.php)
-            'spend_ap' => $available - 1,
+            'spend_ap' => $available,
         ]);
 
         $this->expectException(RuntimeException::class);

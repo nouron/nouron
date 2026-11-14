@@ -106,6 +106,7 @@ class ColonyController extends BaseController
             'damagedThresholdPct' => (float) config('game.encounter.damaged_threshold_pct', 0.66),
             'criticalThresholdPct' => (float) config('game.encounter.critical_threshold_pct', 0.33),
             'deepScanAp' => (int) $d['deepScanAp'],
+            'freeExploreToday' => (bool) $d['freeExploreToday'],
             'relocateApPerHex' => (int) config('game.harvester.relocate_ap_per_hex', 2),
             'phaseProgress' => $d['phaseProgress'],
             'regolithFallbackTiles' => $d['regolithFallbackTiles'],
@@ -237,7 +238,8 @@ class ColonyController extends BaseController
                 // The 0 -> 1 step of a placed site was paid on placement (T9) — 0 then.
                 $b->levelup_cost = $this->buildingCostService->levelupRegolithDue($b);
                 $b->first_level_prepaid = BuildingCostService::firstLevelPrepaid($b);
-                $b->repair_cost = $this->repairRegolithCost((int) $b->building_id);
+                ['sp' => $repairSp, 'rg' => $b->repair_cost] = $this->repairStep((int) $b->building_id, (float) $b->status_points, (int) $b->max_status_points);
+                $b->repair_sp = (int) ceil($repairSp);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, $this->buildingCostService->levelupAp((int) $b->building_id, (int) $b->level + 1, (int) $b->ap_for_levelup));
                 $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
                 $b->ap_cap = $this->apCapService->stateFromRow($apCap, $b);
@@ -268,6 +270,7 @@ class ColonyController extends BaseController
 
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
         $deepScanAp = $this->tileService->deepScanCost($colony->id);
+        $freeExploreToday = $this->tileService->hasFreeExploreToday($colony->id);
 
         // Static per-type chip data for the building catalog — matched client-side against building_key.
         $buildingChipData = collect(config('buildings'))->mapWithKeys(fn ($cfg, $camelKey) => [
@@ -277,7 +280,7 @@ class ColonyController extends BaseController
             ],
         ]);
 
-        return compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp', 'buildingChipData');
+        return compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'organika', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress', 'regolithFallbackTiles', 'deepScanAp', 'freeExploreToday', 'buildingChipData');
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -1007,10 +1010,10 @@ class ColonyController extends BaseController
             return $this->fail('repair_full');
         }
 
-        // Repair costs Regolith per click (game.repair.regolith_per_click; hard gate, no negative balance). CC and
-        // Harvester are exempt (AP-only) so the Regolith source itself stays repairable —
-        // this keeps the decay spiral a recoverable setback, never a hard deadlock.
-        $repairRegolith = $this->repairRegolithCost($buildingId);
+        // One click restores sp_per_click SP for 1 AP and Regolith per SP (repairStep(); hard
+        // gate, no negative balance). CC and Harvester are exempt (AP-only) so the Regolith
+        // source itself stays repairable — the decay spiral stays a recoverable setback.
+        ['sp' => $repairSp, 'rg' => $repairRegolith] = $this->repairStep($buildingId, (float) $row->status_points, $maxSp);
         $repairCostsRegolith = $repairRegolith > 0;
 
         if ($repairCostsRegolith
@@ -1018,9 +1021,9 @@ class ColonyController extends BaseController
             return $this->fail('repair_no_regolith');
         }
 
-        // Decay leaves fractional SP; one click adds exactly one full point (capped),
-        // so the +1 the UI promises is the +1 the player gets.
-        $newSp = min((float) $row->status_points + 1, $maxSp);
+        // Decay leaves fractional SP; the click adds full points (capped at the maximum),
+        // so the gain the UI promises is the gain the player gets.
+        $newSp = min((float) $row->status_points + $repairSp, $maxSp);
 
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -1587,7 +1590,8 @@ class ColonyController extends BaseController
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->buildingCostService->levelupRegolithDue($row);
         $row->first_level_prepaid = BuildingCostService::firstLevelPrepaid($row);
-        $row->repair_cost = $this->repairRegolithCost((int) $row->building_id);
+        ['sp' => $repairSp, 'rg' => $row->repair_cost] = $this->repairStep((int) $row->building_id, (float) $row->status_points, (int) $row->max_status_points);
+        $row->repair_sp = (int) ceil($repairSp);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, $this->buildingCostService->levelupAp((int) $row->building_id, (int) $row->level + 1, (int) $row->ap_for_levelup));
         $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
         $row->ap_cap = $this->apCapService->stateFromRow($this->apCapService->capFor($colonyId), $row);
@@ -1597,18 +1601,26 @@ class ColonyController extends BaseController
     }
 
     /**
-     * Regolith charged per repair click (the number the Reparieren button shows). CC and
-     * Harvester are exempt (AP-only); 0 as well when resource costs are bypassed.
+     * What the next repair click does (AP scale 2026-11-13 §6): it restores
+     * game.repair.sp_per_click status points, or only the missing ones near the maximum,
+     * and charges game.repair.regolith_per_sp per (started) point — the numbers the
+     * Reparieren button shows. CC and Harvester are exempt from Regolith (AP-only); 0 Rg
+     * as well when resource costs are bypassed.
+     *
+     * @return array{sp: float, rg: int}
      */
-    private function repairRegolithCost(int $buildingId): int
+    private function repairStep(int $buildingId, float $statusPoints, int $maxSp): array
     {
-        if ($buildingId === BuildingId::CommandCenter->value
-            || $buildingId === BuildingId::Harvester->value
-            || config('game.bypass.resource_costs')) {
-            return 0;
-        }
+        $perClick = max(1, (int) config('game.repair.sp_per_click', 3));
+        $missing = $maxSp - $statusPoints;
+        $sp = $missing > 0 ? min((float) $perClick, $missing) : (float) $perClick;
 
-        return max(0, (int) config('game.repair.regolith_per_click', 1));
+        $exempt = $buildingId === BuildingId::CommandCenter->value
+            || $buildingId === BuildingId::Harvester->value
+            || config('game.bypass.resource_costs');
+        $rg = $exempt ? 0 : (int) ceil($sp) * max(0, (int) config('game.repair.regolith_per_sp', 1));
+
+        return ['sp' => $sp, 'rg' => $rg];
     }
 
     private static function buildingImageSlug(string $key): string

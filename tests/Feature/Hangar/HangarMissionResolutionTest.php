@@ -236,6 +236,11 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertSame(2, $explored, 'recon_flight reveals exactly 2 tiles');
     }
 
+    private function sweepAp(): int
+    {
+        return (int) config('missions.catalog.mission_data_sweep.reward.research_ap');
+    }
+
     /**
      * mission_data_sweep pays earmarked research AP into the chosen knowledge. Since
      * silent research (2026-11-11) they follow ResearchService::investBonus(): reaching
@@ -246,7 +251,7 @@ class HangarMissionResolutionTest extends TestCase
         $threshold = $this->app->make(ResearchService::class)->knowledgeLevelupCost(self::COLONY_ID, 91);
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => 91],
-            ['level' => 0, 'ap_spend' => $threshold - 5, 'status_points' => 20]
+            ['level' => 0, 'ap_spend' => $threshold - 1, 'status_points' => 20]
         );
         $this->dispatchFixture('mission_data_sweep', 3, dispatchTick: 20500, target: ['research_id' => 91]);
 
@@ -256,7 +261,7 @@ class HangarMissionResolutionTest extends TestCase
             ->where('colony_id', self::COLONY_ID)->where('research_id', 91)->first();
 
         $this->assertSame(1, (int) $row->level);
-        $this->assertSame(8 - 5, (int) $row->ap_spend);
+        $this->assertSame($this->sweepAp() - 1, (int) $row->ap_spend);
     }
 
     public function test_completion_research_ap_uses_the_discounted_threshold_with_sciencelab_lv5(): void
@@ -270,7 +275,7 @@ class HangarMissionResolutionTest extends TestCase
 
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => 91],
-            ['level' => 0, 'ap_spend' => 15, 'status_points' => 20]
+            ['level' => 0, 'ap_spend' => $discounted - 1, 'status_points' => 20]
         );
         $this->dispatchFixture('mission_data_sweep', 3, dispatchTick: 20700, target: ['research_id' => 91]);
 
@@ -280,7 +285,7 @@ class HangarMissionResolutionTest extends TestCase
             ->where('colony_id', self::COLONY_ID)->where('research_id', 91)->first();
 
         $this->assertSame(1, (int) $row->level);
-        $this->assertSame(15 + 8 - $discounted, (int) $row->ap_spend);
+        $this->assertSame($this->sweepAp() - 1, (int) $row->ap_spend);
     }
 
     public function test_completion_research_ap_writes_a_knowledge_journal_entry(): void
@@ -295,7 +300,7 @@ class HangarMissionResolutionTest extends TestCase
         $params = json_decode($entry->parameters, true);
         $this->assertSame('data_sweep', $params['source']);
         $this->assertSame(91, $params['knowledge_id']);
-        $this->assertSame(8, $params['ap_invested']);
+        $this->assertSame($this->sweepAp(), $params['ap_invested']);
     }
 
     public function test_completion_research_ap_into_a_blocked_knowledge_lapses_with_a_journal_entry(): void
@@ -319,7 +324,7 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertNotNull($entry);
         $params = json_decode($entry->parameters, true);
         $this->assertSame('data_sweep', $params['source']);
-        $this->assertSame(8, $params['ap_forfeited']);
+        $this->assertSame($this->sweepAp(), $params['ap_forfeited']);
         $this->assertSame('max_level', $params['block_reason']);
     }
 

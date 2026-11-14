@@ -91,12 +91,13 @@ class CantinaApiTest extends TestCase
 
     public function test_bartender_block_before_and_after_todays_talk(): void
     {
-        config(['game.bartender.ap_bonus_by_relationship_level' => [0 => 0, 1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 3]]);
+        config(['game.bartender.ap_bonus' => 2]);
         Sanctum::actingAs(User::find(self::USER_ID));
         $this->setTomas(3);
 
         $this->getJson('/api/v1/cantina')->assertOk()->assertJson(['bartender' => [
             'relationship_level' => 3, 'ap_bonus' => 2, 'talked_today' => false, 'today_result' => null, 'advice_open' => true,
+            'advice_in_sols' => 0,
         ]]);
 
         $this->postJson('/api/v1/colony/bar/talk-to-bartender', ['knowledge_id' => 90])->assertOk();

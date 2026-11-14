@@ -73,7 +73,7 @@ Gefahren sind klein, lokal und richten sich gegen die Kolonie selbst statt gegen
 
 **Navigation-AP** (Domäne des Raumfahrers): fließt entweder in ring-gestaffelte Tile-Erkundung (Kosten steigen mit dem Ring, `colony.explore_cost_per_ring`) oder in den Dispatch von Hangar-Schiffen auf Außenmissionen (AP und Organika-Proviant je Sol Distanz, `config/missions.php`). Wer eine Mission entsendet, deckt in diesem Sol weniger neues Terrain auf — eine echte, rein zivile Opportunitätskostenentscheidung.
 
-**Bau-AP** (Domäne des Baumeisters): fließt entweder in Gebäudeausbau (Wachstum) oder in Reparatur beschädigter Gebäude (Vorsorge gegen die Kolonistengefahren aus §9). Ein gut gewartetes Gebäude übersteht ein Ereignis fast unbeschadet, ein vernachlässigtes nimmt Schaden — Reparatur kostet nicht mehr AP pro Punkt als Ausbau, sie konkurriert nur mit ihm um denselben Pool.
+**Bau-AP** (Domäne des Baumeisters): fließt entweder in Gebäudeausbau (Wachstum) oder in Reparatur beschädigter Gebäude (Vorsorge gegen die Kolonistengefahren aus §9). Ein gut gewartetes Gebäude übersteht ein Ereignis fast unbeschadet, ein vernachlässigtes nimmt Schaden — Reparatur kostet je Punkt weniger AP als Ausbau, sie konkurriert nur mit ihm um denselben Pool.
 
 ### Geltungsbereich: spielweites Prinzip
 
@@ -338,7 +338,7 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 - Harvester: **kein Level-Up** (§13.5). Er liefert ein festes Regolith-Grundeinkommen je Standort; Wachstum kommt aus Kenntnissen (`geology`), Funden, Missionen und Handel.
 
 **3. Reparatur (laufender Dauer-Sink):**
-- **Regolith + Construction-AP pro Reparatur-Schritt** (siehe `config/game.php`). Decay läuft bis Run-Ende → Reparatur hält Regolith über den gesamten Run relevant (Errichtungs-/Level-Up-Kosten allein versiegen nach Vollausbau).
+- **Ein AP je Klick, ein Klick stellt mehrere Status-Punkte her, Regolith je wiederhergestelltem Punkt** (`config/game.php → repair`). Fehlen weniger Punkte, als ein Klick herstellt, werden nur diese wiederhergestellt und bezahlt; der AP bleibt. Decay läuft bis Run-Ende → Reparatur hält Regolith über den gesamten Run relevant (Errichtungs-/Level-Up-Kosten allein versiegen nach Vollausbau).
 - **Hartes Gate:** kein Regolith → Reparatur-Button gesperrt, Tooltip verweist auf Harvester-Reparatur. Kein Negativ-Saldo, kein Schuldensystem.
 - **CC + Harvester ausgenommen** (AP-only) → die Regolith-Quelle bleibt immer reparierbar, die Decay-Spirale ist ein erholbarer Rückschlag, kein Hard-Deadlock.
 
@@ -377,7 +377,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 | Level | CC-Voraussetzung | Freischaltet / Effekt |
 |-------|-----------------|----------------------|
 | 1 | CC Lv2 | Aktive Nexus-Anfragen: **Direktimport** (Werkstoffe gegen Credits, fester Preis, sofort verfügbar, siehe §3; Regolith und Organika gegen Credits, fester Preis, verzögerte Lieferung, siehe unten) |
-| 2 | CC Lv3 | Tiefenscan kostet weniger AP (`ColonyTileService`); Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt |
+| 2 | CC Lv3 | Der erste Tiefenscan je Sol ist kostenlos (Häufigkeit statt Rabatt, §13.3; `game.finds.free_scan_uplink_level`, `ColonyTileService`); Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt |
 | 3 | CC Lv5 | Direktimport-Lieferzeit für Nicht-Werkstoffe sinkt weiter |
 
 **Direktimport für Nicht-Werkstoff-Ressourcen :** Anfrage und Bezahlung passieren sofort wie beim Werkstoff-Direktimport, die Lieferung selbst braucht jedoch mehrere Sole (`game.economy.delayed_import_delivery_ticks`, sinkend mit dem Uplink-Station-Level). Der **einzige** Hebel zur Verkürzung ist das Uplink-Station-Level selbst — bewusst kein zusätzlicher Hebel über Konsul-Rang, Kenntnisse oder situative Boni, um den Direktimport als reine Infrastrukturfrage zu halten. Das betrifft die *Lieferzeit*; der *Preis* des Direktimports ist ein eigener Kanal des Handelspostens (Stufe III, siehe „Handelsposten — Mechanik" unten). Dieser Weg ist das Sicherheitsnetz für nicht lokal beschaffbare Ressourcenmengen (§12).
@@ -461,7 +461,7 @@ Die CC-Startposition ist pro Run zufällig. Das erzeugt unterschiedliche Ausgang
 - **Erschließen** (CC-Level): Die Kommandozentrale macht angrenzendes Gelände *bebaubar* (erweitert die Kolonie-Zone). Sie deckt das Tile **nicht** automatisch auf — ein neu erschlossenes Zone-Tile bleibt im Fog, bis es erkundet oder bebaut wird.
 - **Erkunden** (Navigation-AP): Erkundungsaktion oder Erkundungsflug lüften den Nebel und finden Ressourcen/Signale. Erkunden ist die einzige Quelle von Tile-Wissen.
 
-Die AP-Kosten pro erkundetem Tile steigen mit dem Ring (`config/game.php → colony.explore_cost_per_ring`), gestaffelt von innen nach außen. Die Staffelung verlangsamt das vollständige Aufdecken der Karte bewusst — eine Pauschalrate würde die Karte zu schnell enthüllen und den Spannungswert des Fog of War zunichtemachen. Ring 1 ist beim Run-Start bereits automatisch erkundet; der Kostensatz greift praktisch nur für nachträglich erschlossene Tiles.
+Die AP-Kosten pro erkundetem Tile steigen mit dem Ring (`config/game.php → colony.explore_cost_per_ring`): Die inneren Ringe kosten gleich wenig, der äußerste Ring mehr. Den Großteil der Bremse trägt der kleine Tagespool selbst; die teurere Außenkante erhält das Profil „nah billig, fern teuer" und verlangsamt das vollständige Aufdecken der Karte bewusst — eine Pauschalrate würde die Karte zu schnell enthüllen und den Spannungswert des Fog of War zunichtemachen. Ab einer `cartography`-Stufe ist die erste Erkundung je Sol kostenlos (§13.3), Lenns Gutschein macht eine einzelne Erkundung kostenlos (§12). Ring 1 ist beim Run-Start bereits automatisch erkundet; der Kostensatz greift praktisch nur für nachträglich erschlossene Tiles.
 
 Daraus folgt:
 - **Kolonie-Zone-Tiles** sind baubar, aber ggf. noch im Fog (`is_colony_zone=1, is_explored=0`). **Bauen auf einem solchen Tile deckt es auf** ("siedeln → sehen"). Der Spieler kann optional vorher per Navigation-AP erkunden, um vor dem Bauen zu sehen, was dort liegt (z.B. Gefahrenzone).
@@ -621,21 +621,21 @@ Jedes Pfadgebäude bietet mehrere **Dinge**, und jedes Ding lässt sich in fünf
 
 **Begriffe.** „Vertrauen“ bleibt allein die Kolonie-Stimmung (§14). Die Bindung an eine Figur heißt **Vertrautheit**, die Erfahrung mit einer Missionsfamilie **Missionserfahrung** (Vorschlag; Alternative „Training“) — sonst würde ein vierter „Level“ oder ein zweites „Vertrauen“ den Spieler verwirren. Der Balken an der Figur ist ein Vertrautheitsbalken.
 
-**Cantina.** Alle Figuren (`config('characters')`) behalten ihre Vielfalt und können eine Vertrautheit aufbauen. Die Vertrautheit wächst durch AP-Investition in die Figur. Die Investition ist als **Gespräch** gerahmt: Je Figur gibt es mehrere Gesprächsoptionen mit unterschiedlich hohem AP-Einsatz; der Spieler entscheidet, wie viel Bemühung er in das Gespräch steckt. Das Gespräch liefert keinen zusätzlichen Ertrag, nur den Fortschritt am Balken (reine AP-Investition, Variante C); der Fortschritt ist proportional zu den eingesetzten AP, ohne Mengenrabatt (Annahme, damit die angezeigte Zahl die wirkende ist). Das Sol-Limit gilt wie beim Bauen, im Labor und im Hangar-Training auch hier als AP-Deckel je Figur und Sol (Annahme; Höhe und etwaiger Rang-Bonus nach Messung). Der Kodex zählt weiterhin getrennt die Begegnungen über alle Läufe (§12, Kodex-Trigger je `game_role`). Die Stufen der Vertrautheit heißen im Spiel **Beziehungsstufen** und tragen Worte statt Zahlen (von „fremd“ bis „brüderlich“). Der Barkeeper ist die Figur ohne Zufallsspawn und die erste, deren Beziehungsstufe schon eine Wirkung hat: Sie bestimmt die Höhe seines Rats (§12). Was jede einzelne Figur auf höheren Stufen mechanisch bringt, wird separat entworfen und gehört nicht in die erste Version; die erste Version macht den Fortschritt nur sichtbar.
+**Cantina.** Alle Figuren (`config('characters')`) behalten ihre Vielfalt und können eine Vertrautheit aufbauen. Die Vertrautheit wächst durch AP-Investition in die Figur. Die Investition ist als **Gespräch** gerahmt (Variante C, Owner 2026-11-13): **Je Figur gibt es ein Gespräch pro Sol, und der Spieler wählt, wie lange es dauert.** Die Länge ist der AP-Einsatz; die Frage je Figur und Sol lautet „Wie viel von meinem gemeinsamen Pool gebe ich heute dieser Figur?". Nach dem Gespräch ist die Figur für heute fertig (dasselbe Muster wie Tomas' Rat: Figurenzeile, Ergebnis, „wieder nächstes Sol"). Das Gespräch liefert keinen zusätzlichen Ertrag, nur den Fortschritt am Balken; der Fortschritt ist proportional zu den eingesetzten AP, ohne Mengenrabatt und ohne Kürzung: Eine Länge kostet immer genau ihren angezeigten Preis. Eine Figur nimmt je Sol höchstens so viele AP auf wie eine Baustelle mit Baumeister (Owner 2026-11-13); längere Gespräche gibt es nicht. **Die erste Beziehungsstufe erreicht schon das erste Gespräch, jede weitere braucht mehrere Gespräche** (Owner 2026-11-13: ab der zweiten Stufe kein Aufstieg nach ein oder zwei kurzen Gesprächen). **Stufengrenze:** Es gibt keinen Übertrag in die nächste Stufe. Wählt der Spieler eine Länge über dem Rest bis zur nächsten Stufe, zahlt er den vollen Preis und der Überschuss verfällt; die Oberfläche warnt vorher (Warnchip am Knopf „… verfallen" und eine Hinweiszeile, wie viel bis zur nächsten Stufe fehlt), ohne Bestätigungsdialog, und die Ergebniszeile sowie das Protokoll nennen die verfallenen AP. Weil das kurze Gespräch immer offen ist, lässt sich jeder Rest genau treffen; Verfall entsteht nur, wenn der Spieler bewusst länger redet. Der Kodex zählt weiterhin getrennt die Begegnungen über alle Läufe (§12, Kodex-Trigger je `game_role`). Die Stufen der Vertrautheit heißen im Spiel **Beziehungsstufen** und tragen Worte statt Zahlen (von „fremd“ bis „brüderlich“). Der Barkeeper ist die Figur ohne Zufallsspawn und die erste, deren Beziehungsstufe schon eine Wirkung hat: Sie bestimmt, wie oft er Rat gibt (§12). Was jede einzelne Figur auf höheren Stufen mechanisch bringt, wird separat entworfen und gehört nicht in die erste Version; die erste Version macht den Fortschritt nur sichtbar.
 
 **Hangar.** Der Missionskatalog (§8b) wird zu fünf **Missionstypen** (Familien: Erkundung, Bergung, Versorgung, Handel und Kurier, Schutz) gebündelt, damit nicht jede Einzelmission eine eigene Fortschrittsspur braucht. Jede Stufe einer Familie erhöht den Ertrag ihrer skalierbaren Belohnungen (Credits, Organika und ähnliche Mengen) um einen kleinen, gleichbleibenden Anteil; die Entscheidung liegt in Breite gegen Tiefe über die Familien. Der Missionsdialog nennt Familie und Stufe und zeigt den Ertrag samt Familienbonus. Die Ertragssteigerung bleibt klein (Credits-Inflation, §4b). Die Missionserfahrung einer Familie wächst durch AP-Investition, nicht durch geflogene Missionen.
 **Freischaltung nach Hangar-Stufe.** Eine Familie ist erst trainierbar, sobald der Hangar die Schiffsklasse erreicht hat, die ihre Missionen typischerweise fliegt (Leitschiff): Drohne, Frachter, Korvette. Die Zuordnung Familie → Hangar-Stufe steht in der Config. Das Training braucht kein Schiff und bindet keines — die Erfahrung gehört der Kolonie, nicht dem Schiff.
 
-**Sol-Limit.** Wie der Ausbau von Gebäuden hat auch das Training eine Obergrenze je Familie und Sol (Grundwert; ein Rang-Bonus des Raumfahrers ist nicht vorgesehen). So lässt sich keine Familie in einem einzigen Sol hochziehen; die Wahl zwischen Breite und Tiefe bleibt eine Frage von mehreren Sol. Die Höhe wird erst nach Messung festgelegt, damit die Senke für ungenutzte AP im Hangar-First-Start erhalten bleibt.
+**Sol-Limit.** Wie der Ausbau von Gebäuden hat auch das Training eine Obergrenze je Familie und Sol: einen kleinen Grundwert plus den **Fach-Deckel des Raumfahrers** je Rang (§13.2). Ohne Raumfahrer trainiert der Hangar langsam. So lässt sich keine Familie in einem einzigen Sol hochziehen; die Wahl zwischen Breite und Tiefe bleibt eine Frage von mehreren Sol. Das Training ist bewusst etwas teurer im Pool als eine reine Umrechnung, weil es die vorgesehene Senke für ungenutzte AP im Hangar-First-Start ist (Annahme, AP-Skala 2026-11-13 §11.2).
 
-**Gleiches Prinzip im Labor.** Auch das Labor nimmt je Kenntnis und Sol nur begrenzt AP auf (Deckel nach dem Muster des Gebäude-Deckels; zweckgebundene Bonus-AP wie die des Barkeepers sind ausgenommen). Damit gilt in allen drei Pfaden dieselbe Regel: AP lassen sich nicht an einem Sol in eine einzige Sache kippen. Alle drei Deckel nutzen denselben Sol-Zähler (`DailyApCapService`); die Höhe wird nach Messung festgelegt.
+**Gleiches Prinzip im Labor.** Auch das Labor nimmt je Kenntnis und Sol nur begrenzt AP auf: Grundwert plus **Fach-Deckel des Analytikers** je Rang (§13.2); zweckgebundene Bonus-AP wie die des Barkeepers sind ausgenommen. Ohne Analytiker forscht das Labor langsam, analog zu „ohne Baumeister baut man langsamer". Damit gilt in allen drei Pfaden dieselbe Regel: AP lassen sich nicht an einem Sol in eine einzige Sache kippen, und der Fach-Berater macht den Pfad schneller. Bau, Labor, Training und Gespräch nutzen denselben Sol-Zähler (`DailyApCapService`).
 
 **Grenzen (Absicht).**
 - **Kein zweiter Prozentbonus-Stapel.** Raumfahrer-Rang und Kenntnis-Level wirken schon auf Erfolgschance und Proviant (§8b). Die Familienstufe wirkt deshalb nur auf den Ertrag und bleibt klein; weitere Stufenwirkung soll bevorzugt *Neues* freischalten (Varianten, Dialoge, Zugang).
 - **Planbar statt Zufall.** Der Fortschritt hängt an der Investition des Spielers, nicht an Glücks-Begegnungen. Ob eine Figur zuvor erschienen sein muss, ist offen (Spec).
 - **Ein Lauf, eine Spur.** Die Stufen gelten pro Lauf. Dauerhaft bleibt nur, was schon dauerhaft ist (Kodex).
 - **Hangarstufe als Deckel.** Der Hangar hat weniger Ausbaustufen als die Vertiefung hat Stufen; die Hangarstufe begrenzt, wie hoch eine Familie steigen kann (`path_depth.building_gate`).
-- **Cantina-Stufe staffelt die Gesprächsoptionen** (Owner 2026-11-13). Für Figuren gibt es keine Stufensperre: Eine Beziehung kann mit jeder Cantina bis zur höchsten Beziehungsstufe wachsen. Die Cantina-Stufe entscheidet nur, welche Gesprächsoptionen offen sind: das kurze Gespräch immer, das normale und das ausführliche erst mit ausgebauter Cantina (`path_depth.conversation_option_cantina_level`). Ohne Ausbau geht es langsam weiter, mit Ausbau schneller. Eine gesperrte Option bleibt sichtbar; statt einer Sperrmeldung sagt die Figur selbst einen Satz dazu (wechselnd je Sol). Das kurze Gespräch ist auch vor dem ersten Handel möglich: Jede Figur, die heute in der Cantina sitzt, lässt sich sofort ansprechen, und das erste Gespräch zählt als Treffen. Figuren, die nicht da sind und nie getroffen wurden, bleiben unerreichbar.
+- **Cantina-Stufe staffelt die Gesprächsoptionen** (Owner 2026-11-13). Für Figuren gibt es keine Stufensperre: Eine Beziehung kann mit jeder Cantina bis zur höchsten Beziehungsstufe wachsen. Die Cantina-Stufe entscheidet nur, welche Gesprächslängen offen sind: das kurze Gespräch immer, das lange erst mit voll ausgebauter Cantina (`path_depth.conversation_option_cantina_level`, AP-Skala 2026-11-13 §11.4). Ohne Ausbau geht es langsamer weiter, mit Ausbau schneller; die mittlere Cantina-Stufe wirkt über Vertrauen und Angebote, nicht über die Gesprächslänge. Eine gesperrte Option bleibt sichtbar; statt einer Sperrmeldung sagt die Figur selbst einen Satz dazu (wechselnd je Sol). Das kurze Gespräch ist auch vor dem ersten Handel möglich: Jede Figur, die heute in der Cantina sitzt, lässt sich sofort ansprechen, und das erste Gespräch zählt als Treffen. Figuren, die nicht da sind und nie getroffen wurden, bleiben unerreichbar.
 
 **Dies ist die zentrale Designregel der Pfadwahl.** Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob*. Eine Kolonie braucht unabhängig vom gewählten Pfad Regolith, Credits, Organika und Vertrauen. Hat ein Pfad auf eines dieser Grundbedürfnisse keine Antwort, wird der Pfad, der sie hat, faktisch zur Pflicht — und die Pfadwahl zur Scheinentscheidung.
 
@@ -708,7 +708,7 @@ Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes f
 | **Wohnhabitat** | Instanz (+ Level 1–3 je Instanz) | 6 | Mehrere Habitate; das Level je Instanz trägt den Wohnraum-Beitrag (§6). |
 | **Agrardom** | Level | Lv3 | Bleibt Level-Gebäude (Owner-Entscheidung F1). Er hat mit Level und `agronomy`-Kenntnis bereits zwei Wachstumshebel — eine dritte Achse (Instanz) wäre Redundanz ohne neue Entscheidung, und eine zusätzliche Instanz würde ein knappes Koloniefeld binden, das mit einzigartigen Gebäuden konkurriert. |
 | **Hangar** | Level (Klasse und Bucht) | Lv3 | Eine einzige Halle; die Stufe ist zugleich Schiffsklasse und Buchtenzahl — siehe unten. |
-| **Analytik-Labor** | Level | Lv5 | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Lv4/5 haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt, §13.3), keine reinen Gate-Stufen mehr. |
+| **Analytik-Labor** | Level | Lv5 | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Höhere Stufen haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt als fester AP-Abzug auf Lv3 und Lv5, §13.3). |
 | **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
 | **Leitstelle** | Level | Lv3 | Eine pro Kolonie. |
 | **Handelsposten** | Level | Lv3 | Eine pro Kolonie. |
@@ -1096,7 +1096,7 @@ Jeder Schiffstyp hat eine unterschiedliche Verschleiß-Rate pro Sol im Einsatz. 
 
 **Kein passiver Decay:** Ein gedocktes Schiff verliert keine SP. Das unterscheidet Schiffs-Verschleiß fundamental von Gebäude-Decay — nur Aktivität kostet.
 
-> ⚠️ BALANCE CONCERN: `wear_per_sol`-Richtwerte sind ungetestet. Zielgröße: eine 3-Sol-Mission kostet 2–3 Construction-AP Reparatur (Drohne). Fühlt sich Verschleiß im Playtest wie Rauschen an → Werte ×1,5; frisst er den Construction-Pool → Drohne auf 1,0 senken.
+> ⚠️ BALANCE CONCERN: `wear_per_sol`-Richtwerte sind ungetestet. Zielgröße: eine 3-Sol-Mission kostet etwa einen bis zwei Reparatur-Klicks (Drohne; seit der AP-Skala stellt ein Klick mehrere SP her, der Anteil am kleineren Pool bleibt ungefähr gleich — gerechnet, nicht gemessen). Fühlt sich Verschleiß im Playtest wie Rauschen an → Werte ×1,5; frisst er den Construction-Pool → Drohne auf 1,0 senken.
 
 **Reparatur:** Fixkosten pro Klick — AP gegen Statuswiederherstellung, gedeckelt auf die maximalen Status-Points. Die Reparatur kostet nur AP, weder Regolith noch Credits, und gilt je Schiff, auch auf dem Vorfeld. Gleiche Interaktion wie Gebäude-Reparatur, damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Werte: `config/game.php → ship_repair`, Tabelle in `docs/game-reference.md`. Eine passive Reparatur im Dock gibt es bewusst nicht; sie käme erst, wenn die Messung zeigt, dass Schiffe sonst dauerhaft warten.
 
@@ -1174,7 +1174,7 @@ Außenmissionen sind der einzige aktive Einsatz von Schiffen (§7 Schiffs-Versch
 
 Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konvention: alle Kosten vorab als Chips am Button):
 
-- **Navigation-AP:** `sol_distance` × Faktor (`config/missions.php → nav_ap_per_sol`)
+- **Navigation-AP:** nach Entfernungstabelle (`config/missions.php → ap_by_distance`; nahe Missionen kosten gleich wenig, lange spürbar mehr). `cartography` senkt ab einer Stufe die langen Missionen um einen AP, nie unter einen AP (§13.3).
 - **Organika:** `sol_distance` × Faktor als Proviant & Betriebsstoffe (`organika_per_sol`; gilt einheitlich auch für die unbemannte Drohne — eine Ausnahme würde Drohnen-Missionen zum kostenlosen Optimalpfad machen)
 - Einzelne Missionen haben Zusatzkosten (z.B. Hilfsgüter-Fracht), im Katalog vermerkt.
 
@@ -1225,7 +1225,7 @@ Exakte Kosten (Navigation-AP, Organika-Proviant, Zusatzmaterialien), Distanzen, 
 Organika-Kosten der Mission = Basis − (Level über Gate − 1), Minimum 1 pro Sol
 ```
 
-Navigation-AP skalieren nie (die AP-Staffel ist das Raumfahrer-Progressionsgate, §13). Missionen ohne Kenntnis-Gate skalieren nicht. Begründung: Kostensenkung statt Belohnungserhöhung funktioniert für alle Belohnungstypen einheitlich (auch Tiles, Scans, Almanach — nicht bezifferbar), lässt Balance-Deckel unberührt, und erhält den Organika-Sink. Exakte Skalierungswerte und Basis-Kosten: `config/missions.php`.
+Navigation-AP skalieren nicht mit dem Gate-Kenntnislevel (die AP-Staffel ist das Raumfahrer-Progressionsgate, §13); die einzige AP-Senkung ist der `cartography`-Abzug auf lange Missionen (Kostenmodell oben). Missionen ohne Kenntnis-Gate skalieren nicht. Begründung: Kostensenkung statt Belohnungserhöhung funktioniert für alle Belohnungstypen einheitlich (auch Tiles, Scans, Almanach — nicht bezifferbar), lässt Balance-Deckel unberührt, und erhält den Organika-Sink. Exakte Skalierungswerte und Basis-Kosten: `config/missions.php`.
 
 **Wiederholbarkeit:** Missionen sind wiederholbar; Ausnahme: Ruinen-Expedition ist einmalig pro enthülltem Ruinen-Tile. Die natürliche Drossel für alles andere ist die Kostentrias AP + Organika + Verschleiß (Reparatur: nur AP, §7).
 
@@ -1293,7 +1293,7 @@ Damit werden zugleich die in §14 markierten Trust-Events mit Anwendungsfällen 
 |---|---|---|---|---|---|
 | **Sturm** | **Koloniweit** — trifft alle Gebäude der Colony Zone gleichzeitig (Harvester ausgenommen, siehe unten) | Zufällig; Basis-Chance/Sol steigt mit Run-Schwierigkeit | SP-Verlust je Gebäude nach individueller Ausgangsstufe (Tabelle oben); ein gemeinsamer Trust-Ausgang für die ganze Kolonie (siehe „Wirkbereich"-Abschnitt) | variabel nach Phase (häufiger mit mehr Gebäuden) | Hohe SP durch regelmäßige Reparatur — bei koloniweitem Wirkbereich zählt jetzt der Zustand *aller* Gebäude, nicht nur eines |
 | **Geologische Instabilität** | **Einzelgebäude, fest** — trifft immer den Harvester; kein Zufallsziel unter mehreren Gebäuden, da mechanisch an das Harvester-Tile gekoppelt | Chance steigt mit Solen seit letzter Relocation, sinkt mit Kenntnis Geologie | Produktionsausfall des Harvesters für eine Weile (statt zusätzlichem Trust-Malus — kein doppelter Bestrafungseffekt) | seltener als Stürme | Kenntnis Geologie senkt Chance; Relocation setzt Zähler zurück |
-| **Seuchenausbruch** | **Kein Gebäude-Wirkbereich** — wirkt direkt auf Kolonie-Systeme (Wohnraum/AP-Generierung), nicht auf die SP eines oder mehrerer Gebäude; die Einzelgebäude/koloniweit-Unterscheidung greift hier nicht | Emergent statt rein zufällig: nur möglich bei echter Vernachlässigung (Hunger-Spirale oder sehr niedriges Vertrauen), dann Zufallschance/Sol | Supply-Cap oder AP-Generierung temporär reduziert + `colony_threatened` | nur im Vernachlässigungsfall — bei gesunder Kolonie 0% Grundrisiko | Krankenstation (infirmary) und Kenntnis `health` senken Chance/Schwere |
+| **Seuchenausbruch** | **Kein Gebäude-Wirkbereich** — wirkt direkt auf Kolonie-Systeme (Wohnraum/AP-Generierung), nicht auf die SP eines oder mehrerer Gebäude; die Einzelgebäude/koloniweit-Unterscheidung greift hier nicht | Emergent statt rein zufällig: nur möglich bei echter Vernachlässigung (Hunger-Spirale oder sehr niedriges Vertrauen), dann Zufallschance/Sol | AP-Pool für einige Sol um einen festen, kleinen AP-Betrag gesenkt (absoluter Abzug als eigene Zeile im AP-Zufluss, kein Prozentfaktor) + `colony_threatened` | nur im Vernachlässigungsfall — bei gesunder Kolonie 0% Grundrisiko | Krankenstation (infirmary) und Kenntnis `health` senken Chance/Schwere |
 
 ### Wirkbereich (Scope): Einzelgebäude vs. koloniweit
 
@@ -1372,7 +1372,7 @@ Bereits implementierte Effekte (`config/knowledge.php`):
 - `health` senkt additiv zur Krankenstation das Seuchenausbruch-Risiko (§9).
 - `defense` senkt das Sturm-Risiko (§9).
 - `trade` gibt einen Preisbonus auf allen drei Handelskanälen (`trade_price_bonus_per_lv`, §4).
-- `construction` senkt additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`). `cartography` senkt stattdessen eigenständig die Navigation-AP-Kosten von Tile-Erkundung und Hangar-Missions-Reisekosten (siehe §13.3). `trade` senkt **keine** Bau-Kosten (Handelsgeschick hat thematisch nichts mit dem Ausbau von Gebäuden zu tun) — ihre Wirkung liegt ausschließlich auf Handelskonditionen und Cantina.
+- `construction` zieht auf einzelnen Stufen einen festen AP-Betrag von großen Gebäude-Levelups ab (praktisch die Kommandozentrale; gewöhnliche Ausbaustufen sind zu klein für dauerhafte Rabatte, §13.3, `ap_cost_reduction_per_lv`). `cartography` wirkt eigenständig auf Navigation: Ab einer Stufe kosten lange Missionen einen AP weniger, ab einer höheren Stufe ist die erste Erkundung je Sol kostenlos (§13.3). `trade` senkt **keine** Bau-Kosten (Handelsgeschick hat thematisch nichts mit dem Ausbau von Gebäuden zu tun) — ihre Wirkung liegt ausschließlich auf Handelskonditionen und Cantina.
 - `trade` erhöht zusätzlich die Zahl gleichzeitig aktiver Cantina-Angebote (§12), siehe `bar_offer_boost_per_lv`.
 - `trade` erhöht außerdem die Erfolgschance der Cantina-Verhandlung (§12, A13, Kalibrierung offen) — die im Beschreibungstext der Kenntnis versprochene „Verhandlungsführung". Wirkt nur, wenn ein Konsul verhandelt.
 - `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
@@ -1479,7 +1479,7 @@ Deva und Lenn bilden einen **dritten, eigenständigen Begegnungskanal** mit eige
 
 Dafür bekommt jede der beiden Figuren einen kleinen **Ausgangs-Pool** (vier Einträge), aus dem bei jeder Begegnung einer gezogen wird — mit eigener Dialogzeile je Eintrag, unabhängig von der mechanischen Wirkung gepflegt (Dialogvarianten sind reine Content-Arbeit und beliebig erweiterbar, ohne die Balance zu berühren):
 
-- **Zwei mechanische Ausgänge, je einmal pro Run nutzbar.** Bei Deva: ein einmaliger „Drill"-Reaktionspuffer, der die Konsequenz der nächsten eintretenden Instabilität oder Seuche (§9) abmildert, sowie ein einmaliger Kenntnis-Fortschrittsschub auf Geologie oder Gesundheit. Bei Lenn: ein einmaliger Navigation-Rabatt auf die nächste Erkundung sowie ein einmaliger Kenntnis-Fortschrittsschub auf Kartografie. Beide Fortschrittsschübe folgen den Regeln des Barkeeper-Rats (zweckgebunden, stille Forschung, Rückmeldung an drei Stellen); ist das Ziel gesperrt oder ausgereizt, wird der Schub nicht gezogen, sondern bleibt für später im Pool (Annahme, Spec `2026-11-11-tomas-rat-rueckmeldung.md`). Ist ein mechanischer Ausgang in diesem Run bereits gezogen (und beim Puffer: bereits verbraucht — nicht nur gebankt), fällt er aus dem Pool der jeweiligen Figur heraus und kann in diesem Run nicht erneut gezogen werden.
+- **Zwei mechanische Ausgänge, je einmal pro Run nutzbar.** Bei Deva: ein einmaliger „Drill"-Reaktionspuffer, der die Konsequenz der nächsten eintretenden Instabilität abmildert bzw. den AP-Abzug der nächsten Seuche ganz aufhebt (§9; ein halber AP-Abzug wäre nicht anzeigbar), sowie ein einmaliger Kenntnis-Fortschrittsschub auf Geologie oder Gesundheit. Bei Lenn: ein einmaliger Gutschein „kostenlos" für die nächste Erkundung sowie ein einmaliger Kenntnis-Fortschrittsschub auf Kartografie. Beide Fortschrittsschübe folgen den Regeln des Barkeeper-Rats (zweckgebunden, stille Forschung, Rückmeldung an drei Stellen); ist das Ziel gesperrt oder ausgereizt, wird der Schub nicht gezogen, sondern bleibt für später im Pool (Annahme, Spec `2026-11-11-tomas-rat-rueckmeldung.md`). Ist ein mechanischer Ausgang in diesem Run bereits gezogen (und beim Puffer: bereits verbraucht — nicht nur gebankt), fällt er aus dem Pool der jeweiligen Figur heraus und kann in diesem Run nicht erneut gezogen werden.
 - **Zwei erzählerische Ausgänge, unbegrenzt wiederholbar.** Kein Ressourcen- oder AP-Effekt — Deva teilt eine Lageeinschätzung oder Feldgeschichte, Lenn eine Theorie-Randnotiz oder Bitte um seltene Bauteile. Diese beiden Einträge bleiben nach dem Verbrauch der mechanischen Ausgänge als Rest-Pool bestehen, sodass jede weitere Begegnung mit Deva oder Lenn im späteren Run weiterhin Sinn ergibt (Dialog statt Belohnung), aber wirkungslos für die Balance ist.
 
 **Warum kein "einmal pro Run"-Deckel auf die ganze Begegnung mehr, sondern einer pro Ausgangs-Typ:** Ein einziger Verbrauchsdeckel auf die gesamte Figur würde entweder Wiederholbarkeit verhindern (Owner-Wunsch verletzt) oder — würde er stattdessen ganz aufgehoben — den Kenntnis-Fortschrittsschub beliebig oft wiederholbar machen und damit zu einem unkontrollierten AP-Kanal neben dem Analytiker werden lassen. Der Deckel pro Ausgangs-Typ löst beides: Die riskanten/wertvollen Ausgänge (Progress, Puffer) bleiben durch den Run-Deckel begrenzt, die Wiederholbarkeit selbst wird durch die erzählerischen Ausgänge bedient, die strukturell ungefährlich sind, weil sie keine Spielwerte verschieben.
@@ -1504,9 +1504,9 @@ Der Kodex ist damit reiner Zusatzwert für Spieler, die an der Welt und ihren Fi
 
 **Barkeeper (Dauer-Charakter):** Anders als Corvan und die übrigen Cantina-Figuren hat der Barkeeper keinen Zufallsspawn und kein Verfügbarkeitsfenster — er ist immer in der Cantina anwesend, sobald sie gebaut ist. Statt über Angebote wirkt er über seinen **Rat**: Der Spieler wählt eine Kenntnis, und Tomas zahlt zweckgebundene Bonus-AP in ihren Fortschritt ein — ein stiller Mitspieler, der den gemeinsamen AP-Pool nicht belastet und nicht unter den Sol-Deckel des Labors fällt. Ein Labor braucht es dafür nicht: Erreicht der Fortschritt die Schwelle, steigt die Kenntnis durch **stille Forschung** (§10) von selbst auf. Wählbar sind nur Kenntnisse, die aufsteigen könnten; gesperrte oder ausgereizte stehen als „wartet auf …“ mit Grund in der Auswahl, damit kein Rat ins Leere geht.
 
-Die Höhe des Rats richtet sich nach Tomas' **Beziehungsstufe** (§4b), nicht nach der Zahl der Gespräche. Bei „fremd“ gibt er keinen Rat; das Popup sagt dann ausdrücklich, dass erst die Beziehung gepflegt werden muss, und bietet „Beziehung pflegen“ direkt darunter an. Ab der ersten Stufe nennt der Gesprächsknopf die Bonushöhe, und diese Zahl ist die wirkende. Damit ist die anfängliche Phase ohne Bonus keine stumme Wartezeit, sondern eine sichtbare Entscheidung: Wie viel Pool-AP ist mir Tomas' Rat wert?
+**Rat-Rhythmus nach Beziehungsstufe.** Ein Rat bringt immer denselben kleinen Bonus; Tomas' **Beziehungsstufe** (§4b) bestimmt, **wie oft** er Rat gibt, nicht wie viel (AP-Skala 2026-11-13 §6: Häufigkeit statt Menge, weil Bruchteile eines AP nicht anzeigbar sind). Auf den ersten Stufen gibt er nur alle paar Sol Rat, mit wachsender Beziehung häufiger, bei „brüderlich“ jeden Sol. Der Abstand zählt ab seinem letzten Rat. Bei „fremd“ gibt er keinen Rat; das Popup sagt dann ausdrücklich, dass erst die Beziehung gepflegt werden muss, und bietet „Beziehung pflegen“ direkt darunter an. Ab der ersten Stufe nennt der Gesprächsknopf die Bonushöhe und, solange der nächste Rat noch nicht fällig ist, in wie vielen Sol er wieder Rat gibt; beide Zahlen sind die wirkenden. Damit ist die anfängliche Phase ohne Bonus keine stumme Wartezeit, sondern eine sichtbare Entscheidung: Wie viel Pool-AP ist mir Tomas' Rat wert?
 
-Der Rat ist einmal pro Sol möglich. Ob er heute schon gegeben wurde, sieht der Spieler vorab: Tomas trägt am Tresen ein Zeichen, solange ein Rat offen ist; danach zeigt das Popup „Für heute ist alles gesagt“ mit dem heutigen Ergebnis, der Gesprächsknopf ist aus und nennt „wieder nächstes Sol“. Beziehungspflege bleibt bedienbar.
+Höchstens ein Rat je Sol. Ob er heute fällig ist, sieht der Spieler vorab: Tomas trägt am Tresen ein Zeichen, solange ein Rat offen ist; danach zeigt das Popup „Für heute ist alles gesagt“ mit dem heutigen Ergebnis, der Gesprächsknopf ist aus und nennt, wann er wieder Rat gibt. Beziehungspflege (das Gespräch, §4b) bleibt bedienbar.
 
 **Rückmeldung.** Jeder Rat meldet seine Wirkung an drei Stellen: als Ergebniszeile im Popup, als Eintrag im Protokoll und in der Labor-Vorschau bzw. im Techtree mit einem Tomas-Zeichen an der Kenntnis. Ohne Labor ist der Fortschritt dabei nur grob in Worten zu sehen, erreichte Stufen und ihr Effekt dagegen genau (§10, `docs/gdd/techtree.md` §11.4). Ein Aufstieg wird als Durchbruch hervorgehoben. Damit ist der Barkeeper kein weiterer Handelskanal, sondern ein dauerhaft verfügbarer, langsamer Kenntnis-Hebel, auch für Kolonien ohne Labor. Details und Annahmen: `docs/superpowers/specs/2026-11-11-tomas-rat-rueckmeldung.md`.
 
@@ -1648,7 +1648,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 | Navigation | Tile-Erkundung, Außenmissions-Dispatch | Raumfahrer |
 | Wirtschaft | Handelsangebote, Marktgeschäfte | Konsul |
 
-**Berater erhöhen den gemeinsamen Pool** und tragen zusätzlich einen **Beitrag in ihrer Domäne** — wo die Domäne aus Projekten besteht, als Kostenrabatt (siehe 13.3), wo sie aus Handlungen besteht, als Qualität der Handlungen. Der Konsul ist der zweite Fall: Konditionen, Verhandlungschance und Planungsvorsprung statt AP-Rabatt (§12). Berater bleiben damit klar unterscheidbar, ohne den Pool zu zersplittern.
+**Berater erhöhen den gemeinsamen Pool** und tragen zusätzlich einen **Beitrag in ihrer Domäne** — wo die Domäne aus Projekten besteht, als **Fach-Deckel** (mehr AP je Ziel und Sol, also Tempo statt Kostenrabatt, siehe 13.2), wo sie aus Handlungen besteht, als Qualität der Handlungen. Der Konsul ist der zweite Fall: Konditionen, Verhandlungschance und Planungsvorsprung statt AP-Rabatt (§12). Berater bleiben damit klar unterscheidbar, ohne den Pool zu zersplittern.
 
 **Keine Bodengarantie**. Es wird **kein** Mindestanteil je Domäne reserviert; die Allokation ist vollständig frei.
 
@@ -1661,7 +1661,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 | Credits auf 0, kein Berater bezahlbar | Nein | Upkeep wird auf ≥ 0 geklemmt, der Verlust läuft über `nexus_debt`. Langsames Ausbluten über viele Sole, kein Lock. |
 | Über dem Wohnraum → beschleunigter Decay → Leveldown-Spirale | Nein | Unbesetzte Arbeitsplätze beschleunigen den Verfall nicht (§7), Wohnraumverlust kostet keine weiteren Ausbaustufen, nur Besetzung (§6). Wohnraum-Gebäude sind vom Bau-Gate ausgenommen — der Weg heraus bleibt offen. Siehe unten. |
 
-Hinzu kommt: die **Einstiegskosten jeder Domäne sind winzig** (1 AP erkunden, 1 AP in eine Baustelle, 2 AP ein Angebot annehmen). Es gibt keine Domäne, in die man nicht mit einem einzigen Restpunkt zurückfindet.
+Hinzu kommt: die **Einstiegskosten jeder Domäne sind winzig** (je ein AP für Erkunden, für eine Baustelle oder für ein Angebot). Es gibt keine Domäne, in die man nicht mit einem einzigen Restpunkt zurückfindet.
 
 Eine Untergrenze würde genau den Allokationsschmerz entfernen, der der Zweck des gemeinsamen Pools ist — und ein Problem lösen, das die Fluss-Natur des Pools bereits ausschließt.
 
@@ -1683,7 +1683,9 @@ Damit ist AP nicht primär ein Tagesbudget, sondern eine **Arbeitsrate**. Knapph
 
 **Parallelbau ist erlaubt und ausdrücklich gewollt.** Der Spieler darf beliebig viele Projekte gleichzeitig laufen lassen und pro Sol frei entscheiden, welche er füttert. Die Rate verteilt sich dann entsprechend — mehr Baustellen heißt nicht mehr Durchsatz, sondern längere Einzellaufzeiten (der Pool bleibt die Gesamtgrenze; wie viel ein einzelnes Ziel pro Sol aufnimmt, begrenzt zusätzlich der AP-Deckel, siehe unten). Das ist eine **bewusste Planungsentscheidung** des Spielers, kein Fehler: Er kann Fertigstellungen absichtlich auf denselben Sol legen. (Ob es dafür einen konkreten Spielvorteil geben soll — z. B. gebündelte Vertrauens- oder Milestone-Effekte — ist offen und soll sich aus Playtests ergeben.)
 
-**AP-Deckel pro Ziel und Sol (aktiv).** Der Pool bleibt ein einziger gemeinsamer Pool (13.1). Zusätzlich kann jedes **Ziel** eines Projekts — eine einzelne Gebäude-Instanz oder eine einzelne Kenntnis — pro Sol nur eine begrenzte Menge AP aufnehmen. Die Obergrenze setzt sich zusammen aus einem **Grundwert** plus dem **Beitrag des passenden Beraters je Rang**: für Gebäude der Baumeister; der Deckel je Kenntnis im Labor kennt bisher nur den Grundwert. Der Rang-Beitrag entspricht dem Beitrag, den der Berater ohnehin zum Pool leistet; er wird nicht separat erfunden. Für Raumfahrer und Konsul ist derselbe Mechanismus vorbereitet, aber ausgeschaltet: Ihre Handlungen sind bereits durch Verfügbarkeit begrenzt (siehe unten) und brauchen keine zweite Bremse.
+**AP-Deckel pro Ziel und Sol (aktiv).** Der Pool bleibt ein einziger gemeinsamer Pool (13.1). Zusätzlich kann jedes **Ziel** eines Projekts — eine einzelne Gebäude-Instanz oder eine einzelne Kenntnis — pro Sol nur eine begrenzte Menge AP aufnehmen. Die Obergrenze setzt sich zusammen aus einem kleinen **Grundwert** plus dem **Fach-Deckel** des passenden Beraters je Rang (AP-Skala 2026-11-13 §11.1): für Gebäude der Baumeister, für Kenntnisse im Labor der Analytiker, für das Hangar-Training der Raumfahrer. Der Fach-Deckel ist ein eigener Rang-Wert, getrennt vom Pool-Beitrag des Beraters. Ein nicht verfügbarer Berater (z. B. durch Nexus-Sanktion gesperrt) trägt nichts bei. Der Konsul hat keinen Fach-Deckel: Seine Handlungen sind bereits durch Verfügbarkeit begrenzt (siehe unten), sein Rang wirkt auf die Qualität der Handlungen (§12). Cantina-Gespräche haben einen eigenen, festen Deckel je Figur und Sol (§4b).
+
+**Jeder Rang ist spürbar — genau eine sichtbare Zahl je Stufe.** Die Einstellung (Rang 1) bringt +1 auf den Pool und +1 auf den Fach-Deckel, Rang 2 einen weiteren Punkt Fach-Deckel, Rang 3 einen weiteren Punkt Pool. Weil der Grundwert des Deckels klein ist, verdoppelt bzw. verdreifacht der Fach-Berater das Tempo in seinem Fach: Ohne Baumeister baut man langsam, ohne Analytiker forscht man langsam. Damit ein Ausbau auch beim höchsten Bau-Deckel nie in einem Sol fertig wird, kosten Ausbaustufen mehr AP als der höchste Bau-Deckel.
 
 Der Deckel erfüllt zwei Aufgaben. Erstens macht er es unmöglich, ein Gebäude oder mehrere Ausbaustufen in einem einzigen Sol durchzuziehen, selbst bei vollem Pool — Ausbau braucht Sole, und das gibt dem Aufbau Rhythmus. Zweitens ist er die **Zeit-Bremse für Phase 1**, die das Tempo drosselt, ohne am Regolith-Einkommen zu rühren: Eine Bremse über höhere Regolith-Kosten oder späteres Einkommen würde den Harvester-Anlauf verzögern und damit genau die Spieler treffen, die ohnehin knapp sind (§13.7 „Phase-1-Pacing"). Der Deckel **wächst nicht mit der Zielstufe** (ausdrücklich nicht): Teurere Stufen brauchen dadurch mehr Sole bei gleichem Deckel. Belohnungs-AP (Daten-Sweep, Cantina-Bonus, Gutscheine) liegen außerhalb des Deckels; sie sind Geschenke und sollen nicht gebremst werden. **Reparatur ist vom Deckel ausgenommen**: Sie erzeugt keinen Fortschritt, sondern stellt nur den Zustand wieder her, ist das Sicherheitsventil gegen den Verfall und wird bereits durch Regolith und Einsatzpunkte begrenzt; ein Notfall soll nie am Tageslimit scheitern. Kenntnisse dürfen die Deckel künftig beeinflussen; welche und wie stark, ist offen und wird nach Messung entschieden. Die Oberfläche zeigt den Deckel im bestehenden, segmentierten AP-Balken des Ausbau-Buttons, ohne zusätzlichen Erklärtext. Werte: siehe `docs/game-reference.md`.
 
@@ -1695,27 +1697,33 @@ Der Deckel erfüllt zwei Aufgaben. Erstens macht er es unmöglich, ein Gebäude 
 
 ### 13.3 Boni: additiv, nie multiplikativ
 
-Boni senken die **AP-Kosten von Projekten** und verkürzen damit die Bauzeit in Solen. Das ist die primäre Progressionsachse des Systems: Ein Gebäude, das früh 5 Sole bindet, ist im Mid- und Late-Game in 2 Solen fertig. Beschleunigung wird als Zeitgewinn spürbar, nicht als größere Zahl in einem Balken.
+Boni senken die **AP-Kosten von Projekten** oder heben ihren **Deckel je Sol** und verkürzen damit die Bauzeit in Solen. Das ist die primäre Progressionsachse des Systems: Was früh viele Sole bindet, ist im Mid- und Late-Game deutlich schneller fertig. Beschleunigung wird als Zeitgewinn spürbar, nicht als größere Zahl in einem Balken.
 
-**Alle Kostenreduktionen wirken additiv.** Berater-Rang, Kenntnis-Level und Koloniereife addieren ihre Prozentwerte, bevor sie einmal auf die Projektkosten angewandt werden. Multiplikative Verkettung ist ausgeschlossen: Sie würde im Late-Game überschießen und Projekte praktisch sofort abschließen, was den Kipppunkt aus 13.2 zerstört.
+**Rabatt-Regel (AP-Skala 2026-11-13 §5.1, Owner-Entscheidung).** AP-Werte sind klein; ein Prozent-Rabatt rundet auf ihnen meist weg. Deshalb gilt für alle AP-Boni:
+
+1. **Absolut und additiv.** Jeder Rabatt ist ein fester AP-Abzug („−1 AP"), und mehrere Quellen werden addiert, bevor sie einmal von den Kosten abgezogen werden. Keine Prozente, keine multiplikative Verkettung: Sie würde im Late-Game überschießen und Projekte praktisch sofort abschließen, was den Kipppunkt aus 13.2 zerstört. Angezeigte Zahl = wirkende Zahl.
+2. **Dauerhafte Rabatte nur auf größere Kosten, höchstens ein Drittel.** Dauerhafte Rabatte (Kenntnisse, Gebäudestufen) wirken nur auf Kosten ab einer Mindesthöhe; zusammen sollen sie nicht mehr als etwa ein Drittel der Grundkosten abziehen. Praktisch heißt das: Kommandozentrale und Kenntnisse bekommen Kosten-Rabatte, gewöhnliche Ausbaustufen, Training und Beziehungsstufen nicht.
+3. **Kleine Kosten bekommen Tempo oder Häufigkeit statt Rabatt.** Wo ein Abzug von 1 AP schon ein Drittel oder die Hälfte wäre, wirkt ein Bonus stattdessen als **Deckel +1** (Zeitgewinn, so wie der Fach-Deckel der Berater, 13.2) oder als **Häufigkeit** („die erste Erkundung je Sol ist kostenlos", „der erste Tiefenscan je Sol ist kostenlos", Tomas' Rat-Rhythmus §12). Bei Deckel-gebundenen Projekten ist der Deckel ohnehin die spürbare Größe: Ein Rabatt von einem AP spart dort oft keinen Sol.
+4. **Untergrenzen.** Kein Rabatt drückt ein Projekt unter eine kleine Mindesthöhe (sonst wäre es mit einem Klick fertig) und keine Handlung unter einen AP. **Null AP gibt es nur als ausdrücklicher Gutschein „kostenlos"** mit eigenem Etikett (Lenns Erkundung, die freie Tageserkundung, der freie Tagesscan).
+5. **Einmal-Gutscheine** (Cantina-Anliegen von Vesper und Aldra, §12) sind Geschenke: Sie gelten auch für kleine Kosten (also auch für gewöhnliche Ausbaustufen) und zählen nicht gegen das Drittel, respektieren aber die Untergrenze.
 
 **Bonusquellen:**
 
-| Quelle | Status | Wo |
-|---|---|---|
-| Kenntnis `construction` (Bau-Projekt-Rabatt-Pool) | implementiert (`trade` gehört nicht dazu) | `ProjectBonusService::buildingApDiscountPercent()`, `config/knowledge.php → construction.ap_cost_reduction_per_lv` |
-| Cantina-Gutschein (Charakter-Anliegen, §12) | implementiert | `ProjectBonusService::activeBuildingDiscountVoucherPercent()` |
-| Analytik-Labor Lv4/5 — Domänen-Effizienzbonus „Wissen" | implementiert | `config/buildings.php → sciencelab.knowledge_ap_cost_reduction_per_lv` |
-| Berater-Rang | **geplant** (ROADMAP Stufe 3) | vorgesehen: `config/game.php → project_cost_bonus` |
-| Koloniereife (CC-Level) | **geplant** (ROADMAP Stufe 3) | dito |
+| Quelle | Wirkt auf | Form | Wo |
+|---|---|---|---|
+| Kenntnis `construction` | Gebäude-Levelups ab Mindesthöhe (praktisch die Kommandozentrale) | AP-Abzug auf einzelnen Kenntnisstufen | `ProjectBonusService::buildingApDiscount()`, `config/knowledge.php → construction.ap_cost_reduction_per_lv` |
+| Cantina-Gutschein (Charakter-Anliegen, §12) | nächste abgeschlossene Ausbaustufe | einmaliger AP-Abzug | `ProjectBonusService::activeBuildingDiscountVoucherAp()` |
+| Analytik-Labor — Domänen-Effizienzbonus „Wissen" | alle Kenntnis-Levelups | AP-Abzug auf höheren Laborstufen | `config/buildings.php → sciencelab.knowledge_ap_cost_reduction_per_lv` |
+| Kenntnis `cartography` | lange Missionen; erste Erkundung je Sol | AP-Abzug ab einer Mindestentfernung; Häufigkeit (kostenlos) | `config/knowledge.php → cartography.mission_ap_reduction`, `free_explore_from_level` |
+| Uplink-Station | erster Tiefenscan je Sol | Häufigkeit (kostenlos) | `config/game.php → finds.free_scan_uplink_level` |
+| Berater-Rang | Bau, Labor, Training | Fach-Deckel (Tempo, 13.2), kein Kosten-Rabatt | `config/game.php → advisor.cap_bonus_per_rank` |
+| Koloniereife (CC-Level) | — | **geplant** (ROADMAP Stufe 3) | — |
 
-**Bau-Projekt-Rabatt-Pool:** Bau ← `construction`. Die Kurve ist glockenförmig über die fünf Level (Peak Lv2–4) und wirkt additiv auf **alle** Gebäude-Levelups inklusive Kommandozentrale — nicht nach Projekttyp getrennt, weil nur Bau-Projekte existieren. Weitere additive Quellen im Pool sind Cantina-Gutscheine aus Charakter-Anliegen (§12). `cartography` gehört nicht zu diesem Pool: die Kenntnis senkt eigenständig die Navigation-AP-Kosten von Tile-Erkundung (`ColonyTileService::exploreTile()`) und Hangar-Missions-Reisekosten (`HangarService::dispatchShip()`), `config('knowledge.cartography.nav_ap_reduction_per_lv')`. `trade` gehört ebenfalls nicht dazu : Handelsgeschick beschleunigt keinen Gebäudeausbau, die Kenntnis wirkt auf Handelskonditionen (§12). Der Pool ist dadurch schlank; die primäre Progressionsachse „Bau-Beschleunigung als Zeitgewinn" ruht künftig stärker auf den noch geplanten Quellen Berater-Rang und Koloniereife (Tabelle oben, Stufe 3).
+**Bau-Projekt-Rabatt-Pool:** Bau ← `construction`, dazu die Cantina-Gutscheine. `trade` gehört nicht dazu: Handelsgeschick beschleunigt keinen Gebäudeausbau, die Kenntnis wirkt auf Handelskonditionen (§12). Weil gewöhnliche Ausbaustufen zu klein für dauerhafte Rabatte sind, ruht die Progressionsachse „Bau-Beschleunigung als Zeitgewinn" vor allem auf dem Fach-Deckel des Baumeisters; der `construction`-Rabatt macht die großen Kommandozentralen-Schritte billiger.
 
-**Analytik-Labor Lv4/5:** Gibt dem Laborausbau über die reinen Kenntnis-Gates (Lv1–3) hinaus einen eigenen Effekt — senkt die AP-Kosten für Kenntnis-Levelups, additiv und unabhängig vom Gebäude-Rabatt-Pool. Rührt an nichts, was pro Run gezogen wird (§10) — reine Effizienzsteigerung auf bereits freigeschaltete Kenntnisse.
+**Analytik-Labor:** Gibt dem Laborausbau über die reinen Kenntnis-Gates hinaus einen eigenen Effekt — senkt die AP-Kosten für Kenntnis-Levelups, additiv und unabhängig vom Gebäude-Rabatt-Pool. Rührt an nichts, was pro Run gezogen wird (§10) — reine Effizienzsteigerung auf bereits freigeschaltete Kenntnisse.
 
-Ein **Mindest-Kostenanteil** (`project_min_cost_factor`) verhindert, dass Projekte auf null fallen — das ist eine Leitplanke für spätere Bonusquellen (Events, Missionsbelohnungen, Run-Modifier), keine aktive Regel zum Start. Mit einer einzigen Kenntnis im Pool plus höchstens einem Gutschein bleibt die Summe deutlich unter dem Deckel; auch hier gilt: nicht gegen einen Deckel kalibrieren, der gar nicht wirkt.
-
-**Boni gelten nur für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit. Es ist zugleich der Grund, warum der Konsul keinen AP-Rabatt auf Handelsgeschäfte bekommt (§12): Sein Beitrag liegt auf der Qualität der Handlungen, nicht auf ihren Kosten. (Die Navigation-Rabatte der `cartography` sind eine bestehende Ausnahme; ihr Rundungsverhalten bei kleinen Basiskosten ist offen und nicht Teil dieser Regel.)
+**Boni gelten im Grundsatz für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit. Es ist zugleich der Grund, warum der Konsul keinen AP-Rabatt auf Handelsgeschäfte bekommt (§12): Sein Beitrag liegt auf der Qualität der Handlungen, nicht auf ihren Kosten. Die Ausnahme ist die `cartography`: Sie senkt nur die teuren, langen Missionen um einen AP und macht sonst die erste Erkundung je Sol kostenlos (Häufigkeit statt Rabatt).
 
 ---
 
@@ -1770,17 +1778,22 @@ Die Profile sind bewusst gegensätzlich: **Analytik** verbessert den Sockel selb
 
 **Cantina-Angebote:** Die Losgröße von Corvans Kaufangeboten ist an die Zahlungsfähigkeit der Kolonie gebunden (höchstens ein Anteil des Bestands), damit Angebote nicht regelmäßig an „Not enough resources" scheitern. *Offen:* Tauschrichtung der anonymen Gäste nach Bestand wählen statt würfeln (Give = größter Überschuss, Get = knappste Ressource) — der Zufall bliebe in Preisvarianz, Gästezahl und Gültigkeitsdauer erhalten (ROADMAP „Offene Pfad-Paritäts-Fragen").
 
-> **Nachrüstoption, falls das späte Spiel im Playtest schlaff wirkt:** Reparaturkosten mit dem Level skalieren — `AP je SP = 1 + floor((level−1)/3)`. Die Instandhaltung skaliert dann mit der **Tiefe** und koppelt sich an den Wohnraum (§6). Die Alternative `decay_rate × level` ist thematisch schwächer (warum verfällt ein größeres Gebäude schneller?) und verdoppelt zusätzlich den Regolith-Abfluss.
+> **Nachrüstoption, falls das späte Spiel im Playtest schlaff wirkt:** Reparaturkosten mit dem Level skalieren — z. B. weniger SP je Klick auf hohen Stufen (früher als `AP je SP = 1 + floor((level−1)/3)` formuliert; seit der AP-Skala wirkt ein AP je Klick auf mehrere SP). Die Instandhaltung skaliert dann mit der **Tiefe** und koppelt sich an den Wohnraum (§6). Die Alternative `decay_rate × level` ist thematisch schwächer (warum verfällt ein größeres Gebäude schneller?) und verdoppelt zusätzlich den Regolith-Abfluss.
 
 ---
 
 ### 13.6 AP-Zahlensatz
 
-Die AP-Struktur ist Owner-Entscheidung: Grundwert des gemeinsamen Pools (`config/game.php → ap.base`), Berater-Beitrag je Rang (`advisor.ap_per_rank`), progressive Projektkostenkurve `f(L)` mit `f(1) = 0.5` und additive Bonus-Kurve (§13.3). Der Grundwert ist gegen die Instandhaltungslast breiter Kolonien (§4c „im Zweifel Instanz") kalibriert, damit alle drei Pfade ohne strukturelle Enge machbar bleiben — auch Pfad B mit seinen laufenden Kosten.
+Die AP-Struktur ist Owner-Entscheidung: Grundwert des gemeinsamen Pools (`config/game.php → ap.base`), Berater-Beitrag je Rang zum Pool (`advisor.ap_per_rank`) und zum Fach-Deckel (`advisor.cap_bonus_per_rank`), Projektkosten je Stufe und absolute, additive Boni (§13.3). Der Grundwert ist gegen die Instandhaltungslast breiter Kolonien (§4c „im Zweifel Instanz") kalibriert, damit alle drei Pfade ohne strukturelle Enge machbar bleiben — auch Pfad B mit seinen laufenden Kosten.
 
-**Die tragenden Elemente:** Basis-AP-Wert, Gebäude-Basis-Kosten-Klassen (gestaffelt nach Gebäude-Rolle), eine progressive Kostenkurve pro Level, Berater-AP-Beitrag pro Rang (progressiv) und Kostenboni durch Kenntnisse/Domänen.
+**Kleine Zahlen, jeder AP zählt (AP-Skala, Owner 2026-11-13).** Alle AP-Werte — Pool, Deckel, Projektkosten, Handlungen — sind kleine ganze Zahlen. Ein einzelner AP soll sich wertvoll anfühlen (ein spürbarer Anteil des Tagespools), und ein Ausbauschritt soll wenige Klicks brauchen, nicht Dutzende. Die Skala wurde so verkleinert, dass das **Tempo in Sol** erhalten bleibt: Projektkosten und Deckel schrumpften im selben Verhältnis. Daraus folgen drei Regeln:
+- **Jeder Rang ist eine sichtbare Zahl** (13.2), kein Bruchteil.
+- **Kleinhandlungen behalten ihr Profil.** Nah ist billig, fern teuer; kleine und große Funde, kurze und lange Missionen, harmlose und heikle Anliegen bleiben im Preis unterscheidbar, auch wenn vieles nur einen AP kostet.
+- **Bruchteile werden zu Häufigkeit.** Wo ein Effekt kleiner als ein AP wäre, wirkt er über die Häufigkeit (Tomas' Rat, freie Tageserkundung, freier Tagesscan) oder über den Deckel, nie über Rundung.
 
-**Stellschrauben, wenn sich das System im Playtest als unausgewogen erweist** — in dieser Reihenfolge: Basis-Wert, dann Gebäude-Klassen, dann Kurvensteilheit, dann Berater-Beiträge. Alle sind einzeln in `config/` kalibrierbar, ohne den Regeltext zu ändern.
+**Die tragenden Elemente:** Basis-AP-Wert, Berater-Beitrag je Rang (Pool und Fach-Deckel), Projektkosten je Stufe (Kommandozentrale und Kenntnisse steigend), Deckel je Ziel und Sol, Kostenboni durch Kenntnisse/Domänen.
+
+**Stellschrauben, wenn sich das System im Playtest als unausgewogen erweist** — in dieser Reihenfolge: Basis-Wert, dann Deckel-Grundwerte und Fach-Deckel, dann Projektkosten, dann Berater-Pool-Beiträge. Alle sind einzeln in `config/` kalibrierbar, ohne den Regeltext zu ändern. Wegen der kleinen Zahlen ist jeder Schritt grob (ein AP mehr Pool ist ein großer Anteil); eine Messung je Änderung.
 
 #### Ziel-Endzustand (solider Run zum Sieg-Zeitpunkt, Sol ~85–95)
 
@@ -1788,19 +1801,15 @@ Der Sieg-Korridor ist in §18.4 festgelegt: Sol 70–85 nur bei einem sehr guten
 
 #### AP-Grundwert und Berater-Beitrag
 
-Der gemeinsame Pool hat einen Basiswert und wächst mit Berater-Rängen; der Beitrag steigt mit dem Rang, erlaubt aber kein exponentielles Wachstum — eine bewusst flache Kurve. Die AP-Rate wird durch drei Faktoren gestaffelt: **Berater-Anzahl und -Rang** (progressiv), **Instandhaltungslast** (wächst über den Run), **Projektkosten** (initial niedrig, später höher). Das Pool-Wachstum über einen Run ist moderat (Faktor ~2–3 vom Anfang zum Ende), kombiniert mit Kostenreduktionen durch Boni. Der Vertrauens-Multiplikator (`trust.ap_multiplier`, §14) kommt obendrauf.
+Der gemeinsame Pool hat einen Basiswert und wächst mit Berater-Rängen; der Beitrag steigt mit dem Rang, erlaubt aber kein exponentielles Wachstum — eine bewusst flache Kurve. Die AP-Rate wird durch drei Faktoren gestaffelt: **Berater-Anzahl und -Rang** (progressiv), **Instandhaltungslast** (wächst über den Run), **Projektkosten** (initial niedrig, später höher). Das Pool-Wachstum über einen Run ist moderat (Faktor ~2–3 vom Anfang zum Ende), kombiniert mit Kostenreduktionen und Deckel-Boni. Der Vertrauens-Zuschlag bzw. -Abzug (`trust.ap_bonus`, §14) kommt als Summand obendrauf.
+
+> ⚠️ BALANCE CONCERN: Der Rang-3-Pool-Punkt hebt den Pool im Endausbau (mehrere Berater auf Rang 3) gerechnet um ein Fünftel bis ein Drittel über eine exakte Umrechnung der alten Skala (Annahme, gerechnet, AP-Skala-Spec §11.1). Die Sieg-Zeit kann dadurch früher fallen. Ungemessen; Messung M2 der Spec.
 
 #### Projektkosten je Gebäudelevel
 
-```
-ap_cost(building, L) = round(base_ap[building] × f(L))
-f(1) = 0.5
-f(L≥2) = 1 + 0.4 × (L−2)
-```
+**Ist-Stand:** Jedes Gebäude außer der Kommandozentrale hat einen flachen AP-Wert je Ausbaustufe (`ap_for_levelup`, gleich für alle Stufen; das Denkmal als Einzelstück etwas teurer). Nur die Kommandozentrale hat eine steigende AP-Kurve je Zielstufe (`cc_upgrade_ap_by_level`); sie ist der Taktgeber der Kolonie (§13 „Stufen-Gate"). **Harte Randbedingung:** Jede Ausbaustufe kostet mehr AP als der höchste mögliche Bau-Deckel (Grundwert plus höchster Fach-Deckel des Baumeisters), sonst wäre sie in einem Sol fertig (13.2).
 
-Das Errichten (Level 1) kostet bewusst weniger als Level-Ups — Anreiz für breite Kolonien früh (weniger AP pro neues Gebäude) und tiefe Spezialisierung später. Gebäude sind nach Rolle in Kostenklassen gruppiert (Produktion, Klein, Mittel, Groß, Kommandozentrale als Sonderfall), jede mit eigenem Basis-AP. Produktionsgebäude sind am billigsten — ihre Glockenkurve (`game.production_curve`) setzt bereits einen Deckel.
-
-> **Implementierungsstand:** Die Kurve `f(L)` ist **geplant** (ROADMAP Phase 4, D3). Aktuell gilt je Gebäude ein flacher `ap_for_levelup`-Wert für jedes Level; nur die Kommandozentrale hat eine steigende AP-Kurve (`cc_upgrade_ap_by_level`). Die Kostenklassen sind in `config/buildings.php` angelegt.
+**Geplant (ROADMAP Phase 4, D3): gestaffelte Kosten je Stufe.** Das Errichten soll weniger kosten als spätere Ausbaustufen — Anreiz für breite Kolonien früh und tiefe Spezialisierung später —, und Gebäude sollen nach Rolle in Kostenklassen gruppiert sein (Produktion, Klein, Mittel, Groß, Kommandozentrale als Sonderfall). Die frühere Faktor-Kurve `f(L)` (halbe Kosten auf Stufe 1, danach linear steigend) passt nicht mehr zur kleinen AP-Skala: Auf wenigen AP rundet sie unregelmäßig, und eine halbierte erste Stufe läge unter dem Bau-Deckel. Die Staffelung wird deshalb als **Tabelle ganzer AP je Stufe und Kostenklasse** angelegt, nicht als Faktor; Untergrenze ist die Randbedingung oben. Produktionsgebäude sind am billigsten — ihre Glockenkurve (`game.production_curve`) setzt bereits einen Deckel.
 
 **Early-Game-Tempo:** Breite Kolonien früh (billige erste Level) über tiefe Spezialisierung, kombiniert mit den Wohnraum-Grenzen aus §6 — zusammen das Breite/Tiefe-Dreieck ohne optimalen Pfad. Befristete AP-Boni oder Vorbau in der Startkolonie sind keine Alternative: erstere wirken dort, wo ohnehin wenig Instandhaltung nötig ist, letzterer zerstört die Lernmomente aus §16.
 
@@ -1808,7 +1817,7 @@ Das Errichten (Level 1) kostet bewusst weniger als Level-Ups — Anreiz für bre
 
 #### Handlungs-AP
 
-Sofort-Handlungen (Handel, Erkundung, Dispatch) sind gegen den gemeinsamen Pool kalibriert: deutlich billiger als Projekte, aber nicht kostenlos — sie konkurrieren um denselben Pool. Lange Missionen kosten einen nennenswerten Anteil des Pools; Ring-Erkundungen skalieren mit der Entfernung, damit die Karte nicht zu schnell aufgedeckt wird. Werte: `config/game.php` (Handel, Erkundung), `config/missions.php` (Navigation-AP pro Sol). Handels-AP (`bar.ap_cost_accept`/`ap_cost_negotiate`) sind gegen den gemeinsamen Pool gesetzt.
+Sofort-Handlungen (Handel, Erkundung, Dispatch, Bergung, Anliegen, Umzug) sind gegen den gemeinsamen Pool kalibriert: deutlich billiger als Projekte, aber nicht kostenlos — sie konkurrieren um denselben Pool. Die meisten kosten einen AP; teurer sind nur die Fälle, deren Preisunterschied eine Entscheidung trägt: der äußerste Erkundungsring, größere Funde bei der Selbstbergung, lange Missionen (Tabelle nach Entfernung) und heikle Anliegen. Werte: `config/game.php` (Handel, Erkundung, Funde, Anliegen), `config/missions.php` (`ap_by_distance`). Handels-AP (`bar.ap_cost_accept`/`ap_cost_negotiate`) sind gegen den gemeinsamen Pool gesetzt.
 
 > **Die Regel „Gelegenheiten sind durch Verfügbarkeit begrenzt" (13.2) ist ohne neue Mechanik erfüllt.** Missionen sind durch Schiffszahl und Rundlaufzeit begrenzt, Bar-Angebote durch `guest_count` und `level_max_concurrent`. Zusammen binden sie einen kleinen Teil des Pools — genau der beabsichtigte Deckel.
 
@@ -1893,7 +1902,7 @@ advisors
 > **Was das konkret heißt:** Es gibt maximal **vier** gleichzeitig zugewiesene Berater. Die **Leitstelle** wirkt über ihre drei eigenständigen Effekte (Vertrauens-Bonus, Event-Dämpfung, Recycling, §4) und ist kein Slot-Gate. Informationsleistungen (Gefahren-Vorwarnung mit Prognose, Ziel-Erreichbarkeits-Prognose) liefert das Kommandozentrale-Dashboard (13.4).
 >
 
-Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Berater-Außendienst ist zurückgestellt (siehe unten).
+Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-Erkundung (ring-gestaffelt, der äußerste Ring teurer, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (AP nach Entfernungstabelle `missions.ap_by_distance`, §8b). Sein Fach-Deckel beschleunigt das Hangar-Training (§4b, 13.2). Er verlässt die Kolonie nicht. Berater-Außendienst ist zurückgestellt (siehe unten).
 
 ### Berater-Außendienst — zurückgestellt
 
@@ -1903,9 +1912,9 @@ Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-E
 
 ### Rang-System
 
-Jeder Berater hat einen von drei Rängen. Der Rang bestimmt, wie stark der Berater den gemeinsamen AP-Pool erhöht (§13.1) und wie hoch sein laufender Upkeep in Credits ist — beide Werte wachsen mit dem Rang, additiv auf den gemeinsamen Pool angerechnet, unabhängig von der Domäne des Beraters.
+Jeder Berater hat einen von drei Rängen. Der Rang bestimmt, wie stark der Berater den gemeinsamen AP-Pool erhöht (§13.1), wie hoch sein **Fach-Deckel** ist (13.2: Baumeister → Bau, Analytiker → Labor, Raumfahrer → Training; der Konsul hat keinen, sein Rang wirkt auf Verhandlung und Konditionen, §12) und wie hoch sein laufender Upkeep in Credits ist. Jeder Rang bringt genau eine sichtbare Zahl: Die Einstellung erhöht Pool und Fach-Deckel um je einen Punkt, Rang 2 den Fach-Deckel, Rang 3 den Pool. Der Pool-Beitrag ist unabhängig von der Domäne des Beraters.
 
-Exakte Werte (AP-Bonus je Rang, Upkeep, Rang-Aufstiegs-Schwellen in aktiven Ticks, Beförderungskosten): siehe `config/game.php → advisor` und `docs/game-reference.md#5-berater-advisors-hire-kosten--ap-beiträge`.
+Exakte Werte (AP-Bonus je Rang, Fach-Deckel je Rang, Upkeep, Rang-Aufstiegs-Schwellen in aktiven Ticks, Beförderungskosten): siehe `config/game.php → advisor` und `docs/game-reference.md#5-berater-advisors-hire-kosten--ap-beiträge`.
 
 **Einstellungskosten (Rang 1) — typ-spezifisch:** Baumeister ist der günstigste Einstieg (Kernanforderung Tag 1); Analytiker, Raumfahrer und Konsul sind höher gestaffelt, gekoppelt an ihre spätere Verfügbarkeit (Analytiker erst ab CC Lv2, Raumfahrer voller Nutzen erst mit Hangar, Konsul mittlere Priorität). Exakte Beträge: `config/advisors.php`, `docs/game-reference.md`.
 
@@ -1917,7 +1926,7 @@ Exakte Werte (AP-Bonus je Rang, Upkeep, Rang-Aufstiegs-Schwellen in aktiven Tick
 - **Rang-Aufstieg:** Bereitschaft wird nach ausreichend kumulierten `active_ticks` erreicht (`config/game.php → advisor.rank_thresholds`); der Vollzug bleibt manuell, siehe oben.
 - Alle Werte stehen in `config/game.php → advisor` (Einstellungskosten, AP-Bonus, Upkeep, Rang-Thresholds, Beförderungskosten).
 
-> **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Sol, laufender Upkeep (Cr/Sol) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
+> **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Sol, Fach-Deckel (falls vorhanden), laufender Upkeep (Cr/Sol) und `active_ticks` zum nächsten Rang-Aufstieg. Diese Werte müssen auf einen Blick lesbar sein; die Beförderungsvorschau nennt, welche Zahl der nächste Rang erhöht.
 
 ---
 
@@ -1946,24 +1955,26 @@ Der Raumfahrer ist ein colony-scoped AP-Produzent für den `navigation`-Pool. Er
 ### Verfügbare AP
 
 ```
-availableAP = Grundwert + Σ AP_bonus(rank) über alle zugewiesenen Berater − lockedAP(tick)
+poolAP      = max(0, Grundwert + Σ AP_bonus(rank) über alle verfügbaren Berater + Vertrauens-AP(Band) − Seuchen-AP)
+availableAP = poolAP − lockedAP(tick)
 ```
 
 Ein einziger Pool je Kolonie (13.1). `AP_bonus(rank)` ist der Beitrag jedes aktuell zugewiesenen Beraters, unabhängig von seiner Domäne — vier Berater erhöhen denselben Pool viermal. AP-Locks verfallen automatisch zum nächsten Sol; der Pool wird täglich vollständig erneuert.
 
-Der Grundwert des gemeinsamen Pools steht in `config/game.php → ap.base` (Owner-Entscheidung, §13.6). Vertrauens- und Seuchen-Multiplikatoren (§9, §14) wirken zusätzlich multiplikativ auf den fertigen Grundwert+Bonus-Betrag, siehe `AdvisorService::getApBreakdown`. Exakter Wert: `docs/game-reference.md#9-action-points-ap`.
+Der Grundwert des gemeinsamen Pools steht in `config/game.php → ap.base` (Owner-Entscheidung, §13.6). Vertrauen und Seuche (§9, §14) wirken als **Summanden**, nicht als Faktoren: Das Vertrauensband addiert oder zieht einen festen AP-Betrag ab, eine laufende Seuche zieht einen festen AP-Betrag ab (der Pool fällt dabei nie unter null). Jeder Summand ist eine eigene Zeile im AP-Zufluss, siehe `AdvisorService::getApBreakdown`. Exakter Wert: `docs/game-reference.md#9-action-points-ap`.
 
 ### AP-Verbrauch
 
 **Projekte (mehrere Sole, siehe 13.2):**
 
-1. **Bauen/Ausbauen:** AP werden beim Investieren gesperrt (`invest('add')`), bis die Projektkosten erreicht sind. Je Gebäude-Instanz nimmt ein Sol höchstens so viele AP auf, wie der AP-Deckel erlaubt (Grundwert plus Baumeister-Beitrag je Rang, 13.2); Belohnungs-AP zählen nicht dagegen.
-2. **Kenntnisse:** identisch — bereits implementiert über `AbstractTechnologyService::_invest`. Der Deckel für Kenntnisse (Analytiker) ist vorgesehen, aber noch nicht aktiv; erst messen, dann einschalten.
+1. **Bauen/Ausbauen:** AP werden beim Investieren gesperrt (`invest('add')`), bis die Projektkosten erreicht sind. Je Gebäude-Instanz nimmt ein Sol höchstens so viele AP auf, wie der AP-Deckel erlaubt (Grundwert plus Fach-Deckel des Baumeisters je Rang, 13.2); Belohnungs-AP zählen nicht dagegen.
+2. **Kenntnisse:** identisch — implementiert über `AbstractTechnologyService::_invest`. Deckel je Kenntnis und Sol: Grundwert plus Fach-Deckel des Analytikers; zweckgebundene Bonus-AP (Tomas, Sarka, Deva, Lenn, Daten-Sweep) sind ausgenommen.
+2a. **Training und Gespräch** (§4b): Training mit Deckel aus Grundwert plus Fach-Deckel des Raumfahrers; Gespräch einmal je Figur und Sol mit festem Deckel je Figur.
 
 **Handlungen (sofort, siehe 13.2):**
 
-3. **Reparatur/Abbau:** AP in Höhe der veränderten `status_points`.
-4. **Erkundung/Dispatch:** Tile-Erkundung ring-gestaffelt (1/2/3 AP, §4a), Außenmissions-Dispatch `sol_distance × 2` AP (§8b).
+3. **Reparatur:** ein AP je Klick; ein Klick stellt mehrere Status-Punkte wieder her (Gebäude: plus Regolith je Punkt; Schiffe: nur AP). Fehlen weniger Punkte, werden nur diese wiederhergestellt und bezahlt, der AP bleibt (§4, §13.7).
+4. **Erkundung/Dispatch:** Tile-Erkundung ring-gestaffelt (§4a), ab einer `cartography`-Stufe ist die erste Erkundung je Sol kostenlos; Außenmissions-Dispatch nach Entfernungstabelle (§8b).
 5. **Handelsgeschäfte:** AP je angenommenem oder verhandeltem Angebot (§12).
 
 ### Implementierung
@@ -2043,7 +2054,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | Wert | Festlegung | folgt aus |
 |---|---|---|
 | Harvester-Ertrag | Frischwert je Tile-Kombination aus Ertrags- und Mächtigkeits-Stufe (§4c), konstant bis zur Erschöpfung, dann harter Cutoff, `max_level = 1` | G7 |
-| Reparatur | 1 Rg je SP (zusätzlich 1 AP je SP) | G2 + „eine Zahl, zwei Währungen" |
+| Reparatur | 1 Rg je SP (zusätzlich 1 AP je Klick, ein Klick stellt mehrere SP her) | G2 + „Regolith je Punkt, AP je Klick" |
 | `decay_rate` | vier Klassen 0,40 / 0,60 / 0,80 / 1,20 | G2, G3 |
 | Errichtung (Lv0→1) | 70 Agrardom (Ramp-Gate-Ausnahme) / 95 alle drei Pfadgebäude | G4 (5–8 Sole) |
 | Level-Up | flach 25, jedes Level, jedes Nicht-CC-Gebäude (auch der Sprung 0→1 nach der Errichtung) | G4 (1–2 Sole) |
@@ -2058,13 +2069,14 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 
 Die **Preisrelation** aus der Knappheitsordnung (§3) ist tragend, auch wenn die konkreten `bar.base_prices` Feintuning sind: Steht der Überschuss teurer als der Mangel, funktioniert der Cantina-Hebel nicht. Regolith < Organika < Werkstoffe; der Abstand Organika→Werkstoffe muss „deutlich knapper" abbilden (`config/game.php`).
 
-**Zur Reparatur — eine Zahl, zwei Währungen.** Reparatur kostet 1 AP und 1 Regolith je SP. Damit gilt:
+**Zur Reparatur — Regolith je Punkt, AP je Klick.** Reparatur kostet 1 Regolith je SP. Ein Klick kostet einen AP und stellt mehrere SP wieder her (`game.repair.sp_per_click`; seit der AP-Skala 2026-11-13, damit die Instandhaltung im kleinen Pool denselben Anteil behält wie zuvor). Fehlen weniger SP, werden nur diese wiederhergestellt und mit Regolith bezahlt; der AP bleibt. Damit gilt:
 
 ```
-Instandhaltung [Rg/Sol]  =  Instandhaltung [AP/Sol]  =  Σ decay_rate
+Instandhaltung [Rg/Sol]  =  Σ decay_rate
+Instandhaltung [AP/Sol]  ≈  Σ decay_rate ÷ sp_per_click   (aufgerundet je Gebäude und Klick)
 ```
 
-Das Dashboard (§13.4) braucht keine zwei Zeilen und §13.5 keine zwei Tabellen. Soll Reparatur „teurer wirken", ist `decay_rate` der Knopf, weil er beide Seiten gleichzeitig bewegt.
+Die Regolith-Zeile bleibt die tragende Zahl für Dashboard (§13.4) und §13.5; die AP-Seite ist ein fester Bruchteil davon. Soll Reparatur „teurer wirken", ist `decay_rate` der Knopf, weil er beide Seiten gleichzeitig bewegt; `sp_per_click` bewegt nur die AP-Seite.
 
 **Zu `decay_rate` — aus einer Spielaussage abgeleitet.** `decay_rate = max_status_points / Sole_bis_Level_Down`; die Sole sind eine Designaussage: *wie teuer ist es, dieses Gebäude zu vergessen?*
 
@@ -2174,7 +2186,7 @@ Phase 1 endet, sobald Verfügbar die Bedarfskette deckt und die Ausführung (Rei
 
 **Nebenbefunde:**
 - Der Wohnraum zwingt in Phase 1 keine zweite Wohnhabitat-Instanz und kein Wohnhabitat-Levelup mehr: Der Sol-1-Cap (CC + Wohnhabitat Lv1) deckt Harvester, Agrardom Lv1 und ein Pfadgebäude auf Lv1 mit Puffer. Das zweite Pfadgebäude in Phase 2 setzt das Wohnhabitat-Levelup voraus — Prüfauftrag. Die folgende Überlegung gilt weiter für diesen Phase-2-Übergang: Das gilt für jede Pfad-Kombination, aber nur solange alle drei Pfadgebäude denselben Arbeitsplatzbedarf tragen (Pfad-Parität, §4b). Kostet ein Pfadgebäude mehr als die anderen, muss das Wohnhabitat-Levelup (das ohnehin zur Phase-1-Kette gehört) vor dem zweiten Pfadgebäude kommen. Die Kombination bestimmt dann die Reihenfolge. Zwei Zeitpunkte zählen, weil ein platziertes Gebäude seine Stufe-1-Arbeitsplätze schon auf Level 0 reserviert und seine Regolith-Errichtungskosten beim Platzieren vollständig bezahlt werden: Freie Kolonisten und Regolith müssen beim **Platzieren** reichen, nicht erst beim Lv0→1-Sprung. Jedes zusätzliche Gebäude in Phase 1 setzt das Wohnhabitat-Levelup ebenfalls voraus. *(Kenntnisse liefern keinen Cap, §6: ab Phase 2 kommt jedes weitere Cap-Wachstum allein aus Wohnbau — dessen AP- und Regolith-Kosten sind dort fest einzuplanen, Prüfauftrag in der Neumessung.)*
-- Die Pfadgebäude sind in Regolith gleich, in AP nicht: Analytik-Labor und Hangar sind AP-Klasse „Groß", Cantina „Mittel". Da der AP-Deckel (13.2) je Gebäude gilt und der Pool in Phase 1 nicht der Engpass ist, ändert das kaum etwas am Pacing, ist aber eine Inkonsistenz gegen die Paritäts-Anforderung (§4b) — bei Gelegenheit prüfen.
+- Die Pfadgebäude sind in Regolith und AP gleich: Alle Ausbaustufen außer Kommandozentrale und Denkmal kosten denselben flachen AP-Wert (§13.6 „Ist-Stand“). Die Paritäts-Anforderung (§4b) ist bei den Baukosten damit erfüllt; die geplanten Kostenklassen (§13.6) müssen sie beibehalten.
 - Das „harte" Agrardom-Gate für den CC-Lv2-Ausbau (§4) ist im Code umgesetzt (`investBuilding()`, `agrardom_required`).
 
 #### Agrardom-Kurve: das obere Ende
@@ -2188,7 +2200,7 @@ Der Organika-Verbrauch skaliert über `food_need = intdiv(anwesende Kolonisten, 
 | Regolith staut sich an (Bestand steigt monoton) | Baukosten anheben | Sockel senken — trifft die Instandhaltung mit und riskiert die Verfallsspirale |
 | Regolith klemmt bei 0, Reparatur konkurriert dauernd mit Bauen | Sockel anheben | Reparaturkosten senken — sonst verschwindet der Verfall als Mechanik |
 | Verfall wirkt wie Dekoration, folgenlos ignorierbar | `decay_rate` anheben (bewegt beide Währungen zugleich) | Reparaturkosten anheben — das entkoppelt Regolith und AP wieder |
-| Instandhaltung fühlt sich spät schlaff an | levelskalierte Reparatur (`1 + floor((level−1)/3)` AP je SP, §13.5) | `decay_rate` global anheben — trifft das Early Game am härtesten |
+| Instandhaltung fühlt sich spät schlaff an | levelskalierte Reparatur (weniger SP je Klick auf hohen Stufen, §13.5) | `decay_rate` global anheben — trifft das Early Game am härtesten |
 | Ein Pfad hängt sichtbar zurück | den betreffenden **Hebel** anheben | Sockel oder Baukosten — die sind pfadneutral |
 | Mehr als 4 Sole pro Run an Regolith blockiert (G5) | Startbestand, dann Errichtungspreise | die Hebel — sie greifen zu spät für die frühe Klemme |
 | Phase 1 dauert typisch > Sol 17 | Startbestand (nur wenn die Bedarfskette gegen den Sol-1-Bootstrap-Zustand nachgerechnet ist), sonst Ausführungsfriktion suchen | `resource_max` — bindet im Zielfenster nicht |
@@ -2224,7 +2236,7 @@ Vertrauen bewegt sich auf einer symmetrischen Skala um einen Neutralwert, mit de
 | Unzufriedenheit | "Unruhig" |
 | Krise | "Aufruhr" |
 
-Die fünf Bänder sind von sehr negativ bis sehr positiv geordnet, symmetrisch um den Neutralwert — deckungsgleich mit den Bändern der Produktions- und AP-Multiplikatoren weiter unten. Exakte Schwellwerte ebenfalls in `docs/game-reference.md` Abschnitt 14.
+Die fünf Bänder sind von sehr negativ bis sehr positiv geordnet, symmetrisch um den Neutralwert — deckungsgleich mit den Bändern des Produktions-Multiplikators und des AP-Zuschlags weiter unten. Exakte Schwellwerte ebenfalls in `docs/game-reference.md` Abschnitt 14.
 
 ### Berechnung (Sol-basiert)
 
@@ -2371,19 +2383,19 @@ Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Fehlschläge und Zwisc
 
 ### Effekte des Vertrauens auf die Kolonie
 
-Vertrauen beeinflusst drei Spielparameter. Alle Effekte werden als **Multiplikatoren** auf die Basiswerte angewendet, nicht als additive Boni. Das verhindert, dass Vertrauen zu einer dominanten Wachstumsstrategie wird.
+Vertrauen beeinflusst Produktion und AP-Pool, den Wohnraum nicht. Die Wirkung bleibt bewusst moderat, damit Vertrauen keine dominante Wachstumsstrategie wird. Auf die Produktion wirkt es als **Multiplikator** (große Mengen, Prozent bleibt sichtbar), auf den AP-Pool als **Summand** (kleiner Pool, ein Prozentfaktor würde dort wegrunden).
 
 #### Ressourcenproduktion
 
 Vertrauen wirkt als Multiplikator auf die Rohstoffproduktion (Harvester, Agrardom). Hohes Vertrauen gibt einen moderaten Produktionsbonus; niedriges Vertrauen reduziert den Output. Das skaliert die Produktion ohne sie zu blockieren — der Multiplikator bleibt immer > 0.
 
-#### AP-Multiplikator
+#### AP-Zuschlag und -Abzug
 
-Vertrauen wirkt auch auf die effektiven Aktionspunkte pro Sol — ein schwächerer Effekt als bei der Produktion. AP ist die knappste Ressource, daher soll Vertrauen sie nicht zu stark verstärken (kein Dominanz-Stacking).
+Vertrauen wirkt auch auf die Aktionspunkte pro Sol — als **fester AP-Betrag je Vertrauensband**, der zum Pool addiert bzw. abgezogen wird, nicht als Faktor (AP-Skala 2026-11-13 §4: auf einem Pool von wenigen AP wäre ein Prozentfaktor meist wirkungslos, angezeigte Zahl = wirkende Zahl). Nur sehr hohes Vertrauen bringt einen Zuschlag, deutlich negatives Vertrauen kostet einen Abzug; die neutralen und leicht positiven Bänder wirken nicht. Der Zuschlag erscheint als eigene Zeile im AP-Zufluss, neben Grundwert und Beratern. AP ist die knappste Ressource, daher soll Vertrauen sie nicht zu stark verstärken (kein Dominanz-Stacking).
 
 > ⚠️ BALANCE CONCERN: Ein starker AP-Malus bei negativem Vertrauen macht Krisensituationen selbstverstärkend (weniger AP → weniger Reparaturen → mehr Decay → mehr Vertrauens-Malus). Diese Spirale ist designtechnisch vertretbar (Entropie als Spielprinzip), aber es muss einen Ausweg geben. Der Ausweg ist der Bau von Vertrauensgebäuden (positive Events) und Kolonisten-Zulagen (Spieler-Aktion), beides funktioniert trotz AP-Malus (AP wird nicht negativ).
 
-Exakte Multiplikator-Werte pro Vertrauensbereich: `config/game.php → trust.production_multiplier` / `trust.ap_multiplier`.
+Exakte Werte pro Vertrauensbereich: `config/game.php → trust.production_multiplier` (Faktor) / `trust.ap_bonus` (AP-Betrag), Tabelle in `docs/game-reference.md` Abschnitt 14.
 
 #### Wohnraum
 
@@ -2393,7 +2405,7 @@ Vertrauen beeinflusst den Wohnraum **nicht**. Das Kolonisten-System ist ein sepa
 
 **Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer innerhalb der Skala aus "Wertebereich" oben. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
 
-**Die Konfiguration** steht produktiv in `config/game.php` unter dem Schlüssel `trust` (Umbenennung von `moral`→`trust` abgeschlossen). Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
+**Die Konfiguration** steht produktiv in `config/game.php` unter dem Schlüssel `trust` (Umbenennung von `moral`→`trust` abgeschlossen). Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_bonus, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
 ### Sol-Integration
 
@@ -2416,7 +2428,7 @@ Vollständig implementiert, kein offener TODO mehr:
 1. `config/game.php` — `trust`-Block produktiv (alle Werte, siehe oben).
 2. `app/Services/TrustService.php` — berechnet den Vertrauenswert je Kolonie.
 3. Tick-Integration in Schritt 9 (siehe unten) — schreibt `colony_resources` (res_id=12).
-4. `app/Services/AdvisorService.php` — AP-Berechnung berücksichtigt den Trust-AP-Multiplikator (`getApBreakdown`).
+4. `app/Services/AdvisorService.php` — AP-Berechnung berücksichtigt den AP-Zuschlag bzw. -Abzug des Vertrauensbands als Summand (`getApBreakdown`).
 5. Produktionslogik — Trust-Produktionsmultiplikator wird angewandt.
 6. UI: Vertrauen-Anzeige in der Ressourcenleiste (resource_id=12).
 

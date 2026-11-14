@@ -993,7 +993,7 @@ class BarService
 
         return match ($slug) {
             'smuggler' => $this->resolveSmugglerConcern($colonyId, $cfg),
-            'information_broker' => $this->resolveVoucherConcern($colonyId, $currentTick, 'information_broker', (int) $cfg['discount_pct'], null),
+            'information_broker' => $this->resolveVoucherConcern($colonyId, $currentTick, 'information_broker', (int) $cfg['discount_ap'], null),
             'mechanic' => $this->resolveMechanicConcern($colonyId, $cfg, $knowledgeId, $currentTick),
             'doctor' => $this->resolveDoctorConcern($colonyId, $cfg),
             'prospector' => $this->resolveProspectorConcern($colonyId, $success, $cfg, $seed, $currentTick),
@@ -1013,11 +1013,15 @@ class BarService
         return ['reward' => 'ship', 'ship_id' => $shipId];
     }
 
-    private function resolveVoucherConcern(int $colonyId, int $currentTick, string $source, int $discountPct, ?int $expiresAfterSols): array
+    /**
+     * Grants a one-off building levelup voucher of $discountAp AP (absolute since the AP
+     * scale 2026-11-13; stored in the discount_pct column, rename pending).
+     */
+    private function resolveVoucherConcern(int $colonyId, int $currentTick, string $source, int $discountAp, ?int $expiresAfterSols): array
     {
         DB::table('colony_building_discount_vouchers')->insert([
             'colony_id' => $colonyId,
-            'discount_pct' => $discountPct,
+            'discount_pct' => $discountAp,
             'source' => $source,
             'granted_tick' => $currentTick,
             'expires_tick' => $expiresAfterSols !== null ? $currentTick + $expiresAfterSols : null,
@@ -1026,7 +1030,7 @@ class BarService
             'updated_at' => now(),
         ]);
 
-        return ['reward' => 'building_discount_voucher', 'discount_pct' => $discountPct];
+        return ['reward' => 'building_discount_voucher', 'discount_ap' => $discountAp];
     }
 
     private function resolveMechanicConcern(int $colonyId, array $cfg, ?int $knowledgeId, int $currentTick): array
@@ -1085,14 +1089,14 @@ class BarService
     private function resolveFounderConcern(int $colonyId, bool $success, array $cfg, int $currentTick): array
     {
         if (! $success) {
-            return ['reward' => 'building_discount_voucher', 'discount_pct' => 0];
+            return ['reward' => 'building_discount_voucher', 'discount_ap' => 0];
         }
 
         return $this->resolveVoucherConcern(
             $colonyId,
             $currentTick,
             'founder',
-            (int) $cfg['discount_pct'],
+            (int) $cfg['discount_ap'],
             isset($cfg['voucher_expires_sols']) ? (int) $cfg['voucher_expires_sols'] : null
         );
     }
@@ -1510,10 +1514,9 @@ class BarService
      * "Mit Tomas reden" (Cantina-Barkeeper, A40, GDD §12). Costs no AP and never
      * locks or checks the shared colony pool — Tomas injects AP directly into the
      * chosen knowledge via ResearchService::investBonus() ("stille Forschung").
-     * The bonus follows Tomas' relationship level (game.bartender.
-     * ap_bonus_by_relationship_level); at level 0 he gives no advice and the
-     * conversation is refused without using the Sol. Gated by a once-per-tick
-     * cooldown; interaction_count is kept as a statistic only.
+     * Every piece of advice gives game.bartender.ap_bonus; his relationship level sets
+     * how often (every N Sols, AP scale 2026-11-13 §6); at level 0 he gives no advice and
+     * the conversation is refused without using the Sol. interaction_count is a statistic.
      *
      * @return array{success: bool, ap_added?: int, interaction_count?: int, knowledge_result?: array<string, mixed>, error?: string, message?: string, block_reason?: string}
      */
@@ -1526,10 +1529,7 @@ class BarService
 
         $state = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->first();
 
-        $cooldownTicks = (int) config('game.bartender.interaction_cooldown_ticks');
-        $lastInteractionTick = $state?->last_interaction_tick;
-
-        if ($lastInteractionTick !== null && $currentTick - $lastInteractionTick < $cooldownTicks) {
+        if ($this->bartenderAdviceInSols($colonyId, $currentTick) > 0) {
             return ['success' => false, 'error' => 'cooldown_active'];
         }
 
@@ -1556,12 +1556,31 @@ class BarService
         });
     }
 
-    /** Tomas' AP bonus at the colony's current relationship level with him (0 = no advice). */
+    /** AP one piece of Tomas' advice gives at the current relationship level (0 = no advice). */
     public function bartenderApBonus(int $colonyId): int
     {
-        $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
+        return $this->bartenderAdviceEverySols($colonyId) !== null ? (int) config('game.bartender.ap_bonus', 1) : 0;
+    }
 
-        return (int) config("game.bartender.ap_bonus_by_relationship_level.{$level}", 0);
+    /**
+     * Every how many Sols Tomas gives advice at the current relationship level
+     * (game.bartender.advice_every_sols_by_relationship_level); null = no advice at all.
+     */
+    public function bartenderAdviceEverySols(int $colonyId): ?int
+    {
+        $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
+        $every = config("game.bartender.advice_every_sols_by_relationship_level.{$level}");
+
+        return $every === null ? null : max(1, (int) $every);
+    }
+
+    /** Sols until Tomas gives advice again (0 = today); measured from his last advice. */
+    public function bartenderAdviceInSols(int $colonyId, int $currentTick): int
+    {
+        $every = $this->bartenderAdviceEverySols($colonyId) ?? 1;
+        $lastTick = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->value('last_interaction_tick');
+
+        return $lastTick === null ? 0 : max(0, (int) $lastTick + $every - $currentTick);
     }
 
     /**

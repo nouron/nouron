@@ -145,7 +145,7 @@ return [
         'pathdepth_family' => 'in Training :name investiert.',
         'pathdepth_family_levelup' => 'in Training :name investiert. Stufe :level erreicht.',
         'pathdepth_character' => 'in Beziehung zu :name investiert.',
-        // Stille Forschung (hinter einem AP-Chip: „5 AP von Tomas …").
+        // Stille Forschung (hinter einem AP-Chip: „1 AP von Tomas …").
         'knowledge_bonus' => 'von :name flossen still in :knowledge.',
         'knowledge_bonus_breakthrough' => 'von :name flossen still in :knowledge. Durchbruch: Stufe :level erreicht.',
         'knowledge_bonus_forfeited' => 'Die übrigen :ap AP verfallen — die Kenntnis wartet auf :reason.',

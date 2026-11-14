@@ -56,6 +56,7 @@ class PathDepthController extends BaseController
                 'ap_spend' => $result['points'],
                 'level' => $result['level'],
                 'leveled_up' => $result['leveled_up'],
+                'wasted' => $result['wasted'],
             ]),
         ]);
 
@@ -65,6 +66,7 @@ class PathDepthController extends BaseController
             'ap_spend' => $result['ap_spend'],
             'ap_for_levelup' => $result['ap_for_levelup'],
             'leveled_up' => $result['leveled_up'],
+            'wasted' => $result['wasted'],
             'level_cap' => $result['level_cap'],
             'ap_cap' => $result['ap_cap'],
             'apAvailable' => $this->advisorService->getAvailableActionPoints($colony->id),

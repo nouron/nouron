@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-14
+
+- AP-Skala ÷3 (T58, Spec `docs/superpowers/specs/2026-11-13-ap-skala.md`): Kolonie 4 AP je Sol, Berater-Ränge erhöhen Pool und Fach-Deckel (Baumeister, Analytiker, Raumfahrer), alle Bau-, Kenntnis-, Training-, Handlungs- und Beziehungskosten neu; Vertrauen und Seuche als feste AP statt Faktor, Rabatte als feste AP mit Untergrenzen, Reparatur 1 AP = 3 SP, Tomas' Rat immer 1 AP und je nach Beziehung häufiger. Werte gerechnet, nicht gemessen; laufende Läufe neu starten.
+- Cantina-Gespräche Variante C: ein Gespräch je Figur und Sol (kurz 1 AP, lang 2 AP ab Cantina 3), keine Kostenkürzung, verfallende AP an der Stufengrenze als Warn-Chip mit Hinweiszeile. AP-Popup zeigt Summanden, Reparatur-Knopf zeigt SP je Klick, Debug-Leiste zeigt die Kenntnis-Tabelle ohne Extra-Klick.
+
 ## 2026-11-13
 
 - Cantina: keine Stufensperre mehr für Beziehungen; die Cantina-Stufe schaltet die Gesprächsoptionen frei (kurz immer, normal ab 2, ausführlich ab 3), gesperrte Optionen tragen eine Figurenzeile; anwesende Figuren lassen sich schon vor dem ersten Handel ansprechen. Debug-Leiste (Admin) liefert die genauen Kenntnis-Werte für die stille Forschung.

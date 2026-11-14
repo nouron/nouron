@@ -198,28 +198,20 @@
 
 		if (s.colony_ap !== undefined && s.trust !== undefined) {
 			const ab = s.ap_breakdown;
+			// All parts are whole AP summands (AP scale 2026-11-13 §4): base, then signed advisor/trust/plague parts.
 			const extra: Row[][] = ab
 				? [
-						rows(
-							[
-								[t('resources.popup_ap_base'), ab.base],
-								[t('resources.popup_ap_advisor'), ab.advisor]
-							],
-							(v) => v !== 0
-						),
-						...(ab.multiplier !== 1
-							? [[{ label: t('resources.popup_ap_trust_multiplier'), value: '× ' + ab.multiplier.toFixed(2) }]]
-							: []),
-						...((ab.plague_multiplier ?? 1) < 1
-							? [
-									[
-										{
-											label: t('resources.popup_ap_plague_multiplier'),
-											value: '× ' + (ab.plague_multiplier ?? 1).toFixed(2)
-										}
-									]
-								]
-							: [])
+						[
+							{ label: t('resources.popup_ap_base'), value: ab.base },
+							...rows(
+								[
+									[t('resources.popup_ap_advisor'), ab.advisor],
+									[t('resources.popup_ap_trust'), ab.trust_ap],
+									[t('resources.popup_ap_plague'), ab.plague_ap]
+								],
+								(v) => v !== 0
+							).map((r) => ({ ...r, value: signed(r.value as number) }))
+						]
 					]
 				: [];
 			out.push({

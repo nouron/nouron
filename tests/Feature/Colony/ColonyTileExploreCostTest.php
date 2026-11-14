@@ -2,10 +2,8 @@
 
 namespace Tests\Feature\Colony;
 
-use App\Console\Commands\GameTick;
 use App\Services\AdvisorService;
 use App\Services\ColonyTileService;
-use App\Services\ProjectBonusService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +56,7 @@ class ColonyTileExploreCostTest extends TestCase
         $this->assertSame($before - 1, $this->navAp());
     }
 
-    public function test_exploring_ring2_tile_costs_2_nav_ap(): void
+    public function test_exploring_ring2_tile_costs_the_configured_ring_price(): void
     {
         $this->fogTile(2, 0, 2);
         $before = $this->navAp();
@@ -66,10 +64,10 @@ class ColonyTileExploreCostTest extends TestCase
         $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 2, 0);
 
         $this->assertTrue($result['ok']);
-        $this->assertSame($before - 2, $this->navAp());
+        $this->assertSame($before - (int) config('game.colony.explore_cost_per_ring.2'), $this->navAp());
     }
 
-    public function test_exploring_ring3_tile_costs_3_nav_ap(): void
+    public function test_exploring_ring3_tile_costs_more_than_ring2(): void
     {
         $this->fogTile(3, 0, 3);
         $before = $this->navAp();
@@ -77,12 +75,14 @@ class ColonyTileExploreCostTest extends TestCase
         $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 3, 0);
 
         $this->assertTrue($result['ok']);
-        $this->assertSame($before - 3, $this->navAp());
+        $this->assertSame($before - (int) config('game.colony.explore_cost_per_ring.3'), $this->navAp());
+        $this->assertGreaterThan((int) config('game.colony.explore_cost_per_ring.2'), (int) config('game.colony.explore_cost_per_ring.3'));
     }
 
-    public function test_exploring_ring2_tile_fails_when_only_1_nav_ap_left(): void
+    public function test_exploring_ring3_tile_fails_when_only_1_nav_ap_left(): void
     {
-        $this->fogTile(2, 0, 2);
+        $this->assertGreaterThan(1, (int) config('game.colony.explore_cost_per_ring.3'), 'precondition: ring 3 costs more than 1 AP');
+        $this->fogTile(3, 0, 3);
 
         $personell = $this->app->make(AdvisorService::class);
         $available = $personell->getAvailableActionPoints(self::COLONY_ID);
@@ -90,42 +90,19 @@ class ColonyTileExploreCostTest extends TestCase
 
         $this->assertSame(1, $this->navAp(), 'precondition: exactly 1 Nav-AP left');
 
-        $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 2, 0);
+        $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 3, 0);
 
         $this->assertFalse($result['ok']);
         $this->assertSame('no_nav_ap', $result['error']);
         $this->assertSame(__('colony.error_no_nav_ap'), $result['message']);
         $this->assertSame(0, (int) DB::table('colony_tiles')
             ->where('colony_id', self::COLONY_ID)
-            ->where('q', 2)->where('r', 0)
+            ->where('q', 3)->where('r', 0)
             ->value('is_explored'));
     }
 
-    // ── cartography Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) ────────
-
-    private function setCartographyLevel(int $level): void
-    {
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'research_id' => 91],
-            ['level' => $level, 'ap_spend' => 0, 'status_points' => 20]
-        );
-    }
-
-    public function test_exploring_ring2_tile_costs_less_with_cartography(): void
-    {
-        $this->setCartographyLevel(5);
-        $this->fogTile(2, 0, 2);
-        $before = $this->navAp();
-
-        $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 2, 0);
-
-        $this->assertTrue($result['ok']);
-        $curve = config('knowledge.cartography.nav_ap_reduction_per_lv');
-        $discountPercent = GameTick::cumulativeCurveYield($curve, 5);
-        $expectedCost = ProjectBonusService::applyDiscount(2, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
-        $this->assertSame($before - $expectedCost, $this->navAp());
-        $this->assertLessThan(2, $expectedCost, 'precondition: discount must actually lower the ring-2 base cost of 2');
-    }
+    // Cartography no longer discounts a single exploration (AP scale 2026-11-13); its free
+    // first exploration per Sol is covered by FreeDailyNavActionTest.
 
     public function test_exploring_tile_costs_full_price_without_cartography(): void
     {

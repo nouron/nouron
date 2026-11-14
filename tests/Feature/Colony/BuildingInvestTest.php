@@ -30,7 +30,7 @@ class BuildingInvestTest extends TestCase
 
     private const CC_ID = 25;
 
-    private const CC_AP_FOR_LEVELUP = 20;   // cc_upgrade_ap_by_level[2] (config/buildings.php)
+    private const CC_AP_FOR_LEVELUP = 8;   // cc_upgrade_ap_by_level[2] (config/buildings.php)
 
     private const CC_MAX_SP = 20;
 
@@ -94,10 +94,11 @@ class BuildingInvestTest extends TestCase
     {
         $this->setCcState(['level' => 1, 'ap_spend' => 0]);
 
-        $response = $this->invest(self::CC_ID, 3);
+        // Two AP fit into one Sol (building cap 1 + engineer field bonus).
+        $response = $this->invest(self::CC_ID, 2);
 
-        $response->assertOk()->assertJsonPath('ok', true)->assertJsonPath('applied', 3);
-        $this->assertSame(3, (int) $this->ccRow()->ap_spend);
+        $response->assertOk()->assertJsonPath('ok', true)->assertJsonPath('applied', 2);
+        $this->assertSame(2, (int) $this->ccRow()->ap_spend);
     }
 
     public function test_invest_batch_stops_at_levelup_without_overshoot(): void
@@ -174,11 +175,11 @@ class BuildingInvestTest extends TestCase
 
     // ── Cantina-Anliegen Baukosten-Rabatt-Gutschein (A41) ───────────────────────
 
-    private function insertVoucher(int $discountPct, string $source): void
+    private function insertVoucher(int $discountAp, string $source): void
     {
         DB::table('colony_building_discount_vouchers')->insert([
             'colony_id' => self::COLONY_ID,
-            'discount_pct' => $discountPct,
+            'discount_pct' => $discountAp,
             'source' => $source,
             'granted_tick' => 1,
             'expires_tick' => null,
@@ -190,9 +191,9 @@ class BuildingInvestTest extends TestCase
 
     public function test_invest_reaches_levelup_earlier_with_an_active_voucher(): void
     {
-        // 25% off CC Lv1->2 (20 AP) -> effective threshold 15.
-        $this->insertVoucher(25, 'information_broker');
-        $this->setCcState(['level' => 1, 'ap_spend' => 14, 'status_points' => 16]);
+        // 2 AP off CC Lv1->2 (8 AP, absolute since the AP scale) -> effective threshold 6.
+        $this->insertVoucher(2, 'information_broker');
+        $this->setCcState(['level' => 1, 'ap_spend' => 5, 'status_points' => 16]);
 
         $response = $this->invest();
 
@@ -202,8 +203,8 @@ class BuildingInvestTest extends TestCase
 
     public function test_invest_levelup_consumes_the_active_voucher(): void
     {
-        $this->insertVoucher(25, 'information_broker');
-        $this->setCcState(['level' => 1, 'ap_spend' => 14, 'status_points' => 16]);
+        $this->insertVoucher(2, 'information_broker');
+        $this->setCcState(['level' => 1, 'ap_spend' => 5, 'status_points' => 16]);
 
         $this->invest()->assertJsonPath('leveled_up', true);
 
@@ -213,7 +214,7 @@ class BuildingInvestTest extends TestCase
 
     public function test_invest_without_levelup_does_not_consume_the_voucher(): void
     {
-        $this->insertVoucher(25, 'information_broker');
+        $this->insertVoucher(2, 'information_broker');
         $this->setCcState(['level' => 1, 'ap_spend' => 0, 'status_points' => 16]);
 
         $this->invest()->assertJsonPath('leveled_up', false);

@@ -11,8 +11,10 @@ return [
 
     // AP needed to reach level N (index 1..5), per kind.
     'levelup_ap' => [
-        'mission_family' => [1 => 6, 2 => 9, 3 => 12, 4 => 16, 5 => 20],
-        'character' => [1 => 4, 2 => 6, 3 => 8, 4 => 10, 5 => 12],
+        // AP scale 2026-11-13 §11.2 (T-2) and §11.4 (S1): the first conversation makes
+        // a character known, every further level needs 3 AP.
+        'mission_family' => [1 => 3, 2 => 5, 3 => 6, 4 => 8, 5 => 10],
+        'character' => [1 => 1, 2 => 3, 3 => 3, 4 => 3, 5 => 3],
     ],
 
     // Minimum hangar level required to reach mission family level N. Mission families only:
@@ -28,12 +30,12 @@ return [
     ],
 
     // Training AP limit per mission family and Sol (T43-G2, owner 2026-10-25: "limited
-    // AP per Sol" also holds in the hangar). PLACEHOLDER: base 4 is an ASSUMPTION copied
-    // from game.knowledge_ap_cap_per_sol.base. null switches the rule off. Counter key
-    // "training:<family>" in App\Services\DailyApCapService. The hangar has no earmarked
-    // bonus AP (investBonus is lab-only), so no exemption is needed.
+    // AP per Sol" also holds in the hangar). Cap = base + the pilot's specialist bonus
+    // (game.advisor.cap_bonus_per_rank, AP scale 2026-11-13 §11.1). null switches the rule
+    // off. Counter key "training:<family>" in App\Services\DailyApCapService. The hangar has
+    // no earmarked bonus AP (investBonus is lab-only), so no exemption is needed.
     'training_ap_cap_per_sol' => [
-        'base' => 4,
+        'base' => 1,
     ],
 
     // Hangar level a mission family needs before it can be trained (T43-G3; designer
@@ -59,17 +61,18 @@ return [
         'protection' => ['mission_escort_convoy', 'mission_perimeter_patrol'],
     ],
 
-    // ── Cantina conversations (T43-G4). ALL VALUES ARE PLACEHOLDERS pending measurement.
-    // Conversation option key => AP spent (progress is proportional to AP; no bulk discount,
-    // no extra yield). Display names come from a pool in lang pathdepth.conversation_names.<key>.
-    'conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 4],
+    // ── Cantina conversations (T43-G4, variant C 2026-11-13): ONE conversation per character
+    // and Sol, the player picks its length. Option key => AP spent; an option always costs
+    // its full price, AP beyond the next relationship level are lost (no carry-over).
+    // Display names come from a pool in lang pathdepth.conversation_names.<key>.
+    'conversation_options' => ['short' => 1, 'long' => 2],
 
-    // Cantina level each conversation option needs (owner decision 2026-11-13): without
-    // expansion a relationship still grows, only slower. An amount between two option
-    // costs needs the level of the next larger option.
-    'conversation_option_cantina_level' => ['short' => 1, 'normal' => 2, 'long' => 3],
+    // Cantina level each conversation option needs (owner decision 2026-11-13; AP scale
+    // §11.4: the long conversation from cantina level 3).
+    'conversation_option_cantina_level' => ['short' => 1, 'long' => 3],
 
-    // AP one character accepts per Sol (shared counter DailyApCapService, key
-    // "conversation:<character>"). null switches the rule off. Earmarked bonus AP is exempt.
-    'conversation_ap_cap_per_sol' => ['base' => 6],
+    // AP one character accepts per Sol (counter DailyApCapService, key
+    // "conversation:<character>"; owner 2026-11-13: at most 2). An option above it is not
+    // selectable. null switches the limit off (the one-conversation rule stays).
+    'conversation_ap_cap_per_sol' => ['base' => 2],
 ];

@@ -512,10 +512,7 @@ class BotStrategy
                 }
             }
 
-            $navAp = app(ProjectBonusService::class)->effectiveNavigationApCost(
-                $b->colonyId,
-                (int) $mission['sol_distance'] * (int) config('missions.ap_per_sol', 2),
-            );
+            $navAp = app(ProjectBonusService::class)->effectiveMissionApCost($b->colonyId, (int) $mission['sol_distance']);
             if (self::availableAp($b) < $navAp || self::organics($b) < $hangar->organikaCostFor($b->colonyId, $mission)) {
                 continue;
             }
@@ -788,7 +785,7 @@ class BotStrategy
     private static function repairCandidate(BotSession $b, float $belowPct, bool $mayPayRegolith): ?object
     {
         $apOnlyIds = [BuildingId::CommandCenter->value, BuildingId::Harvester->value];
-        $canPayRegolith = $mayPayRegolith && self::regolith($b) >= (int) config('game.repair.regolith_per_click', 1);
+        $canPayRegolith = $mayPayRegolith && self::regolith($b) >= self::repairClickRegolith();
 
         return DB::table('colony_buildings as cb')
             ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
@@ -827,7 +824,13 @@ class BotStrategy
             }
         }
 
-        return self::fitsAboveCcReserve($b, self::ccResearchReserve($b), (int) config('game.repair.regolith_per_click', 1));
+        return self::fitsAboveCcReserve($b, self::ccResearchReserve($b), self::repairClickRegolith());
+    }
+
+    /** Regolith of a full repair click (game.repair.sp_per_click × regolith_per_sp, ColonyController::repairStep()). */
+    private static function repairClickRegolith(): int
+    {
+        return (int) config('game.repair.sp_per_click', 3) * (int) config('game.repair.regolith_per_sp', 1);
     }
 
     private static function nextHireCandidate(BotSession $b): ?int
@@ -1001,7 +1004,7 @@ class BotStrategy
             if ($tile === null) {
                 return null;
             }
-            $cost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+            $cost = app(ColonyTileService::class)->exploreCost($b->colonyId, (int) $tile->ring);
 
             return self::availableAp($b) < $cost ? null : $tile;
         }
@@ -1009,7 +1012,7 @@ class BotStrategy
         // No ring cap: harvesterRelocateCandidate() only ever offers already-explored
         // regolith tiles, so once ring<=2 regolith is exhausted the bot must be able
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
-        // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
+        // ring 3 higher — a real, affordable game mechanic) or it deadlocks forever
         // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
         // storage/logs/playtest/{profile}-{opening}-{seed}-{Ymd_His}.json).
         //
@@ -1035,7 +1038,7 @@ class BotStrategy
             return null;
         }
 
-        $cost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+        $cost = app(ColonyTileService::class)->exploreCost($b->colonyId, (int) $tile->ring);
         if (self::availableAp($b) < $cost) {
             return null;
         }
@@ -1706,7 +1709,7 @@ class BotStrategy
 
     private static function dispatchCandidate(BotSession $b): ?object
     {
-        $navApCost = 1 * (int) config('missions.ap_per_sol', 2); // mission_recon_flight: sol_distance = 1
+        $navApCost = ProjectBonusService::missionApBase(1); // mission_recon_flight: sol_distance = 1
 
         if (self::availableAp($b) < $navApCost) {
             return null;
@@ -1809,10 +1812,7 @@ class BotStrategy
                 }
             }
 
-            $navAp = app(ProjectBonusService::class)->effectiveNavigationApCost(
-                $b->colonyId,
-                (int) $mission['sol_distance'] * (int) config('missions.ap_per_sol', 2),
-            );
+            $navAp = app(ProjectBonusService::class)->effectiveMissionApCost($b->colonyId, (int) $mission['sol_distance']);
             if (self::availableAp($b) < $navAp || self::organics($b) < $hangar->organikaCostFor($b->colonyId, $mission)) {
                 continue;
             }
@@ -2123,7 +2123,7 @@ class BotStrategy
      */
     private static function compoundsMissionCandidate(BotSession $b): ?object
     {
-        $navApCost = 4 * (int) config('missions.ap_per_sol', 2); // sol_distance=4
+        $navApCost = ProjectBonusService::missionApBase(4); // sol_distance=4
         if (self::availableAp($b) < $navApCost) {
             return null;
         }
@@ -2182,7 +2182,7 @@ class BotStrategy
         $dx = $targetTile->q - $qx;
         $dy = $targetTile->r - $qy;
         $distance = (int) ((abs($dx) + abs($dy) + abs($dx + $dy)) / 2);
-        $apCost = max(1, (int) ceil($distance * (int) config('game.harvester.relocate_ap_per_hex', 2)));
+        $apCost = max(1, (int) ceil($distance * (int) config('game.harvester.relocate_ap_per_hex', 1)));
 
         if (self::availableAp($b) < $apCost) {
             return null;

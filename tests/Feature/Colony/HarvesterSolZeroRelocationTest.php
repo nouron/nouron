@@ -82,7 +82,9 @@ class HarvesterSolZeroRelocationTest extends TestCase
     public function test_move_chip_shows_the_real_ap_cost_per_hex(): void
     {
         // The Harvester "Verlegen" chip must show the cost that is actually charged
-        // (config relocate_ap_per_hex), not a hardcoded 1 AP/Feld.
+        // (config relocate_ap_per_hex), not a hardcoded 1 AP/Feld. Wiring test: a value
+        // other than 1 keeps the two distinguishable (the live value is 1 since the AP scale).
+        config(['game.harvester.relocate_ap_per_hex' => 2]);
         $perHex = (int) config('game.harvester.relocate_ap_per_hex');
         $this->assertGreaterThan(1, $perHex, 'the old hardcoded 1 would no longer be distinguishable');
 

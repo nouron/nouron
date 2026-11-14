@@ -136,8 +136,8 @@ class BarRelationshipViewTest extends TestCase
         $this->assertArrayNotHasKey('lock_reason', $row);
         $options = collect($row['conversation']['options'])->keyBy('key');
         $this->assertTrue($options['short']['available']);
-        $this->assertFalse($options['normal']['available']);
-        $this->assertNotNull($options['normal']['locked_line']);
+        $this->assertFalse($options['long']['available']);
+        $this->assertNotNull($options['long']['locked_line']);
     }
 
     public function test_run_and_overall_labels_are_separated_and_codex_page_unchanged(): void
@@ -171,12 +171,12 @@ class BarRelationshipViewTest extends TestCase
 
     public function test_conversation_options_replace_the_single_invest_button(): void
     {
-        $this->met('smuggler', 0, 1);
+        $this->met('smuggler', 1, 1);
         $row = $this->relationships()['smuggler'];
 
         // Options travel with the row (names from the pool, effective AP cost, configured cost to send).
         $this->assertSame((int) config('path_depth.conversation_ap_cap_per_sol.base'), $row['conversation']['cap']['cap']);
-        $this->assertSame(['short', 'normal', 'long'], array_column($row['conversation']['options'], 'key'));
+        $this->assertSame(array_keys(config('path_depth.conversation_options')), array_column($row['conversation']['options'], 'key'));
 
         $html = $this->cantinaPage();
         $this->assertStringContainsString('{#each rel.conversation.options as opt (opt.key)}', $html);
@@ -185,15 +185,15 @@ class BarRelationshipViewTest extends TestCase
         $this->assertStringContainsString("t('pathdepth.ui_conversation_cap_tooltip')", $html);
     }
 
-    public function test_option_costs_are_clamped_to_the_rest_of_the_level(): void
+    public function test_option_costs_are_full_price_with_wasted_ap(): void
     {
-        config(['path_depth.conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 10]]);
-        $this->met('smuggler', 0, 1);
+        // Variant C (2026-11-13): no clamping, the surplus over the level is reported as wasted.
+        config(['path_depth.conversation_options' => ['short' => 1, 'long' => 2], 'path_depth.levelup_ap.character.2' => 3]);
+        $this->met('smuggler', 1, 2);
         $long = collect($this->relationships()['smuggler']['conversation']['options'])->firstWhere('key', 'long');
 
-        // level 1 costs 4, 1 spent -> the long option shows 3 AP but still sends cost 10
-        $this->assertSame(3, $long['ap']);
-        $this->assertSame(10, $long['cost']);
-        $this->assertFalse($long['capped']);
+        $this->assertSame(2, $long['ap']);
+        $this->assertSame(2, $long['cost']);
+        $this->assertSame(1, $long['wasted']);
     }
 }
