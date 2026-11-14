@@ -34,7 +34,6 @@
 
 	let d = $state<Debug | null>(null);
 	let open = $state(false);
-	let knowledgeOpen = $state(false);
 	// Collapsed to a thin handle by default; the choice is remembered (storage may be blocked).
 	const KEY = 'nouron.debugbar.expanded';
 	let expanded = $state(false);
@@ -82,11 +81,11 @@
 			<span class="sep">|</span>
 			<span class="mut">env:</span>
 			<span class={d.env === 'production' ? 'bad' : 'ok'}>{d.env}</span>
-			<button class="push" onclick={() => (knowledgeOpen = !knowledgeOpen)}>Kenntnisse {knowledgeOpen ? '▴' : '▾'}</button>
-			<button onclick={() => (open = !open)}>Config {open ? '▴' : '▾'}</button>
+			<button class="push" onclick={() => (open = !open)}>Config {open ? '▴' : '▾'}</button>
 			<button onclick={toggleExpanded} aria-expanded="true" aria-label="collapse">▾</button>
 		</div>
-		{#if knowledgeOpen}
+		<!-- Knowledge progress is always visible in the expanded bar (owner 2026-11-13, no extra toggle). -->
+		{#if d.knowledge}
 			<div class="panel">
 				{#if d.knowledge?.length}
 					<table class="kn">

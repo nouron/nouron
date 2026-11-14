@@ -52,7 +52,9 @@ export type Building = ApRow & {
 	in_transit: boolean;
 	levelup_cost: number;
 	first_level_prepaid: boolean;
+	// Next repair click: status points it restores (repair_sp) and the Regolith it costs (repair_cost).
 	repair_cost: number;
+	repair_sp: number;
 	tier_label: string | null;
 	[k: string]: unknown;
 };
@@ -79,7 +81,10 @@ export type ColonyData = {
 	repairDisplayThreshold: number;
 	damagedThresholdPct: number;
 	criticalThresholdPct: number;
+	// 0 while the first free scan of the Sol is open (Uplink-Station).
 	deepScanAp: number;
+	// Cartography's free exploration of the Sol is still open: exploring costs 0 AP.
+	freeExploreToday: boolean;
 	relocateApPerHex: number;
 	regolithFallbackTiles: { q: number; r: number }[];
 	[k: string]: unknown;

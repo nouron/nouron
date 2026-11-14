@@ -32,6 +32,12 @@ class PathDepthServiceTest extends TestCase
         $this->setBuilding(52, 3);
         // Training AP limit is off here (covered by TrainingLimitTest).
         config(['game.bypass.ap_checks' => false, 'path_depth.training_ap_cap_per_sol.base' => null]);
+        // Mechanism tests with fixed level costs and a pool large enough for them
+        // (independent of the AP scale values).
+        config(['game.ap.base' => 40, 'path_depth.levelup_ap' => [
+            'mission_family' => [1 => 6, 2 => 9, 3 => 12, 4 => 16, 5 => 20],
+            'character' => [1 => 4, 2 => 6, 3 => 8, 4 => 10, 5 => 12],
+        ]]);
     }
 
     private function setBuilding(int $buildingId, int $level): void

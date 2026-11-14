@@ -183,7 +183,7 @@ class BarOfferDialogPageTest extends TestCase
             'chance' => $dialog['chance']['total_percent'], 'amount' => $dialog['amount_negotiated'],
             'resource' => $dialog['get_label'], 'plus' => '+'.$dialog['plus_negotiated'],
         ]));
-        $this->assertSame('30 %: kein Handel, du behältst Regolith, das Angebot verfällt, 2 AP verbraucht.', __('colony.bar_offer_negotiate_lose', [
+        $this->assertSame('30 %: kein Handel, du behältst Regolith, das Angebot verfällt, 1 AP verbraucht.', __('colony.bar_offer_negotiate_lose', [
             'chance' => $dialog['chance']['lose_percent'], 'resource' => $dialog['give_label'], 'ap' => $data['negotiateApCost'],
         ]));
         $this->assertSame('Chance 70 % = Konsul Rang 2: 65 % + Kenntnis Handel +5 %', $dialog['chance']['breakdown']);
@@ -198,9 +198,9 @@ class BarOfferDialogPageTest extends TestCase
         $data = $this->data();
 
         $this->assertTrue($data['offerDialogs'][$id]['can_negotiate']);
-        $this->assertSame(2, $data['offerApCost']);
-        $this->assertSame(2, $data['negotiateApCost']);
-        $this->assertSame(2, (int) config('game.bar.ap_cost_accept'));
+        $this->assertSame(1, $data['offerApCost']);
+        $this->assertSame(1, $data['negotiateApCost']);
+        $this->assertSame(1, (int) config('game.bar.ap_cost_accept'));
         // Annehmen and Verhandeln each show their cost.
         $page = $this->cantinaPage();
         $this->assertStringContainsString('Eco {negotiated[id] ? 0 : data.offerApCost} AP', $page);

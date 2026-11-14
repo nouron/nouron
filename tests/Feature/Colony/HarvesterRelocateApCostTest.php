@@ -83,7 +83,7 @@ class HarvesterRelocateApCostTest extends TestCase
             ->value('spend_ap') ?? 0;
     }
 
-    public function test_four_hex_move_costs_eight_ap(): void
+    public function test_four_hex_move_costs_four_times_the_per_hex_ap(): void
     {
         $response = $this->actingAs($this->makeUser())
             ->postJson(route('colony.building.place'), [
@@ -93,6 +93,6 @@ class HarvesterRelocateApCostTest extends TestCase
             ]);
 
         $response->assertOk()->assertJsonPath('ok', true);
-        $this->assertSame(8, $this->lockedConstructionAp(), 'A 4-hex relocation must cost 4 × 2 = 8 Construction-AP (GDD §4c)');
+        $this->assertSame(4 * (int) config('game.harvester.relocate_ap_per_hex'), $this->lockedConstructionAp(), 'A 4-hex relocation costs 4 × relocate_ap_per_hex Construction-AP (GDD §4c)');
     }
 }

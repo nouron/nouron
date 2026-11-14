@@ -9,14 +9,22 @@ use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
 use Tests\Feature\Playtest\BotStrategy;
+use Tests\Feature\Playtest\PinsPreScaleApValues;
 use Tests\Feature\Playtest\Utility\Sources\ResearchSource;
 use Tests\TestCase;
 
 /** T30 §14 U6: research by effect per AP, not by lowest id. */
 class ResearchSourceTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
     use UtilityFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     /** @return list<Candidate> */
     private function candidates(BotSession $bot): array

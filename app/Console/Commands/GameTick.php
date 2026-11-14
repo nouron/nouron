@@ -1579,20 +1579,21 @@ class GameTick extends Command
         }
 
         $debuffSols = (int) config('game.encounter.plague.debuff_sols', 5);
-        $apReductionPct = (float) config('game.encounter.plague.ap_reduction_pct', 0.20);
+        $apReduction = (int) config('game.encounter.plague.ap_reduction', 1);
 
-        // Deva's "Drill-Reaktionspuffer" (A42) — halves the AP-reduction and
-        // shortens the debuff by 1 Sol for this episode, consumed the moment
-        // it applies. See config/game.php → bar.information_pool.veteran.
+        // Deva's "Drill-Reaktionspuffer" (A42) — cancels the AP malus (AP scale 2026-11-13
+        // §4: half of 1 AP is nothing) and shortens the debuff by 1 Sol for this episode,
+        // consumed the moment it applies. See config/game.php → bar.information_pool.veteran.
         if ($this->consumeActiveDrillBuffer($colony->id)) {
-            $bufferReductionPct = (float) config('game.bar.information_pool.veteran.drill_buffer_reduction_pct', 0.5);
-            $apReductionPct *= 1 - $bufferReductionPct;
+            $apReduction = 0;
             $debuffSols = max(1, $debuffSols - 1);
         }
 
+        // plague_ap_reduction_pct holds the absolute AP malus since the AP scale (column
+        // name kept, rename pending).
         DB::table('glx_colonies')->where('id', $colony->id)->update([
             'plague_until_tick' => $tick + $debuffSols,
-            'plague_ap_reduction_pct' => $apReductionPct,
+            'plague_ap_reduction_pct' => $apReduction,
         ]);
         $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
 

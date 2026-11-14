@@ -471,8 +471,8 @@ class BarTradeAdvantageTest extends TestCase
         $response = $this->actingAs(User::find(self::USER_ID))->getJson(route('colony.bar'))->assertOk();
 
         $this->assertTrue($response->json("offerDialogs.{$offerId}.can_negotiate"));
-        $response->assertJsonPath('negotiateApCost', 2);
-        $this->assertSame(2, (int) config('game.bar.ap_cost_negotiate'));
+        $response->assertJsonPath('negotiateApCost', 1);
+        $this->assertSame(1, (int) config('game.bar.ap_cost_negotiate'));
 
         $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
         $this->assertStringContainsString('negotiate(id, o.name)', $page, 'the Character name is passed to the negotiate handler');

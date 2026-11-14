@@ -48,7 +48,7 @@ class ShipRepairReadinessTest extends TestCase
 
     public function test_config_replaces_constants_and_the_25_percent_floor(): void
     {
-        $this->assertSame(['max_status_points' => 20, 'sp_per_click' => 2, 'ap_per_click' => 1], config('game.ship_repair'));
+        $this->assertSame(['max_status_points' => 20, 'sp_per_click' => 6, 'ap_per_click' => 1], config('game.ship_repair'));
         $this->assertNull(config('missions.dispatch_min_sp_pct'));
         $this->assertSame(20, HangarBays::maxStatus());
     }
@@ -60,7 +60,9 @@ class ShipRepairReadinessTest extends TestCase
             HangarBays::flightReadiness(self::DRONE, 6.0, 2));
         $this->assertFalse(HangarBays::flightReadiness(self::DRONE, 5.0, 2)['ready'], '5-6 SP used to pass the 25 % floor and abort on ring 3');
         $this->assertSame(1, HangarBays::flightReadiness(self::DRONE, 5.0, 2)['repair_clicks']);
-        $this->assertSame(2, HangarBays::flightReadiness(self::DRONE, 4.0, 2)['repair_clicks']);
+        // 6 SP per click (AP scale 2026-11-13): one click covers up to 6 missing SP, a seventh needs a second.
+        $this->assertSame(1, HangarBays::flightReadiness(self::DRONE, 1.0, 2)['repair_clicks']);
+        $this->assertSame(2, HangarBays::flightReadiness(self::DRONE, 0.0, 3)['repair_clicks']);
         $this->assertSame(['ready' => true, 'wear' => 6.0, 'sp_after' => 1.0, 'repair_clicks' => 0, 'repair_ap' => 0],
             HangarBays::flightReadiness(self::DRONE, 7.0, 2));
     }

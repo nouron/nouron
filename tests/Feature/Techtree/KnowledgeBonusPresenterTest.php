@@ -45,13 +45,13 @@ class KnowledgeBonusPresenterTest extends TestCase
 
     public function test_with_lab_payload_carries_exact_progress(): void
     {
-        $result = $this->research->investBonus(self::COLONY_ID, self::CONSTRUCTION, 3);
+        $result = $this->research->investBonus(self::COLONY_ID, self::CONSTRUCTION, 2);
         $threshold = $this->research->knowledgeLevelupCost(self::COLONY_ID, self::CONSTRUCTION);
 
         $payload = $this->presenter->present(self::COLONY_ID, $result->toArray());
 
         $this->assertTrue($payload['has_lab']);
-        $this->assertSame(3, $payload['ap_spend']);
+        $this->assertSame(2, $payload['ap_spend']);
         $this->assertSame($threshold, $payload['ap_for_levelup']);
         $this->assertSame(__('knowledge.construction'), $payload['knowledge_name']);
         $this->assertSame(1, $payload['rough_progress']);
@@ -60,7 +60,7 @@ class KnowledgeBonusPresenterTest extends TestCase
     public function test_without_lab_payload_hides_numbers_and_gives_a_rough_word(): void
     {
         $this->removeLab();
-        $result = $this->research->investBonus(self::COLONY_ID, self::CONSTRUCTION, 3);
+        $result = $this->research->investBonus(self::COLONY_ID, self::CONSTRUCTION, 2);
 
         $payload = $this->presenter->present(self::COLONY_ID, $result->toArray());
 
@@ -74,13 +74,18 @@ class KnowledgeBonusPresenterTest extends TestCase
     public function test_breakthrough_payload_names_the_reached_level_effect(): void
     {
         $this->removeLab();
-        $t1 = $this->research->knowledgeLevelupCost(self::COLONY_ID, self::CONSTRUCTION);
-        $result = $this->research->investBonus(self::COLONY_ID, self::CONSTRUCTION, $t1);
+        // construction level 2 carries an effect line (level 1 has none since the AP scale).
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => self::CONSTRUCTION],
+            ['level' => 1, 'ap_spend' => 0, 'status_points' => 20]
+        );
+        $t2 = $this->research->knowledgeLevelupCost(self::COLONY_ID, self::CONSTRUCTION);
+        $result = $this->research->investBonus(self::COLONY_ID, self::CONSTRUCTION, $t2);
 
         $payload = $this->presenter->present(self::COLONY_ID, $result->toArray());
 
         $this->assertTrue($payload['leveled_up']);
-        $this->assertSame(1, $payload['level']);
+        $this->assertSame(2, $payload['level']);
         $this->assertNotEmpty($payload['effects']);
         $this->assertNull($payload['rough_progress']);
     }

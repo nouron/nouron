@@ -7,6 +7,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
 use Tests\Feature\Playtest\BotStrategy;
+use Tests\Feature\Playtest\PinsPreScaleApValues;
 use Tests\Feature\Playtest\PlaysSolLoop;
 use Tests\TestCase;
 
@@ -41,8 +42,15 @@ use Tests\TestCase;
  */
 class AdapterGoldenTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use PlaysSolLoop;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     /** Sanity floor: an empty or trivially short run must not pass as "identical". */
     private const MIN_ACTIONS = 60;

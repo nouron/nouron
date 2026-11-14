@@ -20,10 +20,8 @@
 return [
 
     // levelup_costs: AP needed to reach that level (index = target level, 1–5).
-    // Raised 12/20/30/40/50 → 20/28/36/44/52 (GDD §13.7, 2026-08-03, Owner-Entscheidung):
-    // amortization ~7 Sole against the new AP-Ratenmodell sockel (ap.base=12). credits
-    // dropped 100 → 0 in the same change (§4b Pfad-A-Credits-Lücke — Analytiker path
-    // has no other Credits sink to justify a per-level fee).
+    // AP scale 2026-11-13 §11.2 (L-4): 20/28/36/44/52 → 8/11/14/18/21. credits 0
+    // (§4b Pfad-A-Credits-Lücke — Analytiker path has no other Credits sink).
     // ⚠️ Diese Kurve ist an game.ap.base / advisor.ap_per_rank gekoppelt — bei
     // Änderung dort gegen die AP/Sol-Rate neu prüfen, nicht isoliert betrachten.
 
@@ -33,13 +31,11 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
-        // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
-        // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt auf ALLE Gebäude-Levelups (Owner-Entscheidung: keine Domänentrennung nach
-        // Projekttyp, da nur Bau-Projekte existieren). Einzige Quelle des Pools seit A13
-        // (2026-09-20); trade war bis dahin additiv beteiligt.
-        'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
+        // Building levelup AP discount in absolute AP per knowledge level (AP scale
+        // 2026-11-13 §4). Applies only to levelups of at least game.min_discountable_cost_ap
+        // (in practice the Command Center), see ProjectBonusService.
+        'ap_cost_reduction_per_lv' => [2 => 1, 4 => 1],   // Σ2 AP
     ],
 
     'cartography' => [
@@ -48,21 +44,13 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
-        // Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) — ersetzt den bisherigen
-        // Bau-AP-Rabatt-Beitrag (der zuvor undifferenziert mit construction/trade in
-        // denselben Pool floss, ohne cartography von den beiden anderen zu unterscheiden).
-        // Wirkt auf ColonyTileService::exploreTile() (Tile-Erkundungskosten) und
-        // HangarService::dispatchShip() (Missions-Reisekosten) — beides im Code konsistent
-        // AP cost reduction per cartography level (errors: no_nav_ap/
-        // hangar_dispatch_no_nav_ap are internal codes, kept). Calibration after
-        // Playtest (ADR 0004) — bewusst auf das Doppelte der ursprünglichen Bau-Rabatt-Kurve
-        // skaliert (Ruling 2026-08-30, SDD-Ledger): exploreTile()s Basiskosten sind winzige
-        // Ganzzahlen (1/2/3 AP), eine 15%-Kurve rundet dort bei jedem Level auf den
-        // Ausgangswert zurück (round() in ProjectBonusService::applyDiscount()) — der Rabatt
-        // wäre ein reiner No-Op gewesen. Σ30% erzeugt bei diesen Größenordnungen tatsächlich
-        // einen sichtbaren Effekt (greift den project_min_cost_factor-Floor).
-        'nav_ap_reduction_per_lv' => [1 => 4, 2 => 8, 3 => 8, 4 => 6, 5 => 4],   // Σ30%
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
+        // AP scale 2026-11-13 §4 (rule §5.1: 1-AP actions get frequency, not a discount):
+        // from from_level, missions of at least min_distance Sols cost `ap` AP less (floor
+        // game.action_min_cost_ap); from free_explore_from_level the first exploration of a
+        // Sol costs no AP. See ProjectBonusService / ColonyTileService::exploreCost().
+        'mission_ap_reduction' => ['from_level' => 2, 'min_distance' => 3, 'ap' => 1],
+        'free_explore_from_level' => 4,
     ],
 
     'geology' => [
@@ -71,7 +59,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
     ],
 
     'agronomy' => [
@@ -80,7 +68,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
     ],
 
     'health' => [
@@ -89,7 +77,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
     ],
 
     'trade' => [
@@ -98,7 +86,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
         // Kein Bau-AP-Rabatt mehr: bis 2026-09-20 senkte trade die AP-Kosten von Gebäude-
         // Levelups (Σ15%, additiv mit construction). Owner-Entscheidung (A13): thematisch
         // falsch — Handel wirkt auf Preise, Angebote und Verhandlung, nicht auf Bauprojekte.
@@ -126,7 +114,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
-        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
+        'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
     ],
 
 ];

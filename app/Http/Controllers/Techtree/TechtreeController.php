@@ -455,7 +455,7 @@ class TechtreeController extends BaseController
                 'leveldown' => $service->leveldownBlocker($colonyId, $id),
             };
 
-            return $this->orderFailed($code ?? 'order_failed', $order, $code === 'knowledge_ap_cap' ? ['cap' => (int) $service->apCap()] : []);
+            return $this->orderFailed($code ?? 'order_failed', $order, $code === 'knowledge_ap_cap' ? ['cap' => (int) $service->apCap($colonyId)] : []);
         }
 
         $leveledUp = false;

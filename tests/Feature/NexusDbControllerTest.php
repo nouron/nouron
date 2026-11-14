@@ -154,13 +154,17 @@ class NexusDbControllerTest extends TestCase
         $this->assertCount(2, $engineer['ranks'][1]['bonuses']);
         $this->assertCount(2, $engineer['ranks'][0]['bonuses']);
         // The cap is shown as the total (base + rank bonus), not as a surcharge.
-        $total = (int) config('game.build.ap_cap_per_sol.base') + (int) config('game.build.ap_cap_per_sol.engineer_bonus_per_rank.2');
+        $total = (int) config('game.build.ap_cap_per_sol.base') + (int) config('game.advisor.cap_bonus_per_rank.2');
         $this->assertStringContainsString((string) $total, $engineer['ranks'][1]['bonuses'][1]);
         $this->assertStringNotContainsString('+', $engineer['ranks'][1]['bonuses'][1]);
-        // The scientist has the AP line only.
-        $this->assertCount(1, $advisors['techs_scientist']['ranks'][2]['bonuses']);
+        // AP scale 2026-11-13 §11.1: scientist and pilot raise their own field cap as well.
+        $scientistCap = (int) config('game.knowledge_ap_cap_per_sol.base') + (int) config('game.advisor.cap_bonus_per_rank.3');
+        $this->assertCount(2, $advisors['techs_scientist']['ranks'][2]['bonuses']);
+        $this->assertSame(__('nexusdb.bonus_ap_cap_lab', ['n' => $scientistCap]), $advisors['techs_scientist']['ranks'][2]['bonuses'][1]);
+        $pilotCap = (int) config('path_depth.training_ap_cap_per_sol.base') + (int) config('game.advisor.cap_bonus_per_rank.3');
+        $this->assertSame(__('nexusdb.bonus_ap_cap_training', ['n' => $pilotCap]), $advisors['techs_pilot']['ranks'][2]['bonuses'][1]);
         // Pilot rank 3: 3 x pilot_rank_bonus_pct (5 %) = +15 %.
-        $this->assertStringContainsString('15', $advisors['techs_pilot']['ranks'][2]['bonuses'][1]);
+        $this->assertStringContainsString('15', $advisors['techs_pilot']['ranks'][2]['bonuses'][2]);
         $this->assertSame('building_sciencelab', $advisors['techs_scientist']['focus_building']);
         $this->assertNull($engineer['focus_building']);
     }
@@ -169,8 +173,8 @@ class NexusDbControllerTest extends TestCase
     {
         $k = collect($this->actingAs($this->bart())->getJson(route('nexusdb.index'))->assertOk()->json('knowledge'))->keyBy('key');
 
-        // construction: AP reduction on level 1 (2 %).
-        $this->assertNotEmpty($k['knowledge_construction']['levels'][0]['effects']);
+        // construction: absolute AP reduction from level 2 (AP scale 2026-11-13).
+        $this->assertNotEmpty($k['knowledge_construction']['levels'][1]['effects']);
         // agronomy: trust per level on every level.
         foreach ($k['knowledge_agronomy']['levels'] as $l) {
             $this->assertNotEmpty($l['effects']);

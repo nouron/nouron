@@ -29,7 +29,14 @@ class TrainingLimitTest extends TestCase
         DB::table('colony_path_levels')->where('colony_id', self::COLONY_ID)->delete();
         DB::table('colony_daily_ap')->where('colony_id', self::COLONY_ID)->delete();
         $this->setHangar(3);
-        config(['game.bypass.ap_checks' => false, 'path_depth.training_ap_cap_per_sol.base' => 4]);
+        // Mechanism tests with fixed numbers: cap 4 without a pilot bonus, pre-scale family costs.
+        config([
+            'game.bypass.ap_checks' => false,
+            'game.ap.base' => 40,
+            'path_depth.training_ap_cap_per_sol.base' => 4,
+            'game.advisor.cap_bonus_per_rank' => [1 => 0, 2 => 0, 3 => 0],
+            'path_depth.levelup_ap.mission_family' => [1 => 6, 2 => 9, 3 => 12, 4 => 16, 5 => 20],
+        ]);
     }
 
     private function setHangar(int $level): void

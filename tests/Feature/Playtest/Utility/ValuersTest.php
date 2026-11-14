@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
+use Tests\Feature\Playtest\PinsPreScaleApValues;
 use Tests\TestCase;
 
 /**
@@ -16,8 +17,15 @@ use Tests\TestCase;
  */
 class ValuersTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
     use UtilityFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     private function ctx(BotSession $bot, string $opening = 'auto'): BotContext
     {
@@ -109,8 +117,11 @@ class ValuersTest extends TestCase
         $bot = BotSession::boot($this, 1);
         $ctx = $this->ctx($bot);
 
-        foreach ([90, 91, 92] as $id) {
-            $this->assertGreaterThan(0.0, Valuers::research($bot, $ctx, $id, 0, 0)->net(), "knowledge {$id}");
+        $this->assertGreaterThan(0.0, Valuers::research($bot, $ctx, 92, 0, 0)->net(), 'geology level 1');
+        // AP scale 2026-11-13: construction and cartography act from level 2 (absolute AP effects).
+        foreach ([90, 91] as $id) {
+            $this->assertSame(0.0, Valuers::research($bot, $ctx, $id, 0, 0)->net(), "knowledge {$id} level 1: no effect");
+            $this->assertGreaterThan(0.0, Valuers::research($bot, $ctx, $id, 1, 0)->net(), "knowledge {$id} level 2");
         }
         $this->assertSame(0.0, Valuers::research($bot, $ctx, 95, 0, 0)->net(), 'trade: no valued effect');
     }

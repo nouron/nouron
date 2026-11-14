@@ -87,18 +87,21 @@ class ResearchService extends AbstractTechnologyService
         return 'knowledge:'.$entityId;
     }
 
-    /** Per-Sol AP cap per knowledge (game.knowledge_ap_cap_per_sol.base), null = rule off. */
-    public function apCap(): ?int
+    /**
+     * Per-Sol AP cap per knowledge: game.knowledge_ap_cap_per_sol.base + the scientist's
+     * field bonus (AP scale 2026-11-13 §11.2); null = rule off.
+     */
+    public function apCap(int $colonyId): ?int
     {
         $base = config('game.knowledge_ap_cap_per_sol.base');
 
-        return $base === null ? null : (int) $base;
+        return $base === null ? null : (int) $base + app(AdvisorService::class)->specialistCapBonus($colonyId, 'scientist');
     }
 
     /** @return array{cap: int, spent: int, remaining: int}|null */
     public function apCapState(int $colonyId, int $entityId): ?array
     {
-        return app(DailyApCapService::class)->state($colonyId, self::capKey($entityId), $this->apCap());
+        return app(DailyApCapService::class)->state($colonyId, self::capKey($entityId), $this->apCap($colonyId));
     }
 
     public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1, bool $bypassPoolCheck = false, ?int $instanceId = null): ?string
@@ -110,7 +113,7 @@ class ResearchService extends AbstractTechnologyService
         }
 
         if (! $bypassPoolCheck && $this->isCappedKnowledge($entityId, $action)
-            && app(DailyApCapService::class)->wouldExceed($colonyId, self::capKey($entityId), $this->apCap(), abs($points))) {
+            && app(DailyApCapService::class)->wouldExceed($colonyId, self::capKey($entityId), $this->apCap($colonyId), abs($points))) {
             return 'knowledge_ap_cap';
         }
 

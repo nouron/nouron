@@ -134,7 +134,8 @@ class PresentCharacterConversationTest extends TestCase
     {
         $this->concern('founder');
 
-        $this->invest('founder', 1)->assertOk()->assertJson(['ok' => true, 'ap_spend' => 1]);
+        // The first conversation makes the character known (level 1 costs 1 AP since the AP scale).
+        $this->invest('founder', 1)->assertOk()->assertJson(['ok' => true, 'level' => 1]);
 
         $this->assertNotNull($this->relationRow('founder'));
         $this->assertTrue(app(PathDepthService::class)->state(self::COLONY_ID, 'character', 'founder')['met']);
@@ -164,7 +165,7 @@ class PresentCharacterConversationTest extends TestCase
             $this->assertSame('not_met', $e->errorCode);
         }
 
-        $this->assertSame(1, $service->invest(self::COLONY_ID, 'character', 'doctor', 1, present: true)['ap_spend']);
+        $this->assertSame(1, $service->invest(self::COLONY_ID, 'character', 'doctor', 1, present: true)['level']);
     }
 
     public function test_cantina_data_lists_present_unmet_character_as_stranger_with_options(): void

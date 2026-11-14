@@ -241,8 +241,10 @@ class BuildResourceSinkTest extends TestCase
 
     // ── Repair costs ─────────────────────────────────────────────────────────
 
-    public function test_repair_deducts_one_regolith(): void
+    public function test_repair_click_restores_sp_per_click_for_one_regolith_each(): void
     {
+        // AP scale 2026-11-13 §6: 1 AP restores game.repair.sp_per_click SP, 1 Rg per SP.
+        config(['game.repair.sp_per_click' => 3]);
         $this->ensureBuildableTile(1, 0);
         config(['game.bypass.supply_checks' => true]);
         $this->place(46, 1, 0)->assertJsonPath('ok', true);
@@ -253,7 +255,27 @@ class BuildResourceSinkTest extends TestCase
         $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
             ->assertOk()->assertJsonPath('ok', true);
 
+        $this->assertSame($before - 3, $this->colonyRes(self::RES_REGOLITH));
+        $sp = (float) DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)->value('status_points');
+        $this->assertEqualsWithDelta(13.0, $sp, 0.0001);
+    }
+
+    public function test_repair_near_max_charges_only_the_missing_points(): void
+    {
+        config(['game.repair.sp_per_click' => 3]);
+        $this->ensureBuildableTile(1, 0);
+        config(['game.bypass.supply_checks' => true]);
+        $this->place(46, 1, 0)->assertJsonPath('ok', true);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)
+            ->update(['level' => 1, 'status_points' => 19]);
+        $before = $this->colonyRes(self::RES_REGOLITH);
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
+            ->assertOk()->assertJsonPath('ok', true);
+
         $this->assertSame($before - 1, $this->colonyRes(self::RES_REGOLITH));
+        $sp = (float) DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)->value('status_points');
+        $this->assertEqualsWithDelta(20.0, $sp, 0.0001);
     }
 
     public function test_repair_hard_gate_without_regolith(): void
@@ -282,11 +304,12 @@ class BuildResourceSinkTest extends TestCase
 
         $this->assertSame(0, $this->colonyRes(self::RES_REGOLITH), 'CC repair must not require Regolith');
         $sp = (int) DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->value('status_points');
-        $this->assertSame(11, $sp);
+        $this->assertSame(10 + (int) config('game.repair.sp_per_click'), $sp);
     }
 
     public function test_building_row_carries_the_regolith_repair_cost_actually_charged(): void
     {
+        config(['game.repair.sp_per_click' => 3]);
         $this->ensureBuildableTile(1, 0);
         config(['game.bypass.supply_checks' => true]);
         $this->place(46, 1, 0)->assertJsonPath('ok', true);
@@ -295,9 +318,9 @@ class BuildResourceSinkTest extends TestCase
         $this->setCc(['level' => 2, 'status_points' => 10]);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
-            ->assertOk()->assertJsonPath('building.repair_cost', 1);
+            ->assertOk()->assertJsonPath('building.repair_cost', 3)->assertJsonPath('building.repair_sp', 3);
         $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 25])
-            ->assertOk()->assertJsonPath('building.repair_cost', 0);
+            ->assertOk()->assertJsonPath('building.repair_cost', 0)->assertJsonPath('building.repair_sp', 3);
     }
 
     // ── Nexus compound import ──────────────────────────────────────────────────

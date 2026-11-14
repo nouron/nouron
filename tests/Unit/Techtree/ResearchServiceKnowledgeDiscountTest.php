@@ -53,28 +53,18 @@ class ResearchServiceKnowledgeDiscountTest extends TestCase
         $this->assertSame($rawCost, $cost, 'at Lv1, sciencelab must not discount knowledge levelup costs — pure gate threshold');
     }
 
-    /**
-     * A39 (2026-09-13, Owner-Entscheidung nach A37-Investigation): der Rabatt
-     * greift jetzt schon ab Lv2 statt erst ab Lv4 — `task_research_lead`
-     * (3 Kenntnisse auf Lv5) brauchte 540 AP kumulativ, während das Labor
-     * selbst erst spät im Run auf die alten Rabatt-Level (4-5) kommt.
-     */
-    public function test_knowledge_levelup_cost_is_discounted_at_sciencelab_level_2(): void
+    /** AP scale 2026-11-13 §4: the lab discount is absolute AP, first at lab level 3. */
+    public function test_knowledge_levelup_cost_is_discounted_at_sciencelab_level_3(): void
     {
-        $this->setSciencelabLevel(2);
+        $this->setSciencelabLevel(3);
 
         $rawCost = (int) config('knowledge.cartography.levelup_costs.1');
-        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
-        $discountPercent = (int) ($curve[2] ?? 0);
-        $expected = (int) max(
-            ceil($rawCost * (float) config('game.project_min_cost_factor', 0.5)),
-            round($rawCost * (1 - $discountPercent / 100))
-        );
+        $discount = (int) (config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv')[3] ?? 0);
 
         $cost = $this->service->knowledgeLevelupCost(self::COLONY_ID, self::CARTOGRAPHY_ID);
 
-        $this->assertLessThan($rawCost, $cost, 'at Lv2, knowledge levelup cost must already be discounted below the raw config value');
-        $this->assertSame($expected, $cost);
+        $this->assertLessThan($rawCost, $cost, 'at Lv3, knowledge levelup cost must already be discounted below the raw config value');
+        $this->assertSame($rawCost - $discount, $cost);
     }
 
     public function test_knowledge_levelup_cost_is_discounted_at_sciencelab_level_5(): void
@@ -83,15 +73,11 @@ class ResearchServiceKnowledgeDiscountTest extends TestCase
 
         $rawCost = (int) config('knowledge.cartography.levelup_costs.1');
         $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
-        $discountPercent = (int) array_sum(array_intersect_key($curve, array_flip(range(1, 5))));
-        $expected = (int) max(
-            ceil($rawCost * (float) config('game.project_min_cost_factor', 0.5)),
-            round($rawCost * (1 - $discountPercent / 100))
-        );
+        $discount = (int) array_sum(array_intersect_key($curve, array_flip(range(1, 5))));
 
         $cost = $this->service->knowledgeLevelupCost(self::COLONY_ID, self::CARTOGRAPHY_ID);
 
         $this->assertLessThan($rawCost, $cost, 'at Lv5, knowledge levelup cost must be discounted below the raw config value');
-        $this->assertSame($expected, $cost);
+        $this->assertSame(max((int) config('game.project_min_cost_ap'), $rawCost - $discount), $cost);
     }
 }

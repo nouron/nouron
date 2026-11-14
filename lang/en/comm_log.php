@@ -142,7 +142,7 @@ return [
         'pathdepth_family' => 'invested in training :name.',
         'pathdepth_family_levelup' => 'invested in training :name. Level :level reached.',
         'pathdepth_character' => 'invested in the relationship with :name.',
-        // Silent research (rendered after an AP chip: "5 AP from Tomas …").
+        // Silent research (rendered after an AP chip: "1 AP from Tomas …").
         'knowledge_bonus' => 'from :name quietly went into :knowledge.',
         'knowledge_bonus_breakthrough' => 'from :name quietly went into :knowledge. Breakthrough: level :level reached.',
         'knowledge_bonus_forfeited' => 'The remaining :ap AP lapse — the knowledge is waiting on :reason.',

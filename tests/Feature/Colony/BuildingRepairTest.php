@@ -13,7 +13,7 @@ use Tests\TestCase;
  * Building repair — POST colony/building/repair.
  *
  * Rules:
- * - 1 construction AP restores 1 status point.
+ * - 1 construction AP restores game.repair.sp_per_click status points (AP scale 2026-11-13 §6).
  * - Buildings under construction (level 0) cannot be repaired.
  * - Fully intact buildings (status_points == max_status_points) cannot be repaired.
  * - Repair never raises ap_spend or level (separate from levelup invest).
@@ -70,15 +70,16 @@ class BuildingRepairTest extends TestCase
 
     // ── Happy path ────────────────────────────────────────────────────────────
 
-    public function test_repair_restores_one_status_point(): void
+    public function test_repair_restores_sp_per_click(): void
     {
+        config(['game.repair.sp_per_click' => 3]);
         $this->setCcState(['status_points' => 16]);
 
         $response = $this->repair();
 
         $response->assertOk()->assertJsonPath('ok', true);
-        $this->assertSame(17, (int) $this->ccRow()->status_points);
-        $this->assertSame(17, (int) $response->json('building.status_points'));
+        $this->assertSame(19, (int) $this->ccRow()->status_points);
+        $this->assertSame(19, (int) $response->json('building.status_points'));
     }
 
     public function test_repair_does_not_touch_level_or_ap_spend(): void
@@ -123,15 +124,16 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(self::CC_MAX_SP, (int) $this->ccRow()->status_points);
     }
 
-    public function test_repair_restores_exactly_one_point_on_fractional_status(): void
+    public function test_repair_restores_full_points_on_fractional_status(): void
     {
-        // Decay leaves fractional SP (e.g. 5.6). One click must add a full point
-        // (5.6 -> 6.6), not truncate to 5 and add 1 (= only +0.4 for the same price).
+        // Decay leaves fractional SP (e.g. 5.6). One click must add full points
+        // (5.6 -> 8.6), not truncate to 5 first.
+        config(['game.repair.sp_per_click' => 3]);
         $this->setCcState(['status_points' => 5.6]);
 
         $this->repair()->assertJsonPath('ok', true);
 
-        $this->assertEqualsWithDelta(6.6, (float) $this->ccRow()->status_points, 0.0001);
+        $this->assertEqualsWithDelta(8.6, (float) $this->ccRow()->status_points, 0.0001);
     }
 
     public function test_repair_on_fractional_status_caps_at_max(): void

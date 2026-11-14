@@ -2,7 +2,7 @@
 
 // Unspent action points (idle AP) and milestone Sols per opening from game:playtest reports (no Laravel needed).
 // Usage: php tools/ap-idle.php --dir=<report dir> [--profile=default] [--engine=utility]
-//        [--from=12] [--to=45] [--threshold=5] [--json]
+//        [--from=12] [--to=45] [--threshold=2] [--json]
 // Idle AP of a Sol = sols[].ap.unspent, counted only when >= --threshold (small leftovers are normal).
 // idle_share = idle AP / sols[].ap.inflow over the Sols [from, to]. Milestones (first Sol with a
 // Sciencelab Lv1+, CC Lv3/4/5) look at the whole run; `never` counts runs that did not reach them.
@@ -14,7 +14,7 @@ $engine = $o['engine'] ?? 'utility';
 $profile = $o['profile'] ?? null;
 $from = (int) ($o['from'] ?? 12);
 $to = (int) ($o['to'] ?? 45);
-$threshold = (int) ($o['threshold'] ?? 5);
+$threshold = (int) ($o['threshold'] ?? 2); // AP scale 2026-11-13: 5 -> 2 (pool ÷3)
 
 function median(array $v): ?float
 {

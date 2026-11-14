@@ -52,8 +52,8 @@ return [
         'cc_upgrade_regolith_per_level' => 30,
         // AP threshold per target level (Owner 2026-10-15, "AP bremst"): the CC is the
         // pace-setter, rising AP on top of the Regolith above. Read via
-        // BuildingCostService::levelupAp(); a level without an entry keeps ap_for_levelup (10).
-        'cc_upgrade_ap_by_level' => [2 => 20, 3 => 40, 4 => 60, 5 => 80],
+        // BuildingCostService::levelupAp(); a level without an entry keeps the seeder's ap_for_levelup.
+        'cc_upgrade_ap_by_level' => [2 => 8, 3 => 16, 4 => 24, 5 => 32],   // AP scale 2026-11-13 §11.1 (B-2)
         'supply_cap' => 10,      // flat cap once CC level >= 1 (does not scale with level)
         'supply_cost' => 0,
         'trust_per_lv' => 0,
@@ -166,28 +166,10 @@ return [
         // (implementiert via ProjectBonusService::effectiveKnowledgeApForLevelup(),
         // siehe knowledge_ap_cost_reduction_per_lv unten).
         'max_level' => 5,
-        // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23, verstärkt
-        // 2026-09-13 nach A37-Investigation) — senkt die AP-Kosten für
-        // Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-Effekten
-        // von construction (die Gebäude-Levelups rabattiert, siehe
-        // config/knowledge.php) — eigener Config-Key, da beide Kurven im
-        // selben Namensraum sonst kollidieren würden (invertierte Semantik:
-        // hier rabattiert Gebäude-Level Kenntnis-Kosten, dort rabattiert
-        // Kenntnis-Level Gebäude-Kosten). Lv1 bleibt reines Kenntnis-Gate.
-        //
-        // A37-Fund: `task_research_lead` (3 Kenntnisse auf Lv5) braucht 540 AP
-        // kumulativ (config/knowledge.php levelup_costs), während das Labor
-        // selbst typischerweise erst spät im Run auf die alten Rabatt-Level
-        // (4-5) kommt — der ursprüngliche Σ5%-Rabatt (nur Lv4/5) änderte daran
-        // praktisch nichts. Owner-Entscheidung: Rabatt beginnt jetzt bei Lv2,
-        // game-designer-kalibrierte Kurve, sanft ansteigend statt Sprungfunktion
-        // (jede Ausbaustufe bringt spürbar mehr), Σ30% bei Lv5 bleibt deutlich
-        // unter dem 50%-Floor (game.project_min_cost_factor) — senkt die 540 AP
-        // auf ~378 AP bei durchgehend Lv5, ohne Forschung zum Selbstläufer zu
-        // machen. Setzt voraus, dass das Labor VOR dem Kenntnis-Grind ausgebaut
-        // wird — sonst greift der Rabatt erst nachträglich (⚠️ im nächsten
-        // Playtest-Batch beobachten).
-        'knowledge_ap_cost_reduction_per_lv' => [2 => 6, 3 => 7, 4 => 8, 5 => 9],   // Σ6/13/21/30% bei Lv2-5
+        // Domain bonus "Wissen": absolute AP off every knowledge levelup per lab level
+        // (AP scale 2026-11-13 §4, cumulative: Lv3 -1, Lv5 another -1). Applied by
+        // ProjectBonusService::effectiveKnowledgeApForLevelup(), floor game.project_min_cost_ap.
+        'knowledge_ap_cost_reduction_per_lv' => [3 => 1, 5 => 1],   // absolute AP per knowledge level (AP scale 2026-11-13 §4)
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
@@ -366,7 +348,7 @@ return [
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).
-    // Effect Lv2+: deep-scan costs 1 Nav-AP instead of 2 (ColonyTileService).
+    // Effect from game.finds.free_scan_uplink_level: first deep scan of a Sol costs no AP (ColonyTileService).
     // Effect Lv2+: merchant appears more frequently (NOT YET IMPLEMENTED — see T33 / Phase 5).
     // Effect Lv3: run-completion action — NOT YET IMPLEMENTED — see Phase 5.
     // Lv1 build cost: Regolith + Credits only — no Compounds (circular dep risk).
@@ -384,7 +366,7 @@ return [
         'max_level' => 3,
         // Nur Stufe 1 hat einen Beiname (schaltet Nexus-Bestellungen überhaupt
         // erst frei — echter Fähigkeits-Sprung). Stufe 2 ist Mengensteigerung
-        // (Scankosten -1 AP). Stufe 3 ist zurückgestellt (Design-Spec Punkt "Neue
+        // (erster Tiefenscan je Sol ohne AP). Stufe 3 ist zurückgestellt (Design-Spec Punkt "Neue
         // Mechaniken" — braucht einen eigenen Meta-Progressions-Design-Sprint).
         'tiers' => [1],
     ],

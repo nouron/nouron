@@ -185,25 +185,29 @@ class BarController extends BaseController
 
     /**
      * Tomas' advice state for the counter and his popup (spec 2026-11-11-tomas-rat-rueckmeldung,
-     * sentence 25): relationship level, the bonus a conversation gives now, whether he was
-     * talked to this Sol and with what result, and whether advice is still open today.
+     * sentence 25; AP scale 2026-11-13 §6): relationship level, the bonus one piece of advice
+     * gives, how often he gives advice (every N Sols, null at level 0), in how many Sols the
+     * next advice comes (0 = today), whether he was talked to this Sol and with what result,
+     * and whether advice is open now.
      *
-     * @return array{relationship_level: int, ap_bonus: int, talked_today: bool, today_result: array<string, mixed>|null, advice_open: bool}
+     * @return array{relationship_level: int, ap_bonus: int, advice_every_sols: int|null, advice_in_sols: int, talked_today: bool, today_result: array<string, mixed>|null, advice_open: bool}
      */
     private function bartenderState(int $colonyId, int $tick): array
     {
         $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
         $apBonus = $this->barService->bartenderApBonus($colonyId);
         $lastTick = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->value('last_interaction_tick');
-        $talkedToday = $lastTick !== null
-            && $tick - (int) $lastTick < (int) config('game.bartender.interaction_cooldown_ticks');
+        $talkedToday = $lastTick !== null && (int) $lastTick === $tick;
+        $adviceInSols = $this->barService->bartenderAdviceInSols($colonyId, $tick);
 
         return [
             'relationship_level' => $level,
             'ap_bonus' => $apBonus,
+            'advice_every_sols' => $this->barService->bartenderAdviceEverySols($colonyId),
+            'advice_in_sols' => $adviceInSols,
             'talked_today' => $talkedToday,
             'today_result' => $talkedToday ? $this->barService->bartenderToday($colonyId, $tick) : null,
-            'advice_open' => $apBonus > 0 && ! $talkedToday,
+            'advice_open' => $apBonus > 0 && $adviceInSols === 0,
         ];
     }
 

@@ -16,17 +16,52 @@ use Random\Randomizer;
 
 class ColonyTileService
 {
+    /** Daily counters (DailyApCapService) of the free first exploration / deep scan of a Sol. */
+    private const FREE_EXPLORE_KEY = 'free:explore';
+
+    private const FREE_SCAN_KEY = 'free:scan';
+
     /**
-     * Effective deep-scan cost in Nav-AP: Uplink-Station Lv2+ (building_id=54) is cheaper.
+     * Effective deep-scan cost in AP: the first scan of a Sol is free from Uplink-Station
+     * level game.finds.free_scan_uplink_level (AP scale 2026-11-13 §6), otherwise scan_ap.
      */
     public function deepScanCost(int $colonyId): int
     {
-        $uplinkLv = DB::table('colony_buildings')
+        return $this->hasFreeScanToday($colonyId) ? 0 : (int) config('game.finds.scan_ap');
+    }
+
+    /**
+     * AP an exploration of a tile in $ring costs right now: the ring price, or 0 while the
+     * cartography knowledge still grants today's free exploration (AP scale 2026-11-13 §4).
+     * Lenn's voucher is applied in exploreTile() on top.
+     */
+    public function exploreCost(int $colonyId, int $ring): int
+    {
+        if ($this->hasFreeExploreToday($colonyId)) {
+            return 0;
+        }
+
+        return (int) (config('game.colony.explore_cost_per_ring')[$ring] ?? config('game.colony.explore_cost_default', 1));
+    }
+
+    public function hasFreeExploreToday(int $colonyId): bool
+    {
+        return $this->projectBonusService->hasFreeDailyExploration($colonyId)
+            && app(DailyApCapService::class)->spent($colonyId, self::FREE_EXPLORE_KEY) === 0;
+    }
+
+    private function hasFreeScanToday(int $colonyId): bool
+    {
+        $from = config('game.finds.free_scan_uplink_level');
+        if ($from === null) {
+            return false;
+        }
+        $uplinkLv = (int) (DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
-            ->value('level') ?? 0;
+            ->value('level') ?? 0);
 
-        return ($uplinkLv >= 2) ? (int) config('game.finds.scan_ap_uplink') : (int) config('game.finds.scan_ap');
+        return $uplinkLv >= (int) $from && app(DailyApCapService::class)->spent($colonyId, self::FREE_SCAN_KEY) === 0;
     }
 
     public const FIND_TYPES = ['find_small', 'find_medium', 'find_large'];
@@ -62,14 +97,13 @@ class ColonyTileService
             return ['ok' => false, 'error' => 'already_explored', 'message' => __('colony.error_already_explored')];
         }
 
-        $baseApCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
-        $apCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseApCost);
+        $useFreeDaily = $this->hasFreeExploreToday($colonyId);
+        $apCost = $this->exploreCost($colonyId, (int) $tile->ring);
 
         // Lenn's "Navigation-Rabatt" Vier-Ausgänge-Pool outcome (A42) — a
-        // granted, unconsumed voucher waives the Nav-AP cost entirely for
-        // this call (100% discount, not additive with the cartography
-        // discount above — the whole cost simply becomes 0).
-        $hasActiveNavVoucher = (bool) DB::table('colony_information_pool_state')
+        // granted, unconsumed voucher waives the AP cost entirely for this call.
+        // Today's free exploration (cartography) is used first; the voucher keeps.
+        $hasActiveNavVoucher = ! $useFreeDaily && (bool) DB::table('colony_information_pool_state')
             ->where('colony_id', $colonyId)
             ->where('active_nav_voucher', true)
             ->exists();
@@ -83,6 +117,9 @@ class ColonyTileService
 
         $tile->is_explored = true;
         $tile->save();
+        if ($useFreeDaily) {
+            app(DailyApCapService::class)->record($colonyId, self::FREE_EXPLORE_KEY, 1);
+        }
         if ($hasActiveNavVoucher) {
             DB::table('colony_information_pool_state')
                 ->where('colony_id', $colonyId)
@@ -112,6 +149,7 @@ class ColonyTileService
             return ['ok' => false, 'error' => 'already_scanned', 'message' => __('colony.error_already_scanned')];
         }
 
+        $useFreeScan = $this->hasFreeScanToday($colonyId);
         $scanApCost = $this->deepScanCost($colonyId);
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $scanApCost) {
@@ -120,7 +158,10 @@ class ColonyTileService
 
         $tile->is_deep_scanned = true;
         $tile->save();
-        if (! config('game.bypass.ap_checks')) {
+        if ($useFreeScan) {
+            app(DailyApCapService::class)->record($colonyId, self::FREE_SCAN_KEY, 1);
+        }
+        if (! config('game.bypass.ap_checks') && $scanApCost > 0) {
             $this->advisorService->lockActionPoints($colonyId, $scanApCost);
         }
 

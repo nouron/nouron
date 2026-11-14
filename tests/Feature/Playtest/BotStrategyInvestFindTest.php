@@ -14,7 +14,14 @@ use Tests\TestCase;
  */
 class BotStrategyInvestFindTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     public function test_picks_the_find_with_the_best_rg_per_ap(): void
     {
@@ -87,22 +94,20 @@ class BotStrategyInvestFindTest extends TestCase
         DB::table('colony_tiles')->where('id', $tile->id)->update(['event_type' => 'find_small', 'is_explored' => 1, 'is_deep_scanned' => 0]);
         $scan = collect(BotStrategy::default())->firstWhere('name', 'deep_scan_signal_tile');
         $cost = (int) config('game.finds.scan_ap');
-        $cheap = (int) config('game.finds.scan_ap_uplink');
-        $this->assertGreaterThan($cheap, $cost);
 
         $this->giveAp($bot, $cost - 1);
         $this->assertEmpty($scan['when']($bot));
         $this->giveAp($bot, $cost);
         $this->assertNotEmpty($scan['when']($bot));
 
+        // AP scale 2026-11-13: from the Uplink level the first scan of a Sol is free.
+        config(['game.finds.free_scan_uplink_level' => 2]);
         DB::table('colony_buildings')->insert([
             'colony_id' => $bot->colonyId, 'building_id' => (int) config('buildings.uplinkStation.id', 54),
             'instance_id' => 1, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 5, 'tile_y' => 5,
         ]);
-        $this->giveAp($bot, $cheap);
+        $this->giveAp($bot, 0);
         $this->assertNotEmpty($scan['when']($bot));
-        $this->giveAp($bot, $cheap - 1);
-        $this->assertEmpty($scan['when']($bot));
     }
 
     public function test_do_posts_to_the_salvage_endpoint_and_credits_regolith(): void
