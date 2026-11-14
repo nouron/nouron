@@ -93,7 +93,8 @@
 		['find_small', 'find_medium', 'find_large'].includes(type) ? t(`colony.${type}_desc`) : '';
 
 	// Ring-staggered explore cost (raw config, see the ponytail note in colony-hexgrid.js).
-	const exploreCostFor = (tile: Tile) => data?.exploreCostPerRing[tile.ring] ?? data?.exploreCostDefault ?? 1;
+	const exploreCostFor = (tile: Tile) =>
+		data?.freeExploreToday ? 0 : (data?.exploreCostPerRing[tile.ring] ?? data?.exploreCostDefault ?? 1);
 
 	// Same tier thresholds as EncounterService::resolveOutcome() (game.encounter.*).
 	function conditionTone(b: Building | null) {
@@ -104,7 +105,11 @@
 		return 'neutral';
 	}
 	const canRepair = (b: Building) => b.level >= 1 && b.status_points < (b.max_status_points ?? 20);
-	const repairStepPct = (b: Building) => Math.round(100 / (b.max_status_points ?? 20));
+	// One click restores repair_sp status points (fewer near the maximum, AP scale 2026-11-13 §6).
+	const repairSp = (b: Building) => Math.max(1, b.repair_sp ?? 1);
+	const repairStepPct = (b: Building) => Math.round((repairSp(b) * 100) / (b.max_status_points ?? 20));
+	// Segments the next click fills (ghost preview on hover).
+	const repairGhost = (b: Building, i: number) => i > Math.floor(b.status_points) && i <= Math.floor(b.status_points) + repairSp(b);
 	const canLevelUp = (b: Building | null) => !!b && (b.max_level === null || b.level < b.max_level);
 	const canLeveldown = (b: Building) =>
 		b.building_id === data?.ccBuildingId ? b.level > 1 : b.tile_x !== null && b.tile_x !== undefined;
@@ -300,17 +305,29 @@
 
 	async function explore(tile: Tile) {
 		const pos = positions.get(key(tile));
+		const wasFree = !!data?.freeExploreToday;
 		const res = await act('/colony/tile/explore', { q: tile.q, r: tile.r });
 		if (!res.ok) return fail(res);
+		// The free exploration is one per Sol: the next one costs the ring price again.
+		if (wasFree && data) data.freeExploreToday = false;
 		await apply(res);
 		await tick();
 		pulseRing(pos);
 	}
 
 	async function deepScan(tile: Tile) {
+		const wasFree = data?.deepScanAp === 0;
 		const res = await act('/colony/tile/deep-scan', { q: tile.q, r: tile.r });
 		if (!res.ok) return fail(res);
 		await apply(res);
+		// The free scan is used up: the response carries no price, so read the new one.
+		if (wasFree) {
+			const fresh = await api<ColonyData>('/colony').catch(() => null);
+			if (fresh && data) {
+				data.deepScanAp = fresh.deepScanAp;
+				data.freeExploreToday = fresh.freeExploreToday;
+			}
+		}
 		if (res.tile?.event_type) eventDiscovery = res.tile;
 	}
 
@@ -923,7 +940,7 @@
 											<span
 												class="btn-seg"
 												class:btn-seg--filled={i <= b.status_points}
-												class:btn-seg--ghost={repairHover && i === Math.floor(b.status_points) + 1}
+												class:btn-seg--ghost={repairHover && repairGhost(b, i)}
 											></span>
 										{/each}
 									</span>

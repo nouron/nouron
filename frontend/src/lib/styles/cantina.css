@@ -1071,3 +1071,17 @@
         height: 110px;
     }
 }
+
+/* Variant C: a conversation length whose AP exceed the rest to the next level (warning, not a block). */
+.bar-conversation-wasted {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-warning-fg);
+}
+
+.bar-conversation-wasted-chip {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-fg);
+    border: 1px solid var(--color-warning);
+    white-space: nowrap;
+}
