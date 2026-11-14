@@ -38,8 +38,10 @@ return [
         // below the small self-salvage density (spec 2.5, ≈ 0.3/AP) leaves the AP to scans/salvage.
         'research_floor' => 0.0,
         'research_min_density' => 0.3,
-        'build_ap_per_sol' => 10,
-        'ap_per_sol' => 4,
+        // AP scale 2026-11-13: knowledge effects are absolute AP per event; assumed event
+        // frequencies (CC levelups per Sol, long missions per Sol) turn them into AP per Sol.
+        'cc_levelups_per_sol' => 0.1,
+        'long_missions_per_sol' => 0.2,
         'income_floor_rg' => 8,
         'goal_max_wait_sols' => 5,
         'min_net' => 0.01,

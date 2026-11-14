@@ -32,7 +32,12 @@ class BarBartenderTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
-        config(['game.bartender.ap_bonus_by_relationship_level' => [0 => 0, 1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 3]]);
+        // AP scale 2026-11-13: fixed bonus per advice, frequency by relationship level
+        // (BarBartenderFrequencyTest covers the rhythm).
+        config([
+            'game.bartender.ap_bonus' => 1,
+            'game.bartender.advice_every_sols_by_relationship_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 1],
+        ]);
         $this->barService = $this->app->make(BarService::class);
     }
 
@@ -104,22 +109,22 @@ class BarBartenderTest extends TestCase
         $this->assertSame(1, $this->interactionCount());
     }
 
-    public function test_higher_relationship_level_gives_the_configured_bonus(): void
+    public function test_higher_relationship_level_gives_the_same_configured_bonus(): void
     {
         $this->setRelationship(5);
         $this->setInteractionCount(0, lastTick: 5);
 
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
-        $this->assertSame(3, $result['ap_added']);
-        $this->assertSame(3, $this->apSpend());
+        $this->assertSame(1, $result['ap_added']);
+        $this->assertSame(1, $this->apSpend());
     }
 
     public function test_bartender_ap_bonus_reads_the_relationship_table(): void
     {
         $this->assertSame(0, $this->barService->bartenderApBonus(self::COLONY_ID));
         $this->setRelationship(3);
-        $this->assertSame(2, $this->barService->bartenderApBonus(self::COLONY_ID));
+        $this->assertSame(1, $this->barService->bartenderApBonus(self::COLONY_ID));
     }
 
     // ── 15: not selectable ───────────────────────────────────────────────────
@@ -159,7 +164,7 @@ class BarBartenderTest extends TestCase
 
     public function test_talk_allows_interaction_again_on_next_tick(): void
     {
-        $this->setRelationship(1);
+        $this->setRelationship(5);
         $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 11);

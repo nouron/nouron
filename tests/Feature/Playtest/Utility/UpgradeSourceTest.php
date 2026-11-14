@@ -6,14 +6,22 @@ use App\Enums\BuildingId;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Feature\Playtest\BotProfile;
 use Tests\Feature\Playtest\BotSession;
+use Tests\Feature\Playtest\PinsPreScaleApValues;
 use Tests\Feature\Playtest\Utility\Sources\UpgradeSource;
 use Tests\TestCase;
 
 /** T30 §14 U1/U3, spec P6: relative expectations, no fixed scores. */
 class UpgradeSourceTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
     use UtilityFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     private function pick(BotSession $bot, string $opening = 'auto'): ?Candidate
     {

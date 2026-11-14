@@ -17,11 +17,12 @@ class FindsConfigTest extends TestCase
             $rg += $count * $types[$type]['rg'];
         }
         $this->assertSame(40, $rg);
-        $this->assertSame([3, 4, 6], [$types['find_small']['ap'], $types['find_medium']['ap'], $types['find_large']['ap']]);
-        $this->assertSame(['rg' => 18, 'ap' => 6], $types['find_large']);
+        // AP scale 2026-11-13 §11.3: self-salvage 1 / 2 / 2 AP.
+        $this->assertSame([1, 2, 2], [$types['find_small']['ap'], $types['find_medium']['ap'], $types['find_large']['ap']]);
+        $this->assertSame(['rg' => 18, 'ap' => 2], $types['find_large']);
         $this->assertSame(['rg' => 0, 'ap' => 0], $types['find_false']);
-        $this->assertSame(2, config('game.finds.scan_ap'));
-        $this->assertSame(1, config('game.finds.scan_ap_uplink'));
+        $this->assertSame(1, config('game.finds.scan_ap'));
+        $this->assertSame(2, config('game.finds.free_scan_uplink_level'));
         $this->assertNull(config('game.finds.salvage_cap_per_sol'));
         $this->assertNull(config('game.finds.max_open_projects'));
     }

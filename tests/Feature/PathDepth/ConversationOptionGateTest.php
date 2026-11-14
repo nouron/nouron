@@ -35,6 +35,8 @@ class ConversationOptionGateTest extends TestCase
             'path_depth.conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 4],
             'path_depth.conversation_option_cantina_level' => ['short' => 1, 'normal' => 2, 'long' => 3],
             'path_depth.conversation_ap_cap_per_sol' => ['base' => null],
+            // Mechanism test with fixed level costs (independent of the AP scale values).
+            'path_depth.levelup_ap.character' => [1 => 4, 2 => 6, 3 => 8, 4 => 10, 5 => 12],
         ]);
         $this->cantina(1);
         $this->service = $this->app->make(PathDepthService::class);

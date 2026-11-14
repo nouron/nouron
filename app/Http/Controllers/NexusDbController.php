@@ -190,9 +190,14 @@ class NexusDbController extends Controller
         foreach ((array) config('game.advisor.upkeep') as $rank => $upkeep) {
             $rank = (int) $rank;
             $bonuses = [__('nexusdb.bonus_ap', ['n' => (int) config("game.advisor.ap_per_rank.{$rank}", 0)])];
+            // Field cap ("Fach-Deckel", AP scale 2026-11-13 §11.1), shown as the total per Sol.
+            $capBonus = (int) config("game.advisor.cap_bonus_per_rank.{$rank}", 0);
             if ($k === 'engineer') {
-                $bonuses[] = __('nexusdb.bonus_ap_cap', ['n' => (int) config('game.build.ap_cap_per_sol.base', 0) + (int) config("game.build.ap_cap_per_sol.engineer_bonus_per_rank.{$rank}", 0)]);
+                $bonuses[] = __('nexusdb.bonus_ap_cap', ['n' => (int) config('game.build.ap_cap_per_sol.base', 0) + $capBonus]);
+            } elseif ($k === 'scientist') {
+                $bonuses[] = __('nexusdb.bonus_ap_cap_lab', ['n' => (int) config('game.knowledge_ap_cap_per_sol.base', 0) + $capBonus]);
             } elseif ($k === 'pilot') {
+                $bonuses[] = __('nexusdb.bonus_ap_cap_training', ['n' => (int) config('path_depth.training_ap_cap_per_sol.base', 0) + $capBonus]);
                 $bonuses[] = __('nexusdb.bonus_mission_chance', ['n' => (int) round($rank * (float) config('game.missions.difficulty.pilot_rank_bonus_pct', 0) * 100)]);
             } elseif ($k === 'trader') {
                 $bonuses[] = __('nexusdb.bonus_ship_discount', ['n' => (int) config("game.hangar.consul_ap_discount.{$rank}", 0)]);

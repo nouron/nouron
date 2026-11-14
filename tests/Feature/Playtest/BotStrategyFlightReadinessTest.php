@@ -11,7 +11,14 @@ use Tests\TestCase;
 /** T30 §13.x/7: bot mission candidates use the return guarantee, not a mirrored 20 × 0.25. */
 class BotStrategyFlightReadinessTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     private function bootWithDrone(float $sp): BotSession
     {

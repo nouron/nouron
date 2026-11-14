@@ -7,7 +7,7 @@
  * (return_tick = dispatch_tick + 2 × sol_distance, computed — not stored).
  *
  * Dispatch costs (both gate the start):
- *   AP cost  = sol_distance × ap_per_sol
+ *   AP cost  = ap_by_distance[sol_distance] (last entry beyond the table)
  *   organika = sol_distance × max(organika_floor_per_sol,
  *              organika_per_sol − organika_scaling_per_level × levels_above_gate)
  *              + extra_cost (knowledge scaling only applies to knowledge-gated missions)
@@ -27,7 +27,8 @@
  */
 return [
 
-    'ap_per_sol' => 2,    // dispatch AP cost = sol_distance × this
+    // Dispatch AP by one-way Sol distance (AP scale 2026-11-13 §11.3: distance × 2/3, rounded).
+    'ap_by_distance' => [1 => 1, 2 => 1, 3 => 2, 4 => 3, 5 => 3],
     'organika_per_sol' => 3,  // dispatch provisions = sol_distance × this (before knowledge scaling)
     'organika_scaling_per_level' => 1, // −1 organika per sol per knowledge level above the gate
     'organika_floor_per_sol' => 1,    // scaling never drops below this
@@ -75,7 +76,7 @@ return [
             'sol_distance' => 3,
             'requires' => ['knowledge' => ['cartography' => 1]],
             'target_type' => 'knowledge',
-            'reward' => ['research_ap' => 8], // invested into player-chosen knowledge, capped at levelup threshold
+            'reward' => ['research_ap' => 3], // invested into player-chosen knowledge, capped at levelup threshold
             'repeatable' => true,
             'difficulties' => ['normal', 'hard'],
         ],

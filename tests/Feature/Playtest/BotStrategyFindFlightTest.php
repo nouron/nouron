@@ -14,7 +14,14 @@ use Tests\TestCase;
 /** T30 §13.3/§13.4: with a hangar the bot flies finds, never opens self-salvage, repairs ships, keeps scanning. */
 class BotStrategyFindFlightTest extends TestCase
 {
+    use PinsPreScaleApValues;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pinPreScaleApValues();
+    }
 
     private function bootWithHangar(int $level): BotSession
     {

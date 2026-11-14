@@ -610,7 +610,7 @@ class HangarService
      *
      * Validates the mission key against config/missions.php: allowed ship type,
      * knowledge gate, target requirement (player-picked tile/knowledge) and the
-     * §7 SP dispatch block. Costs: AP = distance × ap_per_sol; organika =
+     * §7 SP dispatch block. Costs: AP = missions.ap_by_distance (+ cartography); organika =
      * distance × per-sol rate reduced by knowledge levels above the gate (floor 1)
      * plus any mission extra_cost.
      *
@@ -692,8 +692,7 @@ class HangarService
                 $navApCost = $findCosts['ap_cost'];
                 $organikaCost = $findCosts['organika'];
             } else {
-                $baseNavApCost = $solDistance * (int) config('missions.ap_per_sol', 2);
-                $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseNavApCost);
+                $navApCost = $this->projectBonusService->effectiveMissionApCost($colonyId, $solDistance);
                 $organikaCost = $this->organikaCostFor($colonyId, $mission, $solDistance);
             }
 
@@ -864,7 +863,6 @@ class HangarService
      */
     public function getMissionCatalogFor(int $colonyId): array
     {
-        $navPerSol = (int) config('missions.ap_per_sol', 2);
         $shipsConfig = config('ships');
         $pathDepth = app(PathDepthService::class);
 
@@ -909,7 +907,7 @@ class HangarService
                 }
             }
 
-            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $dist * $navPerSol);
+            $navApCost = $this->projectBonusService->effectiveMissionApCost($colonyId, $dist);
             $organikaCost = $this->organikaCostFor($colonyId, $mission, $dist);
 
             if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableAp) {

@@ -289,7 +289,10 @@ class BarConcernTest extends TestCase
         $this->assertTrue($result['ok']);
         $voucher = DB::table('colony_building_discount_vouchers')->where('colony_id', self::COLONY_ID)->first();
         $this->assertNotNull($voucher);
-        $this->assertSame(25, (int) $voucher->discount_pct);
+        // AP scale 2026-11-13 §4: the voucher is absolute AP (column discount_pct holds AP).
+        $this->assertSame((int) config('game.bar.concern.information_broker.discount_ap'), (int) $voucher->discount_pct);
+        $this->assertSame(2, (int) config('game.bar.concern.information_broker.discount_ap'));
+        $this->assertSame(2, $result['discount_ap']);
         $this->assertSame('information_broker', $voucher->source);
         $this->assertNull($voucher->expires_tick);
         $this->assertNull($voucher->consumed_tick);
@@ -466,7 +469,8 @@ class BarConcernTest extends TestCase
         $this->assertTrue($result['ok']);
         $voucher = DB::table('colony_building_discount_vouchers')->where('colony_id', self::COLONY_ID)->first();
         $this->assertNotNull($voucher);
-        $this->assertSame(15, (int) $voucher->discount_pct);
+        $this->assertSame(1, (int) $voucher->discount_pct);
+        $this->assertSame(1, $result['discount_ap']);
         $this->assertSame('founder', $voucher->source);
         $this->assertNotNull($voucher->expires_tick);
     }

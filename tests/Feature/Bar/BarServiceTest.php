@@ -914,7 +914,7 @@ class BarServiceTest extends TestCase
             (int) config('game.bar.ap_cost_negotiate'),
             'Negotiating costs the same AP as a plain accept'
         );
-        $this->assertSame(2, (int) config('game.bar.ap_cost_negotiate'));
+        $this->assertSame(1, (int) config('game.bar.ap_cost_negotiate'));
     }
 
     public function test_negotiate_success_locks_negotiate_ap_but_does_not_execute_the_trade(): void

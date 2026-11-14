@@ -133,11 +133,17 @@ class TrustService
     }
 
     /**
-     * Return the AP multiplier for the given trust value.
+     * AP the trust band adds to (or takes from) the colony pool — absolute, game.trust.ap_bonus.
      */
-    public function getApMultiplier(int $trust): float
+    public function getApBonus(int $trust): int
     {
-        return $this->lookupMultiplier($trust, 'ap_multiplier');
+        foreach (config('game.trust.ap_bonus', []) as $band) {
+            if ($trust >= $band['min'] && $trust <= $band['max']) {
+                return (int) $band['ap'];
+            }
+        }
+
+        return 0;
     }
 
     /**

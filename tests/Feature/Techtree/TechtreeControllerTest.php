@@ -3,6 +3,7 @@
 namespace Tests\Feature\Techtree;
 
 use App\Models\User;
+use App\Services\BuildingApCapService;
 use App\Services\Techtree\BuildingUnlockService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -325,10 +326,10 @@ class TechtreeControllerTest extends TestCase
         $this->app->setLocale('de');
         $bart = User::find($this->userIdBart);
 
-        // construction (id=90) at level 2 → next level 3 → ap_cost_reduction_per_lv[3]=4.
+        // construction (id=90) at level 1 → next level 2 → ap_cost_reduction_per_lv[2]=1 (absolute AP).
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $this->colonyIdBart, 'research_id' => 90],
-            ['level' => 2, 'ap_spend' => 0, 'status_points' => 20]
+            ['level' => 1, 'ap_spend' => 0, 'status_points' => 20]
         );
 
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
@@ -340,7 +341,7 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($construction);
         $this->assertTrue(
-            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% AP-Kosten' && $l['chip'] === null)
+            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-1 AP Ausbau großer Gebäude' && $l['chip'] === null)
         );
     }
 
@@ -392,6 +393,7 @@ class TechtreeControllerTest extends TestCase
         $this->assertSame(6, $housing['max_instances']);
         $this->assertSame([1, 4], array_column($housing['instances'], 'instance_id'), 'only placed instances, ordered by instance_id');
         $maxSp = (int) DB::table('buildings')->where('id', 28)->value('max_status_points');
+        $cap = (int) app(BuildingApCapService::class)->capFor($this->colonyIdBart);
         $this->assertSame([
             'instance_id' => 4,
             'level' => 3,
@@ -400,7 +402,7 @@ class TechtreeControllerTest extends TestCase
             'max_status_points' => $maxSp,
             'q' => 1,
             'r' => -1,
-            'ap_cap' => ['cap' => 8, 'spent' => 0, 'remaining' => 8],
+            'ap_cap' => ['cap' => $cap, 'spent' => 0, 'remaining' => $cap],
         ], $housing['instances'][1]);
 
         $sciencelab = $items->first(fn ($t) => $t['type'] === 'building' && $t['id'] === 31);
@@ -658,7 +660,7 @@ class TechtreeControllerTest extends TestCase
         // so the final AP (1) is what pushes it over, exactly what auto-levelup proves.
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $this->colonyIdBart, 'research_id' => 91],
-            ['level' => 0, 'ap_spend' => 19, 'status_points' => 20]
+            ['level' => 0, 'ap_spend' => (int) config('knowledge.cartography.levelup_costs.1') - 1, 'status_points' => 20]
         );
 
         $response = $this->actingAs(User::find($this->userIdBart))
@@ -670,9 +672,9 @@ class TechtreeControllerTest extends TestCase
         $response->assertJsonPath('levelup_blocked_reason', null);
         $response->assertJsonPath('tech.level', 1);
         $response->assertJsonPath('tech.ap_spend', 0);
-        // Next level (1->2) costs 28 per config/knowledge.php — the bar must rescale,
-        // not stay capped at the Lv0->1 threshold (20).
-        $response->assertJsonPath('tech.ap_for_levelup', 28);
+        // Next level (1->2) costs levelup_costs[2] — the bar must rescale,
+        // not stay capped at the Lv0->1 threshold.
+        $response->assertJsonPath('tech.ap_for_levelup', (int) config('knowledge.cartography.levelup_costs.2'));
 
         $this->assertSame(1, DB::table('colony_researches')
             ->where('colony_id', $this->colonyIdBart)->where('research_id', 91)->value('level'));
@@ -741,8 +743,14 @@ class TechtreeControllerTest extends TestCase
             'unavailable_until_tick' => null,
         ]);
 
+        $threshold = (int) config('knowledge.geology.levelup_costs.1');
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 92],
+            ['level' => 0, 'ap_spend' => $threshold - 1, 'status_points' => 20]
+        );
+
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 92]), ['order' => 'add', 'ap' => 12]);
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 92]), ['order' => 'add', 'ap' => 1]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -752,7 +760,7 @@ class TechtreeControllerTest extends TestCase
 
         // The AP was spent (capped at the threshold) — not silently lost, but not
         // reinvestable either until the missing building is built.
-        $this->assertSame(12, DB::table('colony_researches')
+        $this->assertSame($threshold, DB::table('colony_researches')
             ->where('colony_id', $this->colonyIdBart)->where('research_id', 92)->value('ap_spend'));
     }
 

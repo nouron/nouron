@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\PathDepth;
 
-use App\Exceptions\GameRuleException;
 use App\Models\User;
 use App\Services\PathDepthService;
 use App\Services\TickService;
@@ -11,7 +10,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-/** T43-G4: cantina conversations = 2-3 options with different AP costs, per-Sol AP cap per character. */
+/**
+ * T43-G4: cantina conversation options with different AP costs and a per-Sol AP limit per
+ * character; since variant C (2026-11-13) one conversation per character and Sol, see
+ * ConversationVariantCTest for the full-price and wasted-AP rules.
+ */
 class ConversationOptionsTest extends TestCase
 {
     use RefreshDatabase;
@@ -32,8 +35,9 @@ class ConversationOptionsTest extends TestCase
         );
         config([
             'game.bypass.ap_checks' => false,
-            'path_depth.conversation_options' => ['short' => 1, 'normal' => 2, 'long' => 4],
-            'path_depth.conversation_ap_cap_per_sol' => ['base' => 3],
+            'path_depth.conversation_options' => ['short' => 1, 'long' => 2],
+            'path_depth.conversation_option_cantina_level' => ['short' => 1, 'long' => 3],
+            'path_depth.conversation_ap_cap_per_sol' => ['base' => 2],
         ]);
         $this->service = $this->app->make(PathDepthService::class);
     }
@@ -54,48 +58,24 @@ class ConversationOptionsTest extends TestCase
         $this->service->markMet(self::COLONY_ID, $slug);
     }
 
-    public function test_character_invest_beyond_cap_is_rejected_without_spending(): void
-    {
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 2);
-
-        try {
-            $this->service->invest(self::COLONY_ID, 'character', 'bartender', 2);
-            $this->fail('expected conversation_ap_cap');
-        } catch (GameRuleException $e) {
-            $this->assertSame('conversation_ap_cap', $e->errorCode);
-        }
-        $this->assertSame(2, $this->lockedAp());
-        $this->assertSame(2, $this->service->state(self::COLONY_ID, 'character', 'bartender')['ap_spend']);
-    }
-
-    public function test_cap_can_be_filled_exactly_and_resets_next_sol(): void
-    {
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 2);
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 1);
-        $this->assertSame(0, $this->service->conversation(self::COLONY_ID, 'bartender')['cap']['remaining']);
-
-        $this->tickAt(11);
-        $this->assertSame(3, $this->service->conversation(self::COLONY_ID, 'bartender')['cap']['remaining']);
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 1);
-        $this->assertSame(4, $this->lockedAp());
-    }
-
     public function test_cap_is_per_character(): void
     {
         $this->meet('smuggler');
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 3);
+        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 2);
 
-        $this->assertSame(1, $this->service->invest(self::COLONY_ID, 'character', 'smuggler', 1)['ap_spend']);
+        $this->assertSame(1, $this->service->invest(self::COLONY_ID, 'character', 'smuggler', 1)['level']);
     }
 
     public function test_null_cap_switches_rule_off(): void
     {
-        config(['path_depth.conversation_ap_cap_per_sol' => ['base' => null]]);
+        config([
+            'path_depth.conversation_ap_cap_per_sol' => ['base' => null],
+            'path_depth.conversation_options' => ['short' => 1, 'long' => 4],
+        ]);
         $this->service->invest(self::COLONY_ID, 'character', 'bartender', 4);
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 1);
 
         $this->assertNull($this->service->conversation(self::COLONY_ID, 'bartender')['cap']);
-        $this->assertSame(5, $this->lockedAp());
+        $this->assertSame(4, $this->lockedAp());
     }
 
     public function test_family_training_is_not_affected_by_conversation_cap(): void
@@ -107,30 +87,8 @@ class ConversationOptionsTest extends TestCase
         );
         $this->service->invest(self::COLONY_ID, 'mission_family', 'exploration', 5);
 
-        $this->assertSame(5, $this->lockedAp());
-    }
-
-    public function test_only_points_that_land_count_against_cap(): void
-    {
-        // Level 1 needs 4 AP: 3 in today; next Sol a 4-AP option only pays the remaining 1, and only 1 is booked.
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 3);
-        $this->tickAt(11);
-        $result = $this->service->invest(self::COLONY_ID, 'character', 'bartender', 4);
-
-        $this->assertSame(1, $result['points']);
-        $this->assertSame(1, $this->service->conversation(self::COLONY_ID, 'bartender')['cap']['spent']);
-    }
-
-    public function test_options_carry_effective_cost_and_cap_block(): void
-    {
-        $this->service->invest(self::COLONY_ID, 'character', 'bartender', 1);
-        $conv = $this->service->conversation(self::COLONY_ID, 'bartender');
-
-        $this->assertSame(['short', 'normal', 'long'], array_column($conv['options'], 'key'));
-        // level 1 costs 4, 1 spent -> 3 AP left to the threshold: long is clamped from 4 to 3
-        $this->assertSame([1, 2, 3], array_column($conv['options'], 'ap'));
-        $this->assertSame(['cap' => 3, 'spent' => 1, 'remaining' => 2], $conv['cap']);
-        $this->assertSame([false, false, true], array_column($conv['options'], 'capped'));
+        // Families are still clamped to the rest of the level (only conversations charge full price).
+        $this->assertSame(min(5, (int) config('path_depth.levelup_ap.mission_family.1')), $this->lockedAp());
     }
 
     public function test_no_options_at_max_level(): void
@@ -173,17 +131,18 @@ class ConversationOptionsTest extends TestCase
         }
     }
 
-    public function test_controller_returns_cap_error_and_conversation_state(): void
+    public function test_controller_refuses_a_second_conversation_and_returns_state(): void
     {
         $user = User::find(3);
         $url = route('colony.pathdepth.invest', ['kind' => 'character', 'key' => 'bartender']);
 
         $this->actingAs($user)->postJson($url, ['ap' => 2])->assertOk()
-            ->assertJsonPath('conversation.cap.remaining', 1)
+            ->assertJsonPath('conversation.cap.remaining', 0)
+            ->assertJsonPath('conversation.talked_today', true)
             ->assertJsonPath('conversation.options.0.key', 'short');
 
-        $this->actingAs($user)->postJson($url, ['ap' => 2])->assertStatus(422)
-            ->assertJson(['ok' => false, 'error' => 'conversation_ap_cap'])
+        $this->actingAs($user)->postJson($url, ['ap' => 1])->assertStatus(422)
+            ->assertJson(['ok' => false, 'error' => 'conversation_done_today'])
             ->assertJsonStructure(['message']);
     }
 

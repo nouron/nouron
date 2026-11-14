@@ -248,11 +248,11 @@ class HangarControllerTest extends TestCase
     public function test_index_konsul_discount_and_max_ap_match_executed_charge_for_all_ranks(): void
     {
         config(['game.bypass.ap_checks' => true]);
-        $expectedPerAp = [1 => 50, 2 => 60, 3 => 70];
+        $expectedPerAp = [1 => 150, 2 => 180, 3 => 210];
         $expectedMaxAp = [
-            1 => [self::SHIP_DRONE => 6, self::SHIP_FREIGHTER => 10, self::SHIP_CORVETTE => 16],
-            2 => [self::SHIP_DRONE => 5, self::SHIP_FREIGHTER => 9, self::SHIP_CORVETTE => 14],
-            3 => [self::SHIP_DRONE => 5, self::SHIP_FREIGHTER => 8, self::SHIP_CORVETTE => 12],
+            1 => [self::SHIP_DRONE => 2, self::SHIP_FREIGHTER => 4, self::SHIP_CORVETTE => 6],
+            2 => [self::SHIP_DRONE => 2, self::SHIP_FREIGHTER => 3, self::SHIP_CORVETTE => 5],
+            3 => [self::SHIP_DRONE => 2, self::SHIP_FREIGHTER => 3, self::SHIP_CORVETTE => 4],
         ];
 
         foreach ([1, 2, 3] as $rank) {
@@ -281,16 +281,16 @@ class HangarControllerTest extends TestCase
                 $this->assertSame($expectedPerAp[$rank], $displayedPerAp, "rank {$rank}");
                 $this->assertSame($expectedMaxAp[$rank][$shipId], $displayed['max_consul_ap'], "rank {$rank} ship {$shipId}");
 
-                // Invest 3 AP: charge must equal the price the UI derives from the displayed data.
+                // Invest 1 AP: charge must equal the price the UI derives from the displayed data.
                 $this->actingAs($this->bart())
                     ->postJson(route('colony.hangar.request'), [
                         'ship_id' => $shipId,
                         'use_nexus_credit' => 0,
-                        'consul_ap_spent' => 3,
+                        'consul_ap_spent' => 1,
                     ])->assertOk();
 
                 $this->assertSame(
-                    10000 - max(0, $displayed['cost'] - 3 * $displayedPerAp),
+                    10000 - max(0, $displayed['cost'] - 1 * $displayedPerAp),
                     (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits'),
                     "rank {$rank} ship {$shipId}: charged credits must match displayed price",
                 );
@@ -607,8 +607,8 @@ class HangarControllerTest extends TestCase
 
         $slot = $response->json('slot');
         $this->assertNotNull($slot['ship']);
-        // 10.0 + game.ship_repair.sp_per_click (2) = 12.0
-        $this->assertSame(12.0, (float) $slot['ship']['status_points']);
+        // 10.0 + game.ship_repair.sp_per_click
+        $this->assertSame(10.0 + (float) config('game.ship_repair.sp_per_click'), (float) $slot['ship']['status_points']);
     }
 
     public function test_repair_returns_422_when_ship_at_full_status(): void
