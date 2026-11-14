@@ -172,7 +172,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 |-------|-------------|
 | 1. Hangar | Hangar-Lieferungen abwickeln (Schiff-Bau → docked; abgelaufene Anforderungen) |
 | 2. Decay | Gebäude- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
-| 3. Ressourcen & Wohnraum | Rohstoffproduktion (Vertrauens-Multiplikator und Besetzungsanteil angewendet); nach den Begegnungen Wohnraum neu berechnen; Kolonisten, Besetzungsanteil und Gate folgen sofort daraus (§6) |
+| 3. Ressourcen & Wohnraum | Rohstoffproduktion (Besetzungsanteil angewendet, Vertrauen wirkt nicht auf die Produktion); nach den Begegnungen Wohnraum neu berechnen; Kolonisten, Besetzungsanteil und Gate folgen sofort daraus (§6) |
 | 3a. Verpflegung | Kolonie verbraucht Organika für ihre Kolonisten (Zielregel „1 Organika versorgt 1 Kolonisten“, Umsetzungsstand siehe §4a „Organika“); Vorrat reicht → `well_fed`, sonst Hunger-Streak + eskalierender Vertrauens-Malus (§3, §14) |
 | 4. Vertrauen | Vertrauenswert neu berechnen (inkl. Hunger-Malus), `colony_resources` aktualisieren (§14) |
 | 5. Credits, Beratung & Events | Credits-Einnahmen (Nexus-Subvention, Relaisvergütung), Berater-Unterhalt, Advisor-Ticks, Bar-Angebote, Händler-Spawn, Run-Checks (Phasen, Objectives, Fail State) |
@@ -361,12 +361,12 @@ Die Leitstelle ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv2, m
 Ein Bonus pro Level (kumulativ). Thematisch: "Die Bevölkerung fühlt sich durch Schutzinfrastruktur sicherer." Bewusst niedriger als andere Wohlfahrts-Gebäude — Sicherheitsinfrastruktur ist utilitaristisch, kein Luxus-Bonus. Exakte Werte: `config/buildings.php`.
 
 **Passiv — Event-Dämpfung:**
-Wenn der Hub aktiv ist, werden negative Vertrauensverluste aus Zwischenfällen reduziert (prozentual; siehe `config/buildings.php`). Gilt für die Events `encounter_lost` und `colony_threatened`. Thematisch: "Der Hub sorgt nicht dafür, dass Vorfälle ausbleiben — er verhindert, dass sie eskalieren."
+Wenn der Hub aktiv ist, rückt jedes negative Vertrauens-Ereignis um einen festen Betrag näher an null (absolut, kein Prozentsatz; ein kleiner Malus kann ganz entfallen; siehe `config/buildings.php → trust_event_mitigation`). Gilt für alle negativen Ereignisse, vor allem `encounter_lost` und `colony_threatened`, nicht für die Hungerstrafe. Thematisch: "Der Hub sorgt nicht dafür, dass Vorfälle ausbleiben — er verhindert, dass sie eskalieren."
 
 **Passiv — Level-Down-Recycling:**
 Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch einen kleinen Anteil der Errichtungskosten zurück (Regolith, Werkstoffe). Das Recycling gibt es erst ab Leitstellen-Stufe 3. Der Anteil liegt bewusst deutlich unter dem Reparaturwert, damit kein Anreiz entsteht, Verfall absichtlich zu provozieren. Exakte Prozentsätze: `config/buildings.php`.
 
-> **TODO Balance:** Alle drei Effekte (trust-Bonus, Event-Dämpfungs-%, Recycling-%) nach erstem Playtest kalibrieren (siehe `config/buildings.php`). Compounds-Anforderung ist akzeptiert: Hub ist kein Progression-Gate (CC Lv3 hat kein Pflichtgebäude), sondern ein optionaler Resilienz-Baustein. In runs mit schlechtem Trade-Zugang kann der Hub später kommen — das verzögert nichts Zwingendes.
+> **TODO Balance:** Alle drei Effekte (trust-Bonus, Event-Dämpfungsbetrag, Recycling-%) nach erstem Playtest kalibrieren (siehe `config/buildings.php`). Compounds-Anforderung ist akzeptiert: Hub ist kein Progression-Gate (CC Lv3 hat kein Pflichtgebäude), sondern ein optionaler Resilienz-Baustein. In runs mit schlechtem Trade-Zugang kann der Hub später kommen — das verzögert nichts Zwingendes.
 
 ---
 
@@ -491,7 +491,7 @@ Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten n
 
 Organika wird **nicht** in Bau- oder Schiffskosten verwendet (§3 Verwendungsmatrix). Ihre Sinks (implementiert):
 
-1. **Verpflegung (laufend, eskalierend):** Zielregel (Owner-Entscheidung): **1 Organika versorgt 1 Kolonisten pro Sol**, und verpflegt werden **alle Kolonisten**, nicht nur die beschäftigten. *Umsetzungsstand:* Der Code rechnet noch mit einem Teiler und der Zahl der beschäftigten Kolonisten (`game.food.supply_per_eater`, `ResourcesService::foodNeed()`); die Angleichung samt Produktions-Abstimmung steht aus (ROADMAP T36, T43-G7). Tick-Reihenfolge: Produktion → Verpflegung → Vertrauen (Schritt 3a). Deckt der Vorrat den Bedarf → Bonus-Vertrauen, Hunger-Streak zurückgesetzt. Reicht der Vorrat nicht → verfügbarer Rest wird verbraucht, Hunger-Streak wächst, und ein **eskalierender** Trust-Malus greift (`TrustService::hungerPenalty`) — kein weicher Einmal-Tick, sondern eine Spirale: weniger Vertrauen → Produktionseinbruch → noch weniger Organika. Sättigung setzt den Streak (und damit den Malus) sofort zurück. Macht den Agrardom zum Pflichtgebäude.
+1. **Verpflegung (laufend, eskalierend):** Zielregel (Owner-Entscheidung): **1 Organika versorgt 1 Kolonisten pro Sol**, und verpflegt werden **alle Kolonisten**, nicht nur die beschäftigten. *Umsetzungsstand:* Der Code rechnet noch mit einem Teiler und der Zahl der beschäftigten Kolonisten (`game.food.supply_per_eater`, `ResourcesService::foodNeed()`); die Angleichung samt Produktions-Abstimmung steht aus (ROADMAP T36, T43-G7). Tick-Reihenfolge: Produktion → Verpflegung → Vertrauen (Schritt 3a). Deckt der Vorrat den Bedarf → Bonus-Vertrauen, Hunger-Streak zurückgesetzt. Reicht der Vorrat nicht → verfügbarer Rest wird verbraucht, Hunger-Streak wächst, und ein **eskalierender** Trust-Malus greift (`TrustService::hungerPenalty`) — kein weicher Einmal-Tick, sondern Druck über die AP: weniger Vertrauen → tiefere Stufe → AP-Abzug → weniger Spielraum, die Versorgung zu reparieren (die Produktion selbst bleibt seit T59 unberührt). Sättigung setzt den Streak (und damit den Malus) sofort zurück. Macht den Agrardom zum Pflichtgebäude.
 2. **Missions-Proviant (einmalig):** Hangar-Dispatch (`HangarService::dispatchShip`) kostet beim Start Organika je Sol Distanz (Crew-Verpflegung) **und** AP je Sol Distanz; bei Mangel an beidem wird die Entsendung blockiert. (Config `config/missions.php → organika_per_sol` / `nav_ap_per_sol`.)
 3. **Handel:** Organika ist in der Cantina gegen Credits verkaufbar (`bar.base_prices`).
 
@@ -739,7 +739,7 @@ Ertrag = Frischwert, solange Restvorkommen > 0, sonst 0
 
 Ein Tile fördert **konstant zum Frischwert**, bis das Vorkommen aufgebraucht ist — kein Abschwächen zur Mitte hin. Bei erschöpftem Vorkommen: harter Cutoff auf Produktion 0, der Umzug ist erzwungen. Ein Tile mit hohem Ertrag, aber geringer Mächtigkeit erreicht den Boden eher als eines mit niedrigerem Ertrag, aber großer Mächtigkeit — derselbe Mechanismus, keine Sonderregel.
 
-**Konstante Förderrate:** Der Ertrag fällt nicht mit sinkendem Restvorkommen ab; eine konstante Rate ist für den Spieler berechenbar. Als Vorwarnung zeigt das Tile-Panel einen serverseitig berechneten „≈N Sole bis Erschöpfung"-Countdown (serverseitig, weil Geologie-Bonus und Vertrauens-Multiplikator nur dort zuverlässig bekannt sind). Herleitung: `docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md`.
+**Konstante Förderrate:** Der Ertrag fällt nicht mit sinkendem Restvorkommen ab; eine konstante Rate ist für den Spieler berechenbar. Als Vorwarnung zeigt das Tile-Panel einen serverseitig berechneten „≈N Sole bis Erschöpfung"-Countdown (serverseitig, weil Geologie-Bonus und Besetzungsanteil nur dort zuverlässig bekannt sind). Herleitung: `docs/superpowers/specs/2026-08-10-harvester-constant-yield-design.md`.
 
 **Der eigentliche Regler ist die Umzugsgebühr, nicht die Kurve.** Verlegekosten sind pro Hex gesetzt (`config/game.php`) und machen einen Umzug samt Zielkundschaftung zu einer spürbaren Investition. Spielziel: mehrfache Umzüge pro Run, aber nicht als Routine — die Verlegung ist eine wiederkehrende Entscheidung, kein automatisches Refresh.
 
@@ -770,14 +770,14 @@ Dazu kommt das **Vorfeld**: Es existiert ab Stufe 1, gehört nur der Geschenk-Dr
 
 ### Mechanik
 
-Einmal pro Sol produzieren die beiden Produktionsgebäude Rohstoffe: der **Harvester** Regolith, der **Agrardom** Organika. Auf beide wirken der Vertrauens-Multiplikator (§14) und der Besetzungsanteil. Der Besetzungsanteil ist 1, solange alle Arbeitsplätze besetzt sind; nach einem Wohnraumverlust sinkt er anteilig zu den unbesetzten Arbeitsplätzen (§6, „Wohnraumverlust — Konsequenzen").
+Einmal pro Sol produzieren die beiden Produktionsgebäude Rohstoffe: der **Harvester** Regolith, der **Agrardom** Organika. Auf beide wirkt der Besetzungsanteil; Vertrauen wirkt seit T59 nicht mehr auf die Produktion (§14). Der Besetzungsanteil ist 1, solange alle Arbeitsplätze besetzt sind; nach einem Wohnraumverlust sinkt er anteilig zu den unbesetzten Arbeitsplätzen (§6, „Wohnraumverlust — Konsequenzen").
 
 **Harvester:** Der Ertrag hängt vom Tile ab, nicht vom Level (§4c): konstanter Frischwert, solange das Vorkommen reicht, dazu der Bonus der Kenntnis `geology` (§10). Der Harvester hat kein Level-Up (`max_level = 1`).
 
 **Agrardom:** Die produzierte Menge ist die **kumulierte Glockenkurve** bis zum aktuellen Level (nicht Level × Flat-Rate), dazu der Bonus der Kenntnis `agronomy`:
 
 ```
-produzierte Menge = Σ curve[1..aktuelles Level] × vertrauens_multiplikator × besetzungsanteil
+produzierte Menge = Σ curve[1..aktuelles Level] × besetzungsanteil
 ```
 
 ### Produktionsgebäude
@@ -2218,41 +2218,55 @@ Der Organika-Verbrauch skaliert über `food_need = intdiv(anwesende Kolonisten, 
 
 ### Design-Absicht
 
-Vertrauen ist das "weiche" Feedback-System der Kolonie. Es reagiert auf die Entscheidungen des Spielers — welche Gebäude gebaut werden, wie die Kolonie versorgt wird, welche Kenntnisse erarbeitet werden — und verstärkt oder schwächt die Kolonieleistung mit spürbaren, aber nicht spielentscheidenden Effekten.
+Vertrauen ist das "weiche" Feedback-System der Kolonie. Es reagiert auf die Entscheidungen des Spielers — welche Gebäude gebaut werden, wie die Kolonie versorgt wird, welche Kenntnisse erarbeitet werden — und wirkt auf genau eine Sache: die Aktionspunkte des nächsten Sols.
 
-Vertrauen ist kein zweites Ressourcenproblem, das der Spieler managen muss. Es ist ein stiller Bewertungsparameter: Wer eine ausgewogene, zivil-orientierte Kolonie aufbaut, wird belohnt. Wer Versorgung und Zivilinfrastruktur vernachlässigt, spürt das in einer moderaten Malus-Spirale.
+Vertrauen ist kein zweites Ressourcenproblem, das der Spieler managen muss. Es ist ein stiller Bewertungsparameter: Wer eine ausgewogene, zivil-orientierte Kolonie aufbaut, wird belohnt. Wer Versorgung und Zivilinfrastruktur vernachlässigt, verliert AP und riskiert im Extremfall den Lauf.
 
-### Wertebereich
+### Wertebereich und Grundwert
 
-Vertrauen bewegt sich auf einer symmetrischen Skala um einen Neutralwert, mit dem jede Kolonie startet. Beide Enden der Skala sind harte Grenzen — keine weitere Verschlechterung bzw. Verbesserung darüber hinaus. Exakte Grenzwerte: siehe `docs/game-reference.md` Abschnitt 14 (Trust-Bänder & Multiplikatoren) / `config/game.php → trust`.
+Vertrauen liegt auf einer Skala von „kein Vertrauen“ bis „vollstes Vertrauen“ (0 bis 100). Beide Enden sind harte Grenzen. Jede Kolonie hat einen **Grundwert** in der Mitte der Skala; er steckt in jeder Berechnung und ist damit auch der Startwert. Alle Quellen verschieben das Vertrauen von dort aus nach oben oder unten.
 
-**Bedeutungsbereiche:**
+### Die fünf Stufen
 
-| Bezeichnung | Anzeige (UI-Hinweis) |
-|-------------|----------------------|
-| Hohes Vertrauen | "Euphorisch" |
-| Positive Stimmung | "Zufrieden" |
-| Neutral | "Stabil" |
-| Unzufriedenheit | "Unruhig" |
-| Krise | "Aufruhr" |
+Der Spieler erlebt Vertrauen nicht als Zahl, sondern als **Stufe** mit fester AP-Wirkung:
 
-Die fünf Bänder sind von sehr negativ bis sehr positiv geordnet, symmetrisch um den Neutralwert — deckungsgleich mit den Bändern des Produktions-Multiplikators und des AP-Zuschlags weiter unten. Exakte Schwellwerte ebenfalls in `docs/game-reference.md` Abschnitt 14.
+| Stufe | Wirkung auf den AP-Pool |
+|-------|-------------------------|
+| Euphorisch | großer Zuschlag |
+| Zufrieden | kleiner Zuschlag |
+| Stabil | keine Wirkung (Grundwert liegt hier) |
+| Unruhig | kleiner Abzug |
+| Aufruhr | großer Abzug |
+
+Die Stufen sind nicht gleich breit: Stabil ist eng um den Grundwert gelegt, damit schon ein paar Vertrauensquellen spürbar werden; Aufruhr ist ein schmaler Rand kurz vor der Niederlage. Grenzen und AP-Beträge: `config/game.php → trust.bands`, Tabelle in `docs/game-reference.md` Abschnitt 14.
+
+**Regel (Owner 2026-11-14):** keine Faktoren. Quellen sind kleine ganze Zahlen und werden addiert; die Stufe gibt einen festen AP-Betrag. Angezeigte Zahl = wirkende Zahl.
+
+### Anzeige: Wort, Wirkung, Zahl mit Labor
+
+Ressourcenleiste und Popup zeigen immer das **Stufenwort mit Wirkung** („Zufrieden · +1 AP“) und eine Leiste der fünf Stufen mit Markierung. Die rohe Zahl bleibt verborgen, bis die Kolonie ein **Analytik-Labor** hat: Erst dann zeigt das Popup die Summe („Punkte, nächste Stufe ab …“) und die Beträge jeder Quelle. Ohne Labor nennt es nur, welche Quellen gerade wirken (Grundwert, Gebäude, Kenntnisse, Schiffe, Ereignisse, Hunger), ohne Beträge — die Beträge würden die Zahl verraten. Das Datenarchiv darf die Stufentabelle mit AP zeigen.
+
+Begründung: Fünf Wörter sind ohne Tutorial lesbar; die Zahl ist Analyse-Wissen und passt zum Labor als Ort der Analyse (gleiches Muster wie die Labor-Vorschau). Die Farbe des Chips folgt der Stufe.
 
 ### Berechnung (Sol-basiert)
 
-Vertrauen wird einmal pro Sol **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Sols ergibt sich aus der Summe aller aktiven Faktoren:
+Vertrauen wird einmal pro Sol **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Sols ist die Summe aus Grundwert und allen aktiven Quellen:
 
 ```
-vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), Schiffs-Untergrenze, Schiffs-Obergrenze) + ereigniseffekte, Vertrauens-Untergrenze, Vertrauens-Obergrenze)
+vertrauen = clamp(Grundwert + Σ(Gebäudeeffekte) + Σ(Kenntniseffekte) + clamp(Σ(Schiffseffekte), ±Schiffsdeckel) + Ereigniseffekte + Hungerstrafe, Untergrenze, Obergrenze)
 ```
 
-Exakte Grenzwerte: `docs/game-reference.md` Abschnitt 14 / `config/game.php → trust`.
+Exakte Werte: `config/game.php → trust` / `docs/game-reference.md` Abschnitt 14.
 
-`colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
+`colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt. Weil jeder Sol neu summiert, wirkt eine Quelle genau so lange, wie sie besteht: Ein Gebäude trägt bei, solange es steht; ein Ereignis, solange sein Profil läuft.
 
-Der Wert wird in **Tick-Schritt 9** (nach Ressourcenproduktion und Verpflegung) berechnet, da Vertrauen die Produktionswerte desselben Sols noch nicht beeinflusst — es wirkt ab dem nächsten Sol.
+Der Wert wird am Ende des Sols berechnet (nach Produktion, Verpflegung und Begegnungen); seine AP-Wirkung gilt für den nächsten Sol.
 
-> **Implementierungsnotiz:** Die Sol-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Solen die volle Wirkung einer vertrauensverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
+### Niederlage bei Vertrauenskollaps
+
+Fällt Vertrauen unter eine Grenze knapp über dem unteren Skalenende (also tief im Aufruhr), ist der Lauf verloren (§18.2 Fail State 1). Kurz davor warnt der Nexus einmal. Auch der Seuchen-Zweig (§9) hängt am Aufruhr: Erst echte Unruhe öffnet die Seuchengefahr über das Vertrauen.
+
+> ⚠️ BALANCE CONCERN: Mit den aktuellen Quellen ist die untere Hälfte praktisch unerreichbar: Die größte negative Summe aus Hunger, Zwischenfällen und Nexus-Kredit reicht nur für einen Sol Unruhig, nicht für Aufruhr oder Niederlage (gerechnet, ungemessen, Spec §2.5). Der Spieler sieht fünf Stufen, erlebt drei. Vorgesehener Hebel: eskalierender Hunger als eigener, gemessener Schritt nach der Skalenmessung (ROADMAP T59a), damit Messung Skala und Hunger trennt.
 
 ### Einflussfaktoren: Gebäude
 
@@ -2266,6 +2280,7 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 | 46 | infirmary (Krankenstation) | positiv, am stärksten |
 | 50 | monument (Kolonialdenkmal) | positiv |
 | 52 | bar (Cantina) | positiv |
+| 53 | securityHub (Leitstelle) | positiv, am schwächsten |
 
 Exakte Werte pro Level: `config/buildings.php → trust_per_lv` / `docs/game-reference.md`.
 
@@ -2275,7 +2290,7 @@ Exakte Werte pro Level: `config/buildings.php → trust_per_lv` / `docs/game-ref
 
 **Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + infirmary + monument + bar auf Höchstlevel), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der Clamp am oberen Ende der Skala verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
+> ⚠️ BALANCE CONCERN: Euphorisch verlangt, dass fast alles Vertrauensrelevante ausgebaut ist (Gebäude und Kenntnisse zusammen reichen knapp darüber, gerechnet). Ob das zu schwer oder zu leicht ist, zeigt erst die Messung (Spec §6, M-T1); gemessen wird Sole je Stufe und erster Sol Zufrieden/Euphorisch.
 
 ### Einflussfaktoren: Schiffe
 
@@ -2294,7 +2309,7 @@ Exakte Werte: `config/ships.php → trust_per_unit` / `docs/game-reference.md`.
 **Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf einen Höchstwert gecapped, bevor er in die Vertrauen-Summe eingeht:
 
 ```
-ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), 0, Schiffs-Obergrenze)
+ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), −Schiffsdeckel, +Schiffsdeckel)
 ```
 
 Exakter Deckel: `config/game.php → trust.ships_cap` / `docs/game-reference.md` Abschnitt 14.
@@ -2329,7 +2344,7 @@ Die Wirkung folgt der Standard-Event-Logik (siehe "Einflussfaktoren: Ereignisse"
 
 **Nur eine Zulage pro Sol.** Die drei Stufen sind unterschiedliche Event-Keys (nicht Varianten desselben Keys) — das bestehende Dedup in `TrustService::eventContribution` fasst nur *gleiche* Keys zusammen und summiert *unterschiedliche* Keys auf. Ohne zusätzliche Sperre könnten z. B. "Klein" und "Groß" im selben Sol zu einem kombinierten Vertrauens-Bonus addiert werden. Das ist **nicht gewollt** und muss bei der Implementierung als eigene Regel ergänzt werden: pro Kolonie und Sol ist höchstens eine Zulagen-Stufe auslösbar (Fire-Time-Guard im Service, nicht im bestehenden Event-Dedup). Dieser Punkt ist ein expliziter Implementierungs-Hinweis, kein bereits vorhandenes Verhalten.
 
-**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (die Credits-Kosten pro Vertrauenspunkt steigen mit der Stufe) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer regelmäßig die kleine Stufe zieht, zahlt einen laufenden Credits-Betrag für einen wiederkehrenden Vertrauens-Bonus — spürbar gegenüber der Relaisvergütung und dem Berater-Upkeep, aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) liefert einmalig einen großen Vertrauens-Bonus für einen Credits-Betrag — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll. Exakte Werte für den Vergleich: `docs/game-reference.md` Abschnitt 11–13.
+**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (die Credits-Kosten pro Vertrauenspunkt steigen mit der Stufe) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer regelmäßig die kleine Stufe zieht, zahlt einen laufenden Credits-Betrag für einen wiederkehrenden Vertrauens-Bonus — spürbar gegenüber der Relaisvergütung und dem Berater-Upkeep, aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) löst ein eigenes Ereignis aus (`merchant_trust_boost`), das groß einsetzt und über mehrere Sole abklingt, für einen Credits-Betrag — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll. Exakte Werte für den Vergleich: `docs/game-reference.md` Abschnitt 11–13.
 
 **Rationale:** Die Zulage gibt dem Spieler einen direkten, jederzeit verfügbaren Hebel auf Vertrauen — aber zu einem Preis, der die Entscheidung "Vertrauen jetzt sichern" gegen "Credits in Ausbau/Handel investieren" tatsächlich schwer macht. Die degressive Staffelung verhindert, dass die große Stufe zur Standardwahl wird; die Einmal-pro-Sol-Regel verhindert Kombination innerhalb eines Sols. Zusammen ersetzt das einen Cooldown, ohne die Reaktionsfreiheit des Spielers einzuschränken.
 
@@ -2348,18 +2363,18 @@ Vertrauens-Malus = −min(Basis-Malus + (streak−1), Malus-Deckel)
 
 Anders als gewöhnliche Events eskaliert dieser Malus, solange der Hunger anhält, und verfällt erst beim Sättigen (Streak → 0). Er wird in `TrustService::calculateTrust` als eigener Summand addiert, nicht über die Event-Tabelle (die nicht stackt).
 
-Die Hunger-Spirale wird eskalierend bestraft — ein anhaltender Hunger führt zu einem progressiv stärkeren Vertrauens-Malus (kein Cap beim Eintreten, aber ein Deckel nach einigen Solen). Dies erzeugt einen echten Druck, die Organika-Produktion auf mindestens dem ersten Ausbaulevel zu halten. Der Feedback-Loop: leerer Agrardom → Vertrauensverfall → Produktions-/AP-Malus → noch weniger Organika möglich. Der Agrardom wird damit zum Pflichtgebäude. Exakte Malus-Werte: `config/game.php → food` (`hunger_base_malus`, `hunger_step`, `hunger_cap`) / `docs/game-reference.md` Abschnitt 15.
+Die Hunger-Spirale wird eskalierend bestraft — ein anhaltender Hunger führt zu einem progressiv stärkeren Vertrauens-Malus (kein Cap beim Eintreten, aber ein Deckel nach einigen Solen). Dies erzeugt einen echten Druck, die Organika-Produktion auf mindestens dem ersten Ausbaulevel zu halten. Der Feedback-Loop: leerer Agrardom → Vertrauensverfall → AP-Abzug → weniger Handlungsspielraum, um die Versorgung zu reparieren. Die Produktion selbst bleibt unberührt (keine Spirale über die Nahrung). Die Serie endet mit dem ersten satten Sol. Der Agrardom wird damit zum Pflichtgebäude. Exakte Malus-Werte: `config/game.php → food` (`hunger_base_malus`, `hunger_step`, `hunger_cap`) / `docs/game-reference.md` Abschnitt 15.
 
 ### Einflussfaktoren: Ereignisse (Events)
 
-Events können Vertrauen temporär verändern. Die Wirkung beginnt im ersten Sol voll und **klingt über mehrere Sole aus** (Nachwirkung, Spec `docs/superpowers/specs/2026-10-23-vertrauens-nachwirkung.md`). Wie lange und wie stark, legt ein Profil je Ereignis-Typ fest: der Anteil des Ereigniswertes pro Sol seit Auslösung. Ereignisse ohne Profil (derzeit alle) wirken nur einen Sol; die Nachwirkung wird erst nach einer Messung scharf geschaltet. Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Sol-Berechnung aus den Ereigniszeilen neu berechnet.
+Events können Vertrauen temporär verändern. Die Wirkung beginnt im ersten Sol voll und **klingt über mehrere Sole aus** (Nachwirkung, Spec `docs/superpowers/specs/2026-10-23-vertrauens-nachwirkung.md`). Wie lange und wie stark, legt ein Profil je Ereignis-Typ fest: der Anteil des Ereigniswertes pro Sol seit Auslösung. Ereignisse ohne Profil wirken nur einen Sol; die allgemeine Nachwirkung wird erst nach einer Messung scharf geschaltet. Einzige Ausnahme bisher ist der **Händler-Vertrauensschub**: Er hat ein eigenes Abklingprofil, damit ein teurer Kauf mehrere Sole spürbar bleibt (vorher schrieb er direkt auf den gespeicherten Wert und verpuffte mit der nächsten Neuberechnung, T59). Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Sol-Berechnung aus den Ereigniszeilen neu berechnet.
 
 **Regeln der Nachwirkung:**
 - Gleicher Typ im selben Auslöse-Sol zählt nur einmal (der stärkste). Gleicher Typ aus verschiedenen Solen **addiert sich**, solange sich die Nachwirkungen überlappen.
 - Die Spitze bleibt erhalten, die Nachwirkung kommt zusätzlich; die Mehrwirkung wird gemessen.
-- Jede Ereigniszeile wird einzeln gerundet (von der Null weg), damit angezeigte Zeilen und Summe übereinstimmen.
+- Jede Ereigniszeile wird einzeln kaufmännisch gerundet (halbe Werte von der Null weg), damit angezeigte Zeilen und Summe übereinstimmen.
 - Ein optionaler Deckel begrenzt den Gesamt-Ereignisanteil nach oben und unten (Sicherheitsnetz gegen Rückschlag-Ketten); seine Höhe wird gemessen.
-- Der Leitstellen-Abschlag wirkt auf den Ereigniswert vor dem Profil, also auf die ganze Nachwirkung.
+- Die Leitstelle rückt jedes negative Ereignis um einen festen Punkt näher an null (kein Prozentabschlag; ein kleiner Malus kann damit ganz entfallen). Das wirkt auf den Ereigniswert vor dem Profil, also auf die ganze Nachwirkung. Die Hungerstrafe ist kein Ereignis und wird nicht gedämpft.
 - `well_fed` bleibt beim Ein-Sol-Profil (täglich wiederholt, sonst ein versteckter Dauerbonus). Das Stipend wirkt im ersten Sol voll; die Nachwirkung kommt obendrauf, die Preis-Leistung wird nach der Messung geprüft.
 - Die Kommandozentrale zeigt die wirkenden Ereigniszeilen mit Verlauf („danach +1, +1“) und der Summe.
 
@@ -2373,7 +2388,7 @@ Standard: Ein Ereignis wirkt einen Sol; mit einem Nachwirkungsprofil (s. o.) kli
 
 Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Fehlschläge und Zwischenfälle, Bonus für Erfolg oder Zuwendung) stehen in `config/game.php → trust.events.*` — exakte Werte nach erstem Playtest kalibrieren.
 
-> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** dämpft `encounter_lost` und `colony_threatened` um einen Prozentsatz, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Dämpfungswert: `config/buildings.php` (securityHub).
+> **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Die **Leitstelle** rückt `encounter_lost`, `colony_threatened` und alle anderen negativen Ereignisse um einen festen Betrag näher an null, wenn aktiv — das macht ihre genauen Werte doppelt relevant. Exakter Betrag: `config/buildings.php` (securityHub, `trust_event_mitigation`).
 
 **Rationale für neue Events:**
 - Handelsbeschränkungen gibt es nicht, ein Ereignis `trade_blocked` existiert nicht. `treaty_signed` ist angelegt, wird aber derzeit von keiner Spielregel ausgelöst (Verträge kommen frühestens mit den Cantina-Vereinbarungen, ROADMAP Ideenpool).
@@ -2383,19 +2398,21 @@ Die konkreten Vertrauenseffekte pro Event-Typ (Malus für Fehlschläge und Zwisc
 
 ### Effekte des Vertrauens auf die Kolonie
 
-Vertrauen beeinflusst Produktion und AP-Pool, den Wohnraum nicht. Die Wirkung bleibt bewusst moderat, damit Vertrauen keine dominante Wachstumsstrategie wird. Auf die Produktion wirkt es als **Multiplikator** (große Mengen, Prozent bleibt sichtbar), auf den AP-Pool als **Summand** (kleiner Pool, ein Prozentfaktor würde dort wegrunden).
+Vertrauen wirkt nur auf den AP-Pool — weder auf die Produktion noch auf den Wohnraum. Daneben hängen an ihm die Niederlage (siehe oben), der Seuchen-Zweig (§9), das Siegziel Kolonieblüte (§15) und die Punktwertung.
 
-#### Ressourcenproduktion
+#### Keine Produktionswirkung (T59, Owner 2026-11-14)
 
-Vertrauen wirkt als Multiplikator auf die Rohstoffproduktion (Harvester, Agrardom). Hohes Vertrauen gibt einen moderaten Produktionsbonus; niedriges Vertrauen reduziert den Output. Das skaliert die Produktion ohne sie zu blockieren — der Multiplikator bleibt immer > 0.
+Früher wirkte Vertrauen zusätzlich als Faktor auf Harvester und Agrardom. Das entfällt: Die guten Faktor-Bänder fielen fast genau auf die neuen AP-Zuschläge (doppelte Belohnung für denselben Zustand), ein Organika-Abzug bei Unruhe hätte Hunger verlängert und damit eine Spirale gebaut, und ein gerundeter Faktor widerspricht „angezeigte Zahl = wirkende Zahl“. Falls die Messung Organika-Knappheit zeigt, ist der Rückfall ein fester, nur positiver Organika-Summand in den guten Stufen (Spec §3.3), keine Rückkehr des Faktors.
 
 #### AP-Zuschlag und -Abzug
 
-Vertrauen wirkt auch auf die Aktionspunkte pro Sol — als **fester AP-Betrag je Vertrauensband**, der zum Pool addiert bzw. abgezogen wird, nicht als Faktor (AP-Skala 2026-11-13 §4: auf einem Pool von wenigen AP wäre ein Prozentfaktor meist wirkungslos, angezeigte Zahl = wirkende Zahl). Nur sehr hohes Vertrauen bringt einen Zuschlag, deutlich negatives Vertrauen kostet einen Abzug; die neutralen und leicht positiven Bänder wirken nicht. Der Zuschlag erscheint als eigene Zeile im AP-Zufluss, neben Grundwert und Beratern. AP ist die knappste Ressource, daher soll Vertrauen sie nicht zu stark verstärken (kein Dominanz-Stacking).
+Jede Stufe gibt einen **festen AP-Betrag**, der zum Pool addiert bzw. abgezogen wird (AP-Skala 2026-11-13 §4: auf einem Pool von wenigen AP wäre ein Prozentfaktor meist wirkungslos). Stabil wirkt nicht; Zufrieden und Euphorisch geben einen kleinen bzw. großen Zuschlag, Unruhig und Aufruhr den entsprechenden Abzug. Die Wirkung erscheint als eigene Zeile im AP-Zufluss mit dem Stufenwort („Vertrauen (Zufrieden) +1“), neben Grundwert und Beratern.
 
-> ⚠️ BALANCE CONCERN: Ein starker AP-Malus bei negativem Vertrauen macht Krisensituationen selbstverstärkend (weniger AP → weniger Reparaturen → mehr Decay → mehr Vertrauens-Malus). Diese Spirale ist designtechnisch vertretbar (Entropie als Spielprinzip), aber es muss einen Ausweg geben. Der Ausweg ist der Bau von Vertrauensgebäuden (positive Events) und Kolonisten-Zulagen (Spieler-Aktion), beides funktioniert trotz AP-Malus (AP wird nicht negativ).
+> ⚠️ BALANCE CONCERN: Die AP-Wirkung ist stärker als vor T59 — Zufrieden gibt jetzt einen Zuschlag, Euphorisch einen doppelten. Auf einem Pool von wenigen AP kann das Phase 2 spürbar beschleunigen und den Sieg-Korridor (§18.4) verschieben (gerechnet, ungemessen). Messen, bevor nachgeschärft wird.
 
-Exakte Werte pro Vertrauensbereich: `config/game.php → trust.production_multiplier` (Faktor) / `trust.ap_bonus` (AP-Betrag), Tabelle in `docs/game-reference.md` Abschnitt 14.
+> ⚠️ BALANCE CONCERN: Ein AP-Abzug bei niedrigem Vertrauen macht Krisen selbstverstärkend (weniger AP → weniger Reparaturen → mehr Decay). Das ist vertretbar (Entropie als Spielprinzip), braucht aber einen Ausweg: Vertrauensgebäude, Verpflegung und Kolonisten-Zulagen funktionieren trotz Abzug (AP wird nicht negativ), und es gibt keinen Produktionsabzug, der die Versorgung zusätzlich drückt.
+
+Exakte Werte: `config/game.php → trust.bands`, Tabelle in `docs/game-reference.md` Abschnitt 14.
 
 #### Wohnraum
 
@@ -2405,7 +2422,7 @@ Vertrauen beeinflusst den Wohnraum **nicht**. Das Kolonisten-System ist ein sepa
 
 **Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer innerhalb der Skala aus "Wertebereich" oben. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
 
-**Die Konfiguration** steht produktiv in `config/game.php` unter dem Schlüssel `trust` (Umbenennung von `moral`→`trust` abgeschlossen). Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_bonus, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
+**Die Konfiguration** steht produktiv in `config/game.php` unter dem Schlüssel `trust` (Umbenennung von `moral`→`trust` abgeschlossen). Die vollständigen Werte (min, max, base, bands, ships_cap, event_profiles, events; Quellen je Entität in `config/buildings.php`, `config/knowledge.php`, `config/ships.php`) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
 ### Sol-Integration
 
@@ -2413,13 +2430,13 @@ Vertrauen wird in **Tick-Schritt 9** nach Ressourcenproduktion und Verpflegung b
 
 | Schritt | Beschreibung |
 |---------|-------------|
-| 5 | Resource Generation — Rohstoffproduktion (mit altem Vertrauen-Multiplikator) |
+| 5 | Resource Generation — Rohstoffproduktion (ohne Vertrauenswirkung) |
 | 6–7 | Verpflegung, Begegnungen |
 | 8 | Wohnraum neu berechnen |
 | **9** | **Trust Calculation** — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren |
 | 12 | Advisor Ticks |
 
-Die Reihenfolge ist bewusst: Die Produktion von Sol N verwendet den Vertrauenswert von Sol N-1. Der neue Vertrauenswert gilt erst ab Sol N+1. Das verhindert zirkuläre Abhängigkeiten.
+Die Reihenfolge ist bewusst: Der neue Vertrauenswert (und damit die AP-Wirkung seiner Stufe) gilt erst ab Sol N+1. Das verhindert zirkuläre Abhängigkeiten.
 
 ### Implementierung (Stand)
 
@@ -2428,9 +2445,9 @@ Vollständig implementiert, kein offener TODO mehr:
 1. `config/game.php` — `trust`-Block produktiv (alle Werte, siehe oben).
 2. `app/Services/TrustService.php` — berechnet den Vertrauenswert je Kolonie.
 3. Tick-Integration in Schritt 9 (siehe unten) — schreibt `colony_resources` (res_id=12).
-4. `app/Services/AdvisorService.php` — AP-Berechnung berücksichtigt den AP-Zuschlag bzw. -Abzug des Vertrauensbands als Summand (`getApBreakdown`).
-5. Produktionslogik — Trust-Produktionsmultiplikator wird angewandt.
-6. UI: Vertrauen-Anzeige in der Ressourcenleiste (resource_id=12).
+4. `app/Services/AdvisorService.php` — AP-Berechnung berücksichtigt den AP-Zuschlag bzw. -Abzug der Vertrauensstufe als Summand (`getApBreakdown`).
+5. Produktionslogik — keine Vertrauenswirkung mehr (T59).
+6. UI: Vertrauen in der Ressourcenleiste als Stufenwort + AP; Zahlen nur mit Analytik-Labor (`TrustService::view()`).
 
 ### Mögliche Erweiterungen (nach Playtest)
 
@@ -2498,7 +2515,7 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 |---|---|---|
 | Handelsnetz (`task_trade_volume`) | Wirtschaft | Abgeschlossene Transaktionen mit dem Reisenden Händler im laufenden Run über einer Schwelle |
 | Forschungsvorsprung (`task_research_lead`) | Forschung/Aufbau | Mindestens einige Kenntnisse auf Höchstlevel gebracht |
-| Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen über einer Schwelle für mehrere aufeinanderfolgende Sole |
+| Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen mindestens in einer bestimmten Stufe (Zufrieden) für mehrere aufeinanderfolgende Sole — an die Stufe gekoppelt, weil der Spieler die Zahl nicht sieht |
 | Selbstversorgung (`task_self_sufficiency`) | Überleben | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen. Beide Bedingungen müssen gleichzeitig für mehrere aufeinanderfolgende Sole gelten, jeder einzelne Ausfall setzt die Serie zurück |
 | Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b, Bergungsflüge eingeschlossen) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
 | Ingenieursleistung (`task_engineering_output`) | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
@@ -2738,7 +2755,7 @@ Vier Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Object
 
 #### Fail State 1 — Vertrauenskollaps
 
-**Bedingung:** `trust < config('game.run.trust_fail_threshold')` — ein tief negativer Schwellwert, siehe `config/game.php → run.trust_fail_threshold`.
+**Bedingung:** `trust < config('game.run.trust_fail_threshold')` — eine Grenze knapp über dem unteren Skalenende, tief in der Stufe Aufruhr, siehe `config/game.php → run.trust_fail_threshold`.
 
 **Auslösung:** Instant in demselben Tick, in dem der Vertrauenswert unter die Fail-Schwelle fällt. Kein Streak erforderlich.
 
@@ -2748,14 +2765,14 @@ Begründung gegen eine Streak-Mechanikverzögerung: Trust unter der Fail-Schwell
 
 | Schwellwert | Maßnahme |
 |-------------|---------|
-| Trust unter dem Neutralwert | Protokoll-Ereignis (Kolonist, Absender): "Die Stimmung in der Kolonie ist angespannt." — einmalig pro Run |
-| Trust deutlich negativ | Roter Farbwechsel am Trust-Ressource-Chip in der Ressourcenleiste (dazwischen zeigt der Chip gelb als Vorstufe) |
-| Trust nahe der Fail-Schwelle | Nexus-Funk-Warnung, einmalig pro Run: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." (entfällt, wenn im selben Tick bereits der Fail State greift) |
+| Wechsel von Stabil nach Unruhig (erste Stufe mit AP-Abzug) | Protokoll-Ereignis (Kolonist, Absender): "Die Stimmung in der Kolonie ist angespannt." — einmalig pro Run |
+| jede Stufe | Farbe des Vertrauens-Chips folgt der Stufe (Zufrieden/Euphorisch positiv, Stabil neutral, Unruhig Warnung, Aufruhr negativ, Warnmarke an der Leiste) |
+| Trust nahe der Fail-Schwelle (im Aufruhr) | Nexus-Funk-Warnung, einmalig pro Run: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." (entfällt, wenn im selben Tick bereits der Fail State greift) |
 | Trust unter der Fail-Schwelle | Fail State — Run endet sofort |
 
-Exakte Schwellwerte: `config/game.php → run.trust_fail_threshold`, `run.trust_warning.chip_red`, `run.trust_warning.nexus_warning`.
+Exakte Schwellwerte: `config/game.php → run.trust_fail_threshold`, `run.trust_warning.nexus_warning`, `trust.bands`.
 
-> ⚠️ BALANCE CONCERN: Die Fail-Schwelle ist bewusst tief gesetzt. Ein mehrtägiger Hunger-Streak plus ein zusätzliches Level-Down-Event würde die Schwelle knapp nicht erreichen — das ist gewollt: Vernachlässigung soll spürbar bestrafen, aber erholbar bleiben. Nach erstem Playtest kalibrieren ob die Schwelle zu tief (Spieler scheitern selten) oder zu flach (Spieler scheitern überraschend schnell) ist.
+> ⚠️ BALANCE CONCERN: Mit den heutigen Quellen erreicht keine Kolonie die Fail-Schwelle — Hunger (gedeckelt) plus Zwischenfälle und Nexus-Kredit reichen nur bis Unruhig (gerechnet, Spec §2.5). Der Fail State ist damit vorerst Dekoration. Vorgesehen: eskalierender Hunger als eigener, gemessener Schritt (ROADMAP T59a); Zielbild „Niederlagen durch Vertrauen in wenigen Läufen, nur nach langer Vernachlässigung“ (Annahme).
 
 **Narrativer Ausgang:** "Die Kolonisten haben das Vertrauen verloren. Der Direktor wurde abgesetzt."
 

@@ -16,7 +16,7 @@ Diese Datei ist ein **Hand-Maintained Snapshot** — keine automatische Generier
 | 3 | `regolith` | Regolith | Kolonie | **Ja** | 300 (`game.onboarding.start_regolith`) |
 | 4 | `compounds` | Werkstoffe | Kolonie | **Ja** | 0 |
 | 5 | `organics` | Organika | Kolonie | **Ja** | 0 |
-| 12 | `trust` | Vertrauen | Kolonie | Nein | 0 |
+| 12 | `trust` | Vertrauen | Kolonie | Nein | 50 (Grundwert `game.trust.base`, Skala 0–100, Abschnitt 14) |
 
 ---
 
@@ -121,10 +121,10 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **construction** | 8/11/14/18/21 | 72 AP | 0 | Gebäude-Levelup-AP: Lv2 −1, Lv4 −1 (Σ −2 AP, `ap_cost_reduction_per_lv`), nur auf Levelups ≥ `game.min_discountable_cost_ap` (6), praktisch nur CC |
 | **cartography** | 8/11/14/18/21 | 72 AP | 0 | ab Lv2: Missionen mit Entfernung ≥ 3 kosten −1 AP (`mission_ap_reduction`, Untergrenze `game.action_min_cost_ap` = 1); ab Lv4: erste Erkundung je Sol kostenlos (`free_explore_from_level`) |
 | **geology** | 8/11/14/18/21 | 72 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
-| **agronomy** | 8/11/14/18/21 | 72 AP | +2 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
-| **health** | 8/11/14/18/21 | 72 AP | +3 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
+| **agronomy** | 8/11/14/18/21 | 72 AP | +1 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
+| **health** | 8/11/14/18/21 | 72 AP | +2 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
 | **trade** | 8/11/14/18/21 | 72 AP | 0 | Bar-Slots +0/+1/+1/+0/+0; Handelsvorteil-Preisbonus (alle 3 Kanäle) +2/+3/+3/+2/+2% (Σ12%); Cantina-Verhandlung-Erfolgschance +1/+2/+2/+2/+1%-Punkte (Σ8%-Punkte, nur mit Konsul). Kein Bau-Rabatt auf AP mehr (A13, 2026-09-20 — vorher Σ15% additiv mit construction, gestrichen: Handel wirkt auf Preise/Angebote/Verhandlung, nicht auf Bauprojekte). |
-| **defense** | 8/11/14/18/21 | 72 AP | +2 | Sturm-Risiko −3/−5/−5/−4/−3% |
+| **defense** | 8/11/14/18/21 | 72 AP | +1 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **Rabatt-Regel** (`game.php`, AP-Skala §5.1): alle AP-Rabatte absolut und additiv. `min_discountable_cost_ap` = 6 (dauerhafte Rabatte nur auf Kosten ≥ 6 AP), `project_min_cost_ap` = 2 (Untergrenze Projekte/Levelups nach Rabatt), `action_min_cost_ap` = 1 (Untergrenze Handlungen/Missionen). Einmal-Gutscheine (Vesper/Aldra) ignorieren `min_discountable_cost_ap`, respektieren aber die Untergrenze. Labor-Rabatt auf Kenntnisse: Abschnitt 20.
 > **Sol je Kenntnis** (gerechnet aus Kosten ÷ Deckel): Lv1–5 bei Deckel 1 / 2 / 3 = Σ 72 / 37 / 25 Sol.
@@ -269,8 +269,8 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
 | `mission_supply_run` | 1 | 3 Or | 10 Or (nur Organika, T30: kein Regolith mehr) |
-| `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 520 Cr + Trade Success (+2 Trust) |
-| `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 180 Cr + Encounter Won (+2 Trust) |
+| `mission_trade_convoy` (Trade Lv1+) | 3 | 9 Or | 520 Cr + Trade Success (+1 Vertrauen) |
+| `mission_aid_transport` | 2 | 6 Or + 10 Or extra | 180 Cr + Encounter Won (+1 Vertrauen) |
 
 ### Frachter / Korvette
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
@@ -282,7 +282,7 @@ Credit-Belohnungen am 2026-09-30 verdoppelt (Owner, `task_credit_reserve`: Credi
 | Mission | Sol-Distanz | Organika-Kosten | **Belohnung** |
 |---|---|---|---|
 | `mission_escort_convoy` | 3 | 9 Or | 560 Cr |
-| `mission_perimeter_patrol` (Def Lv1+) | 3 | 9 Or | 440 Cr + Encounter Won (+2 Trust) |
+| `mission_perimeter_patrol` (Def Lv1+) | 3 | 9 Or | 440 Cr + Encounter Won (+1 Vertrauen) |
 
 > **Dispatch-AP** (`missions.ap_by_distance`): Entfernung 1/2/3/4/5 = 1/1/2/3/3 AP (jenseits der Tabelle der letzte Wert); `cartography` ab Lv2 −1 AP ab Entfernung 3 (Untergrenze 1), siehe Abschnitt 6.
 > **Organika-Kosten** (Provisions): base = sol_distance × 3 Or, mit Knowledge-Scaling −1 pro Level (Floor 1)
@@ -337,10 +337,10 @@ Aus `config/missions.php` → `catalog[*].difficulties`. Jede Mission bietet gen
 | **Advisor Rang 1** | +1 AP |
 | **Advisor Rang 2** | +1 AP |
 | **Advisor Rang 3** | +2 AP |
-| **Vertrauens-AP** | −1 / 0 / +1 je Band (Abschnitt 14) |
+| **Vertrauens-AP** | −2 / −1 / 0 / +1 / +2 je Stufe (Abschnitt 14) |
 | **Seuche** | −1 AP solange aktiv (`game.encounter.plague.ap_reduction`; 0 bei Devas Drill-Puffer) |
 
-Pool = `max(0, base + Σ Berater + Vertrauens-AP + Seuchen-AP)` (`AdvisorService::getApBreakdown`, alle Summanden einzeln ausgewiesen). Sol 0 (Baumeister R1): 5; Phase-1-Ende (2 × R1): 6; **Maximum** 4 + 4 × 2 + 1 = 13 AP/Tick theoretisch.
+Pool = `max(0, base + Σ Berater + Vertrauens-AP + Seuchen-AP)` (`AdvisorService::getApBreakdown`, alle Summanden einzeln ausgewiesen). Sol 0 (Baumeister R1): 5; Phase-1-Ende (2 × R1): 6; **Maximum** 4 + 4 × 2 + 2 (Euphorisch) = 14 AP/Tick theoretisch.
 
 ### Deckel je Ziel und Sol
 | Ziel | `base` | + Fach-Deckel | wirksam ohne / R1 / R2 / R3 |
@@ -436,14 +436,7 @@ Bau-Gate: Platzieren und Ausbau n → n+1 (n ≥ 1) erfordern `freies Supply ≥
 
 ## 10a. Wohnraumverlust / Unterbesetzung (A14, Option A2)
 
-Kein eigener Config-Block mehr (`game.overcap` und die Ereignisse `colonists_left` / `colonists_dismissed` entfielen mit T43-G9); Logik in `ResourcesService::colonistsOverview()` und `staffingShare()`. Die Zeilen unten sind weitere Vertrauens-Konfiguration.
-
-| Config-Key | Wert | Bedeutung |
-|---|---|---|
-| `game.trust.events.treaty_signed` | +3 | reserviert (Cantina-Vereinbarungen), feuert noch nirgends; `trade_blocked` entfiel 2026-10-23 |
-| `game.trust.event_profiles` | `instant` [100]; `fade5` [100, 80, 60, 40, 20] | Nachwirkung: Prozent des Ereigniswerts je Sol seit Auslösung (T40) |
-| `game.trust.event_profile` | leer (alle `instant`) | Zuordnung Ereignis-Typ → Profil; `fade5` ist vorbereitet, aber noch nicht zugewiesen (Messschritt offen) |
-| `game.trust.event_cap` | aus (`null`) | Deckel auf den Gesamt-Ereignisanteil (±), Höhe nach Messung |
+Kein eigener Config-Block mehr (`game.overcap` und die Ereignisse `colonists_left` / `colonists_dismissed` entfielen mit T43-G9); Logik in `ResourcesService::colonistsOverview()` und `staffingShare()`. Vertrauens-Konfiguration (Profile, Ereignis-Deckel): Abschnitt 13/14.
 
 ```
 Arbeitsplätze  = siehe Abschnitt 10 (inkl. Reserve)
@@ -483,53 +476,91 @@ Konsul-Handelsvertrag (bedingungsloses Dauereinkommen) entfernt (2026-09-09, F3/
 
 ---
 
-## 13. Trust-Events (einmalig, Σ stacking strongest-only)
+## 13. Vertrauens-Ereignisse (`game.trust.events`)
 
-| Event | Trust-Delta | Trigger |
+Stand T59 (2026-11-14, Skala 0–100, Werte gegenüber der alten Skala halbiert). Beträge wirken nach ihrem Profil (`game.trust.event_profile`, Standard `instant` = genau ein Sol).
+
+| Ereignis (Key) | Betrag | Auslöser |
 |---|---|---|
-| Gebäude Level-Up | +1 | Jeder Level-Up |
-| Gebäude Level-Down | −3 | Decay, SP ≤ 0 |
-| Kenntnis Level-Up | +2 | Jeder Level-Up |
-| Handel erfolgreich | +2 | Bar-Angebot akzeptiert |
-| Handel blockiert | −3 | Bar-Angebot scheitert / abgelehnt |
-| Vertrag unterzeichnet | +3 | (zukünftig, nicht implementiert) |
-| Organika "gut versorgt" | +2 | Diese Sol: Vorrat ≥ Bedarf |
-| Hunger-Strafe | −2 bis −8 | Hunger-Streak, linear bis Cap |
-| Encounter gewonnen | +2 | Mission erfolgreich (z.B. `encounter_won`) |
-| Encounter verloren | −4 | Beschädigte Begegnung (33–65% SP) |
-| Kolonie bedroht | −5 | Kritische Begegnung (<33% SP) |
-| Kolonisten-Zulage (klein) | +2 | Spieler zahlt 100 Cr |
-| Kolonisten-Zulage (mittel) | +3 | Spieler zahlt 300 Cr |
-| Kolonisten-Zulage (groß) | +4 | Spieler zahlt 600 Cr |
-| Nexus-Kredit | −5 | Schiff gekauft on Debt |
+| `building_level_up` | +1 | jede abgeschlossene Ausbaustufe |
+| `research_level_up` | +1 | jede abgeschlossene Kenntnisstufe |
+| `trade_success` | +1 | Handel erfolgreich (auch Belohnung `mission_trade_convoy`) |
+| `treaty_signed` | +2 | reserviert (Cantina-Vereinbarungen), feuert noch nirgends |
+| `well_fed` | +1 | in diesem Sol Organika-Vorrat ≥ Bedarf |
+| `encounter_won` | +1 | Begegnung abgewehrt / Schutz- oder Hilfsmission erfolgreich |
+| `encounter_lost` | −2 | Begegnung beschädigt (33–65 % SP) |
+| `colony_threatened` | −3 | Begegnung kritisch (< 33 % SP) |
+| `nexus_credit` | −3 | Schiff auf Nexus-Kredit (`game.hangar.nexus_credit_trust_penalty` ebenfalls −3) |
+| `stipend_small` / `_medium` / `_large` | +1 / +2 / +3 | Kolonisten-Zulage für 100 / 300 / 600 Cr (`game.stipend.tiers`) |
+| `story_concern_resolved` | +2 | Cantina-Anliegen (Sorel/Prediger) gelöst |
+| `story_concern_failed` | −1 | Cantina-Anliegen gescheitert |
+| `merchant_trust_boost` | +8, klingt ab | Händler-Item „Vertrauensschub“ (600 Cr, `game.merchant.items.trust_boost`), Profil `merchant_boost` |
 
-**Stacking-Regel**: Nur der stärkste Event pro Tick zählt (kein Addieren mehrerer same-key events).
+Gebäude-Rückbau und Handel-blockiert lösen kein Vertrauens-Ereignis aus (keine Keys in Config).
+
+**Stapel-Regel:** gleicher Key im selben Sol zählt nur einmal (stärkster gewinnt); derselbe Key in verschiedenen Solen addiert sich, solange die Nachwirkungen überlappen.
+
+| Config-Key | Wert | Bedeutung |
+|---|---|---|
+| `game.trust.event_profiles` | `instant` [100]; `fade5` [100, 80, 60, 40, 20]; `merchant_boost` [100, 75, 63, 38, 25] | Prozent des Ereignisbetrags je Sol seit Auslösung (T40); `merchant_boost` ergibt aus +8 die Folge 8, 6, 5, 3, 2 |
+| `game.trust.event_profile` | `merchant_trust_boost` → `merchant_boost`; alle anderen `instant` | `fade5` ist vorbereitet, aber keinem Ereignis zugewiesen (Messschritt offen) |
+| `game.trust.event_cap` | aus (`null`) | Deckel auf den Gesamt-Ereignisanteil (±), Höhe nach Messung |
+| `buildings.securityHub.trust_event_mitigation` | 1 | Leitstelle (Stufe ≥ 1): jedes negative Ereignis 1 Punkt näher an 0 (−3 → −2, −1 → 0), vor dem Profil; Hunger ausgenommen |
 
 ---
 
-## 14. Trust-Bänder & Multiplikatoren
+## 14. Vertrauen: Skala, Quellen, Stufen (T59)
 
-Gesamttrust = clamp(Σ buildings + Σ researches + clamp(Σ ships, −30, +30) + events, −100, +100)
+```
+Vertrauen = clamp(base + Σ Gebäude + Σ Kenntnisse + clamp(Σ Schiffe, ±ships_cap) + Ereignisse + Hunger, min, max)
+          = clamp(50 + … , 0, 100)
+```
 
-### Production Multiplier (Ressourcen/Sol)
-| Trust-Band | Factor |
-|---|---|
-| 61–100 | ×1.20 |
-| 21–60 | ×1.10 |
-| −20 bis +20 | ×1.00 |
-| −60 bis −21 | ×0.85 |
-| −100 bis −61 | ×0.70 |
+Kein angesparter Bestand: jeden Sol neu berechnet (`TrustService::breakdown()`), Ergebnis in `colony_resources` (resource_id 12). Start = Grundwert 50. Keine Produktionswirkung mehr (Faktor-Tabelle entfällt, T59 Variante P0); Vertrauen wirkt nur über die AP der Stufe.
 
-### Vertrauens-AP (Summand, `game.trust.ap_bonus`)
-Seit der AP-Skala 2026-11-13 ein absoluter AP-Betrag auf den Pool statt eines Faktors (`trust.ap_multiplier` entfällt).
+### Stufen (`game.trust.bands`, untere Grenze inklusive)
+| Stufe (Key) | Spanne | AP auf den Pool |
+|---|---|---|
+| Aufruhr (`riot`) | 0–14 | −2 |
+| Unruhig (`restless`) | 15–39 | −1 |
+| Stabil (`stable`) | 40–59 | 0 |
+| Zufrieden (`content`) | 60–79 | +1 |
+| Euphorisch (`euphoric`) | 80–100 | +2 |
 
-| Trust-Band | AP |
-|---|---|
-| 61–100 | +1 |
-| 21–60 | 0 |
-| −20 bis +20 | 0 |
-| −60 bis −21 | −1 |
-| −100 bis −61 | −1 |
+### Statische Quellen (je Stufe bzw. Einheit)
+| Quelle | Config | Betrag | Maximum |
+|---|---|---|---|
+| Krankenstation (max 3) | `buildings.infirmary.trust_per_lv` | +3 | +9 |
+| Cantina (max 3) | `buildings.bar.trust_per_lv` | +2 | +6 |
+| Religiöse Stätte (max 1) | `buildings.temple.trust_per_lv` | +2 | +2 |
+| Kolonialdenkmal (max 1) | `buildings.monument.trust_per_lv` | +2 | +2 |
+| Leitstelle (max 3) | `buildings.securityHub.trust_per_lv` | +1 | +3 |
+| Agronomie (max 5) | `knowledge.agronomy.trust_per_lv` | +1 | +5 |
+| Gesundheit (max 5) | `knowledge.health.trust_per_lv` | +2 | +10 |
+| Verteidigung (max 5) | `knowledge.defense.trust_per_lv` | +1 | +5 |
+| Frachter (je Einheit) | `ships.freighter.trust_per_unit` | +1 | Schiffsdeckel `game.trust.ships_cap` = ±15 |
+
+Berater, übrige Gebäude, Kenntnisse und Schiffe: 0.
+
+### Hunger (`game.food`)
+Strafe = −min(`hunger_base_malus` + (Serie − 1) × `hunger_step`, `hunger_cap`) = −1, −2, −3, −4 (Deckel). Endet mit dem ersten satten Sol.
+
+### Schwellen
+| Schwelle | Wert | Config |
+|---|---|---|
+| Niederlage | Vertrauen < 5 | `game.run.trust_fail_threshold` |
+| Nexus-Warnung (einmalig) | < 10 | `game.run.trust_warning.nexus_warning` |
+| Onboarding-Hinweis | < 40 (Eintritt Unruhig), frühestens ab Tick 5 | `game.onboarding.hint_trust_threshold`, `hint_trust_min_ticks` |
+| Seuchen-Zweig Vertrauen | < 15 (Aufruhr) | `game.encounter.plague.trust_below` |
+| Kolonieblüte | Stufe ≥ Zufrieden, 12 Sole in Folge | `game.run.tasks.task_colony_prosperity` (`min_band` `content`) |
+| Punktwertung | Vertrauen am Ende × 5 | `game.run.score_weights.trust_multiplier` |
+
+Die Kopfzeilen-Farbe folgt der Stufe (`trust_chip_red` entfällt).
+
+### Anzeige
+Chip und Popup zeigen immer Stufenwort + AP-Wirkung und die Stufenleiste. Zahlen (Summe und Beträge der Quellen) nur mit Analytik-Labor Stufe ≥ 1 (`TrustService::numbersVisible()`); ohne Labor nur die Namen der gerade wirkenden Quellen (Grundwert immer).
+
+> Erreichbarkeit (gerechnet, Spec §2.5, ungemessen): größte negative Summe aus bestehenden Quellen etwa −11, Aufruhr und Niederlage praktisch unerreichbar. Eskalierender Hunger als eigener, gemessener Schritt (ROADMAP T59a).
 
 ---
 
@@ -540,10 +571,10 @@ Seit der AP-Skala 2026-11-13 ein absoluter AP-Betrag auf den Pool statt eines Fa
 | **Verbrauch pro Tick** | beschäftigte Kolonisten × 1 Organika (`game.food.supply_per_eater = 1`, T43-G7 2026-10-31; anwesend = Arbeitsplätze inkl. Reserve − abgewandert, siehe Abschnitt 10a) |
 | **Start-Organika** | 10 (`OnboardingService`, T43-G7 2026-10-31) |
 | **Agrardom-Kurve** | 16 / 20 / 30 Organika je Sol (Marginalwerte Lv1/2/3; kumulativ 16/36/66; `game.production_curve[41][5]`, T43-G7 2026-10-31) |
-| **"Gut versorgt" Bonus** | +1 Trust (wenn Bestand ≥ Bedarf) |
-| **Hunger-Strafe Base** | −2 Trust auf erste hungrige Sol |
-| **Hunger-Strafe Step** | +1 pro weitere Sol in Streak |
-| **Hunger-Strafe Cap** | −8 Trust (max) |
+| **"Gut versorgt" Bonus** | +1 Vertrauen (Ereignis `well_fed`, wenn Bestand ≥ Bedarf) |
+| **Hunger-Strafe Base** | −1 Vertrauen auf erstem hungrigen Sol (`hunger_base_malus`) |
+| **Hunger-Strafe Step** | +1 pro weiterem Sol in Serie (`hunger_step`) |
+| **Hunger-Strafe Cap** | −4 Vertrauen (`hunger_cap`) |
 
 ---
 
@@ -558,18 +589,18 @@ Trigger-Chancen ramp linear von 0 bis volle Stärke über erste 15 Sol.
 |---|---|---|---|---|
 | **Sturm** (Weather) | 1.2% | — (entfernt, s. u.) | 2% |
 | **Geologische Instabilität** | 0.15% × Sol seit Harv-Umzug | — | 5% |
-| **Seuchenausbruch** (Plague) | 5% (nur wenn Hunger ≥3 oder Trust<−20) | — | — |
+| **Seuchenausbruch** (Plague) | 5% (nur wenn Hungerserie ≥ 3 oder Vertrauen < 15) | — | — |
 
 > **Sturm-Re-Kalibrierung 2026-09-03:** Seit dem Wechsel auf koloniweiten Wirkbereich (GDD §9) trifft ein ausgelöster Sturm ALLE Colony-Zone-Gebäude gleichzeitig statt eines einzelnen — die Gesamtschwere skaliert dadurch bereits von selbst mit der Gebäudeanzahl. Ein zusätzlicher `chance_per_building`-Term hätte dasselbe Kolonie-Größen-Signal doppelt eingepreist (Trigger-Häufigkeit UND Schadenssumme). `chance_per_building` wurde daher entfernt und `base_chance` gesenkt, damit die erwartete Schadenssumme/Sol für eine typische Mid-/Lategame-Kolonie (5-12 Gebäude) grob auf dem alten, gedeckelten Einzelziel-Niveau bleibt statt mit der Gebäudeanzahl zu explodieren. Platzhalter-Größenordnung, Nachjustierung nach Playtest — siehe `config/game.php` (`game.encounter.storm.*`) für den Rechenweg-Kommentar.
 
 > **Cooldown**: 3 Sol nach jeder resolved Begegnung, keine neue WARNING
 
 ### Begegnungs-Ergebnisse (SP-Prozent)
-| Tier | SP-Range | Event | Trust-Delta |
+| Tier | SP-Range | Event | Vertrauen |
 |---|---|---|---|
-| Abgewehrt | ≥66% | Erfolgreich | +2 (encounter_won) |
-| Beschädigt | 33–65% | Getroffen | −4 (encounter_lost) |
-| Kritisch | <33% | Kritisch | −5 (colony_threatened) |
+| Abgewehrt | ≥66% | Erfolgreich | +1 (encounter_won) |
+| Beschädigt | 33–65% | Getroffen | −2 (encounter_lost; mit Leitstelle −1) |
+| Kritisch | <33% | Kritisch | −3 (colony_threatened; mit Leitstelle −2) |
 
 ---
 
@@ -646,7 +677,7 @@ Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für
 | **Phase 1 Warning** | Sol 17 (Nexus escalates, `game.run.phase1_warning_sol`) |
 | **Phase-1-Ende** | Grundaufbau (`RunProgressService::checkPhase1Completion`, Owner 2026-10-15): CC Lv2; Harvester, Wohnhabitat, Agrardom, Uplink-Station und ein Pfadgebäude je mindestens Lv1; zwei Berater. Zielfenster Sol 12–15. CC Lv3 eröffnet Phase 2. |
 | **CC-Ausbau AP** | je Ziel-Level 8/16/24/32 für Lv2–Lv5 (`buildings.commandCenter.cc_upgrade_ap_by_level`, AP-Skala 2026-11-13), zusätzlich zum Regolith (30 × Ziel-Level). Gerechnet bei Baumeister R1 (Deckel 2) 4/8/12/16 Sol, ab R2 (Deckel 3) 3/6/8/11 Sol. |
-| **Trust Fail Threshold** | Trust < −20 (instant fail) |
+| **Trust Fail Threshold** | Vertrauen < 5 (instant fail, `game.run.trust_fail_threshold`; Nexus-Warnung < 10) |
 | **Nexus Debt Cap** | 12000 Cr (instant fail) |
 | **Countdown** | `countdown_sols_before_limit` 20 → Gesamt-Sol 80 |
 | **Sieg-Korridor** (Owner) | Sol 70–85 nur sehr guter Run + Glück; realistisch Sol 85–95 |
@@ -664,7 +695,7 @@ Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens
 |---|---|---|---|---|---|
 | `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
 | `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 6000, `target` 20 Sole** | Owner-Entscheidung 2026-10-01 (vorher 4000/10: mit Belohnungen ×2 und Sparen schon an Sol 44–45 erfüllt) |
-| `task_colony_prosperity` | diplomacy | streak | Vertrauen > `threshold` | **`threshold` 40, `target` 12 Sole** | Owner 2026-10-01 bestätigt (8/8 @82–95) |
+| `task_colony_prosperity` | diplomacy | streak | Vertrauensstufe ≥ `min_band` | **`min_band` content (Zufrieden, ≥ 60), `target` 12 Sole** | T59 Owner 2026-11-14 (vorher Vertrauen > 40 auf alter Skala, 8/8 @82–95); neu ungemessen |
 | `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | **`min_level` 5, `target` 7** | Owner 2026-10-01 bestätigt (gezielt ~Sol 68, nebenbei max. 6) |
 | `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | **`regolith_min` 150, `organics_min` 300, `target` 35 Sole** | Owner 2026-10-01 (vorher 45 Sole, erst um Sol 96 erreicht) |
 | `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` normal, `target` 10** | Owner 2026-10-01 bestätigt (gezielt @82–87) |
@@ -729,18 +760,18 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 
 ---
 
-## 20. Gebäude-Trust & Special Effects
+## 20. Gebäude-Vertrauen & Special Effects
 
-| Gebäude | Trust/Lv | Spezial-Effekt |
+| Gebäude | Vertrauen/Lv | Spezial-Effekt |
 |---|---|---|
 | Agrardom | 0 | Organisierte Organika-Produktion |
-| Cantina | +3/Lv | Verhandlungs-Risiko; +Konsul-Slot |
+| Cantina | +2/Lv | Verhandlungs-Risiko; +Konsul-Slot |
 | Analytik-Labor | 0 | Kenntnis-Forschung; +Analytiker-Slot; Kenntnis-Levelup-AP: ab Lv3 −1, ab Lv5 −2 (absolut, kumulativ, `knowledge_ap_cost_reduction_per_lv` [3 => 1, 5 => 1], Untergrenze 2) |
 | Hangar | 0 | Schiff-Ausbau; +Raumfahrer-Slot |
-| Krankenstation | +5/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
-| Religiöse Stätte | +3/Lv | Besinnlichkeit (Lv1 only) |
-| Kolonialdenkmal | +3/Lv | Stolz (Lv1 only) |
-| Leitstelle | +2/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost ab Ausbaustufe 3 (Bergungsdienst, `recycle_min_level`) |
+| Krankenstation | +3/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
+| Religiöse Stätte | +2/Lv | Besinnlichkeit (Lv1 only) |
+| Kolonialdenkmal | +2/Lv | Stolz (Lv1 only) |
+| Leitstelle | +1/Lv | negative Vertrauens-Ereignisse 1 Punkt näher an 0 (`trust_event_mitigation`, absolut); Recycling 10% build-cost ab Ausbaustufe 3 (Bergungsdienst, `recycle_min_level`) |
 | Uplink Station | 0 | ab Lv2 erster Tiefenscan je Sol kostenlos; Merchant frequency ↑ (nicht implementiert) |
 | Trading Post | 0 | Handelsvorteil-Kanalrabatt 12% je Ausbaustufe: Lv1 Bar-Kanal, Lv2 + Merchant-Kanal, Lv3 + Nexus-Kanal (kumulativ, additiv mit Konsul-Rang/`trade`-Kenntnis im Handelsvorteil, A13) |
 
