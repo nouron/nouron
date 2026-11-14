@@ -8,7 +8,7 @@ return [
     'run_failed_phase1_deadline' => 'Deadline breach — Phase 1 was not completed in time. The Nexus terminates the concession with immediate effect.',
     'task_senior_advisors' => 'Expert Staff: :target advisors at rank :min_rank or higher',
     'task_credit_reserve' => 'Credit Reserve: hold at least :threshold Credits for :target Sols in a row',
-    'task_colony_prosperity' => 'Colony Prosperity: keep Trust above :threshold for :target Sols in a row',
+    'task_colony_prosperity' => 'Colony Prosperity: keep Trust at ":min_band" or better for :target Sols in a row',
     'task_research_lead' => 'Research Lead: :target knowledge fields at level :min_level or higher',
     'task_self_sufficiency' => 'Self-Sufficiency: keep Regolith above :regolith_min, Organics above :organics_min for :target Sols in a row',
     'task_expedition_coverage' => 'Expeditions: :target successful outside missions at difficulty ":min_difficulty" or higher',
