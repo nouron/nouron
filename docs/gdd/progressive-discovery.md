@@ -97,7 +97,7 @@ Jeder Dialog hat folgende Felder:
 
 **AP als Preis für Information:** Wenn ein Berater-Dialog AP kostet, sind das keine "Strafpunkte" — es ist der Preis für etwas Wertvolles. Ein Baumeister, der einen halben Sol damit verbringt, Nexus-Direktiven zu entziffern und dem Direktor zu erklären, steht in dieser Zeit nicht für Bauprojekte bereit. Das ist die saubere Nouron-Mechanik: **Opportunitätskosten statt Verbot** (§1.1).
 
-> Designprinzip: Dialog-AP-Kosten sollten spürbar, aber nicht prohibitiv sein. Richtwert: 3–8 AP (entspricht 25–65% eines Junior-Berater-Tagespools). Ein Junior-Baumeister mit 10 AP/Sol kann sich den Dialog "leisten" — aber nicht an demselben Sol gleichzeitig ein Gebäude ausbauen. Das ist die Entscheidung.
+> Designprinzip: Dialog-AP-Kosten sollten spürbar, aber nicht prohibitiv sein. Richtwert: ein spürbarer Teil des Tagespools, deutlich unter der Hälfte. Der Spieler kann sich den Dialog "leisten" — aber an diesem Sol bleibt merklich weniger für Bau und Forschung. Das ist die Entscheidung.
 
 #### Dialog-Verlauf
 
@@ -118,12 +118,14 @@ Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer opt
 
 | Dialog-Key | Berater | Trigger | Kosten | Ergebnis |
 |------------|---------|---------|--------|---------|
-| `engineer_phase2_objective_reveal` | Baumeister | `phase2_start` + 1 Sol | 4 construction-AP | Objective 1 enthüllt |
-| `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | 5 AP | Event-Tile Tiefenscan-Kosten um 1 AP reduziert |
-| `pilot_patrol_report` | Raumfahrer | 3+ Außenmissionen abgeschlossen | 0 AP | Verschleiß-Prognose des nächsten Dispatch detailliert aufgeschlüsselt (§7) |
-| `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | 6 AP | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
+| `engineer_phase2_objective_reveal` | Baumeister | `phase2_start` + 1 Sol | mittel | Objective 1 enthüllt |
+| `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | mittel | Tiefenscan des Event-Tiles kostenlos (Gutschein, Rabatt-Regel GDD §13.3) |
+| `pilot_patrol_report` | Raumfahrer | 3+ Außenmissionen abgeschlossen | keine AP | Verschleiß-Prognose des nächsten Dispatch detailliert aufgeschlüsselt (§7) |
+| `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | hoch | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
 
-> ⚠️ BALANCE CONCERN: Dialoge mit 0 AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Prognostizierter Gefahren-Ausgang" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Dialoge mit 5+ AP-Kosten müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
+Kostenstufen sind relativ zum Tagespool gemeint; konkrete AP setzt die Config bei der Umsetzung.
+
+> ⚠️ BALANCE CONCERN: Dialoge ohne AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Prognostizierter Gefahren-Ausgang" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Teure Dialoge müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
 
 #### Ablehnung und Verfall
 
@@ -176,9 +178,9 @@ Wenn ein Spieler einen Artikel mit einem Wissensbonus öffnet und vollständig l
 
 | Bonus-Typ | Beschreibung | Beispiel |
 |-----------|-------------|---------|
-| `ap_bonus` | Sofortiger einmaliger AP-Schub eines Typs | +6 construction-AP nach Lesen von "Bautechnik — fortgeschrittene Methoden" |
+| `ap_bonus` | Sofortiger einmaliger, zweckgebundener AP-Schub | einige Bonus-AP auf eine Baustelle nach Lesen von "Bautechnik — fortgeschrittene Methoden" |
 | `resource_bonus` | Sofortiger einmaliger Ressourcen-Zuschuss | +30 Regolith nach Lesen von "Geologie — Abbauoptimierung" |
-| `knowledge_hint` | Erhöht AP-Effizienz für eine bestimmte Kenntnis für N Sole | -1 AP pro research-Level für "Agronomie" für 5 Sole |
+| `knowledge_hint` | Erhöht das Tempo einer bestimmten Kenntnis für N Sole | Labor-Deckel +1 für "Agronomie" für einige Sole (Deckel statt Rabatt, GDD §13.3) |
 | `encounter_prep` | Mildert den Ausgang der nächsten Kolonistengefahr (§9) um eine Stufe | Nächster Sturm wird eine Ausgangsstufe milder bewertet (z.B. Kritisch → Beschädigt) |
 | `none` | Kein Spielbonus — reines Lore oder Nachschlagewerk | Hintergrundgeschichte des Planeten |
 
@@ -186,7 +188,7 @@ Wenn ein Spieler einen Artikel mit einem Wissensbonus öffnet und vollständig l
 
 **Lesbarkeits-Prinzip:** Artikel mit Bonus müssen kurz sein — max. 150–200 Wörter. Sie sind keine Romankapitel. Der Spieler soll nicht 10 Minuten lesen müssen um einen AP-Bonus zu bekommen. Das wäre kein Anreiz, sondern Arbeit.
 
-> ⚠️ BALANCE CONCERN: AP-Boni über den Almanach dürfen die bestehende AP-Balance (§13) nicht aushebeln. Der Richtwert ist: ein Almanach-AP-Bonus entspricht dem Grundwert eines Tages (6 AP) oder dem Beitrag eines Junior-Beraters für 1 Sol (4 AP-Bonus). Höhere Boni sind nur für sehr späte oder sehr seltene Artikel akzeptabel. Die Boni summieren sich über einen Run: wenn alle freigeschalteten Artikel gelesen werden, sollte der Gesamteffekt spürbar, aber nicht spielverändernd sein.
+> ⚠️ BALANCE CONCERN: AP-Boni über den Almanach dürfen die bestehende AP-Balance (§13) nicht aushebeln. Der Richtwert ist: ein Almanach-AP-Bonus liegt höchstens beim Grundwert des Pools für einen Sol (`game.ap.base`). Höhere Boni sind nur für sehr späte oder sehr seltene Artikel akzeptabel. Die Boni summieren sich über einen Run: wenn alle freigeschalteten Artikel gelesen werden, sollte der Gesamteffekt spürbar, aber nicht spielverändernd sein.
 
 > ⚠️ BALANCE CONCERN: Artikel mit `encounter_prep`-Bonus (Ausgangs-Milderung) müssen sicherstellen, dass Kolonistengefahren dadurch nicht trivial werden. Richtwert: maximal eine Ausgangsstufe Milderung, nur für die unmittelbar nächste Gefahr.
 

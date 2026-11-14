@@ -207,7 +207,7 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 
 **Aktion 1 — Baumeister einstellen (Berater-Screen)**
 
-- Warum: Baumeister (+4 Construction-AP/Sol Junior) erhöht Bau-Tempo ab Sol 1; hint_1 zeigt auf `/advisors`
+- Warum: Baumeister erhöht ab Sol 1 den Pool und über seinen Fach-Deckel das Bau-Tempo (GDD §13.2); hint_1 zeigt auf `/advisors`
 - Kosten: 300 Cr (Junior-Baumeister)
 - Ergebnis: Construction-AP springt von 6 auf 10. AP-Chips aktualisieren sich sofort.
 - Feedback-Loop klar: Berater-Card erscheint, Construction-AP-Anzeige springt hoch
@@ -215,28 +215,28 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 **Aktion 2 — Harvester auf Ring-2-Regolith verlegen (Colony-Screen)**
 
 - Warum: Harvester steht in der Kolonie-Zone (Ring 1) — dieser Slot ist für Gebäude reserviert. Nexus-Scout hat Ring-2-Tile (2,0) vorab erkundet; Ziel ist sichtbar.
-- Kosten: 1 Construction-AP (Distanz 1 Hex)
+- Kosten: AP je Hex (`game.harvester.relocate_ap_per_hex`)
 - Ergebnis: Tile (1,0) in Ring 1 wird frei für Gebäude; Harvester produziert weiterhin Regolith
 - Feedback-Loop klar: Harvester-Sprite bewegt sich auf neues Tile
 
 **Aktion 3 — Agrardom platzieren + Rest-AP investieren (Sol 1, `hint_agrardome` → `hint_invest_site`)**
 
 - Warum: Der Agrardom ist Pflicht-Gate für CC Lv2 und serverseitige Voraussetzung für alle Pfadgebäude — er ist das erste Bauprojekt der Kolonie. Ohne ihn bleibt Organika auf 0 (Verpflegungsmechanik §4a).
-- Kosten: 40 Rg + 1 AP (Platzieren) + Rest-AP als Invest (Ziel 10 kumuliert)
-- Ergebnis: Baustelle Sol 1 bei ~6/10, fertig Sol 2. `hint_invest_site` (Rang 6) lenkt die Rest-AP automatisch in die aktive Baustelle — der Rhythmus "platzieren → fertig investieren → nächstes platzieren" entsteht ohne Sequenz-Skript.
-- Parallel: `hint_explore` (Rang 13) lenkt die ungenutzten 6 AP in die Tile-Erkundung.
+- Kosten: Regolith beim Platzieren, danach die AP der Ausbaustufe über mehrere Sol (AP-Deckel je Gebäude und Sol, GDD §13.2)
+- Ergebnis: Die Baustelle läuft über mehrere Sol; keine Ausbaustufe wird an einem einzigen Sol fertig. `hint_invest_site` (Rang 6) lenkt die Rest-AP in die aktive Baustelle — der Rhythmus "platzieren → fertig investieren → nächstes platzieren" entsteht ohne Sequenz-Skript.
+- Parallel: `hint_explore` (Rang 13) lenkt AP, die der Deckel nicht in die Baustelle lässt, in die Tile-Erkundung.
 
 **Aktion 4 — Pfadgebäude wählen und bauen (Sol 2/3, `hint_6`/`hint_analytik`/`hint_hangar_path`, ggf. `hint_build_priority`)**
 
 - Warum: Ab Sol 2 (Agrardom platziert) stehen Cantina, Sciencelab und Hangar auf derselben Tick-Schwelle — die erste gleichwertige strategische Wahl: Handel, Forschung oder Schiffe zuerst. Das Pfadgebäude muss **vor** CC Lv2 stehen, damit der freigeschaltete Beraterslot 2 sofort besetzbar ist (Slots 2–4 verlangen ein gebautes Pfadgebäude).
-- Kosten: 70 (Cantina) / 80 (Sciencelab) / 80 (Hangar) Rg + 1 AP Platzieren + 10 Invest-AP
-- Ergebnis: Pfadgebäude fertig ~Sol 3. Wer zuerst baut, bekommt automatisch den passenden Berater-Slot-Typ (Sciencelab → Analytiker, Hangar → Raumfahrer, Cantina → Konsul) — die Bau-Entscheidung *ist* die Berater-Entscheidung.
+- Kosten: Regolith beim Platzieren (alle drei Pfadgebäude gleich bepreist, GDD §13.7 G4), danach die AP der Ausbaustufe über mehrere Sol
+- Ergebnis: Pfadgebäude fertig nach wenigen Sol. Wer zuerst baut, bekommt automatisch den passenden Berater-Slot-Typ (Sciencelab → Analytiker, Hangar → Raumfahrer, Cantina → Konsul) — die Bau-Entscheidung *ist* die Berater-Entscheidung.
 - **Kein permanenter Lockout:** Die anderen Pfade folgen bei höherem CC-Level — die Wahl bestimmt Reihenfolge, nicht endgültigen Zugang.
 
 **Aktion 5 — CC auf Level 2 ausbauen (Sol 3/4, `hint_3`)**
 
 - Warum: Jetzt zahlt sich CC Lv2 sofort aus — Agrardom (Pflicht-Gate) und Pfadgebäude (Slot-Gate) stehen. CC Lv2 schaltet den zweiten Berater-Slot frei + 6 neue Kolonie-Zone-Tiles.
-- Kosten: 10 Construction-AP kumuliert + 40 Rg (CC-Upgrade = Ziel-Level × 20 Rg)
+- Kosten: steigende AP je CC-Zielstufe plus Regolith je Zielstufe (`buildings.commandCenter.cc_upgrade_ap_by_level`, `docs/game-reference.md` §3)
 - Ergebnis: Koloniekarte aktualisiert sich live (Ring-Expansion §4a); `hint_advisor_slot2` (Rang 7) feuert sofort.
 
 **Aktion 6 — Zweiten Berater einstellen (`hint_advisor_slot2`)**
@@ -244,16 +244,9 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 - Der Slot ist generisch; der Typ ergibt sich aus dem gebauten Pfadgebäude (§13). Kosten 350–500 Cr — Credits sind zu diesem Zeitpunkt reichlich (~2.300+).
 - An diesem Punkt hat der Spieler alle Kernsysteme berührt: Berater, Tile-Management, Bauen/Investieren, Pfadwahl, CC-Ausbau, Erkundung.
 
-**Budget-Rechnung Sol 1–4** (10 AP/Sol ab Baumeister-Hire; Harvester-Move worst case 3 AP; Regolith-Start 200, +10/Sol ab Sol 2):
+**Budget der ersten Sole:** Die frühere Sol-für-Sol-Rechnung ist entfallen (sie beruhte auf einer alten AP- und Regolith-Skala). Gültiges Pacing: GDD §13.7 „Phase-1-Pacing“ und `docs/superpowers/specs/2026-10-16-phase1-pacing-entscheidungen.md`; aktuelle Werte in `docs/game-reference.md`. Bindend sind der Regolith-Startbestand und der AP-Deckel je Ziel und Sol, nicht der Pool.
 
-| Sol | AP | Regolith (Endstand) |
-|-----|--------|---------------------|
-| 1 | Hire (0) + Harvester-Move (3) + Agrardom platzieren (1) + Invest (6) = 10/10 | −40 → **160** |
-| 2 | Agrardom-Invest 4 → **Lv1 ✓** + Pfadgebäude platzieren (1) + Invest (5) = 10/10 | +10 −10 −70/80 → **80–90** |
-| 3 | Pfad-Invest 5 → **Lv1 ✓** + CC-Invest 5 = 10/10 | +10 −18/20 → **70–82** |
-| 4 | CC-Invest 5 → **CC Lv2 ✓** → Berater 2 anheuern | +10 −40 → **37–52** |
-
-> Die Rampe lässt bewusst einen kleinen Regolith-Puffer für Repairs und Housing-Ausbau. Die Hebel dafür sind der Regolith-Satz je CC-Level und der Hangar-Baupreis (Pfad-Gleichwertigkeit: Cantina 70 / Sciencelab 80 / Hangar 80); ein höherer Harvester-Yield wäre ein globaler Hebel mit Trivialisierungsrisiko im Midgame. Der Nexus-Kredit liefert Credits, der Engpass ist aber Regolith. **Offen (nach Playtest):** Nexus-Kredit als eigener Discovery-Moment, sobald die Cantina steht.
+> Die Rampe lässt bewusst einen kleinen Regolith-Puffer für Repairs und Housing-Ausbau. Die Hebel dafür sind der Regolith-Satz je CC-Level und die gleich bepreisten Pfadgebäude; ein höherer Harvester-Yield wäre ein globaler Hebel mit Trivialisierungsrisiko im Midgame. Der Nexus-Kredit liefert Credits, der Engpass ist aber Regolith. **Offen (nach Playtest):** Nexus-Kredit als eigener Discovery-Moment, sobald die Cantina steht.
 
 **Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
 
