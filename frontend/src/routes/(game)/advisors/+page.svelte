@@ -3,7 +3,7 @@
 	import '#lib/styles/advisors.css';
 	import { onMount } from 'svelte';
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
-	import { refreshShell, setAp, setHint, type Shell } from '#lib/stores/shell.ts';
+	import { refreshShell, setAp, setHint, shell, type Shell } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
 	import { Carousel } from '#lib/carousel.svelte.ts';
 	import EntityChip from '#lib/components/EntityChip.svelte';
@@ -60,12 +60,15 @@
 	let juniorUpkeep = $state(10);
 	let loadError = $state('');
 	let dialogSlot = $state<Slot | null>(null);
-	let dialogKind = $state<'hire' | 'fire'>('hire');
+	// Hire error shown on the card it belongs to (hiring fires directly, like building; only firing asks first).
+	let cardError = $state<{ key: string; msg: string } | null>(null);
 	let errorMsg = $state<string | null>(null);
 	let pageError = $state<string | null>(null);
 	let dialog = $state<HTMLDialogElement>();
 	const carousel = new Carousel(4);
 
+	// Credits on hand (header data): a hire the colony cannot pay marks its cost chip.
+	const credits = $derived($shell?.resource_bar_possessions?.[1]?.amount ?? Infinity);
 	const roleOf = (s: Slot) => s.preview_advisor_key ?? s.key;
 	const chipTip = (key: string) => ({ description: t(`advisors.${key}_desc`), meta: t('advisors.ap_label') });
 	function portraitStyle(key: string) {
@@ -86,9 +89,8 @@
 		img.src = PLACEHOLDER;
 	};
 
-	function openDialog(slot: Slot, kind: 'hire' | 'fire') {
+	function openDialog(slot: Slot) {
 		dialogSlot = slot;
-		dialogKind = kind;
 		errorMsg = null;
 		queueMicrotask(() => dialog?.showModal());
 	}
@@ -116,12 +118,11 @@
 			.finally(() => (busy = false));
 	}
 
-	async function doHire() {
-		if (!dialogSlot) return;
-		const res = await send('/advisors/hire', 'POST', { personell_id: dialogSlot.personell_id });
-		if (!res.ok) return void (errorMsg = res.message ?? t('advisors.ui_error_hire'));
+	async function doHire(slot: Slot) {
+		const res = await send('/advisors/hire', 'POST', { personell_id: slot.personell_id });
+		if (!res.ok) return void (cardError = { key: slot.key, msg: res.message ?? t('advisors.ui_error_hire') });
+		cardError = null;
 		apply(res);
-		closeDialog();
 	}
 
 	// Blade left the AP/credits chips stale after firing; the shell refresh covers it here.
@@ -245,25 +246,26 @@
 
 						<div class="advisor-info">
 							<div class="advisor-name-row">
-								<span class="advisor-name">{@render roleChip(role)}</span>
+								<!-- Role as the card title (display font); the description stays reachable as a tooltip. -->
+								<h3 class="advisor-name" title={ROLES.includes(role) ? t(`advisors.${role}_desc`) : undefined}>
+									{ROLES.includes(role) ? t(`advisors.${role}`) : ''}
+								</h3>
 								{#if slot.advisor}
 									<span class="rank-badge rank-badge--{slot.advisor.rank}">{slot.advisor.rank_name}</span>
 								{/if}
 							</div>
 
+							<!-- What the role unlocks, right under the title (the footer action sits at the card's bottom edge). -->
+							<span class="advisor-effects">{effects(slot)}</span>
+							<!-- Lore line for cards with room (vacant, locked); hired cards keep it as the title tooltip. -->
+							{#if !slot.advisor && ROLES.includes(role)}<p class="advisor-lore">{t(`advisors.${role}_desc`)}</p>{/if}
+
 							{#if slot.advisor}
 								<span class="advisor-subtitle">
 									<span class="ap-chip ap-chip--neutral"><span class="res-amount">{slot.advisor.ap_per_tick}</span> AP</span>
 								</span>
-							{:else if slot.state === 'locked'}
-								<span class="advisor-subtitle">{t('advisors.ui_locked')}</span>
-							{:else if slot.is_path_open}
-								<span class="advisor-subtitle"
-									>{slot.preview_advisor_key ? t('advisors.ui_vacant') : t('advisors.ui_path_pending')}</span
-								>
-							{:else if slot.state === 'empty'}
-								<span class="advisor-subtitle">{t('advisors.ui_vacant')}</span>
 							{/if}
+							<!-- Locked and vacant cards need no status word: the lock line / the hire button say it. -->
 
 							<div class="advisor-stats">
 								{#if slot.advisor}
@@ -300,31 +302,35 @@
 											{#if !a.is_max_rank && a.next_rank_ticks !== null && a.active_ticks >= a.next_rank_ticks}
 												<button class="btn-hire" disabled={busy} onclick={() => doPromote(slot)}>{t('advisors.ui_promote')}</button>
 											{/if}
-											<button class="btn-fire" onclick={() => openDialog(slot, 'fire')}>{t('advisors.dialog_fire')}</button>
+											<button class="btn-fire" onclick={() => openDialog(slot)}>{t('advisors.dialog_fire')}</button>
 										</div>
 									</div>
 								{:else if slot.is_path_open && slot.state !== 'locked'}
 									<p class="path-open-guidance">{t('advisors.ui_path_guidance')}</p>
 								{:else if slot.state === 'empty'}
 									<div style="display:contents">
-										<div class="stat-row">
-											<span class="stat-label">{t('advisors.ui_hire_cost')}</span>
-											<span class="res-chip res-Cr"
-												><span class="res-abbr">CR</span><span class="res-amount">{slot.hire_cost}</span></span
+										<!-- Running terms on one line: upkeep per Sol · AP gain (junior rank). The one-off cost sits on the button. -->
+										<p class="hire-terms">
+											<span
+												><span class="res-chip res-Cr"
+													><span class="res-abbr">CR</span><span class="res-amount">{juniorUpkeep}</span></span
+												>
+												{t('advisors.ui_terms_per_sol')}</span
 											>
-										</div>
-										<!-- Blade showed a hardcoded 4 here; junior_ap is the configured value the hire dialog uses. -->
-										<div class="stat-row">
-											<span class="stat-label">{t('advisors.ui_junior_ap')}</span>
-											<span class="ap-chip ap-chip--neutral"><span class="res-amount">{slot.junior_ap}</span> AP</span>
-										</div>
-										<div class="stat-row">
-											<span class="stat-label">{t('advisors.dialog_upkeep')}</span>
-											<span class="res-chip res-Cr"><span class="res-abbr">CR</span><span class="res-amount">{juniorUpkeep}</span></span>
-										</div>
+											<span class="ap-chip ap-chip--neutral">+<span class="res-amount">{slot.junior_ap}</span> AP</span>
+										</p>
+										<!-- No status chip here: the subtitle already says "vacant"; the button takes the full width. -->
+										{#if slot.building_warning}<p class="hire-note hire-note--warning">{slot.building_warning}</p>{/if}
+										{#if cardError?.key === slot.key}<p class="hire-note hire-note--error" role="alert">{cardError.msg}</p>{/if}
 										<div class="advisor-card-footer">
-											<span class="advisor-status advisor-status--empty">{t('advisors.ui_vacant')}</span>
-											<button class="btn-hire" onclick={() => openDialog(slot, 'hire')}>{t('advisors.dialog_hire')}</button>
+											<!-- Like the build buttons: label left, what the click costs as a chip on the right; no confirm dialog.
+											     Too few credits: button disabled and the chip turns red, no message. -->
+											<button class="btn-hire btn-hire--full" disabled={busy || credits < slot.hire_cost} onclick={() => doHire(slot)}>
+												<span>{t('advisors.dialog_hire')}</span>
+												<span class="res-chip res-Cr" class:hire-cost--short={credits < slot.hire_cost}
+													><span class="res-abbr">CR</span><span class="res-amount">{slot.hire_cost}</span></span
+												>
+											</button>
 										</div>
 									</div>
 								{:else if slot.state === 'locked'}
@@ -343,17 +349,14 @@
 											<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
 											<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 										</svg>
-										<span class="advisor-status advisor-status--locked">{t('advisors.ui_locked')}</span>
-										<span class="locked-req">{t('advisors.ui_cc_required', { level: slot.cc_required })}</span>
+										<span class="locked-req"
+											>{PREREQ[role]
+												? t('advisors.ui_locked_needs', { level: slot.cc_required, building: PREREQ[role].name })
+												: t('advisors.ui_cc_required', { level: slot.cc_required })}</span
+										>
 									</div>
 								{/if}
 							</div>
-						</div>
-
-						<!-- Section 3: unlocked effects -->
-						<div class="advisor-card__effects">
-							<span class="effects-section-label">{t('advisors.ui_effects')}</span>
-							<span class="effects-text">{effects(slot)}</span>
 						</div>
 					</div>
 				{/each}
@@ -381,42 +384,7 @@
 	</div>
 
 	<dialog class="advisor-dialog" bind:this={dialog} onclose={() => (dialogSlot = null)}>
-		{#if dialogSlot && dialogKind === 'hire'}
-			{@const s = dialogSlot}
-			<h3>{t('advisors.dialog_hire_title')}</h3>
-			<div class="dialog-advisor">
-				<div class="dialog-portrait" style={portraitStyle(s.key)}></div>
-				<div class="dialog-advisor-info">
-					<div class="dialog-advisor-name">
-						<strong>{@render roleChip(s.key)}</strong>
-						<span class="dialog-rank-badge">{t('advisors.dialog_rank_junior')}</span>
-					</div>
-					<p class="dialog-advisor-desc">{s.desc}</p>
-				</div>
-			</div>
-			<dl class="dialog-stats">
-				<div class="dialog-stat">
-					<dt>AP</dt>
-					<dd class="dialog-stat-positive">+{s.junior_ap} {t('advisors.dialog_ap_label')}</dd>
-				</div>
-				<div class="dialog-stat">
-					<dt>{t('advisors.dialog_cost_once')}</dt>
-					<dd><span class="res-chip res-Cr"><span class="res-abbr">CR</span><span class="res-amount">{s.hire_cost}</span></span></dd>
-				</div>
-				<div class="dialog-stat">
-					<dt>{t('advisors.dialog_upkeep')}</dt>
-					<dd>
-						<span class="res-chip res-Cr"><span class="res-abbr">CR</span><span class="res-amount">{s.junior_upkeep}</span></span>
-					</dd>
-				</div>
-			</dl>
-			{#if s.building_warning}<div class="dialog-warning">{s.building_warning}</div>{/if}
-			<div class="dialog-error">{errorMsg ?? ''}</div>
-			<div class="dialog-actions">
-				<button class="btn-cancel" onclick={closeDialog}>{t('advisors.dialog_cancel')}</button>
-				<button class="btn-confirm-hire" disabled={busy} onclick={doHire}>{t('advisors.dialog_hire')}</button>
-			</div>
-		{:else if dialogSlot}
+		{#if dialogSlot}
 			<h3>{t('advisors.dialog_fire_title')}</h3>
 			<p class="dialog-cost"><strong>{@render roleChip(dialogSlot.key)}</strong> {t('advisors.dialog_fire_confirm')}</p>
 			<div class="dialog-error">{errorMsg ?? ''}</div>
@@ -440,12 +408,53 @@
 		justify-content: center;
 		flex: 1;
 		gap: 0.5rem;
-		color: #bbb;
+		color: var(--color-text-secondary);
 		text-align: center;
 		padding: 0.5rem 0;
 	}
 	.locked-req {
-		font-size: 0.7rem;
-		color: #bbb;
+		font-size: 0.8rem;
+		line-height: 1.35;
+		max-width: 16rem;
+	}
+	/* Not enough credits for this hire (the dialog still explains; the chip warns up front). */
+	.hire-cost--short {
+		background: var(--color-danger-bg) !important;
+		border-color: var(--color-danger) !important;
+		color: var(--color-danger-fg) !important;
+	}
+	.hire-note {
+		margin: 0.3rem 0 0;
+		font-size: 0.72rem;
+		line-height: 1.3;
+	}
+	.hire-note--warning {
+		color: var(--color-warning-fg);
+	}
+	/* Rare refusals only (the usual one, too few credits, is shown by the disabled button). Kept quiet. */
+	.hire-note--error {
+		color: var(--color-text-secondary);
+	}
+	.advisor-lore {
+		margin: 0 0 0.4rem;
+		font-size: 0.72rem;
+		font-style: italic;
+		line-height: 1.35;
+		color: var(--color-text-secondary);
+	}
+	.hire-terms {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem 0.75rem;
+		margin: 0.2rem 0 0;
+		font-size: 0.75rem;
+		color: var(--color-text-secondary);
+		/* At most four lines, so a long text never pushes the panel past the shared height. */
+		display: -webkit-box;
+		-webkit-line-clamp: 4;
+		line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 </style>

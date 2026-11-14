@@ -1,14 +1,18 @@
 <script lang="ts">
-	// Slim header: logo, Sol button, user menu; below it the hint bar. The resource bar is the left overlay ResourceRail. Navigation lives in BottomNav.
+	// Slim header: logo, trust, AP ring, Sol (label + end-Sol button), user menu; below it the hint bar.
+	// Materials live in the left overlay ResourceRail. Navigation lives in BottomNav.
 	import { t } from '#lib/i18n.ts';
 	import { logout } from '#lib/stores/auth.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
 	import HintBar from './HintBar.svelte';
+	import ResourceBar from './ResourceBar.svelte';
 	import SolButton from './SolButton.svelte';
 
 	let { s, onfeedback }: { s: Shell; onfeedback: () => void } = $props();
 
 	let userOpen = $state(false);
+	// Open header popup (trust / AP / Sol); one at a time.
+	let open = $state<string | null>(null);
 	let userBtn = $state<HTMLButtonElement>();
 
 	const userNav = $derived([
@@ -19,8 +23,12 @@
 </script>
 
 <svelte:window
-	onclick={() => (userOpen = false)}
+	onclick={(e) => {
+		userOpen = false;
+		if (!(e.target as Element).closest('.rc')) open = null;
+	}}
 	onkeydown={(e) => {
+		if (e.key === 'Escape') open = null;
 		if (e.key === 'Escape' && userOpen) {
 			userOpen = false;
 			userBtn?.focus();
@@ -33,7 +41,13 @@
 		<a href="/" class="logo">Nouron</a>
 
 		<div class="right">
-			{#if s.in_active_run}<SolButton />{/if}
+			<ResourceBar {s} keys={['trust', 'ap']} top bind:open />
+			{#if s.in_active_run}
+				<div class="sol-block">
+					<ResourceBar {s} keys={['sol']} top bind:open />
+					<SolButton ready={s.colony_ap === 0} />
+				</div>
+			{/if}
 			<div class="user">
 				<button
 					class="plain"
@@ -97,6 +111,16 @@
 		align-items: center;
 		gap: var(--space-sm);
 		position: relative;
+	}
+	.sol-block {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 2px;
+	}
+	/* Sol label line spans the button's width. */
+	.sol-block :global(.rc) {
+		flex: 1;
 	}
 	.plain {
 		display: inline-flex;
@@ -170,6 +194,13 @@
 	@media (max-width: 599px) {
 		.uname {
 			display: none;
+		}
+		.topbar {
+			gap: var(--space-xs);
+			padding: 0 var(--space-sm);
+		}
+		.right {
+			gap: var(--space-xs);
 		}
 	}
 </style>

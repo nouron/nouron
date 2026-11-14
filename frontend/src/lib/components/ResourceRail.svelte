@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Resource rail: fixed overlay on the left edge (docs/superpowers/specs/2026-11-08-ressourcenleiste-links-design.md).
-	// Expanded = panel with all chips; collapsed = only a handle (chevron + AP). Toggles ONLY on click/tap/key (R),
+	// Expanded = panel with the material chips; collapsed = only a handle (chevron). Sol, trust and AP live in the header. Toggles ONLY on click/tap/key (R),
 	// never on hover. Pure overlay, never part of the layout flow, so toggling never moves or resizes the page.
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
@@ -130,13 +130,12 @@
 		bind:this={handleEl}
 		aria-expanded={shown}
 		aria-controls="rail-panel"
-		aria-label={t('resources.rail_toggle_ap', { ap: s.colony_ap ?? 0 })}
+		aria-label={t('resources.rail_toggle')}
 		title={t('resources.rail_toggle')}
 		onclick={() => setPinned(!pinned)}
 	>
 		<span class="tab">
 			<i class="bi {shown ? 'bi-chevron-left' : 'bi-chevron-right'}" aria-hidden="true"></i>
-			{#if !shown}<span class="tab-ap">{s.colony_ap ?? '–'}</span>{/if}
 			{#if warn}<span class="tab-warn" aria-label={t('resources.rail_warning')}>!</span>{/if}
 		</span>
 	</button>

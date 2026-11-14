@@ -109,6 +109,12 @@
     text-decoration: underline;
 }
 
+/* The hint is a link to the screen it talks about: show that without hovering. */
+.hint-bar__marquee::after {
+    content: ' →';
+    font-weight: 700;
+}
+
 .hint-bar__marquee {
     display: inline;
 }

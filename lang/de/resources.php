@@ -85,6 +85,5 @@ return [
     // Resource rail (left overlay)
     'rail_label' => 'Ressourcenleiste',
     'rail_toggle' => 'Ressourcenleiste ein- oder ausklappen (Taste R)',
-    'rail_toggle_ap' => 'Ressourcenleiste ein- oder ausklappen, :ap AP',
     'rail_warning' => 'Warnung',
 ];
