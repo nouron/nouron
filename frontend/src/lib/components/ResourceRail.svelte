@@ -10,12 +10,15 @@
 
 	let { s }: { s: Shell } = $props();
 
-	type Group = 'colony' | 'other';
-	const group = $derived<Group>(page.url.pathname === '/colony' ? 'colony' : 'other');
+	type Group = 'colony' | 'advisors' | 'other';
+	const group = $derived<Group>(
+		page.url.pathname === '/colony' ? 'colony' : page.url.pathname.startsWith('/advisors') ? 'advisors' : 'other',
+	);
 	const KEY = (g: Group) => `nouron.rail.${g}`;
 
 	// User's choice per screen group; null = default (colony expanded, everything else collapsed). Comfort only.
-	let choice = $state<Record<Group, boolean | null>>({ colony: null, other: null });
+	// Advisors: always starts collapsed (the expanded rail would cover the page title), choice is never stored.
+	let choice = $state<Record<Group, boolean | null>>({ colony: null, advisors: null, other: null });
 	try {
 		for (const g of ['colony', 'other'] as Group[]) {
 			const v = localStorage.getItem(KEY(g));
@@ -37,6 +40,7 @@
 		folded = false;
 		choice[group] = v;
 		if (!v) open = null;
+		if (group === 'advisors') return;
 		try {
 			localStorage.setItem(KEY(group), v ? '1' : '0');
 		} catch {
@@ -52,6 +56,7 @@
 		if (lastGroup !== null && lastGroup !== group) {
 			folded = false;
 			autoDone = false;
+			choice.advisors = null;
 		}
 		lastGroup = group;
 	});
@@ -105,10 +110,10 @@
 		}
 	}
 
-	// Warning mark on the handle (not colour alone): nexus debt >= 80 %, trust below the red threshold, unfilled workplaces.
+	// Warning mark on the handle (not colour alone): nexus debt >= 80 %, trust at riot (T59 §4), unfilled workplaces.
 	const warn = $derived.by(() => {
 		const nx = s.nexus_debt !== null && s.nexus_debt_max > 0 ? (s.nexus_debt / s.nexus_debt_max) * 100 : 0;
-		const danger = nx >= 95 || (s.trust !== undefined && s.trust < s.trust_chip_red);
+		const danger = nx >= 95 || s.trust?.band === 'riot';
 		const warning = nx >= 80 || (s.colonists_overview?.unfilled ?? 0) > 0;
 		return danger ? 'danger' : warning ? 'warning' : null;
 	});
@@ -152,7 +157,7 @@
 <style>
 	.rail {
 		--rail-w: 112px;
-		--rail-top: calc(var(--app-header-h) + 8px);
+		--rail-top: calc(var(--app-header-h) + 24px);
 		--rail-bg: transparent;
 		--rail-blur: 0px;
 		--rail-chip-bg: rgba(255, 255, 255, 0.5);
@@ -166,6 +171,10 @@
 		.rail {
 			--rail-w: 132px;
 		}
+	}
+	/* Expanded rail floats over page content: less see-through chips keep it readable. */
+	.rail--shown {
+		--rail-chip-bg: rgba(255, 255, 255, 0.88);
 	}
 
 	.rail-panel {

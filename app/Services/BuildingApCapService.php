@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\Advisor;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Per-building per-Sol cap on construction AP invested toward a level-up
- * (game.build.ap_cap_per_sol). Cap = base + engineer rank bonus; a null base switches
+ * (game.build.ap_cap_per_sol). Cap = base + engineer field bonus; a null base switches
  * the rule off. Repair AP and placement are not subject to it.
  */
 class BuildingApCapService
@@ -22,16 +21,7 @@ class BuildingApCapService
             return null;
         }
 
-        $tick = $this->tickService->getTickCount();
-        $engineer = Advisor::where('colony_id', $colonyId)
-            ->where('personell_id', AdvisorService::idFor('engineer'))
-            ->first();
-        $bonus = 0;
-        if ($engineer !== null && $engineer->isAvailable($tick)) {
-            $bonus = (int) config('game.build.ap_cap_per_sol.engineer_bonus_per_rank.'.$engineer->rank, 0);
-        }
-
-        return (int) $base + $bonus;
+        return (int) $base + app(AdvisorService::class)->specialistCapBonus($colonyId, 'engineer');
     }
 
     public function spentThisSol(int $colonyId, int $buildingId, int $instanceId): int

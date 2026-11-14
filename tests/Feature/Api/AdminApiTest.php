@@ -3,8 +3,10 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
+use App\Services\Techtree\ResearchService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -72,5 +74,46 @@ class AdminApiTest extends TestCase
             ])
             ->assertJsonStructure(['config' => ['Sol', 'Kolonisten', 'Credits', 'Vertrauen']])
             ->assertJsonMissingPath('config.Tick');
+    }
+
+    public function test_admin_debug_shows_exact_knowledge_progress(): void
+    {
+        $this->as(3);
+        $knowledge = $this->getJson('/api/v1/admin/debug')->assertOk()->json('knowledge');
+
+        $this->assertCount(count(array_filter(config('knowledge'), fn ($d) => is_array($d) && isset($d['id']))), $knowledge);
+        $row = collect($knowledge)->firstWhere('key', 'construction');
+        $this->assertNotNull($row);
+        $this->assertSame((int) config('knowledge.construction.id'), $row['id']);
+        $this->assertSame(__('knowledge.construction'), $row['name']);
+        foreach (['level', 'ap_spend', 'ap_for_levelup', 'max_level'] as $field) {
+            $this->assertIsInt($row[$field], $field);
+        }
+        $this->assertSame(ResearchService::maxKnowledgeLevel($row['id']), $row['max_level']);
+        $this->assertArrayHasKey('blocker', $row);
+        $this->assertArrayHasKey('blocker_label', $row);
+    }
+
+    public function test_debug_knowledge_reads_the_colony_row(): void
+    {
+        $id = (int) config('knowledge.construction.id');
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => 1, 'research_id' => $id],
+            ['level' => 1, 'ap_spend' => 7, 'status_points' => 10]
+        );
+
+        $this->as(3);
+        $row = collect($this->getJson('/api/v1/admin/debug')->json('knowledge'))->firstWhere('key', 'construction');
+
+        $this->assertSame(1, $row['level']);
+        $this->assertSame(7, $row['ap_spend']);
+        $this->assertSame(app(ResearchService::class)->knowledgeLevelupCost(1, $id), $row['ap_for_levelup']);
+        $this->assertGreaterThan(0, $row['ap_for_levelup']);
+    }
+
+    public function test_players_never_get_debug_knowledge(): void
+    {
+        $this->as(1);
+        $this->getJson('/api/v1/admin/debug')->assertForbidden()->assertJsonMissingPath('knowledge');
     }
 }

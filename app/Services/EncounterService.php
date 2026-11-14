@@ -20,7 +20,7 @@ class EncounterService
         $damagedThreshold = (float) config('game.encounter.damaged_threshold_pct', 0.66);
         $criticalThreshold = (float) config('game.encounter.critical_threshold_pct', 0.33);
         $mitigationPct = $securityHubActive
-            ? (float) config('buildings.securityHub.event_mitigation_pct', 0.25)
+            ? (float) config('buildings.securityHub.sp_loss_mitigation_pct', 0.25)
             : 0.0;
 
         if ($ratio >= $damagedThreshold) {

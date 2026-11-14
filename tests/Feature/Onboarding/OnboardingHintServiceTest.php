@@ -952,6 +952,7 @@ class OnboardingHintServiceTest extends TestCase
         // Regression: only checking "Nav-AP > 0" let the hint nag the player to
         // explore even when the cheapest remaining fog tile costs more than what's
         // left (ring 2 = 2 AP/tile here). Lock down to 1 Nav-AP — unaffordable.
+        config(['game.colony.explore_cost_per_ring' => [1 => 1, 2 => 2, 3 => 3]]);
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
         $personell = $this->app->make(AdvisorService::class);

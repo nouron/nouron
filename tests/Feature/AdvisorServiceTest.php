@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Advisor;
 use App\Services\AdvisorService;
+use App\Services\BuildingApCapService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
@@ -38,12 +39,12 @@ class AdvisorServiceTest extends TestCase
                 'tile_x' => 5, 'tile_y' => 5]
         );
 
-        // 1 engineer: rank 2 = +3 AP into the shared colony pool
+        // 1 engineer: rank 2 = +1 AP into the shared colony pool (AP scale 2026-11-13)
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => AdvisorService::idFor('engineer'),
             'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
         ]);
-        // 1 scientist: rank 1 = +2 AP into the shared colony pool
+        // 1 scientist: rank 1 = +1 AP into the shared colony pool
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
@@ -52,14 +53,14 @@ class AdvisorServiceTest extends TestCase
 
     public function test_get_total_action_points(): void
     {
-        // 12 base + engineer rank2 (3) + scientist rank1 (2) = 17 — a shared pool,
+        // 4 base + engineer rank2 (1) + scientist rank1 (1) = 6 — a shared pool,
         // both advisors contribute regardless of their domain.
-        $this->assertEquals(17, $this->service->getTotalActionPoints($this->colonyId));
+        $this->assertEquals(6, $this->service->getTotalActionPoints($this->colonyId));
     }
 
     public function test_get_available_action_points(): void
     {
-        $this->assertEquals(17, $this->service->getAvailableActionPoints($this->colonyId));
+        $this->assertEquals(6, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     public function test_lock_action_points(): void
@@ -73,47 +74,28 @@ class AdvisorServiceTest extends TestCase
     {
         $breakdown = $this->service->getApBreakdown($this->colonyId);
 
-        $this->assertEquals(12, $breakdown['base']);
-        $this->assertEquals(5, $breakdown['advisor']);
-        $this->assertEquals($this->service->getTotalActionPoints($this->colonyId), $breakdown['total']);
-        $this->assertEquals(1.0, $breakdown['plague_multiplier'], 'plague_multiplier must be 1.0 (inactive) when no plague debuff is active');
+        $this->assertSame((int) config('game.ap.base'), $breakdown['base']);
+        $this->assertSame($this->service->getTotalActionPoints($this->colonyId), $breakdown['total']);
+        $this->assertSame(0, $breakdown['plague_ap'], 'plague_ap must be 0 when no plague debuff is active');
+        $this->assertSame($breakdown['base'] + $breakdown['advisor'] + $breakdown['trust_ap'] + $breakdown['plague_ap'], $breakdown['total']);
     }
 
     /**
-     * getApBreakdown()'s `plague_multiplier` must reflect the active plague
-     * reduction — without it the resource-bar popup's visible arithmetic
-     * (base + advisor, × multiplier) silently didn't add up to `total` during
-     * an active plague, with no row explaining the missing amount.
+     * AP scale 2026-11-13 §4: the Seuchenausbruch debuff (GDD §9) is an absolute AP malus
+     * (game.encounter.plague.ap_reduction), shown as its own breakdown row so the
+     * resource-bar popup adds up to `total`.
      */
-    public function test_ap_breakdown_plague_multiplier_reflects_active_debuff(): void
+    public function test_active_plague_debuff_is_an_absolute_ap_malus(): void
     {
+        config(['game.encounter.plague.ap_reduction' => 1]);
+        $baseline = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
         DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => 999999]);
 
         $breakdown = $this->app->make(AdvisorService::class)->getApBreakdown($this->colonyId);
 
-        $this->assertEquals(0.80, $breakdown['plague_multiplier']);
-        $this->assertEqualsWithDelta(
-            (int) round(($breakdown['base'] + $breakdown['advisor']) * $breakdown['multiplier'] * $breakdown['plague_multiplier']),
-            $breakdown['total'],
-            0
-        );
-    }
-
-    /**
-     * Seuchenausbruch (GDD §9) debuff: while glx_colonies.plague_until_tick is
-     * still in the future, getApBreakdown()/getTotalActionPoints() must shrink the
-     * total by config('game.encounter.plague.ap_reduction_pct') (default 0.20).
-     */
-    public function test_active_plague_debuff_reduces_total_ap_by_configured_percent(): void
-    {
-        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => 999999]);
-        $withPlague = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
-        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => null]);
-        $baseline = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
-
-        // ap_reduction_pct default 0.20 → plague total should be ~80% of baseline.
-        $this->assertLessThan($baseline, $withPlague);
-        $this->assertEqualsWithDelta((int) round($baseline * 0.80), $withPlague, 1);
+        $this->assertSame(-1, $breakdown['plague_ap']);
+        $this->assertSame($baseline - 1, $breakdown['total']);
+        $this->assertSame($breakdown['base'] + $breakdown['advisor'] + $breakdown['trust_ap'] + $breakdown['plague_ap'], $breakdown['total']);
     }
 
     public function test_credit_ap_raises_available_action_points(): void
@@ -167,26 +149,26 @@ class AdvisorServiceTest extends TestCase
     public function test_get_ap_per_tick_rank_one(): void
     {
         $advisor = new Advisor(['rank' => 1]);
-        $this->assertEquals(2, $advisor->getApPerTick());
+        $this->assertEquals(1, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_rank_two(): void
     {
         $advisor = new Advisor(['rank' => 2]);
-        $this->assertEquals(3, $advisor->getApPerTick());
+        $this->assertEquals(1, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_rank_three(): void
     {
         $advisor = new Advisor(['rank' => 3]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(2, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_unknown_rank_falls_back_to_default(): void
     {
         // rank 99 is not in ap_per_rank — should fall back to the Junior (rank-1) value
         $advisor = new Advisor(['rank' => 99]);
-        $this->assertEquals(2, $advisor->getApPerTick());
+        $this->assertEquals(1, $advisor->getApPerTick());
     }
 
     // ── Advisor model: isUnemployed ───────────────────────────────────────────
@@ -245,9 +227,9 @@ class AdvisorServiceTest extends TestCase
             'unavailable_until_tick' => 99999,
         ]);
 
-        // 12 base + engineer rank2 (3) + scientist rank1 (2) = 17 — the unavailable
+        // 4 base + engineer rank2 (1) + scientist rank1 (1) = 6 — the unavailable
         // trader (rank 3 = +4) does not count.
-        $this->assertEquals(17, $this->service->getTotalActionPoints($this->colonyId));
+        $this->assertEquals(6, $this->service->getTotalActionPoints($this->colonyId));
     }
 
     // ── hire(): rank clamping and validation ──────────────────────────────────
@@ -305,8 +287,8 @@ class AdvisorServiceTest extends TestCase
     {
         $this->service->lockActionPoints($this->colonyId, 3);
         $this->service->lockActionPoints($this->colonyId, 2);
-        // 17 total − 5 locked = 12
-        $this->assertEquals(12, $this->service->getAvailableActionPoints($this->colonyId));
+        // 6 total − 5 locked = 1
+        $this->assertEquals(1, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     public function test_lock_action_points_with_negative_amount_is_sanitised(): void
@@ -530,8 +512,10 @@ class AdvisorServiceTest extends TestCase
         // The exact value depends on the trust multiplier and other advisors already
         // present in the pool, so we compare against a captured baseline instead of
         // a fixed constant (a fixed threshold is unfalsifiable against ap.base=12).
+        // AP scale 2026-11-13 §11.1 option B: rank 2 raises the field cap, not the pool.
         $this->assertTrue($result === true);
         $this->assertEquals(2, $advisor->rank);
-        $this->assertGreaterThan($totalBefore, $this->service->getTotalActionPoints($this->colonyId));
+        $this->assertSame($totalBefore, $this->service->getTotalActionPoints($this->colonyId));
+        $this->assertSame((int) config('game.build.ap_cap_per_sol.base') + (int) config('game.advisor.cap_bonus_per_rank.2'), app(BuildingApCapService::class)->capFor($this->colonyId));
     }
 }

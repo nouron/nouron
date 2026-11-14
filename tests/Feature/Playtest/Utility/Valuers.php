@@ -137,8 +137,10 @@ final class Valuers
 
         $effect = match ($researchId) {
             self::GEOLOGY => $ctx->stream((float) (config('game.geology_harvester_bonus_per_level')[$target] ?? 0), $latency),
-            self::CONSTRUCTION => $ctx->stream(($cfg['ap_cost_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['build_ap_per_sol'] * $ctx->lambdaAp, $latency),
-            self::CARTOGRAPHY => $ctx->stream(($cfg['nav_ap_reduction_per_lv'][$target] ?? 0) / 100 * (float) $w['ap_per_sol'] * $ctx->lambdaAp, $latency),
+            // AP scale 2026-11-13: absolute AP effects, valued as AP saved per Sol (assumed
+            // frequencies in weights.php, uncalibrated).
+            self::CONSTRUCTION => $ctx->stream((float) ($cfg['ap_cost_reduction_per_lv'][$target] ?? 0) * (float) $w['cc_levelups_per_sol'] * $ctx->lambdaAp, $latency),
+            self::CARTOGRAPHY => $ctx->stream(self::cartographyApPerSol($cfg, $target, $w) * $ctx->lambdaAp, $latency),
             // GameTick::generateAgronomyBonus() pays nothing while no Agrardom stands.
             self::AGRONOMY => self::agrardomLevel($b) === 0 ? 0.0
                 : $ctx->stream(min((int) (config('game.agronomy_agrardom_bonus_per_level')[$target] ?? 0), self::foodDeficit($b)) * $ctx->price('organics'), $latency),
@@ -191,10 +193,25 @@ final class Valuers
         return new Estimate($terms, 1, $regolith);
     }
 
+    /**
+     * AP per Sol a cartography level saves: the long-mission cut (times the assumed long
+     * missions per Sol) and the free first exploration of a Sol (1 AP).
+     *
+     * @param  array<string, mixed>  $cfg
+     * @param  array<string, mixed>  $w
+     */
+    private static function cartographyApPerSol(array $cfg, int $target, array $w): float
+    {
+        $rule = (array) ($cfg['mission_ap_reduction'] ?? []);
+        $ap = (int) ($rule['from_level'] ?? 0) === $target ? (float) ($rule['ap'] ?? 0) * (float) $w['long_missions_per_sol'] : 0.0;
+
+        return $ap + ((int) ($cfg['free_explore_from_level'] ?? 0) === $target ? 1.0 : 0.0);
+    }
+
     /** One more advisor: Rank-1 AP stream valued at λ_AP minus its upkeep (spec 2.3). */
     public static function advisorSlotValue(BotContext $ctx): float
     {
-        $ap = (int) (config('game.advisor.ap_per_rank')[1] ?? 2);
+        $ap = (int) (config('game.advisor.ap_per_rank')[1] ?? 1);
         $upkeep = (int) (config('game.advisor.upkeep')[1] ?? 10);
 
         return $ctx->stream($ap * $ctx->lambdaAp - $upkeep * $ctx->price('credits'), 1);

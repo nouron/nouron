@@ -392,16 +392,18 @@ return [
     'bar_encounter_accept' => 'Accept',
 
     // ── Cantina bartender Tomas (A40) ─────────────────────────────────────────
-    // "Talk to Tomas" — free interaction, no AP cost check. The 4 tier variants
-    // mirror config('game.bartender.ap_bonus_tiers') (0/5/15/30 interactions ->
-    // 0/1/2/3 AP) and grow warmer the better Tomas knows the Director.
+    // "Talk to Tomas" — free interaction, no AP cost check. The 4 tier variants follow
+    // his relationship level (frontend: ceil(level / 2)). The advice always brings the
+    // same AP; the relationship makes it more frequent
+    // (game.bartender.advice_every_sols_by_relationship_level). The lines grow warmer
+    // the better Tomas knows the Director.
     'bartender_counter_role' => 'Bartender',
     'bartender_talk_button' => 'Talk to Tomas',
     'bartender_dialog_intro' => 'Tomas listens while polishing a glass — no word wasted with him, but every one counts.',
     'bartender_dialog_tier_0' => '"Tell me what\'s weighing on you." He nods curtly and listens — nothing more, he doesn\'t know you well enough yet.',
     'bartender_dialog_tier_1' => 'Tomas pauses. "I see you around." Without a word he slides a thought your way that actually helps.',
-    'bartender_dialog_tier_2' => 'He sets the glass down and sits for a moment. "You\'re no stranger here anymore." What he passes on weighs more than usual.',
-    'bartender_dialog_tier_3' => 'Tomas smiles briefly — rare enough that you notice. "You belong here." He gives you more than he has given most people.',
+    'bartender_dialog_tier_2' => 'He sets the glass down and sits for a moment. "For you I have a moment more often than for most." By now he has something for you every other evening.',
+    'bartender_dialog_tier_3' => 'Tomas smiles briefly — rare enough that you notice. "You\'re one of us. All the way." Not an evening goes by now without him passing you something.',
 
     // ── Character concerns (A41) ──────────────────────────────────────────────
     // One approach line + one success line per character; a failure line only
@@ -683,7 +685,7 @@ return [
     'sol_report_instability_detail' => 'After :sols Sols without a change of location: Harvester yield disrupted.',
     'sol_report_event_plague' => 'Outbreak of disease',
     'sol_report_plague_detail_hunger' => 'Food shortage (:streak Sols without supplies) triggered the outbreak — action points temporarily reduced.',
-    'sol_report_plague_detail_trust' => 'Critical Trust (:trust) triggered the outbreak — action points temporarily reduced.',
+    'sol_report_plague_detail_trust' => 'Trust has fallen to ":trust" — the turmoil triggered the outbreak — action points temporarily reduced.',
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',
@@ -761,6 +763,9 @@ return [
     'bartender_knowledge_label' => 'Which knowledge field does the tip go into?',
     'bartender_error_cooldown' => 'Tomas has already given you advice for today — try again next Sol.',
     'bartender_error_generic' => 'The conversation did not happen.',
+    // Silent research (spec 2026-11-11-tomas-rat-rueckmeldung).
+    'bartender_relationship_too_low' => 'Tomas gives you a nod, nothing more. He does not know you well enough for advice yet — build the relationship first.',
+    'knowledge_not_selectable' => 'This knowledge is waiting on :reason. Pick another one.',
     'bar_concern_knowledge_label' => 'Which knowledge field should the help go into?',
     'bar_information_knowledge_label' => 'Which knowledge field should benefit?',
     'codex_page_intro' => 'Every figure in the Cantina leaves traces — the more often you meet, the more you learn about them. Unlocked entries stay with you beyond the end of a run.',
@@ -836,4 +841,19 @@ return [
     // Svelte hangar screen (ADR 0006): carousel arrows (were hardcoded English in Blade)
     'hangar_prev_bay' => 'Previous bay',
     'hangar_next_bay' => 'Next bay',
+
+    // Tomas' advice / silent research in the cantina dialog (spec 2026-11-11-tomas-rat-rueckmeldung,
+    // sentences 27–35). Result lines serve Tomas, Sarka, Deva and Lenn (:name = source).
+    'bartender_talk_button_bonus' => 'Talk to Tomas (+:ap AP into a knowledge)',
+    'bartender_done_today' => 'Tomas goes back to polishing his glass. Everything has been said for today.',
+    'bartender_next_sol' => 'again next Sol',
+    'bartender_advice_open' => 'Tomas has advice for you today',
+    'bartender_no_selectable' => 'Tomas shrugs. Right now there is no knowledge his advice could move forward.',
+    'knowledge_option_waiting' => ':name — waiting on :reason',
+    'knowledge_result_lab' => '+:ap AP into :knowledge (:name)',
+    'knowledge_result_lab_progress' => ':spent / :needed AP',
+    'knowledge_result_rough' => 'What :name gave you flows into :knowledge — :progress.',
+    'knowledge_result_plain' => 'What :name gave you flows into :knowledge.',
+    'knowledge_result_breakthrough' => 'Breakthrough: :knowledge reaches level :level',
+    'knowledge_result_forfeited' => 'The remaining :ap AP lapse — the knowledge is waiting on :reason.',
 ];

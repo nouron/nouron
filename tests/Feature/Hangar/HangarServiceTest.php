@@ -62,7 +62,6 @@ namespace Tests\Feature\Hangar;
  *    - test_repair_ship_throws_when_already_at_full_status
  */
 
-use App\Console\Commands\GameTick;
 use App\Exceptions\GameRuleException;
 use App\Services\AdvisorService;
 use App\Services\HangarService;
@@ -294,15 +293,15 @@ class HangarServiceTest extends TestCase
     public static function consulRankShipProvider(): array
     {
         return [
-            'rank 1 drone' => [1, self::SHIP_DRONE, 300, 6],
-            'rank 2 drone' => [2, self::SHIP_DRONE, 300, 5],
-            'rank 3 drone' => [3, self::SHIP_DRONE, 300, 5],
-            'rank 1 freighter' => [1, self::SHIP_FREIGHTER, 500, 10],
-            'rank 2 freighter' => [2, self::SHIP_FREIGHTER, 500, 9],
-            'rank 3 freighter' => [3, self::SHIP_FREIGHTER, 500, 8],
-            'rank 1 corvette' => [1, self::SHIP_CORVETTE, 800, 16],
-            'rank 2 corvette' => [2, self::SHIP_CORVETTE, 800, 14],
-            'rank 3 corvette' => [3, self::SHIP_CORVETTE, 800, 12],
+            'rank 1 drone' => [1, self::SHIP_DRONE, 300, 2],
+            'rank 2 drone' => [2, self::SHIP_DRONE, 300, 2],
+            'rank 3 drone' => [3, self::SHIP_DRONE, 300, 2],
+            'rank 1 freighter' => [1, self::SHIP_FREIGHTER, 500, 4],
+            'rank 2 freighter' => [2, self::SHIP_FREIGHTER, 500, 3],
+            'rank 3 freighter' => [3, self::SHIP_FREIGHTER, 500, 3],
+            'rank 1 corvette' => [1, self::SHIP_CORVETTE, 800, 6],
+            'rank 2 corvette' => [2, self::SHIP_CORVETTE, 800, 5],
+            'rank 3 corvette' => [3, self::SHIP_CORVETTE, 800, 4],
         ];
     }
 
@@ -341,7 +340,7 @@ class HangarServiceTest extends TestCase
 
     public function test_consul_ap_discount_config_is_rank_scaled(): void
     {
-        $this->assertSame([1 => 50, 2 => 60, 3 => 70], config('game.hangar.consul_ap_discount'));
+        $this->assertSame([1 => 150, 2 => 180, 3 => 210], config('game.hangar.consul_ap_discount'));
     }
 
     #[DataProvider('consulRankShipProvider')]
@@ -897,8 +896,8 @@ class HangarServiceTest extends TestCase
             ->where('bay', 1)
             ->first();
 
-        // Fixed per call: 10.0 + game.ship_repair.sp_per_click (2) = 12.0, ap_spend +ap_per_click (1)
-        $this->assertSame(12.0, (float) $row->status_points);
+        // Fixed per call: 10.0 + game.ship_repair.sp_per_click, ap_spend +ap_per_click (1)
+        $this->assertSame(10.0 + (float) config('game.ship_repair.sp_per_click'), (float) $row->status_points);
         $this->assertSame(1, (int) $row->ap_spend);
     }
 
@@ -950,7 +949,7 @@ class HangarServiceTest extends TestCase
 
     // ── cartography Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) ────────
 
-    public function test_dispatch_ship_costs_less_nav_ap_with_cartography(): void
+    public function test_dispatch_ship_costs_less_ap_for_long_missions_with_cartography(): void
     {
         config(['game.bypass.ap_checks' => false]);
         $this->insertHangar(1);
@@ -960,15 +959,13 @@ class HangarServiceTest extends TestCase
         $advisorService = $this->app->make(AdvisorService::class);
         $before = $advisorService->getAvailableActionPoints(self::COLONY_ID);
 
-        // mission_courier_run: sol_distance=1 (siehe test_dispatch_ship_sets_dispatched_state_and_creates_mission).
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+        // mission_long_range_expedition: sol_distance=5 — long enough for the cartography cut
+        // (knowledge.cartography.mission_ap_reduction, AP scale 2026-11-13).
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_long_range_expedition');
 
-        $baseNavApCost = 1 * (int) config('missions.ap_per_sol', 2);
-        $curve = config('knowledge.cartography.nav_ap_reduction_per_lv');
-        $discountPercent = GameTick::cumulativeCurveYield($curve, 5);
-        $expectedCost = ProjectBonusService::applyDiscount($baseNavApCost, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
+        $expectedCost = ProjectBonusService::missionApBase(5) - (int) config('knowledge.cartography.mission_ap_reduction.ap');
 
-        $this->assertLessThan($baseNavApCost, $expectedCost, 'precondition: discount must actually lower the base nav AP cost');
+        $this->assertLessThan(ProjectBonusService::missionApBase(5), $expectedCost, 'precondition: the cut must actually lower the base AP cost');
         $this->assertSame($before - $expectedCost, $advisorService->getAvailableActionPoints(self::COLONY_ID));
     }
 
@@ -983,7 +980,7 @@ class HangarServiceTest extends TestCase
 
         $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
 
-        $baseNavApCost = 1 * (int) config('missions.ap_per_sol', 2);
+        $baseNavApCost = ProjectBonusService::missionApBase(1);
         $this->assertSame($before - $baseNavApCost, $advisorService->getAvailableActionPoints(self::COLONY_ID), 'no cartography → unchanged base nav AP cost');
     }
 
@@ -1003,13 +1000,12 @@ class HangarServiceTest extends TestCase
         $before = $advisorService->getAvailableActionPoints(self::COLONY_ID);
 
         $catalog = $this->hangarService->getMissionCatalogFor(self::COLONY_ID);
-        $entry = collect($catalog)->firstWhere('key', 'mission_courier_run');
+        $entry = collect($catalog)->firstWhere('key', 'mission_long_range_expedition');
         $this->assertNotNull($entry);
 
-        $baseNavApCost = 1 * (int) config('missions.ap_per_sol', 2);
-        $this->assertLessThan($baseNavApCost, $entry['ap_cost'], 'precondition: catalog must reflect the cartography discount');
+        $this->assertLessThan(ProjectBonusService::missionApBase(5), $entry['ap_cost'], 'precondition: catalog must reflect the cartography discount');
 
-        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_long_range_expedition');
         $actualCharged = $before - $advisorService->getAvailableActionPoints(self::COLONY_ID);
 
         $this->assertSame($actualCharged, $entry['ap_cost'], 'catalog nav_ap must match what dispatchShip() actually charges');

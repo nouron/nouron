@@ -54,6 +54,10 @@
 		ap_for_levelup: number;
 		ap_available: number;
 		ap_cap: ApCap;
+		// Lab preview only: progress from cantina bonus AP as a rough word (silent research).
+		rough_progress?: number | null;
+		rough_progress_label?: string | null;
+		bonus_progress?: boolean;
 	};
 	type Phases = Record<string, { cc_level: number; items: Tech[] }>;
 	type Edge = Record<string, unknown>;
@@ -121,6 +125,9 @@
 	}
 
 	const isPreviewKnowledge = (tech: Tech) => preview && tech.type === 'research' && tech.status === 'locked';
+	// Preview knowledge carrying cantina bonus progress: rough word + cantina mark instead of numbers.
+	const hasBonusProgress = (tech: Tech) =>
+		preview && tech.type === 'research' && !!tech.bonus_progress && !!tech.rough_progress_label;
 	const labNode = () => flatItems().find((it) => it.type === 'building' && it.id === LAB_ID);
 
 	function focusLab() {
@@ -129,7 +136,7 @@
 	}
 
 	function statusLabel(tech: Tech): string {
-		if (isPreviewKnowledge(tech)) return t('techtree.preview_lab_needed');
+		if (isPreviewKnowledge(tech)) return hasBonusProgress(tech) ? tech.rough_progress_label! : t('techtree.preview_lab_needed');
 		const gate: Record<string, string> = {
 			available: t('techtree.status_available'),
 			locked: t('techtree.status_locked')
@@ -316,7 +323,8 @@
 				label: item.ref.name,
 				sub: statusLabel(item.ref),
 				status: item.ref.status,
-				pulse: item.ref.pulse
+				pulse: item.ref.pulse,
+				mark: hasBonusProgress(item.ref)
 			}),
 			onSelect: selectByKey
 		});
@@ -489,6 +497,18 @@
 						<p class="detail-ap-hint">{acquireHint(tech)}</p>
 					{/if}
 				{:else if tech.type === 'research' && preview}
+					<!-- Reached level: exact, with its own effect (future levels and AP stay hidden). -->
+					{#if tech.level > 0}{@render effects(tech)}{/if}
+					{#if hasBonusProgress(tech)}
+						<div class="detail-row preview-bonus" data-bonus-progress>
+							<span class="detail-row-label">{t('techtree.preview_bonus_label')}</span>
+							<span class="preview-bonus__value">
+								<span class="preview-bonus__mark" aria-hidden="true"><i class="bi bi-lightbulb"></i></span>
+								<strong>{tech.rough_progress_label}</strong>
+								<span class="preview-bonus__source">{t('techtree.preview_bonus_source')}</span>
+							</span>
+						</div>
+					{/if}
 					{#if tech.status === 'locked'}
 						{@const lab = labNode()}
 						<div class="preview-reason">
@@ -618,6 +638,27 @@
 <style>
 	.load-error {
 		margin: var(--space-md);
+	}
+	.preview-bonus__value {
+		display: inline-flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: var(--space-xs) var(--space-sm);
+	}
+	.preview-bonus__mark {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: var(--color-accent);
+		color: #ffffff;
+		font-size: 0.75rem;
+	}
+	.preview-bonus__source {
+		color: var(--color-text-secondary);
+		font-size: 0.85rem;
 	}
 	.preview-reason-link {
 		background: none;

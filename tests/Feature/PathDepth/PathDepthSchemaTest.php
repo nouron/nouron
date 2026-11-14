@@ -46,7 +46,11 @@ class PathDepthSchemaTest extends TestCase
             $sorted = $costs;
             sort($sorted);
             $this->assertSame($sorted, array_values($costs));
-            $this->assertCount(count($costs), array_unique($costs), 'strictly increasing');
+            // Families rise strictly; character levels 2-5 cost the same on purpose (AP scale
+            // 2026-11-13 §11.4: "every further level needs 3 AP").
+            if ($kind === 'mission_family') {
+                $this->assertCount(count($costs), array_unique($costs), 'strictly increasing');
+            }
         }
     }
 

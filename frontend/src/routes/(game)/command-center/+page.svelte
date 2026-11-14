@@ -34,9 +34,11 @@
 		}[];
 		lastSolDeltas: Record<string, number> | null;
 		advisors: { type_key: string | null; name: string; rank_name: string; ap_per_tick: number }[];
-		trustEvents: { tick: number; description: string; delta: number; following: number[] }[];
-		trustEventsSum: number;
-		trustEventCap: number | null;
+		// T59 F3: amounts (delta, following, sum, cap) only with a science lab (trustNumbersVisible).
+		trustEvents: { tick: number; description: string; delta?: number; following?: number[] }[];
+		trustEventsSum?: number;
+		trustEventCap?: number | null;
+		trustNumbersVisible: boolean;
 		uplinkLevel: number;
 		nexusImport: {
 			resources: Record<string, PriceRow>;
@@ -269,7 +271,7 @@
 				{@const deltas = d.lastSolDeltas}
 				<p class="cc-card-hint">{t('command_center.widget_balance_intro')}</p>
 				<ul class="cc-list">
-					{#each BALANCE as [key, lang] (key)}
+					{#each BALANCE.filter(([key]) => key !== 'trust' || d?.trustNumbersVisible) as [key, lang] (key)}
 						{@const delta = deltas[key] ?? 0}
 						<li class="cc-list-item">
 							<span>{t(`resources.${lang}`)}</span>
@@ -318,28 +320,37 @@
 						<li class="cc-list-item">
 							<span>
 								{t('command_center.widget_trust_events_sol', { sol: e.tick + 1 })} — {e.description}
-								{#if e.following.length}
+								{#if e.following?.length}
 									<small class="cc-card-hint"
 										>{t('command_center.widget_trust_events_following', { values: e.following.map(signed).join(', ') })}</small
 									>
 								{/if}
 							</span>
-							<span
-								class="ap-chip {e.delta > 0 ? 'ap-chip--trust-pos' : e.delta < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'}"
-								>{signed(e.delta)}</span
-							>
+							{#if e.delta !== undefined}
+								<span
+									class="ap-chip {e.delta > 0 ? 'ap-chip--trust-pos' : e.delta < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'}"
+									>{signed(e.delta)}</span
+								>
+							{/if}
 						</li>
 					{/each}
-					<li class="cc-list-item">
-						<strong>{t('command_center.widget_trust_events_sum')}</strong>
-						<span>
-							{signed(d.trustEventsSum)}
-							{#if d.trustEventCap !== null && Math.abs(d.trustEventsSum) >= d.trustEventCap}
-								<small class="cc-card-hint">{t('command_center.widget_trust_events_capped', { cap: d.trustEventCap })}</small>
-							{/if}
-						</span>
-					</li>
+					{#if d.trustEventsSum !== undefined}
+						{@const sum = d.trustEventsSum}
+						{@const cap = d.trustEventCap ?? null}
+						<li class="cc-list-item">
+							<strong>{t('command_center.widget_trust_events_sum')}</strong>
+							<span>
+								{signed(sum)}
+								{#if cap !== null && Math.abs(sum) >= cap}
+									<small class="cc-card-hint">{t('command_center.widget_trust_events_capped', { cap })}</small>
+								{/if}
+							</span>
+						</li>
+					{/if}
 				</ul>
+				{#if !d.trustNumbersVisible}
+					<p class="cc-card-hint">{t('resources.popup_trust_numbers_locked')}</p>
+				{/if}
 			{/if}
 		</article>
 

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\BuildingId;
 use App\Services\ResourcesService;
+use App\Services\TrustService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -75,7 +76,7 @@ class ValidateColony extends Command
                 ->value('amount');
             if ($trust === null) {
                 $issues[] = ['WARN', 'Trust resource row missing'];
-            } elseif ((int) $trust < -50) {
+            } elseif ((int) $trust < app(TrustService::class)->bandMin('restless')) {
                 $issues[] = ['WARN', "Trust critically low: {$trust}"];
             }
 

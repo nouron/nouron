@@ -18,7 +18,7 @@ use Tests\TestCase;
  *   - Ship contributions (capped at ±30)
  *   - One-shot events from trust_events (only strongest per type)
  *
- * Formula: clamp(Σbuildings + Σresearches + clamp(Σships, -30, +30) + events, -100, +100)
+ * Formula: clamp(base + Σbuildings + Σresearches + clamp(Σships, ±ships_cap) + events + hunger, 0, 100)
  *
  * Covered scenarios:
  *  Happy path:
@@ -28,17 +28,17 @@ use Tests\TestCase;
  *
  *  Edge cases:
  *  - Trust clamped at +100 maximum
- *  - Trust clamped at -100 minimum
+ *  - Trust clamped at 0 minimum
  *  - Trust events are one-shot (not repeated on subsequent ticks)
  *  - Duplicate events of the same type do not stack (strongest wins)
  *
  *  Adversarial:
  *  - Unknown event type is silently ignored (no crash, no effect)
- *  - Trust with zero buildings/events = 0 (neutral)
+ *  - Trust with zero buildings/events = base value
  *
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3
- *   colony_resources resource_id=12: amount=0 (trust starts at 0)
+ *   colony_resources resource_id=12: amount=50 (trust starts at the base value)
  *
  * Uses tick numbers 11300–11349.
  */
@@ -147,7 +147,7 @@ class GameTickTrustTest extends TestCase
 
         $trust = $this->getTrust();
         // buildings+researches+ships = 0 (zeroed above); event = +1
-        $this->assertEquals($eventEffect, $trust,
+        $this->assertEquals((int) config('game.trust.base') + $eventEffect, $trust,
             "Trust after 'building_level_up' event must equal the configured effect (+{$eventEffect})");
     }
 
@@ -164,7 +164,7 @@ class GameTickTrustTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11302]);
 
         $trust = $this->getTrust();
-        $this->assertEquals($eventEffect, $trust,
+        $this->assertEquals((int) config('game.trust.base') + $eventEffect, $trust,
             "Trust after 'encounter_lost' event must equal the configured effect ({$eventEffect})");
     }
 
@@ -191,7 +191,7 @@ class GameTickTrustTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11303]);
 
         $trust = $this->getTrust();
-        $this->assertEquals($trustPerLv, $trust,
+        $this->assertEquals((int) config('game.trust.base') + $trustPerLv, $trust,
             "Infirmary level 1 must contribute trust_per_lv={$trustPerLv} to total trust");
     }
 
@@ -225,14 +225,14 @@ class GameTickTrustTest extends TestCase
     }
 
     /**
-     * Trust must be clamped to -100 even when negative contributions exceed -100.
+     * Trust must be clamped to 0 even when negative contributions exceed the base.
      *
-     * Use events from all negative-value event types and assert the result is always >= -100.
+     * Use events from all negative-value event types and assert the result is always >= 0.
      */
-    public function test_trust_clamped_at_negative_100(): void
+    public function test_trust_clamped_at_zero(): void
     {
         // Strategy: use events from all negative-value event types
-        // and assert the result is always >= -100.
+        // and assert the result is always >= 0.
         $negativeEvents = collect(config('game.trust.events', []))
             ->filter(fn ($v) => $v < 0)
             ->keys();
@@ -244,7 +244,7 @@ class GameTickTrustTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11311]);
 
         $trust = $this->getTrust();
-        $this->assertGreaterThanOrEqual(-100, $trust, 'Trust must never go below -100');
+        $this->assertGreaterThanOrEqual(0, $trust, 'Trust must never go below 0');
     }
 
     /**
@@ -263,9 +263,9 @@ class GameTickTrustTest extends TestCase
         $trustAfterTick2 = $this->getTrust();
 
         // Both ticks with no buildings → event fired only in tick 11320
-        // tick 11320: trust = +1 (event);  tick 11321: trust = 0 (no event)
-        $this->assertEquals(1, $trustAfterTick1, 'Trust must reflect the event in its tick');
-        $this->assertEquals(0, $trustAfterTick2, 'Trust event must not carry to the next tick');
+        // tick 11320: trust = base + event;  tick 11321: trust = base (no event)
+        $this->assertEquals((int) config('game.trust.base') + (int) config('game.trust.events.building_level_up'), $trustAfterTick1, 'Trust must reflect the event in its tick');
+        $this->assertEquals((int) config('game.trust.base'), $trustAfterTick2, 'Trust event must not carry to the next tick');
     }
 
     /**
@@ -285,7 +285,7 @@ class GameTickTrustTest extends TestCase
         $singleEffect = (int) config('game.trust.events.encounter_lost', -4);
 
         // Must be exactly the single effect, not doubled (not stacked)
-        $this->assertEquals($singleEffect, $trust,
+        $this->assertEquals((int) config('game.trust.base') + $singleEffect, $trust,
             'Duplicate trust events of the same type must not stack — strongest (only one) wins');
     }
 
@@ -310,6 +310,6 @@ class GameTickTrustTest extends TestCase
 
         $trust = $this->getTrust();
         // eventContribution() looks up $cfg[$type] which returns null/0 for unknown keys
-        $this->assertEquals(0, $trust, 'Unknown event type must contribute 0 to trust (silently ignored)');
+        $this->assertEquals((int) config('game.trust.base'), $trust, 'Unknown event type must contribute 0 to trust (silently ignored)');
     }
 }

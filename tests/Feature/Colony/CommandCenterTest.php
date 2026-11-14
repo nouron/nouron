@@ -184,7 +184,8 @@ class CommandCenterTest extends TestCase
     {
         config([
             'game.trust.event_profiles.test' => [100, 50, 25],
-            'game.trust.event_profile.research_level_up' => 'test', // delta +2
+            'game.trust.event_profile.research_level_up' => 'test',
+            'game.trust.events.research_level_up' => 2, // pinned: 50 % = 1, 25 % = 1
         ]);
         $next = app(TickService::class)->getTickCount() + 1;
         DB::table('trust_events')->insert([

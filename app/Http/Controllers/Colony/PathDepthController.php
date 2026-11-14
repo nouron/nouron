@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Exceptions\GameRuleException;
 use App\Http\Controllers\BaseController;
 use App\Services\AdvisorService;
+use App\Services\CantinaPresenceService;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\PathDepthService;
@@ -21,6 +22,7 @@ class PathDepthController extends BaseController
         private readonly ColonyService $colonyService,
         private readonly PathDepthService $pathDepthService,
         private readonly AdvisorService $advisorService,
+        private readonly CantinaPresenceService $cantinaPresence,
     ) {
         parent::__construct($tick);
     }
@@ -36,9 +38,11 @@ class PathDepthController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
         try {
-            $result = $this->pathDepthService->invest($colony->id, $kind, $key, $ap);
+            $present = $kind === PathDepthService::KIND_CHARACTER
+                && $this->cantinaPresence->isPresent($colony->id, $key, $this->getTick());
+            $result = $this->pathDepthService->invest($colony->id, $kind, $key, $ap, $present);
         } catch (GameRuleException $e) {
-            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()], 422);
+            return response()->json(['ok' => false, 'error' => $e->errorCode, 'message' => $e->getMessage()] + $e->context, 422);
         }
 
         $this->eventService->createEvent([
@@ -52,6 +56,7 @@ class PathDepthController extends BaseController
                 'ap_spend' => $result['points'],
                 'level' => $result['level'],
                 'leveled_up' => $result['leveled_up'],
+                'wasted' => $result['wasted'],
             ]),
         ]);
 
@@ -61,6 +66,7 @@ class PathDepthController extends BaseController
             'ap_spend' => $result['ap_spend'],
             'ap_for_levelup' => $result['ap_for_levelup'],
             'leveled_up' => $result['leveled_up'],
+            'wasted' => $result['wasted'],
             'level_cap' => $result['level_cap'],
             'ap_cap' => $result['ap_cap'],
             'apAvailable' => $this->advisorService->getAvailableActionPoints($colony->id),

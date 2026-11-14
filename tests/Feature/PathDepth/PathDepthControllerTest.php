@@ -57,16 +57,16 @@ class PathDepthControllerTest extends TestCase
         $before = app(AdvisorService::class)->getAvailableActionPoints(self::COLONY_ID);
 
         $this->actingAs($this->bart())
-            ->postJson($this->url('mission_family', 'exploration'), ['ap' => 2])
+            ->postJson($this->url('mission_family', 'exploration'), ['ap' => 1])
             ->assertOk()
             ->assertJson([
                 'ok' => true,
                 'level' => 0,
-                'ap_spend' => 2,
-                'ap_for_levelup' => 6,
+                'ap_spend' => 1,
+                'ap_for_levelup' => (int) config('path_depth.levelup_ap.mission_family.1'),
                 'leveled_up' => false,
                 'level_cap' => 5,
-                'apAvailable' => $before - 2,
+                'apAvailable' => $before - 1,
             ]);
     }
 
@@ -75,7 +75,7 @@ class PathDepthControllerTest extends TestCase
         DB::table('colony_log')->where('user', 3)->delete();
 
         $this->actingAs($this->bart())
-            ->postJson($this->url('mission_family', 'exploration'), ['ap' => 2])
+            ->postJson($this->url('mission_family', 'exploration'), ['ap' => 1])
             ->assertOk();
 
         $row = DB::table('colony_log')->where('user', 3)->where('event', 'colony.pathdepth_invested')->first();
@@ -83,7 +83,7 @@ class PathDepthControllerTest extends TestCase
         $params = json_decode($row->parameters, true);
         $this->assertSame('mission_family', $params['kind']);
         $this->assertSame('exploration', $params['key']);
-        $this->assertSame(2, $params['ap_spend']);
+        $this->assertSame(1, $params['ap_spend']);
         $this->assertFalse($params['leveled_up']);
     }
 

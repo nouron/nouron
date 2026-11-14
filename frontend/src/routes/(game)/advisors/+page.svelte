@@ -174,11 +174,6 @@
 <div class="advisors-page" {@attach carousel.attach}>
 	<div class="advisors-header">
 		<h2>{t('advisors.ui_title')}</h2>
-		<div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-			{#each slots.filter((s) => s.state === 'active' && s.advisor) as s (s.key)}
-				<span class="ap-chip"><strong>+{s.advisor?.ap_per_tick} AP</strong></span>
-			{/each}
-		</div>
 		<span class="slot-badge">
 			{t('advisors.ui_slots')}: <strong>{slotInfo.used}/{slotInfo.max}</strong>
 			<span>(CC Lv{slotInfo.cc_level})</span>

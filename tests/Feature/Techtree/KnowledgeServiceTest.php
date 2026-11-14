@@ -39,7 +39,15 @@ class KnowledgeServiceTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
         $this->service = $this->app->make(ResearchService::class);
         // These tests bulk-invest; the per-Sol lab cap has its own tests (KnowledgeApCapTest).
-        config(['game.knowledge_ap_cap_per_sol.base' => null]);
+        // Mechanism tests with the pre-scale numbers (pool 12 + rank-2 advisor 3, costs 20/28/...).
+        config([
+            'game.knowledge_ap_cap_per_sol.base' => null,
+            'game.ap.base' => 12,
+            'game.advisor.ap_per_rank' => [1 => 2, 2 => 3, 3 => 4],
+        ]);
+        foreach (array_keys(config('knowledge')) as $key) {
+            config(["knowledge.{$key}.levelup_costs" => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52]]);
+        }
 
         // Replace seeded advisors with a single Rank-2 Wissenschaftler (7 research AP)
         Advisor::where('colony_id', $this->colonyId)->delete();

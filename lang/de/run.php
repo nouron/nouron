@@ -8,7 +8,7 @@ return [
     'run_failed_phase1_deadline' => 'Fristbruch — Phase 1 wurde nicht rechtzeitig abgeschlossen. Nexus zieht die Konzession mit sofortiger Wirkung.',
     'task_senior_advisors' => 'Expertenstab: :target Berater mit mindestens Rang :min_rank',
     'task_credit_reserve' => 'Kreditreserve: mindestens :threshold Credits halten, :target Sole in Folge',
-    'task_colony_prosperity' => 'Kolonieblüte: Vertrauen über :threshold halten, :target Sole in Folge',
+    'task_colony_prosperity' => 'Kolonieblüte: Vertrauen mindestens auf „:min_band“ halten, :target Sole in Folge',
     'task_research_lead' => 'Forschungsvorsprung: :target Kenntnisse auf mindestens Stufe :min_level',
     'task_self_sufficiency' => 'Selbstversorgung: Regolith über :regolith_min, Organika über :organics_min halten, :target Sole in Folge',
     'task_expedition_coverage' => 'Expeditionen: :target erfolgreiche Außenmissionen mit Schwierigkeit „:min_difficulty“ oder höher',

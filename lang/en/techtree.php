@@ -213,4 +213,7 @@ return [
     'preview_reason_label' => 'Requirement',
     'preview_reason_lab' => 'Analytics Lab',
     'preview_reason_lab_needs' => 'The Analytics Lab itself still needs: :list',
+    // Lab preview: bonus progress from the cantina (silent research).
+    'preview_bonus_label' => 'Silent research',
+    'preview_bonus_source' => 'from talks in the cantina',
 ];

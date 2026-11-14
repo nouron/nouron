@@ -2,6 +2,8 @@
 
 Stand 2026-11-11 · Autor: game-designer · Status: Entwurf, Owner-Fragen offen (Abschnitt 8)
 Bezug: ROADMAP T41 P7 (Cantina-Stufenwirkung je Figur), T43-B4/G4 (Gesprächsoptionen), Spec `2026-10-23-pfad-vertiefung.md` (Frage O4), Datenarchiv-Entwurf `2026-11-08-nexusdb-codex-zusammenfuehren-entwurf.md` (Korrektur 2026-11-11).
+**Stand 2026-11-14 (Nachtrag Hauptsession):** Seit diesem Entwurf gemergt: AP-Skala ÷3 (Spec `2026-11-13-ap-skala.md`, PR #473 — AP-Zahlen in diesem Dokument, z. B. Kenntnis 20–52 AP und Grundwert 12 AP, sind überholt), Baukunde/Bau-Rabatte bereits absolut (deckt U2 weitgehend ab), Vertrauen 0–100 mit Stufen und ohne Produktionsfaktor (Spec `2026-11-14-vertrauen-skala.md`, PR #475 — deckt U7 ab). Vor der Umsetzung von P7 die Zahlen gegen die aktuelle Config neu rechnen.
+
 Nur Dokument. Kein Code, keine Messung, GDD unverändert. Konkrete Zahlen stehen ausschließlich in Tabellen und sind **Platzhalter** (ADR 0004), sofern nicht als gemessen gekennzeichnet. Es liegen für diese Spec **keine Messdaten** vor; alle Rechnungen sind **Annahme (gerechnet)**.
 
 ## 0. Owner-Vorgaben (2026-11-11, verbindlich)
@@ -89,7 +91,7 @@ Als bereits konform gelten: Geologie-Regolith, Agrarwissen-Organika, Handel-Plä
 ### 2.2 Wo das Prinzip an Grenzen stößt (Annahme, Owner-Entscheidung nötig)
 
 - **Seltene Ereignisse.** Eine absolute Senkung um „1 Prozentpunkt“ wäre bei einer Sturm-Chance von etwa 1 bis 2 % ein Zehntel bis die Hälfte des Risikos, mit Ansatz „n Punkte“ also unbrauchbar. Außerdem ist ihre Wirkung heute ohnehin kaum sichtbar (20 % von 1,2 % sind 0,24 Prozentpunkte je Sol). **Empfehlung:** Risiko-Senkungen bleiben prozentual, werden aber als **eine additive Summe** geführt (so ist es heute schon bei Gesundheit plus Krankenstation) und nie mit einem zweiten Faktor multipliziert. Für P7 gilt: **Figuren bekommen keine Risiko-Effekte**, weil sie unsichtbar bleiben würden (Abschnitt 3).
-- **Preise.** Preis-Prozente sind eine **benannte Summe** (Handelsvorteil), additiv aus mehreren Quellen. **Empfehlung:** als Ausnahme belassen, solange sie nur dort und nur additiv wirken.
+- **Preise.** ~~Empfehlung: als Ausnahme belassen.~~ **Owner-Entscheidung 2026-11-13: keine Ausnahme** — Preis-Prozente (Kenntnis, Handelsposten, Konsul-Rabatt, Verhandlungsaufschlag) werden mit P7 auf absolute Beträge umgestellt (U5). Offen bleibt nur, ob die Verhandlungs-Erfolgschance als Prozentpunkte bleibt.
 - **Schwierigkeitsfaktor und Malus-Zustände** (Seuche halbiert AP, Drill-Puffer): Szenario-Faktoren, keine Boni. Ausnahme.
 
 ### 2.3 Reihenfolge-Empfehlung
@@ -98,7 +100,7 @@ Als bereits konform gelten: Geologie-Regolith, Agrarwissen-Organika, Handel-Plä
 
 1. P7 (Figuren) und U1 (Hangar-Ertrag) zusammen oder unmittelbar hintereinander: beide setzen das Muster „Quelle, Stufenwerte, Summe sichtbar“.
 2. U3 und U6 (klein, rundungsanfällig beziehungsweise reine Konfiguration).
-3. U2 (Baukunde), danach U5 nur falls der Owner die Preis-Ausnahme ablehnt.
+3. U2 (Baukunde), danach U5 (Preise absolut, Owner-Entscheidung 2026-11-13).
 4. U7 (Vertrauensbänder) zuletzt und erst nach der T40-Messung, weil sie jede Zahl im Spiel berührt.
 
 **Zentrale Effekttabelle:** Empfehlung, die Effekte aller drei Pfade (Kenntnis, Figur, Familie) in einer Struktur zu führen (Quelle, Ziel-Größe, Stufenwerte, Art). Das beantwortet die Transparenz-Regel in Config und Anzeige gleichermaßen und ist Voraussetzung für die Summen-Aufschlüsselung (Abschnitt 6). Aufwand Mittel; als erste Teilaufgabe von P7 einplanen.

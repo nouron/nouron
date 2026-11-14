@@ -48,7 +48,7 @@ return [
     'securityHub_desc' => 'This is where the reports come in when something goes wrong outside. Because someone responds in time, incidents do less damage and setbacks shake the colonists less. As a Salvage Crew, the staff also recovers part of the building materials when a building loses a level to decay. Just knowing that someone is watching strengthens trust.',
 
     'uplinkStation' => 'Uplink Station',
-    'uplinkStation_desc' => 'A powerful communications and scanning array. It unlocks the Nexus import, brings in relay credits every Sol and, from the second upgrade level, makes deep scans cheaper.',
+    'uplinkStation_desc' => 'A powerful communications and scanning array. It unlocks the Nexus import, brings in relay credits every Sol and, from the second upgrade level, makes the first deep scan of each Sol free.',
 
     'tradingPost' => 'Trading Post',
     'tradingPost_desc' => 'A fixed stop for travelling merchants. Those who find an established post make better offers than at a meeting in the Cantina.',

@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\DB;
  *
  * Advisors are individual entities stored in the `advisors` table.
  * Each advisor has a rank (1–3) that adds a flat AP contribution to the
- * colony's single shared pool (GDD §13.1), regardless of advisor type:
- *   Junior (1) = +2 AP, Senior (2) = +3 AP, Experte (3) = +4 AP
+ * colony's single shared pool (GDD §13.1), regardless of advisor type
+ * (game.advisor.ap_per_rank).
  *
  * Advisor IDs come exclusively from config/advisors.php — never hardcode them.
  * Use AdvisorService::idFor('engineer') etc. for all lookups.
@@ -23,7 +23,7 @@ class AdvisorService
 {
     use ValidatesId;
 
-    const DEFAULT_ACTIONPOINTS = 2;    // Junior AP fallback
+    const DEFAULT_ACTIONPOINTS = 1;    // Junior AP fallback
 
     public static function idFor(string $key): int
     {
@@ -53,44 +53,57 @@ class AdvisorService
     }
 
     /**
-     * Breakdown of a colony's total AP — base/advisor/multiplier components,
-     * for display in the resource-bar AP chip popup.
+     * Breakdown of a colony's total AP for the resource-bar AP chip popup. Every part is
+     * absolute AP (AP scale 2026-11-13 §4), so base + advisor + trust_ap + plague_ap = total.
      *
-     * @return array{base: int, advisor: int, multiplier: float, plague_multiplier: float, total: int}
+     * @return array{base: int, advisor: int, trust_ap: int, plague_ap: int, total: int}
      */
     public function getApBreakdown(int $colonyId): array
     {
-        $baseAp = (int) config('game.ap.base', 12);
-        $advisorAp = Advisor::where('colony_id', $colonyId)
+        $baseAp = (int) config('game.ap.base', 4);
+        $advisorAp = (int) Advisor::where('colony_id', $colonyId)
             ->whereNull('unavailable_until_tick')
             ->get()
             ->sum(fn (Advisor $a) => $a->getApPerTick());
 
-        $trust = $this->trustService->getTrust($colonyId);
-        $multiplier = $this->trustService->getApMultiplier($trust);
+        $trustAp = $this->trustService->getApBonus($this->trustService->getTrust($colonyId));
 
-        // Seuchenausbruch (GDD §9): temporary AP-reduction debuff while
-        // glx_colonies.plague_until_tick is still in the future. The reduction
-        // percentage itself is read from plague_ap_reduction_pct — set per
-        // episode by GameTick::rollPlague() (halved when Deva's "Drill-
-        // Reaktionspuffer", A42, was active) — falling back to the global
-        // config default for rows where it was never set (e.g. plague_until_tick
-        // set directly in a test, bypassing rollPlague()).
+        // Seuchenausbruch (GDD §9): AP malus while glx_colonies.plague_until_tick is still
+        // ahead. The malus of the episode is stored in plague_ap_reduction_pct (absolute AP
+        // since the AP scale; 0 when Deva's "Drill-Reaktionspuffer" was active), falling
+        // back to the config value for rows where it was never set.
         $plagueRow = DB::table('glx_colonies')->where('id', $colonyId)->first(['plague_until_tick', 'plague_ap_reduction_pct']);
         $plagueActive = $plagueRow !== null && $plagueRow->plague_until_tick !== null
             && (int) $plagueRow->plague_until_tick >= $this->tickService->getTickCount();
-        $plagueReductionPct = $plagueRow?->plague_ap_reduction_pct !== null
-            ? (float) $plagueRow->plague_ap_reduction_pct
-            : (float) config('game.encounter.plague.ap_reduction_pct', 0.20);
-        $plagueMultiplier = $plagueActive ? (1 - $plagueReductionPct) : 1.0;
+        $plagueReduction = $plagueRow?->plague_ap_reduction_pct !== null
+            ? (int) $plagueRow->plague_ap_reduction_pct
+            : (int) config('game.encounter.plague.ap_reduction', 1);
+        $plagueAp = $plagueActive ? -$plagueReduction : 0;
 
         return [
             'base' => $baseAp,
-            'advisor' => (int) $advisorAp,
-            'multiplier' => $multiplier,
-            'plague_multiplier' => $plagueMultiplier,
-            'total' => (int) round(($baseAp + $advisorAp) * $multiplier * $plagueMultiplier),
+            'advisor' => $advisorAp,
+            'trust_ap' => $trustAp,
+            'plague_ap' => $plagueAp,
+            'total' => max(0, $baseAp + $advisorAp + $trustAp + $plagueAp),
         ];
+    }
+
+    /**
+     * Field cap bonus of a specialist advisor ("Fach-Deckel", AP scale 2026-11-13 §11.1):
+     * game.advisor.cap_bonus_per_rank for the advisor's rank, 0 without the advisor or while
+     * it is unavailable. engineer -> building cap, scientist -> lab cap, pilot -> training cap.
+     */
+    public function specialistCapBonus(int $colonyId, string $advisorKey): int
+    {
+        $advisor = Advisor::where('colony_id', $colonyId)
+            ->where('personell_id', self::idFor($advisorKey))
+            ->first();
+        if ($advisor === null || ! $advisor->isAvailable($this->tickService->getTickCount())) {
+            return 0;
+        }
+
+        return (int) config('game.advisor.cap_bonus_per_rank.'.$advisor->rank, 0);
     }
 
     public function getAvailableActionPoints(int $colonyId): int

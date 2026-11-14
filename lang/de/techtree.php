@@ -215,4 +215,8 @@ return [
     'preview_reason_label' => 'Voraussetzung',
     'preview_reason_lab' => 'Analytik-Labor',
     'preview_reason_lab_needs' => 'Das Analytik-Labor braucht noch: :list',
+    // Labor-Vorschau: Bonus-Fortschritt aus der Cantina (stille Forschung, spec
+    // 2026-11-11-tomas-rat-rueckmeldung Satz 33).
+    'preview_bonus_label' => 'Stille Forschung',
+    'preview_bonus_source' => 'aus Gesprächen in der Cantina',
 ];

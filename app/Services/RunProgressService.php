@@ -253,18 +253,15 @@ class RunProgressService
     }
 
     /**
-     * Streak task: trust > threshold on consecutive Sols.
+     * Streak task: trust at least in band `min_band` on consecutive Sols (T59).
      */
     private function updateColonyProsperity(RunObjective $objective, Run $run): void
     {
-        $trust = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 12)
-            ->value('amount') ?? 0);
+        $trustService = app(TrustService::class);
+        $trust = $trustService->getTrust($run->colony_id);
+        $threshold = $trustService->bandMin((string) $this->tasks->param('task_colony_prosperity', 'min_band', 'content'));
 
-        $threshold = (int) $this->tasks->param('task_colony_prosperity', 'threshold', 70);
-
-        $this->applyStreak($objective, $run, $trust > $threshold);
+        $this->applyStreak($objective, $run, $trust >= $threshold);
     }
 
     /**
@@ -593,13 +590,10 @@ class RunProgressService
      */
     public function checkTrustWarnings(Run $run): void
     {
-        $warnBelow = (int) config('game.run.trust_warning.nexus_warning', -18);
-        $failBelow = (int) config('game.run.trust_fail_threshold', -20);
+        $warnBelow = (int) config('game.run.trust_warning.nexus_warning', 10);
+        $failBelow = (int) config('game.run.trust_fail_threshold', 5);
 
-        $trust = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 12)
-            ->value('amount') ?? 0);
+        $trust = app(TrustService::class)->getTrust($run->colony_id);
 
         if ($trust >= $warnBelow || $trust < $failBelow) {
             return;
@@ -613,7 +607,8 @@ class RunProgressService
         $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
             'run_id' => $run->id,
             'colony_id' => $run->colony_id,
-            'trust' => $trust,
+            // Band, not the number: comm-log params reach the client (T59 F3).
+            'trust_band' => app(TrustService::class)->bandKey($trust),
         ]);
     }
 
@@ -632,12 +627,9 @@ class RunProgressService
      */
     public function checkFailStates(Run $run): ?string
     {
-        $trustThreshold = (int) config('game.run.trust_fail_threshold', -20);
+        $trustThreshold = (int) config('game.run.trust_fail_threshold', 5);
 
-        $trust = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 12)
-            ->value('amount') ?? 0);
+        $trust = app(TrustService::class)->getTrust($run->colony_id);
 
         if ($trust < $trustThreshold) {
             return 'trust_collapse';

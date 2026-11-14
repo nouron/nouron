@@ -38,8 +38,8 @@ return [
 
     'popup_ap_base' => 'Basis-AP',
     'popup_ap_advisor' => 'durch Berater',
-    'popup_ap_trust_multiplier' => 'Vertrauen-Multiplikator',
-    'popup_ap_plague_multiplier' => 'Seuchenausbruch',
+    'popup_ap_trust' => 'Vertrauen',
+    'popup_ap_plague' => 'Seuchenausbruch',
 
     // Per-Sol balance rows in the Regolith/Organika/Werkstoffe popups
     'popup_flow_net' => 'Bilanz pro Sol',
@@ -70,13 +70,17 @@ return [
     'popup_or_desc' => 'Alles, was der Agrardom unter seinem Dach anbaut: Nahrung, Medizin, Biodünger. Ohne ausreichend Organika hungern die Kolonisten — und das Vertrauen bricht schnell ein.',
 
     'popup_trust_title' => 'Vertrauen',
-    'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
+    'popup_trust_desc' => 'Was die Kolonisten noch hält. Wer der Leitung vertraut, packt mit an, und die Schichten gehen leichter von der Hand. Kippt die Stimmung, bleibt Arbeit liegen — und irgendwann hört niemand mehr hin.',
+    'popup_trust_base' => 'Grundwert',
     'popup_trust_buildings' => 'Gebäude',
     'popup_trust_research' => 'Kenntnisse',
     'popup_trust_ships' => 'Schiffe',
     'popup_trust_events' => 'Ereignisse',
-    'popup_trust_total' => 'Vertrauen gesamt',
+    'popup_trust_total' => ':total Punkte · :band ab :min',
     'popup_trust_hunger' => 'Hunger',
+    'popup_trust_band_effect' => ':band · :ap AP',
+    'popup_trust_numbers_locked' => 'Genaue Werte erst mit dem Analytik-Labor.',
+    'popup_trust_next' => 'Ab nächstem Sol: :value',
 
     // Resource rail (left overlay)
     'rail_label' => 'Ressourcenleiste',

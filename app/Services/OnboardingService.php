@@ -211,7 +211,7 @@ class OnboardingService
             ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => (int) config('game.onboarding.start_regolith')],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
             ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 10],   // organika  — T43-G7: start > 0 (~2 Sol Bedarf) prevents Sol-1 hunger
-            ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // trust
+            ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => (int) config('game.trust.base', 50)],    // trust (base value, T59)
         ];
 
         DB::table('colony_resources')->insert($colonyResources);

@@ -214,6 +214,6 @@ class HangarBaysTest extends TestCase
         $this->actingAs(User::where('user_id', self::USER_ID)->firstOrFail())
             ->postJson(route('colony.hangar.repair', ['bay' => 0]))->assertOk();
 
-        $this->assertSame(12.0, (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('status_points'));
+        $this->assertSame(10.0 + (float) config('game.ship_repair.sp_per_click'), (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('status_points'));
     }
 }

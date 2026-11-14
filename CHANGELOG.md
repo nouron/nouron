@@ -1,9 +1,29 @@
 # Changelog
 
+## 2026-11-14
+
+- AP-Skala ÷3 (T58, Spec `docs/superpowers/specs/2026-11-13-ap-skala.md`): Kolonie 4 AP je Sol, Berater-Ränge erhöhen Pool und Fach-Deckel (Baumeister, Analytiker, Raumfahrer), alle Bau-, Kenntnis-, Training-, Handlungs- und Beziehungskosten neu; Vertrauen und Seuche als feste AP statt Faktor, Rabatte als feste AP mit Untergrenzen, Reparatur 1 AP = 3 SP, Tomas' Rat immer 1 AP und je nach Beziehung häufiger. Werte gerechnet, nicht gemessen; laufende Läufe neu starten.
+- Cantina-Gespräche Variante C: ein Gespräch je Figur und Sol (kurz 1 AP, lang 2 AP ab Cantina 3), keine Kostenkürzung, verfallende AP an der Stufengrenze als Warn-Chip mit Hinweiszeile. AP-Popup zeigt Summanden, Reparatur-Knopf zeigt SP je Klick, Debug-Leiste zeigt die Kenntnis-Tabelle ohne Extra-Klick.
+- Vertrauen 0–100 (T59, Spec `docs/superpowers/specs/2026-11-14-vertrauen-skala.md`): Grundwert 50, fünf Stufen Aufruhr bis Euphorisch mit −2 bis +2 AP, Niederlage unter 5, Ereignis- und Quellenbeträge halbiert, kein Produktionsfaktor mehr, Händler-Schub klingt über 5 Sol ab, Kolonieblüte nach Stufe. Anzeige als Stufenwort mit AP-Wirkung; Zahl und Beträge nur mit Analytik-Labor.
+
+## 2026-11-13
+
+- Cantina: keine Stufensperre mehr für Beziehungen; die Cantina-Stufe schaltet die Gesprächsoptionen frei (kurz immer, normal ab 2, ausführlich ab 3), gesperrte Optionen tragen eine Figurenzeile; anwesende Figuren lassen sich schon vor dem ersten Handel ansprechen. Debug-Leiste (Admin) liefert die genauen Kenntnis-Werte für die stille Forschung.
+- Oberfläche dazu: gesperrte Gesprächsoptionen grau mit Schloss, die Figurenzeile einmal kursiv darunter; Figuren-Chips unter der Szene nur für bereits getroffene Figuren; Debug-Leiste mit Kenntnis-Tabelle. Beraterkarten Desktop: Infobereiche aller Karten gleich hoch und bündig.
+
+## 2026-11-12
+
+- Sol-Abschluss-Übersicht liegt jetzt über der unteren Navigationsleiste (Overlay wird direkt an `body` gehängt).
+- Ressourcenleiste: etwas tiefer, ausgeklappt weniger transparent, auf der Beraterseite immer eingeklappt; doppelte „+N AP“-Chips im Berater-Titel entfernt.
+- Beraterübersicht Desktop: Porträt füllt die ganze Karte und läuft weich in die Infos aus (wie mobil), Voraussetzung als kleiner Tag oben rechts; keine abgeschnittenen Porträts mehr.
+- Stille Forschung: Bonus-AP von Tomas, Sarka, Deva, Lenn und Daten-Sweep lassen Kenntnisse auch ohne Labor aufsteigen, verfallene Rest-AP werden gemeldet; Tomas' Rat hängt an der Beziehungsstufe, Popup zeigt Ergebnis und „wieder nächstes Sol“ (Spec `2026-11-11-tomas-rat-rueckmeldung`).
+- Kenntnisse: Höchststufe aus der Kostenkurve gilt auch im Labor; Labor-Aufstieg prüft die zweite Gebäude-Voraussetzung.
+
 ## 2026-11-11
 
 - T41 P7: Spec-Entwurf Figuren-Stufenwirkung (Owner-Prinzip: Effekte absolut, klein, additiv); nicht umgesetzt.
 - Datenarchiv-Entwurf: Freischalt-Moment (Ereignis im Lauf, Achievement-Pop-up), Lauf-Zähler am Lauf-Ende, Beziehungswert pro Figur als einfaches System; Sinken des Werts als spätere Idee.
+- Cantina: „Beziehung pflegen“ ins Figuren-Popup integriert (Desktop 3 Spalten Porträt | Beziehung | Gespräch, Handy untereinander); Beziehungsstufen als Wörter (fremd … brüderlich); unter der Szene nur noch kompakte Figuren-Chips.
 
 ## 2026-11-09
 

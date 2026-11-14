@@ -52,8 +52,8 @@ return [
         'cc_upgrade_regolith_per_level' => 30,
         // AP threshold per target level (Owner 2026-10-15, "AP bremst"): the CC is the
         // pace-setter, rising AP on top of the Regolith above. Read via
-        // BuildingCostService::levelupAp(); a level without an entry keeps ap_for_levelup (10).
-        'cc_upgrade_ap_by_level' => [2 => 20, 3 => 40, 4 => 60, 5 => 80],
+        // BuildingCostService::levelupAp(); a level without an entry keeps the seeder's ap_for_levelup.
+        'cc_upgrade_ap_by_level' => [2 => 8, 3 => 16, 4 => 24, 5 => 32],   // AP scale 2026-11-13 §11.1 (B-2)
         'supply_cap' => 10,      // flat cap once CC level >= 1 (does not scale with level)
         'supply_cost' => 0,
         'trust_per_lv' => 0,
@@ -166,28 +166,10 @@ return [
         // (implementiert via ProjectBonusService::effectiveKnowledgeApForLevelup(),
         // siehe knowledge_ap_cost_reduction_per_lv unten).
         'max_level' => 5,
-        // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23, verstärkt
-        // 2026-09-13 nach A37-Investigation) — senkt die AP-Kosten für
-        // Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-Effekten
-        // von construction (die Gebäude-Levelups rabattiert, siehe
-        // config/knowledge.php) — eigener Config-Key, da beide Kurven im
-        // selben Namensraum sonst kollidieren würden (invertierte Semantik:
-        // hier rabattiert Gebäude-Level Kenntnis-Kosten, dort rabattiert
-        // Kenntnis-Level Gebäude-Kosten). Lv1 bleibt reines Kenntnis-Gate.
-        //
-        // A37-Fund: `task_research_lead` (3 Kenntnisse auf Lv5) braucht 540 AP
-        // kumulativ (config/knowledge.php levelup_costs), während das Labor
-        // selbst typischerweise erst spät im Run auf die alten Rabatt-Level
-        // (4-5) kommt — der ursprüngliche Σ5%-Rabatt (nur Lv4/5) änderte daran
-        // praktisch nichts. Owner-Entscheidung: Rabatt beginnt jetzt bei Lv2,
-        // game-designer-kalibrierte Kurve, sanft ansteigend statt Sprungfunktion
-        // (jede Ausbaustufe bringt spürbar mehr), Σ30% bei Lv5 bleibt deutlich
-        // unter dem 50%-Floor (game.project_min_cost_factor) — senkt die 540 AP
-        // auf ~378 AP bei durchgehend Lv5, ohne Forschung zum Selbstläufer zu
-        // machen. Setzt voraus, dass das Labor VOR dem Kenntnis-Grind ausgebaut
-        // wird — sonst greift der Rabatt erst nachträglich (⚠️ im nächsten
-        // Playtest-Batch beobachten).
-        'knowledge_ap_cost_reduction_per_lv' => [2 => 6, 3 => 7, 4 => 8, 5 => 9],   // Σ6/13/21/30% bei Lv2-5
+        // Domain bonus "Wissen": absolute AP off every knowledge levelup per lab level
+        // (AP scale 2026-11-13 §4, cumulative: Lv3 -1, Lv5 another -1). Applied by
+        // ProjectBonusService::effectiveKnowledgeApForLevelup(), floor game.project_min_cost_ap.
+        'knowledge_ap_cost_reduction_per_lv' => [3 => 1, 5 => 1],   // absolute AP per knowledge level (AP scale 2026-11-13 §4)
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
@@ -250,7 +232,7 @@ return [
         // Entscheidung, den Threshold NICHT zu senken, sondern die Trust-Quellen
         // selbst zu verstärken. Infirmary bekommt den stärksten Bump ("Fürsorge"
         // trägt thematisch am plausibelsten hohe Vertrauenswerte).
-        'trust_per_lv' => 5,
+        'trust_per_lv' => 3,       // 5→3 (T59 0..100 scale, halved)
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
@@ -293,7 +275,7 @@ return [
         // 6 (unverändert seit 2026-06-28) — jetzt zugleich der gemeinsame supply_cost
         // aller drei Pfadgebäude (Owner, 2026-08-11, provisorisch, s. Hangar/Sciencelab).
         'supply_cost' => 6,
-        'trust_per_lv' => 3,       // social hub — leisure in an otherwise bleak colony life; 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life; 3→2 (T59 0..100 scale, halved)
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
@@ -307,7 +289,7 @@ return [
         'id' => 50,
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 2,
-        'trust_per_lv' => 3,       // 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // 3→2 (T59 0..100 scale, halved)
         // Klasse "Robust" (GDD §13.7, 2026-08-03): 50 Sole bis Level-Down.
         'decay_rate' => 0.40,
         'max_status_points' => 20,
@@ -321,7 +303,7 @@ return [
         'id' => 32,
         'build_cost' => [3 => 50, 4 => 15],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 4,
-        'trust_per_lv' => 3,       // 2→3 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 2,       // 3→2 (T59 0..100 scale, halved)
         // Klasse "Fragil" (GDD §13.7, 2026-08-03): 17 Sole bis Level-Down — bewusst der
         // teuerste Unterhalt im Spiel, sie zahlt in Vertrauen statt Funktion.
         'decay_rate' => 1.20,
@@ -339,19 +321,20 @@ return [
     // Effects:
     //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).
     //   2. Event mitigation: negative trust events (encounter_lost,
-    //      colony_threatened, ...) reduced by 25% when Hub active
-    //      (TrustService::eventContribution()).
+    //      colony_threatened, ...) move `trust_event_mitigation` points closer
+    //      to 0 when the Hub is active (absolute, T59 §3.4; TrustService::eventLines()).
+    //      Encounter SP loss in the Beschaedigt tier is reduced by sp_loss_mitigation_pct.
     //   3. recycle_pct: on building level-down by decay, return 10% of build
     //      cost in tradeable resources (GameTick, only from recycle_min_level on).
     //
     // Former defend-order discount removed with the fleet/galaxy layer 2026-06.
-    // TODO Balance: trust_per_lv, event_mitigation_pct, recycle_pct, supply_cost
+    // TODO Balance: trust_per_lv, trust_event_mitigation, sp_loss_mitigation_pct, recycle_pct, supply_cost
     //               all to be calibrated after first playtest.
     'securityHub' => [
         'id' => 53,
         'build_cost' => [3 => 80, 4 => 25],   // Regolith + Werkstoffe (Compounds gate accepted — see GDD §4)
         'supply_cost' => 8,
-        'trust_per_lv' => 2,                   // +2 trust per level (Lv3 max = +6); 1→2 (2026-09-14, A37-Folge task_colony_prosperity)
+        'trust_per_lv' => 1,                   // +1 trust per level (Lv3 max = +3); 2→1 (T59 0..100 scale, halved)
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
         'decay_rate' => 0.60,
         'max_status_points' => 20,
@@ -362,11 +345,12 @@ return [
         'tiers' => [3],
         'recycle_min_level' => 3,              // recycling only from this Ausbaustufe on (keep in sync with tiers)
         'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
-        'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TrustService::eventContribution())
+        'trust_event_mitigation' => 1,         // negative trust events 1 point closer to 0 (TrustService::eventLines())
+        'sp_loss_mitigation_pct' => 0.25,      // 25% less SP loss in the Beschaedigt encounter tier (EncounterService)
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).
-    // Effect Lv2+: deep-scan costs 1 Nav-AP instead of 2 (ColonyTileService).
+    // Effect from game.finds.free_scan_uplink_level: first deep scan of a Sol costs no AP (ColonyTileService).
     // Effect Lv2+: merchant appears more frequently (NOT YET IMPLEMENTED — see T33 / Phase 5).
     // Effect Lv3: run-completion action — NOT YET IMPLEMENTED — see Phase 5.
     // Lv1 build cost: Regolith + Credits only — no Compounds (circular dep risk).
@@ -384,7 +368,7 @@ return [
         'max_level' => 3,
         // Nur Stufe 1 hat einen Beiname (schaltet Nexus-Bestellungen überhaupt
         // erst frei — echter Fähigkeits-Sprung). Stufe 2 ist Mengensteigerung
-        // (Scankosten -1 AP). Stufe 3 ist zurückgestellt (Design-Spec Punkt "Neue
+        // (erster Tiefenscan je Sol ohne AP). Stufe 3 ist zurückgestellt (Design-Spec Punkt "Neue
         // Mechaniken" — braucht einen eigenen Meta-Progressions-Design-Sprint).
         'tiers' => [1],
     ],

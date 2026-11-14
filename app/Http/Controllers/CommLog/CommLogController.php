@@ -240,6 +240,8 @@ class CommLogController extends BaseController
             'colony.building_placed' => $this->descBuildingPlaced($params),
             'colony.building_invested' => $this->descBuildingInvested($params),
             'colony.pathdepth_invested' => $this->descPathDepthInvested($params),
+            'knowledge.bonus_progress', 'knowledge.bonus_breakthrough' => $this->descKnowledgeBonus($params),
+            'knowledge.bonus_lapsed' => $this->descKnowledgeBonusLapsed($params),
             'colony.building_repaired' => $this->descBuildingRepaired($params),
             'colony.tile_explored' => [$this->seg(__('comm_log.desc.tile_explored'))],
             'colony.tile_deep_scanned' => $this->descTileDeepScanned($params),
@@ -394,6 +396,66 @@ class CommLogController extends BaseController
     }
 
     /** @return array<int, array<string, mixed>> */
+    /**
+     * Earmarked knowledge bonus ("stille Forschung"): AP chip, source character and
+     * knowledge; a breakthrough names the reached level, a forfeit the rest and reason.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function descKnowledgeBonus(array $params): array
+    {
+        $key = (string) ($params['knowledge_key'] ?? '');
+        $source = (string) ($params['source'] ?? '');
+        $replace = [
+            'name' => $this->bonusSourceName($source),
+            'knowledge' => $key !== '' ? __("knowledge.{$key}") : '?',
+            'level' => (int) ($params['level'] ?? 0),
+        ];
+        $text = __('comm_log.desc.knowledge_bonus'.(! empty($params['leveled_up']) ? '_breakthrough' : ''), $replace);
+
+        $forfeited = (int) ($params['ap_forfeited'] ?? 0);
+        if ($forfeited > 0 && ! empty($params['block_reason'])) {
+            $text .= ' '.__('comm_log.desc.knowledge_bonus_forfeited', [
+                'ap' => $forfeited,
+                'reason' => __('knowledge.bonus_wait_'.$params['block_reason']),
+            ]);
+        }
+
+        return [
+            $this->amountSeg('AP', (int) ($params['ap_invested'] ?? 0), 'ap'),
+            $this->seg(' '.$text),
+        ];
+    }
+
+    /**
+     * Bonus AP a blocked knowledge could not take at all (e.g. a data sweep returning to
+     * a knowledge that reached its top level meanwhile): they lapse, the entry says why.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function descKnowledgeBonusLapsed(array $params): array
+    {
+        $key = (string) ($params['knowledge_key'] ?? '');
+
+        return [$this->seg(__('comm_log.desc.knowledge_bonus_lapsed', [
+            'ap' => (int) ($params['ap_forfeited'] ?? 0),
+            'name' => $this->bonusSourceName((string) ($params['source'] ?? '')),
+            'knowledge' => $key !== '' ? __("knowledge.{$key}") : '?',
+            'reason' => __('knowledge.bonus_wait_'.($params['block_reason'] ?? 'order_failed')),
+        ]))];
+    }
+
+    /** Who gave a knowledge bonus: a Cantina figure's name, else the mission's name. */
+    private function bonusSourceName(string $source): string
+    {
+        $character = config("characters.{$source}");
+        if (is_array($character)) {
+            return (string) ($character['name'] ?? $character['role'] ?? $source);
+        }
+
+        return Lang::has("missions.mission_{$source}_name") ? __("missions.mission_{$source}_name") : $source;
+    }
+
     private function descPathDepthInvested(array $params): array
     {
         $kind = (string) ($params['kind'] ?? '');

@@ -12,8 +12,8 @@ use Tests\TestCase;
  * levels have no such discrete unlock — their effect is a continuous curve
  * (config/knowledge.php, config/game.php `*_per_lv`/`*_per_level` arrays,
  * from the Kenntnis-Effekte-Redesign series). This translates the curve
- * VALUE AT a given level into a short readable line, e.g. "construction Lv3"
- * → "-4% AP-Kosten" (config/knowledge.php: ap_cost_reduction_per_lv[3]=4).
+ * VALUE AT a given level into a short readable line, e.g. "construction Lv2"
+ * → "-1 AP Ausbau großer Gebäude" (config/knowledge.php: ap_cost_reduction_per_lv[2]=1).
  * Levels whose curve entry is 0 (no change at that level) produce no line.
  *
  * Each line is ['text' => string, 'chip' => null|array{abbr,value,cls}] —
@@ -40,12 +40,11 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         );
     }
 
-    public function test_construction_level3_reduces_construction_ap_cost(): void
+    public function test_construction_level2_reduces_large_building_projects_by_absolute_ap(): void
     {
-        // config/knowledge.php: construction.ap_cost_reduction_per_lv[3] = 4
-        $lines = $this->service->effectsAtLevel('construction', 3);
-
-        $this->assertHasTextLine($lines, '-4% AP-Kosten');
+        // AP scale 2026-11-13: construction.ap_cost_reduction_per_lv = [2 => 1, 4 => 1] (absolute AP)
+        $this->assertHasTextLine($this->service->effectsAtLevel('construction', 2), '-1 AP Ausbau großer Gebäude');
+        $this->assertSame([], $this->service->effectsAtLevel('construction', 3));
     }
 
     public function test_geology_level1_has_two_distinct_effects(): void
@@ -107,11 +106,12 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         $this->assertSame(['abbr' => 'OR', 'value' => '+2/Sol', 'cls' => 'Or'], $agrardom['chip']);
     }
 
-    public function test_cartography_level_reduces_navigation_ap_cost(): void
+    public function test_cartography_levels_show_mission_cut_and_free_exploration(): void
     {
-        $lines = $this->service->effectsAtLevel('cartography', 1);
-
-        $this->assertHasTextLine($lines, '-4% AP-Kosten');
+        // AP scale 2026-11-13: Lv2 cuts long missions by 1 AP, Lv4 makes the first exploration of a Sol free.
+        $this->assertSame([], $this->service->effectsAtLevel('cartography', 1));
+        $this->assertHasTextLine($this->service->effectsAtLevel('cartography', 2), '-1 AP lange Missionen');
+        $this->assertHasTextLine($this->service->effectsAtLevel('cartography', 4), '+1 kostenlose Erkundung je Sol');
     }
 
     public function test_unknown_knowledge_key_returns_empty(): void

@@ -13,6 +13,18 @@
 		bypass: Record<string, boolean>;
 		env: string;
 		config: Record<string, Record<string, string | number>>;
+		// Exact knowledge progress (owner checks silent research without a lab).
+		knowledge?: {
+			id: number;
+			key: string;
+			name: string;
+			level: number;
+			ap_spend: number;
+			ap_for_levelup: number;
+			max_level: number;
+			blocker: string | null;
+			blocker_label: string | null;
+		}[];
 	};
 	const FLAGS: [string, string][] = [
 		['ap_checks', 'AP'],
@@ -72,6 +84,33 @@
 			<button class="push" onclick={() => (open = !open)}>Config {open ? '▴' : '▾'}</button>
 			<button onclick={toggleExpanded} aria-expanded="true" aria-label="collapse">▾</button>
 		</div>
+		<!-- Knowledge progress is always visible in the expanded bar (owner 2026-11-13, no extra toggle). -->
+		{#if d.knowledge}
+			<div class="panel">
+				{#if d.knowledge?.length}
+					<table class="kn">
+						<thead>
+							<tr><th>Kenntnis</th><th>Stufe</th><th>AP</th><th>Sperrgrund</th></tr>
+						</thead>
+						<tbody>
+							{#each d.knowledge as k (k.id)}
+								<tr>
+									<td title={k.key}>{k.name}</td>
+									<td><b>{k.level}</b><span class="dim">/{k.max_level}</span></td>
+									<td>
+										{#if k.level >= k.max_level}<span class="ok">max</span>
+										{:else}{k.ap_spend}<span class="dim">/{k.ap_for_levelup}</span>{/if}
+									</td>
+									<td class={k.blocker ? 'warn' : 'dim'} title={k.blocker ?? undefined}>{k.blocker_label ?? k.blocker ?? '–'}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				{:else}
+					<span class="dim">keine Kenntnisse</span>
+				{/if}
+			</div>
+		{/if}
 		{#if open}
 			<div class="panel">
 				{#each Object.entries(d.config) as [group, values] (group)}
@@ -170,6 +209,23 @@
 	}
 	.push {
 		margin-left: auto;
+	}
+	.kn {
+		border-collapse: collapse;
+	}
+	.kn th {
+		color: #888;
+		font-weight: normal;
+		text-align: left;
+	}
+	.kn th,
+	.kn td {
+		padding: 1px 10px 1px 0;
+		white-space: nowrap;
+	}
+	.panel:has(.kn) {
+		max-height: 40vh;
+		overflow: auto;
 	}
 	/* Keep the floating feedback button (infra layout) above the bar. */
 	:global(body:has(.debug) .feedback-trigger) {

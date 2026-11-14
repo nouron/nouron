@@ -38,7 +38,11 @@ class KnowledgeApCapTest extends TestCase
             'rank' => 3,
             'active_ticks' => 0,
         ]);
-        config(['game.knowledge_ap_cap_per_sol.base' => 3]);
+        // Mechanism tests: fixed cap 3 (no scientist field bonus) and pre-scale knowledge costs.
+        config(['game.ap.base' => 40, 'game.knowledge_ap_cap_per_sol.base' => 3, 'game.advisor.cap_bonus_per_rank' => [1 => 0, 2 => 0, 3 => 0]]);
+        foreach (array_keys(config('knowledge')) as $key) {
+            config(["knowledge.{$key}.levelup_costs" => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52]]);
+        }
         $this->service = $this->app->make(ResearchService::class);
     }
 
@@ -82,7 +86,7 @@ class KnowledgeApCapTest extends TestCase
     public function test_bonus_ap_bypasses_and_does_not_consume_cap(): void
     {
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 3);
-        $this->assertTrue($this->service->investBonus($this->colonyId, $this->knowledgeId, 2));
+        $this->assertTrue($this->service->investBonus($this->colonyId, $this->knowledgeId, 2)->accepted);
         $this->assertSame(5, $this->apSpend($this->knowledgeId));
 
         $cap = app(DailyApCapService::class);

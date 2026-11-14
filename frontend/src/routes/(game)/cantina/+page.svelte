@@ -10,6 +10,7 @@
 	import { t } from '#lib/i18n.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import CantinaDialog from './CantinaDialog.svelte';
+	import KnowledgeResultLine, { type KnowledgeResult } from './KnowledgeResultLine.svelte';
 
 	type Pos = { left: number; top: number };
 	type Char = { slug?: string; name?: string; role?: string; game_role?: string };
@@ -37,7 +38,19 @@
 		negotiation_sum: string;
 	};
 	type Encounter = { id: number; type: 'wager' | 'auction' | 'contract'; give_resource_id: number; give_amount: number; credits_amount: number };
-	type Knowledge = { id: number; key: string; name: string };
+	// selectable=false: the knowledge cannot take bonus AP now ("wartet auf <blocked_label>").
+	type Knowledge = { id: number; key: string; name: string; selectable?: boolean; blocked_label?: string | null };
+	// Tomas' advice state (relationship level drives the bonus; level 0 = no advice).
+	type Bartender = {
+		relationship_level: number;
+		ap_bonus: number;
+		// How often Tomas gives advice (every N Sols; null below relationship level 1) and in how many Sols the next one comes (0 = today).
+		advice_every_sols: number | null;
+		advice_in_sols: number;
+		talked_today: boolean;
+		today_result: KnowledgeResult | null;
+		advice_open: boolean;
+	};
 	type Relationship = {
 		key: string;
 		name: string;
@@ -45,8 +58,27 @@
 		level_cap: number;
 		ap_spend: number;
 		ap_for_levelup: number;
-		lock_reason: string | null;
-		conversation: { cap: { spent: number; cap: number } | null; options: { key: string; name: string; ap: number; cost: number; capped?: boolean }[] };
+		met: boolean;
+		// In the cantina today (scene dialog) — false for characters only reachable via the overview chips.
+		present: boolean;
+		// Variant C: one conversation per Sol; to_next_level = AP still missing for the next level.
+		conversation: { cap: { spent: number; cap: number } | null; talked_today: boolean; to_next_level: number; options: ConversationOption[] };
+	};
+	// available=false: the cantina level does not allow this option yet; locked_line is the
+	// character's in-voice line for it (resolved server-side), null when available.
+	// ap = full price (always charged); wasted = AP beyond the next level that would be lost;
+	// capped = not selectable today (already talked, or above the character's per-Sol limit).
+	type ConversationOption = {
+		key: string;
+		name: string;
+		ap: number;
+		cost: number;
+		wasted: number;
+		capped?: boolean;
+		available: boolean;
+		requires_cantina_level: number;
+		locked_line_key: string | null;
+		locked_line: string | null;
 	};
 	type Data = {
 		barLevel: number;
@@ -75,7 +107,8 @@
 		knowledgeOptions: Knowledge[];
 		devaKnowledgeChoices: Knowledge[];
 		relationships: Relationship[];
-		relationshipGate: Record<string, number>;
+		bartender: Bartender;
+		conversationOptionCantinaLevel: Record<string, number>;
 		relationshipMaxLevel: number;
 	};
 	type Result = { ok: boolean; message?: string; error?: string; [k: string]: unknown };
@@ -110,21 +143,26 @@
 	let encounterError = $state<string | null>(null);
 	let bartenderKnowledgeId = $state<number | null>(null);
 	let bartenderTier = $state<number | null>(null);
+	let bartenderResult = $state<KnowledgeResult | null>(null);
 	let bartenderError = $state<string | null>(null);
 	let bartenderLoading = $state(false);
 	let concernKnowledgeId = $state<number | null>(null);
 	let concernResolved = $state(false);
 	let concernSuccess = $state<boolean | null>(null);
 	let concernError = $state<string | null>(null);
+	let concernKnowledgeResult = $state<KnowledgeResult | null>(null);
 	let concernLoading = $state(false);
 	let informationKnowledgeId = $state<number | null>(null);
 	let informationResolved = $state(false);
 	let informationOutcomeKey = $state<string | null>(null);
 	let informationError = $state<string | null>(null);
+	let informationKnowledgeResult = $state<KnowledgeResult | null>(null);
 	let informationLoading = $state(false);
 	// Relationships
 	let relationLoading = $state<Record<string, boolean>>({});
 	let relationError = $state<Record<string, string>>({});
+	// AP lost in today's conversation per character (shown in the done-today line).
+	let relationWasted = $state<Record<string, number>>({});
 
 	// ── Scene (which character stands where) — mirror of the @php block in bar.blade.php ──
 
@@ -263,6 +301,7 @@
 		if (!res.ok) return void (offerError[id] = fail(res));
 		accepted[id] = true;
 		sync(res.ap_available);
+		refreshRelationships(slug);
 	}
 
 	// A won negotiation flags the offer (bonus on the Get side); Annehmen then books it at 0 AP.
@@ -294,6 +333,7 @@
 		encounterResolved = true;
 		if (res.type === 'wager') encounterResult = res.won ? 'won' : 'lost';
 		sync(res.ap_available);
+		refreshRelationships(scene?.encounter?.slug ?? null);
 	}
 
 	async function talkToBartender() {
@@ -302,12 +342,45 @@
 		bartenderError = null;
 		const res = await post('/colony/bar/talk-to-bartender', { knowledge_id: bartenderKnowledgeId });
 		bartenderLoading = false;
-		// ap_added tiers 0–3 map onto the four bartender_dialog_tier_* lines.
 		if (res.ok) {
-			bartenderTier = Math.min(3, (res.ap_added as number) ?? 0);
+			// Tomas' line follows his relationship level (1–5) onto the four bartender_dialog_tier_* lines.
+			bartenderTier = Math.min(3, Math.ceil((d?.bartender.relationship_level ?? 0) / 2));
+			bartenderResult = (res.knowledge_result as KnowledgeResult) ?? null;
+			if (d) d.bartender = { ...d.bartender, talked_today: true, today_result: bartenderResult, advice_open: false };
 			sync();
-		} else
-			bartenderError = t(res.error === 'cooldown_active' ? 'colony.bartender_error_cooldown' : 'colony.bartender_error_generic');
+			refreshKnowledgeState();
+		} else if (res.error === 'cooldown_active') {
+			// Fallback only (e.g. second tab): the popup normally knows this before the click.
+			bartenderError = t('colony.bartender_error_cooldown');
+			refreshKnowledgeState();
+		} else bartenderError = res.message ?? t('colony.bartender_error_generic');
+	}
+
+	/** Opening Tomas' dialog: fresh state, the done-today view comes from d.bartender. */
+	function openBartender() {
+		open('bartender');
+		bartenderTier = null;
+		bartenderResult = null;
+		bartenderError = null;
+	}
+
+	const optionLabel = (opt: Knowledge) =>
+		opt.selectable === false ? t('colony.knowledge_option_waiting', { name: opt.name, reason: opt.blocked_label ?? '?' }) : opt.name;
+	const firstSelectable = (opts: Knowledge[]) => opts.find((o) => o.selectable !== false)?.id ?? null;
+	const isSelectable = (opts: Knowledge[], id: number | null) => id !== null && opts.some((o) => o.id === id && o.selectable !== false);
+
+	// After a bonus or a Tomas relationship step: knowledge selectability and Tomas' state
+	// (bonus, advice open) changed server-side — reload them without touching the scene.
+	async function refreshKnowledgeState() {
+		const r = await api<Data>('/cantina').catch(() => null);
+		if (!r || !d) return;
+		d.knowledgeOptions = r.knowledgeOptions;
+		d.devaKnowledgeChoices = r.devaKnowledgeChoices;
+		d.bartender = r.bartender;
+		if (!isSelectable(r.knowledgeOptions, bartenderKnowledgeId)) bartenderKnowledgeId = firstSelectable(r.knowledgeOptions);
+		if (!isSelectable(r.knowledgeOptions, concernKnowledgeId)) concernKnowledgeId = firstSelectable(r.knowledgeOptions);
+		if (!isSelectable(r.devaKnowledgeChoices, informationKnowledgeId))
+			informationKnowledgeId = firstSelectable(r.devaKnowledgeChoices);
 	}
 
 	async function resolveConcern() {
@@ -321,7 +394,10 @@
 		if (!res.ok) return void (concernError = fail(res));
 		concernResolved = true;
 		concernSuccess = res.success as boolean;
+		concernKnowledgeResult = (res.knowledge_result as KnowledgeResult) ?? null;
 		sync(res.ap_available);
+		refreshRelationships(d.concern.character_slug);
+		if (concernKnowledgeResult) refreshKnowledgeState();
 	}
 
 	// Only Deva's knowledge_boost outcome needs a choice; Lenn's target is fixed.
@@ -339,32 +415,96 @@
 		if (!res.ok) return void (informationError = fail(res));
 		informationResolved = true;
 		informationOutcomeKey = (res.outcome_key as string) ?? null;
+		informationKnowledgeResult = (res.knowledge_result as KnowledgeResult) ?? null;
 		sync();
+		if (informationKnowledgeResult) refreshKnowledgeState();
+		refreshRelationships(d.informationEncounter.character_slug);
 	}
 
 	// ── Relationships (path depth of met characters, T41) ──
+	// Shown as the relationship column inside each character dialog; the overview
+	// under the scene only lists met characters and opens their dialog.
 
-	function conversationBlock(rel: Relationship, opt: Relationship['conversation']['options'][number]) {
-		if (relationLoading[rel.key]) return t('pathdepth.ui_conversation_cap_tooltip');
-		if (rel.lock_reason) return rel.lock_reason;
+	const relFor = (slug: string | null) => (slug ? (d?.relationships.find((r) => r.key === slug) ?? null) : null);
+
+	/** Character behind the open dialog (null for Corvan or a guest without a character). */
+	const activeSlug = $derived.by((): string | null => {
+		const m = activeModal;
+		if (!m || !d || !scene) return null;
+		if (m === 'bartender') return 'bartender';
+		if (m.startsWith('rel_')) return m.slice(4);
+		if (m.startsWith('offer_')) return scene.offers.find((o) => `offer_${o.offer.id}` === m)?.acceptSlug ?? null;
+		if (m === 'encounter') return scene.encounter?.slug ?? null;
+		if (m === 'story') return d.storyEncounterSlug;
+		if (m === 'concern') return d.concern?.character_slug ?? null;
+		if (m === 'information') return d.informationEncounter?.character_slug ?? null;
+		return null;
+	});
+	// Every character in the scene today has a relationship row (level 0 before the first talk).
+	const hasRelation = $derived(!!activeSlug && !!d?.characters[activeSlug] && !!relFor(activeSlug));
+
+	/** Scene dialog of a character standing in the cantina today, else null. */
+	function modalFor(slug: string): string | null {
+		if (!d || !scene) return null;
+		if (slug === 'bartender') return 'bartender';
+		const offer = scene.offers.find((o) => o.acceptSlug === slug);
+		if (offer) return `offer_${offer.offer.id}`;
+		if (scene.encounter?.slug === slug) return 'encounter';
+		if (d.storyEncounterSlug === slug) return 'story';
+		if (d.concern?.character_slug === slug) return 'concern';
+		if (d.informationEncounter?.character_slug === slug) return 'information';
+		return null;
+	}
+
+	// The first trade/encounter/talk marks a character as met server-side; reload the
+	// relationship list so the overview chips pick the character up.
+	async function refreshRelationships(slug: string | null) {
+		if (!slug || relFor(slug)?.met || !d?.characters[slug]) return;
+		const r = await api<Data>('/cantina').catch(() => null);
+		if (r && d) d.relationships = r.relationships;
+	}
+
+	function conversationBlock(opt: ConversationOption) {
+		if (!opt.available) return opt.locked_line ?? '';
 		return opt.capped ? t('pathdepth.ui_conversation_cap_tooltip') : null;
 	}
 
-	async function investRelation(rel: Relationship, opt: Relationship['conversation']['options'][number]) {
+	/** In-voice line of the lowest locked option — shown once under the options. */
+	function lockedLine(rel: Relationship): string | null {
+		const locked = rel.conversation.options.filter((o) => !o.available && o.locked_line);
+		if (!locked.length) return null;
+		return locked.reduce((a, b) => (b.requires_cantina_level < a.requires_cantina_level ? b : a)).locked_line;
+	}
+
+	async function investRelation(rel: Relationship, opt: ConversationOption) {
 		if (relationLoading[rel.key] || !d) return;
 		relationLoading[rel.key] = true;
 		relationError[rel.key] = '';
 		const res = await post(`/colony/path-depth/character/${rel.key}/invest`, { ap: opt.cost });
 		relationLoading[rel.key] = false;
-		if (!res.ok) return void (relationError[rel.key] = (res.message || res.error || '') as string);
+		if (!res.ok) {
+			relationError[rel.key] = (res.error === 'conversation_done_today'
+				? t('pathdepth.error_conversation_done_today')
+				: res.message || res.error || '') as string;
+			// Talked elsewhere (other tab/dialog): reload so the panel switches to its done-today state.
+			if (res.error === 'conversation_done_today') {
+				const r = await api<Data>('/cantina').catch(() => null);
+				if (r && d) d.relationships = r.relationships;
+			}
+			return;
+		}
+		relationWasted[rel.key] = Number(res.wasted ?? 0);
 		Object.assign(rel, { level: res.level, ap_spend: res.ap_spend, ap_for_levelup: res.ap_for_levelup, level_cap: res.level_cap });
 		if (res.conversation) rel.conversation = res.conversation as Relationship['conversation'];
 		sync(res.apAvailable);
-		const required = d.relationshipGate[rel.level + 1];
-		rel.lock_reason =
-			required !== undefined && rel.level >= rel.level_cap
-				? t('pathdepth.ui_locked_building', { building: t('buildings.bar'), level: required })
-				: null;
+		// Tomas' bonus follows his relationship level: the talk button must show the new number.
+		if (rel.key === 'bartender') refreshKnowledgeState();
+		// First talk with a present character: the server now lists them as met.
+		if (!rel.met) {
+			rel.met = true;
+			const r = await api<Data>('/cantina').catch(() => null);
+			if (r && d) d.relationships = r.relationships;
+		}
 	}
 
 	onMount(() => {
@@ -372,9 +512,9 @@
 			.then((r) => {
 				d = r;
 				negotiated = { ...r.negotiatedOffers };
-				bartenderKnowledgeId = r.knowledgeOptions[0]?.id ?? null;
-				concernKnowledgeId = r.knowledgeOptions[0]?.id ?? null;
-				informationKnowledgeId = r.devaKnowledgeChoices[0]?.id ?? null;
+				bartenderKnowledgeId = firstSelectable(r.knowledgeOptions);
+				concernKnowledgeId = firstSelectable(r.knowledgeOptions);
+				informationKnowledgeId = firstSelectable(r.devaKnowledgeChoices);
 			})
 			.catch((e) => {
 				if (!(e instanceof ApiError && e.status === 401)) loadError = String(e.message ?? e);
@@ -405,13 +545,121 @@
 	</div>
 {/snippet}
 
+<!-- Talk button after today's advice: off, with a chip naming when the next advice comes. -->
+{#snippet bartenderDoneButton(bt: Bartender)}
+	<div class="row-end">
+		<button class="tile-action-btn auto" disabled data-bartender-done>
+			<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+			<span class="ap-chip ap-cost-chip ap-chip--neutral"
+				>{t('pathdepth.bartender_advice_next', { n: Math.max(1, bt.advice_in_sols || (bt.advice_every_sols ?? 1)) })}</span
+			>
+		</button>
+	</div>
+{/snippet}
+
+<!-- How often Tomas gives advice (by relationship level); "today" only while advice is open —
+     otherwise the disabled talk button's chip names the next Sol. -->
+{#snippet bartenderAdviceInfo(bt: Bartender)}
+	{#if bt.advice_every_sols !== null && bt.ap_bonus > 0}
+		<p class="hint-line" data-bartender-advice-every>
+			{bt.advice_every_sols <= 1 ? t('pathdepth.bartender_advice_daily') : t('pathdepth.bartender_advice_every', { n: bt.advice_every_sols })}
+			{#if bt.advice_in_sols === 0 && !bt.talked_today}
+				· <span data-bartender-advice-today>{t('pathdepth.bartender_advice_today')}</span>
+			{/if}
+		</p>
+	{/if}
+{/snippet}
+
 {#snippet knowledgeSelect(label: string, options: Knowledge[], value: number | null, set: (v: number) => void)}
 	<label class="muted-label">
 		{label}
 		<select value={value} onchange={(e) => set(Number((e.currentTarget as HTMLSelectElement).value))}>
-			{#each options as opt (opt.id)}<option value={opt.id}>{opt.name}</option>{/each}
+			{#each options as opt (opt.id)}<option value={opt.id} disabled={opt.selectable === false}>{optionLabel(opt)}</option>{/each}
 		</select>
 	</label>
+{/snippet}
+
+<!-- Beziehung pflegen for the character behind the open dialog (T41). -->
+{#snippet relationPanel()}
+	{@const rel = relFor(activeSlug)}
+	{@const max = d?.relationshipMaxLevel ?? 0}
+	<section class="cantina-relation" data-relation={activeSlug}>
+		{#if rel}
+			<div class="cantina-relation__level">
+				<span title={t('pathdepth.ui_level', { level: rel.level, max })}>{t(`pathdepth.relationship_level_${rel.level}`)}</span>
+				<span class="cantina-relation__pips" aria-hidden="true">
+					{#each Array.from({ length: max }, (_, i) => i) as i (i)}
+						<span class="cantina-relation__pip" class:cantina-relation__pip--on={i < rel.level}></span>
+					{/each}
+				</span>
+			</div>
+			{#if rel.ap_for_levelup <= 0}
+				<p class="cantina-relation__note">{t('pathdepth.ui_level_max')}</p>
+			{:else}
+				<div class="cantina-relation__progress">
+					<span>{t('pathdepth.ui_invest_progress', { spent: rel.ap_spend, needed: rel.ap_for_levelup })}</span>
+					<span class="cantina-relation__bar" aria-hidden="true"
+						><span style="width: {Math.min(100, (rel.ap_spend / rel.ap_for_levelup) * 100)}%"></span></span
+					>
+				</div>
+				{#if rel.conversation.talked_today}
+					<!-- One conversation per Sol (variant C): options are off until the next Sol. -->
+					<div class="bar-conversation" data-conversation-done>
+						<p class="cantina-relation__note">{t('pathdepth.conversation_done_today')}</p>
+						{#if relationWasted[rel.key]}
+							<p class="bar-conversation-wasted" data-conversation-wasted-result>
+								{t('pathdepth.conversation_wasted_result', { n: relationWasted[rel.key] })}
+							</p>
+						{/if}
+						<div class="row-end">
+							<span class="ap-chip ap-cost-chip ap-chip--neutral">{t('colony.bartender_next_sol')}</span>
+						</div>
+					</div>
+				{:else}
+					{@const wasteHint = rel.conversation.options.some((o) => o.available && !o.capped && o.wasted > 0)}
+					<div class="bar-conversation">
+						<p class="bar-conversation-caption">{t('pathdepth.ui_get_to_know')}</p>
+						{#if wasteHint}
+							<p class="bar-conversation-wasted" data-conversation-wasted-hint>
+								{t('pathdepth.conversation_wasted_hint', { n: rel.conversation.to_next_level })}
+							</p>
+						{/if}
+						{#each rel.conversation.options as opt (opt.key)}
+							{@const block = conversationBlock(opt)}
+							<button
+								type="button"
+								class="bar-conversation-btn"
+								class:bar-conversation-btn--blocked={block !== null}
+								class:bar-conversation-btn--locked={!opt.available}
+								aria-disabled={block !== null && opt.available ? 'true' : undefined}
+								disabled={!opt.available || relationLoading[rel.key]}
+								title={block || undefined}
+								data-option={opt.key}
+								data-available={opt.available ? 'true' : 'false'}
+								data-wasted={opt.wasted}
+								onclick={() => block === null && investRelation(rel, opt)}
+							>
+								<span class="bar-conversation-btn__name"
+									>{#if !opt.available}<i class="bi bi-lock-fill" aria-hidden="true"></i> {/if}{opt.name}</span
+								>
+								{#if opt.wasted > 0 && opt.available}
+									<!-- Full price stays visible; the warn chip names the AP that would be lost. -->
+									<span class="ap-chip ap-cost-chip bar-conversation-wasted-chip" data-wasted-chip
+										>{t('pathdepth.conversation_wasted_chip', { ap: opt.ap, n: opt.wasted })}</span
+									>
+								{:else}
+									<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{opt.ap} AP</span>
+								{/if}
+							</button>
+						{/each}
+					</div>
+					{@const line = lockedLine(rel)}
+					{#if line}<p class="cantina-relation__quote" data-locked-line>{line}</p>{/if}
+				{/if}
+			{/if}
+			{#if relationError[rel.key]}<p class="bar-relationship-error" role="alert">{relationError[rel.key]}</p>{/if}
+		{/if}
+	</section>
 {/snippet}
 
 {#if loadError}<p class="error load-error" role="alert">{loadError}</p>{/if}
@@ -498,12 +746,16 @@
 					type="button"
 					class="cantina-bartender"
 					data-bartender-counter
-					onclick={() => {
-						open('bartender');
-						bartenderTier = null;
-						bartenderError = null;
-					}}
+					onclick={openBartender}
 				>
+					{#if data.bartender.advice_open}
+						<!-- Advice open today (relationship level >= 1, not talked yet). -->
+						<span class="hotspot-badge cantina-bartender__badge" data-advice-open title={t('colony.bartender_advice_open')}
+							><i class="bi bi-lightbulb" aria-hidden="true"></i><span class="visually-hidden"
+								>{t('colony.bartender_advice_open')}</span
+							></span
+						>
+					{/if}
 					<img class="cantina-bartender__portrait" src="{portrait('bartender')}.webp" srcset="{portrait('bartender')}.webp 1x, {portrait('bartender')}_lg.webp 2x" alt={data.characters.bartender?.name} />
 					<span class="cantina-bartender__counter">
 						<strong>{data.characters.bartender?.name}</strong>
@@ -554,7 +806,12 @@
 				<div class="cantina-modal-backdrop backdrop" onclick={() => open(null)} transition:fade={{ duration: 150 }}></div>
 			{/if}
 
-			<div class="cantina-modal cantina-modal--{activeModal === null ? 'neutral' : 'economy'}" class:open={activeModal !== null} hidden={activeModal === null}>
+			<div
+				class="cantina-modal cantina-modal--{activeModal === null ? 'neutral' : 'economy'}"
+				class:cantina-modal--wide={hasRelation && !activeModal?.startsWith('rel_')}
+				class:open={activeModal !== null}
+				hidden={activeModal === null}
+			>
 				<button onclick={() => open(null)} class="cantina-modal-close" aria-label={t('colony.cancel')}>&times;</button>
 
 				{#if activeModal === 'merchant' && data.merchantVisit}
@@ -593,7 +850,7 @@
 					{@const id = o.offer.id}
 					{@const dlg = data.offerDialogs[id]}
 					{#if activeModal === `offer_${id}`}
-						<CantinaDialog slug={o.slug} name={o.name} role={o.role}>
+						<CantinaDialog slug={o.slug} name={o.name} role={o.role} relation={hasRelation ? relationPanel : undefined}>
 							{@render toastFor(`offer_${id}`)}
 							{#if o.flavor}<p class="flavor">{t(o.flavor)}</p>{/if}
 
@@ -734,7 +991,7 @@
 
 				{#if activeModal === 'encounter' && scene.encounter && data.encounter}
 					{@const e = data.encounter}
-					<CantinaDialog slug={scene.encounter.slug ?? 'stranger'} name={scene.encounter.heading} role={scene.encounter.char?.role ?? ''}>
+					<CantinaDialog slug={scene.encounter.slug ?? 'stranger'} name={scene.encounter.heading} role={scene.encounter.char?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{@render toastFor('encounter')}
 						<p>{scene.encounter.body}</p>
 						{#if e.type === 'contract'}
@@ -765,7 +1022,7 @@
 
 				<!-- story_hook encounter: pure flavour, only to dismiss -->
 				{#if activeModal === 'story' && scene.story && data.storyEncounterSlug}
-					<CantinaDialog slug={data.storyEncounterSlug} name={scene.story.char.name ?? '???'} role={scene.story.char.role ?? ''}>
+					<CantinaDialog slug={data.storyEncounterSlug} name={scene.story.char.name ?? '???'} role={scene.story.char.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						<p>{t(`colony.story_encounter_${data.storyEncounterSlug}`)}</p>
 						{@render closeButton()}
 					</CantinaDialog>
@@ -773,20 +1030,54 @@
 
 				{#if activeModal === 'bartender'}
 					{@const b = data.characters.bartender ?? {}}
-					<CantinaDialog slug="bartender" name={b.name ?? ''} role={b.role ?? ''}>
-						{#if bartenderTier === null}
+					<CantinaDialog slug="bartender" name={b.name ?? ''} role={b.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
+						{@const bt = data.bartender}
+						{#if bartenderTier !== null}
+							<!-- Right after the conversation: Tomas' line + today's result. -->
+							<p>{t(`colony.bartender_dialog_tier_${bartenderTier}`)}</p>
+							{#if bartenderResult}<KnowledgeResultLine result={bartenderResult} source={b.name ?? ''} />{/if}
+							{@render bartenderAdviceInfo(bt)}
+							{@render bartenderDoneButton(bt)}
+						{:else if bt.talked_today}
+							<p>{t('colony.bartender_done_today')}</p>
+							{#if bt.today_result}<KnowledgeResultLine result={bt.today_result} source={b.name ?? ''} />{/if}
+							{@render bartenderAdviceInfo(bt)}
+							{@render bartenderDoneButton(bt)}
+						{:else if bt.relationship_level < 1 || bt.ap_bonus < 1}
+							<!-- "fremd": no advice yet; Beziehung pflegen sits in the same dialog. -->
 							<p>{t('colony.bartender_dialog_intro')}</p>
+							<p class="hint-line" data-bartender-too-low>{t('colony.bartender_relationship_too_low')}</p>
+							<div class="row-end">
+								<button class="tile-action-btn auto" disabled>
+									<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+								</button>
+							</div>
+						{:else if bt.advice_in_sols > 0}
+							<!-- Advice not due yet (frequency follows the relationship): button off, next Sol named. -->
+							<p>{t('colony.bartender_dialog_intro')}</p>
+							{@render bartenderAdviceInfo(bt)}
+							<div class="row-end">
+								<button class="tile-action-btn auto" disabled data-bartender-not-due>
+									<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+									<span class="ap-chip ap-cost-chip ap-chip--neutral">{t('pathdepth.bartender_advice_next', { n: bt.advice_in_sols })}</span>
+								</button>
+							</div>
+						{:else}
+							{@const canTalk = isSelectable(data.knowledgeOptions, bartenderKnowledgeId)}
+							<p>{t('colony.bartender_dialog_intro')}</p>
+							{@render bartenderAdviceInfo(bt)}
 							<div class="stack">
 								{@render knowledgeSelect(t('colony.bartender_knowledge_label'), data.knowledgeOptions, bartenderKnowledgeId, (v) => (bartenderKnowledgeId = v))}
+								{#if firstSelectable(data.knowledgeOptions) === null}
+									<p class="hint-line">{t('colony.bartender_no_selectable')}</p>
+								{/if}
 								<div class="row-end">
-									<button class="tile-action-btn auto" onclick={talkToBartender} disabled={bartenderLoading || !bartenderKnowledgeId}>
-										<span class="tile-action-btn__body">{t('colony.bartender_talk_button')}</span>
+									<button class="tile-action-btn auto" onclick={talkToBartender} disabled={bartenderLoading || !canTalk}>
+										<span class="tile-action-btn__body">{t('colony.bartender_talk_button_bonus', { ap: bt.ap_bonus })}</span>
+										<span class="ap-chip ap-cost-chip ap-chip--research" aria-hidden="true">+{bt.ap_bonus} AP</span>
 									</button>
 								</div>
 							</div>
-						{:else}
-							<p>{t(`colony.bartender_dialog_tier_${bartenderTier}`)}</p>
-							{@render closeButton()}
 						{/if}
 						{#if bartenderError}<div class="error-line">{bartenderError}</div>{/if}
 					</CantinaDialog>
@@ -795,7 +1086,7 @@
 				{#if activeModal === 'concern' && data.concern}
 					{@const slug = data.concern.character_slug}
 					{@const ch = data.characters[slug]}
-					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_concern_heading')} role={ch?.role ?? ''}>
+					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_concern_heading')} role={ch?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{#if !concernResolved}
 							<p>{t(`colony.bar_concern_${slug}_intro`)}</p>
 							{#if slug === 'mechanic'}
@@ -805,7 +1096,11 @@
 							{/if}
 							<div class="row-between">
 								<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true">{data.concernApCost ?? 1} AP</span>
-								<button class="tile-action-btn auto" onclick={resolveConcern} disabled={concernLoading}>
+								<button
+									class="tile-action-btn auto"
+									onclick={resolveConcern}
+									disabled={concernLoading || (slug === 'mechanic' && !isSelectable(data.knowledgeOptions, concernKnowledgeId))}
+								>
 									<span class="tile-action-btn__body">{t('colony.bar_concern_resolve')}</span>
 								</button>
 							</div>
@@ -815,16 +1110,25 @@
 							{:else}
 								<p class="ok-line">{t(`colony.bar_concern_${slug}_success`)}</p>
 							{/if}
+							{#if concernKnowledgeResult}<KnowledgeResultLine result={concernKnowledgeResult} source={ch?.name ?? ''} />{/if}
 							{@render closeButton()}
 						{/if}
 						{#if concernError}<div class="error-line">{concernError}</div>{/if}
 					</CantinaDialog>
 				{/if}
 
+				<!-- Met earlier, not in the scene today: portrait | relationship only. -->
+				{#if activeModal?.startsWith('rel_') && activeSlug}
+					{@const ch = data.characters[activeSlug]}
+					<CantinaDialog slug={activeSlug} name={ch?.name ?? relFor(activeSlug)?.name ?? '???'} role={ch?.role ?? ''}>
+						{@render relationPanel()}
+					</CantinaDialog>
+				{/if}
+
 				{#if activeModal === 'information' && data.informationEncounter}
 					{@const slug = data.informationEncounter.character_slug}
 					{@const ch = data.characters[slug]}
-					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_information_heading')} role={ch?.role ?? ''}>
+					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_information_heading')} role={ch?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{#if !informationResolved}
 							{#if infoNeedsChoice}
 								<div class="gap-below">
@@ -832,12 +1136,17 @@
 								</div>
 							{/if}
 							<div class="row-end">
-								<button class="tile-action-btn auto" onclick={resolveInformation} disabled={informationLoading}>
+								<button
+									class="tile-action-btn auto"
+									onclick={resolveInformation}
+									disabled={informationLoading || (infoNeedsChoice && !isSelectable(data.devaKnowledgeChoices, informationKnowledgeId))}
+								>
 									<span class="tile-action-btn__body">{t('colony.bar_information_resolve')}</span>
 								</button>
 							</div>
 						{:else}
 							<p>{data.informationOutcomeLines[informationOutcomeKey ?? ''] ?? ''}</p>
+							{#if informationKnowledgeResult}<KnowledgeResultLine result={informationKnowledgeResult} source={ch?.name ?? ''} />{/if}
 							{@render closeButton()}
 						{/if}
 						{#if informationError}<div class="error-line">{informationError}</div>{/if}
@@ -845,52 +1154,34 @@
 				{/if}
 			</div>
 
-			<!-- Beziehung pflegen: path depth of met characters (T41) -->
-			<section class="bar-relationships">
-				<h3 class="bar-relationships-title">{t('pathdepth.ui_relationship_title')}</h3>
-				<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_run_hint')}</p>
-				<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_met_only')}</p>
-				<div class="bar-relationships-grid">
-					{#each data.relationships as rel (rel.key)}
-						<article class="bar-relationship-card" data-character={rel.key}>
-							<header class="bar-relationship-head">
-								<strong>{rel.name}</strong>
-								<span class="bar-relationship-level">{t('pathdepth.ui_level', { level: rel.level, max: data.relationshipMaxLevel })}</span>
-							</header>
-							<p class="bar-relationship-progress">
-								{rel.ap_for_levelup <= 0
-									? t('pathdepth.ui_level_max')
-									: t('pathdepth.ui_invest_progress', { spent: rel.ap_spend, needed: rel.ap_for_levelup })}
-							</p>
-							{#if rel.ap_for_levelup > 0}
-								<div class="bar-conversation">
-									<p class="bar-conversation-caption">
-										{t('pathdepth.ui_get_to_know')}
-										{#if rel.conversation.cap}
-											<span>{t('pathdepth.ui_conversation_today', { spent: rel.conversation.cap.spent, cap: rel.conversation.cap.cap })}</span>
-										{/if}
-									</p>
-									{#each rel.conversation.options as opt (opt.key)}
-										{@const block = conversationBlock(rel, opt)}
-										<button
-											type="button"
-											class="bar-conversation-btn"
-											class:bar-conversation-btn--blocked={block}
-											aria-disabled={block ? 'true' : undefined}
-											title={block}
-											onclick={() => !block && investRelation(rel, opt)}
+			<!-- Beziehung pflegen overview: met characters; each opens their dialog (T41). -->
+			{#if data.relationships.some((r) => r.met)}
+				<section class="bar-relationships">
+					<h3 class="bar-relationships-title">{t('pathdepth.ui_relationship_title')}</h3>
+					<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_met_only')}</p>
+					<p class="bar-relationships-hint">{t('pathdepth.ui_relationship_run_hint')}</p>
+					<ul class="bar-relationships-list">
+						{#each data.relationships.filter((r) => r.met) as rel (rel.key)}
+							<li>
+								<button
+									type="button"
+									class="bar-relationship-chip"
+									data-character={rel.key}
+									onclick={() => open(modalFor(rel.key) ?? `rel_${rel.key}`)}
+								>
+									<img src="{portrait(rel.key)}.webp" alt="" />
+									<span class="bar-relationship-chip__text">
+										<strong>{rel.name}</strong>
+										<span class="bar-relationship-chip__level"
+											>{t(`pathdepth.relationship_level_${rel.level}`)}</span
 										>
-											<span class="bar-conversation-btn__name">{opt.name}</span>
-											<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">{opt.ap} AP</span>
-										</button>
-									{/each}
-								</div>
-							{/if}
-							{#if relationError[rel.key]}<p class="bar-relationship-error">{relationError[rel.key]}</p>{/if}
-						</article>
-					{/each}
-				</div>
-			</section>
+									</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/if}
 		{/if}
 	</div>
 
@@ -940,26 +1231,6 @@
 			display: none;
 		}
 	}
-	/* Blade drew these with PicoCSS (white <article> card, filled buttons); here on design tokens. */
-	.bar-relationship-card {
-		background: var(--color-bg);
-		border-radius: var(--radius-sm);
-		box-shadow:
-			0 1px 3px rgba(0, 0, 0, 0.08),
-			0 0 0 1px rgba(0, 0, 0, 0.03);
-	}
-	.bar-conversation-btn {
-		font: inherit;
-		font-size: 0.875rem;
-		color: #fff;
-		background: var(--color-accent);
-		border: none;
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-	}
-	.bar-conversation-btn:hover:not(.bar-conversation-btn--blocked) {
-		background: var(--color-accent-hover);
-	}
 	/* Former inline styles from bar.blade.php, on design tokens. */
 	.empty-text {
 		margin: 0;
@@ -997,6 +1268,23 @@
 	.error-line {
 		color: var(--color-danger);
 		font-size: 0.85rem;
+	}
+	.hint-line {
+		color: var(--color-text-secondary);
+		font-size: 0.9rem;
+		font-style: italic;
+	}
+	.cantina-bartender__badge {
+		top: -8px;
+		right: 6px;
+	}
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
 	}
 	.ok-line {
 		color: #166534;

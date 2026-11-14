@@ -396,16 +396,17 @@ return [
 
     // ── Cantina-Barkeeper Tomas (A40) ────────────────────────────────────────
     // "Mit Tomas reden" — kostenlose Interaktion, kein AP-Kosten-Check. Die 4
-    // Tier-Varianten spiegeln config('game.bartender.ap_bonus_tiers') (0/5/15/30
-    // Interaktionen -> 0/1/2/3 AP) und werden wärmer, je vertrauter Tomas den
-    // Direktor kennt.
+    // Tier-Varianten folgen seiner Beziehungsstufe (Frontend: ceil(Stufe / 2)). Der Rat
+    // bringt immer gleich viele AP; die Beziehung macht ihn häufiger
+    // (game.bartender.advice_every_sols_by_relationship_level). Die Zeilen werden wärmer,
+    // je vertrauter Tomas den Direktor kennt.
     'bartender_counter_role' => 'Barkeeper',
     'bartender_talk_button' => 'Mit Tomas reden',
     'bartender_dialog_intro' => 'Tomas hört zu, während er ein Glas poliert — bei ihm ist kein Wort verschwendet, aber jedes zählt.',
     'bartender_dialog_tier_0' => '„Erzähl mir, was dich umtreibt." Er nickt knapp und hört zu — mehr nicht, noch kennt er dich nicht gut genug.',
     'bartender_dialog_tier_1' => 'Tomas hält kurz inne. „Dich seh ich öfter." Er schiebt dir wortlos einen Gedanken zu, der weiterhilft.',
-    'bartender_dialog_tier_2' => 'Er stellt das Glas ab und setzt sich für einen Moment hin. „Du bist kein Fremder mehr hier." Was er dir mitgibt, wiegt mehr als sonst.',
-    'bartender_dialog_tier_3' => 'Tomas lächelt kurz — selten genug, dass es auffällt. „Du gehörst hierher." Er gibt dir mehr, als er den meisten je gegeben hat.',
+    'bartender_dialog_tier_2' => 'Er stellt das Glas ab und setzt sich für einen Moment hin. „Für dich hab ich öfter einen Moment als für die meisten." Inzwischen hat er jeden zweiten Abend etwas für dich.',
+    'bartender_dialog_tier_3' => 'Tomas lächelt kurz — selten genug, dass es auffällt. „Du gehörst zu uns. Ganz." Kein Abend vergeht mehr, an dem er dir nicht etwas mitgibt.',
 
     // ── Charakter-Anliegen (A41) ────────────────────────────────────────────────
     // Je Figur eine Ansprache-Zeile + Erfolgs-Zeile; eine Fehlschlag-Zeile nur
@@ -687,7 +688,7 @@ return [
     'sol_report_instability_detail' => 'Nach :sols Solen ohne Standortwechsel: Harvester-Ertrag gestört.',
     'sol_report_event_plague' => 'Seuchenausbruch',
     'sol_report_plague_detail_hunger' => 'Nahrungsknappheit (:streak Sole ohne Vorräte) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
-    'sol_report_plague_detail_trust' => 'Kritisches Vertrauen (:trust) hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
+    'sol_report_plague_detail_trust' => 'Vertrauen auf „:trust“ gefallen — die Unruhe hat den Ausbruch ausgelöst — Aktionspunkte vorübergehend reduziert.',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
@@ -765,6 +766,9 @@ return [
     'bartender_knowledge_label' => 'In welche Kenntnis fließt der Hinweis?',
     'bartender_error_cooldown' => 'Tomas hat dir für heute schon einen Rat mitgegeben — versuch es nächstes Sol wieder.',
     'bartender_error_generic' => 'Das Gespräch kam nicht zustande.',
+    // Stille Forschung (spec 2026-11-11-tomas-rat-rueckmeldung).
+    'bartender_relationship_too_low' => 'Tomas nickt dir zu, mehr nicht. Für einen Rat kennt er dich noch zu wenig — pflege erst die Beziehung.',
+    'knowledge_not_selectable' => 'Diese Kenntnis wartet auf :reason. Wähl eine andere.',
     'bar_concern_knowledge_label' => 'In welche Kenntnis soll die Hilfe fließen?',
     'bar_information_knowledge_label' => 'Welche Kenntnis soll profitieren?',
     'codex_page_intro' => 'Jede Figur der Cantina hinterlässt Spuren — je öfter ihr euch begegnet, desto mehr erfährst du über sie. Freigeschaltete Einträge bleiben dir über das Ende eines Runs hinaus erhalten.',
@@ -835,4 +839,19 @@ return [
     // Svelte hangar screen (ADR 0006): carousel arrows (were hardcoded English in Blade)
     'hangar_prev_bay' => 'Vorheriger Stellplatz',
     'hangar_next_bay' => 'Nächster Stellplatz',
+
+    // Tomas' Rat / stille Forschung im Cantina-Popup (spec 2026-11-11-tomas-rat-rueckmeldung,
+    // Sätze 27–35). Ergebniszeilen gelten für Tomas, Sarka, Deva und Lenn (:name = Quelle).
+    'bartender_talk_button_bonus' => 'Mit Tomas reden (+:ap AP in eine Kenntnis)',
+    'bartender_done_today' => 'Tomas poliert weiter sein Glas. Für heute ist alles gesagt.',
+    'bartender_next_sol' => 'wieder nächstes Sol',
+    'bartender_advice_open' => 'Tomas hat heute einen Rat für dich',
+    'bartender_no_selectable' => 'Tomas zuckt mit den Schultern. Gerade gibt es keine Kenntnis, die sein Rat voranbringen würde.',
+    'knowledge_option_waiting' => ':name — wartet auf :reason',
+    'knowledge_result_lab' => '+:ap AP in :knowledge (:name)',
+    'knowledge_result_lab_progress' => ':spent / :needed AP',
+    'knowledge_result_rough' => 'Was :name dir mitgibt, fließt in :knowledge — :progress.',
+    'knowledge_result_plain' => 'Was :name dir mitgibt, fließt in :knowledge.',
+    'knowledge_result_breakthrough' => 'Durchbruch: :knowledge erreicht Stufe :level',
+    'knowledge_result_forfeited' => 'Die übrigen :ap AP verfallen — die Kenntnis wartet auf :reason.',
 ];

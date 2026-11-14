@@ -29,4 +29,18 @@ return [
     'defense' => 'Defence & Survival Tactics',
     'defense_desc' => 'How the colony protects itself from dangers outside, from securing the facilities to how colonists behave in an emergency.',
 
+    // Silent research (spec 2026-11-11-tomas-rat-rueckmeldung).
+    // Rough progress words without a lab (game.knowledge_rough_progress_bands).
+    'rough_progress_1' => 'first sketches',
+    'rough_progress_2' => 'taking shape',
+    'rough_progress_3' => 'on the verge of a breakthrough',
+    // Block reason, shown as "waiting on …".
+    'bonus_wait_max_level' => 'nothing more (top level)',
+    'bonus_wait_knowledge_cc_gate' => 'a command center upgrade',
+    'bonus_wait_requires_building' => 'a missing building',
+    'bonus_wait_insufficient_resources' => 'resources',
+    'bonus_wait_insufficient_supply' => 'free supply',
+    'bonus_wait_entity_not_found' => 'clarification',
+    'bonus_wait_order_failed' => 'another attempt',
+
 ];

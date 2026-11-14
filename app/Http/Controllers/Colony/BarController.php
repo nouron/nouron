@@ -7,16 +7,17 @@ use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\BarOfferDialogPresenter;
 use App\Services\BarService;
+use App\Services\CantinaPresenceService;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\PathDepthService;
 use App\Services\ResourcesService;
+use App\Services\Techtree\KnowledgeBonusPresenter;
 use App\Services\TickService;
 use App\Services\TradeAdvantagePresenter;
 use App\Services\TradeAdvantageService;
-use App\Support\RunSeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +41,8 @@ class BarController extends BaseController
         private readonly BarOfferDialogPresenter $offerDialogPresenter,
         private readonly TradeAdvantagePresenter $advantagePresenter,
         private readonly PathDepthService $pathDepthService,
+        private readonly KnowledgeBonusPresenter $knowledgeBonusPresenter,
+        private readonly CantinaPresenceService $cantinaPresence,
     ) {
         parent::__construct($tick);
     }
@@ -67,7 +70,7 @@ class BarController extends BaseController
             'characters' => config('characters'),
             'concernHasFailureLine' => $concernFailureKey !== null && Lang::has($concernFailureKey),
             'informationOutcomeLines' => (object) $informationLines,
-            'relationshipGate' => config('path_depth.building_gate'),
+            'conversationOptionCantinaLevel' => config('path_depth.conversation_option_cantina_level'),
             'relationshipMaxLevel' => (int) config('path_depth.max_level'),
         ]);
     }
@@ -143,43 +146,19 @@ class BarController extends BaseController
             ? $this->merchantService->getForecast($colony->id, $tick)
             : null;
 
-        $hotspotsFile = base_path('data/cantina_hotspots.json');
-        $hotspots = file_exists($hotspotsFile)
-            ? (json_decode(file_get_contents($hotspotsFile), true) ?: [])
-            : [];
-
-        $run = Run::where('colony_id', $colony->id)->active()->first();
-        // The run's rng_seed, not the run/colony id (R5b): ids depend on start order in
-        // a shared database — see App\Support\RunSeed.
-        $seed = RunSeed::forColony($colony->id);
+        $hotspots = $this->cantinaPresence->hotspots();
         $characters = config('characters');
-
-        $characterAssignment = [];
-        foreach ($hotspots as $spotKey => $spot) {
-            if (empty($spot['characters'])) {
-                continue;
-            }
-            $idx = abs(crc32($seed.$spotKey)) % count($spot['characters']);
-            $slug = $spot['characters'][$idx];
-            $char = $characters[$slug] ?? null;
-            if ($char) {
-                $characterAssignment[$spotKey] = ['slug' => $slug] + $char;
-            }
-        }
+        $characterAssignment = $this->cantinaPresence->characterAssignment($colony->id);
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
         $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
         $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 2);
         $hasConsul = $barLevel > 0 && $this->barService->hasAvailableConsul($colony->id);
 
-        // Knowledge dropdown options shared by Tomas (A40), Sarka's Anliegen (A41)
-        // and Deva's knowledge_boost outcome (A42) — all 7 Kenntnisse are valid
-        // targets for Tomas/Sarka; Deva's choice is further restricted client-side
-        // to game.bar.information_pool.veteran.knowledge_choices.
-        $knowledgeOptions = [];
-        foreach (config('knowledge', []) as $key => $def) {
-            $knowledgeOptions[] = ['id' => $def['id'], 'key' => $key, 'name' => __("knowledge.{$key}")];
-        }
+        // Knowledge choice shared by Tomas (A40), Sarka's Anliegen (A41) and Deva's
+        // knowledge_boost outcome (A42): every knowledge, flagged selectable or
+        // "wartet auf <Grund>" (silent research, spec 2026-11-11-tomas-rat-rueckmeldung).
+        $knowledgeOptions = $this->knowledgeBonusPresenter->options($colony->id);
 
         $concernApCost = $concern ? (int) config("game.bar.concern.ap_cost.{$concern->character_slug}", 0) : null;
 
@@ -189,10 +168,13 @@ class BarController extends BaseController
             fn ($opt) => in_array($opt['key'], $devaKnowledgeChoiceKeys, true),
         ));
 
-        $relationships = $barLevel > 0 ? $this->relationships($colony->id, $characters) : [];
+        $relationships = $barLevel > 0
+            ? $this->relationships($colony->id, $characters, $this->cantinaPresence->presentCharacters($colony->id, $tick))
+            : [];
+        $bartender = $this->bartenderState($colony->id, $tick);
 
         return compact(
-            'relationships',
+            'relationships', 'bartender',
             'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
@@ -202,29 +184,59 @@ class BarController extends BaseController
     }
 
     /**
-     * Path-depth state of every character met in this run (Tomas always), for the
-     * "Beziehung pflegen" panel (T41). Unmet characters are not listed.
+     * Tomas' advice state for the counter and his popup (spec 2026-11-11-tomas-rat-rueckmeldung,
+     * sentence 25; AP scale 2026-11-13 §6): relationship level, the bonus one piece of advice
+     * gives, how often he gives advice (every N Sols, null at level 0), in how many Sols the
+     * next advice comes (0 = today), whether he was talked to this Sol and with what result,
+     * and whether advice is open now.
+     *
+     * @return array{relationship_level: int, ap_bonus: int, advice_every_sols: int|null, advice_in_sols: int, talked_today: bool, today_result: array<string, mixed>|null, advice_open: bool}
+     */
+    private function bartenderState(int $colonyId, int $tick): array
+    {
+        $level = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, 'bartender')['level'];
+        $apBonus = $this->barService->bartenderApBonus($colonyId);
+        $lastTick = DB::table('colony_bartender_state')->where('colony_id', $colonyId)->value('last_interaction_tick');
+        $talkedToday = $lastTick !== null && (int) $lastTick === $tick;
+        $adviceInSols = $this->barService->bartenderAdviceInSols($colonyId, $tick);
+
+        return [
+            'relationship_level' => $level,
+            'ap_bonus' => $apBonus,
+            'advice_every_sols' => $this->barService->bartenderAdviceEverySols($colonyId),
+            'advice_in_sols' => $adviceInSols,
+            'talked_today' => $talkedToday,
+            'today_result' => $talkedToday ? $this->barService->bartenderToday($colonyId, $tick) : null,
+            'advice_open' => $apBonus > 0 && $adviceInSols === 0,
+        ];
+    }
+
+    /**
+     * Path-depth state of every character met in this run (Tomas always) or sitting in
+     * the cantina today, for the "Beziehung pflegen" panel (T41). A present, unmet
+     * character is listed at level 0 with its options (owner 2026-11-13); absent, unmet
+     * characters are not listed. `present` tells whether the character is here today.
      *
      * @param  array<string, array<string, mixed>>  $characters
+     * @param  list<string>  $present
      * @return list<array<string, mixed>>
      */
-    private function relationships(int $colonyId, array $characters): array
+    private function relationships(int $colonyId, array $characters, array $present): array
     {
-        $gate = config('path_depth.building_gate');
+        // No relationship-level gate by cantina level (owner 2026-11-13): the conversation
+        // options carry their own cantina requirement (PathDepthService::conversation()).
         $rows = [];
         foreach ($characters as $slug => $char) {
             $state = $this->pathDepthService->state($colonyId, PathDepthService::KIND_CHARACTER, $slug);
-            if (! $state['met']) {
+            $isPresent = in_array($slug, $present, true);
+            if (! $state['met'] && ! $isPresent) {
                 continue;
             }
-            $nextRequired = $gate[$state['level'] + 1] ?? null;
             $rows[] = $state + [
+                'present' => $isPresent,
                 'conversation' => $this->pathDepthService->conversation($colonyId, $slug),
                 'key' => $slug,
                 'name' => $char['name'] ?? $char['role'],
-                'lock_reason' => $nextRequired !== null && $state['level'] >= $state['level_cap']
-                    ? __('pathdepth.ui_locked_building', ['building' => __('buildings.bar'), 'level' => $nextRequired])
-                    : null,
             ];
         }
 

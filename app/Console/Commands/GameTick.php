@@ -20,9 +20,10 @@ use App\Services\HangarService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
 use App\Services\PathDepthService;
-use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunProgressService;
+use App\Services\Techtree\KnowledgeBonusJournal;
+use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use App\Services\TrustService;
 use App\Support\RegolithLedger;
@@ -47,7 +48,7 @@ use Illuminate\Support\Facades\DB;
  *  2. Hangar missions     — resolve dispatched missions (complete/abort), apply rewards
  *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
- *  5. Resource generation — produce colony resources per industry building level (trust multiplier × staffing share)
+ *  5. Resource generation — produce colony resources per industry building level (× staffing share)
  *  6. Food consumption    — deduct Organics per employed colonist; trust penalty on shortfall
  *  7. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
  *  8. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model); runs after
@@ -83,12 +84,13 @@ class GameTick extends Command
         private readonly TrustService $trustService,
         private readonly ResourcesService $resourcesService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
-        private readonly ProjectBonusService $projectBonusService,
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
         private readonly HangarService $hangarService,
         private readonly CharacterCodexService $characterCodexService,
         private readonly PathDepthService $pathDepthService,
+        private readonly ResearchService $researchService,
+        private readonly KnowledgeBonusJournal $knowledgeBonusJournal,
     ) {
         parent::__construct();
     }
@@ -551,7 +553,10 @@ class GameTick extends Command
             } elseif ($type === 'reveal_tiles') {
                 $value = $this->revealTiles($colonyId, (int) $value);
             } elseif ($type === 'research_ap') {
-                $this->grantResearchAp($colonyId, $target, (int) $value);
+                $knowledgeResult = $this->grantResearchAp($colonyId, $target, (int) $value, $tick);
+                if ($knowledgeResult !== null) {
+                    $details['knowledge_result'] = $knowledgeResult;
+                }
             } elseif ($type === 'find_salvage') {
                 // T30 §13.3: own detail keys, deliberately NOT 'regolith' (RunReport topf find_flight).
                 // Hook for §13.6 (Feldproben, Fahrtbericht) — find_type is in the details.
@@ -591,33 +596,24 @@ class GameTick extends Command
     }
 
     /**
-     * Grants research-AP progress on the player-chosen knowledge, capped at the
-     * next levelup threshold (no auto-levelup) — bypasses the AP-gated invest().
+     * Pays a mission's research AP (mission_data_sweep) into the player-chosen knowledge.
+     * They are earmarked reward AP like the Cantina bonuses, so they follow silent research
+     * (ResearchService::investBonus): level-up at the threshold, rest carries over, and AP
+     * a blocked knowledge cannot take lapse with a journal entry instead of being capped.
+     *
+     * @return array<string, mixed>|null the KnowledgeBonusResult payload, null without a target
      */
-    private function grantResearchAp(int $colonyId, ?array $target, int $points): void
+    private function grantResearchAp(int $colonyId, ?array $target, int $points, int $tick): ?array
     {
         $researchId = (int) ($target['research_id'] ?? 0);
         if ($researchId === 0) {
-            return;
+            return null;
         }
 
-        $row = DB::table('colony_researches')
-            ->where('colony_id', $colonyId)
-            ->where('research_id', $researchId)
-            ->first(['level', 'ap_spend']);
+        $result = $this->researchService->investBonus($colonyId, $researchId, $points);
+        $this->knowledgeBonusJournal->record($colonyId, $tick, 'data_sweep', $result);
 
-        $currentLevel = (int) ($row->level ?? 0);
-        $costs = collect(config('knowledge'))->firstWhere('id', $researchId)['levelup_costs'] ?? [];
-        $rawThreshold = (int) ($costs[$currentLevel + 1] ?? PHP_INT_MAX);
-        $threshold = $rawThreshold === PHP_INT_MAX
-            ? PHP_INT_MAX
-            : $this->projectBonusService->effectiveKnowledgeApForLevelup($colonyId, $rawThreshold);
-        $newSpend = min(((int) ($row->ap_spend ?? 0)) + $points, $threshold);
-
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $colonyId, 'research_id' => $researchId],
-            ['ap_spend' => $newSpend, 'level' => $currentLevel]
-        );
+        return $result->toArray();
     }
 
     /**
@@ -952,14 +948,11 @@ class GameTick extends Command
         $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
-            // Apply trust production multiplier based on the colony's CURRENT trust
-            // (stored from the previous tick's trust calculation — no circular dependency),
-            // times the staffing share: colonists short of workplaces leave
-            // them unfilled (GDD §5/§6 "Wohnraumverlust", T43-G9). Every consumer below
-            // produces Regolith or Organika only — AP, Credits and trust are unaffected.
-            $trust = $this->trustService->getTrust($colony->id);
-            $multiplier = $this->trustService->getProductionMultiplier($trust)
-                * $this->resourcesService->staffingShare($colony->id);
+            // Staffing share: colonists short of workplaces leave them unfilled
+            // (GDD §5/§6 "Wohnraumverlust", T43-G9). Trust has no production factor
+            // (T59, Owner 2026-11-14). Every consumer below produces Regolith or
+            // Organika only — AP, Credits and trust are unaffected.
+            $multiplier = $this->resourcesService->staffingShare($colony->id);
 
             $harvesterYield = $this->generateHarvesterYield($tick, $colony, $multiplier);
             if ($harvesterYield > 0) {
@@ -1540,7 +1533,7 @@ class GameTick extends Command
 
     /**
      * Seuchenausbruch (GDD §9): emergent, not ambient — only rolls when
-     * hunger_streak≥3 OR Trust<-20 (a healthy colony has 0% base risk, hard-gated,
+     * hunger_streak≥3 OR trust below plague.trust_below (band riot) (a healthy colony has 0% base risk, hard-gated,
      * not just a very low chance). Resolves immediately (no warning/resolution
      * split, matching instability's shape, not storm's) as a colony_threatened Trust
      * hit plus a temporary AP-reduction debuff via glx_colonies.plague_until_tick.
@@ -1550,7 +1543,7 @@ class GameTick extends Command
         $hungerStreak = (int) DB::table('glx_colonies')->where('id', $colony->id)->value('hunger_streak');
         $trust = $this->trustService->getTrust($colony->id);
 
-        if ($hungerStreak < 3 && $trust >= -20) {
+        if ($hungerStreak < 3 && $trust >= (int) config('game.encounter.plague.trust_below', 15)) {
             return 0;   // healthy colony — hard gate, not a chance roll
         }
 
@@ -1583,20 +1576,21 @@ class GameTick extends Command
         }
 
         $debuffSols = (int) config('game.encounter.plague.debuff_sols', 5);
-        $apReductionPct = (float) config('game.encounter.plague.ap_reduction_pct', 0.20);
+        $apReduction = (int) config('game.encounter.plague.ap_reduction', 1);
 
-        // Deva's "Drill-Reaktionspuffer" (A42) — halves the AP-reduction and
-        // shortens the debuff by 1 Sol for this episode, consumed the moment
-        // it applies. See config/game.php → bar.information_pool.veteran.
+        // Deva's "Drill-Reaktionspuffer" (A42) — cancels the AP malus (AP scale 2026-11-13
+        // §4: half of 1 AP is nothing) and shortens the debuff by 1 Sol for this episode,
+        // consumed the moment it applies. See config/game.php → bar.information_pool.veteran.
         if ($this->consumeActiveDrillBuffer($colony->id)) {
-            $bufferReductionPct = (float) config('game.bar.information_pool.veteran.drill_buffer_reduction_pct', 0.5);
-            $apReductionPct *= 1 - $bufferReductionPct;
+            $apReduction = 0;
             $debuffSols = max(1, $debuffSols - 1);
         }
 
+        // plague_ap_reduction_pct holds the absolute AP malus since the AP scale (column
+        // name kept, rename pending).
         DB::table('glx_colonies')->where('id', $colony->id)->update([
             'plague_until_tick' => $tick + $debuffSols,
-            'plague_ap_reduction_pct' => $apReductionPct,
+            'plague_ap_reduction_pct' => $apReduction,
         ]);
         $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
 
@@ -1612,7 +1606,8 @@ class GameTick extends Command
                 'debuff_until_tick' => $tick + $debuffSols,
                 'reason' => $hungerStreak >= 3 ? 'hunger' : 'trust',
                 'hunger_streak' => $hungerStreak,
-                'trust' => $trust,
+                // Band, not the number: comm-log params reach the client (T59 F3).
+                'trust_band' => $this->trustService->bandKey($trust),
             ]),
         ]);
 
@@ -1673,26 +1668,24 @@ class GameTick extends Command
         $colonies = $this->tickColonies();
 
         foreach ($colonies as $colony) {
-            // Trigger 3 — onboarding_trust: fires once when trust crosses from
-            // non-negative to negative for a real (non-NPC) colony.
+            // Trigger 3 — onboarding_trust: fires once when trust drops into the first
+            // band with an AP malus (T59: from >= 40 to < 40) for a real (non-NPC) colony.
             $userId = $colony->user_id ?? null;
+            $malusBelow = $this->trustService->malusBelow();
             $trustBefore = null;
             if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_trust')) {
                 $trustBefore = (int) (DB::table('colony_resources')
                     ->where('colony_id', $colony->id)
                     ->where('resource_id', 12)
-                    ->value('amount') ?? 0);
+                    ->value('amount') ?? $this->trustService->getTrust($colony->id));
             }
 
             $this->trustService->calculateAndStore($colony, $tick);
 
-            if ($userId !== null && $trustBefore !== null && $trustBefore >= 0) {
-                $trustAfter = (int) (DB::table('colony_resources')
-                    ->where('colony_id', $colony->id)
-                    ->where('resource_id', 12)
-                    ->value('amount') ?? 0);
+            if ($userId !== null && $trustBefore !== null && $trustBefore >= $malusBelow) {
+                $trustAfter = $this->trustService->getTrust($colony->id);
 
-                if ($trustAfter < 0) {
+                if ($trustAfter < $malusBelow) {
                     $this->eventService->createEvent([
                         'user' => $userId,
                         'tick' => $tick,
