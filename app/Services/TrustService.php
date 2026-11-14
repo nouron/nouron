@@ -41,14 +41,33 @@ class TrustService
      */
     public function calculateAndStore(Colony $colony, int $tick): int
     {
-        $trust = $this->calculateTrust($colony->id, $tick);
+        $parts = $this->breakdown($colony->id, $tick);
+        $trust = $parts['total'];
 
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => $colony->id, 'resource_id' => $this->resourceId()],
             ['amount' => $trust]
         );
+        // The parts behind the stored value: the popup shows exactly what acts (view()).
+        DB::table('glx_colonies')->where('id', $colony->id)
+            ->update(['trust_breakdown' => json_encode($parts)]);
 
         return $trust;
+    }
+
+    /**
+     * Breakdown that produced the stored trust value, or null when it is unknown
+     * (value written elsewhere, e.g. a test scenario, or no Sol change yet;
+     * stored in glx_colonies.trust_breakdown).
+     *
+     * @return array<string, int>|null
+     */
+    private function storedBreakdown(int $colonyId, int $trust): ?array
+    {
+        $json = DB::table('glx_colonies')->where('id', $colonyId)->value('trust_breakdown');
+        $parts = is_string($json) ? json_decode($json, true) : null;
+
+        return is_array($parts) && ($parts['total'] ?? null) === $trust ? $parts : null;
     }
 
     /**
@@ -235,15 +254,22 @@ class TrustService
      * Trust as the player may see it. Band, AP and the band list always; with a science lab
      * also the total (the stored, acting value) and every source with its amount. Without a
      * lab the sources are names only, and only those that currently act (base always).
+     * Sources are the parts that produced the stored value (displayed = effective); when they
+     * are unknown, the live parts stand in only if they add up to the same value, else none.
      *
-     * @return array{band: string, ap: int, bands: list<array{key: string, min: int, max: int, ap: int}>, lab: bool, sources: list<array{key: string, value?: int}>, total?: int}
+     * Projection: what the next Sol will compute ($tick = the tick the next game:tick
+     * processes). With a lab `next_total` + `next_band` when the total changes; without a lab
+     * only `next_band`, and only when the band changes (a total change must not leak).
+     *
+     * @return array{band: string, ap: int, bands: list<array{key: string, min: int, max: int, ap: int}>, lab: bool, sources: list<array{key: string, value?: int}>, total?: int, next_total?: int, next_band?: string}
      */
     public function view(int $colonyId, int $tick): array
     {
         $trust = $this->getTrust($colonyId);
         $band = $this->band($trust);
         $lab = $this->numbersVisible($colonyId);
-        $parts = $this->breakdown($colonyId, $tick);
+        $live = $this->breakdown($colonyId, $tick);
+        $parts = $this->storedBreakdown($colonyId, $trust) ?? ($live['total'] === $trust ? $live : []);
         unset($parts['total']);
 
         $sources = [];
@@ -262,8 +288,15 @@ class TrustService
             'lab' => $lab,
             'sources' => $sources,
         ];
+        $nextBand = $this->bandKey($live['total']);
         if ($lab) {
             $view['total'] = $trust;
+            if ($live['total'] !== $trust) {
+                $view['next_total'] = $live['total'];
+                $view['next_band'] = $nextBand;
+            }
+        } elseif ($nextBand !== $band['key']) {
+            $view['next_band'] = $nextBand;
         }
 
         return $view;

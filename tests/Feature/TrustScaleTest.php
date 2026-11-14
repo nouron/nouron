@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\BuildingId;
+use App\Models\Colony;
 use App\Models\Run;
 use App\Models\RunObjective;
 use App\Models\User;
@@ -13,6 +14,7 @@ use App\Services\TickService;
 use App\Services\TrustService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -256,8 +258,8 @@ class TrustScaleTest extends TestCase
 
     public function test_shell_without_lab_hides_number_and_source_amounts(): void
     {
-        $this->setBuilding(46, 1); // hospital: a building source
-        $this->setTrust(62);
+        $this->setBuilding(46, 4); // infirmary: a building source, 50 + 4 × 3 = 62
+        $this->storeAtTick();
 
         $shell = $this->shell();
         $trust = $shell['trust'];
@@ -282,8 +284,8 @@ class TrustScaleTest extends TestCase
     public function test_shell_with_lab_shows_sources_with_amounts_and_total(): void
     {
         $this->setBuilding(BuildingId::Sciencelab->value, 1);
-        $this->setBuilding(46, 1);
-        $this->setTrust(62);
+        $this->setBuilding(46, 4);
+        $this->storeAtTick();
 
         $trust = $this->shell()['trust'];
 
@@ -291,7 +293,8 @@ class TrustScaleTest extends TestCase
         $this->assertSame(62, $trust['total']);
         $sources = collect($trust['sources'])->pluck('value', 'key')->all();
         $this->assertSame(50, $sources['base']);
-        $this->assertSame((int) config('buildings.infirmary.trust_per_lv'), $sources['buildings']);
+        $this->assertSame(4 * (int) config('buildings.infirmary.trust_per_lv'), $sources['buildings']);
+        $this->assertSame(62, array_sum($sources));
         $this->assertArrayHasKey('hunger', $sources);
     }
 
@@ -301,5 +304,86 @@ class TrustScaleTest extends TestCase
         $this->setTrust(62);
 
         $this->assertFalse($this->shell()['trust']['lab']);
+    }
+
+    // ── View: shown sources = parts of the effective (stored) value ──────────
+
+    private function storeAtTick(): void
+    {
+        $this->service->calculateAndStore(Colony::findOrFail(self::COLONY_ID), self::TICK);
+    }
+
+    public function test_view_sources_sum_to_the_stored_total_and_live_change_is_a_projection(): void
+    {
+        $this->setBuilding(BuildingId::Sciencelab->value, 1);
+        $this->setBuilding(46, 1);
+        $this->storeAtTick();
+        $stored = $this->service->getTrust(self::COLONY_ID);
+
+        $this->setBuilding(46, 3); // infirmary finished two more levels after the Sol
+
+        $view = $this->service->view(self::COLONY_ID, self::TICK + 1);
+
+        $this->assertSame($stored, $view['total']);
+        $this->assertSame($stored, array_sum(array_column($view['sources'], 'value')));
+        $this->assertSame($stored + 2 * (int) config('buildings.infirmary.trust_per_lv'), $view['next_total']);
+        $this->assertSame($this->service->bandKey($view['next_total']), $view['next_band']);
+    }
+
+    public function test_stored_sources_survive_a_cache_flush_and_live_in_the_colony_row(): void
+    {
+        $this->setBuilding(BuildingId::Sciencelab->value, 1);
+        $this->setBuilding(46, 1);
+        $this->storeAtTick();
+        $stored = $this->service->getTrust(self::COLONY_ID);
+
+        Cache::flush(); // game state must not live in the cache
+        $this->setBuilding(46, 3); // live parts now differ from the stored ones
+
+        $view = $this->service->view(self::COLONY_ID, self::TICK + 1);
+
+        $this->assertSame($stored, array_sum(array_column($view['sources'], 'value')));
+        $this->assertContains('base', array_column($view['sources'], 'key'));
+        $row = DB::table('glx_colonies')->where('id', self::COLONY_ID)->value('trust_breakdown');
+        $this->assertSame($stored, json_decode((string) $row, true)['total'] ?? null);
+    }
+
+    public function test_view_has_no_projection_when_nothing_changes(): void
+    {
+        $this->setBuilding(BuildingId::Sciencelab->value, 1);
+        $this->storeAtTick();
+
+        $view = $this->service->view(self::COLONY_ID, self::TICK);
+
+        $this->assertArrayNotHasKey('next_total', $view);
+        $this->assertArrayNotHasKey('next_band', $view);
+    }
+
+    public function test_view_without_lab_projects_only_a_band_change(): void
+    {
+        $this->storeAtTick(); // 50 (stable)
+
+        $this->setBuilding(46, 1); // +3, still stable
+        $view = $this->service->view(self::COLONY_ID, self::TICK + 1);
+        $this->assertArrayNotHasKey('next_total', $view);
+        $this->assertArrayNotHasKey('next_band', $view, 'no hint that would betray a number change');
+
+        $this->setBuilding(46, 4); // +12 → 62, content
+        $view = $this->service->view(self::COLONY_ID, self::TICK + 1);
+        $this->assertArrayNotHasKey('next_total', $view);
+        $this->assertSame('content', $view['next_band']);
+    }
+
+    public function test_view_without_stored_breakdown_never_shows_mismatching_sources(): void
+    {
+        $this->setBuilding(BuildingId::Sciencelab->value, 1);
+        $this->setBuilding(46, 1);
+        $this->setTrust(62); // set directly, e.g. by a test scenario, no breakdown stored
+
+        $view = $this->service->view(self::COLONY_ID, self::TICK);
+
+        $this->assertSame(62, $view['total']);
+        $sources = $view['sources'];
+        $this->assertTrue($sources === [] || array_sum(array_column($sources, 'value')) === 62);
     }
 }
