@@ -11,22 +11,6 @@
 
 /* ── Merchant section (bar/cantina page) ─────────────────────────────────── */
 
-.merchant-section {
-    margin-bottom: 2rem;
-    padding: 1.25rem;
-    border: 1px solid #e6c84a;
-    border-radius: var(--pico-border-radius, 6px);
-    background: #fffdf0;
-    max-width: 560px;
-}
-
-.merchant-section__header {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
 .merchant-items-bar {
     display: flex;
     flex-direction: column;
@@ -63,13 +47,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-}
-
-.merchant-item-bar__cost {
-    font-weight: 600;
-    color: var(--pico-muted-color, #666);
-    white-space: nowrap;
-    font-size: 0.85rem;
 }
 
 .merchant-item-bar__buy {
@@ -578,10 +555,6 @@
     color: var(--color-text-secondary);
 }
 
-.cantina-relation__note--lock {
-    color: var(--color-warning-fg);
-}
-
 /* Character's own line for conversation options the cantina level does not allow yet:
    quoted in their voice, quiet — no warning colour. */
 .cantina-relation__quote {
@@ -591,12 +564,6 @@
     font-size: var(--text-meta-size);
     font-style: italic;
     color: var(--color-text-secondary);
-}
-
-.cantina-relation__status {
-    margin: 0;
-    font-weight: 600;
-    font-size: 0.9rem;
 }
 
 .cantina-modal-close {

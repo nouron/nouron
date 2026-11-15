@@ -2,7 +2,7 @@
 
 ## 2026-11-15
 
-- Aufräumen nach dem UI-Umbau: unbenutzte CSS-Regeln aus `advisors.css` und `resources.css` entfernt (alte Pfadwahl-Karten, alte Popup-Varianten; 420 Zeilen, Screenshots vorher/nachher identisch), ein übrig gebliebener Text-Key des entfernten Einstell-Popups gelöscht, veraltete Dateiköpfe korrigiert.
+- Aufräumen nach dem UI-Umbau: unbenutzte CSS-Regeln aus `advisors.css` und `resources.css` entfernt (alte Pfadwahl-Karten, alte Popup-Varianten; 420 Zeilen, Screenshots vorher/nachher identisch), ein übrig gebliebener Text-Key des entfernten Einstell-Popups gelöscht, veraltete Dateiköpfe korrigiert. Danach die übrigen Stylesheets einzeln geprüft: 43 weitere tote Klassen entfernt (Cantina, Kolonie, Hangar, Labor, Kommandozentrale, Feedback, Swipe; 400 Zeilen), dynamisch gesetzte Klassen (Log-Abzeichen, Sol-Bericht-Zeilen) bleiben.
 
 ## 2026-11-14
 

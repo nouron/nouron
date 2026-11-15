@@ -33,18 +33,6 @@
     object-fit: cover;
 }
 
-.building-detail-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
-}
-
-.building-detail-name {
-    font-size: 0.95rem;
-    color: var(--color-anthracite, #333);
-}
-
 /* General effect text (Owner-Playtest-Fund 2026-08-31) — sits outside
  * .building-detail-wrap so it still shows for image-less types (knowledge). */
 .building-detail-description {
@@ -56,16 +44,6 @@
 }
 
 /* ── Building level badge (shared building-detail partial) ───────────────── */
-
-.sidebar-level-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 10px;
-    background: #e8f4e8;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
-}
 
 .tile-action-btn {
     width: 100%;
@@ -107,15 +85,6 @@
 
 .tile-action-btn__main {
     display: block;
-}
-
-.tile-action-btn__sub {
-    display: block;
-    font-size: 0.68rem;
-    font-weight: 400;
-    opacity: 0.85;
-    margin-top: 0.1rem;
-    white-space: nowrap;
 }
 
 /* AP-cost chip inside an action button — mirrors the resource-bar .ap-chip,

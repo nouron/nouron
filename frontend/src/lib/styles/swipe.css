@@ -1,23 +1,4 @@
 /* ── Swipe carousel (mobile) ───────────────────────────────────────────── */
-.swipe-container {
-    overflow: hidden;
-    width: 100%;
-    position: relative;
-    -webkit-overflow-scrolling: touch;
-}
-
-.swipe-track {
-    display: flex;
-    width: 100%;
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-}
-
-.swipe-panel {
-    flex: 0 0 100%;
-    min-width: 0;
-}
-
 /* Dot indicators */
 .swipe-dots {
     display: flex;
@@ -53,26 +34,4 @@
 .swipe-dot--active::before {
     background: var(--color-accent, #8c2030);
     transform: scale(1.25);
-}
-
-/* Nav icon-only rules moved to colony.css (kept with the other nav styles
-   and served with a cache-busting query string). */
-
-/* ── Messages swipe hint (mobile only) ────────────────────────────────── */
-@media (max-width: 767px) {
-    .msg-swipe-hint {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.72rem;
-        color: var(--color-text-secondary, #6b6b7a);
-        padding: 0.25rem 0;
-        opacity: 0.6;
-    }
-}
-@media (min-width: 768px) {
-    .msg-swipe-hint {
-        display: none;
-    }
 }

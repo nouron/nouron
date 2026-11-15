@@ -38,8 +38,6 @@
     margin-left: auto;
 }
 
-/* ── Carousel layout — shared primitives in carousel.css ─────────────────── */
-
 /* ── Hangar card ──────────────────────────────────────────────────────────── */
 
 .hangar-card {
@@ -302,12 +300,6 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
 }
-
-.hangar-status-chip--docked {
-    background: #f2faf2;
-    color: #2e7d32;
-    border: 1px solid #c8e6c9;
-}
 .hangar-status-chip--dispatched {
     background: #fef9ec;
     color: #78350f;
@@ -402,57 +394,6 @@
 .btn-hangar-action:disabled {
     opacity: 0.4;
     cursor: default;
-}
-
-/* ── Inline forms inside cards ────────────────────────────────────────────── */
-
-.hangar-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.hangar-form label {
-    font-size: 0.72rem;
-    color: #555;
-    font-weight: 600;
-    margin-bottom: 0.1rem;
-}
-
-.hangar-form input[type="text"],
-.hangar-form input[type="number"],
-.hangar-form select {
-    width: 100%;
-    font-size: 0.8rem;
-    padding: 0.3rem 0.5rem;
-    border: 1px solid #d0d0dc;
-    border-radius: 6px;
-    background: #fafafa;
-    color: #1a1a2e;
-    box-sizing: border-box;
-}
-
-.hangar-form input[type="range"] {
-    width: 100%;
-}
-
-.hangar-form .form-row-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.72rem;
-    color: #555;
-    font-weight: 600;
-}
-
-/* (Radio group styles removed — replaced by .hangar-ship-btn-list) */
-
-.hangar-form-actions {
-    display: flex;
-    gap: 0.4rem;
-    justify-content: flex-end;
-    padding-top: 0.3rem;
 }
 
 /* ── Inline error message ─────────────────────────────────────────────────── */
@@ -603,22 +544,6 @@
 
 .hangar-dialog-close:hover {
     color: #555;
-}
-
-.hangar-dialog-fieldset {
-    border: none;
-    margin: 0;
-    padding: 0.6rem 1rem 0;
-}
-
-.hangar-dialog-fieldset legend {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #888;
-    padding: 0;
-    margin-bottom: 0.35rem;
 }
 
 /* Nexus credit hint text */

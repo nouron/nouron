@@ -108,8 +108,6 @@
     filter: brightness(1.14);
 }
 
-/* ── Grid legend (tile-state key) ───────────────────────────────────────── */
-
 /* ── Canvas info bar (phase progress + legend) ───────────────────────────── */
 
 .canvas-info-bar {
@@ -929,28 +927,6 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     flex-shrink: 0;
 }
 
-.building-list-info {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.1rem;
-    height: 1.1rem;
-    border-radius: 50%;
-    border: 1px solid var(--color-border, #e8e8ec);
-    color: #888;
-    font-size: 0.65rem;
-    font-style: italic;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.building-list-info:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-}
-
 .building-list-supply {
     font-size: 0.72rem;
     color: var(--color-text-secondary, #6b6b7a);
@@ -973,12 +949,6 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     color: #2a5a6b;
     background: #e8f3fb;
     border-color: #a8cfe6;
-}
-
-/* Erect cost + level 1 breakdown next to the placement total (T9). */
-.building-list-cost-breakdown {
-    font-size: 0.68rem;
-    color: var(--color-text-secondary, #6b6b7a);
 }
 
 /* Short hint under a build card's cost row (e.g. hangar: finds go by ship). */
@@ -1162,34 +1132,6 @@ dialog.discovery-dialog {
     font-weight: 700;
 }
 
-/* Alpine transition classes */
-.levelup-enter {
-    transition:
-        opacity 0.35s ease,
-        transform 0.35s ease;
-}
-.levelup-enter-start {
-    opacity: 0;
-    transform: translateX(-50%) translateY(30px);
-}
-.levelup-enter-end {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-.levelup-leave {
-    transition:
-        opacity 0.5s ease,
-        transform 0.5s ease;
-}
-.levelup-leave-start {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-.levelup-leave-end {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
-}
-
 /* ── Merchant notification chip (hexview canvas header) ─────────────────── */
 
 /*
@@ -1304,13 +1246,6 @@ dialog.discovery-dialog {
     align-items: center;
     gap: 0.5rem;
     margin-top: 0.6rem;
-}
-
-.find-card__action .find-card__ap {
-    width: 4rem;
-    margin: 0;
-    padding: 0.3rem 0.4rem;
-    font-size: 0.85rem;
 }
 
 .find-counters {
