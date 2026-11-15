@@ -306,6 +306,8 @@ return [
     'merchant_until_sol' => 'Bleibt bis Sol',
     'merchant_buy' => 'Kaufen',
     'merchant_sold' => 'Verkauft',
+    'merchant_section_wares' => 'Sonderwaren',
+    'merchant_section_trades' => 'Tauschgeschäfte',
     'merchant_buy_success' => 'Kauf erfolgreich.',
     'merchant_buy_error' => 'Kauf fehlgeschlagen.',
 

@@ -131,8 +131,9 @@ class TradeChannelPricesTest extends TestCase
         $this->assertSame(200, $items[0]['cost_credits']);
         // The chip shows the charged price; the base cost only appears as the struck-through "was" price (P2b).
         $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
-        $this->assertStringContainsString('{@render chip(1, item.price_credits)}', $page);
-        $this->assertStringNotContainsString('{@render chip(1, item.cost_credits)}', $page);
+        // Since 2026-11-15 the chip sits inside the buy button (card pattern), written out instead of the chip snippet.
+        $this->assertStringContainsString('<span class="res-amount">{item.price_credits}</span>', $page);
+        $this->assertStringNotContainsString('<span class="res-amount">{item.cost_credits}</span>', $page);
         $this->assertStringContainsString('{#if item.price_credits < item.cost_credits}', $page);
     }
 }

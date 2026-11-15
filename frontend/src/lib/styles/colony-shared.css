@@ -124,6 +124,31 @@
     cursor: not-allowed;
 }
 
+/* Main action of a card or list row (docs/design-system readme, "Action cards"): full width, touch height,
+   label left and the one-off cost as a chip on the right. Disabled fades only the button face, so a red
+   (cannot afford) chip stays readable. */
+.tile-action-btn--main {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+.tile-action-btn--main:disabled {
+    opacity: 1;
+    background: color-mix(in srgb, var(--color-accent) 40%, #fff);
+    border-color: transparent;
+}
+@media (max-width: 767px) {
+    .tile-action-btn--main {
+        min-height: 48px;
+        font-size: 1rem;
+    }
+}
+.cost-chip--short {
+    background: var(--color-danger-bg) !important;
+    border-color: var(--color-danger) !important;
+    color: var(--color-danger-fg) !important;
+}
+
 .tile-action-btn--secondary {
     background: transparent;
     border-color: #7a9ab8;

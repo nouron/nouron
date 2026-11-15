@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
-	import { refreshShell, setAp } from '#lib/stores/shell.ts';
+	import { refreshShell, setAp, shell } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import CantinaDialog from './CantinaDialog.svelte';
@@ -121,7 +121,7 @@
 		4: 'resources.res_werkstoffe',
 		5: 'resources.res_organika'
 	};
-	// spot_0 is Corvan's special inventory; offers and events share the other five, cycled.
+	// spot_0 is Tomas, spot_merchant Corvan's special inventory; offers and events share the other five, cycled.
 	const SPOTS = ['spot_1', 'spot_2', 'spot_3', 'spot_4', 'spot_5'];
 	const portrait = (slug: string) => `${BACKEND_URL}/img/characters/${slug}`;
 
@@ -132,6 +132,8 @@
 	let loading = $state(false);
 	let toast = $state<{ msg: string; type: 'info' | 'error'; modal: string | null } | null>(null);
 	let buyLoading = $state(false);
+	// Credits on hand (resource 1), for the "cannot afford" state of buy buttons.
+	const credits = $derived($shell?.resource_bar_possessions?.[1]?.amount ?? Infinity);
 	// Offers
 	let accepted = $state<Record<number, boolean>>({});
 	let negotiated = $state<Record<string, boolean>>({});
@@ -221,6 +223,8 @@
 		);
 	}
 
+	// Corvan's commodity offers: options inside his one dialog, never separate cards (owner 2026-11-15).
+	const corvanOffers = $derived(scene?.offers.filter((o) => o.corvan) ?? []);
 	const panelCount = $derived(d && (d.merchantVisit || d.merchantItems.length || d.offers.length) ? 4 : 1);
 	const empty = $derived(
 		!!d && !d.offers.length && !d.merchantVisit && !d.encounter && !d.concern && !d.informationEncounter
@@ -527,6 +531,146 @@
 	<span class="res-chip res-{abbr}"><span class="res-abbr">{abbr}</span><span class="res-amount">{amount}</span></span>
 {/snippet}
 
+<!-- Terms and actions of one barter offer; used in a guest's dialog and, for Corvan's offers, inside the merchant dialog. -->
+{#snippet offerBody(o: NonNullable<typeof scene>['offers'][number], showExpiry: boolean)}
+	{@const id = o.offer.id}
+	{@const dlg = d!.offerDialogs[id]}
+	{@const data = d!}
+	{#if o.flavor}<p class="flavor">{t(o.flavor)}</p>{/if}
+
+	<!-- Offer dialog with source breakdown: every number from BarOfferDialogPresenter (shown == booked). -->
+	{#if dlg.fixed_price}
+		<div class="offer-terms offer-terms--fixed">
+			<div class="offer-terms__swap">
+				{@render chip(o.offer.give_resource_id, dlg.give_amount)}
+				<span class="offer-terms__arrow" aria-hidden="true">→</span>
+				{@render chip(o.offer.get_resource_id, data.offerTerms[id].get_amount)}
+			</div>
+			<p class="offer-note">{dlg.fixed_price_note}</p>
+		</div>
+	{:else}
+		<div class="offer-terms">
+			<div class="offer-terms__row offer-terms__row--base">
+				<span class="offer-terms__label"
+					>{dlg.credits_give ? t('colony.bar_offer_base_label_credits') : t('colony.bar_offer_base_label')}</span
+				>
+				<span class="offer-terms__value offer-terms__value--nowrap">
+					{dlg.credits_give ? dlg.base_credits_text : `${dlg.base_give} ${dlg.give_label} → ${dlg.base_get} ${dlg.get_label}`}
+				</span>
+			</div>
+			<div class="offer-terms__row">
+				<span class="offer-terms__label">{t('colony.bar_offer_advantage_label')}</span>
+				<span class="offer-terms__value offer-terms__value--percent">{dlg.advantage.total_text}</span>
+			</div>
+			{#each dlg.advantage.lines as line, i (i)}
+				<div class="offer-terms__row offer-terms__row--source">
+					<span class="offer-terms__label">{line.label}</span>
+					<span class="offer-terms__value offer-terms__value--percent">{line.percent_text}</span>
+				</div>
+			{/each}
+			{#if dlg.negotiation_percent !== null && negotiated[id]}
+				<div class="offer-terms__row">
+					<span class="offer-terms__label">{t('colony.bar_offer_negotiation_label')}</span>
+					<span class="offer-terms__value offer-terms__value--percent">+{dlg.negotiation_percent} %</span>
+				</div>
+			{/if}
+			{#if !negotiated[id] && negotiateFailed[id] === undefined}
+				<div class="offer-terms__row offer-terms__row--result">
+					<span class="offer-terms__label">{t('colony.bar_offer_receive_label')}</span>
+					<span class="offer-terms__value">
+						{@render chip(o.offer.get_resource_id, dlg.amount_safe)}
+						<span class="offer-terms__plus">{t('colony.bar_offer_plus_vs_base', { plus: `+${dlg.plus_safe}` })}</span>
+					</span>
+				</div>
+			{/if}
+			{#if dlg.amount_negotiated !== null && negotiated[id]}
+				<div class="offer-terms__row offer-terms__row--result">
+					<span class="offer-terms__label">{t('colony.bar_offer_receive_label')}</span>
+					<span class="offer-terms__value">
+						{@render chip(o.offer.get_resource_id, dlg.amount_negotiated)}
+						<span class="offer-terms__plus">{t('colony.bar_offer_plus_vs_base', { plus: `+${dlg.plus_negotiated}` })}</span>
+					</span>
+				</div>
+			{/if}
+			{#if dlg.credits_give}<p class="offer-note">{dlg.price_stays_text}</p>{/if}
+		</div>
+		{#if dlg.advantage.hints.length}
+			<div class="trade-hints">
+				{#each dlg.advantage.hints as hint, i (i)}<p class="trade-hint">{hint}</p>{/each}
+			</div>
+		{/if}
+	{/if}
+
+	{#if !dlg.fixed_price && dlg.amount_negotiated !== null && negotiated[id] && !accepted[id]}
+		<div class="offer-status offer-status--ok">
+			<strong>{t('colony.bar_offer_negotiated_label')}</strong>
+			{dlg.amount_negotiated}
+			{dlg.get_label}.
+		</div>
+	{/if}
+
+	<div class="offer-actions">
+		<div class="offer-action">
+			<button class="tile-action-btn auto" onclick={() => accept(id, o.acceptSlug)} disabled={resolved(id) || loading}>
+				<span class="tile-action-btn__body">{accepted[id] ? '✓' : t('colony.bar_offer_accept')}</span>
+				<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
+					>Eco {negotiated[id] ? 0 : data.offerApCost} AP</span
+				>
+			</button>
+			{#if !dlg.fixed_price && !negotiated[id] && !resolved(id)}
+				<span class="offer-action__outcome"
+					>{t('colony.bar_offer_accept_safe', { amount: dlg.amount_safe, resource: dlg.get_label, plus: `+${dlg.plus_safe}` })}</span
+				>
+			{/if}
+		</div>
+
+		<!-- Gone once negotiated (the "Verhandelt:" line takes over) or lost. -->
+		{#if dlg.can_negotiate && !negotiated[id] && negotiateFailed[id] === undefined}
+			<div class="offer-action">
+				<button
+					class="tile-action-btn tile-action-btn--secondary auto"
+					onclick={() => negotiate(id, o.name)}
+					disabled={resolved(id) || loading}
+				>
+					<span class="tile-action-btn__body">{t('colony.bar_offer_negotiate')}</span>
+					<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true">Eco {data.negotiateApCost} AP</span>
+				</button>
+				{#if !resolved(id)}
+					<span class="offer-action__outcome">
+						<span class="offer-action__win"
+							>{t('colony.bar_offer_negotiate_win', {
+								chance: dlg.chance.total_percent,
+								amount: dlg.amount_negotiated ?? '',
+								resource: dlg.get_label,
+								plus: `+${dlg.plus_negotiated}`
+							})}</span
+						>
+						{#if dlg.chance.lose_percent > 0}
+							<span class="offer-action__lose"
+								>{t('colony.bar_offer_negotiate_lose', {
+									chance: dlg.chance.lose_percent,
+									resource: dlg.give_label,
+									ap: data.negotiateApCost
+								})}</span
+							>
+						{/if}
+					</span>
+				{/if}
+			</div>
+			{#if !resolved(id)}
+				<div class="offer-notes">
+					<p class="offer-note">{dlg.chance.breakdown}</p>
+					<p class="offer-note">{dlg.negotiation_sum}</p>
+				</div>
+			{/if}
+		{/if}
+	</div>
+
+	{#if showExpiry}<small class="muted">{t('colony.bar_offer_expires')} {o.offer.expires_tick}</small>{/if}
+	{#if negotiateFailed[id] !== undefined}<div class="offer-status offer-status--fail">{negotiateFailed[id]}</div>{/if}
+	{#if offerError[id]}<div class="error-line">{offerError[id]}</div>{/if}
+{/snippet}
+
 {#snippet toastFor(modal: string)}
 	{#if toast && toast.modal === modal}
 		<div class="merchant-toast merchant-toast--{toast.type}" aria-live="polite" role="status" transition:fade>{toast.msg}</div>
@@ -673,28 +817,24 @@
 			<!-- svelte-ignore a11y_no_static_element_interactions (swipe shortcut; dots stay usable) -->
 			<div class="cantina-viewport" ontouchstart={touchstart} ontouchend={touchend}>
 				<div class="cantina-background-wrapper" style="transform: translateX(-{current * 22.222}%)">
-					{#if data.merchantVisit}
-						<button class="cantina-hotspot has-portrait hotspot-merchant hs" style={spotStyle('spot_0')} onclick={openMerchant}>
+					{#if data.merchantVisit || corvanOffers.length}
+						<button class="cantina-hotspot has-portrait hotspot-merchant hs" style={spotStyle('spot_merchant')} onclick={openMerchant}>
 							<span class="hotspot-badge"><i class="bi bi-exclamation-lg"></i></span>
 							{@render hotspotImg('merchant', t('colony.merchant_title'))}
 							<span class="hotspot-label">{t('colony.merchant_title')}</span>
 						</button>
 					{/if}
 
-					<!-- Guest barter offers + Corvan's commodity offers (his portrait, not a random guest) -->
-					{#each scene.offers as o (o.offer.id)}
+					<!-- Guest barter offers. Corvan's commodity offers live in his one dialog (merchant hotspot above). -->
+					{#each scene.offers.filter((x) => !x.corvan) as o (o.offer.id)}
 						<button
 							class="cantina-hotspot hs"
-							class:has-portrait={o.corvan || o.char}
-							class:hotspot-corvan-offer={o.corvan}
+							class:has-portrait={o.char}
 							style={spotStyle(o.slot)}
 							onclick={() => open(`offer_${o.offer.id}`)}
 						>
 							<span class="hotspot-pulse"></span>
-							{#if o.corvan}
-								<span class="hotspot-badge hotspot-badge--corvan" aria-hidden="true"><i class="bi bi-coin"></i></span>
-								{@render hotspotImg('merchant', o.name)}
-							{:else if o.char}
+							{#if o.char}
 								{@render hotspotImg(o.char.slug ?? 'stranger', o.name)}
 							{:else}
 								<i class="bi bi-chat-right-text"></i>
@@ -814,8 +954,12 @@
 			>
 				<button onclick={() => open(null)} class="cantina-modal-close" aria-label={t('colony.cancel')}>&times;</button>
 
-				{#if activeModal === 'merchant' && data.merchantVisit}
-					<CantinaDialog slug="merchant" name={t('colony.merchant_title')} role="{t('colony.merchant_until_sol')} {data.merchantVisit.tick_end}">
+				{#if activeModal === 'merchant' && (data.merchantVisit || corvanOffers.length)}
+					<CantinaDialog
+						slug="merchant"
+						name={t('colony.merchant_title')}
+						role="{t('colony.merchant_until_sol')} {data.merchantVisit?.tick_end ?? corvanOffers[0].offer.expires_tick}"
+					>
 						{@render toastFor('merchant')}
 						{#if data.merchantAdvantage?.summary}<p class="trade-price-line">{data.merchantAdvantage.summary}</p>{/if}
 						{#if data.merchantAdvantage?.hints.length}
@@ -824,24 +968,39 @@
 							</div>
 						{/if}
 						<div class="merchant-items-bar scroll-list">
+							{#if data.merchantItems.length && corvanOffers.length}<h4 class="merchant-section-title">{t('colony.merchant_section_wares')}</h4>{/if}
 							{#each data.merchantItems as item (item.id)}
+								{@const short = !item.sold && credits < item.price_credits}
 								<article class="merchant-item-bar" class:merchant-item-bar--sold={item.sold}>
 									<div class="merchant-item-bar__label" title={item.label}>{item.label}</div>
-									<div class="merchant-item-bar__row">
+									<!-- Card pattern: the buy button is the main action, its price is the chip inside it.
+									     Too few credits: button disabled and the chip turns red, no message. -->
+									<button
+										class="tile-action-btn tile-action-btn--main"
+										disabled={item.sold || buyLoading || short}
+										title={short ? t('colony.error_insufficient_credits') : undefined}
+										onclick={() => buyItem(item.id)}
+									>
+										<span class="tile-action-btn__body">{item.sold ? t('colony.merchant_sold') : t('colony.merchant_buy')}</span>
 										<span class="merchant-item-bar__price">
 											{#if item.price_credits < item.cost_credits}
 												<s class="merchant-item-bar__base" title={t('colony.merchant_price_base_title', { price: item.cost_credits })}
 													>{item.cost_credits}</s
 												>
 											{/if}
-											{@render chip(1, item.price_credits)}
+											<span class="res-chip res-Cr" class:cost-chip--short={short}
+												><span class="res-abbr">Cr</span><span class="res-amount">{item.price_credits}</span></span
+											>
 										</span>
-										<button class="merchant-item-bar__buy" disabled={item.sold || buyLoading} onclick={() => buyItem(item.id)}>
-											{item.sold ? t('colony.merchant_sold') : t('colony.merchant_buy')}
-										</button>
-									</div>
+									</button>
 								</article>
 							{/each}
+							{#if corvanOffers.length}
+								<h4 class="merchant-section-title">{t('colony.merchant_section_trades')}</h4>
+								{#each corvanOffers as o (o.offer.id)}
+									<article class="merchant-item-bar merchant-item-bar--offer">{@render offerBody(o, false)}</article>
+								{/each}
+							{/if}
 						</div>
 					</CantinaDialog>
 				{/if}
@@ -849,142 +1008,10 @@
 				{#each scene.offers as o (o.offer.id)}
 					{@const id = o.offer.id}
 					{@const dlg = data.offerDialogs[id]}
-					{#if activeModal === `offer_${id}`}
+					{#if activeModal === `offer_${id}` && !o.corvan}
 						<CantinaDialog slug={o.slug} name={o.name} role={o.role} relation={hasRelation ? relationPanel : undefined}>
 							{@render toastFor(`offer_${id}`)}
-							{#if o.flavor}<p class="flavor">{t(o.flavor)}</p>{/if}
-
-							<!-- Offer dialog with source breakdown: every number from BarOfferDialogPresenter (shown == booked). -->
-							{#if dlg.fixed_price}
-								<div class="offer-terms offer-terms--fixed">
-									<div class="offer-terms__swap">
-										{@render chip(o.offer.give_resource_id, dlg.give_amount)}
-										<span class="offer-terms__arrow" aria-hidden="true">→</span>
-										{@render chip(o.offer.get_resource_id, data.offerTerms[id].get_amount)}
-									</div>
-									<p class="offer-note">{dlg.fixed_price_note}</p>
-								</div>
-							{:else}
-								<div class="offer-terms">
-									<div class="offer-terms__row offer-terms__row--base">
-										<span class="offer-terms__label"
-											>{dlg.credits_give ? t('colony.bar_offer_base_label_credits') : t('colony.bar_offer_base_label')}</span
-										>
-										<span class="offer-terms__value offer-terms__value--nowrap">
-											{dlg.credits_give ? dlg.base_credits_text : `${dlg.base_give} ${dlg.give_label} → ${dlg.base_get} ${dlg.get_label}`}
-										</span>
-									</div>
-									<div class="offer-terms__row">
-										<span class="offer-terms__label">{t('colony.bar_offer_advantage_label')}</span>
-										<span class="offer-terms__value offer-terms__value--percent">{dlg.advantage.total_text}</span>
-									</div>
-									{#each dlg.advantage.lines as line, i (i)}
-										<div class="offer-terms__row offer-terms__row--source">
-											<span class="offer-terms__label">{line.label}</span>
-											<span class="offer-terms__value offer-terms__value--percent">{line.percent_text}</span>
-										</div>
-									{/each}
-									{#if dlg.negotiation_percent !== null && negotiated[id]}
-										<div class="offer-terms__row">
-											<span class="offer-terms__label">{t('colony.bar_offer_negotiation_label')}</span>
-											<span class="offer-terms__value offer-terms__value--percent">+{dlg.negotiation_percent} %</span>
-										</div>
-									{/if}
-									{#if !negotiated[id] && negotiateFailed[id] === undefined}
-										<div class="offer-terms__row offer-terms__row--result">
-											<span class="offer-terms__label">{t('colony.bar_offer_receive_label')}</span>
-											<span class="offer-terms__value">
-												{@render chip(o.offer.get_resource_id, dlg.amount_safe)}
-												<span class="offer-terms__plus">{t('colony.bar_offer_plus_vs_base', { plus: `+${dlg.plus_safe}` })}</span>
-											</span>
-										</div>
-									{/if}
-									{#if dlg.amount_negotiated !== null && negotiated[id]}
-										<div class="offer-terms__row offer-terms__row--result">
-											<span class="offer-terms__label">{t('colony.bar_offer_receive_label')}</span>
-											<span class="offer-terms__value">
-												{@render chip(o.offer.get_resource_id, dlg.amount_negotiated)}
-												<span class="offer-terms__plus">{t('colony.bar_offer_plus_vs_base', { plus: `+${dlg.plus_negotiated}` })}</span>
-											</span>
-										</div>
-									{/if}
-									{#if dlg.credits_give}<p class="offer-note">{dlg.price_stays_text}</p>{/if}
-								</div>
-								{#if dlg.advantage.hints.length}
-									<div class="trade-hints">
-										{#each dlg.advantage.hints as hint, i (i)}<p class="trade-hint">{hint}</p>{/each}
-									</div>
-								{/if}
-							{/if}
-
-							{#if !dlg.fixed_price && dlg.amount_negotiated !== null && negotiated[id] && !accepted[id]}
-								<div class="offer-status offer-status--ok">
-									<strong>{t('colony.bar_offer_negotiated_label')}</strong>
-									{dlg.amount_negotiated}
-									{dlg.get_label}.
-								</div>
-							{/if}
-
-							<div class="offer-actions">
-								<div class="offer-action">
-									<button class="tile-action-btn auto" onclick={() => accept(id, o.acceptSlug)} disabled={resolved(id) || loading}>
-										<span class="tile-action-btn__body">{accepted[id] ? '✓' : t('colony.bar_offer_accept')}</span>
-										<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
-											>Eco {negotiated[id] ? 0 : data.offerApCost} AP</span
-										>
-									</button>
-									{#if !dlg.fixed_price && !negotiated[id] && !resolved(id)}
-										<span class="offer-action__outcome"
-											>{t('colony.bar_offer_accept_safe', { amount: dlg.amount_safe, resource: dlg.get_label, plus: `+${dlg.plus_safe}` })}</span
-										>
-									{/if}
-								</div>
-
-								<!-- Gone once negotiated (the "Verhandelt:" line takes over) or lost. -->
-								{#if dlg.can_negotiate && !negotiated[id] && negotiateFailed[id] === undefined}
-									<div class="offer-action">
-										<button
-											class="tile-action-btn tile-action-btn--secondary auto"
-											onclick={() => negotiate(id, o.name)}
-											disabled={resolved(id) || loading}
-										>
-											<span class="tile-action-btn__body">{t('colony.bar_offer_negotiate')}</span>
-											<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true">Eco {data.negotiateApCost} AP</span>
-										</button>
-										{#if !resolved(id)}
-											<span class="offer-action__outcome">
-												<span class="offer-action__win"
-													>{t('colony.bar_offer_negotiate_win', {
-														chance: dlg.chance.total_percent,
-														amount: dlg.amount_negotiated ?? '',
-														resource: dlg.get_label,
-														plus: `+${dlg.plus_negotiated}`
-													})}</span
-												>
-												{#if dlg.chance.lose_percent > 0}
-													<span class="offer-action__lose"
-														>{t('colony.bar_offer_negotiate_lose', {
-															chance: dlg.chance.lose_percent,
-															resource: dlg.give_label,
-															ap: data.negotiateApCost
-														})}</span
-													>
-												{/if}
-											</span>
-										{/if}
-									</div>
-									{#if !resolved(id)}
-										<div class="offer-notes">
-											<p class="offer-note">{dlg.chance.breakdown}</p>
-											<p class="offer-note">{dlg.negotiation_sum}</p>
-										</div>
-									{/if}
-								{/if}
-							</div>
-
-							<small class="muted">{t('colony.bar_offer_expires')} {o.offer.expires_tick}</small>
-							{#if negotiateFailed[id] !== undefined}<div class="offer-status offer-status--fail">{negotiateFailed[id]}</div>{/if}
-							{#if offerError[id]}<div class="error-line">{offerError[id]}</div>{/if}
+							{@render offerBody(o, true)}
 						</CantinaDialog>
 					{/if}
 				{/each}
@@ -1250,6 +1277,10 @@
 		max-height: 250px;
 		overflow-y: auto;
 		padding-right: 4px;
+	}
+	/* Corvan's dialog holds two option groups (wares, barter deals): give the list more room. */
+	.merchant-items-bar.scroll-list {
+		max-height: min(56vh, 520px);
 	}
 	.flavor {
 		font-style: italic;

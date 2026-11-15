@@ -304,6 +304,8 @@ return [
     'merchant_until_sol' => 'Stays until Sol',
     'merchant_buy' => 'Buy',
     'merchant_sold' => 'Sold',
+    'merchant_section_wares' => 'Special wares',
+    'merchant_section_trades' => 'Barter deals',
     'merchant_buy_success' => 'Purchase successful.',
     'merchant_buy_error' => 'Purchase failed.',
 

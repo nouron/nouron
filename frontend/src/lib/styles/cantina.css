@@ -30,6 +30,19 @@
     transition: opacity 0.2s ease;
 }
 
+/* Headings of the two option groups in Corvan's dialog (special wares, barter deals). */
+.merchant-section-title {
+    margin: 0.4rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+}
+.merchant-section-title:first-child {
+    margin-top: 0;
+}
+
 .merchant-item-bar--sold {
     opacity: 0.5;
 }
@@ -40,21 +53,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.merchant-item-bar__row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-}
-
-.merchant-item-bar__buy {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.8rem;
-    margin: 0;
-    white-space: nowrap;
-    cursor: pointer;
 }
 
 /* ── Merchant buy feedback toast (bar page) ──────────────────────────────── */
@@ -207,11 +205,6 @@
    (matches .res-Cr's border-color in resources.css) instead of the urgent-red
    merchant-visit badge, so a Corvan commodity offer reads as "trade opportunity",
    not "don't miss this". */
-.hotspot-badge--corvan {
-    background: #e6c84a;
-    color: var(--color-anthracite, #333333);
-}
-
 .cantina-hotspot i {
     font-size: 1.5rem;
     pointer-events: none;
@@ -688,7 +681,7 @@
 
 .merchant-item-bar__base {
     font-size: 0.8rem;
-    color: var(--color-text-secondary, #6b6b7a);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .offer-terms {

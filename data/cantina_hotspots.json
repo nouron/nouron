@@ -114,5 +114,20 @@
             "smuggler",
             "stranger"
         ]
+    },
+    "spot_merchant": {
+        "desktop": {
+            "left": 40.3,
+            "top": 44.6
+        },
+        "tablet": {
+            "left": 40.3,
+            "top": 44.6
+        },
+        "mobile": {
+            "left": 17,
+            "top": 58
+        },
+        "characters": []
     }
 }
