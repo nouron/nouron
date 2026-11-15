@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-15
+
+- Aufräumen nach dem UI-Umbau: unbenutzte CSS-Regeln aus `advisors.css` und `resources.css` entfernt (alte Pfadwahl-Karten, alte Popup-Varianten; 420 Zeilen, Screenshots vorher/nachher identisch), ein übrig gebliebener Text-Key des entfernten Einstell-Popups gelöscht, veraltete Dateiköpfe korrigiert.
+
 ## 2026-11-14
 
 - AP-Skala ÷3 (T58, Spec `docs/superpowers/specs/2026-11-13-ap-skala.md`): Kolonie 4 AP je Sol, Berater-Ränge erhöhen Pool und Fach-Deckel (Baumeister, Analytiker, Raumfahrer), alle Bau-, Kenntnis-, Training-, Handlungs- und Beziehungskosten neu; Vertrauen und Seuche als feste AP statt Faktor, Rabatte als feste AP mit Untergrenzen, Reparatur 1 AP = 3 SP, Tomas' Rat immer 1 AP und je nach Beziehung häufiger. Werte gerechnet, nicht gemessen; laufende Läufe neu starten.

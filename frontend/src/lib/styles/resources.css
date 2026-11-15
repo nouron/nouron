@@ -1,23 +1,14 @@
 /* ── resources.css ─────────────────────────────────────────────────────────
- * Shared resource chip, resource bar, AP chip, and popup styles.
- * Imported by style.css (Bootstrap layout) and colony.css (Alpine/Pico layout).
+ * Shared resource chip, AP chip, and popup styles.
+ * Imported by the (game) and (infra) layouts; ResourceBar.svelte draws the chips (header and left rail).
  * Do NOT add layout-specific rules here (e.g. fixed positioning, grid areas).
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /* ── Resource bar wrapper ───────────────────────────────────────────────── */
 
-/* Inline centering helper used by the shared resourcebar partial */
+/* Default alignment of the chip list (ResourceBar.svelte overrides it for the rail) */
 .resource-bar {
     text-align: center;
-}
-
-/* Flexbox wrapper used by the shared resourcebar partial */
-.res-bar-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-    align-items: center;
 }
 
 /* ── Base chip ──────────────────────────────────────────────────────────── */
@@ -72,14 +63,6 @@
     border-radius: 1px;
     margin: 0 2px;
     align-self: center;
-}
-
-/* Chip internal separator (legacy) */
-.res-chip-sep {
-    opacity: 0.35;
-    font-weight: 400;
-    padding: 0 1px;
-    font-size: 0.75rem;
 }
 
 /* ── Chip state modifiers ───────────────────────────────────────────────── */
@@ -204,87 +187,10 @@
     line-height: 1.4;
 }
 
-.res-popup--wide {
-    white-space: normal;
-    max-width: 240px;
-    pointer-events: auto;
-}
-
 .res-popup-extra {
     margin-top: 0.4rem;
     padding-top: 0.4rem;
     border-top: 1px solid var(--color-border, #e8e8ec);
-}
-
-/* Popup with an action button (e.g. a button inside a chip popup):
- * accepts pointer events, and an invisible bridge over the 6px gap to the chip
- * keeps the hover alive while the pointer moves from the chip into the popup. */
-.res-popup--interactive {
-    pointer-events: auto;
-}
-.res-popup--interactive::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -8px;
-    height: 8px;
-}
-
-.res-popup-action {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.res-popup-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    width: 100%;
-    margin: 0.35rem 0 0;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    border: 1px solid var(--color-accent, #8c2030);
-    border-radius: 6px;
-    background: #fff;
-    color: var(--color-accent, #8c2030);
-    cursor: pointer;
-}
-.res-popup-btn:hover:not(:disabled) {
-    background: #fdf0f2;
-}
-.res-popup-btn:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.res-popup-error {
-    font-size: 0.75rem;
-    color: var(--color-accent, #8c2030);
-}
-
-/* Nexus breakdown row inside popup */
-.res-popup-nx-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    font-size: 0.78rem;
-    color: var(--color-text-secondary, #6b6b7a);
-}
-.res-popup-nx-row .res-popup-label {
-    font-size: 0.72rem;
-    opacity: 0.7;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-.res-popup-nx-row.res-chip--warning {
-    color: #7a5500;
-}
-.res-popup-nx-row.res-chip--danger {
-    color: var(--color-accent, #8c2030);
 }
 
 /* Legacy generic row (kept for fallback) */

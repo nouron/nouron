@@ -55,7 +55,6 @@ return [
     'dialog_fire_title' => 'Dismiss advisor',
     'dialog_rank_junior' => 'Junior',
     'dialog_upkeep' => 'Upkeep',
-    'dialog_per_sol' => 'Cr / Sol',
     'dialog_fire_confirm' => 'really dismiss? Accumulated experience (rank) will be lost.',
     'dialog_hire' => 'Hire',
     'dialog_fire' => 'Dismiss',

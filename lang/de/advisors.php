@@ -55,7 +55,6 @@ return [
     'dialog_fire_title' => 'Berater entlassen',
     'dialog_rank_junior' => 'Junior',
     'dialog_upkeep' => 'Unterhalt',
-    'dialog_per_sol' => 'Cr / Sol',
     'dialog_fire_confirm' => 'wirklich entlassen? Bereits gesammelte Erfahrung (Rang) geht verloren.',
     'dialog_hire' => 'Einstellen',
     'dialog_fire' => 'Entlassen',
