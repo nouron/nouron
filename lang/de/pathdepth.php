@@ -30,15 +30,11 @@ return [
     'ui_training_effect_now' => 'Jetzt +:now % · nächste Stufe +:next %',
     'ui_training_effect_max' => 'Jetzt +:now % (Höchststufe)',
     'ui_training_missions' => 'Gilt für: :list',
-    'ui_training_unlock' => 'Ab Hangar-Stufe :level',
 
     // ── Cantina: Beziehung pflegen
     'ui_relationship_title' => 'Beziehung pflegen',
-    'ui_not_met' => 'Noch nicht getroffen',
     'ui_relationship_run_hint' => 'Vertrautheit wächst nur in diesem Lauf. Was du über eine Figur erfährst, bleibt im Kodex stehen.',
     'ui_relationship_met_only' => 'Gelistet sind nur Figuren, mit denen du in diesem Lauf schon gesprochen hast.',
-    // Hinweis im Figuren-Popup für noch nicht getroffene Figuren.
-    'ui_relationship_not_met_hint' => 'Ihr habt noch kein Wort gewechselt. Nach dem ersten Gespräch kannst du hier die Beziehung pflegen.',
     // Relationship level names 0–5 (owner 2026-11-11).
     'relationship_level_0' => 'fremd',
     'relationship_level_1' => 'neu kennengelernt',
@@ -49,7 +45,6 @@ return [
 
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'Diese Figur nimmt pro Sol nur begrenzt Zeit für Gespräche. Morgen geht es weiter — oder bei jemand anderem.',
-    'ui_conversation_today' => 'Heute :spent/:cap AP',
     // Variante C (2026-11-13): ein Gespräch je Figur und Sol; Überschuss über die nächste
     // Stufe verfällt mit Warnung.
     'conversation_done_today' => 'Für heute habt ihr geredet. Morgen wieder.',

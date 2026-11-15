@@ -8,7 +8,6 @@
 return [
 
     // Page header
-    'page_title' => 'Nexus-Datenbank',
     'page_subtitle' => 'Referenz für Spielmechaniken und Begriffe.',
 
     // Concept cards

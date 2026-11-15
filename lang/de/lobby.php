@@ -4,7 +4,6 @@ return [
     // Existing keys — kept as-is
     'colony_ready' => 'Kolonie bereit zum Start',
     'start_button' => 'Mission starten',
-    'no_run' => 'Kein aktiver Run gefunden. Bitte neu einloggen.',
     'run_not_started' => 'Dein Run ist noch nicht gestartet — klicke „Mission starten", um loszulegen.',
 
     // New keys for the rewritten lobby view
@@ -25,7 +24,6 @@ return [
     'bypass_active' => 'Bypass',
     'run_number' => 'Mission #:id',
     'colony_unnamed' => '(Unbenannt)',
-    'ended_at' => 'Beendet',
 
     // Highscore table (Feature 1)
     'highscore_title' => 'Vergangene Missionen',

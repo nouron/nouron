@@ -2,7 +2,6 @@
 
 return [
     'nav_label' => 'Kommandozentrale',
-    'title' => 'Kommandozentrale — Nouron',
 
     // Phasenziele (Widget 1)
     'widget_phase_title' => 'Phasenziele',

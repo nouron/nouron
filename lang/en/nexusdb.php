@@ -8,7 +8,6 @@
 return [
 
     // Page header
-    'page_title' => 'Nexus Database',
     'page_subtitle' => 'Reference for game mechanics and terminology.',
 
     // Concept cards

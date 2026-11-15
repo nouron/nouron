@@ -2,7 +2,6 @@
 
 return [
     'nav_label' => 'Command Center',
-    'title' => 'Command Center — Nouron',
 
     // Phase objectives (Widget 1)
     'widget_phase_title' => 'Phase Objectives',

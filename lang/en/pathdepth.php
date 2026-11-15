@@ -30,15 +30,12 @@ return [
     'ui_training_effect_now' => 'Now +:now% · next level +:next%',
     'ui_training_effect_max' => 'Now +:now% (highest level)',
     'ui_training_missions' => 'Applies to: :list',
-    'ui_training_unlock' => 'From hangar level :level',
 
     // ── Cantina: nurture relationship
     'ui_relationship_title' => 'Nurture relationship',
-    'ui_not_met' => 'Not met yet',
     'ui_relationship_run_hint' => 'Familiarity grows only within this run. What you learn about a character stays in the codex.',
     'ui_relationship_met_only' => 'Only characters you have already spoken to in this run are listed.',
     // Hint in the character dialog for characters not met yet.
-    'ui_relationship_not_met_hint' => 'You have not exchanged a word yet. After your first conversation you can nurture the relationship here.',
     // Relationship level names 0–5 (owner 2026-11-11).
     'relationship_level_0' => 'stranger',
     'relationship_level_1' => 'newly met',
@@ -49,7 +46,6 @@ return [
 
     // ── Cantina: conversation options (T43-G4)
     'ui_conversation_cap_tooltip' => 'This character only has so much time for conversation per Sol. Tomorrow is another day — or talk to someone else.',
-    'ui_conversation_today' => 'Today :spent/:cap AP',
     // Variant C (2026-11-13): one conversation per character and Sol; AP beyond the next
     // level are lost, with a warning.
     'conversation_done_today' => 'You have talked for today. Tomorrow again.',
