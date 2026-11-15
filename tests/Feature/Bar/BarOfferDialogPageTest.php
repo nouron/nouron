@@ -203,8 +203,11 @@ class BarOfferDialogPageTest extends TestCase
         $this->assertSame(1, (int) config('game.bar.ap_cost_accept'));
         // Annehmen and Verhandeln each show their cost.
         $page = $this->cantinaPage();
-        $this->assertStringContainsString('Eco {negotiated[id] ? 0 : data.offerApCost} AP', $page);
-        $this->assertStringContainsString('Eco {data.negotiateApCost} AP', $page);
+        // One AP pool: the chips name the cost without a category prefix (2026-11-15).
+        $this->assertStringContainsString('{@const acceptAp = negotiated[id] ? 0 : data.offerApCost}', $page);
+        $this->assertStringContainsString('{acceptAp} AP</span>', $page);
+        $this->assertStringContainsString('>{data.negotiateApCost} AP</span>', $page);
+        $this->assertStringNotContainsString('Eco {', $page);
     }
 
     /** @return array<string, array{int, string, string}> */

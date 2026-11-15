@@ -536,6 +536,11 @@
 	{@const id = o.offer.id}
 	{@const dlg = d!.offerDialogs[id]}
 	{@const data = d!}
+	{@const done = resolved(id)}
+	{@const giveAbbr = ABBR[o.offer.give_resource_id] ?? '?'}
+	{@const acceptAp = negotiated[id] ? 0 : data.offerApCost}
+	{@const giveShort = !done && ($shell?.resource_bar_possessions?.[o.offer.give_resource_id]?.amount ?? Infinity) < dlg.give_amount}
+	{@const apShort = !done && ($shell?.colony_ap ?? Infinity) < acceptAp}
 	{#if o.flavor}<p class="flavor">{t(o.flavor)}</p>{/if}
 
 	<!-- Offer dialog with source breakdown: every number from BarOfferDialogPresenter (shown == booked). -->
@@ -611,11 +616,21 @@
 
 	<div class="offer-actions">
 		<div class="offer-action">
-			<button class="tile-action-btn auto" onclick={() => accept(id, o.acceptSlug)} disabled={resolved(id) || loading}>
+			<!-- Card pattern: accepting is the main action; what the click costs (the goods given + AP) are the chips
+			     inside it. Short on either: button disabled and that chip turns red, no message. -->
+			<button
+				class="tile-action-btn tile-action-btn--main"
+				onclick={() => accept(id, o.acceptSlug)}
+				disabled={resolved(id) || loading || giveShort || apShort}
+				title={giveShort ? t('colony.bar_offer_insufficient_resources') : apShort ? t('colony.bar_offer_insufficient_ap') : undefined}
+			>
 				<span class="tile-action-btn__body">{accepted[id] ? '✓' : t('colony.bar_offer_accept')}</span>
-				<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
-					>Eco {negotiated[id] ? 0 : data.offerApCost} AP</span
-				>
+				<span class="offer-costs">
+					<span class="res-chip res-{giveAbbr}" class:cost-chip--short={giveShort}
+						><span class="res-abbr">{giveAbbr}</span><span class="res-amount">{dlg.give_amount}</span></span
+					>
+					<span class="ap-chip ap-cost-chip ap-chip--economy" class:cost-chip--short={apShort}>{acceptAp} AP</span>
+				</span>
 			</button>
 			{#if !dlg.fixed_price && !negotiated[id] && !resolved(id)}
 				<span class="offer-action__outcome"
@@ -628,12 +643,12 @@
 		{#if dlg.can_negotiate && !negotiated[id] && negotiateFailed[id] === undefined}
 			<div class="offer-action">
 				<button
-					class="tile-action-btn tile-action-btn--secondary auto"
+					class="tile-action-btn tile-action-btn--secondary"
 					onclick={() => negotiate(id, o.name)}
 					disabled={resolved(id) || loading}
 				>
 					<span class="tile-action-btn__body">{t('colony.bar_offer_negotiate')}</span>
-					<span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true">Eco {data.negotiateApCost} AP</span>
+					<span class="ap-chip ap-cost-chip ap-chip--economy">{data.negotiateApCost} AP</span>
 				</button>
 				{#if !resolved(id)}
 					<span class="offer-action__outcome">

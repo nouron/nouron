@@ -476,7 +476,7 @@ class BarTradeAdvantageTest extends TestCase
 
         $page = file_get_contents(base_path('frontend/src/routes/(game)/cantina/+page.svelte'));
         $this->assertStringContainsString('negotiate(id, o.name)', $page, 'the Character name is passed to the negotiate handler');
-        $this->assertStringContainsString('Eco {data.negotiateApCost} AP', $page, 'the Verhandeln chip shows the configured AP cost (= Annehmen)');
+        $this->assertStringContainsString('>{data.negotiateApCost} AP</span>', $page, 'the Verhandeln chip shows the configured AP cost (= Annehmen)');
         // The failure message names the facts: who withdrew, what stays with the player, how many AP are gone.
         $template = trans('colony.bar_offer_negotiate_failed', [], 'de'); // player-facing texts live in lang/de
         foreach ([':name', ':resource', ':ap'] as $placeholder) {

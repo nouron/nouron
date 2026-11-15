@@ -781,8 +781,16 @@
 .offer-action {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 0.3rem;
+}
+
+/* Cost chips inside the accept button: goods given, then AP. */
+.offer-costs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
 }
 
 .offer-action .tile-action-btn {
