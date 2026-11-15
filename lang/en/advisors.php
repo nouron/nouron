@@ -60,9 +60,6 @@ return [
     'dialog_fire' => 'Dismiss',
     'dialog_cancel' => 'Cancel',
 
-    // Hire-time warnings: path building not yet built
-    'warning_no_sciencelab' => 'You don\'t have an Analytics Lab yet — knowledge research will stay locked until you build one.',
-    'warning_no_hangar' => 'You don\'t have a Hangar yet — missions will stay locked until you build one.',
     'error_not_found' => 'Advisor not found.',
     // Svelte advisors screen (ADR 0006) — were hardcoded in advisors/index.blade.php + advisors.js
     'ui_title' => 'Advisors',

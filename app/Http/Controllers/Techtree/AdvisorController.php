@@ -33,19 +33,6 @@ class AdvisorController extends BaseController
      */
     private const PATH_BUILDINGS = [31 => 'scientist', 44 => 'pilot', 52 => 'trader'];
 
-    /**
-     * Advisor types whose AP pool has no consuming building yet at hire time
-     * are a known trap (scientist/sciencelab, pilot/hangar — see
-     * project_hint_system_review_needed memory, 2026-06-24 re-review). Maps
-     * slot key → [building_id, warning lang key]. Only includes pairs where
-     * the trap is real (Konsul/Cantina excluded — Cantina unlocks before the
-     * Konsul slot, not after).
-     */
-    private const BUILDING_WARNING_MAP = [
-        'scientist' => [31, 'advisors.warning_no_sciencelab'], // sciencelab
-        'pilot' => [44, 'advisors.warning_no_hangar'], // hangar
-    ];
-
     public function __construct(
         TickService $tick,
         private readonly AdvisorService $advisorService,
@@ -151,7 +138,6 @@ class AdvisorController extends BaseController
                     'cc_required' => 2,
                     'state' => $ccLevel < 2 ? 'locked' : 'empty',
                     'advisor' => null,
-                    'building_warning' => null,
                     'is_path_open' => true,
                     'preview_advisor_key' => $previewKey,
                     'path_choices' => $this->buildPathChoices($pathBuildingIds),
@@ -213,19 +199,6 @@ class AdvisorController extends BaseController
                 ];
             }
 
-            $buildingWarning = null;
-            if ($state === 'empty' && isset(self::BUILDING_WARNING_MAP[$key])) {
-                [$buildingId, $warningKey] = self::BUILDING_WARNING_MAP[$key];
-                $isBuilt = (int) DB::table('colony_buildings')
-                    ->where('colony_id', $colonyId)
-                    ->where('building_id', $buildingId)
-                    ->where('level', '>', 0)
-                    ->count() > 0;
-                if (! $isBuilt) {
-                    $buildingWarning = trans($warningKey);
-                }
-            }
-
             $slots[] = [
                 'position' => $position,
                 'key' => $key,
@@ -238,7 +211,6 @@ class AdvisorController extends BaseController
                 'cc_required' => $ccGate,
                 'state' => $state,
                 'advisor' => $advisorData,
-                'building_warning' => $buildingWarning,
                 'is_path_open' => false,
                 'preview_advisor_key' => null,
                 'path_choices' => [],

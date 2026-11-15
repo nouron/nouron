@@ -19,3 +19,5 @@ date: 2026-07-31T18:21:35Z
 | `components/data/ResourceChip.jsx`, `ResourceBar.jsx`, `APChip.jsx` | `resources/views/resources/resourcebar.blade.php`, `public/css/resources.css` |
 | `components/data/EntityChip.jsx` | `resources/views/components/entity-chip.blade.php` |
 | Colors/type/spacing tokens | `docs/design-guide.md` |
+
+> Historical note (2026-11-15): this file records what the August 2026 export was built from. The Blade views and `public/css` named above no longer exist; the live UI is `frontend/src/lib/` (SvelteKit).

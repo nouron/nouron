@@ -1,7 +1,9 @@
-Its own row directly under the navbar, never part of it — not shown on the Lobby or on screens without an active run.
+**Superseded layout (2026-11-14):** in the live game Sol, trust and AP sit in the header (AP as a segmented ring) and the materials sit in a collapsible rail on the left edge that never shifts page content — see "Interaction patterns" in the readme. This React component keeps the old horizontal row and is a reference for chip styling only.
+
+Not shown on the Lobby or on screens without an active run.
 
 ```jsx
 <ResourceBar sol={42} credits={3000} supply={12} trust={68} resources={[{abbr:"Rg",amount:200},{abbr:"Co",amount:0}]} />
 ```
 
-Order is fixed: Sol chip → divider → Credits/Supply/Trust → divider → tradable resources. Secondary resources hide entirely at zero.
+Rail order is fixed: Credits/Supply → tradable resources. Secondary resources hide entirely at zero.

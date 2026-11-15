@@ -245,7 +245,7 @@
 
 .hangar-status-fill {
     height: 100%;
-    background: var(--color-accent, #c0392b);
+    background: var(--color-accent);
     border-radius: 3px;
     transition: width 0.4s ease;
 }
@@ -375,7 +375,7 @@
 
 .btn-hangar-action--danger {
     border-color: #ddd;
-    color: #c0392b;
+    color: var(--color-danger);
 }
 
 .btn-hangar-action--danger:hover:not(:disabled) {
@@ -399,7 +399,7 @@
 /* ── Inline error message ─────────────────────────────────────────────────── */
 
 .hangar-error {
-    color: #c0392b;
+    color: var(--color-danger);
     font-size: 0.75rem;
     min-height: 1em;
     margin-top: 0.25rem;
@@ -779,7 +779,7 @@ details[open] .hangar-pending-summary::before {
 
 .hangar-pending-expires {
     font-size: 0.7rem;
-    color: #c0392b;
+    color: var(--color-danger);
     font-variant-numeric: tabular-nums;
 }
 

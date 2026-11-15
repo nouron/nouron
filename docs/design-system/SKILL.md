@@ -1,6 +1,6 @@
 ---
 name: nouron-design
-description: Use this skill to generate well-branded interfaces and assets for Nouron, a tick-based sci-fi browser strategy game, either for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping.
+description: Use this skill to generate well-branded interfaces and assets for Nouron, a turn-based sci-fi browser strategy game, either for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping.
 user-invocable: true
 ---
 

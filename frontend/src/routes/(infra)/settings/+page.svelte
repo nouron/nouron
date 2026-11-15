@@ -184,7 +184,7 @@
 		margin: var(--space-sm) 0 0;
 	}
 	.field-error {
-		color: var(--color-danger, #c0392b);
+		color: var(--color-danger);
 		font-size: 0.85rem;
 	}
 </style>

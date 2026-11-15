@@ -1,4 +1,4 @@
-Modal confirm/info dialog for destructive or blocking actions (Sol-advance confirm, hire/fire advisor, Nexus request) — use when a native `<dialog>` would normally appear in-game.
+Modal confirm/info dialog for actions that lose something or block the game (Sol-advance confirm with unspent AP, fire advisor, tear down a building, Nexus request). Do not use it to confirm an action whose cost and effect the card already shows — hiring an advisor acts on click since 2026-11-14 (see "Interaction patterns" in the readme). Otherwise — use when a native `<dialog>` would normally appear in-game.
 
 ```jsx
 <Dialog open={open} onClose={() => setOpen(false)} title="Sol beenden"

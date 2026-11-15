@@ -167,7 +167,7 @@
 
 	function highlight(tile: Tile) {
 		const cur = polygons.get(key(tile));
-		cur?.setAttribute('stroke', '#c0392b');
+		cur?.setAttribute('stroke', '#8c2030');
 		cur?.setAttribute('stroke-width', '3');
 	}
 
@@ -552,7 +552,7 @@
 	}
 
 	// Expanding ring on a tile (explore reveal, harvester arrival); CSS .tile-pulse in colony-view.css.
-	function pulseRing(pos: { cx: number; cy: number } | undefined, color = '#c0392b') {
+	function pulseRing(pos: { cx: number; cy: number } | undefined, color = '#8c2030') {
 		const svg = gridEl?.querySelector('svg');
 		if (!svg || !pos) return;
 		const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');

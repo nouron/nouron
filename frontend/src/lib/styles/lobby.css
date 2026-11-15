@@ -172,7 +172,7 @@
     border-radius: var(--radius-sm, 4px);
     font-size: 0.75rem;
     font-weight: 600;
-    background: var(--color-danger, #c0392b);
+    background: var(--color-danger);
     color: #fff;
     white-space: nowrap;
 }
@@ -208,7 +208,7 @@
     color: #fff;
 }
 .lobby-status-pill--failed {
-    background: var(--color-danger, #c0392b);
+    background: var(--color-danger);
     color: #fff;
 }
 
@@ -243,7 +243,7 @@
     width: auto;
 }
 .lobby-rename-error {
-    color: var(--color-danger, #c0392b);
+    color: var(--color-danger);
     font-size: 0.8rem;
     margin: 0.25rem 0 0;
 }
@@ -277,20 +277,17 @@
 }
 
 /* Abandon-run button — outlined danger action, kept visually secondary to
-   the primary "Continue" button in the same footer. Pico's .secondary.outline
-   rules set color/border-color via its own custom properties at a higher
-   specificity than a plain class — override those properties, not the final
-   color/border-color, so the override always wins regardless of cascade order. */
-.lobby-btn-danger-outline {
-    --pico-color: var(--color-danger, #c0392b);
-    --pico-border-color: var(--color-danger, #c0392b);
-    --pico-background-color: transparent;
+   the primary "Continue" button in the same footer. */
+button.lobby-btn-danger-outline.outline {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+    background-color: transparent;
 }
-.lobby-btn-danger-outline:hover,
-.lobby-btn-danger-outline:focus {
-    --pico-color: #ffffff;
-    --pico-background-color: var(--color-danger, #c0392b);
-    --pico-border-color: var(--color-danger, #c0392b);
+button.lobby-btn-danger-outline.outline:hover:not(:disabled),
+button.lobby-btn-danger-outline.outline:focus-visible {
+    color: #ffffff;
+    background-color: var(--color-danger);
+    border-color: var(--color-danger);
 }
 
 .lobby-highscore-scroll {

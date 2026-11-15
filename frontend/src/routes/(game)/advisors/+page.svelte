@@ -33,7 +33,6 @@
 		cc_required: number;
 		state: 'locked' | 'empty' | 'active' | 'unavailable';
 		advisor: Advisor | null;
-		building_warning: string | null;
 		is_path_open: boolean;
 		preview_advisor_key: string | null;
 	};
@@ -320,7 +319,6 @@
 											<span class="ap-chip ap-chip--neutral">+<span class="res-amount">{slot.junior_ap}</span> AP</span>
 										</p>
 										<!-- No status chip here: the subtitle already says "vacant"; the button takes the full width. -->
-										{#if slot.building_warning}<p class="hire-note hire-note--warning">{slot.building_warning}</p>{/if}
 										{#if cardError?.key === slot.key}<p class="hire-note hire-note--error" role="alert">{cardError.msg}</p>{/if}
 										<div class="advisor-card-footer">
 											<!-- Like the build buttons: label left, what the click costs as a chip on the right; no confirm dialog.
@@ -427,9 +425,6 @@
 		margin: 0.3rem 0 0;
 		font-size: 0.72rem;
 		line-height: 1.3;
-	}
-	.hire-note--warning {
-		color: var(--color-warning-fg);
 	}
 	/* Rare refusals only (the usual one, too few credits, is shown by the disabled button). Kept quiet. */
 	.hire-note--error {

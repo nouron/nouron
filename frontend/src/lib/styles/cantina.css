@@ -835,7 +835,7 @@
 }
 
 .offer-status--fail {
-    color: var(--pico-del-color, #c0392b);
+    color: var(--color-danger);
 }
 
 

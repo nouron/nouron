@@ -496,7 +496,7 @@
     border-radius: 6px;
     border: 1px solid #ddd;
     background: transparent;
-    color: #c0392b;
+    color: var(--color-danger);
     cursor: pointer;
     font-weight: 600;
     transition: background 0.15s;
@@ -580,7 +580,7 @@ dialog.advisor-dialog h3 {
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--color-anthracite);
-    border-bottom: 2px solid #c0392b;
+    border-bottom: 2px solid var(--color-accent);
     padding-bottom: 0.5rem;
 }
 
@@ -613,7 +613,7 @@ dialog.advisor-dialog h3 {
 }
 
 .btn-confirm-fire {
-    background: #c0392b;
+    background: var(--color-danger);
     color: #fff;
 }
 .btn-confirm-fire:hover {
@@ -628,7 +628,7 @@ dialog.advisor-dialog h3 {
 }
 
 .dialog-error {
-    color: #c0392b;
+    color: var(--color-danger);
     font-size: 0.8rem;
     margin-top: 0.5rem;
     min-height: 1em;

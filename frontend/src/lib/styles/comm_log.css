@@ -65,7 +65,7 @@
     height: 1.25rem;
     padding: 0 0.3rem;
     border-radius: 999px;
-    background: #c0392b;
+    background: var(--color-accent);
     color: #ffffff;
     font-size: 0.65rem;
     font-weight: 700;

@@ -3,6 +3,9 @@
 ## 2026-11-15
 
 - Aufräumen nach dem UI-Umbau: unbenutzte CSS-Regeln aus `advisors.css` und `resources.css` entfernt (alte Pfadwahl-Karten, alte Popup-Varianten; 420 Zeilen, Screenshots vorher/nachher identisch), ein übrig gebliebener Text-Key des entfernten Einstell-Popups gelöscht, veraltete Dateiköpfe korrigiert. Danach die übrigen Stylesheets einzeln geprüft: 43 weitere tote Klassen entfernt (Cantina, Kolonie, Hangar, Labor, Kommandozentrale, Feedback, Swipe; 400 Zeilen), dynamisch gesetzte Klassen (Log-Abzeichen, Sol-Bericht-Zeilen) bleiben.
+- Design-System (`docs/design-system/`) auf den Stand des SvelteKit-UI gebracht: neuer Abschnitt „Interaction patterns“ (Kopfzeile mit AP-Ring, Aktions-Karten mit Kosten im Knopf und ohne Bestätigungs-Popup, Ressourcenleiste), veraltete Angaben zu Alpine/PicoCSS/Blade und AP-Kategorien ersetzt; Schichtung in `docs/frontend-conventions.md` §3.2 korrigiert.
+- Fehler-Rot und Akzent-Rot getrennt: fest eingetragene `#c0392b`-Werte laufen jetzt über `--color-danger` (Fehlertexte, Entlassen, Abbrechen) oder `--color-accent` (Kartenauswahl, Ungelesen-Zähler, Dialog-Linie). „Mission abbrechen“ in der Lobby war durch eine wirkungslose PicoCSS-Regel akzentrot und ist jetzt fehlerrot.
+- Berater: unerreichbare Gebäude-Warnung beim Einstellen entfernt (Controller, Karte, zwei Text-Keys). Ein Berater-Platz bekommt seine Rolle erst, wenn das Gebäude steht; die Warnung „noch kein Labor/Hangar“ konnte daher nie erscheinen.
 
 ## 2026-11-14
 

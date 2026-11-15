@@ -57,14 +57,16 @@ Einstiegspunkt vor und nach einem Run.
 Gilt für: Kolonie, Kommandozentrale, Berater, Techtree, Hangar, Cantina, Protokoll, Nexus-DB (Routengruppe `(game)`).
 
 **Schichtung (von oben nach unten):**
-1. Navbar (`position: fixed; top: 0; width: 100%`, hell)
-2. Resource Bar (direkt darunter, horizontale Leiste)
-3. Subnav / Tabs (wenn der Screen interne Sektionen hat)
-4. Seiteninhalt
+1. Kopfzeile (`AppHeader.svelte`, fix oben, hell): Logo, rechts Vertrauen, AP-Ring, Sol mit Sol-Knopf, Nutzermenü
+2. Hinweisleiste (`HintBar.svelte`) direkt darunter
+3. Seiteninhalt, bei Bedarf mit Subnav / Tabs am Anfang
+4. Navigation unten (`BottomNav.svelte`, fix)
+
+Die Ressourcenleiste liegt als Overlay am linken Rand über dem Inhalt und gehört nicht zur Schichtung (Details in §4). Muster für Aktions-Karten, Kopfzeile und Popups: `docs/design-system/readme.md`, Abschnitt „Interaction patterns“.
 
 - Kein eigener Page-Title als H1 nötig, wenn der Screen-Name bereits in der Navbar-Navigation aktiv ist
 - H2 für Abschnitte innerhalb des Screens, Whitespace zwischen Sektionen: `lg` (32px)
-- Meldungen (Erfolg/Fehler) nach Aktionen: als Banner/Toast oberhalb des Inhalts, zeitlich begrenzt (kein permanentes Element)
+- Meldungen (Erfolg/Fehler) nach Aktionen: als Banner/Toast oberhalb des Inhalts, zeitlich begrenzt (kein permanentes Element). Ausnahme Aktions-Karten: „nicht bezahlbar“ zeigt der deaktivierte Knopf mit rotem Kosten-Chip, seltene Ablehnungen stehen als dezente graue Zeile auf der Karte
 
 ### 3.3 Carousel-Screens
 

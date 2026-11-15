@@ -713,7 +713,7 @@
 
 .tile-building .tile-leveldown__btn {
     background: transparent;
-    border-color: var(--color-danger, #c0392b);
+    border-color: var(--color-danger);
     color: var(--color-danger-fg, #8c2030);
 }
 
