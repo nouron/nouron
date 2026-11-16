@@ -652,6 +652,7 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 50%;
+		corner-shape: round;
 		background: var(--color-accent);
 		color: #ffffff;
 		font-size: 0.75rem;

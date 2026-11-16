@@ -66,7 +66,7 @@ class ColonySeedDemo extends Command
         28 => 2,
         31 => 2,
         41 => 1,
-        44 => 1,
+        44 => 3,  // hangar level 3: the fixture ships (freighter bay 2, corvette bay 3) need all three bays open
         52 => 1,
     ];
 

@@ -1,7 +1,7 @@
 /* ── dialogs.css ────────────────────────────────────────────────────────────
  * Shared sci-fi dialog / modal system — applies to ALL layouts.
  * Usage: add class="sol-modal" to any <dialog> element.
- * Shape: beveled top-right corner, red accent stripe, blurred backdrop.
+ * Shape: shared dialog frame from controls.css (cut corners, hairline, accent bar), blurred backdrop.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 dialog.sol-modal {
@@ -16,6 +16,7 @@ dialog.sol-modal::backdrop {
     background: rgba(14, 14, 26, 0.65);
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
+    animation: ds-scrim-in var(--duration-base) ease-out;
 }
 
 /* ── Card ───────────────────────────────────────────────────────────────────
@@ -27,38 +28,13 @@ dialog.sol-modal > article {
     /* Reset PicoCSS */
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
     overflow: hidden !important;
     max-height: 85vh;
     width: 100%;
 
-    /* Bevel: top-right corner cut */
-    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
-
-    /* White background + 3px red left accent stripe */
-    background:
-        linear-gradient(to right, var(--color-accent, #8c2030) 0, var(--color-accent, #8c2030) 3px, transparent 3px),
-        #ffffff !important;
-
-    /* Shadow traces the clip-path polygon */
-    filter: drop-shadow(0 12px 36px rgba(14, 14, 46, 0.2)) drop-shadow(0 2px 6px rgba(14, 14, 46, 0.1));
-
+    /* Frame (cut corners, hairline, accent bar, entry motion) comes from controls.css: .sol-modal > article is in its dialog list. */
+    background-color: #ffffff !important;
     position: relative;
-}
-
-/* Hairline top rule — stops at bevel */
-dialog.sol-modal > article::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 3px;
-    right: 20px;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.06);
-    pointer-events: none;
-    z-index: 1;
 }
 
 /* ── Header ─────────────────────────────────────────────────────────────────

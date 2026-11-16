@@ -1,0 +1,252 @@
+/* controls.css: the game-UI layer shared by every screen (loaded once from app.css).
+ * Shape: cut corners (top right + bottom left) instead of rounded ones.
+ * Feel: every control lifts on hover, sinks on press, shows a soft accent ring.
+ * Colours stay those of the design tokens; white remains the dominant surface. */
+
+/* ── Shape ───────────────────────────────────────────────────────────────────
+ * corner-shape turns every existing border-radius into a straight cut, so borders,
+ * shadows and focus rings follow the cut for free.
+ * ponytail: browsers without corner-shape keep today's rounded corners; add a
+ * clip-path fallback if the look has to match there too. */
+@supports (corner-shape: bevel) {
+    *,
+    ::before,
+    ::after {
+        corner-shape: bevel; /* true circles opt out with corner-shape: round next to their 50% radius */
+    }
+
+    /* Box-shaped buttons get the signature cut. !important because some twenty
+       stylesheets each set their own 4px radius. */
+    :is(button, .btn-link, a[role="button"]):not(:is(.tile, .plain, .menu-item, .link-btn, .preview-reason-link, .detail-cta-link, .logo, .infra-brand, .comm-tab, .sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .detail-x, .mobile-sheet__close, .hint-bar__dismiss)) {
+        border-radius: 0 var(--ctl-bevel, var(--bevel-md)) 0 var(--ctl-bevel, var(--bevel-md)) !important;
+    }
+
+    /* Small square buttons: a 9px cut would eat the whole corner. */
+    :is(.handle, .hint-bar__dismiss, .chip-btn, .first-visit-popup__dismiss, .tt-zoom button, .sol-modal-close, .carousel-arrow) {
+        --ctl-bevel: var(--bevel-sm);
+    }
+}
+
+/* Buttons without a style of their own get a plain token-based face instead of the browser's 3D one
+   (zero specificity: any styled button overrides it). */
+:where(button) {
+    font: inherit;
+    color: var(--color-text-primary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-strong);
+    cursor: pointer;
+}
+
+/* ── Feel ────────────────────────────────────────────────────────────────────
+ * Boxed buttons lift and ring; the :not() list names the unboxed ones (nav tiles, links, close crosses),
+ * which get their own cue further down.
+ * `translate` (not `transform`) so buttons that are positioned with a transform keep their place. */
+:root :is(button, .btn-link, a[role="button"]) {
+    transition:
+        translate 0.14s var(--ease-out),
+        box-shadow 0.18s var(--ease-out),
+        background-color var(--duration-fast),
+        border-color var(--duration-fast),
+        color var(--duration-fast),
+        opacity var(--duration-fast);
+}
+
+@media (hover: hover) {
+    :root :is(button, .btn-link, a[role="button"]):not(:is(.tile, .plain, .menu-item, .link-btn, .preview-reason-link, .detail-cta-link, .logo, .infra-brand, .comm-tab, .sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .detail-x, .mobile-sheet__close, .hint-bar__dismiss)):hover:not(:disabled) {
+        translate: 0 -1px;
+        box-shadow: var(--ring-hover), var(--lift-shadow);
+    }
+}
+
+:root :is(button, .btn-link, a[role="button"]):not(:is(.tile, .plain, .menu-item, .link-btn, .preview-reason-link, .detail-cta-link, .logo, .infra-brand, .comm-tab, .sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .detail-x, .mobile-sheet__close, .hint-bar__dismiss)):active:not(:disabled) {
+    translate: 0 1px;
+    box-shadow: var(--ring-press);
+    transition-duration: var(--duration-press);
+}
+
+:is(button, a, [role="button"], summary):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* ── Dialog frame ────────────────────────────────────────────────────────────
+ * One frame for every dialog and popup card: white, hairline in anthracite, large cut
+ * top right + bottom left, a short accent bar that draws in at the top left.
+ * The bar is a background layer, so no pseudo-element of the dialog is taken. */
+dialog.sol-modal > article,
+.sol-dialog,
+.sol-report,
+dialog.advisor-dialog,
+.first-visit-popup__card {
+    border: 1px solid var(--color-anthracite) !important;
+    border-radius: 0 var(--bevel-lg) 0 var(--bevel-lg) !important;
+    box-shadow: var(--shadow-dialog) !important;
+    /* Accent bar that breaks up towards the right: four ever shorter pieces after the solid part. */
+    background-image: linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)) !important;
+    background-repeat: no-repeat !important;
+    background-position:
+        0 0,
+        68px 0,
+        84px 0,
+        95px 0,
+        103px 0 !important;
+    background-size:
+        64px 3px,
+        12px 3px,
+        7px 3px,
+        4px 3px,
+        2px 3px !important;
+    animation:
+        ds-dialog-in 0.26s var(--ease-out),
+        ds-bar-draw 0.55s var(--ease-out);
+}
+
+@keyframes ds-bar-draw {
+    from {
+        background-size:
+            0 3px,
+            0 3px,
+            0 3px,
+            0 3px,
+            0 3px;
+    }
+}
+
+.sol-overlay {
+    animation: ds-scrim-in var(--duration-base) ease-out;
+}
+
+/* Close crosses: drawn (two hairlines in ::before), not typed, so the cross sits dead centre in every font
+   and can turn a quarter on hover without moving the button itself. The glyph in the markup is hidden. */
+html:root :is(.sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .mobile-sheet__close, .hint-bar__dismiss, .detail-x) {
+    display: inline-grid !important;
+    place-items: center;
+    font-size: 0 !important;
+    min-width: 1.75rem;
+    min-height: 1.75rem;
+}
+html:root :is(.sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .mobile-sheet__close, .hint-bar__dismiss, .detail-x)::before {
+    content: "";
+    width: 0.8rem;
+    height: 0.8rem;
+    background:
+        linear-gradient(45deg, transparent calc(50% - 0.8px), currentColor calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)),
+        linear-gradient(-45deg, transparent calc(50% - 0.8px), currentColor calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px));
+    transition: rotate 0.3s var(--ease-out);
+}
+html:root :is(.sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .mobile-sheet__close, .hint-bar__dismiss, .detail-x):hover {
+    color: var(--color-accent) !important;
+}
+html:root :is(.sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .mobile-sheet__close, .hint-bar__dismiss, .detail-x):hover::before {
+    rotate: 90deg;
+}
+
+/* Selectable rows and cards: an accent marker slides in from the left, like a cursor on a list. */
+:is(.building-list-item, .hangar-mission-card, .cc-card-link, .menu-item, .comm-tab, .nexusdb-item-title) {
+    transition:
+        box-shadow 0.18s var(--ease-out),
+        translate 0.18s var(--ease-out),
+        background-color var(--duration-fast),
+        border-color var(--duration-fast);
+}
+@media (hover: hover) {
+    :is(.building-list-item, .hangar-mission-card, .cc-card-link, .menu-item):hover:not(.building-list-item--disabled, .hangar-mission-card--locked) {
+        box-shadow: inset 3px 0 0 var(--color-accent);
+        translate: 2px 0;
+    }
+}
+:is(.building-list-item, .hangar-mission-card, .cc-card-link):active:not(.building-list-item--disabled, .hangar-mission-card--locked) {
+    translate: 2px 1px;
+}
+
+/* ── Screens and cards arrive ────────────────────────────────────────────────
+ * <main> is re-created on every page change ({#key} in the layouts), so a plain CSS animation is the page transition.
+ * Cards follow one after another; sibling-index() is ignored by browsers that lack it (cards then arrive together). */
+main {
+    animation: ds-page-in 0.28s var(--ease-out);
+}
+:is(.advisor-card, .hangar-card, .nexusdb-item, .lobby-run-card) {
+    animation: ds-page-in 0.36s var(--ease-out) backwards;
+    animation-delay: calc(sibling-index() * 45ms);
+}
+
+/* ── Small sci-fi details ────────────────────────────────────────────────────
+ * Sparingly: shape and motion only, no new colours. */
+
+/* Page titles settle in from a slightly wider tracking, like a title card. */
+main :is(h1, h2) {
+    animation: ds-title-in 0.5s var(--ease-out) backwards;
+}
+@keyframes ds-title-in {
+    from {
+        opacity: 0;
+        letter-spacing: 0.7em;
+    }
+}
+
+/* Level and progress tracks fill up from zero when they appear. */
+:is(.hangar-training-levelbar, .cantina-relation__bar) > span {
+    animation: ds-fill-in 0.7s var(--ease-out) backwards;
+}
+@keyframes ds-fill-in {
+    from {
+        width: 0;
+    }
+}
+
+/* Portrait scan: one fine accent line passes down a portrait.
+   Cantina cards and advisor cards on hover; the portrait of an opened cantina dialog and the advisor cards once when they appear. */
+:is(.cantina-hotspot, .cantina-bartender, .cantina-dialog__portrait, .advisor-portrait)::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: var(--color-accent);
+    opacity: 0;
+    pointer-events: none;
+}
+:is(.cantina-dialog__portrait, .advisor-portrait) {
+    position: relative;
+    overflow: hidden;
+}
+.cantina-modal.open .cantina-dialog__portrait::after {
+    animation: ds-scan 0.7s ease-in-out 0.25s;
+}
+.advisor-portrait::after {
+    animation: ds-scan 0.7s ease-in-out 0.5s;
+}
+@media (hover: hover) {
+    :is(.cantina-hotspot, .cantina-bartender):hover::after,
+    .advisor-card:hover .advisor-portrait::after {
+        animation: ds-scan-hover 0.6s ease-in-out;
+    }
+}
+/* Two identical keyframes: switching the animation name on hover restarts the scan. */
+@keyframes ds-scan {
+    from {
+        opacity: 0.7;
+        top: 0;
+    }
+    to {
+        opacity: 0;
+        top: 100%;
+    }
+}
+@keyframes ds-scan-hover {
+    from {
+        opacity: 0.7;
+        top: 0;
+    }
+    to {
+        opacity: 0;
+        top: 100%;
+    }
+}
+
+/* Keyboard focus on a close cross: a thin frame is enough. */
+html:root :is(.sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .detail-x):focus-visible {
+    outline-width: 1px;
+    outline-offset: 0;
+}

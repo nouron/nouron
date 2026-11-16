@@ -1,5 +1,6 @@
 /* Tokens: docs/design-system is binding (CLAUDE.md); never redefine values here. */
 @import "../../docs/design-system/styles.css";
+@import "./lib/styles/controls.css";
 
 /* Layout heights, defined in ONE place.
    Measured by routes/(game)/+layout.svelte (ResizeObserver), 0px until measured / outside the run:

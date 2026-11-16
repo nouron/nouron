@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Typed from '#lib/components/Typed.svelte';
 	// Port of partials/first-visit-popup: one-time explanation per screen, confirmed via hint key visit_<screen>.
 	import '#lib/styles/hints.css';
 	import { t } from '#lib/i18n.ts';
@@ -14,7 +15,7 @@
 			<div class="first-visit-popup__icon" aria-hidden="true">ℹ</div>
 			<div class="first-visit-popup__body">
 				<p class="first-visit-popup__title">{t(`colony.first_visit_${screen}_title`)}</p>
-				<p class="first-visit-popup__text">{t(`colony.first_visit_${screen}_text`)}</p>
+				<p class="first-visit-popup__text"><Typed text={t(`colony.first_visit_${screen}_text`)} /></p>
 			</div>
 			<button
 				class="first-visit-popup__dismiss"

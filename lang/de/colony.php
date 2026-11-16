@@ -605,6 +605,10 @@ return [
 
     'hangar_title' => 'Hangar',
     'hangar_slot_count' => 'Buchten',
+    'hangar_bays_free' => ':free von :total Buchten frei',
+    'hangar_tab_bays' => 'Buchten',
+    'hangar_tab_open' => ':n offen',
+    'hangar_pending_waiting' => ':ship wartet auf eine freie Bucht',
     'hangar_apron' => 'Vorfeld',
     'hangar_bay' => 'Bucht :n',
     'hangar_bay_locked' => 'ab Stufe :level',

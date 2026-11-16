@@ -48,7 +48,7 @@
     gap: 4px;
     font-size: 0.75rem;
     padding: 2px 8px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     background: #f0f0f0;
     color: #555;
 }
@@ -356,7 +356,7 @@
 .rank-badge {
     display: inline-block;
     padding: 1px 6px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -441,7 +441,7 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -580,7 +580,7 @@ dialog.advisor-dialog h3 {
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--color-anthracite);
-    border-bottom: 2px solid var(--color-accent);
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 0.5rem;
 }
 
@@ -672,7 +672,7 @@ dialog.advisor-dialog h3 {
     .advisors-header .slot-badge {
         margin: 0;
         padding: 0.15rem 0.55rem;
-        border-radius: 999px;
+        border-radius: var(--radius-pill);
         background: rgba(255, 255, 255, 0.85);
         color: #555;
         font-size: 0.7rem;

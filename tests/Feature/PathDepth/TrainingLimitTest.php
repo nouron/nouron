@@ -185,7 +185,8 @@ class TrainingLimitTest extends TestCase
         $html = file_get_contents(base_path('frontend/src/routes/(game)/hangar/+page.svelte'));
         $this->assertStringContainsString('class="hangar-training-hint"', $html);
         $this->assertStringContainsString("t('pathdepth.ui_training_ap_today', { spent: fam.ap_cap.spent, cap: fam.ap_cap.cap })", $html);
-        $this->assertStringContainsString('<p class="hangar-training-lock">{fam.lock_reason}</p>', $html);
+        // The lock reason is a quiet line with a lock icon (a requirement is a state, not an error).
+        $this->assertStringContainsString('<p class="hangar-training-lock"><i class="bi bi-lock-fill" aria-hidden="true"></i> {fam.lock_reason}</p>', $html);
     }
 
     public function test_texts_exist_in_both_languages(): void

@@ -1,6 +1,6 @@
 :root {
     --radius-sm: 4px;
-    --radius-pill: 20px;
+    --radius-pill: 5px; /* chips are cut-corner tags since 2026-11-16, no longer pills */
     --radius-round: 999px;
     --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
     --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -49,5 +49,31 @@
     }
     to {
         opacity: 1;
+    }
+}
+
+/* Game-UI layer (2026-11-16, test branch): cut corners instead of rounded ones, and one shared feel for every control. */
+:root {
+    --bevel-sm: 5px;
+    --bevel-md: 9px;
+    --bevel-lg: 20px;
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); /* @kind other */
+    --duration-press: 0.08s; /* @kind other */
+    --ring-hover: 0 0 0 3px rgba(140, 32, 48, 0.13);
+    --ring-press: 0 0 0 1px rgba(140, 32, 48, 0.45);
+    --lift-shadow: 0 5px 12px -6px rgba(26, 26, 30, 0.45);
+}
+@keyframes ds-line-draw {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+@keyframes ds-page-in {
+    from {
+        opacity: 0;
+        translate: 0 8px;
     }
 }

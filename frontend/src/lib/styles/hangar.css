@@ -88,11 +88,25 @@
         flex-shrink: 0;
     }
 
-    .carousel-wrapper {
+    /* .hangar-page prefix: must beat carousel.css whatever the load order. */
+    .hangar-page .carousel-wrapper {
         flex: 1;
         min-height: 0;
         margin-bottom: 0;
         align-items: stretch; /* override 'center' so viewport fills full height */
+    }
+    .hangar-page .carousel-viewport {
+        display: flex; /* the track stretches to the viewport height, the cards with it */
+    }
+    /* The page itself does not scroll on phones (fixed height for the card slider), so the training tab scrolls on its own. */
+    .hangar-page .hangar-training {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    .hangar-tabs {
+        flex-shrink: 0;
+        margin-bottom: 0.75rem;
     }
 
     /* viewport stretches to wrapper height via align-items: stretch above */
@@ -110,7 +124,7 @@
         max-width: none;
         min-height: 0;
         max-height: none;
-        /* height: auto — stretched by track's align-items: stretch */
+        height: auto; /* stretched by the track's align-items: stretch; the fixed desktop height would overflow the page under the tab bar */
         border-radius: 0;
         border-left: none;
         border-right: none;
@@ -261,7 +275,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     padding: 2px 8px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     white-space: nowrap;
     background: #f0faf4;
     color: #1b7a3e;
@@ -293,7 +307,7 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -339,56 +353,65 @@
 
 /* ── Card footer ──────────────────────────────────────────────────────────── */
 
+/* Card pattern (design system, "Action cards"): actions end the card, each a full-width button of at least 44px;
+   the main action is the last one, a secondary action sits above it. */
 .hangar-card-footer {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.4rem;
     margin-top: auto;
     padding-top: 0.5rem;
-    flex-wrap: wrap;
+    order: 10; /* below an inline error line that follows it in the markup */
+}
+
+.hangar-card-footer > span:empty {
+    display: none;
 }
 
 /* ── Action buttons inside cards ──────────────────────────────────────────── */
 
 .btn-hangar-action {
-    font-size: 0.72rem;
-    padding: 0.3rem 0.7rem;
-    border-radius: 6px;
-    border: 1px solid #c8e6c9;
-    background: transparent;
-    color: #2e7d32;
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
     cursor: pointer;
     font-weight: 600;
-    transition: background 0.15s;
     white-space: nowrap;
-    /* hold an optional AP-cost chip next to the label */
-    display: inline-flex;
+    /* label left, optional AP-cost chip right */
+    display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 0.4rem;
 }
 
 .btn-hangar-action:hover:not(:disabled) {
-    background: #f2faf2;
+    background: var(--color-accent-hover);
 }
 
 .btn-hangar-action--danger {
-    border-color: #ddd;
+    border-color: var(--color-danger);
+    background: var(--color-bg);
     color: var(--color-danger);
 }
 
 .btn-hangar-action--danger:hover:not(:disabled) {
-    background: #fff5f5;
+    background: var(--color-danger-bg);
 }
 
 .btn-hangar-action--secondary {
-    border-color: #c5cff0;
-    color: #3b5ac6;
+    order: -1;
+    border-color: var(--color-border-strong);
+    background: var(--color-bg);
+    color: var(--color-text-primary);
 }
 
 .btn-hangar-action--secondary:hover:not(:disabled) {
-    background: #f4f6ff;
+    background: var(--color-surface);
 }
 
 .btn-hangar-action:disabled {
@@ -703,45 +726,51 @@
 
 /* ── Pending ships section ─────────────────────────────────────────────────── */
 
-.hangar-pending-section {
-    margin-top: 1.5rem;
-    padding: 0 0.5rem;
-}
-
-/* PicoCSS <details> / <summary> override for inline look */
-.hangar-pending-section details {
-    border: 1px solid #e4e4ef;
-    border-radius: 10px;
-    background: #fafafa;
-    overflow: hidden;
-}
-
-.hangar-pending-summary {
-    list-style: none;
+/* A waiting ship is one quiet line above the bays: what waits, until when, and where to put it. */
+.hangar-pending-notice {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 1rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #1a1a2e;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-warning);
+    background: var(--color-bg);
+    font-size: 0.85rem;
+}
+.hangar-pending-notice .hangar-pending-name {
+    flex: 1 1 16rem;
+}
+.hangar-pending-notice .hangar-pending-select {
+    width: auto;
+    margin: 0;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+}
+.btn-hangar-action--inline {
+    width: auto;
+    min-height: 36px;
+}
+
+/* Tab bar: the tabs are buttons here (same page), links in the log. */
+.hangar-tabs .comm-tab {
+    background: none;
+    border-width: 0 0 2px;
     cursor: pointer;
-    user-select: none;
 }
-
-.hangar-pending-summary::-webkit-details-marker {
-    display: none;
+.hangar-tab-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-tint);
+    color: var(--color-accent);
 }
-
-.hangar-pending-summary::before {
-    content: "▸";
-    font-size: 0.65rem;
-    color: #aaa;
-    transition: transform 0.15s;
-}
-
-details[open] .hangar-pending-summary::before {
-    transform: rotate(90deg);
+.hangar-slot-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
 }
 
 .hangar-pending-list {
@@ -914,7 +943,7 @@ details[open] .hangar-pending-summary::before {
     font-size: 0.7rem;
     font-weight: 600;
     padding: 0.15rem 0.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #f4f4f4;
     color: #666;
     border: 1px solid #e4e4ef;
@@ -953,7 +982,7 @@ details[open] .hangar-pending-summary::before {
     font-size: 0.7rem;
     font-weight: 600;
     padding: 0.15rem 0.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #f4f4f4;
     color: #666;
     border: 1px solid #e4e4ef;
@@ -1062,8 +1091,9 @@ details[open] .hangar-pending-summary::before {
     min-width: 0;
 }
 
-.hangar-training-card--locked {
-    opacity: 0.6;
+/* Locked: content dims, the lock line stays fully readable (design system, locked cards). */
+.hangar-training-card--locked > :not(.hangar-training-action) {
+    opacity: 0.5;
 }
 
 .hangar-training-card > .hangar-training-head {
@@ -1139,13 +1169,20 @@ details[open] .hangar-pending-summary::before {
     gap: 0.25rem;
 }
 
+/* The train button ends the card; progress and today's allowance stand above it. */
+.hangar-training-buy .ap-upgrade-btn {
+    order: 9;
+}
+
 .hangar-training-buy .ap-upgrade-btn {
     width: 100%;
 }
 
+/* A requirement is a state, not an error: quiet grey with a lock, never danger red. */
 .hangar-training-lock {
     font-size: 0.8rem;
-    color: #b3261e;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
 }
 
 @media (max-width: 1100px) {
@@ -1172,7 +1209,7 @@ details[open] .hangar-pending-summary::before {
 /* Mission dialog: family pill and yield note (T43-C3) */
 .hangar-mission-family {
     padding: 0.05rem 0.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #e8ecf5;
     color: #3a4560;
     font-size: 0.72rem;

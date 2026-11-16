@@ -4,7 +4,6 @@
 	import '#lib/styles/infra.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { fade } from 'svelte/transition';
 	import DebugBar from '#lib/components/DebugBar.svelte';
 	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
 	import { logout, token } from '#lib/stores/auth.ts';
@@ -57,7 +56,7 @@
 {/if}
 
 {#key page.url.pathname}
-	<main class="infra-main" in:fade={{ duration: 150 }}>{@render children()}</main>
+	<main class="infra-main">{@render children()}</main>
 {/key}
 
 {#if $shell}<FeedbackButton />{/if}

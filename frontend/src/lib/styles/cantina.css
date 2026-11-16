@@ -130,45 +130,28 @@
 
 /* ── Hotspots ──────────────────────────────────────────────────────────── */
 
+/* One look for every figure in the scene (guests, merchant, story characters, the bartender):
+   a plain portrait card. Hover and press come from controls.css. */
 .cantina-hotspot {
     position: absolute;
-    width: 70px;
-    height: 70px;
-    margin-left: -35px; /* Center hotspot on coordinate */
-    margin-top: -35px;
-    border-radius: 50%;
-    background: rgba(140, 32, 48, 0.12);
-    border: 2px dashed var(--color-accent, #8c2030);
+    width: 160px;
+    height: 220px;
+    margin-left: -80px; /* Center hotspot on coordinate */
+    margin-top: -110px;
+    background: var(--color-surface);
+    border: 2px solid var(--color-accent, #8c2030);
     cursor: pointer;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-accent, #8c2030);
-    transition:
-        transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-        background 0.2s;
-    box-shadow: 0 0 12px rgba(140, 32, 48, 0.2);
+    overflow: hidden;
     z-index: 10;
 }
 
-.cantina-hotspot:hover {
-    transform: scale(1.15);
-    background: rgba(140, 32, 48, 0.22);
-}
-
-.cantina-hotspot.has-portrait {
-    width: 160px;
-    height: 220px;
-    margin-left: -80px;
-    margin-top: -110px;
-    border-radius: 12px;
-    border-style: solid;
-    background: transparent;
-    overflow: hidden;
-}
-
-.cantina-hotspot.has-portrait .hotspot-pulse {
+.hotspot-pulse,
+.hotspot-label {
     display: none;
 }
 
@@ -177,7 +160,6 @@
     height: 100%;
     object-fit: cover;
     object-position: top center;
-    border-radius: 6px;
     pointer-events: none;
 }
 
@@ -190,6 +172,7 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
+    corner-shape: round;
     background: var(--color-accent, #8c2030);
     color: #ffffff;
     display: flex;
@@ -208,43 +191,6 @@
 .cantina-hotspot i {
     font-size: 1.5rem;
     pointer-events: none;
-}
-
-/* Pulsing outer ring */
-.hotspot-pulse {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid var(--color-accent, #8c2030);
-    animation: hotspot-pulse-anim 2.2s infinite;
-    pointer-events: none;
-}
-
-@keyframes hotspot-pulse-anim {
-    0% {
-        transform: scale(1);
-        opacity: 0.95;
-    }
-    100% {
-        transform: scale(1.6);
-        opacity: 0;
-    }
-}
-
-/* Hotspot names / labels */
-.hotspot-label {
-    position: absolute;
-    top: -28px;
-    background: rgba(26, 26, 30, 0.85);
-    color: #ffffff;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
-    pointer-events: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* ── Modal Drawer (Responsive) ─────────────────────────────────────────── */
@@ -399,9 +345,19 @@
 }
 
 .cantina-dialog__columns {
+    flex: 1 1 auto; /* fills the dialog height so the actions can sit on its bottom edge */
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+}
+
+/* Actions close the dialog: the last action block of a column is pushed to the bottom edge. */
+.cantina-dialog__content > :is(.offer-actions, .row-end):last-child,
+.cantina-relation > .bar-conversation {
+    margin-top: auto;
+}
+.cantina-relation > .bar-conversation {
+    order: 9; /* below the locked-option quote */
 }
 
 .cantina-dialog__content {
@@ -429,7 +385,7 @@
         display: grid;
         grid-template-columns: 15rem minmax(0, 1fr);
         grid-template-areas: "rel main";
-        align-items: start;
+        align-items: stretch;
         gap: var(--space-lg);
     }
     /* Subtle divider between relationship and interaction. */
@@ -492,6 +448,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
+    height: 100%;
 }
 
 .cantina-relation__level {
@@ -570,6 +527,7 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
+    corner-shape: round;
     background: rgba(255, 255, 255, 0.85);
     border: none;
     font-size: 1.5rem;
@@ -798,6 +756,12 @@
     margin: 0;
 }
 
+/* What a click leads to stands above its button, so the buttons end the dialog. */
+.offer-action__outcome,
+.offer-notes {
+    order: -1;
+}
+
 .offer-action__outcome {
     display: flex;
     flex-direction: column;
@@ -891,6 +855,7 @@
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 50%;
+    corner-shape: round;
     object-fit: cover;
     object-position: top center;
     background: #f0f0f2;
@@ -979,64 +944,44 @@
     position: absolute;
     left: 50%;
     bottom: 0;
-    transform: translateX(-50%);
+    margin-left: -80px; /* centred without a transform, so the shared hover lift works */
     z-index: 15;
-    width: 150px;
+    width: 160px;
+    height: 220px;
     padding: 0;
-    border: 0;
-    background: none;
+    border: 2px solid var(--color-accent, #8c2030);
+    background: var(--color-surface);
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    overflow: hidden;
 }
 
 .cantina-bartender__portrait {
-    width: 120px;
-    height: 150px;
+    display: block;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: top center;
-    border-radius: 12px 12px 0 0;
-    border: 2px solid var(--color-accent, #8c2030);
-    border-bottom: 0;
-    background: #f7f7f5;
 }
 
+/* Name and role stay in the markup (and in the portrait's alt text) but the card shows the portrait only, like every other figure. */
 .cantina-bartender__counter {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.35rem 0.5rem;
-    background: rgba(255, 255, 255, 0.92);
-    border: 2px solid var(--color-accent, #8c2030);
-    border-radius: 6px 6px 0 0;
-    font-size: 0.8rem;
-    line-height: 1.2;
-    color: #333;
-}
-
-.cantina-bartender:hover .cantina-bartender__counter,
-.cantina-bartender:focus-visible .cantina-bartender__counter {
-    background: #fff;
+    display: none;
 }
 
 /* Desktop: static background, so he can stand behind the bar on the left of the picture. */
 @media (min-width: 768px) {
     .cantina-bartender {
-        left: 14%;
-        bottom: 250px;
+        left: 10%;
+        bottom: 230px;
     }
 }
 
 @media (max-width: 767px) {
     .cantina-bartender {
         bottom: 1.75rem;
-        width: 120px;
-    }
-    .cantina-bartender__portrait {
-        width: 90px;
-        height: 110px;
+        width: 96px;
+        height: 132px;
+        margin-left: -48px;
     }
 }
 

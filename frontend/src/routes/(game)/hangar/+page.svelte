@@ -8,6 +8,7 @@
 	import { t } from '#lib/i18n.ts';
 	import { Carousel } from '#lib/carousel.svelte.ts';
 	import ApUpgradeButton, { type ApRow } from '#lib/components/ApUpgradeButton.svelte';
+	import '#lib/styles/comm_log.css'; // tab bar (.comm-tabs / .comm-tab), shared with the log
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 
 	type Readiness = { ready: boolean; wear: number; sp_after: number; repair_ap: number };
@@ -110,6 +111,8 @@
 	let loadError = $state('');
 	let loading = $state<Record<number, boolean>>({});
 	let error = $state<Record<number, string | null>>({});
+	// Same per-level yield for every training family: the sentence is shown once above the cards.
+	const samePct = $derived(new Set((d?.trainingFamilies ?? []).map((f) => f.yield_per_level_pct)).size === 1);
 	let trainingLoading = $state<Record<string, boolean>>({});
 	let trainingError = $state<Record<string, string>>({});
 	let pendingOpen = $state(false);
@@ -133,10 +136,13 @@
 
 	const shipLabel = (name: string) => (SHIP_LABEL[name] ? t(SHIP_LABEL[name]) : name);
 	const bayLabel = (bay: number) => (bay === 0 ? t('colony.hangar_apron') : t('colony.hangar_bay', { n: bay }));
-	const slotInfo = $derived.by(() => {
-		const bays = d?.slots.filter((s) => s.open && s.bay > 0) ?? [];
-		return { used: bays.filter((s) => s.ship).length, total: bays.length };
-	});
+	const openBays = $derived(d?.slots.filter((s) => s.open && s.bay > 0).length ?? 0);
+	// Two tabs: dispatching is the main activity, training is the rarer one (owner 2026-11-16).
+	let tab = $state<'bays' | 'training'>('bays');
+	// Trainings that can take an AP right now (shown as a count on the tab).
+	const trainingOpen = $derived(
+		(d?.trainingFamilies ?? []).filter((f) => !f.locked_until && f.ap_for_levelup > 0 && !(f.ap_cap && f.ap_cap.remaining <= 0)).length
+	);
 	const freeSlots = $derived(d?.slots.filter((s) => s.open && s.bay > 0 && !s.ship) ?? []);
 	const statusWidth = (sp: number) => `${Math.max(0, Math.min(100, (sp / (d?.maxShipStatus ?? 1)) * 100))}%`;
 	const fail = (res: Result) => res.message ?? res.error ?? t('colony.network_error');
@@ -372,17 +378,34 @@
 		<div class="hangar-header">
 			<h2>{t('colony.hangar_title')}</h2>
 			{#if data.slots.length}
-				<span class="hangar-slot-badge">{t('colony.hangar_slot_count')}: <strong>{slotInfo.used}/{slotInfo.total}</strong></span>
+				<!-- Facts about the whole hangar stand here once, not on every ship card. -->
+				<span class="hangar-slot-badge">
+					{#if data.hasPilot}<span class="hangar-pilot-badge">{t('colony.hangar_pilot_ready')}</span>{/if}
+					{t('colony.hangar_bays_free', { free: freeSlots.length, total: openBays })}
+				</span>
 			{/if}
 		</div>
 
 		{#if data.slots.length === 0}
 			<p class="hangar-none">{t('colony.hangar_none_built')}</p>
 		{:else}
-			<!-- Training: path depth of mission families (T41), above apron and bays -->
+			<div class="comm-tabs hangar-tabs" role="tablist">
+				<button type="button" role="tab" class="comm-tab" class:comm-tab-active={tab === 'bays'} aria-selected={tab === 'bays'} onclick={() => (tab = 'bays')}
+					><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> {t('colony.hangar_tab_bays')}</button
+				>
+				<button type="button" role="tab" class="comm-tab" class:comm-tab-active={tab === 'training'} aria-selected={tab === 'training'} onclick={() => (tab = 'training')}
+					><i class="bi bi-mortarboard" aria-hidden="true"></i> {t('pathdepth.ui_training_title')}
+					{#if trainingOpen}<span class="hangar-tab-count">{t('colony.hangar_tab_open', { n: trainingOpen })}</span>{/if}</button
+				>
+			</div>
+
+			{#if tab === 'training'}
+			<!-- Training: path depth of mission families (T41) -->
 			<section class="hangar-training">
-				<h3 class="hangar-training-title">{t('pathdepth.ui_training_title')}</h3>
-				<p class="hangar-training-hint">{t('pathdepth.ui_experience_label')}</p>
+				<!-- The per-level yield is the same for every family today: say it once here, not on each card. -->
+				<p class="hangar-training-hint">
+					{t('pathdepth.ui_experience_label')}{#if samePct}{' · '}{t('pathdepth.ui_training_effect', { pct: data.trainingFamilies[0].yield_per_level_pct })}{/if}
+				</p>
 				<div class="hangar-training-grid">
 					{#each data.trainingFamilies as fam (fam.key)}
 						<article class="hangar-training-card" class:hangar-training-card--locked={fam.locked_until}>
@@ -394,17 +417,19 @@
 								<span style="width: {(fam.level / data.trainingMaxLevel) * 100}%"></span>
 							</div>
 							<p class="hangar-training-effect" title={t('pathdepth.ui_training_missions', { list: fam.missions.join(', ') })}>
-								<span>{t('pathdepth.ui_training_effect', { pct: fam.yield_per_level_pct })}</span>
+								{#if !samePct}<span>{t('pathdepth.ui_training_effect', { pct: fam.yield_per_level_pct })}</span>{/if}
 								<span class="hangar-training-effect-now"
-									>{fam.yield_next_pct !== null
-										? t('pathdepth.ui_training_effect_now', { now: fam.yield_now_pct, next: fam.yield_next_pct })
-										: t('pathdepth.ui_training_effect_max', { now: fam.yield_now_pct })}</span
+									>{fam.yield_next_pct === null
+										? t('pathdepth.ui_training_effect_max', { now: fam.yield_now_pct })
+										: samePct
+											? t('pathdepth.ui_training_effect_current', { now: fam.yield_now_pct })
+											: t('pathdepth.ui_training_effect_now', { now: fam.yield_now_pct, next: fam.yield_next_pct })}</span
 								>
 							</p>
 							<p class="hangar-training-missions">{fam.missions.join(' · ')}</p>
 							<div class="hangar-training-action">
 								{#if fam.locked_until}
-									<p class="hangar-training-lock">{fam.lock_reason}</p>
+									<p class="hangar-training-lock"><i class="bi bi-lock-fill" aria-hidden="true"></i> {fam.lock_reason}</p>
 								{:else if fam.ap_for_levelup <= 0}
 									<p class="hangar-training-progress">{t('pathdepth.ui_level_max')}</p>
 								{:else}
@@ -418,15 +443,13 @@
 											capTip={t('pathdepth.ui_training_ap_cap_tooltip')}
 											onclick={() => investTraining(fam)}
 										/>
-										{#if fam.lock_reason}<p class="hangar-training-lock">{fam.lock_reason}</p>{/if}
+										{#if fam.lock_reason}<p class="hangar-training-lock"><i class="bi bi-lock-fill" aria-hidden="true"></i> {fam.lock_reason}</p>{/if}
 										<p class="hangar-training-progress">
-											{t('pathdepth.ui_invest_progress', { spent: fam.ap_spend, needed: fam.ap_for_levelup })}
+											{t('pathdepth.ui_invest_progress', { spent: fam.ap_spend, needed: fam.ap_for_levelup })}{#if fam.ap_cap}{' · '}<span
+													title={t('pathdepth.ui_training_ap_today', { spent: fam.ap_cap.spent, cap: fam.ap_cap.cap })}
+													>{t('pathdepth.ui_training_ap_today_short', { spent: fam.ap_cap.spent, cap: fam.ap_cap.cap })}</span
+												>{/if}
 										</p>
-										{#if fam.ap_cap}
-											<p class="hangar-training-progress">
-												{t('pathdepth.ui_training_ap_today', { spent: fam.ap_cap.spent, cap: fam.ap_cap.cap })}
-											</p>
-										{/if}
 									</div>
 								{/if}
 								{#if trainingError[fam.key]}<p class="hangar-error">{trainingError[fam.key]}</p>{/if}
@@ -435,6 +458,31 @@
 					{/each}
 				</div>
 			</section>
+			{:else}
+				<!-- Ships delivered while no bay was free: they wait here for a few Sols, then they are gone. Rare (off-the-books deliveries). -->
+				{#each data.pendingShips as ship (ship.id)}
+					{@const expires = ship.expires_at_tick || ship.pending_until_tick}
+					<div class="hangar-pending-notice">
+						<span class="hangar-pending-name"
+							><i class="bi bi-hourglass-split" aria-hidden="true"></i>
+							{t('colony.hangar_pending_waiting', { ship: shipLabel(ship.name) })}{#if expires}{' · '}{t('colony.hangar_pending_expires', { tick: expires })}{/if}</span
+						>
+						<!-- No free bay: nothing to choose, the line alone says what is going on. -->
+						{#if freeSlots.length}
+						<select class="hangar-pending-select" bind:value={pendingAssign[ship.id]}>
+							<option value="">{t('colony.hangar_assign_select')}</option>
+							{#each freeSlots as free (free.bay)}
+								<option value={String(free.bay)}>{t('colony.hangar_bay', { n: free.bay })}</option>
+							{/each}
+						</select>
+						<button class="btn-hangar-action btn-hangar-action--inline" onclick={() => assignShip(ship.id)} disabled={!pendingAssign[ship.id] || pendingLoading[ship.id]}>
+							{pendingLoading[ship.id] ? '…' : t('colony.hangar_assign_hangar')}
+						</button>
+						{/if}
+						{#if pendingError[ship.id]}<div class="hangar-error">{pendingError[ship.id]}</div>{/if}
+					</div>
+				{/each}
+
 
 			<div class="carousel-wrapper">
 				<button class="carousel-arrow" onclick={carousel.prev} disabled={carousel.index === 0} aria-label={t('colony.hangar_prev_bay')}
@@ -490,7 +538,6 @@
 								<div class="hangar-info">
 									<div class="hangar-name-row">
 										<span class="hangar-name">{ship ? shipLabel(ship.name) : '—'}</span>
-										{#if ship}<span class="hangar-stat-value">Lv {ship.level}</span>{/if}
 									</div>
 
 									{#if !ship}
@@ -530,7 +577,6 @@
 											</div>
 										{/if}
 									{:else if ship.ship_state === 'building'}
-										<span class="hangar-subtitle">{t('colony.hangar_delivery_pending')}</span>
 										<div style="display:contents">
 											<div class="hangar-stat-row">
 												<span class="hangar-stat-label">{t('colony.hangar_status')}</span>
@@ -545,18 +591,16 @@
 											{/if}
 										</div>
 									{:else if ship.ship_state === 'docked'}
-										<span class="hangar-subtitle">{t('colony.hangar_status')}: <span>{ship.status_points}/{data.maxShipStatus}</span></span>
 										<div style="display:contents">
 											<div class="hangar-status-track">
 												<div class="hangar-status-fill" style="width: {statusWidth(ship.status_points)}"></div>
 											</div>
-											{#if data.hasPilot}<span class="hangar-pilot-badge">{t('colony.hangar_pilot_ready')}</span>{/if}
 											<div class="hangar-stat-row">
 												<span class="hangar-stat-label">{t('colony.hangar_status')}</span>
 												<span class="hangar-stat-value">{ship.status_points}/{data.maxShipStatus}</span>
 											</div>
 											<!-- Inactive (GDD §7): hangar below the ship class — no mission start -->
-											{#if ship.inactive}<div class="hangar-error">{ship.inactive_reason}</div>{/if}
+											{#if ship.inactive}<p class="hangar-training-lock"><i class="bi bi-lock-fill" aria-hidden="true"></i> {ship.inactive_reason}</p>{/if}
 											<div class="hangar-card-footer">
 												<button class="btn-hangar-action" onclick={() => openMissions(slot.bay)} disabled={loading[slot.bay] || ship.inactive}>
 													{t('colony.hangar_dispatch')}
@@ -573,7 +617,6 @@
 											{#if error[slot.bay]}<div class="hangar-error">{error[slot.bay]}</div>{/if}
 										</div>
 									{:else}
-										<span class="hangar-subtitle">{t('colony.hangar_in_transit')}</span>
 										<div style="display:contents">
 											{#if ship.active_mission}
 												<div class="hangar-mission-info">
@@ -626,42 +669,6 @@
 
 			{#if requestNotice}<p class="hangar-notice" role="status">{requestNotice}</p>{/if}
 
-			<!-- Ships delivered without a bay yet -->
-			{#if data.pendingShips.length}
-				<section class="hangar-pending-section">
-					<details bind:open={pendingOpen}>
-						<summary class="hangar-pending-summary">
-							<span>{t('colony.hangar_pending_section')} ({data.pendingShips.length})</span>
-						</summary>
-						<div class="hangar-pending-list">
-							{#each data.pendingShips as ship (ship.id)}
-								{@const expires = ship.expires_at_tick || ship.pending_until_tick}
-								<article class="hangar-pending-card">
-									<div class="hangar-pending-card-info">
-										<span class="hangar-pending-name">{shipLabel(ship.name)}</span>
-										{#if expires}<span class="hangar-pending-expires">{t('colony.hangar_pending_expires', { tick: expires })}</span>{/if}
-									</div>
-									<div class="hangar-pending-card-actions">
-										<select class="hangar-pending-select" bind:value={pendingAssign[ship.id]}>
-											<option value="">{t('colony.hangar_assign_select')}</option>
-											{#each freeSlots as free (free.bay)}
-												<option value={String(free.bay)}>{t('colony.hangar_bay', { n: free.bay })}</option>
-											{/each}
-										</select>
-										<button
-											class="btn-hangar-action"
-											onclick={() => assignShip(ship.id)}
-											disabled={!pendingAssign[ship.id] || pendingLoading[ship.id]}
-										>
-											<span>{pendingLoading[ship.id] ? '…' : t('colony.hangar_assign_hangar')}</span>
-										</button>
-									</div>
-									{#if pendingError[ship.id]}<div class="hangar-error">{pendingError[ship.id]}</div>{/if}
-								</article>
-							{/each}
-						</div>
-					</details>
-				</section>
 			{/if}
 		{/if}
 

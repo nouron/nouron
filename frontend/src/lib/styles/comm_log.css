@@ -64,7 +64,7 @@
     min-width: 1.25rem;
     height: 1.25rem;
     padding: 0 0.3rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--color-accent);
     color: #ffffff;
     font-size: 0.65rem;
@@ -147,6 +147,7 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 50%;
+    corner-shape: round;
     background: #f4f4f8;
     color: #6b6b7a;
     font-size: 0.85rem;
@@ -170,7 +171,7 @@
     color: #999;
     background: #f0f0f4;
     padding: 0.1rem 0.45rem;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-weight: 600;
     white-space: nowrap;
 }
@@ -275,7 +276,7 @@
     align-items: center;
     flex-shrink: 0;
     padding: 0.18em 0.65em;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
