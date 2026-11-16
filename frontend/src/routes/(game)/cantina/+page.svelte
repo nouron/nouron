@@ -10,6 +10,7 @@
 	import { t } from '#lib/i18n.ts';
 	import FirstVisit from '#lib/components/FirstVisit.svelte';
 	import CantinaDialog from './CantinaDialog.svelte';
+	import Typed from '#lib/components/Typed.svelte';
 	import KnowledgeResultLine, { type KnowledgeResult } from './KnowledgeResultLine.svelte';
 
 	type Pos = { left: number; top: number };
@@ -541,7 +542,7 @@
 	{@const acceptAp = negotiated[id] ? 0 : data.offerApCost}
 	{@const giveShort = !done && ($shell?.resource_bar_possessions?.[o.offer.give_resource_id]?.amount ?? Infinity) < dlg.give_amount}
 	{@const apShort = !done && ($shell?.colony_ap ?? Infinity) < acceptAp}
-	{#if o.flavor}<p class="flavor">{t(o.flavor)}</p>{/if}
+	{#if o.flavor}<p class="flavor"><Typed text={t(o.flavor)} /></p>{/if}
 
 	<!-- Offer dialog with source breakdown: every number from BarOfferDialogPresenter (shown == booked). -->
 	{#if dlg.fixed_price}
@@ -614,6 +615,11 @@
 		</div>
 	{/if}
 
+	<!-- Everything informational sits above; the action buttons close the dialog at its bottom edge. -->
+	{#if showExpiry}<small class="muted">{t('colony.bar_offer_expires')} {o.offer.expires_tick}</small>{/if}
+	{#if negotiateFailed[id] !== undefined}<div class="offer-status offer-status--fail">{negotiateFailed[id]}</div>{/if}
+	{#if offerError[id]}<div class="error-line">{offerError[id]}</div>{/if}
+
 	<div class="offer-actions">
 		<div class="offer-action">
 			<!-- Card pattern: accepting is the main action; what the click costs (the goods given + AP) are the chips
@@ -681,9 +687,6 @@
 		{/if}
 	</div>
 
-	{#if showExpiry}<small class="muted">{t('colony.bar_offer_expires')} {o.offer.expires_tick}</small>{/if}
-	{#if negotiateFailed[id] !== undefined}<div class="offer-status offer-status--fail">{negotiateFailed[id]}</div>{/if}
-	{#if offerError[id]}<div class="error-line">{offerError[id]}</div>{/if}
 {/snippet}
 
 {#snippet toastFor(modal: string)}
@@ -813,7 +816,7 @@
 						{/each}
 					</div>
 					{@const line = lockedLine(rel)}
-					{#if line}<p class="cantina-relation__quote" data-locked-line>{line}</p>{/if}
+					{#if line}<p class="cantina-relation__quote" data-locked-line><Typed text={line} /></p>{/if}
 				{/if}
 			{/if}
 			{#if relationError[rel.key]}<p class="bar-relationship-error" role="alert">{relationError[rel.key]}</p>{/if}
@@ -840,6 +843,7 @@
 						</button>
 					{/if}
 
+					<!-- Every figure shows the same portrait its dialog shows (unknown guests: the stranger), so all cards look alike. -->
 					<!-- Guest barter offers. Corvan's commodity offers live in his one dialog (merchant hotspot above). -->
 					{#each scene.offers.filter((x) => !x.corvan) as o (o.offer.id)}
 						<button
@@ -849,11 +853,7 @@
 							onclick={() => open(`offer_${o.offer.id}`)}
 						>
 							<span class="hotspot-pulse"></span>
-							{#if o.char}
-								{@render hotspotImg(o.char.slug ?? 'stranger', o.name)}
-							{:else}
-								<i class="bi bi-chat-right-text"></i>
-							{/if}
+							{@render hotspotImg(o.slug, o.name)}
 							<span class="hotspot-label">{o.name}</span>
 						</button>
 					{/each}
@@ -862,7 +862,7 @@
 						{@const e = scene.encounter}
 						<button class="cantina-hotspot hs" class:has-portrait={e.char} style={spotStyle(e.slot)} onclick={() => open('encounter')}>
 							<span class="hotspot-pulse"></span>
-							{#if e.char && e.slug}{@render hotspotImg(e.slug, e.name)}{:else}<i class="bi bi-briefcase"></i>{/if}
+							{@render hotspotImg(e.slug ?? 'stranger', e.name)}
 							<span class="hotspot-label">{e.name}</span>
 						</button>
 					{/if}
@@ -879,7 +879,7 @@
 						{@const c = scene.concern}
 						<button class="cantina-hotspot hs" class:has-portrait={c.char} style={spotStyle(c.slot)} onclick={() => open('concern')}>
 							<span class="hotspot-pulse"></span>
-							{#if c.char}{@render hotspotImg(data.concern.character_slug, c.char.name ?? '???')}{:else}<i class="bi bi-chat-dots"></i>{/if}
+							{@render hotspotImg(data.concern.character_slug, c.char?.name ?? '???')}
 							<span class="hotspot-label">{c.char?.name ?? t('colony.bar_concern_heading')}</span>
 						</button>
 					{/if}
@@ -888,9 +888,7 @@
 						{@const c = scene.info}
 						<button class="cantina-hotspot hs" class:has-portrait={c.char} style={spotStyle(c.slot)} onclick={() => open('information')}>
 							<span class="hotspot-pulse"></span>
-							{#if c.char}{@render hotspotImg(data.informationEncounter.character_slug, c.char.name ?? '???')}{:else}<i
-									class="bi bi-broadcast"
-								></i>{/if}
+							{@render hotspotImg(data.informationEncounter.character_slug, c.char?.name ?? '???')}
 							<span class="hotspot-label">{c.char?.name ?? t('colony.bar_information_heading')}</span>
 						</button>
 					{/if}
@@ -1065,7 +1063,7 @@
 				<!-- story_hook encounter: pure flavour, only to dismiss -->
 				{#if activeModal === 'story' && scene.story && data.storyEncounterSlug}
 					<CantinaDialog slug={data.storyEncounterSlug} name={scene.story.char.name ?? '???'} role={scene.story.char.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
-						<p>{t(`colony.story_encounter_${data.storyEncounterSlug}`)}</p>
+						<p><Typed text={t(`colony.story_encounter_${data.storyEncounterSlug}`)} /></p>
 						{@render closeButton()}
 					</CantinaDialog>
 				{/if}
@@ -1076,7 +1074,7 @@
 						{@const bt = data.bartender}
 						{#if bartenderTier !== null}
 							<!-- Right after the conversation: Tomas' line + today's result. -->
-							<p>{t(`colony.bartender_dialog_tier_${bartenderTier}`)}</p>
+							<p><Typed text={t(`colony.bartender_dialog_tier_${bartenderTier}`)} /></p>
 							{#if bartenderResult}<KnowledgeResultLine result={bartenderResult} source={b.name ?? ''} />{/if}
 							{@render bartenderAdviceInfo(bt)}
 							{@render bartenderDoneButton(bt)}
@@ -1087,7 +1085,7 @@
 							{@render bartenderDoneButton(bt)}
 						{:else if bt.relationship_level < 1 || bt.ap_bonus < 1}
 							<!-- "fremd": no advice yet; Beziehung pflegen sits in the same dialog. -->
-							<p>{t('colony.bartender_dialog_intro')}</p>
+							<p><Typed text={t('colony.bartender_dialog_intro')} /></p>
 							<p class="hint-line" data-bartender-too-low>{t('colony.bartender_relationship_too_low')}</p>
 							<div class="row-end">
 								<button class="tile-action-btn auto" disabled>
@@ -1096,7 +1094,7 @@
 							</div>
 						{:else if bt.advice_in_sols > 0}
 							<!-- Advice not due yet (frequency follows the relationship): button off, next Sol named. -->
-							<p>{t('colony.bartender_dialog_intro')}</p>
+							<p><Typed text={t('colony.bartender_dialog_intro')} /></p>
 							{@render bartenderAdviceInfo(bt)}
 							<div class="row-end">
 								<button class="tile-action-btn auto" disabled data-bartender-not-due>
@@ -1106,7 +1104,7 @@
 							</div>
 						{:else}
 							{@const canTalk = isSelectable(data.knowledgeOptions, bartenderKnowledgeId)}
-							<p>{t('colony.bartender_dialog_intro')}</p>
+							<p><Typed text={t('colony.bartender_dialog_intro')} /></p>
 							{@render bartenderAdviceInfo(bt)}
 							<div class="stack">
 								{@render knowledgeSelect(t('colony.bartender_knowledge_label'), data.knowledgeOptions, bartenderKnowledgeId, (v) => (bartenderKnowledgeId = v))}
@@ -1130,7 +1128,7 @@
 					{@const ch = data.characters[slug]}
 					<CantinaDialog {slug} name={ch?.name ?? t('colony.bar_concern_heading')} role={ch?.role ?? ''} relation={hasRelation ? relationPanel : undefined}>
 						{#if !concernResolved}
-							<p>{t(`colony.bar_concern_${slug}_intro`)}</p>
+							<p><Typed text={t(`colony.bar_concern_${slug}_intro`)} /></p>
 							{#if slug === 'mechanic'}
 								<div class="gap-below">
 									{@render knowledgeSelect(t('colony.bar_concern_knowledge_label'), data.knowledgeOptions, concernKnowledgeId, (v) => (concernKnowledgeId = v))}
@@ -1319,10 +1317,6 @@
 		color: var(--color-text-secondary);
 		font-size: 0.9rem;
 		font-style: italic;
-	}
-	.cantina-bartender__badge {
-		top: -8px;
-		right: 6px;
 	}
 	.visually-hidden {
 		position: absolute;

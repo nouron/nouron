@@ -24,11 +24,13 @@ return [
     'ui_get_to_know' => 'Kennenlernen',
     'ui_level_max' => 'Höchste Stufe',
     'ui_training_ap_today' => 'Heute schon :spent/:cap AP in dieses Training',
+    'ui_training_ap_today_short' => 'heute :spent/:cap',
     'ui_training_ap_cap_tooltip' => 'Dieses Training nimmt pro Sol nur begrenzt AP auf. Morgen geht es weiter — oder bei einer anderen Familie.',
     'ui_locked_building' => 'Gesperrt: :building braucht Stufe :level.',
     'ui_training_effect' => 'Je Stufe: +:pct % Ertrag bei Mengen-Belohnungen',
     'ui_training_effect_now' => 'Jetzt +:now % · nächste Stufe +:next %',
     'ui_training_effect_max' => 'Jetzt +:now % (Höchststufe)',
+    'ui_training_effect_current' => 'Jetzt +:now %',
     'ui_training_missions' => 'Gilt für: :list',
 
     // ── Cantina: Beziehung pflegen

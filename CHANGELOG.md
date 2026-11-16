@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-16
+
+- Test-Branch `feat/scifi-ui-test`: Game-UI-Schicht im Sci-Fi-Look bei unveränderten Farben (Weiß dominiert). Schrägkanten statt Rundungen für Knöpfe, Chips, Karten und Dialoge, ein gemeinsamer Dialograhmen (Haarlinie, Akzentbalken, Einblenden), Mikro-Interaktionen auf allen Bedienelementen und ein Seitenübergang; alles zentral in `frontend/src/lib/styles/controls.css`, Regeln in `docs/design-system/readme.md`. Cantina: alle Figuren (auch Barkeeper und unbekannte Gäste) erscheinen als gleiche Porträtkarte; Aktionsknöpfe stehen in Dialogen und Hinweis-Popups immer am unteren Ende. Gesprochene Zeilen und kurze Systemhinweise bauen sich Zeichen für Zeichen auf (`Typed.svelte`).
+- Hangar: der „Trainieren“-Knopf hatte dort kein Aussehen, weil seine Grundregeln nur mit der Kolonie-Seite geladen wurden; die Komponente lädt sie jetzt selbst. Hangar-Karten nach dem Karten-Muster: Aktionen als breite Knöpfe am unteren Kartenrand („Entsenden“ als Hauptaktion zuletzt, „Reparieren“ darüber), „Trainieren“ unter den Fortschrittszeilen. Der Screen hat zwei Tabs (Buchten als Standard, Training mit Zähler offener Trainings); wartende Schiffe ohne Bucht stehen als Hinweiszeile über den Buchten statt im aufklappbaren Bereich. Aufgeräumt: Ertragssatz einmal über den Trainingskarten, Voraussetzungen als graue Sperrzeile statt rot, Status je Schiff nur noch einmal, „Raumfahrer bereit“ und „x von y Buchten frei“ in der Kopfzeile, wirkungslose Schiffs-Stufe („Lv“) entfernt.
+- Testdaten bereinigt: vier abgeschaltete Alt-Schiffstypen ohne Bucht aus `data/sql/testdata.sql` entfernt, wirkungslose Schiffs-Stufe dort auf 0; der Demo-Stand (`colony:seed-demo`) baut den Hangar auf Stufe 3, damit Frachter und Korvette in ihren Buchten aktiv sind (Test in `ColonySeedDemoTest`).
+- Karten-Schieber (Hangar, Berater) unter 900 px: Karten bewegen sich nur noch seitlich, die aktive Karte hebt sich nicht mehr mit Schatten nach vorne.
+
 ## 2026-11-15
 
 - Cantina, Tauschangebote (Gäste und Corvan) nach dem Karten-Muster: „Annehmen“ ist die breite Hauptaktion und trägt, was der Klick kostet (Tauschware oder Credits, dazu AP) als Chips; fehlt etwas davon, ist der Knopf deaktiviert und der betroffene Chip rot. „Eco“ vor den AP-Kosten gestrichen.

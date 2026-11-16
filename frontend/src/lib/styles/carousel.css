@@ -44,6 +44,7 @@
     background: #fff;
     border: 1px solid var(--color-border);
     border-radius: 50%;
+    corner-shape: round;
     width: 36px;
     height: 36px;
     min-width: 36px;
@@ -110,6 +111,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
+    corner-shape: round;
     background: #ccc;
     transition: background 0.15s;
 }
@@ -121,5 +123,16 @@
 @media (min-width: 900px) {
     .carousel-dots {
         display: none;
+    }
+}
+
+/* Sliding (below 900px, one card at a time): cards only move left and right.
+   No lift and no shadow for the current card: that reads as a card coming forward while the other steps back. */
+@media (max-width: 899px) {
+    .carousel-track > [class*="-card--current"],
+    .carousel-track > [class*="-card"] {
+        transform: none;
+        box-shadow: none;
+        transition: none;
     }
 }

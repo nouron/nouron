@@ -185,7 +185,7 @@
     content: "";
     width: 10px;
     height: 10px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--tt-border-strong);
     transition:
         width 0.2s ease,
@@ -312,7 +312,7 @@
     background: var(--detail-accent-bg);
     border: 1px solid var(--detail-accent-line);
     padding: 3px 8px;
-    border-radius: var(--radius-pill, 20px);
+    border-radius: var(--radius-pill);
 }
 
 .tech-panel .detail-x {

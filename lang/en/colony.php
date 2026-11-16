@@ -602,6 +602,10 @@ return [
 
     'hangar_title' => 'Hangar',
     'hangar_slot_count' => 'Bays',
+    'hangar_bays_free' => ':free of :total bays free',
+    'hangar_tab_bays' => 'Bays',
+    'hangar_tab_open' => ':n open',
+    'hangar_pending_waiting' => ':ship is waiting for a free bay',
     'hangar_apron' => 'Apron',
     'hangar_bay' => 'Bay :n',
     'hangar_bay_locked' => 'from level :level',

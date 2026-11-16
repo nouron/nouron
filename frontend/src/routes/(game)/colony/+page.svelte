@@ -14,6 +14,7 @@
 	import { t } from '#lib/i18n.ts';
 	import { clickBatcher } from '#lib/js/clickBatch.ts';
 	import ApUpgradeButton from '#lib/components/ApUpgradeButton.svelte';
+	import Typed from '#lib/components/Typed.svelte';
 	import EntityChip from '#lib/components/EntityChip.svelte';
 	import { notifyTileTap } from '#lib/stores/rail.ts';
 	import { isPhone } from '#lib/stores/viewport.ts';
@@ -1145,7 +1146,7 @@
 			<header><h3>{t('colony.discovery_title')}</h3></header>
 			<p class="discovery-event-name">{eventTypeName(ev.event_type ?? '')}</p>
 			{#if eventDescription(ev.event_type ?? '')}
-				<p class="discovery-event-desc">{eventDescription(ev.event_type ?? '')}</p>
+				<p class="discovery-event-desc"><Typed text={eventDescription(ev.event_type ?? '') ?? ''} /></p>
 			{/if}
 			<footer><button onclick={() => (eventDiscovery = null)}>{t('colony.discovery_dismiss')}</button></footer>
 		</article>
@@ -1160,7 +1161,7 @@
 			<div class="first-visit-popup__icon" aria-hidden="true">ℹ</div>
 			<div class="first-visit-popup__body">
 				<p class="first-visit-popup__title">{completionPopup.title}</p>
-				<p class="first-visit-popup__text">{completionPopup.text}</p>
+				<p class="first-visit-popup__text"><Typed text={completionPopup.text} /></p>
 			</div>
 			<button class="first-visit-popup__dismiss" type="button" onclick={() => (completionPopup = null)}>
 				{t('colony.first_visit_dismiss')}

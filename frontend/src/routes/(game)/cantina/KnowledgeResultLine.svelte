@@ -125,7 +125,7 @@
 		grid-column: 1 / -1;
 		display: block;
 		height: 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--color-border);
 		overflow: hidden;
 	}

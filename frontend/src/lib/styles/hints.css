@@ -87,6 +87,7 @@
     width: 1.2rem;
     height: 1.2rem;
     border-radius: 50%;
+    corner-shape: round;
     background: #d97706;
     color: #fff;
     font-size: 0.7rem;
@@ -190,6 +191,7 @@
     border-radius: 0.4rem;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     padding: 0.75rem 0.85rem;
+    flex-wrap: wrap; /* the dismiss button wraps onto its own last row */
 }
 
 .first-visit-popup__icon {
@@ -200,6 +202,7 @@
     width: 1.4rem;
     height: 1.4rem;
     border-radius: 50%;
+    corner-shape: round;
     background: #3f3f46;
     color: #fff;
     font-size: 0.85rem;
@@ -207,7 +210,7 @@
 }
 
 .first-visit-popup__body {
-    flex: 1;
+    flex: 1 1 calc(100% - 2.2rem);
 }
 
 .first-visit-popup__title {
@@ -225,6 +228,7 @@
 
 .first-visit-popup__dismiss {
     flex-shrink: 0;
+    margin-left: auto !important; /* bottom right: actions always end a popup */
     background: none;
     border: 1px solid #d4d4d4;
     border-radius: 0.3rem;

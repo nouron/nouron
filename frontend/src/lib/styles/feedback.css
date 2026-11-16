@@ -40,11 +40,11 @@
 }
 
 /* Primary action in Nouron-red (design system: red only for primary actions). */
-.feedback-dialog footer button:not(.secondary) {
+.feedback-dialog footer button:not(.secondary, .ghost) {
     background: #8c2030;
     border-color: #8c2030;
 }
 
-.feedback-dialog footer button:not(.secondary):hover {
+.feedback-dialog footer button:not(.secondary, .ghost):hover {
     opacity: 0.88;
 }

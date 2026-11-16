@@ -607,6 +607,7 @@
 		margin: 0;
 		border: 0;
 		border-radius: 50%;
+		corner-shape: round;
 		background: none;
 		color: var(--color-text-primary);
 		font: 700 0.95rem/1 var(--font-body);

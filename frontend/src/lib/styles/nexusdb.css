@@ -128,7 +128,7 @@
     background: transparent;
     color: #555;
     border: 1px solid #e4e4ef;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
 }
 

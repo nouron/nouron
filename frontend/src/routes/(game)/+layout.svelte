@@ -3,7 +3,6 @@
 	import '#lib/styles/resources.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { fade } from 'svelte/transition';
 	import BottomNav from '#lib/components/BottomNav.svelte';
 	import AppHeader from '#lib/components/AppHeader.svelte';
 	import DebugBar from '#lib/components/DebugBar.svelte';
@@ -64,7 +63,7 @@
 {/if}
 
 {#key page.url.pathname + page.url.search + ':' + $solEpoch}
-	<main in:fade={{ duration: 150 }}>{@render children()}</main>
+	<main>{@render children()}</main>
 {/key}
 
 {#if $shell}

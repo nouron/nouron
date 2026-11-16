@@ -127,7 +127,7 @@
     padding: 0.2rem 0.6rem;
     background: #fff;
     border: 1px solid #d0d4db;
-    border-radius: 10px;
+    border-radius: var(--radius-pill);
     font-size: 0.72rem;
     font-weight: 600;
     color: #444;
@@ -406,7 +406,7 @@
     font-size: 0.7rem;
     font-weight: 700;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
@@ -932,7 +932,7 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     color: var(--color-text-secondary, #6b6b7a);
     background: var(--color-surface, #f7f7f5);
     border: 1px solid var(--color-border, #e8e8ec);
-    border-radius: 10px;
+    border-radius: var(--radius-pill);
     padding: 0 0.4rem;
 }
 
@@ -941,7 +941,7 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     color: #6b5a2a;
     background: #fbf6e8;
     border: 1px solid #e6d8a8;
-    border-radius: 10px;
+    border-radius: var(--radius-pill);
     padding: 0 0.4rem;
 }
 
@@ -1143,7 +1143,7 @@ dialog.discovery-dialog {
     align-items: center;
     gap: 4px;
     padding: 3px 10px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 0.82rem;
     font-weight: 600;
     background: #fffbea;
@@ -1386,7 +1386,7 @@ dialog.discovery-dialog {
     min-height: 44px;
     margin: 0;
     padding: 0 1.25rem;
-    border-radius: 22px;
+    border-radius: var(--radius-pill);
     background: var(--color-accent);
     border: 1px solid var(--color-accent);
     color: #fff;

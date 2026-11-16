@@ -24,11 +24,13 @@ return [
     'ui_get_to_know' => 'Get to know',
     'ui_level_max' => 'Highest level',
     'ui_training_ap_today' => 'Today :spent/:cap AP already put into this training',
+    'ui_training_ap_today_short' => 'today :spent/:cap',
     'ui_training_ap_cap_tooltip' => 'This training takes only a limited amount of AP per Sol. It continues tomorrow — or with another family.',
     'ui_locked_building' => 'Locked: :building needs level :level.',
     'ui_training_effect' => 'Each level: +:pct% yield on quantity rewards',
     'ui_training_effect_now' => 'Now +:now% · next level +:next%',
     'ui_training_effect_max' => 'Now +:now% (highest level)',
+    'ui_training_effect_current' => 'Now +:now%',
     'ui_training_missions' => 'Applies to: :list',
 
     // ── Cantina: nurture relationship

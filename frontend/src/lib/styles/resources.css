@@ -18,7 +18,7 @@
     align-items: center;
     gap: 4px;
     padding: 3px 10px 3px 8px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 0.7rem;
     font-weight: 700;
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -216,7 +216,7 @@
     font-size: 0.72rem;
     font-weight: 600;
     padding: 0.2rem 0.55rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     white-space: nowrap;
 }
 

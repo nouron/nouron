@@ -195,6 +195,28 @@
 	}
 	.tile .bi:first-child {
 		font-size: 1.25rem;
+		transition: translate 0.18s var(--ease-out);
+	}
+	.tile:hover:not(.locked) .bi:first-child {
+		translate: 0 -2px;
+	}
+	.tile:active:not(.locked) .bi:first-child {
+		translate: 0 1px;
+	}
+	/* Accent line on the top edge: draws in when the tile becomes the active one. */
+	.tile::before {
+		content: '';
+		position: absolute;
+		top: -4px;
+		left: 18%;
+		right: 18%;
+		height: 2px;
+		background: var(--color-accent);
+		transform: scaleX(0);
+		transition: transform 0.3s var(--ease-out);
+	}
+	.tile.active::before {
+		transform: scaleX(1);
 	}
 	.tile:hover {
 		color: var(--color-text-primary);

@@ -30,7 +30,7 @@
 
     /* Sizing — relative to context font, never fixed px */
     padding: 0.1em 0.5em;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.875em;
     font-weight: 500;
     line-height: 1.4;
