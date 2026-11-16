@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use App\Services\HangarService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,20 @@ class ColonySeedDemoTest extends TestCase
         $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID, '--path' => 'hangar'])->assertExitCode(0);
 
         $this->assertSame(85, (int) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('ship_id'));
+    }
+
+    /** The demo state must be a state the game itself can produce: every ship in an open bay of a hangar that can run it. */
+    public function test_demo_hangar_holds_no_inactive_and_no_bayless_ships(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID])->assertExitCode(0);
+
+        $hangar = $this->app->make(HangarService::class);
+        $inactive = collect($hangar->getHangarSlots(self::COLONY_ID))
+            ->filter(fn (array $slot) => $slot['ship'] !== null && $slot['ship']['inactive'])
+            ->pluck('bay')->all();
+
+        $this->assertSame([], $inactive, 'ships sit in bays the demo hangar level does not run');
+        $this->assertSame([], $hangar->getPendingShips(self::COLONY_ID), 'ships without a bay in the demo state');
     }
 
     public function test_unknown_colony_fails(): void

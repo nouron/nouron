@@ -41,14 +41,11 @@ INSERT INTO colony_resources (resource_id,colony_id,amount) VALUES(12,1,50);
 -- Lv3 = three bays and every class active: drone bay 1, freighter bay 2, corvette bay 3.
 INSERT INTO colony_buildings (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,1,3,20,0,1);
 
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,29,0,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,37,9,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,47,3,10,0,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,49,12,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,83,17,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,84,16,10,1,NULL,'docked',NULL,NULL);
-INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,5,3,0,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,37,0,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,47,0,10,0,NULL,'docked',NULL,NULL);
+INSERT INTO colony_ships (colony_id,ship_id,level,status_points,ap_spend,bay,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,0,3,0,NULL,'docked',NULL,NULL);
 
+-- Only the three ship types the game still has; `level` stays 0 (the game never reads or raises it).
 -- Bays: drone (85) bay 1 (dispatched), freighter (47) bay 2, corvette (37) bay 3.
 UPDATE colony_ships SET bay=1, ship_state='dispatched' WHERE colony_id=1 AND ship_id=85;
 UPDATE colony_ships SET bay=3, ship_state='docked'     WHERE colony_id=1 AND ship_id=37;
