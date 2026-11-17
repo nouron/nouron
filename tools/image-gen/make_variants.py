@@ -28,11 +28,12 @@ VARIANTS_DIR = SCRIPT_DIR / "variants"
 
 
 def load_variants_config(category: str) -> dict:
+    """Whole config: "variants" (suffix -> size) plus optional "fit": "contain" (default "cover")."""
     config_file = VARIANTS_DIR / f"{category}.json"
     if not config_file.exists():
         print(f"ERROR: No variants config at {config_file}", file=sys.stderr)
         sys.exit(1)
-    return json.loads(config_file.read_text(encoding="utf-8"))["variants"]
+    return json.loads(config_file.read_text(encoding="utf-8"))
 
 
 def find_master(category: str, name: str) -> Path | None:
@@ -68,9 +69,29 @@ def cover_resize(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
     return img.crop((left, 0, left + target_w, target_h))
 
 
-def make_variant(master: Image.Image, size: str) -> Image.Image:
+def contain_on_white(img: Image.Image, target_w: int, target_h: int, margin: float = 0.04) -> Image.Image:
+    """For freestanding objects on white (ships): trim the white margin the model leaves around the
+    subject, scale it to fit the target, centre it on white. Nothing of the subject is cut off."""
+    rgb = img.convert("RGB")
+    # Anything clearly darker than paper white counts as subject.
+    mask = rgb.convert("L").point(lambda v: 255 if v < 235 else 0)
+    box = mask.getbbox() or (0, 0, *rgb.size)
+    # Paper texture leaves the background a shade off white; flatten it so the image edge disappears on a white card.
+    rgb = rgb.crop(box).point(lambda v: 255 if v >= 235 else v)
+    inner_w, inner_h = round(target_w * (1 - 2 * margin)), round(target_h * (1 - 2 * margin))
+    scale = min(inner_w / rgb.width, inner_h / rgb.height)
+    rgb = rgb.resize((round(rgb.width * scale), round(rgb.height * scale)), Image.LANCZOS)
+    canvas = Image.new("RGB", (target_w, target_h), "white")
+    canvas.paste(rgb, ((target_w - rgb.width) // 2, (target_h - rgb.height) // 2))
+    return canvas
+
+
+def make_variant(master: Image.Image, size: str, fit: str = "cover") -> Image.Image:
     w, h = (int(v) for v in size.lower().split("x"))
-    img = cover_resize(master.convert("RGBA"), w, h)
+    if fit == "contain":
+        img = contain_on_white(master, w, h)
+    else:
+        img = cover_resize(master.convert("RGBA"), w, h)
     # Fine ink-line art loses contrast when downscaled; a light unsharp pass
     # brings edges back without introducing halos at these target sizes.
     return img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
@@ -84,7 +105,9 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="List what would be generated, no writes")
     args = parser.parse_args()
 
-    variants = load_variants_config(args.category)
+    config = load_variants_config(args.category)
+    variants = config["variants"]
+    fit = config.get("fit", "cover")
     published_dir = IMG_DIR / args.category
     published_dir.mkdir(parents=True, exist_ok=True)
 
@@ -132,7 +155,7 @@ def main():
                 print(f"  DRY   {out_path.relative_to(PROJECT_ROOT)}  <- {master_path.relative_to(PROJECT_ROOT)} @ {spec['size']}")
                 continue
 
-            variant = make_variant(master, spec["size"])
+            variant = make_variant(master, spec["size"], fit)
             variant.save(out_path, format="WEBP", quality=90, method=6)
             print(f"  OK    {out_path.relative_to(PROJECT_ROOT)}  <- {master_path.relative_to(PROJECT_ROOT)} @ {spec['size']}")
 

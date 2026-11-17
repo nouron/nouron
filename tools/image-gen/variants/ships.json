@@ -1,0 +1,6 @@
+{
+  "fit": "contain",
+  "variants": {
+    "": { "size": "800x560" }
+  }
+}

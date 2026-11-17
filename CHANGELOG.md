@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-17
+
+- Hangar: Drohne, Frachter und Korvette haben Bilder (schwarz-weiße Konzeptzeichnungen, geparkt, freigestellt auf Weiß) in der Bildfläche der Schiffskarte; Platzhalter nur noch ohne Bild. Bild-Werkzeug (`tools/image-gen`): Option `grayscale` gegen Farbstich, Varianten-Modus `fit: contain` (weißen Rand abschneiden, Objekt ganz einpassen) für freigestellte Objekte.
+
 ## 2026-11-16
 
 - Test-Branch `feat/scifi-ui-test`: Game-UI-Schicht im Sci-Fi-Look bei unveränderten Farben (Weiß dominiert). Schrägkanten statt Rundungen für Knöpfe, Chips, Karten und Dialoge, ein gemeinsamer Dialograhmen (Haarlinie, Akzentbalken, Einblenden), Mikro-Interaktionen auf allen Bedienelementen und ein Seitenübergang; alles zentral in `frontend/src/lib/styles/controls.css`, Regeln in `docs/design-system/readme.md`. Cantina: alle Figuren (auch Barkeeper und unbekannte Gäste) erscheinen als gleiche Porträtkarte; Aktionsknöpfe stehen in Dialogen und Hinweis-Popups immer am unteren Ende. Gesprochene Zeilen und kurze Systemhinweise bauen sich Zeichen für Zeichen auf (`Typed.svelte`).
