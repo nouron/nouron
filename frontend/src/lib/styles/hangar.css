@@ -199,6 +199,20 @@
     position: relative;
 }
 
+/* With a ship drawing the area turns white (the drawings sit on white paper). */
+.hangar-icon-area--image {
+    background-color: #fff;
+}
+
+/* The drawing is already trimmed to the ship (tools/image-gen variants, fit: contain); contain keeps every ship whole.
+   Top padding keeps the bay label clear. */
+.hangar-ship-img {
+    width: 100%;
+    height: 100%;
+    padding: 1.6rem 0.75rem 0.5rem;
+    object-fit: contain;
+}
+
 .hangar-icon-placeholder {
     width: 64px;
     height: 64px;

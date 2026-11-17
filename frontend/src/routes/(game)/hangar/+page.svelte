@@ -3,7 +3,7 @@
 	import '#lib/styles/hangar.css';
 	import '#lib/styles/dialogs.css';
 	import { onMount } from 'svelte';
-	import { api, ApiError } from '#lib/stores/auth.ts';
+	import { api, ApiError, BACKEND_URL } from '#lib/stores/auth.ts';
 	import { refreshShell, setAp } from '#lib/stores/shell.ts';
 	import { t } from '#lib/i18n.ts';
 	import { Carousel } from '#lib/carousel.svelte.ts';
@@ -499,9 +499,12 @@
 						{#each data.slots as slot, i (slot.bay)}
 							{@const ship = slot.ship}
 							<div class="hangar-card" class:hangar-card--current={i === carousel.index}>
-								<div class="hangar-icon-area">
+								<div class="hangar-icon-area" class:hangar-icon-area--image={ship && SHIP_KEY[ship.ship_id]}>
 									<span class="hangar-bay-label">{bayLabel(slot.bay)}</span>
-									{#if ship}
+									{#if ship && SHIP_KEY[ship.ship_id]}
+										<!-- Parked ship, b/w drawing on white (public/img/ships/<key>.webp, made with tools/image-gen). -->
+										<img class="hangar-ship-img" src="{BACKEND_URL}/img/ships/{SHIP_KEY[ship.ship_id]}.webp" alt={shipLabel(ship.name)} />
+									{:else if ship}
 										<svg
 											class="hangar-icon-placeholder"
 											viewBox="0 0 24 24"

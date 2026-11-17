@@ -29,6 +29,7 @@ Alle Spiel-Grafiken (Icons, Portraits, Tiles, Schiffe, Gebäude, Ressourcen, For
 | Gebäude-Icons (Sidebar) | 32×32 px | 64×64 px |
 | Gebäude-Icons (auf Tile) | 48×48 px | 96×96 px |
 | Schiffs-Icons | 48×48 px | 96×96 px |
+| Schiffs-Bild (Hangar-Karte, Nachtrag 2026-11-17) | ca. 400×280 px | 800×560 px, weißer Hintergrund statt Transparenz (Owner-Entscheidung) |
 | Berater-Portraits | 128×128 px | 256×256 px |
 | Hex-Tile-Texturen | abhängig von SIZE-Konstante in `colony-hexgrid.js` | 2× SIZE berechnen |
 

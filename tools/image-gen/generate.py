@@ -172,6 +172,9 @@ def main():
 
     api_size_override = cat_cfg.get("api_size")
 
+    # "grayscale": true in _config.json drops any colour cast the model adds (e.g. a sepia tint on ink drawings).
+    grayscale = bool(cat_cfg.get("grayscale"))
+
     crop_to = None
     if cat_cfg.get("crop"):
         crop_to = parse_resize(cat_cfg["crop"])
@@ -226,7 +229,7 @@ def main():
             print(f"  DRY   {name}")
             print(f"        model  : {model}")
             print(f"        size   : {api_size}{f' → resize {resize_to[0]}x{resize_to[1]}' if resize_to else ''}")
-            print(f"        quality: {quality}")
+            print(f"        quality: {quality}{' (grayscale)' if grayscale else ''}")
             print(f"        format : {args.output_format}")
             print(f"        base   : {'(none)' if not base_prompt else base_prompt[:60] + '...'}")
             print(f"        prompt : {combined[:120]}...")
@@ -243,8 +246,10 @@ def main():
                 output_format=args.output_format,
                 output_compression=args.compression,
             )
-            if resize_to or crop_to:
+            if resize_to or crop_to or grayscale:
                 img = Image.open(io.BytesIO(image_bytes))
+                if grayscale:
+                    img = img.convert("L").convert("RGB")
                 if resize_to:
                     img = img.resize(resize_to, Image.LANCZOS)
                 if crop_to:
@@ -264,6 +269,8 @@ def main():
             suffix = f" (resized to {args.resize})" if resize_to else ""
             if crop_to:
                 suffix += f" (cropped to {crop_to[0]}x{crop_to[1]})"
+            if grayscale:
+                suffix += " (grayscale)"
             print(f"saved → {output_path.relative_to(PROJECT_ROOT)}{suffix}")
         except Exception as e:
             print(f"FAILED: {e}", file=sys.stderr)
