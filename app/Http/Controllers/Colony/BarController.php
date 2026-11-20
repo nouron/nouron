@@ -88,9 +88,16 @@ class BarController extends BaseController
             ->where('building_id', self::BAR_BUILDING_ID)
             ->value('level');
 
+        // T60: only the cast of this Sol sits in the cantina; everyone else brings nothing today.
+        $cast = $this->cantinaPresence->cast($colony->id, $tick);
+        $inCast = fn (string $key) => in_array($key, $cast, true);
+
         $offers = $barLevel > 0
             ? $this->barService->getActiveOffers($colony->id, $tick)
+                ->filter(fn ($o) => $inCast($o->visit_id !== null ? 'merchant' : "offer_{$o->id}"))->values()
             : collect();
+        // Hotspot (and with it the character) of each guest offer, stable within the Sol.
+        $offerSpots = $this->cantinaPresence->offerSpots($colony->id, $tick);
 
         // Terms each offer actually executes at (Handelsvorteil applied) — the same
         // BarService::effectiveTerms() acceptOffer() books, so shown == executed.
@@ -118,23 +125,29 @@ class BarController extends BaseController
         $encounter = $barLevel > 0
             ? $this->barService->getActiveEncounter($colony->id, $tick)
             : null;
+        $encounter = $encounter !== null && $inCast("encounter_{$encounter->id}") ? $encounter : null;
 
         $storyEncounterSlug = $barLevel > 0
             ? $this->barService->pickStoryEncounter($colony->id, $tick)
             : null;
+        $storyEncounterSlug = $storyEncounterSlug !== null && $inCast("story_{$storyEncounterSlug}") ? $storyEncounterSlug : null;
 
         // Charakter-Anliegen (A41) — second, independent Cantina special-event slot.
         $concern = $barLevel > 0
             ? $this->barService->getActiveConcern($colony->id, $tick)
             : null;
+        $concern = $concern !== null && $inCast("concern_{$concern->id}") ? $concern : null;
 
         // Deva & Lenn Vier-Ausgänge-Pool (A42) — third, independent channel, not
         // gated by bar level's shared "one special event per tick" rule.
         $informationEncounter = $barLevel > 0
             ? $this->barService->getActiveInformationEncounter($colony->id, $tick)
             : null;
+        $informationEncounter = $informationEncounter !== null && $inCast("information_{$informationEncounter->id}") ? $informationEncounter : null;
 
         $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $tick);
+        // Without a cantina Corvan still trades (no cast then); with one he always has a place.
+        $merchantVisit = $barLevel < 1 || $inCast('merchant') ? $merchantVisit : null;
         $merchantItems = $merchantVisit
             ? $this->merchantService->getPricedItemsForVisit($merchantVisit->id, $colony->id)
             : [];
@@ -176,7 +189,7 @@ class BarController extends BaseController
         return compact(
             'relationships', 'bartender',
             'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
-            'merchantVisit', 'merchantItems', 'merchantForecast', 'characterAssignment',
+            'merchantVisit', 'merchantItems', 'merchantForecast', 'characterAssignment', 'offerSpots',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
             'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
@@ -252,6 +265,9 @@ class BarController extends BaseController
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick = $this->tick->getTickCount();
+        if ($absent = $this->absentOffer($colony->id, $tick, $offerId)) {
+            return $absent;
+        }
         $result = $this->barService->acceptOffer(
             $colony->id,
             $offerId,
@@ -286,6 +302,9 @@ class BarController extends BaseController
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick = $this->tick->getTickCount();
+        if ($absent = $this->absentOffer($colony->id, $tick, $offerId)) {
+            return $absent;
+        }
         $result = $this->barService->negotiateOffer($colony->id, $offerId, $userId, $tick);
 
         if ($result['ok'] && $result['success']) {
@@ -314,6 +333,9 @@ class BarController extends BaseController
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick = $this->tick->getTickCount();
+        if ($absent = $this->absent($colony->id, $tick, 'bar_encounters', 'encounter', $encounterId)) {
+            return $absent;
+        }
         $result = $this->barService->acceptEncounter($colony->id, $encounterId, $userId, $tick);
 
         if ($result['ok']) {
@@ -380,6 +402,9 @@ class BarController extends BaseController
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick = $this->tick->getTickCount();
+        if ($absent = $this->absent($colony->id, $tick, 'bar_concerns', 'concern', $concernId)) {
+            return $absent;
+        }
 
         $result = $this->barService->resolveConcern(
             $colony->id,
@@ -415,6 +440,9 @@ class BarController extends BaseController
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick = $this->tick->getTickCount();
+        if ($absent = $this->absent($colony->id, $tick, 'bar_information_encounters', 'information', $encounterId)) {
+            return $absent;
+        }
 
         $result = $this->barService->resolveInformationEncounter(
             $colony->id,
@@ -425,6 +453,33 @@ class BarController extends BaseController
         );
 
         return response()->json($result, $result['ok'] ? 200 : 422);
+    }
+
+    /** 422 when the offer's figure is not in today's cast (T60); null when it may be used. */
+    private function absentOffer(int $colonyId, int $tick, int $offerId): ?JsonResponse
+    {
+        $offer = DB::table('bar_offers')->where('colony_id', $colonyId)->where('id', $offerId)->first(['visit_id']);
+        if ($offer === null) {
+            return null; // the service answers "not found"
+        }
+        $key = $offer->visit_id !== null ? 'merchant' : "offer_{$offerId}";
+
+        return $this->cantinaPresence->inCast($colonyId, $tick, $key) ? null : $this->notPresent();
+    }
+
+    /** Same for an encounter, concern or information figure; null when missing (the service answers). */
+    private function absent(int $colonyId, int $tick, string $table, string $key, int $id): ?JsonResponse
+    {
+        if (! DB::table($table)->where('colony_id', $colonyId)->where('id', $id)->exists()) {
+            return null;
+        }
+
+        return $this->cantinaPresence->inCast($colonyId, $tick, "{$key}_{$id}") ? null : $this->notPresent();
+    }
+
+    private function notPresent(): JsonResponse
+    {
+        return response()->json(['ok' => false, 'error' => 'not_present', 'message' => __('colony.bar_not_present')], 422);
     }
 
     /**

@@ -15,6 +15,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Analytik-Labor („Labor“) | `sciencelab` (ID 31) | Pfadgebäude; mit Stufe 1 lassen sich Kenntnisse erforschen. Im Code und in Berichten nie „Sciencelab“ neben „Labor“ als zwei Dinge lesen. |
 | Hangar | `hangar` | Pfadgebäude; Schiffe, Missionen, Bergung. |
 | Cantina | `bar` | Pfadgebäude; Begegnungen, Handel, Anliegen. |
+| Cantina-Besetzung | `cantina_casts` | Die Figuren, die an einem Sol neben dem Barkeeper in der Cantina sitzen. |
 | Uplink-Station | `uplinkStation` | Pflichtgebäude in Phase 1; Tor zum Werkstoff-Import. |
 | Leitstelle | `securityHub` | Sicherheit/Bergungsdienst (Entwurf). |
 | Krankenstation | `infirmary` | Gesundheit der Kolonie. |
