@@ -110,7 +110,7 @@ class ColonySeedDemo extends Command
         }
 
         $this->ensurePilotAdvisor($colonyId);
-        $this->info('  ✓ Pilot advisor ensured (navigation AP)');
+        $this->info('  ✓ Pilot advisor ensured');
 
         $this->line('Done.');
 

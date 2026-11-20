@@ -375,7 +375,7 @@ return [
 
     // Trading Post — CC Lv4, max 1 instance (is_instanced=0).
     // Effect: Merchant (+Reisender Händler) gives +12% better trade value when present.
-    //         Konsul Economy-AP reduction: NOT YET IMPLEMENTED — see T33 / Phase 5.
+    //         Konsul AP reduction: NOT YET IMPLEMENTED — see T33 / Phase 5.
     // Balance: merchant_price_bonus vs. Konsul-Rang-System (kein Stack-Effekt) — post-playtest.
     'tradingPost' => [
         'id' => 55,

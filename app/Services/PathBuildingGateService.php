@@ -24,6 +24,13 @@ class PathBuildingGateService
         BuildingId::Bar->value,
     ];
 
+    /** Path building id => the advisor type it unlocks (one slot each, GDD §16). */
+    public const ADVISOR_TYPES = [
+        BuildingId::Sciencelab->value => 'scientist',
+        BuildingId::Hangar->value => 'pilot',
+        BuildingId::Bar->value => 'trader',
+    ];
+
     public static function isPathBuilding(int $buildingId): bool
     {
         return in_array($buildingId, self::PATH_BUILDING_IDS, true);

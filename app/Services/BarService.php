@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Console\Commands\GameTick;
+use App\Enums\BuildingId;
 use App\Models\BarConcern;
 use App\Models\BarEncounter;
 use App\Models\BarInformationEncounter;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Log;
 
 class BarService
 {
-    private const BAR_BUILDING_ID = 52;
+    private const BAR_BUILDING_ID = BuildingId::Bar->value;
 
     private const TRADER_ADVISOR_ID = 92; // personell.id for 'trader'
 
@@ -222,7 +223,7 @@ class BarService
             return $this->fail('bar_offer_expired');
         }
 
-        // Economy-AP check — waived when the offer was already negotiated
+        // AP check — waived when the offer was already negotiated
         // (ap_cost_negotiate was already paid during that step; Annehmen here is
         // just confirming the improved terms, not a second priced action).
         $apCost = $offer->is_negotiated ? 0 : (int) config('game.bar.ap_cost_accept', 1);

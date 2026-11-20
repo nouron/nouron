@@ -66,7 +66,7 @@ return [
     'concept_ap_body' => 'Action Points are provided per Sol by assigned advisor personnel and feed a single colony-bound pool. Construction, research, exploration and trade measures are all funded from this pool alike. Unused AP expire at Sol end — carry-over to subsequent Sols is not provided. Without sufficient AP availability, construction, research, and maintenance measures cannot be performed.',
 
     'concept_decay_title' => 'Decay',
-    'concept_decay_body' => 'All colony buildings are subject to continuous status loss through regular operational wear. A building\'s status value decreases automatically each Sol by a fixed amount. When the status value reaches zero, the building loses one operational level. Regular Construction AP input from Engineer personnel is required to compensate for status loss.',
+    'concept_decay_body' => 'All colony buildings are subject to continuous status loss through regular operational wear. A building\'s status value decreases automatically each Sol by a fixed amount. When the status value reaches zero, the building loses one operational level. Regular AP input from Engineer personnel is required to compensate for status loss.',
 
     'concept_repair_title' => 'Repair',
     'concept_repair_body' => 'Repair measures increase a building\'s status value through targeted AP and resource expenditure. Each repair operation raises the status value toward its maximum. Repairs to colony buildings (excluding Command Center and Harvester) additionally require Regolith. Without regular maintenance, status continues to decline until the building becomes inoperable.',

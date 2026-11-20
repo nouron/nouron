@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Enums\BuildingId;
+
 /**
  * T30 step 0: paired comparison of PlaytestBot openings (labor / hangar /
  * cantina) by the equivalence criteria K1-K7 of
@@ -17,8 +19,8 @@ namespace App\Support;
  * BotSession::nextSol() increments the Sol first and then logs `sol_next`, so
  * the ok `sol_next` entry with sol N carries the start-of-Sol-N balances.
  *
- * Path building per opening: labor = Sciencelab (31), hangar = Hangar (44),
- * cantina = Bar (52); `auto` uses whichever of the three reached level 1 first
+ * Path building per opening: labor = Sciencelab, hangar = Hangar,
+ * cantina = Bar; `auto` uses whichever of the three reached level 1 first
  * (if two reach Lv1 in the same Sol, the constant order labor > hangar >
  * cantina decides).
  * "Lv1 Sol" = first snapshot Sol in which that building has level >= 1.
@@ -122,7 +124,7 @@ class OpeningComparison
 
     public const FINISHED_STATUSES = ['completed', 'failed'];
 
-    private const PATH_BUILDINGS = ['labor' => 31, 'hangar' => 44, 'cantina' => 52];
+    private const PATH_BUILDINGS = ['labor' => BuildingId::Sciencelab->value, 'hangar' => BuildingId::Hangar->value, 'cantina' => BuildingId::Bar->value];
 
     private const PATH_RULES = [
         'labor' => ['research_knowledge'],

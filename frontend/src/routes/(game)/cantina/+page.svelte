@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Port of resources/views/colony/bar.blade.php incl. its inline barPage() component (ADR 0006 stage 4d).
-	import '#lib/styles/swipe.css';
+	import '#lib/styles/carousel.css';
 	import '#lib/styles/colony-shared.css';
 	import '#lib/styles/cantina.css';
 	import { onMount } from 'svelte';
@@ -12,8 +12,9 @@
 	import CantinaDialog from './CantinaDialog.svelte';
 	import Typed from '#lib/components/Typed.svelte';
 	import KnowledgeResultLine, { type KnowledgeResult } from './KnowledgeResultLine.svelte';
+	import { Carousel } from '#lib/carousel.svelte.ts';
+	import { assignSeats, PAGES, type Figure } from '#lib/cantinaSeats.ts';
 
-	type Pos = { left: number; top: number };
 	type Char = { slug?: string; name?: string; role?: string; game_role?: string };
 	type Offer = { id: number; visit_id: number | null; expires_tick: number; get_resource_id: number; give_resource_id: number };
 	type Advantage = { total_text?: string; lines: { label: string; percent_text: string }[]; hints: string[]; summary?: string };
@@ -92,7 +93,6 @@
 		merchantVisit: { id: number; tick_end: number; was_visited: boolean } | null;
 		merchantItems: { id: number; label: string; price_credits: number; cost_credits: number; sold: boolean }[];
 		merchantForecast: { sols: number; categories: string[] | null } | null;
-		hotspots: Record<string, Record<'desktop' | 'tablet' | 'mobile', Pos>>;
 		characterAssignment: Record<string, Char>;
 		characters: Record<string, Char>;
 		firstVisit: boolean;
@@ -122,14 +122,16 @@
 		4: 'resources.res_werkstoffe',
 		5: 'resources.res_organika'
 	};
-	// spot_0 is Tomas, spot_merchant Corvan's special inventory; offers and events share the other five, cycled.
+	// Which guest a slot brings (data/cantina_hotspots.json, characterAssignment); offers and events share the five, cycled.
+	// Where a figure stands in the picture is separate: seatOf below.
 	const SPOTS = ['spot_1', 'spot_2', 'spot_3', 'spot_4', 'spot_5'];
 	const portrait = (slug: string) => `${BACKEND_URL}/img/characters/${slug}`;
 
 	let d = $state<Data | null>(null);
 	let loadError = $state('');
 	let activeModal = $state<string | null>(null);
-	let current = $state(0);
+	// Met when the page loaded: someone met in this visit keeps their seat until the next Sol.
+	let metAtLoad = new Set<string>();
 	let loading = $state(false);
 	let toast = $state<{ msg: string; type: 'info' | 'error'; modal: string | null } | null>(null);
 	let buyLoading = $state(false);
@@ -213,34 +215,38 @@
 		};
 	});
 
-	// Hotspot position per device (data/cantina_hotspots.json), applied via CSS variables.
-	function spotStyle(slot: string) {
-		const p = d?.hotspots[slot];
-		const v = (dev: 'desktop' | 'tablet' | 'mobile') => p?.[dev] ?? { left: 50, top: 50 };
-		return (
-			`--hs-dl:${v('desktop').left}%;--hs-dt:${v('desktop').top}%;` +
-			`--hs-tl:${v('tablet').left}%;--hs-tt:${v('tablet').top}%;` +
-			`--hs-ml:${v('mobile').left}%;--hs-mt:${v('mobile').top}%`
-		);
+	// Who stands where in the picture (lib/cantinaSeats.ts); keyed like the dialogs.
+	const seatOf = $derived.by(() => {
+		if (!d || !scene) return {};
+		const fig = (key: string, slug: string | null | undefined): Figure => ({
+			key,
+			slug: slug ?? 'stranger',
+			met: !!slug && metAtLoad.has(slug)
+		});
+		const figures: Figure[] = [fig('bartender', 'bartender')];
+		// Corvan is known by trade, not by a relationship: always at a table.
+		if (d.merchantVisit || corvanOffers.length) figures.push({ key: 'merchant', slug: 'merchant', met: true });
+		for (const o of scene.offers) if (!o.corvan) figures.push(fig(`offer_${o.offer.id}`, o.char?.slug));
+		if (scene.encounter) figures.push(fig('encounter', scene.encounter.slug));
+		if (scene.story) figures.push(fig('story', d.storyEncounterSlug));
+		if (scene.concern) figures.push(fig('concern', d.concern?.character_slug));
+		if (scene.info) figures.push(fig('information', d.informationEncounter?.character_slug));
+		return assignSeats(figures);
+	});
+
+	function seatStyle(key: string) {
+		const s = seatOf[key];
+		return s ? `left:${s.x}%;top:${s.y}%` : 'display:none';
 	}
 
 	// Corvan's commodity offers: options inside his one dialog, never separate cards (owner 2026-11-15).
 	const corvanOffers = $derived(scene?.offers.filter((o) => o.corvan) ?? []);
-	const panelCount = $derived(d && (d.merchantVisit || d.merchantItems.length || d.offers.length) ? 4 : 1);
 	const empty = $derived(
 		!!d && !d.offers.length && !d.merchantVisit && !d.encounter && !d.concern && !d.informationEncounter
 	);
 
-	// ── Swipe (port of swipeCarousel in public/js/swipe.js) ──
-	let x0 = 0;
-	let y0 = 0;
-	const touchstart = (e: TouchEvent) => ((x0 = e.touches[0].clientX), (y0 = e.touches[0].clientY));
-	function touchend(e: TouchEvent) {
-		const dx = e.changedTouches[0].clientX - x0;
-		const dy = e.changedTouches[0].clientY - y0;
-		if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-		current = Math.max(0, Math.min(panelCount - 1, current + (dx < 0 ? 1 : -1)));
-	}
+	// ── Swipe: phones page through the picture in 4 screen-wide steps (same drag as advisors/hangar) ──
+	const carousel = new Carousel(PAGES, { breakpoint: 768, cardMaxWidth: 0, swipeMin: 40, gapPx: 0 });
 
 	// ── Helpers ──
 
@@ -515,6 +521,7 @@
 	onMount(() => {
 		api<Data>('/cantina')
 			.then((r) => {
+				metAtLoad = new Set(r.relationships.filter((x) => x.met).map((x) => x.key));
 				d = r;
 				negotiated = { ...r.negotiatedOffers };
 				bartenderKnowledgeId = firstSelectable(r.knowledgeOptions);
@@ -833,15 +840,44 @@
 			<p>{t('colony.bar_no_building')}</p>
 		{:else}
 			<!-- svelte-ignore a11y_no_static_element_interactions (swipe shortcut; dots stay usable) -->
-			<div class="cantina-viewport" ontouchstart={touchstart} ontouchend={touchend}>
-				<div class="cantina-background-wrapper" style="transform: translateX(-{current * 22.222}%)">
+			<div
+				class="cantina-viewport"
+				{@attach carousel.attach}
+				ontouchstart={carousel.touchstart}
+				ontouchmove={carousel.touchmove}
+				ontouchend={carousel.touchend}
+			>
+				<div class="cantina-background-wrapper" style={carousel.trackStyle}>
 					{#if data.merchantVisit || corvanOffers.length}
-						<button class="cantina-hotspot has-portrait hotspot-merchant hs" style={spotStyle('spot_merchant')} onclick={openMerchant}>
+						<button class="cantina-hotspot has-portrait hotspot-merchant hs" style={seatStyle('merchant')} onclick={openMerchant}>
 							<span class="hotspot-badge"><i class="bi bi-exclamation-lg"></i></span>
 							{@render hotspotImg('merchant', t('colony.merchant_title'))}
 							<span class="hotspot-label">{t('colony.merchant_title')}</span>
 						</button>
 					{/if}
+
+					<!-- Tomas behind the counter, always there. -->
+					<button
+						type="button"
+						class="cantina-bartender"
+						style={seatStyle('bartender')}
+						data-bartender-counter
+						onclick={openBartender}
+					>
+						{#if data.bartender.advice_open}
+							<!-- Advice open today (relationship level >= 1, not talked yet). -->
+							<span class="hotspot-badge cantina-bartender__badge" data-advice-open title={t('colony.bartender_advice_open')}
+								><i class="bi bi-lightbulb" aria-hidden="true"></i><span class="visually-hidden"
+									>{t('colony.bartender_advice_open')}</span
+								></span
+							>
+						{/if}
+						<img class="cantina-bartender__portrait" src="{portrait('bartender')}.webp" srcset="{portrait('bartender')}.webp 1x, {portrait('bartender')}_lg.webp 2x" alt={data.characters.bartender?.name} />
+						<span class="cantina-bartender__counter">
+							<strong>{data.characters.bartender?.name}</strong>
+							<span>{t('colony.bartender_counter_role')}</span>
+						</span>
+					</button>
 
 					<!-- Every figure shows the same portrait its dialog shows (unknown guests: the stranger), so all cards look alike. -->
 					<!-- Guest barter offers. Corvan's commodity offers live in his one dialog (merchant hotspot above). -->
@@ -849,7 +885,7 @@
 						<button
 							class="cantina-hotspot hs"
 							class:has-portrait={o.char}
-							style={spotStyle(o.slot)}
+							style={seatStyle(`offer_${o.offer.id}`)}
 							onclick={() => open(`offer_${o.offer.id}`)}
 						>
 							<span class="hotspot-pulse"></span>
@@ -860,7 +896,7 @@
 
 					{#if scene.encounter}
 						{@const e = scene.encounter}
-						<button class="cantina-hotspot hs" class:has-portrait={e.char} style={spotStyle(e.slot)} onclick={() => open('encounter')}>
+						<button class="cantina-hotspot hs" class:has-portrait={e.char} style={seatStyle('encounter')} onclick={() => open('encounter')}>
 							<span class="hotspot-pulse"></span>
 							{@render hotspotImg(e.slug ?? 'stranger', e.name)}
 							<span class="hotspot-label">{e.name}</span>
@@ -868,7 +904,7 @@
 					{/if}
 
 					{#if scene.story && data.storyEncounterSlug}
-						<button class="cantina-hotspot has-portrait hs" style={spotStyle(scene.story.slot)} onclick={() => open('story')}>
+						<button class="cantina-hotspot has-portrait hs" style={seatStyle('story')} onclick={() => open('story')}>
 							<span class="hotspot-pulse"></span>
 							{@render hotspotImg(data.storyEncounterSlug, scene.story.char.name ?? '???')}
 							<span class="hotspot-label">{scene.story.char.name ?? '???'}</span>
@@ -877,7 +913,7 @@
 
 					{#if scene.concern && data.concern}
 						{@const c = scene.concern}
-						<button class="cantina-hotspot hs" class:has-portrait={c.char} style={spotStyle(c.slot)} onclick={() => open('concern')}>
+						<button class="cantina-hotspot hs" class:has-portrait={c.char} style={seatStyle('concern')} onclick={() => open('concern')}>
 							<span class="hotspot-pulse"></span>
 							{@render hotspotImg(data.concern.character_slug, c.char?.name ?? '???')}
 							<span class="hotspot-label">{c.char?.name ?? t('colony.bar_concern_heading')}</span>
@@ -886,7 +922,7 @@
 
 					{#if scene.info && data.informationEncounter}
 						{@const c = scene.info}
-						<button class="cantina-hotspot hs" class:has-portrait={c.char} style={spotStyle(c.slot)} onclick={() => open('information')}>
+						<button class="cantina-hotspot hs" class:has-portrait={c.char} style={seatStyle('information')} onclick={() => open('information')}>
 							<span class="hotspot-pulse"></span>
 							{@render hotspotImg(data.informationEncounter.character_slug, c.char?.name ?? '???')}
 							<span class="hotspot-label">{c.char?.name ?? t('colony.bar_information_heading')}</span>
@@ -894,32 +930,12 @@
 					{/if}
 				</div>
 
-				<!-- Tomas behind the counter: always on screen, outside the swiped background. -->
-				<button
-					type="button"
-					class="cantina-bartender"
-					data-bartender-counter
-					onclick={openBartender}
-				>
-					{#if data.bartender.advice_open}
-						<!-- Advice open today (relationship level >= 1, not talked yet). -->
-						<span class="hotspot-badge cantina-bartender__badge" data-advice-open title={t('colony.bartender_advice_open')}
-							><i class="bi bi-lightbulb" aria-hidden="true"></i><span class="visually-hidden"
-								>{t('colony.bartender_advice_open')}</span
-							></span
-						>
-					{/if}
-					<img class="cantina-bartender__portrait" src="{portrait('bartender')}.webp" srcset="{portrait('bartender')}.webp 1x, {portrait('bartender')}_lg.webp 2x" alt={data.characters.bartender?.name} />
-					<span class="cantina-bartender__counter">
-						<strong>{data.characters.bartender?.name}</strong>
-						<span>{t('colony.bartender_counter_role')}</span>
-					</span>
-				</button>
-
-				<div class="swipe-dots cantina-dots">
-					{#each Array.from({ length: panelCount }, (_, i) => i) as i (i)}
-						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-						<span class="swipe-dot" class:swipe-dot--active={current === i} onclick={() => (current = i)}></span>
+				<!-- Phones: the picture is 4 screens wide; arrows and dots show there is more to either side. -->
+				<button class="carousel-arrow cantina-arrow cantina-arrow--prev" onclick={carousel.prev} disabled={carousel.index === 0} aria-label={t('colony.cantina_prev_view')}>&#8249;</button>
+				<button class="carousel-arrow cantina-arrow cantina-arrow--next" onclick={carousel.next} disabled={carousel.index >= PAGES - 1} aria-label={t('colony.cantina_next_view')}>&#8250;</button>
+				<div class="carousel-dots cantina-dots">
+					{#each Array.from({ length: PAGES }, (_, i) => i) as i (i)}
+						<button class="carousel-dot" class:carousel-dot--active={carousel.index === i} onclick={() => carousel.goTo(i)} aria-label="{i + 1} / {PAGES}"></button>
 					{/each}
 				</div>
 
@@ -960,7 +976,7 @@
 			{/if}
 
 			<div
-				class="cantina-modal cantina-modal--{activeModal === null ? 'neutral' : 'economy'}"
+				class="cantina-modal"
 				class:cantina-modal--wide={hasRelation && !activeModal?.startsWith('rel_')}
 				class:open={activeModal !== null}
 				hidden={activeModal === null}
@@ -1232,23 +1248,6 @@
 	.load-error {
 		padding: var(--space-md);
 	}
-	/* Hotspot positions per device (Blade generated .hs-slot-* rules from the same JSON). */
-	:global(.cantina-hotspot.hs) {
-		left: var(--hs-dl);
-		top: var(--hs-dt);
-	}
-	@media (min-width: 768px) and (max-width: 1023px) {
-		:global(.cantina-hotspot.hs) {
-			left: var(--hs-tl);
-			top: var(--hs-tt);
-		}
-	}
-	@media (max-width: 767px) {
-		:global(.cantina-hotspot.hs) {
-			left: var(--hs-ml);
-			top: var(--hs-mt);
-		}
-	}
 	/* Phones: the viewport stays full-bleed, the text sections keep the 16px gutter. */
 	@media (max-width: 599px) {
 		.bar-relationships,
@@ -1258,15 +1257,24 @@
 			margin-right: var(--space-md);
 		}
 	}
-	/* Mobile-only swipe dots (Blade: .nav-mobile). */
+	/* Phone-only page dots on the picture. */
 	.cantina-dots {
 		position: absolute;
 		bottom: 0.75rem;
 		left: 0;
 		right: 0;
 		z-index: 20;
+		pointer-events: none; /* the full-width row must not cover the arrows in the corners */
 	}
-	@media (min-width: 600px) {
+	.cantina-dots .carousel-dot {
+		pointer-events: auto;
+	}
+	/* Over the light picture the shared light-grey dots disappear. */
+	.cantina-dots .carousel-dot:not(.carousel-dot--active)::before {
+		background: var(--color-anthracite);
+		opacity: 0.35;
+	}
+	@media (min-width: 768px) {
 		.cantina-dots {
 			display: none;
 		}

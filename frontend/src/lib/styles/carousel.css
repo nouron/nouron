@@ -1,7 +1,7 @@
 /* carousel.css — shared card-carousel primitives (Berater, Hangar, future screens)
  *
  * Pattern: horizontal swipe carousel with arrow nav (tablet) + dot pager (mobile).
- * NOT for the Cantina panorama swipe — that uses swipe.css / swipe.js.
+ * The Cantina panorama reuses the swipe (4 screen-wide pages, its own arrows on the picture).
  *
  * Breakpoints:
  *   ≥900px  — all cards visible in a row, arrows + dots hidden

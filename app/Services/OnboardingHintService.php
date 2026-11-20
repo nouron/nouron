@@ -104,10 +104,10 @@ class OnboardingHintService
 
     /** Milestone buildings that explain themselves when finished: id => lang key stem. */
     private const COMPLETION_POPUPS = [
-        31 => 'sciencelab',
-        44 => 'hangar',
-        52 => 'bar',
-        54 => 'uplink',
+        BuildingId::Sciencelab->value => 'sciencelab',
+        BuildingId::Hangar->value => 'hangar',
+        BuildingId::Bar->value => 'bar',
+        BuildingId::UplinkStation->value => 'uplink',
     ];
 
     /**
@@ -419,7 +419,7 @@ class OnboardingHintService
      * (rank 15) catches "AP left but no missing must-have building" — this only
      * fires once NEITHER a build-hint NOR any AP pool has anything left to spend,
      * so "alles Wichtige erledigt" is actually true when shown. Without this gate
-     * it used to fire with e.g. 10 unused Bau-AP whenever Cantina/Agrardom/Analytik
+     * it used to fire with e.g. 10 unused AP whenever Cantina/Agrardom/Analytik
      * were all three already built (Sol-5 playtest finding, 2026-06-23).
      */
     private function checkHintEndSol(int $colonyId, int $currentTick): bool
@@ -450,7 +450,7 @@ class OnboardingHintService
      * at, not *how much* is left there. A domain only counts when the player
      * can actually act on it (playtest review 2026-07-14 — a "spend your
      * research AP" nag without a Sciencelab, or "end the Sol, nothing left"
-     * with idle-but-usable Nav-AP, are both wrong): research needs a built
+     * with idle-but-usable AP, are both wrong): research needs a built
      * Sciencelab, economy a built Cantina, navigation an affordable fog tile.
      * Construction has no gate, so it is checked last (not first) — otherwise
      * it would always win once any AP is left and the other three branches
@@ -470,20 +470,20 @@ class OnboardingHintService
             return null;
         }
 
-        if ($this->hasBuiltBuilding($colonyId, 31)) { // sciencelab gates the techtree
+        if ($this->hasBuiltBuilding($colonyId, BuildingId::Sciencelab->value)) { // gates the techtree
             return 'research';
         }
         if ($this->canAffordCheapestFogTile($colonyId, $ap)) {
             return 'navigation';
         }
-        if ($this->hasBuiltBuilding($colonyId, 52)) { // cantina gates trade offers
+        if ($this->hasBuiltBuilding($colonyId, BuildingId::Bar->value)) { // gates trade offers
             return 'economy';
         }
         if ($this->constructionAvailable($colonyId)) {
             return 'construction';
         }
 
-        return $this->hasBuiltBuilding($colonyId, 44) ? 'hangar' : 'blocked';
+        return $this->hasBuiltBuilding($colonyId, BuildingId::Hangar->value) ? 'hangar' : 'blocked';
     }
 
     /**
@@ -771,7 +771,7 @@ class OnboardingHintService
     /**
      * Invest-site hint (rank 6): an active construction project exists — a placed
      * level-0 building (construction site) or a started CC upgrade (ap_spend > 0) —
-     * and Bau-AP is still available this Sol. Nudges the player to finish what was
+     * and AP is still available this Sol. Nudges the player to finish what was
      * started before placing the next thing; combined with the placement hints
      * (Agrardom rank 4, path buildings ranks 8-10) this produces the natural
      * "place → invest to done → place next" rhythm of the Sol-1-4 ramp without
@@ -838,15 +838,15 @@ class OnboardingHintService
     /**
      * Explore hint (rank 8, Sol 1 only): the base colony AP pool (12/Sol) sits idle
      * early because nothing guides the player to scout. While unexplored tiles
-     * remain and Navigation AP is available, nudge exploration — it lifts fog,
+     * remain and AP is available, nudge exploration — it lifts fog,
      * reveals regolith for the Harvester relocation and surrounding hazards.
      *
-     * Uses the existing explore mechanic (ring-staggered Nav-AP cost — see
+     * Uses the existing explore mechanic (ring-staggered AP cost — see
      * game.colony.explore_cost_per_ring); the start map is seeded with reward
-     * tiles (regolith). Ranked below the Bau-AP track, so the build guidance
+     * tiles (regolith). Ranked below the build track, so the build guidance
      * (engineer/harvester/repair/CC-invest) always comes first via rank ordering;
-     * explore then fills the otherwise-idle Nav-AP. Self-clearing, never
-     * persisted: disappears once the Nav-AP is spent, the fog is cleared, the
+     * explore then fills the otherwise-idle AP. Self-clearing, never
+     * persisted: disappears once the AP is spent, the fog is cleared, the
      * tile-count throttle kicks in, or the Sol window has passed.
      */
     private function checkHintExplore(int $colonyId, int $currentTick): bool
@@ -865,7 +865,7 @@ class OnboardingHintService
         }
 
         // Ring 0 (CC) and ring 1 are auto-explored at seed time — only count tiles
-        // the player actually spent Nav-AP to reveal (ring >= 2).
+        // the player actually spent AP to reveal (ring >= 2).
         $maxExploredTiles = (int) config('game.onboarding.hint_explore_max_explored_tiles', 6);
         $exploredTiles = DB::table('colony_tiles')
             ->where('colony_id', $colonyId)
@@ -876,9 +876,9 @@ class OnboardingHintService
             return false;
         }
 
-        // Not just "any Nav-AP left" — the cheapest unexplored tile (ring-staggered
+        // Not just "any AP left" — the cheapest unexplored tile (ring-staggered
         // cost) must actually be affordable. Otherwise the hint nags the player to
-        // explore with AP that can't pay for anything (e.g. 1 Nav-AP left but the
+        // explore with AP that can't pay for anything (e.g. 1 AP left but the
         // only remaining fog is ring 2+ at 2+ AP/tile).
         $cheapestRing = (int) DB::table('colony_tiles')
             ->where('colony_id', $colonyId)
@@ -998,7 +998,7 @@ class OnboardingHintService
      * Hint Agrardom (rank 4, from Sol 1): bioFacility (building_id=41) not yet
      * built, Harvester >= level 1. The Agrardom is the colony's first build
      * project (playtest review 2026-07-14) — hard prerequisite for CC Lv2, so
-     * it leads the Bau-AP track: placed + part-invested Sol 1, finished Sol 2.
+     * it leads the build track: placed + part-invested Sol 1, finished Sol 2.
      */
     private function checkHintAgrardome(int $colonyId, int $currentTick): bool
     {
@@ -1059,7 +1059,7 @@ class OnboardingHintService
 
     /**
      * Hint: 2+ of (Cantina/Agrardom/Analytik) are simultaneously eligible
-     * (prereqs met, not yet placed) but Bau-AP/Regolith won't stretch to all
+     * (prereqs met, not yet placed) but AP/Regolith won't stretch to all
      * of them this Sol — nudges the player to pick one rather than wondering
      * why only one of several "ready" buildings is being suggested. Purely
      * informational/strategic (rank 11, above the individual build hints) —
@@ -1095,11 +1095,11 @@ class OnboardingHintService
     /**
      * "Build X" hints (Cantina/Agrardom/Analytik) must not nag the player to
      * place a building they can't currently afford — same bug class as the
-     * Sol-1 Agrardom leak, generalized: checks remaining Bau-AP this Sol AND
+     * Sol-1 Agrardom leak, generalized: checks remaining AP this Sol AND
      * Regolith/Werkstoffe/Supply against the building's actual placement cost
      * (BuildingCostService::placementCost() — erect cost + first-level Regolith,
      * the same amount ColonyController::placeBuilding charges, T9).
-     * Placing always costs exactly 1 Bau-AP regardless of building type.
+     * Placing always costs exactly 1 AP regardless of building type.
      */
     private function canAffordBuildingPlacement(int $colonyId, int $buildingId): bool
     {

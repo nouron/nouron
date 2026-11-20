@@ -101,7 +101,7 @@ class TechtreeController extends BaseController
 
         // Ship capacity = bays of the single hangar hall (T30 B1): hall level, at least
         // the apron once a hall stands.
-        $hangarCap = isset($instanceCounts[44])
+        $hangarCap = isset($instanceCounts[BuildingId::Hangar->value])
             ? max(1, $this->hangarService->hangarMaxLevel($colonyId))
             : 0;
 
@@ -167,7 +167,7 @@ class TechtreeController extends BaseController
                     },
                     // Reverse of required_desc: what becomes available/changes specifically
                     // at the NEXT level (Owner-Playtest-Fund 2026-08-31, e.g. "Hangar Lv2
-                    // unlocks Frachter" for buildings, "-4% Bau-AP-Kosten" for knowledge —
+                    // unlocks Frachter" for buildings, "-4% AP-Kosten" for knowledge —
                     // buildings have discrete gate-unlocks (BuildingUnlockService), knowledge
                     // has continuous effect curves (KnowledgeEffectDescriptionService,
                     // follow-up 2026-08-31) — same UI slot either way.

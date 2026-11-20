@@ -77,8 +77,10 @@
 .cantina-viewport {
     position: relative;
     width: 100%;
-    height: 720px;
+    aspect-ratio: 16 / 9; /* the picture's own ratio: seats (lib/cantina-seats.json) are % of the picture */
+    container-type: inline-size;
     overflow: hidden;
+    touch-action: pan-y; /* horizontal drags page through the picture (Carousel), vertical ones scroll */
     border-radius: var(--pico-border-radius, 8px);
     border: 1px solid var(--pico-muted-border-color, #e8e8ec);
     background: #f7f7f5;
@@ -94,8 +96,7 @@
     height: 100%;
     width: 100%;
     background-image: url("../../../../public/img/cantina/cantina-interior.webp"); /* was relative to public/css */
-    background-size: cover;
-    background-position: center;
+    background-size: 100% 100%; /* the wrapper has the picture's ratio, so nothing is cropped or stretched */
     background-repeat: no-repeat;
     transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     will-change: transform;
@@ -106,7 +107,7 @@
     .cantina-viewport {
         height: calc(100vh - var(--page-offset-cantina)); /* fallback for browsers without dvh */
         height: calc(100dvh - var(--page-offset-cantina));
-        aspect-ratio: unset;
+        aspect-ratio: auto;
         border-radius: 0;
         border: none;
         margin-bottom: 0;
@@ -115,9 +116,14 @@
         left: 50%;
         transform: translateX(-50%);
     }
+    /* 4 screens wide at the picture's ratio. Short screens cut the ceiling; the bottom 8% (bare floor, below every
+       seat) hangs below the edge so the seats from the bar (top) to the front tables still fit on a 360x640 phone. */
     .cantina-background-wrapper {
-        width: 300%;
-        background-position: left center;
+        width: 400%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        top: auto;
+        bottom: -18vw; /* 8% of the wrapper height (400vw * 9/16 = 225vw) */
     }
 }
 
@@ -132,12 +138,24 @@
 
 /* One look for every figure in the scene (guests, merchant, story characters, the bartender):
    a plain portrait card. Hover and press come from controls.css. */
-.cantina-hotspot {
+.cantina-hotspot,
+.cantina-bartender {
+    /* Centred on its seat (left/top inline); phones: fixed size, larger screens: scales with the picture. */
+    --card-w: clamp(80px, 10cqw, 150px);
     position: absolute;
-    width: 160px;
-    height: 220px;
-    margin-left: -80px; /* Center hotspot on coordinate */
-    margin-top: -110px;
+    width: var(--card-w);
+    height: calc(var(--card-w) * 11 / 8);
+    margin-left: calc(var(--card-w) / -2);
+    margin-top: calc(var(--card-w) * -11 / 16);
+}
+@media (max-width: 767px) {
+    .cantina-hotspot,
+    .cantina-bartender {
+        --card-w: 96px;
+    }
+}
+
+.cantina-hotspot {
     background: var(--color-surface);
     border: 2px solid var(--color-accent, #8c2030);
     cursor: pointer;
@@ -212,27 +230,24 @@
         opacity 0.3s ease;
 }
 
-/* Action-type accent — one edge only, colour matches the AP-chip family for that
-   type (nav/build/research/economy/strategy), neutral grey when the type is
-   unclear/not yet categorized. Top edge on the mobile bottom-sheet (the edge
-   the drawer "enters" from), left edge on the centered desktop dialog. */
-.cantina-modal--nav {
-    border-top-color: #1e40af;
-}
-.cantina-modal--build {
-    border-top-color: #166534;
-}
-.cantina-modal--research {
-    border-top-color: #5b21b6;
-}
-.cantina-modal--economy {
-    border-top-color: #b45309;
-}
-.cantina-modal--strategy {
-    border-top-color: #9f1239;
-}
-.cantina-modal--neutral {
-    border-top-color: #6b7280;
+/* Same frame as every other dialog (controls.css): anthracite hairline, cut corners, accent bar breaking up to the right.
+   Copied rather than shared because the shared frame animates with transform, which this modal uses for its position. */
+.cantina-modal {
+    border-color: var(--color-anthracite);
+    background-image: linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent)), linear-gradient(var(--color-accent), var(--color-accent));
+    background-repeat: no-repeat;
+    background-position:
+        0 0,
+        68px 0,
+        84px 0,
+        95px 0,
+        103px 0;
+    background-size:
+        64px 3px,
+        12px 3px,
+        7px 3px,
+        4px 3px,
+        2px 3px;
 }
 
 /* Mobile drawer (slides up from bottom) */
@@ -242,9 +257,7 @@
         left: 0;
         right: 0;
         max-height: 85vh;
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
-        border-top-width: 4px;
+        border-radius: 0 var(--bevel-lg) 0 0; /* bottom sheet: only the top right is cut, the bottom sits on the screen edge */
         transform: translateY(100%);
     }
     .cantina-modal.open {
@@ -258,7 +271,7 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%) scale(0.92);
-        border-radius: 10px;
+        border-radius: 0 var(--bevel-lg) 0 var(--bevel-lg);
         width: 720px;
         max-width: calc(100vw - 2rem);
         max-height: calc(100vh - 4rem);
@@ -269,28 +282,6 @@
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
         pointer-events: auto;
-    }
-    .cantina-modal[class*="cantina-modal--"] {
-        border-top-width: 1px;
-        border-left-width: 4px;
-    }
-    .cantina-modal--nav {
-        border-left-color: #1e40af;
-    }
-    .cantina-modal--build {
-        border-left-color: #166534;
-    }
-    .cantina-modal--research {
-        border-left-color: #5b21b6;
-    }
-    .cantina-modal--economy {
-        border-left-color: #b45309;
-    }
-    .cantina-modal--strategy {
-        border-left-color: #9f1239;
-    }
-    .cantina-modal--neutral {
-        border-left-color: #6b7280;
     }
 }
 
@@ -941,13 +932,7 @@
 
 /* cantina bar layout */
 .cantina-bartender {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    margin-left: -80px; /* centred without a transform, so the shared hover lift works */
     z-index: 15;
-    width: 160px;
-    height: 220px;
     padding: 0;
     border: 2px solid var(--color-accent, #8c2030);
     background: var(--color-surface);
@@ -968,22 +953,6 @@
     display: none;
 }
 
-/* Desktop: static background, so he can stand behind the bar on the left of the picture. */
-@media (min-width: 768px) {
-    .cantina-bartender {
-        left: 10%;
-        bottom: 230px;
-    }
-}
-
-@media (max-width: 767px) {
-    .cantina-bartender {
-        bottom: 1.75rem;
-        width: 96px;
-        height: 132px;
-        margin-left: -48px;
-    }
-}
 
 /* Variant C: a conversation length whose AP exceed the rest to the next level (warning, not a block). */
 .bar-conversation-wasted {
@@ -997,4 +966,25 @@
     color: var(--color-warning-fg);
     border: 1px solid var(--color-warning);
     white-space: nowrap;
+}
+
+/* Phones: arrows in the bottom corners, level with the dots, show there is more of the cantina to either side
+   (the floor strip below the front tables stays free of cards). */
+.carousel-arrow.cantina-arrow {
+    position: absolute;
+    bottom: 0.5rem;
+    z-index: 20;
+    display: flex;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.cantina-arrow--prev {
+    left: var(--space-sm);
+}
+.cantina-arrow--next {
+    right: var(--space-sm);
+}
+@media (min-width: 768px) {
+    .carousel-arrow.cantina-arrow {
+        display: none;
+    }
 }

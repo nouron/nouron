@@ -37,7 +37,7 @@ return [
     // stays reachable within the typical Lv4 timing window.
     'colony_zone_expansion' => [6, 3, 3, 3, 0],
 
-    // Navigation-AP cost to explore a fogged tile, keyed by ring distance from the
+    // AP cost to explore a fogged tile, keyed by ring distance from the
     // CC (ring 0). AP scale 2026-11-13 (spec §11.3, profile kept): rings 1 and 2 cost
     // the same, ring 3 more — the smaller pool sets the reveal pace.
     'colony' => [
@@ -252,7 +252,7 @@ return [
         // CC scales separately (config/buildings.php cc_upgrade_regolith_per_level).
         'levelup_regolith_flat' => 25,
 
-        // Per-building per-Sol cap on construction AP invested toward a level-up
+        // Per-building per-Sol cap on AP invested toward a level-up
         // (Owner decision 2026-10-16): a time brake for Phase 1 that leaves Regolith
         // income alone and stops a building (CC included) from finishing, or gaining
         // several levels, in a single Sol. Cap = base + the engineer's specialist bonus
@@ -515,7 +515,7 @@ return [
     //   below the barter baseline (88%), matching the Owner's "seltener als
     //   die normale Ressourcen-Rotation" requirement without being so rare it
     //   never shows up within a run.
-    // ap_cost_accept: Economy-AP consumed when the player accepts any bar offer (shown as chip on button).
+    // ap_cost_accept: AP consumed when the player accepts any bar offer (shown as chip on button).
     // level_offer_duration: how many ticks an offer stays valid, keyed by bar building level.
     // level_max_concurrent: max simultaneous active *guest* offers per colony, keyed by
     //   bar level — Corvan's commodity offers (bar_offers.visit_id set) have their own
@@ -628,7 +628,7 @@ return [
 
             // Lenn (ai_researcher) — Unlicensed AI Researcher.
             'ai_researcher' => [
-                // Mechanical A: next exploreTile() call costs 0 Navigation-AP
+                // Mechanical A: next exploreTile() call costs 0 AP
                 // (100% discount, not a partial one) — see
                 // colony_information_pool_state.active_nav_voucher, consumed
                 // by ColonyTileService::exploreTile().
@@ -1061,7 +1061,7 @@ return [
         // Minimum ticks elapsed before Agrardom hint fires (Harvester>=1 + bioFacility missing).
         // 0 (Sol 1) — the Agrardom is the colony's first build project (playtest review
         // 2026-07-14): placed and part-invested on Sol 1, finished Sol 2. It is the hard
-        // prerequisite for CC Lv2, so it must come before everything else on the Bau-AP track.
+        // prerequisite for CC Lv2, so it must come before everything else on the build track.
         'hint_no_agrardome_after_tick' => 0,
 
         // Minimum ticks elapsed before Analytik-Labor hint fires (Agrardom placed + sciencelab missing).
@@ -1083,7 +1083,7 @@ return [
         // 0 = Sol 1 only — a single nudge into exploring the surroundings (find
         // regolith for the Harvester, scout hazards). Kept low on purpose: with
         // ring-staggered explore costs (game.colony.explore_cost_per_ring) repeated
-        // nudging would push the player to dump all Nav-AP into fog-clearing every
+        // nudging would push the player to dump all AP into fog-clearing every
         // Sol, defeating the slower reveal pace. See also the explore-tile-count
         // throttle in OnboardingHintService::checkHintExplore().
         'hint_explore_until_tick' => 0,

@@ -75,8 +75,10 @@ class BarRelationshipViewTest extends TestCase
         $this->assertNotFalse($counter);
         $this->assertGreaterThan($viewport, $counter);
         $this->assertLessThan($panel, $counter);
-        // The counter sits before the swipe dots, i.e. still inside the viewport.
-        $this->assertLessThan(strpos($html, 'swipe-dots'), $counter);
+        // He stands in the picture itself (seat "bar", owner 2026-11-20), before the page dots.
+        $this->assertGreaterThan(strpos($html, 'class="cantina-background-wrapper"'), $counter);
+        $this->assertLessThan(strpos($html, 'cantina-dots'), $counter);
+        $this->assertStringContainsString("seatStyle('bartender')", $html);
         $this->assertSame(1, substr_count($html, "open('bartender');"));
         $this->assertStringContainsString("t('colony.bartender_counter_role')", $html);
         // His conversation options stay reachable in the relationship panel.
