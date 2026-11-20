@@ -589,7 +589,8 @@
 											{#if ship.deliver_at_tick != null}
 												<div class="hangar-stat-row">
 													<span class="hangar-stat-label">{t('colony.hangar_delivery_pending')}</span>
-													<span class="hangar-stat-value hangar-arrival-tick">Sol {ship.deliver_at_tick}</span>
+													<!-- Docked when the Sol with this tick ends; the header shows Sol = tick + 1. -->
+													<span class="hangar-stat-value hangar-arrival-tick">Sol {ship.deliver_at_tick + 1}</span>
 												</div>
 											{/if}
 										</div>

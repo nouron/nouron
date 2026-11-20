@@ -740,7 +740,7 @@ class OnboardingHintService
         // useless until a ship has arrived (the Drohne is still being delivered) — so a Hangar
         // without a ship does not count as the building that unlocked the slot yet.
         if (! $this->hasArrivedShip($colonyId)) {
-            $rows = $rows->reject(fn ($row) => (int) $row->building_id === 44);
+            $rows = $rows->reject(fn ($row) => (int) $row->building_id === BuildingId::Hangar->value);
         }
 
         // Only a path building whose matching advisor is not yet hired is worth announcing
@@ -987,7 +987,7 @@ class OnboardingHintService
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level');
         $requiredCcLevel = (int) DB::table('buildings')
-            ->whereIn('id', [31, 44, 52])
+            ->whereIn('id', array_keys(PathBuildingGateService::ADVISOR_TYPES))
             ->min('required_building_level');
 
         return $ccLevel >= max(1, $requiredCcLevel)

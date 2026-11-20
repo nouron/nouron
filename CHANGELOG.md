@@ -4,6 +4,7 @@
 
 - Cantina: Figuren stehen an festen Plätzen im Bild, die zu ihnen passen (Tomas hinter dem Tresen, Gäste am Tresen oder an Tischen, noch unbekannte Figuren am Eingang, die mysteriöse Figur in der Ecke), auf allen Geräten an denselben Stellen. Auf dem Handy ist das Bild 4 Bildschirme breit, gewischt wird wie bei Beratern und Hangar (Mitziehen, Pfeile, Punkte); keine Karte liegt auf einer Seitengrenze, ein Test prüft die Plätze. Tomas steht jetzt im Bild statt fest am unteren Rand.
 - AP-Arten-Reste (T42): Kommentare und Texte sprechen nur noch von AP. Pfadgebäude-IDs stehen nicht mehr als Zahlen im Code (T34-Rest). ROADMAP: Score-System neu konzipieren (T57), höchstens 3–4 Cantina-Figuren pro Sol (T60).
+- Handy: Die Zurück-Taste schließt das Vollbild-Fenster von Kolonie und Labor, statt die Seite zu verlassen. Hangar zeigt die Ankunft bestellter Schiffe jetzt in der richtigen Sol (vorher eine zu früh). Browser-Check aus T37 nachgeholt; T39 und T43-E4 abgehakt, letzte nackte Gebäude-Nummern ersetzt.
 
 ## 2026-11-19
 

@@ -954,7 +954,7 @@ class ColonyController extends BaseController
         // so the nav reflects the new state without manual page refresh.
         $navUnlocked = $leveledUp
             && $row->level === 0
-            && in_array($buildingId, [31, 44, 52], true);
+            && array_key_exists($buildingId, PathBuildingGateService::ADVISOR_TYPES);
 
         return response()->json([
             'ok' => true,

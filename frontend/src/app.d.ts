@@ -5,7 +5,10 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/** Id of the open MobileSheet (back button closes it). */
+			sheet?: string;
+		}
 		// interface Platform {}
 	}
 }
