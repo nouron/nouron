@@ -53,7 +53,9 @@ Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Pr
 
 #### Kenntnisse
 
-Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus. Zusätzlich gelten funktionale Gebäude-Voraussetzungen je nach Kenntnis.
+Die 7 Kenntnisse sind das einzige Forschungssystem. Für die aktive Forschung setzen alle das Analytik-Labor voraus. Zusätzlich gelten funktionale Gebäude-Voraussetzungen je nach Kenntnis.
+
+> **Ausnahme stille Forschung (GDD §10):** Steigt eine Kenntnis durch zweckgebundene Bonus-AP aus der Cantina von selbst auf, entfällt die Labor-Voraussetzung ganz, auch eine höhere Labor-Stufe (z. B. Lv 2 bei `geology`). Die übrigen Gebäude-Voraussetzungen der Tabelle, das CC-Gate und die Höchststufe gelten weiter (`ResearchService::checkRequiredBuildingsByEntityId`).
 
 | Key (intern) | Name (DE) | Voraussetzung | Max-Level |
 |---|---|---|---|
