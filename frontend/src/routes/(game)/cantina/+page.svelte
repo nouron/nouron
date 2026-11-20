@@ -94,6 +94,7 @@
 		merchantItems: { id: number; label: string; price_credits: number; cost_credits: number; sold: boolean }[];
 		merchantForecast: { sols: number; categories: string[] | null } | null;
 		characterAssignment: Record<string, Char>;
+		offerSpots?: Record<number, string>;
 		characters: Record<string, Char>;
 		firstVisit: boolean;
 		offerApCost: number;
@@ -176,7 +177,8 @@
 		const data = d;
 		const n = data.offers.length;
 		const offers = data.offers.map((offer, idx) => {
-			const slot = SPOTS[idx % SPOTS.length];
+			// Server-side spot (stable within the Sol, T60); index fallback for older payloads.
+			const slot = data.offerSpots?.[offer.id] ?? SPOTS[idx % SPOTS.length];
 			const corvan = offer.visit_id !== null;
 			let char: Char | null = corvan ? null : (data.characterAssignment[slot] ?? null);
 			if (char?.game_role === 'story_hook') char = null;

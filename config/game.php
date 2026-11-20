@@ -535,6 +535,10 @@ return [
             'negotiate_chance_max' => 0.95,
         ],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
+        // T60 (owner 2026-11-20): besides Tomas, this many figures sit in the cantina per
+        // Sol (rolled per Sol); the travelling merchant comes first, the rest is chance.
+        // Figures outside the cast have no offers or conversations that Sol.
+        'guests_per_sol' => ['min' => 1, 'max' => 3],
         'regolith_sell_offer_chance_pct' => 12,
         'offer_duration' => 2,  // fallback when bar level unknown
         'ap_cost_accept' => 1,  // AP scale 2026-11-13: 2 → 1

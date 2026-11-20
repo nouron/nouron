@@ -57,6 +57,8 @@ class BarControllerTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        // T60 caps the cantina to a few figures per Sol; these tests are about the actions, so everyone sits there.
+        config(['game.bar.guests_per_sol' => ['min' => 99, 'max' => 99]]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -31,6 +31,8 @@ class PresentCharacterConversationTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        // T60 caps the cantina to a few figures per Sol; these tests are about the actions, so everyone sits there.
+        config(['game.bar.guests_per_sol' => ['min' => 99, 'max' => 99]]);
         $this->app->instance(TickService::class, new TickService(self::TICK));
         DB::table('colony_path_levels')->where('colony_id', self::COLONY_ID)->delete();
         foreach (['bar_offers', 'bar_encounters', 'bar_concerns', 'bar_information_encounters'] as $table) {

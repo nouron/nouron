@@ -332,6 +332,7 @@ return [
     'bar_offer_get' => 'You receive',
     'bar_offer_expires' => 'Expires in Sol',
     'bar_offer_not_found' => 'Offer not found.',
+    'bar_not_present' => 'This person is not in the cantina today.',
     'bar_offer_already_accepted' => 'Offer already accepted.',
     'bar_offer_expired' => 'Offer has expired.',
     'bar_offer_insufficient_resources' => 'Not enough resources.',
