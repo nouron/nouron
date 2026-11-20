@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Run;
-use App\Services\RunProgressService;
 use App\Services\RunTaskCatalog;
 use Illuminate\Http\JsonResponse;
 
@@ -25,7 +24,8 @@ class RunResultController extends Controller
             'id' => $run->id,
             'status' => $run->status,
             'fail_reason' => $run->fail_reason,
-            'score' => app(RunProgressService::class)->calculateScore($run),
+            // Frozen by RunProgressService::endRun(), like the lobby list; recomputing would use today's credits (T57).
+            'score' => (int) ($run->score ?? 0),
             'current_tick' => (int) $run->current_tick,
             'tick_limit' => $run->getTickLimit(),
             'objectives' => $run->objectives->map(fn ($obj) => [

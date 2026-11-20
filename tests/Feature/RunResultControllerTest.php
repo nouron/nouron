@@ -7,6 +7,7 @@ use App\Models\RunObjective;
 use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
@@ -61,6 +62,20 @@ class RunResultControllerTest extends TestCase
         $response->assertJsonPath('status', 'completed');
         $response->assertJsonStructure(['score', 'objectives' => [['label', 'current', 'target', 'pct', 'done']]]);
         $response->assertJsonPath('objectives.0.pct', 100);
+    }
+
+    /** T57: the result screen shows the score frozen at the run's end, like the lobby, not one recomputed from today's credits. */
+    public function test_result_shows_the_score_frozen_at_run_end(): void
+    {
+        $run = $this->makeRun('completed');
+        $run->update(['score' => 4321]);
+        // Credits are per user and keep changing after the run (next run, purchases): they must not move an old score.
+        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['credits' => 999999]);
+
+        $response = $this->actingAs($this->user())->get(route('run.result', ['id' => $run->id]));
+
+        $response->assertOk();
+        $response->assertJsonPath('score', 4321);
     }
 
     public function test_active_run_is_rejected_as_not_finished(): void

@@ -1291,10 +1291,11 @@ dialog.discovery-dialog {
     opacity: 0.55;
 }
 
+/* Cannot afford: the missing cost chip turns red (design system, action cards). */
 .building-list-chip--missing {
-    color: #a32020;
-    background: #fdecec;
-    border-color: #e8a8a8;
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+    border-color: var(--color-danger);
 }
 
 .building-list-reasons {
