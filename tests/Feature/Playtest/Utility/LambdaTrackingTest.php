@@ -61,9 +61,9 @@ class LambdaTrackingTest extends TestCase
         $bot->sol = 2;
         $this->playOneSol($bot, $rules);   // closes Sol 1
 
-        $this->assertEqualsWithDelta(1.25, $bot->lambdaBySol[0], 1e-6);   // 0.7 * 0.5 + 0.3 * 3.0
-        $this->assertEqualsWithDelta(0.875, $bot->lambdaBySol[1], 1e-6);  // 0.7 * 1.25 + 0.3 * 0
-        $this->assertEqualsWithDelta(0.875, $bot->lambdaAp, 1e-6);
+        $this->assertEqualsWithDelta(1.95, $bot->lambdaBySol[0], 1e-6);   // 0.7 * 1.5 + 0.3 * 3.0
+        $this->assertEqualsWithDelta(1.365, $bot->lambdaBySol[1], 1e-6);  // 0.7 * 1.95 + 0.3 * 0
+        $this->assertEqualsWithDelta(1.365, $bot->lambdaAp, 1e-6);
     }
 
     /** One Sol in which $candidate fires once, closed by the next; returns λ after Sol 0. */
@@ -113,13 +113,13 @@ class LambdaTrackingTest extends TestCase
     public function test_the_finishing_click_of_a_cycle_counts_with_the_whole_cycle_s_ap(): void
     {
         // Review S3 I5: net 20 over a 10-AP cycle is density 2, not 20 for the last click.
-        $this->assertEqualsWithDelta(0.7 * 0.5 + 0.3 * 2.0, $this->lambdaAfterOne($this->work(20.0, 1, 10)), 1e-6);
+        $this->assertEqualsWithDelta(0.7 * 1.5 + 0.3 * 2.0, $this->lambdaAfterOne($this->work(20.0, 1, 10)), 1e-6);
     }
 
     public function test_the_marginal_density_is_capped(): void
     {
-        // Review S3 I5: λ feeds the advisor-slot value it is measured from — capped at lambda_ap_max (3).
-        $this->assertEqualsWithDelta(0.7 * 0.5 + 0.3 * 3.0, $this->lambdaAfterOne($this->work(100.0, 1)), 1e-6);
+        // Review S3 I5: λ feeds the advisor-slot value it is measured from — capped at lambda_ap_max (9 since T58a).
+        $this->assertEqualsWithDelta(0.7 * 1.5 + 0.3 * 9.0, $this->lambdaAfterOne($this->work(100.0, 1)), 1e-6);
     }
 
     public function test_adapter_mode_never_tracks_lambda(): void

@@ -55,11 +55,33 @@ class BotStrategyBarOfferTest extends TestCase
         $this->assertEmpty($this->rule('accept_bar_offer')['when']($bot));
     }
 
+    /** T60: only figures sitting in the cantina today can be traded with (the API answers not_present otherwise). */
+    public function test_only_offers_of_figures_in_todays_cast_are_taken(): void
+    {
+        $bot = $this->bootWithBar();
+        config(['game.bar.guests_per_sol' => ['min' => 1, 'max' => 1]]);
+        $first = $this->offer($bot, giveResource: self::RES_REGOLITH, giveAmount: 10, getResource: self::RES_ORGANICS);
+        $second = $this->offer($bot, giveResource: self::RES_REGOLITH, giveAmount: 10, getResource: self::RES_ORGANICS);
+        // Today's cast holds only the second guest (stored like CantinaPresenceService::cast() does).
+        DB::table('cantina_casts')->insert([
+            'colony_id' => $bot->colonyId, 'tick' => app(TickService::class)->getTickCount(),
+            'size' => 1, 'figures' => json_encode(["offer_{$second}"]),
+        ]);
+
+        $candidate = $this->rule('accept_bar_offer')['when']($bot);
+
+        $this->assertNotEmpty($candidate);
+        $this->assertSame($second, (int) $candidate->id);
+        $this->assertNotSame($first, (int) $candidate->id);
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private function bootWithBar(): BotSession
     {
         $bot = BotSession::boot($this, 1);
+        // T60 caps the cantina to a few figures per Sol; these tests are about the offer choice.
+        config(['game.bar.guests_per_sol' => ['min' => 99, 'max' => 99]]);
         DB::table('bar_offers')->where('colony_id', $bot->colonyId)->delete();
         DB::table('colony_buildings')->insert([
             'colony_id' => $bot->colonyId,

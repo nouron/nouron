@@ -11,10 +11,12 @@ return [
     'base' => [
         'gamma' => 0.95,
         'horizon_max' => 40,
-        'lambda_ap_start' => 0.5,
+        // T58a (2026-11-20): λ is value per AP; the AP scale ÷3 makes every AP worth ~3x, so start,
+        // cap and research_min_density are ×3. Smoke batch 2026-11-20: λ hit the old cap 3.0 from Sol 0.
+        'lambda_ap_start' => 1.5,
         'lambda_ap_ema' => 0.3,
         // Review S3 I5: cap of the marginal density fed into λ (best regular density, geology Lv1 ≈ 2.5, spec 2.5).
-        'lambda_ap_max' => 3.0,
+        'lambda_ap_max' => 9.0,
         'price' => ['credits' => 0.04, 'organics' => 1.0, 'compounds' => 3.0, 'trust' => 2.0],
         'scarcity_clamp' => [0.5, 4.0],
         'trust_danger_margin' => 10,
@@ -37,7 +39,7 @@ return [
         // Review S3 I6: no floor — a level without a valued effect is worth nothing, and research
         // below the small self-salvage density (spec 2.5, ≈ 0.3/AP) leaves the AP to scans/salvage.
         'research_floor' => 0.0,
-        'research_min_density' => 0.3,
+        'research_min_density' => 0.9,
         // AP scale 2026-11-13: knowledge effects are absolute AP per event; assumed event
         // frequencies (CC levelups per Sol, long missions per Sol) turn them into AP per Sol.
         'cc_levelups_per_sol' => 0.1,
@@ -46,6 +48,12 @@ return [
         'goal_max_wait_sols' => 5,
         'min_net' => 0.01,
         'risk_aversion' => 0.0,
+    ],
+    // λ values before the AP scale ÷3, for tests pinned to the old AP numbers (PinsPreScaleApValues).
+    'pre_scale_ap' => [
+        'lambda_ap_start' => 0.5,
+        'lambda_ap_max' => 3.0,
+        'research_min_density' => 0.3,
     ],
     'profiles' => [
         'default' => [],

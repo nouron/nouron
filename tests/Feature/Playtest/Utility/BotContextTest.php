@@ -23,7 +23,7 @@ class BotContextTest extends TestCase
         $ctx = BotContext::capture($bot, BotProfile::named('default')->withOpening('hangar'));
 
         $this->assertSame([0, 1, 77, 40, 'hangar', 44], [$ctx->sol, $ctx->phase, $ctx->regolith, $ctx->horizon(), $ctx->opening, $ctx->openingBuildingId]);
-        $this->assertSame(0.5, $ctx->lambdaAp, 'start value until the session tracks lambda');
+        $this->assertSame(1.5, $ctx->lambdaAp, 'start value until the session tracks lambda');
         $this->assertSame(8.0, $ctx->incomeRg, 'income floor without any sol_next yet');
         $this->assertSame(0.95, $ctx->weights['gamma']);
         $this->assertSame(1.0, $ctx->phase1Urgency());

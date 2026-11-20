@@ -5,11 +5,14 @@ namespace Tests\Feature\Playtest;
 use App\Console\Commands\GameTick;
 use App\Enums\BuildingId;
 use App\Services\AdvisorService;
+use App\Services\BarService;
 use App\Services\BuildingApCapService;
 use App\Services\BuildingCostService;
+use App\Services\CantinaPresenceService;
 use App\Services\ColonyTileService;
 use App\Services\HangarService;
 use App\Services\PathBuildingGateService;
+use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunTaskCatalog;
@@ -379,6 +382,15 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'ask_bartender_advice',
+                // T58a: Tomas' advice costs no AP (earmarked bonus into a knowledge), so it never
+                // displaces anything; due every few Sols depending on his relationship level.
+                'when' => fn (BotSession $b) => self::bartenderAdviceCandidate($b),
+                'do' => fn (BotSession $b, int $knowledgeId) => $b->act('ask_bartender_advice', 'POST', '/colony/bar/talk-to-bartender', [
+                    'knowledge_id' => $knowledgeId,
+                ]),
+            ],
+            [
                 'name' => 'deep_scan_signal_tile',
                 // T30: LOW priority (directly before invest_find) — scans only use leftover AP,
                 // the find pool must absorb idle AP, not displace buildings/research (Spec 11.3).
@@ -402,6 +414,24 @@ class BotStrategy
                 'do' => fn (BotSession $b, object $c) => $b->act('invest_find', 'POST', '/colony/tile/salvage', [
                     'q' => $c->q,
                     'r' => $c->r,
+                ]),
+            ],
+            [
+                'name' => 'train_mission_family',
+                // T58a: Hangar training (mission yield per family) — after everything else, so it
+                // only takes AP nothing else wanted. One AP per click, within the family's Sol cap.
+                'when' => fn (BotSession $b) => self::trainingCandidate($b),
+                'do' => fn (BotSession $b, string $family) => $b->act('train_mission_family', 'POST', "/colony/path-depth/mission_family/{$family}/invest", [
+                    'ap' => 1,
+                ]),
+            ],
+            [
+                'name' => 'converse_character',
+                // T58a: Cantina conversations (relationship levels) — leftover AP only. Tomas first:
+                // his level sets how often he gives advice. Short option, one per figure and Sol.
+                'when' => fn (BotSession $b) => self::conversationCandidate($b),
+                'do' => fn (BotSession $b, array $c) => $b->act('converse_character', 'POST', "/colony/path-depth/character/{$c['slug']}/invest", [
+                    'ap' => $c['ap'],
                 ]),
             ],
         ];
@@ -1611,6 +1641,12 @@ class BotStrategy
             $level = (int) ($row->level ?? 0);
             $requiredCc = $ccCaps[$level + 1] ?? null;
             if ($requiredCc === null || $ccLevel >= $requiredCc) {
+                // Smoke batch 2026-11-20: skip a knowledge whose per-Sol cap is used up (the server
+                // answers knowledge_ap_cap) unless its levelup is ready, which the cap does not block.
+                $capState = app(ResearchService::class)->apCapState($b->colonyId, (int) $row->id);
+                if ($capState !== null && $capState['remaining'] < 1 && ! self::researchLevelupReady($b, (int) $row->id)) {
+                    continue;
+                }
                 $eligible[] = (object) ['id' => (int) $row->id, 'level' => $level, 'ap_spend' => (int) ($row->ap_spend ?? 0)];
             } else {
                 $ccBlocked = true;
@@ -1868,6 +1904,7 @@ class BotStrategy
             // T24: BarService::acceptOffer() rejects an unpayable give side with
             // bar_offer_insufficient_resources (40x in the 2026-09-26 baseline).
             // The give side is never changed by Handelsvorteil or negotiation.
+            ->filter(fn (object $offer): bool => self::inCast($b, $offer->visit_id !== null ? 'merchant' : "offer_{$offer->id}"))
             ->first(fn (object $offer): bool => self::resourceBalance($b, (int) $offer->give_resource_id) >= (int) $offer->give_amount);
     }
 
@@ -1891,6 +1928,7 @@ class BotStrategy
             ->orderByDesc('credits_amount')
             ->orderBy('id')
             ->get()
+            ->filter(fn (object $e): bool => self::inCast($b, "encounter_{$e->id}"))
             ->first(function (object $e) use ($b, $regolithSurplus): bool {
                 if ($e->give_resource_id === null) {
                     return true;
@@ -1917,6 +1955,7 @@ class BotStrategy
             ->where('expires_tick', '>', app(TickService::class)->getTickCount())
             ->orderBy('id')
             ->get()
+            ->filter(fn (object $c): bool => self::inCast($b, "concern_{$c->id}"))
             ->first(function (object $c) use ($b): bool {
                 if (self::availableAp($b) < (int) config("game.bar.concern.ap_cost.{$c->character_slug}", 0)) {
                     return false;
@@ -1941,14 +1980,89 @@ class BotStrategy
             ->where('is_resolved', false)
             ->where('expires_tick', '>', app(TickService::class)->getTickCount())
             ->orderBy('id')
-            ->first();
+            ->get()
+            ->first(fn (object $e): bool => self::inCast($b, "information_{$e->id}"));
 
         return $encounter === null ? null : ['encounter' => $encounter, 'knowledge_id' => self::bonusKnowledgeId($b)];
     }
 
+    /** T58a: knowledge for Tomas' advice when it is due today; null otherwise. */
+    private static function bartenderAdviceCandidate(BotSession $b): ?int
+    {
+        $bar = app(BarService::class);
+        if (self::barLevel($b) < 1 || $bar->bartenderApBonus($b->colonyId) <= 0
+            || $bar->bartenderAdviceInSols($b->colonyId, app(TickService::class)->getTickCount()) > 0) {
+            return null;
+        }
+
+        return self::bonusKnowledgeId($b);
+    }
+
+    /** T58a: cheapest unlocked training family with today's cap and AP left, lowest level first. */
+    private static function trainingCandidate(BotSession $b): ?string
+    {
+        if (self::availableAp($b) < 1) {
+            return null;
+        }
+        $service = app(PathDepthService::class);
+        $best = null;
+        foreach (array_keys((array) config('path_depth.families')) as $family) {
+            $state = $service->state($b->colonyId, PathDepthService::KIND_FAMILY, (string) $family);
+            if ($state['locked_until'] !== null || $state['level'] >= $state['level_cap'] || $state['ap_for_levelup'] <= 0
+                || ($state['ap_cap'] !== null && $state['ap_cap']['remaining'] < 1)) {
+                continue;
+            }
+            if ($best === null || $state['level'] < $best[1]) {
+                $best = [(string) $family, $state['level']];
+            }
+        }
+
+        return $best[0] ?? null;
+    }
+
     /**
-     * Knowledge to receive an AP bonus from a concern/encounter outcome: the
-     * lowest-level knowledge not yet at its cap (level 5), lowest id on ties.
+     * T58a: one conversation with a figure sitting in the cantina today: Tomas first, then the
+     * lowest relationship level; the cheapest option that is open, not capped and wastes nothing.
+     *
+     * @return array{slug: string, ap: int}|null
+     */
+    private static function conversationCandidate(BotSession $b): ?array
+    {
+        if (self::barLevel($b) < 1 || self::availableAp($b) < 1) {
+            return null;
+        }
+        $tick = app(TickService::class)->getTickCount();
+        $service = app(PathDepthService::class);
+        $present = app(CantinaPresenceService::class)->presentCharacters($b->colonyId, $tick);
+        usort($present, fn (string $x, string $y): int => [$x !== 'bartender', self::relationshipLevel($b, $x), $x]
+            <=> [$y !== 'bartender', self::relationshipLevel($b, $y), $y]);
+        foreach ($present as $slug) {
+            $options = $service->conversation($b->colonyId, $slug)['options'];
+            usort($options, fn (array $x, array $y): int => $x['ap'] <=> $y['ap']);
+            foreach ($options as $option) {
+                if ($option['available'] && ! $option['capped'] && $option['wasted'] === 0 && $option['ap'] <= self::availableAp($b)) {
+                    return ['slug' => $slug, 'ap' => (int) $option['ap']];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static function relationshipLevel(BotSession $b, string $slug): int
+    {
+        return app(PathDepthService::class)->state($b->colonyId, PathDepthService::KIND_CHARACTER, $slug)['level'];
+    }
+
+    /** T60: whether the cantina figure sits there today, as the API checks it (no not_present rejections). */
+    private static function inCast(BotSession $b, string $key): bool
+    {
+        return app(CantinaPresenceService::class)->inCast($b->colonyId, app(TickService::class)->getTickCount(), $key);
+    }
+
+    /**
+     * Knowledge to receive an AP bonus from a concern/encounter outcome or Tomas' advice:
+     * the lowest-level knowledge the server accepts as a bonus target, lowest id on ties.
      */
     private static function bonusKnowledgeId(BotSession $b): ?int
     {
@@ -1959,7 +2073,9 @@ class BotStrategy
             ->pluck('level', 'research_id')
             ->all();
 
-        $candidates = array_values(array_filter($ids, fn (int $id): bool => (int) ($levels[$id] ?? 0) < 5));
+        // T58a: only knowledge the server accepts as a bonus target (max level, CC gate, requirements).
+        $research = app(ResearchService::class);
+        $candidates = array_values(array_filter($ids, fn (int $id): bool => $research->bonusTargetBlocker($b->colonyId, $id) === null));
         if ($candidates === []) {
             return null;
         }
