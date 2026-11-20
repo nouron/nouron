@@ -343,7 +343,7 @@ class ColonyTileService
     /**
      * Recalculate which terrain tiles belong to the colony zone for a given CC level.
      * Colony-zone tiles are buildable but NOT auto-explored — fog is lifted only by
-     * exploring (Nav-AP) or building on the tile. Ring 0 (CC tile) is always zone.
+     * exploring (AP) or building on the tile. Ring 0 (CC tile) is always zone.
      */
     public function assignColonyZone(int $colonyId, int $ccLevel): void
     {
@@ -354,8 +354,8 @@ class ColonyTileService
 
         // Mark colony zone tiles as buildable. Decoupled from exploration: the zone
         // grants build permission but does NOT auto-lift the fog — a zone tile stays
-        // fogged until the player explores it (Nav-AP) or builds on it (settle → see).
-        // This keeps "erschließen" (CC grows buildable area) and "erkunden" (Nav-AP
+        // fogged until the player explores it (AP) or builds on it (settle → see).
+        // This keeps "erschließen" (CC grows buildable area) and "erkunden" (AP
         // reveals the surroundings) as two distinct, separately-communicated axes.
         foreach ($colonyZone as [$q, $r]) {
             DB::table('colony_tiles')

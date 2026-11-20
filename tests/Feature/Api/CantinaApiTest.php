@@ -38,7 +38,7 @@ class CantinaApiTest extends TestCase
         $this->getJson('/api/v1/cantina')->assertOk()->assertJsonStructure([
             'barLevel', 'currentSol', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers',
             'tradeAdvantage', 'merchantAdvantage', 'merchantVisit', 'merchantItems', 'merchantForecast',
-            'hotspots', 'characterAssignment', 'characters', 'firstVisit', 'offerApCost', 'negotiateApCost',
+            'characterAssignment', 'characters', 'firstVisit', 'offerApCost', 'negotiateApCost',
             'encounter', 'storyEncounterSlug', 'concern', 'concernHasFailureLine', 'informationEncounter',
             'informationOutcomeLines', 'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',
             'relationships', 'conversationOptionCantinaLevel', 'relationshipMaxLevel',

@@ -122,14 +122,14 @@ dialog.sol-modal > article > footer {
     box-shadow: none !important;
 }
 
-/* Plain confirm button in a dialog footer (dialogs with their own button classes are untouched). */
+/* Primary button in a dialog footer: class="dialog-primary" (a class-less selector missed buttons that Svelte gives a scope class). */
 dialog.sol-modal > article > footer {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
 }
 
-dialog.sol-modal > article > footer > button:not([class]) {
+dialog.sol-modal > article > footer > .dialog-primary {
     width: auto;
     margin: 0;
     padding: 0.4rem 0.9rem;

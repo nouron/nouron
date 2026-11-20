@@ -187,11 +187,10 @@ class AdvisorService
             }
 
             // Path-building gate — scientist/pilot/trader require the matching building placed.
-            $pathBuildingMap = [
-                self::idFor('scientist') => 31,  // sciencelab
-                self::idFor('pilot') => 44,       // hangar
-                self::idFor('trader') => 52,      // bar
-            ];
+            $pathBuildingMap = [];
+            foreach (PathBuildingGateService::ADVISOR_TYPES as $buildingId => $type) {
+                $pathBuildingMap[self::idFor($type)] = $buildingId;
+            }
             if (isset($pathBuildingMap[$personellId])) {
                 $requiredBuildingId = $pathBuildingMap[$personellId];
                 $isPlaced = DB::table('colony_buildings')

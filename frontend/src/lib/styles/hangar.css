@@ -511,9 +511,9 @@
     font-size: 0.85rem;
     font-weight: 700;
     border-radius: 8px;
-    border: 1.5px solid #3b5ac6;
+    border: 1px solid var(--color-accent);
     background: transparent;
-    color: #3b5ac6;
+    color: var(--color-accent);
     cursor: pointer;
     letter-spacing: 0.02em;
     transition:
@@ -522,7 +522,7 @@
 }
 
 .btn-hangar-nexus-request:hover:not(:disabled) {
-    background: #f0f3ff;
+    background: var(--color-accent-tint);
 }
 
 .btn-hangar-nexus-request:disabled {

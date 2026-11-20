@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * BuildingService — manages colony buildings.
  *
- * Buildings require construction AP (engineers) to be invested before a
+ * Buildings require AP (engineers) to be invested before a
  * levelup can be triggered. Level is capped by building.max_level (if set).
  *
  * Every operation addresses exactly one colony_buildings row via
@@ -203,7 +203,7 @@ class BuildingService extends AbstractTechnologyService
             return 'not_placed';
         }
 
-        // Per-building per-Sol construction AP cap (game.build.ap_cap_per_sol): only the
+        // Per-building per-Sol AP cap (game.build.ap_cap_per_sol): only the
         // level-up investment ('add') is capped, never repair/remove.
         if ($action === 'add' && ! $bypassPoolCheck
             && app(BuildingApCapService::class)->wouldExceed($colonyId, $entityId, $instanceId ?? 1, abs($points))) {

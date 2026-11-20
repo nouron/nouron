@@ -844,6 +844,8 @@ return [
     'regolith_needed' => ':needed RG benötigt, :have RG vorhanden',
     // Svelte hangar screen (ADR 0006): carousel arrows (were hardcoded English in Blade)
     'hangar_prev_bay' => 'Vorheriger Stellplatz',
+    'cantina_prev_view' => 'Weiter links in der Cantina',
+    'cantina_next_view' => 'Weiter rechts in der Cantina',
     'hangar_next_bay' => 'Nächster Stellplatz',
 
     // Tomas' Rat / stille Forschung im Cantina-Popup (spec 2026-11-11-tomas-rat-rueckmeldung,

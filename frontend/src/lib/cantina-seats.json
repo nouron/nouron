@@ -1,0 +1,14 @@
+[
+	{ "id": "bar", "kind": "bar", "x": 8, "y": 44 },
+	{ "id": "counter_front", "kind": "counter", "x": 6, "y": 70 },
+	{ "id": "counter_mid", "kind": "counter", "x": 19, "y": 62 },
+	{ "id": "counter_end", "kind": "counter", "x": 31, "y": 52 },
+	{ "id": "table_front_left", "kind": "table", "x": 40, "y": 79 },
+	{ "id": "table_back_left", "kind": "table", "x": 44, "y": 52 },
+	{ "id": "table_back_mid", "kind": "table", "x": 56, "y": 52 },
+	{ "id": "table_back_right", "kind": "table", "x": 67, "y": 54 },
+	{ "id": "table_front_right", "kind": "table", "x": 69, "y": 81 },
+	{ "id": "entrance", "kind": "entrance", "x": 83.5, "y": 50 },
+	{ "id": "entrance_front", "kind": "entrance", "x": 83.5, "y": 77 },
+	{ "id": "corner", "kind": "corner", "x": 94.5, "y": 63 }
+]

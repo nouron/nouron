@@ -44,7 +44,7 @@ return [
             'requires' => [],
             // 60 → 90 (2026-08-17, game-designer review): effective Cr/Tick of the
             // active mission schedule sat below the passive income floor
-            // (nexus_subsidy + relay bonus) — not worth the ship/Nav-AP cost.
+            // (nexus_subsidy + relay bonus) — not worth the ship/AP cost.
             'reward' => ['credits' => 180], // ×2 (Owner 2026-09-30, task_credit_reserve: Credits come from missions/events)
             'repeatable' => true,
             'difficulties' => ['easy', 'normal'],

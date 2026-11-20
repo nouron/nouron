@@ -14,7 +14,7 @@ use RuntimeException;
 
 class HangarService
 {
-    private const HANGAR_BUILDING_ID = 44;
+    private const HANGAR_BUILDING_ID = BuildingId::Hangar->value;
 
     private const ALLOWED_SHIP_IDS = [37, 47, 85];
 

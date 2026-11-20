@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Colony;
 
+use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Models\Run;
 use App\Services\AdvisorService;
@@ -27,7 +28,7 @@ use Illuminate\View\View;
 
 class BarController extends BaseController
 {
-    private const BAR_BUILDING_ID = 52;
+    private const BAR_BUILDING_ID = BuildingId::Bar->value;
 
     public function __construct(
         TickService $tick,
@@ -146,7 +147,6 @@ class BarController extends BaseController
             ? $this->merchantService->getForecast($colony->id, $tick)
             : null;
 
-        $hotspots = $this->cantinaPresence->hotspots();
         $characters = config('characters');
         $characterAssignment = $this->cantinaPresence->characterAssignment($colony->id);
 
@@ -176,7 +176,7 @@ class BarController extends BaseController
         return compact(
             'relationships', 'bartender',
             'colony', 'offers', 'offerTerms', 'offerDialogs', 'negotiatedOffers', 'tradeAdvantage', 'merchantAdvantage', 'barLevel', 'currentSol',
-            'merchantVisit', 'merchantItems', 'merchantForecast', 'hotspots', 'characterAssignment',
+            'merchantVisit', 'merchantItems', 'merchantForecast', 'characterAssignment',
             'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
             'encounter', 'storyEncounterSlug', 'concern', 'informationEncounter',
             'knowledgeOptions', 'concernApCost', 'devaKnowledgeChoices',

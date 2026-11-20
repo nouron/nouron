@@ -792,6 +792,7 @@
 							<!-- Missing resources/colonists are already marked on the cost chips; only gates and AP get a line. -->
 							{@const shownReasons = reasons.filter((r) => r.kind === 'locked' || r.kind === 'ap')}
 							{@const gated = reasons.some((r) => r.kind === 'locked')}
+							{@const wk = (b.placement_cost ?? b.build_cost)?.[4] ?? 0}
 							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 							<li
 								class="building-list-item"
@@ -835,8 +836,12 @@
 											>{b.placement_cost[3]} Rg</span
 										>
 									{/if}
-									{#if b.build_cost?.[4]}
-										<span class="building-list-cost building-list-cost--compounds">{b.build_cost[4]} Wk</span>
+									<!-- Same cost source as buildMissingReasons(): a missing Werkstoffe amount turns this chip red (it had no marker, so a
+									     building short on Werkstoffe looked disabled without any reason). -->
+									{#if wk}
+										<span class="building-list-cost building-list-cost--compounds" class:building-list-chip--missing={wk > d.werkstoffe}
+											>{wk} Wk</span
+										>
 									{/if}
 								</div>
 								{#if b.notice}<p class="building-list-notice">{b.notice}</p>{/if}
@@ -844,7 +849,10 @@
 								{#if shownReasons.length}
 									<ul class="building-list-reasons">
 										{#each shownReasons as r (r.kind)}
-											<li class="building-list-reason building-list-reason--{r.kind}">{r.text}</li>
+											<li class="building-list-reason building-list-reason--{r.kind}">
+												{#if r.kind === 'locked'}<i class="bi bi-lock-fill" aria-hidden="true"></i>{/if}
+												{r.text}
+											</li>
 										{/each}
 									</ul>
 								{/if}
@@ -1148,7 +1156,7 @@
 			{#if eventDescription(ev.event_type ?? '')}
 				<p class="discovery-event-desc"><Typed text={eventDescription(ev.event_type ?? '') ?? ''} /></p>
 			{/if}
-			<footer><button onclick={() => (eventDiscovery = null)}>{t('colony.discovery_dismiss')}</button></footer>
+			<footer><button class="dialog-primary" onclick={() => (eventDiscovery = null)}>{t('colony.discovery_dismiss')}</button></footer>
 		</article>
 	</dialog>
 {/if}

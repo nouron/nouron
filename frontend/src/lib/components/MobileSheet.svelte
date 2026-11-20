@@ -2,7 +2,9 @@
 	// Full-screen detail sheet for phones (< 600 px): replaces the side panel there. Plain role="dialog" (not a native
 	// <dialog>) on purpose, so toasts (z-index 500) stay visible above it. Covers header, rail and bottom navigation
 	// completely (z-index 300 > bottom chrome 200), so there is exactly one place to act and one way out (X / Esc).
-	import { tick, type Snippet } from 'svelte';
+	import { tick, untrack, type Snippet } from 'svelte';
+	import { pushState } from '$app/navigation';
+	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
 
 	let {
@@ -42,6 +44,30 @@
 			const target = opener && opener !== document.body && opener.isConnected ? opener : returnFocus?.();
 			target?.focus?.({ preventScroll: true });
 		};
+	});
+
+	// Phone back button / back swipe closes the sheet instead of leaving the page: opening adds a
+	// shallow history entry; going back past it closes, closing by X/Esc removes it again.
+	// `onTop` turns true once our entry is the current one (page.state updates after pushState).
+	let pushed = false;
+	let onTop = false;
+	$effect(() => {
+		if (!open) return;
+		untrack(() => pushState('', { ...page.state, sheet: titleId }));
+		pushed = true;
+		return () => {
+			if (pushed && onTop && untrack(() => page.state.sheet) === titleId) history.back();
+			pushed = onTop = false;
+		};
+	});
+	$effect(() => {
+		const current = page.state.sheet === titleId;
+		if (!open || !pushed) return;
+		if (current) onTop = true;
+		else if (onTop) {
+			pushed = onTop = false;
+			onclose();
+		}
 	});
 
 	function onKeydown(e: KeyboardEvent) {

@@ -87,7 +87,7 @@ return [
         'max_status_points' => 20,
         'credits' => 0,
         'levelup_costs' => [1 => 8, 2 => 11, 3 => 14, 4 => 18, 5 => 21],
-        // Kein Bau-AP-Rabatt mehr: bis 2026-09-20 senkte trade die AP-Kosten von Gebäude-
+        // Kein AP-Rabatt mehr: bis 2026-09-20 senkte trade die AP-Kosten von Gebäude-
         // Levelups (Σ15%, additiv mit construction). Owner-Entscheidung (A13): thematisch
         // falsch — Handel wirkt auf Preise, Angebote und Verhandlung, nicht auf Bauprojekte.
         // Cantina-Angebotsslot-Bonus (Task 4 dieses Plans) — zusätzliche gleichzeitige

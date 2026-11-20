@@ -73,7 +73,7 @@ class ResetPlayer extends Command
 
     private const PATH_LABELS = [
         'hangar' => 'Hangar   — Pilot-Berater, Missionen/Navigations-AP',
-        'cantina' => 'Cantina  — Konsul-Berater, Handelsangebote/Wirtschafts-AP',
+        'cantina' => 'Cantina  — Konsul-Berater, Handelsangebote/AP',
         'lab' => 'Labor    — nur Sciencelab-Basis, kein 3. Gebäude/Berater',
     ];
 

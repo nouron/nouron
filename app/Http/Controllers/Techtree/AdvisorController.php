@@ -8,6 +8,7 @@ use App\Models\Advisor;
 use App\Services\AdvisorService;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
+use App\Services\PathBuildingGateService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -31,7 +32,7 @@ class AdvisorController extends BaseController
      * Maps building_id → advisor key for the three path buildings.
      * Placing one of these buildings in the colony unlocks the matching advisor slot.
      */
-    private const PATH_BUILDINGS = [31 => 'scientist', 44 => 'pilot', 52 => 'trader'];
+    private const PATH_BUILDINGS = PathBuildingGateService::ADVISOR_TYPES;
 
     public function __construct(
         TickService $tick,

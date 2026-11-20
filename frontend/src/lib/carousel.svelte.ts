@@ -1,7 +1,7 @@
 import '#lib/styles/carousel.css';
 
 // Port of public/js/carousel.js (card carousel for advisors and hangar): swipe with drag-to-peek,
-// arrow keys, full-width cards on mobile, a row on desktop. Not for the Cantina panorama.
+// arrow keys, full-width cards on mobile, a row on desktop. The Cantina pages through its picture with it (gapPx 0).
 export class Carousel {
 	index = $state(0);
 	count = $state(0);

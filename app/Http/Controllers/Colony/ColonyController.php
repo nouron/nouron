@@ -720,7 +720,7 @@ class ColonyController extends BaseController
     }
 
     /**
-     * Invests `ap` (default 1) construction AP in one request, so quick repeated clicks arrive as a
+     * Invests `ap` (default 1) AP in one request, so quick repeated clicks arrive as a
      * single call. Every step runs through the single-AP path, so all gates and side effects apply
      * per AP; the batch stops at a level-up or at the first rejected step. A rejection after at
      * least one applied AP still answers ok, with `applied` and `stopped_by`.
@@ -954,7 +954,7 @@ class ColonyController extends BaseController
         // so the nav reflects the new state without manual page refresh.
         $navUnlocked = $leveledUp
             && $row->level === 0
-            && in_array($buildingId, [31, 44, 52], true);
+            && array_key_exists($buildingId, PathBuildingGateService::ADVISOR_TYPES);
 
         return response()->json([
             'ok' => true,
@@ -1377,7 +1377,7 @@ class ColonyController extends BaseController
      * a failure at all.
      *
      * @param  string|null  $message  defaults to the `colony.error_<code>` line
-     * @param  array<string, mixed>  $extra  extra context for the client (ap_type, cost, …)
+     * @param  array<string, mixed>  $extra  extra context for the client (cost, …)
      */
     /**
      * Whether the supply build gate blocks the next level of the given building:

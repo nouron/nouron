@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Per-building per-Sol cap on construction AP invested toward a level-up
+ * Per-building per-Sol cap on AP invested toward a level-up
  * (game.build.ap_cap_per_sol). Cap = base + engineer field bonus; a null base switches
  * the rule off. Repair AP and placement are not subject to it.
  */
