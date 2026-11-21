@@ -70,7 +70,7 @@ class PlaytestCommandOpeningsTest extends TestCase
         $this->partialMock(PlaytestDatabase::class, fn ($mock) => $mock->shouldReceive('reset')->once()->andReturn('nouron_playtest'));
 
         $this->artisan('game:playtest', ['--openings' => 'labor,hangar', '--seeds' => '1', '--concurrency' => 2])
-            ->expectsOutputToContain('default/labor=1');
+            ->expectsOutputToContain('default/labor seed 1');
 
         Process::assertRanTimes(fn (PendingProcess $p) => $p->environment['PLAYTEST_OPENING'] === 'labor', 1);
         Process::assertRanTimes(fn (PendingProcess $p) => $p->environment['PLAYTEST_OPENING'] === 'hangar', 1);

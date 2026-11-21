@@ -647,7 +647,8 @@ class RunReport
 
     public function write(array $report): string
     {
-        $dir = storage_path('logs/playtest');
+        // T58d: game:playtest sends each batch's reports into its own folder.
+        $dir = getenv('PLAYTEST_REPORT_DIR') ?: storage_path('logs/playtest');
         if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }

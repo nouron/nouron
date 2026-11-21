@@ -28,16 +28,17 @@ Verfahren für jede Balancing- oder Pacing-Arbeit. Hintergrund: Am 2026-10-16 kr
 ```
 PLAYTEST_PROCESS_TIMEOUT=2700 nohup php artisan game:playtest --engine=utility \
   --openings=labor,hangar,cantina --seeds=1,2,3,4,5,6,7,8 --until-sol=25 --concurrency=24 \
-  > $CLAUDE_JOB_DIR/tmp/mN.log 2>&1 &
-date -u +"%Y%m%d_%H%M%S" > $CLAUDE_JOB_DIR/tmp/mN_since.txt   # VOR dem Start schreiben
-php tools/phase1-budget.php --since=<Zeitstempel>
+  --batch=YYYYMMDD_mN > $CLAUDE_JOB_DIR/tmp/mN.log 2>&1 &
+php tools/phase1-budget.php --dir=storage/logs/playtest/YYYYMMDD_mN
 ```
 
-- 24 Läufe dauern mit `--concurrency=24` auf der 24-Kerne-Maschine ca. 4 min (nicht 1 h). Standard 10 erzeugt ungleiche Wellen.
+- Seit T58d (2026-11-21) hat jeder Batch einen eigenen Ordner (`--batch=NAME`, Standard: UTC-Zeitstempel). Abbrechen mit Strg+C; derselbe `--batch`-Name setzt fort und überspringt Läufe mit Bericht. Der nächste Lauf startet, sobald einer frei wird (keine Wellen); nach jedem Lauf eine Fortschrittszeile mit Restzeit.
+- 24 Läufe bis Sol 25 dauern mit `--concurrency=24` auf der 24-Kerne-Maschine ca. 1,5–5 min.
 - Währenddessen keine PHPUnit-Läufe, Migrationen oder Seeds (gleiche DB). Nie `migrate:fresh` gegen die Dev-DB.
 - Hintergrundlauf mit `nohup ... &`, dann Monitor/Polling-Schleife; `run_in_background` kann fälschlich "low memory" melden.
-- `--since` ist UTC aus dem Dateinamen (nicht lokale mtime, +2 h) und hat keine Obergrenze: der Zeitstempel ist das Lauf-Ende, Läufe an der Batchgrenze mischen Batches. Jeden Batch per Zeitfenster in einen Ordner sortieren (`--dir=`) und je Zelle genau 24 Reports prüfen. Maße wie das Rg-Minimum aus der Config ableiten (`tools/phase1-budget.php --min=auto`), nie fest verdrahten.
+- Je Zelle genau die erwartete Zahl Berichte im Batch-Ordner prüfen. Maße wie das Rg-Minimum aus der Config ableiten (`tools/phase1-budget.php --min=auto`), nie fest verdrahten. (`--since` gilt nur noch für alte, flach abgelegte Berichte.)
 - PHPUnit parallel zu Batches nur gegen eine Wegwerf-DB: `TEST_TOKEN=9 LARAVEL_PARALLEL_TESTING=1 php bin/phpunit …`.
+- Bot-Testreihe: `php tools/bot-tests.php` (Fortschritt, Strg+C, `--resume`, langsamste Tests zuerst, ca. 2 min mit 20 Prozessen).
 - Wert-Sweeps ohne Code: Config-Zeile per `sed` ändern, Batch fahren, danach `git checkout config/game.php`. Immer prüfen, dass die Config danach sauber ist.
 - Kleine Bot-/UI-Fixes ohne Batch abschließen; Batches nur bei Balance-Änderungen.
 

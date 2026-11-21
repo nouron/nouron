@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-21
+
+- Bot-Tests (T58d): `php tools/bot-tests.php` zeigt Fortschritt, lässt sich jederzeit abbrechen und mit `--resume` fortsetzen und startet die langsamsten Tests zuerst; Test-Datenbanken werden nur noch bei geänderten Migrationen neu aufgebaut. Bot-Testreihe 6:42 → 1:50 min. `game:playtest --batch=NAME` legt jeden Batch in einen eigenen Ordner, setzt mit demselben Namen fort und meldet jeden fertigen Lauf.
+- Bot an die Umbauten angepasst (T58a): Cantina nur mit anwesenden Figuren, Kenntnis-Tagesdeckel, Wert je AP auf die AP-Skala ÷3; neu Tomas' Rat, Hangar-Training und Cantina-Gespräche. Alte Bot-Berichte gelöscht.
+
 ## 2026-11-20
 
 - Cantina: Figuren stehen an festen Plätzen im Bild, die zu ihnen passen (Tomas hinter dem Tresen, Gäste am Tresen oder an Tischen, noch unbekannte Figuren am Eingang, die mysteriöse Figur in der Ecke), auf allen Geräten an denselben Stellen. Auf dem Handy ist das Bild 4 Bildschirme breit, gewischt wird wie bei Beratern und Hangar (Mitziehen, Pfeile, Punkte); keine Karte liegt auf einer Seitengrenze, ein Test prüft die Plätze. Tomas steht jetzt im Bild statt fest am unteren Rand.
