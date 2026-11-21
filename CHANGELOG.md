@@ -4,6 +4,7 @@
 
 - Bot-Tests (T58d): `php tools/bot-tests.php` zeigt Fortschritt, lässt sich jederzeit abbrechen und mit `--resume` fortsetzen und startet die langsamsten Tests zuerst; Test-Datenbanken werden nur noch bei geänderten Migrationen neu aufgebaut. Bot-Testreihe 6:42 → 1:50 min. `game:playtest --batch=NAME` legt jeden Batch in einen eigenen Ordner, setzt mit demselben Namen fort und meldet jeden fertigen Lauf.
 - Bot an die Umbauten angepasst (T58a): Cantina nur mit anwesenden Figuren, Kenntnis-Tagesdeckel, Wert je AP auf die AP-Skala ÷3; neu Tomas' Rat, Hangar-Training und Cantina-Gespräche. Alte Bot-Berichte gelöscht.
+- Messung M2 bis Sol 60: Kommandozentrale Stufe 5 und ein Sieg kommen zu früh. ROADMAP: T58 abgeschlossen, neuer Punkt T61 (mehr AP-Bedarf im Mittel- und Spätspiel durch Ereignisse wie Stürme oder Krankheiten).
 
 ## 2026-11-20
 
