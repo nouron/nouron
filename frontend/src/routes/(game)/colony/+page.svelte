@@ -153,6 +153,7 @@
 			harvesterMoveMode,
 			harvesterBuilding: harvesterMoveMode ? harvesterBuilding() : null,
 			tileYields: data.tileYields,
+			tileTextureBase: `${BACKEND_URL}/img/tiles`,
 			repairDisplayThreshold: data.repairDisplayThreshold,
 			damagedThresholdPct: data.damagedThresholdPct,
 			criticalThresholdPct: data.criticalThresholdPct,

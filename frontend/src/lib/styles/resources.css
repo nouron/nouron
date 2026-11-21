@@ -298,3 +298,16 @@
 .res-chip--flash {
     animation: res-chip-flash 0.5s ease-out;
 }
+
+/* ── Illustrated resource icon (ResourceBar, colony materials) ──────────── */
+
+.res-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.res-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+}
