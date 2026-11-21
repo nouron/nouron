@@ -46,6 +46,10 @@ const TILE_STROKES = {
     regolith_poor: '#7aaace',
 };
 
+// Illustrated ground textures (public/img/tiles/<tile_type>.webp, ADR 0001). Drawn over the
+// state fill with multiply blending, so the fill colour (buildable, target, ...) still reads.
+const TILE_TEXTURES = new Set(['terrain_empty', 'regolith_rich', 'terrain_hazard']);
+
 const CC_COLOR = '#7ec87e';
 const CC_STROKE = '#2e7d32';
 // Colony-zone terrain: noticeably lighter than exploration-zone so "buildable" is
@@ -532,6 +536,28 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     }
 
     g.appendChild(polygon);
+
+    // Ground texture: explored tiles only (fog never reveals the tile type).
+    if (opts.tileTextureBase && tile.is_explored && !isImpassable && TILE_TEXTURES.has(tile.tile_type)) {
+        const texClipId = `tex-clip-${tile.q}-${tile.r}`;
+        const texClip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+        texClip.setAttribute('id', texClipId);
+        const texPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        texPoly.setAttribute('points', points.join(' '));
+        texClip.appendChild(texPoly);
+        g.appendChild(texClip);
+        const tex = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        tex.setAttribute('href', `${opts.tileTextureBase}/${tile.tile_type}.webp`);
+        tex.setAttribute('x', cx - size);
+        tex.setAttribute('y', cy - size);
+        tex.setAttribute('width', size * 2);
+        tex.setAttribute('height', size * 2);
+        tex.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+        tex.setAttribute('clip-path', `url(#${texClipId})`);
+        tex.setAttribute('pointer-events', 'none');
+        tex.style.mixBlendMode = 'multiply';
+        g.appendChild(tex);
+    }
 
     // Construction progress: clock-wedge fill, clockwise from 12 o'clock, clipped to the hex.
     if (building && isConstructionSite(building)) {
