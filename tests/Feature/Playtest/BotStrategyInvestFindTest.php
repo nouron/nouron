@@ -74,16 +74,16 @@ class BotStrategyInvestFindTest extends TestCase
         $this->assertEmpty($this->rule()['when']($bot), 'with a hangar finds go by flight');
     }
 
-    public function test_scan_and_invest_find_are_the_last_two_rules(): void
+    public function test_scan_and_invest_find_come_last_before_the_idle_sinks(): void
     {
+        // T58a: only Hangar training and Cantina conversations (leftover AP sinks) follow them.
         $names = array_column(BotStrategy::default(), 'name');
 
-        $this->assertSame('invest_find', end($names));
-        $this->assertSame('deep_scan_signal_tile', $names[count($names) - 2]);
+        $this->assertSame(['deep_scan_signal_tile', 'invest_find', 'train_mission_family', 'converse_character'], array_slice($names, -4));
         foreach (['hire_advisor', 'explore_tile', 'place_building', 'invest_production', 'research_knowledge', 'request_ship'] as $before) {
             $pos = array_search($before, $names, true);
             $this->assertNotFalse($pos, "{$before} missing");
-            $this->assertLessThan(count($names) - 2, $pos, "{$before} must precede the scan");
+            $this->assertLessThan(count($names) - 4, $pos, "{$before} must precede the scan");
         }
     }
 

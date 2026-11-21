@@ -54,9 +54,13 @@ class Playtest extends Command
         {--engine=legacy : Bot engine (see BotProfile::ENGINES)}
         {--until-sol= : Stop each run at the start of Sol N (5-100, use >= 21 so K3/K5/K6 are meaningful) for short Phase-1 measurement runs; default: play the whole run}
         {--seeds=4242 : Comma-separated integer seeds}
-        {--concurrency=10 : How many profile×opening×seed combos to run at once}';
+        {--concurrency=10 : How many profile×opening×seed combos to run at once}
+        {--batch= : Batch name; reports go to storage/logs/playtest/<batch>/. Same name again = resume (runs with a report are skipped). Default: current UTC time}';
 
     private const OUTPUT_TAIL_CHARS = 4000;
+
+    /** Set by the SIGINT/SIGTERM handler (Ctrl+C): stop all runs; the batch can be resumed. */
+    private bool $stopRequested = false;
 
     protected $description = 'Run the PlaytestBot across seeds/profiles (in parallel batches) and print a comparison table';
 
@@ -113,17 +117,39 @@ class Playtest extends Command
             }
         }
 
+        // T58d: one folder per batch (no mixing by timestamp); started again with the same
+        // name, runs that already left a report are skipped, so an interrupted batch resumes.
+        $batchName = (string) ($this->option('batch') ?: gmdate('Ymd_His'));
+        $reportDir = storage_path('logs/playtest/'.$batchName); // created by RunReport::write()
+        $total = count($combos);
+        $combos = array_values(array_filter($combos, fn (array $c) => $this->latestReportFor($c[0], $c[1], $c[2], $engine, $reportDir) === null));
+        $done = $total - count($combos);
+        $this->line("Batch {$batchName}: {$total} Läufe, {$concurrency} gleichzeitig. Berichte: storage/logs/playtest/{$batchName}");
+        if ($done > 0) {
+            $this->line("{$done} von {$total} Läufen schon fertig, sie werden übersprungen.");
+        }
+        $this->line('Abbrechen mit Strg+C, fortsetzen mit demselben --batch='.$batchName);
+
+        if (function_exists('pcntl_async_signals')) {
+            pcntl_async_signals(true);
+            pcntl_signal(SIGINT, function () {
+                $this->stopRequested = true;
+            });
+            pcntl_signal(SIGTERM, function () {
+                $this->stopRequested = true;
+            });
+        }
+        $timeout = (int) config('game.playtest.process_timeout');
+
         $rows = [];
-
-        foreach (array_chunk($combos, $concurrency) as $batch) {
-            $labels = collect($batch)->map(fn ($c) => RunReport::filePrefix($c[0], $engine)."/{$c[1]}={$c[2]}")->implode(', ');
-            $this->line('Running batch: '.$labels);
-
-            // Started one by one (not via Process::pool) so a child that exceeds the
-            // timeout can be caught per run below — a pool's wait() aborts on the first
-            // ProcessTimedOutException and loses every other result (R5b, 2026-10-04).
-            $running = [];
-            foreach ($batch as [$profile, $opening, $seed]) {
+        $queue = $combos;
+        $running = [];
+        $started = microtime(true);
+        $durations = [];
+        // Rolling pool (T58d): the next run starts as soon as one finishes, instead of waves.
+        while (($queue !== [] || $running !== []) && ! $this->stopRequested()) {
+            while ($queue !== [] && count($running) < $concurrency) {
+                [$profile, $opening, $seed] = array_shift($queue);
                 // Every child plays in the shared playtest DB the parent just reset.
                 // phpunit.xml forces DB_DATABASE=nouron_test, so DB_DATABASE would
                 // not reach the child (and is deliberately not passed: the guard
@@ -132,12 +158,13 @@ class Playtest extends Command
                 // to PLAYTEST_DATABASE at runtime (PlaytestDatabase::connect(),
                 // same guard as here) and skip the rollback, so the run's data
                 // is committed like a real player's.
-                $running["{$profile}-{$opening}-{$seed}"] = Process::env(array_filter([
+                $process = Process::env(array_filter([
                     'PLAYTEST_PROFILE' => $profile,
                     'PLAYTEST_OPENING' => $opening,
                     'PLAYTEST_ENGINE' => $engine,
                     'PLAYTEST_SEED' => $seed,
                     'PLAYTEST_UNTIL_SOL' => $untilSol === null ? null : (string) (int) $untilSol,
+                    'PLAYTEST_REPORT_DIR' => $reportDir,
                     'APP_ENV' => 'testing',
                     'PLAYTEST_SHARED_DB' => '1',
                     'PLAYTEST_DATABASE' => $playtestDb,
@@ -148,7 +175,7 @@ class Playtest extends Command
                     'DB_PASSWORD' => (string) $mysql['password'],
                 ], fn ($v) => $v !== null))
                     // History and reasoning of the value: config/game.php playtest.process_timeout.
-                    ->timeout((int) config('game.playtest.process_timeout'))
+                    ->timeout($timeout)
                     ->start([
                         // opcache.enable_cli defaults to Off system-wide, so every
                         // spawned child cold-compiles the whole vendor tree from
@@ -161,20 +188,40 @@ class Playtest extends Command
                         '--filter', 'test_bot_plays_a_full_run_and_produces_a_report',
                         'tests/Feature/Playtest/PlaytestBotTest.php',
                     ]);
+                $running[] = [$process, $profile, $opening, $seed, microtime(true)];
             }
 
-            foreach ($batch as [$profile, $opening, $seed]) {
+            foreach ($running as $i => [$process, $profile, $opening, $seed, $since]) {
+                // A run over the timeout is stopped and reported on its own (R5b, 2026-10-04):
+                // it must not lose the other runs' results.
+                $timedOut = $timeout > 0 && microtime(true) - $since > $timeout;
+                if (! $timedOut && $process->running()) {
+                    continue;
+                }
                 try {
-                    $result = $running["{$profile}-{$opening}-{$seed}"]->wait();
+                    if ($timedOut) {
+                        $process->stop();
+                    }
+                    $result = $timedOut ? null : $process->wait();
                 } catch (ProcessTimedOutException) {
-                    $this->error("profile={$profile} opening={$opening} seed={$seed} timed out after ".config('game.playtest.process_timeout').'s');
+                    $result = null;
+                }
+                if ($result === null) {
+                    $process->stop();
+                    unset($running[$i]);
+                    $done++;
+                    $this->error("[{$done}/{$total}] profile={$profile} opening={$opening} seed={$seed} timed out after {$timeout}s");
                     $rows[] = [$profile, $opening, $seed, 'timed out', '-', '-', '-', '-'];
 
                     continue;
                 }
+                unset($running[$i]);
+                $done++;
+                $durations[] = microtime(true) - $since;
+                $label = RunReport::filePrefix($profile, $engine)."/{$opening} seed {$seed}";
 
                 if (! $result->successful()) {
-                    $this->error("profile={$profile} opening={$opening} seed={$seed} failed to run:");
+                    $this->error("[{$done}/{$total}] {$label} failed to run:");
                     // PHPUnit reports test failures on stdout, not stderr — printing
                     // only errorOutput() left this message empty (baseline 2026-09-26).
                     $this->line(self::tail($result->output()));
@@ -183,7 +230,15 @@ class Playtest extends Command
                     continue;
                 }
 
-                $report = $this->latestReportFor($profile, $opening, $seed, $engine);
+                $report = $this->latestReportFor($profile, $opening, $seed, $engine, $reportDir);
+                $left = count($queue) + count($running);
+                // Running runs need the average minus what they already ran; queued ones start in later rounds.
+                $avg = array_sum($durations) / count($durations);
+                $now = microtime(true);
+                $runningLeft = array_map(fn (array $r): float => max(0.0, $avg - ($now - $r[4])), $running);
+                $eta = (int) round(($runningLeft === [] ? 0 : max($runningLeft)) + ceil(count($queue) / $concurrency) * $avg);
+                $this->line(sprintf('[%d/%d] fertig: %s in %s · Phase 2 ab Sol %s · noch %d Läufe, ca. %s',
+                    $done, $total, $label, self::clock((int) end($durations)), $report['phase2_start_sol'] ?? '-', $left, self::clock($eta)));
                 if ($report === null) {
                     $this->error("profile={$profile} opening={$opening} seed={$seed}: no report file found after run");
 
@@ -192,12 +247,26 @@ class Playtest extends Command
 
                 $rows[] = $this->summarize(RunReport::filePrefix($profile, $engine), $opening, $seed, $report);
             }
+            if ($running !== []) {
+                usleep(250000);
+            }
+        }
+
+        if ($this->stopRequested()) {
+            foreach ($running as [$process]) {
+                $process->stop(2);
+            }
+            $this->warn(sprintf('Unterbrochen nach %s, %d von %d Läufen fertig. Fortsetzen: php artisan game:playtest … --batch=%s (gleiche Optionen)',
+                self::clock((int) (microtime(true) - $started)), $done, $total, $batchName));
+
+            return self::FAILURE;
         }
 
         $this->table(
             ['Profile', 'Opening', 'Seed', 'Status', 'Fail Reason', 'Phase2 Sol', 'Objectives Done', 'Score'],
             $rows
         );
+        $this->line("Berichte: storage/logs/playtest/{$batchName} · Auswertung: php tools/phase1-budget.php --dir=storage/logs/playtest/{$batchName}");
 
         return self::SUCCESS;
     }
@@ -212,9 +281,20 @@ class Playtest extends Command
             : $output;
     }
 
-    private function latestReportFor(string $profile, string $opening, string $seed, string $engine = 'legacy'): ?array
+    /** Read through a method: the signal handler changes the flag at any time. */
+    private function stopRequested(): bool
     {
-        $pattern = storage_path('logs/playtest/'.RunReport::filePrefix($profile, $engine)."-{$opening}-{$seed}-*.json");
+        return $this->stopRequested;
+    }
+
+    private static function clock(int $seconds): string
+    {
+        return sprintf('%d:%02d', intdiv($seconds, 60), $seconds % 60);
+    }
+
+    private function latestReportFor(string $profile, string $opening, string $seed, string $engine = 'legacy', ?string $dir = null): ?array
+    {
+        $pattern = ($dir ?? storage_path('logs/playtest')).'/'.RunReport::filePrefix($profile, $engine)."-{$opening}-{$seed}-*.json";
         $matches = glob($pattern) ?: [];
         if ($matches === []) {
             return null;

@@ -15,6 +15,7 @@ trait PinsPreScaleApValues
     protected function pinPreScaleApValues(): void
     {
         config([
+            'playtest.pre_scale_ap' => true, // old λ values too (BotProfile::weights())
             'game.ap.base' => 12,
             'game.advisor.ap_per_rank' => [1 => 2, 2 => 3, 3 => 4],
             'game.advisor.cap_bonus_per_rank' => [1 => 2, 2 => 3, 3 => 4],

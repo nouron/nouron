@@ -3,6 +3,7 @@
 namespace Tests\Feature\Playtest;
 
 use App\Enums\BuildingId;
+use App\Services\DailyApCapService;
 use App\Services\Techtree\ResearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,32 @@ class BotStrategyResearchLevelupTest extends TestCase
         $this->assertCount(1, $newEntries, 'at the levelup threshold, a single levelup request should suffice: '.json_encode($newEntries));
         $this->assertTrue($newEntries[0]['ok'], 'the levelup request should succeed: '.json_encode($newEntries));
         $this->assertSame($levelBefore + 1, $this->researchLevel($bot, $researchId));
+    }
+
+    /** Smoke batch 2026-11-20: 8 knowledge_ap_cap rejections per Labor run — the bot ignored the per-Sol cap. */
+    public function test_knowledge_with_todays_cap_used_up_is_skipped_for_the_next_one(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $first = $this->researchCandidateId($bot);
+        $this->assertNotNull($first, 'fixture needs an eligible research candidate');
+        $cap = (int) app(ResearchService::class)->apCap($bot->colonyId);
+        app(DailyApCapService::class)->record($bot->colonyId, ResearchService::capKey($first), $cap);
+
+        $next = $this->researchCandidateId($bot);
+
+        $this->assertNotNull($next, 'another knowledge stays researchable');
+        $this->assertNotSame($first, $next);
+    }
+
+    public function test_capped_knowledge_stays_a_candidate_when_its_levelup_is_ready(): void
+    {
+        $bot = BotSession::boot($this, 1);
+        $first = $this->researchCandidateId($bot);
+        $this->setApSpend($bot, $first, $this->apForLevelup($bot, $first));
+        app(DailyApCapService::class)->record($bot->colonyId, ResearchService::capKey($first), (int) app(ResearchService::class)->apCap($bot->colonyId));
+
+        // order:'levelup' is not an AP investment, so the cap does not block it.
+        $this->assertSame($first, $this->researchCandidateId($bot));
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

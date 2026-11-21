@@ -69,6 +69,10 @@ final class BotProfile
     {
         $file = require __DIR__.'/Utility/weights.php';
         $w = array_replace_recursive($file['base'], $file['profiles'][$this->name] ?? []);
+        // Mechanism tests pinned to the pre-scale AP numbers (PinsPreScaleApValues) keep the matching λ values.
+        if (app()->bound('config') && config('playtest.pre_scale_ap')) {
+            $w = array_replace($w, $file['pre_scale_ap']);
+        }
 
         $w['w_objective'] = $this->objectiveFocus * (float) $w['objective_base'];
         $w['price']['credits'] = (float) $w['price']['credits'] * (1.0 + $this->savingsAggressiveness);
