@@ -3,7 +3,6 @@
 	// right of the rail) and, with `top`, in the header (Sol, trust, AP ring; popups open below the chip).
 	import { t } from '#lib/i18n.ts';
 	import type { Shell } from '#lib/stores/shell.ts';
-	import { BACKEND_URL } from '#lib/stores/auth.ts';
 
 	let {
 		s,
@@ -11,9 +10,6 @@
 		keys,
 		top = false
 	}: { s: Shell; open?: string | null; /** Header: only these chips. Rail (unset): everything but HEADER_KEYS. */ keys?: string[]; top?: boolean } = $props();
-
-	// Illustrated icons for the colony materials (public/img/icons, ADR 0001); other chips keep their text abbreviation.
-	const RES_ICON: Record<string, string> = { Rg: 'regolith', Co: 'compounds', Or: 'organics' };
 
 	// Chips that live in the header instead of the rail.
 	const HEADER_KEYS = ['sol', 'trust', 'ap'];
@@ -337,15 +333,7 @@
 					<span class="ap-ring__n">{apLeft}</span>
 					<span class="ap-ring__u">AP</span>
 				{:else}
-				{#if chip.abbr && RES_ICON[chip.abbr]}
-					<span class="res-label"
-						><img class="res-icon" src="{BACKEND_URL}/img/icons/res_{RES_ICON[chip.abbr]}.webp" alt="" /><span class="res-abbr"
-							>{chip.abbr}</span
-						></span
-					>
-				{:else}
-					<span class={chip.ap ? 'ap-label' : 'res-abbr'}>{chip.abbr ?? chip.label}</span>
-				{/if}
+				<span class={chip.ap ? 'ap-label' : 'res-abbr'}>{chip.abbr ?? chip.label}</span>
 				{#if chip.split}
 					<span class="res-amount res-amount--split" aria-label={String(chip.amount)}
 						><span>{chip.split[0]}</span><span>{chip.split[1]}</span></span
@@ -473,7 +461,7 @@
 	}
 	.chip-btn--stack .ap-label {
 		font-size: 0.66rem;
-		opacity: 0.7;
+		color: color-mix(in srgb, currentColor 70%, transparent);
 	}
 	/* Band word left, AP effect right; at the narrow (112 px) rail the effect drops to its own line instead of clipping. */
 	.res-amount--split {
