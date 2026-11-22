@@ -46,23 +46,34 @@ const TILE_STROKES = {
     regolith_poor: '#7aaace',
 };
 
-// Illustrated ground textures (public/img/tiles/<tile_type>.webp, ADR 0001). Drawn over the
-// state fill with multiply blending, so the fill colour (buildable, target, ...) still reads.
-const TILE_TEXTURES = new Set([
-    'terrain_empty',
-    'terrain_hazard',
-    'terrain_impassable',
-    'regolith_rich',
-    'regolith_normal',
-    'regolith_poor',
-]);
-// Regolith tiles are `regolith_y{yield}_d{deposit}` (config/game.php); the texture follows the yield.
+// Illustrated hex scenes (public/img/tiles/<name>.webp, ADR 0001). Drawn over the state fill with
+// multiply blending, so the fill colour (buildable, target, fog kind, ...) still reads. Each key lists
+// its image variants; a tile picks one by a hash of its coordinates, so the map stays stable across
+// redraws. A name listed several times is picked more often (the rover-track plain only rarely).
+const TILE_TEXTURES = {
+    terrain_empty: ['terrain_empty_2', 'terrain_empty_3', 'terrain_empty_4', 'terrain_empty_2', 'terrain_empty_3', 'terrain_empty_4', 'terrain_empty'],
+    terrain_hazard: ['terrain_hazard', 'terrain_hazard_2'],
+    terrain_impassable: ['terrain_impassable', 'terrain_impassable_2'],
+    regolith_rich: ['regolith_rich', 'regolith_rich_2'],
+    regolith_normal: ['regolith_normal', 'regolith_normal_2'],
+    regolith_poor: ['regolith_poor', 'regolith_poor_2'],
+    fog: ['fog', 'fog_2'],
+};
+// Regolith tiles are `regolith_y{yield}_d{deposit}` (config/game.php); the scene follows the yield.
 const REGOLITH_TEXTURE_BY_YIELD = { 1: 'regolith_poor', 2: 'regolith_normal', 3: 'regolith_rich' };
 
-function tileTexture(tileType) {
-    const m = /^regolith_y(\d)/.exec(tileType);
-    const key = m ? REGOLITH_TEXTURE_BY_YIELD[m[1]] : tileType;
-    return TILE_TEXTURES.has(key) ? key : null;
+function tileHash(q, r) {
+    return ((q * 73856093) ^ (r * 19349663)) >>> 0;
+}
+
+// Fog never reveals the tile type: unexplored tiles all get a fog scene.
+function tileTexture(tile) {
+    const m = /^regolith_y(\d)/.exec(tile.tile_type);
+    const key = !tile.is_explored ? 'fog' : m ? REGOLITH_TEXTURE_BY_YIELD[m[1]] : tile.tile_type;
+    const variants = TILE_TEXTURES[key];
+    if (!variants) return null;
+    const h = tileHash(tile.q, tile.r);
+    return { name: variants[h % variants.length], mirror: (h >> 8) % 2 === 1 };
 }
 
 const CC_COLOR = '#7ec87e';
@@ -552,8 +563,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     g.appendChild(polygon);
 
-    // Ground texture: explored tiles only (fog never reveals the tile type).
-    const texture = opts.tileTextureBase && tile.is_explored ? tileTexture(tile.tile_type) : null;
+    // Hex scene: terrain, or fog for unexplored tiles.
+    const texture = opts.tileTextureBase ? tileTexture(tile) : null;
     if (texture) {
         const texClipId = `tex-clip-${tile.q}-${tile.r}`;
         const texClip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
@@ -563,7 +574,9 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         texClip.appendChild(texPoly);
         g.appendChild(texClip);
         const tex = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-        tex.setAttribute('href', `${opts.tileTextureBase}/${texture}.webp`);
+        tex.setAttribute('href', `${opts.tileTextureBase}/${texture.name}.webp`);
+        // Mirrored around the tile's vertical axis for more variety; the hex clip is symmetric to it.
+        if (texture.mirror) tex.setAttribute('transform', `translate(${2 * cx} 0) scale(-1 1)`);
         tex.setAttribute('x', cx - size);
         tex.setAttribute('y', cy - size);
         tex.setAttribute('width', size * 2);
@@ -621,13 +634,15 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // so the hatch is still drawn but the "+"/"?" glyph is suppressed for them.
     const isFog = !tile.is_explored && !isImpassable;
     if (isFog && !isBuildTarget && !isHarvesterTarget) {
-        // Diagonal mist hatch on top of the slate fill.
-        const hatch = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        hatch.setAttribute('points', points.join(' '));
-        hatch.setAttribute('fill', 'url(#fog-hatch)');
-        hatch.setAttribute('stroke', 'none');
-        hatch.setAttribute('pointer-events', 'none');
-        g.appendChild(hatch);
+        // Diagonal mist hatch on top of the slate fill, only without drawn fog scenes.
+        if (!opts.tileTextureBase) {
+            const hatch = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            hatch.setAttribute('points', points.join(' '));
+            hatch.setAttribute('fill', 'url(#fog-hatch)');
+            hatch.setAttribute('stroke', 'none');
+            hatch.setAttribute('pointer-events', 'none');
+            g.appendChild(hatch);
+        }
 
         if (tile.next_zone) {
             // Handled by the padlock badge below ("next CC upgrade unlocks this").

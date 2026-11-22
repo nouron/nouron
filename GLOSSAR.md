@@ -36,6 +36,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Credits (Cr) | `credits` | Geld: Berater, Schiffe, Handel. |
 | Kolonisten (KOL) | `supply` | **Kein Zuzug, kein Wachstum.** Kolonisten = Wohnraum aus CC und Wohnhabitaten (sofort bei Abschluss und bei Verlust); davon beschäftigt = besetzte Arbeitsplätze, der Rest ist frei. Unbesetzte Arbeitsplätze mindern die Rohstoffproduktion. |
 | Regolith (Rg) | `regolith` | Baumaterial; Baukosten werden beim Platzieren voll gezahlt. |
+| Regolith-Vorkommen | `regolith_y{Ertrag}_d{Vorkommen}` | Feld mit Regolith; Ertrag (niedrig/mittel/hoch) bestimmt die Förderung je Sol, Vorkommen (klein/mittel/groß) die Gesamtmenge. |
 | Werkstoffe (Co) | `compounds`/`werkstoffe` | Material für spätere Gebäude, per Uplink-Station importierbar. |
 | Organika (Or) | `organics`/`organika` | Nahrung der Kolonisten; Proviant für Missionen. Zielbild: 1 Einheit ernährt 1 Kolonisten pro Sol (ROADMAP T36). |
 | Vertrauen | `trust` (früher `moral`) | Stimmung der Kolonie, jeden Sol neu als Grundwert plus Quellen (Gebäude, Kenntnisse, Frachter, Ereignisse, Hunger) berechnet; wirkt nur über ihre Stufe auf die AP, als Zahl erst mit Analytik-Labor sichtbar. |

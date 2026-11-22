@@ -15,7 +15,7 @@
 	}: {
 		tile: Tile;
 		built?: boolean;
-		tileTypeName: (type: string) => string;
+		tileTypeName: (type: string, detail?: boolean) => string;
 		eventTypeName: (type: string) => string;
 		flightShortfall: (tile: Tile) => string | null;
 		onsalvage: (tile: Tile) => void;
@@ -62,7 +62,7 @@
 			<dl class="tile-dl">
 				<div>
 					<dt>{t('colony.terrain_label')}</dt>
-					<dd>{tileTypeName(tile.tile_type)}</dd>
+					<dd>{tileTypeName(tile.tile_type, true)}</dd>
 				</div>
 			</dl>
 		{/if}
