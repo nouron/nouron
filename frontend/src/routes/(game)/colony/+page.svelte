@@ -80,7 +80,16 @@
 	const selectedBuilding = $derived(buildingForTile(selectedTile));
 
 	const buildingLabel = (k: string) => data?.buildingCatalog?.[k]?.label ?? k;
-	const tileTypeName = (type: string) => hex.TILE_LABELS[type] ?? type;
+	// Regolith tiles are `regolith_y{yield}_d{deposit}` (config/game.php): short name as heading, levels as detail.
+	function tileTypeName(type: string, detail = false) {
+		const m = /^regolith_y(\d)_d(\d)$/.exec(type);
+		if (!m) return hex.TILE_LABELS[type] ?? type;
+		if (!detail) return t('colony.regolith_tile');
+		return t('colony.regolith_tile_detail', {
+			yield: t(`colony.regolith_yield_${m[1]}`),
+			deposit: t(`colony.regolith_deposit_${m[2]}`)
+		});
+	}
 	function tileHeading(tile: Tile) {
 		if (tile.q === 0 && tile.r === 0) return t('techtree.building_commandCenter');
 		if (!tile.is_explored) return t('colony.tile_unknown');
