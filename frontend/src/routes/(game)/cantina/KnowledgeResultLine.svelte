@@ -21,6 +21,7 @@
 </script>
 
 <script lang="ts">
+	import Res from '#lib/components/Res.svelte';
 	// Result line after an earmarked knowledge bonus — shared by Tomas, Sarka, Deva and Lenn.
 	// With a lab: exact AP and bar; without: a rough word. A level-up and forfeited AP are always explicit.
 	import { t } from '#lib/i18n.ts';
@@ -47,9 +48,7 @@
 					<span class="knowledge-result__effect">
 						{line.text}
 						{#if line.chip}
-							<span class="res-chip res-{line.chip.cls}"
-								><span class="res-abbr">{line.chip.abbr}</span><span class="res-amount">{line.chip.value}</span></span
-							>
+							<Res res={line.chip.cls} label={line.chip.abbr} amount={line.chip.value} />
 						{/if}
 					</span>
 				{/each}

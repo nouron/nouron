@@ -326,3 +326,23 @@
     height: 1.7em;
     background: var(--res-icon) center / contain no-repeat;
 }
+
+/* Plain variant (Res.svelte `plain`): icon + amount + abbreviation without the pill,
+ * for running text and tight rows. State classes only tint the text. */
+.res-plain {
+    white-space: nowrap;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+}
+.res-plain::before {
+    content: '';
+    display: inline-block;
+    width: 1.35em;
+    height: 1.35em;
+    margin: -0.2em 0.15em -0.2em 0;
+    vertical-align: -0.3em;
+    background: var(--res-icon) center / contain no-repeat;
+}

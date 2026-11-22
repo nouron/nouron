@@ -2,6 +2,7 @@
 
 ## 2026-11-22
 
+- Ressourcen-Chips (T62, Owner-Wunsch): Ein gemeinsamer Chip (`Res.svelte`) ersetzt die handgebauten Chips und Kosten-Pillen (Baukosten, Reparatur, Kolonisten-Bedarf, Berater, Hangar, Cantina). Für wenig Platz gibt es die schlichte Form `plain` (nur Icon + Betrag, ohne Pille): Gebäudeliste, Kosten an Aktionsknöpfen und Beträge in Meldungen und Hinweistexten („300 Cr“, „12 RG“, über `ResText.svelte`).
 - Kolonie-Karte (T62): Hexfelder in mehreren Varianten je Geländeart, fest nach Feldposition gewählt und teils gespiegelt; Fahrspuren nur noch auf wenigen freien Feldern. Unerkundete Felder zeigen gezeichneten Nebel statt Schraffur. Regolith-Felder heißen „Regolith-Vorkommen“ mit „Ertrag … · Vorkommen …“ statt `regolith_y3_d2`.
 - Kolonie-Karte (T62, Owner-Feedback): Hexfelder zeigen statt gleichmäßiger Bodentextur je Geländeart eine kleine Landschaftsszene im Tusche-Stil, leicht schräg von oben wie bei Brettspiel-Plättchen (Ebene mit Fahrspuren, Erzaufschluss je Ertrag, dampfende Spalten, Felsgipfel).
 - Spielgrafiken (T62, Owner-Feedback): Icons vereinfacht (kräftige Umrisse, lesbar in Chipgröße), neu für Credits, Kolonisten und Vertrauen; sie stehen jetzt an jedem Ressourcen-Chip im Spiel und am Kolonisten-Bedarf der Gebäude. Regolith-Vorkommen auf der Karte zeigen das Regolith-Icon statt des blauen Punkts. Ruhigere, gröbere Bodentexturen für alle Geländearten (Regolith je Ertrag) und ein angedeuteter Planetenboden hinter der Karte. Neue Gebäudegrafiken Uplink-Station und Handelsposten.

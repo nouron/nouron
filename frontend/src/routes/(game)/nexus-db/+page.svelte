@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
 	// Port of resources/views/nexusdb/index.blade.php (ADR 0006 stage 4e): the core concepts in short.
 	import '#lib/styles/nexusdb.css';
 	import { onMount } from 'svelte';
@@ -170,7 +171,7 @@
 											<td>{r.rank}</td>
 											<td>{r.cost} <small>({t(r.rank === 1 ? 'nexusdb.advisor_cost_hire' : 'nexusdb.advisor_cost_promotion')})</small></td>
 											<td>{r.upkeep}</td>
-											<td>{r.bonuses.join('; ')}</td>
+											<td><ResText text={r.bonuses.join('; ')} /></td>
 										</tr>
 									{/each}
 								</tbody>

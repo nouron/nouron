@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
+	import Res from '#lib/components/Res.svelte';
 	// Techtree: canvas renderer in lib/js/techtree-canvas.js, styles in lib/styles/techtree-view.css.
 	import '#lib/styles/techtree-view.css';
 	import '#lib/styles/colony-shared.css';
@@ -381,10 +383,7 @@
 		{#each lines as line, idx (idx)}
 			<li>
 				{#if line.chip}
-					<span class="res-chip res-{line.chip.cls}">
-						<span class="res-abbr">{line.chip.abbr}</span>
-						<span class="res-amount">{line.chip.value}</span>
-					</span>
+					<Res res={line.chip.cls} label={line.chip.abbr} amount={line.chip.value} />
 				{:else}
 					<span class="res-chip res-chip--neutral">{line.text}</span>
 				{/if}
@@ -571,7 +570,7 @@
 <div class="techtree-page" class:techtree-page--panel={selected} bind:this={page}>
 	{#if toast}
 		<div class="techtree-toast techtree-toast--{toast.type}" role="status" aria-live="polite" transition:fade>
-			{toast.message}
+			<ResText text={toast.message} />
 		</div>
 	{/if}
 

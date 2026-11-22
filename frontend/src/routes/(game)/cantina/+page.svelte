@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
+	import Res from '#lib/components/Res.svelte';
 	// Port of resources/views/colony/bar.blade.php incl. its inline barPage() component (ADR 0006 stage 4d).
 	import '#lib/styles/carousel.css';
 	import '#lib/styles/colony-shared.css';
@@ -538,7 +540,7 @@
 
 {#snippet chip(id: number | string, amount: number | string)}
 	{@const abbr = typeof id === 'number' ? (ABBR[id] ?? '?') : id}
-	<span class="res-chip res-{abbr}"><span class="res-abbr">{abbr}</span><span class="res-amount">{amount}</span></span>
+	<Res res={abbr} label={abbr} {amount} />
 {/snippet}
 
 <!-- Terms and actions of one barter offer; used in a guest's dialog and, for Corvan's offers, inside the merchant dialog. -->
@@ -561,7 +563,7 @@
 				<span class="offer-terms__arrow" aria-hidden="true">→</span>
 				{@render chip(o.offer.get_resource_id, data.offerTerms[id].get_amount)}
 			</div>
-			<p class="offer-note">{dlg.fixed_price_note}</p>
+			<p class="offer-note"><ResText text={dlg.fixed_price_note ?? ''} /></p>
 		</div>
 	{:else}
 		<div class="offer-terms">
@@ -570,7 +572,7 @@
 					>{dlg.credits_give ? t('colony.bar_offer_base_label_credits') : t('colony.bar_offer_base_label')}</span
 				>
 				<span class="offer-terms__value offer-terms__value--nowrap">
-					{dlg.credits_give ? dlg.base_credits_text : `${dlg.base_give} ${dlg.give_label} → ${dlg.base_get} ${dlg.get_label}`}
+					<ResText text={dlg.credits_give ? (dlg.base_credits_text ?? '') : `${dlg.base_give} ${dlg.give_label} → ${dlg.base_get} ${dlg.get_label}`} />
 				</span>
 			</div>
 			<div class="offer-terms__row">
@@ -641,9 +643,7 @@
 			>
 				<span class="tile-action-btn__body">{accepted[id] ? '✓' : t('colony.bar_offer_accept')}</span>
 				<span class="offer-costs">
-					<span class="res-chip res-{giveAbbr}" class:cost-chip--short={giveShort}
-						><span class="res-abbr">{giveAbbr}</span><span class="res-amount">{dlg.give_amount}</span></span
-					>
+					<Res res={giveAbbr} label={giveAbbr} amount={dlg.give_amount} class={giveShort ? 'cost-chip--short' : ''} />
 					<span class="ap-chip ap-cost-chip ap-chip--economy" class:cost-chip--short={apShort}>{acceptAp} AP</span>
 				</span>
 			</button>
@@ -700,7 +700,7 @@
 
 {#snippet toastFor(modal: string)}
 	{#if toast && toast.modal === modal}
-		<div class="merchant-toast merchant-toast--{toast.type}" aria-live="polite" role="status" transition:fade>{toast.msg}</div>
+		<div class="merchant-toast merchant-toast--{toast.type}" aria-live="polite" role="status" transition:fade><ResText text={toast.msg} /></div>
 	{/if}
 {/snippet}
 
@@ -1019,9 +1019,7 @@
 													>{item.cost_credits}</s
 												>
 											{/if}
-											<span class="res-chip res-Cr" class:cost-chip--short={short}
-												><span class="res-abbr">Cr</span><span class="res-amount">{item.price_credits}</span></span
-											>
+											<Res res="Cr" amount={item.price_credits} class={short ? 'cost-chip--short' : ''} />
 										</span>
 									</button>
 								</article>
@@ -1053,7 +1051,7 @@
 						{@render toastFor('encounter')}
 						<p>{scene.encounter.body}</p>
 						{#if e.type === 'contract'}
-							<div class="res-chip res-Cr inline"><span class="res-abbr">Cr</span><span class="res-amount">{e.credits_amount}/Sol</span></div>
+							<Res res="Cr" amount="{e.credits_amount}/Sol" />
 						{:else}
 							<div class="swap-box">
 								<div>
@@ -1339,9 +1337,6 @@
 	.ok-line {
 		color: #166534;
 		font-size: 0.85rem;
-	}
-	.inline {
-		display: inline-flex;
 	}
 	.swap-box {
 		display: grid;

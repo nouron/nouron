@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
+	import Res from '#lib/components/Res.svelte';
 	// Colony hex view (ported from the Blade hexview, ADR 0006 stage 3). The SVG renderer
 	// lives in lib/js/colony-hexgrid.js.
 	import '#lib/styles/colony-shared.css';
@@ -697,7 +699,7 @@
 
 			{#if data}
 				<div class="canvas-info-bar">
-					<span class="find-counters">{findCounters}</span>
+					<span class="find-counters"><ResText text={findCounters} /></span>
 					<details class="hex-legend">
 						<summary class="info-bar-btn">{t('colony.legend_title')}</summary>
 						<ul class="hex-legend__list">
@@ -828,31 +830,27 @@
 								{#if !gated}
 								<div class="building-list-row building-list-row--costs">
 									{#if (b.supply_cost ?? 0) > 0}
-										<span
-											class="building-list-supply"
-											class:building-list-chip--missing={(b.supply_cost ?? 0) > d.freeSupply}
-											>{t('colony.building_needs_colonists', { count: b.supply_cost ?? 0 })}</span
-										>
+										<Res plain
+											res="Sup"
+											amount={b.supply_cost ?? 0}
+											class={(b.supply_cost ?? 0) > d.freeSupply ? 'building-list-chip--missing' : ''}
+										/>
 									{/if}
 									{#if (b.colonists_gain ?? 0) > 0}
-										<span class="building-list-supply"
-											>{t('colony.building_gives_colonists', { count: b.colonists_gain ?? 0 })}</span
-										>
+										<Res plain res="Sup" amount="+{b.colonists_gain ?? 0}" />
 									{/if}
 									<!-- Placement pays erect cost + level 1 in one go (T9): total, then the breakdown. -->
 									{#if b.placement_cost?.[3]}
-										<span
-											class="building-list-cost"
-											class:building-list-chip--missing={b.placement_cost[3] > d.regolith}
-											>{b.placement_cost[3]} Rg</span
-										>
+										<Res plain
+											res="RG"
+											amount={b.placement_cost[3]}
+											class={b.placement_cost[3] > d.regolith ? 'building-list-chip--missing' : ''}
+										/>
 									{/if}
 									<!-- Same cost source as buildMissingReasons(): a missing Werkstoffe amount turns this chip red (it had no marker, so a
 									     building short on Werkstoffe looked disabled without any reason). -->
 									{#if wk}
-										<span class="building-list-cost building-list-cost--compounds" class:building-list-chip--missing={wk > d.werkstoffe}
-											>{wk} Wk</span
-										>
+										<Res plain res="Co" amount={wk} class={wk > d.werkstoffe ? 'building-list-chip--missing' : ''} />
 									{/if}
 								</div>
 								{#if b.notice}<p class="building-list-notice">{b.notice}</p>{/if}
@@ -941,11 +939,12 @@
 								</span>
 								<span class="tile-action-btn__costs">
 									{#if ok && b.repair_cost > 0}
-										<span
-											class="ap-chip ap-cost-chip rg-cost-chip"
-											class:rg-cost-chip--short={b.repair_cost > data.regolith}
-											aria-hidden="true">{b.repair_cost} Rg</span
-										>
+										<Res plain
+											res="RG"
+											amount={b.repair_cost}
+											class={b.repair_cost > data.regolith ? 'cost-chip--short' : ''}
+											aria-hidden="true"
+										/>
 									{/if}
 									<span class="ap-chip ap-cost-chip ap-chip--build" aria-hidden="true">1 AP</span>
 								</span>
@@ -1044,16 +1043,14 @@
 							{#if (b.workplaces ?? 0) > 0}
 								<p class="tile-building-colonists">
 									<span>{t('colony.tile_colonists')}</span>
-									<span class="res-chip res-Sup"><span class="res-abbr">KOL</span><span class="res-amount">{b.workplaces}</span></span>
+									<Res res="Sup" amount={b.workplaces} />
 								</p>
 							{/if}
 
 							{#if canLevelUp(b) && (b.levelup_cost ?? 0) > 0}
 								<p class="tile-building-levelup-cost">
 									<span>{t('colony.levelup_cost_label')}</span>
-									<span class="res-chip res-RG"
-										><span class="res-abbr">RG</span><span class="res-amount">{b.levelup_cost}</span></span
-									>
+									<Res res="RG" amount={b.levelup_cost} />
 									<span
 										>{b.ap_spend > 0 ? t('colony.levelup_cost_already_paid') : t('colony.levelup_cost_suffix')}</span
 									>
@@ -1074,11 +1071,7 @@
 							{#if tile.regolith_remaining !== undefined}
 								<p class="tile-building-regolith-remaining">
 									<span>{t('colony.harvester_regolith_remaining_label')}</span>
-									<span class="res-chip res-RG"
-										><span class="res-abbr">RG</span><span class="res-amount"
-											>{tile.regolith_remaining} / {tile.regolith_max}</span
-										></span
-									>
+									<Res res="RG" amount="{tile.regolith_remaining} / {tile.regolith_max}" />
 								</p>
 							{/if}
 							{#if tile.sols_remaining !== undefined && tile.sols_remaining !== null}
@@ -1194,7 +1187,7 @@
 
 {#if toast}
 	<div class="colony-toast colony-toast--{toast.type}" aria-live="polite" role="status" transition:fade>
-		{toast.msg}
+		<ResText text={toast.msg} />
 	</div>
 {/if}
 

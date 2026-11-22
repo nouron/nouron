@@ -102,22 +102,14 @@
     gap: 0.2rem;
     flex-shrink: 0;
 }
+.tile-action-btn__costs .res-plain {
+    font-size: 0.72rem;
+}
 .tile-action-btn__costs .ap-cost-chip {
     padding: 0.15rem 0.4rem;
     font-size: 0.68rem;
 }
 
-/* Regolith cost chip next to the AP chip (partials/rg-cost-chip). "Short" = not
-   enough Regolith for this click. */
-.rg-cost-chip {
-    background: #fdf0e0;
-    color: #8a4a0a;
-}
-.rg-cost-chip--short {
-    background: #fee2e2;
-    color: #b91c1c;
-    text-decoration: line-through;
-}
 
 .tile-action-btn:disabled {
     opacity: 0.4;

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
+	import Res from '#lib/components/Res.svelte';
 	// Port of resources/views/colony/command_center.blade.php + public/js/command_center.js (ADR 0006 stage 4b).
 	import '#lib/styles/command_center.css';
 	import '#lib/styles/colony-view.css';
@@ -145,7 +147,7 @@
 				<li class="cc-nexus-price">
 					<span class="cc-nexus-price-name">{t(RES_LABELS[id])}</span>
 					{#if row.price < row.base}<s class="cc-nexus-price-base">{row.base}</s>{/if}
-					<strong class="cc-nexus-price-final">{t('colony.nexus_import_price_each', { price: row.price })}</strong>
+					<strong class="cc-nexus-price-final"><ResText text={t('colony.nexus_import_price_each', { price: row.price })} /></strong>
 				</li>
 			{/each}
 		</ul>
@@ -186,7 +188,7 @@
 					<button class="stipend-tier-btn" disabled={busy} onclick={() => stipend(tier.key)}>
 						<strong>{t(`colony.stipend_tier_${tier.key}`)}</strong>
 						<span class="cc-chip-row">
-							<span class="res-chip res-Cr"><span class="res-abbr">CR</span><span class="res-amount">{tier.cost}</span></span>
+							<Res res="Cr" amount={tier.cost} />
 							<span class="ap-chip ap-chip--trust-pos">+{tier.trust} {t('resources.res_trust')}</span>
 						</span>
 					</button>
@@ -214,10 +216,11 @@
 			<div class="cc-nexus-debt">
 				<div class="cc-nexus-debt-label">
 					<span>{t('command_center.widget_run_nexus_debt')}</span>
-					<span class="res-chip res-Cr {d.nexusDebtTone !== 'neutral' ? `res-chip--${d.nexusDebtTone}` : ''}">
-						<span class="res-abbr">CR</span>
-						<span class="res-amount">{fmt(d.nexusDebt)} / {fmt(d.nexusDebtMax)}</span>
-					</span>
+					<Res
+						res="Cr"
+						amount="{fmt(d.nexusDebt)} / {fmt(d.nexusDebtMax)}"
+						class={d.nexusDebtTone !== 'neutral' ? `res-chip--${d.nexusDebtTone}` : ''}
+					/>
 				</div>
 				<div class="cc-nexus-debt-bar">
 					<div
@@ -412,7 +415,7 @@
 {/if}
 
 {#if toast}
-	<div class="colony-toast colony-toast--{toast.type}" aria-live="polite" role="status" transition:fade>{toast.msg}</div>
+	<div class="colony-toast colony-toast--{toast.type}" aria-live="polite" role="status" transition:fade><ResText text={toast.msg} /></div>
 {/if}
 
 <style>

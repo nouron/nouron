@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Res from '#lib/components/Res.svelte';
 	// Port of resources/views/advisors/index.blade.php + public/js/advisors.js (ADR 0006 stage 4a).
 	import '#lib/styles/advisors.css';
 	import { onMount } from 'svelte';
@@ -276,7 +277,7 @@
 										</div>
 										<div class="stat-row">
 											<span class="stat-label">{t('advisors.dialog_upkeep')}</span>
-											<span class="res-chip res-Cr"><span class="res-abbr">CR</span><span class="res-amount">{a.upkeep}</span></span>
+											<Res res="Cr" amount={a.upkeep} />
 										</div>
 										<div class="advisor-progress-wrap">
 											<div class="stat-row">
@@ -311,9 +312,7 @@
 										<!-- Running terms on one line: upkeep per Sol · AP gain (junior rank). The one-off cost sits on the button. -->
 										<p class="hire-terms">
 											<span
-												><span class="res-chip res-Cr"
-													><span class="res-abbr">CR</span><span class="res-amount">{juniorUpkeep}</span></span
-												>
+												><Res res="Cr" amount={juniorUpkeep} />
 												{t('advisors.ui_terms_per_sol')}</span
 											>
 											<span class="ap-chip ap-chip--neutral">+<span class="res-amount">{slot.junior_ap}</span> AP</span>
@@ -325,9 +324,7 @@
 											     Too few credits: button disabled and the chip turns red, no message. -->
 											<button class="btn-hire btn-hire--full" disabled={busy || credits < slot.hire_cost} onclick={() => doHire(slot)}>
 												<span>{t('advisors.dialog_hire')}</span>
-												<span class="res-chip res-Cr" class:hire-cost--short={credits < slot.hire_cost}
-													><span class="res-abbr">CR</span><span class="res-amount">{slot.hire_cost}</span></span
-												>
+												<Res res="Cr" amount={slot.hire_cost} class={credits < slot.hire_cost ? 'hire-cost--short' : ''} />
 											</button>
 										</div>
 									</div>
@@ -416,7 +413,7 @@
 		max-width: 16rem;
 	}
 	/* Not enough credits for this hire (the dialog still explains; the chip warns up front). */
-	.hire-cost--short {
+	:global(.hire-cost--short) {
 		background: var(--color-danger-bg) !important;
 		border-color: var(--color-danger) !important;
 		color: var(--color-danger-fg) !important;

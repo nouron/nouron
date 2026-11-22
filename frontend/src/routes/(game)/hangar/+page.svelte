@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
+	import Res from '#lib/components/Res.svelte';
 	// Port of resources/views/colony/hangar.blade.php + public/js/hangar.js (ADR 0006 stage 4c).
 	import '#lib/styles/hangar.css';
 	import '#lib/styles/dialogs.css';
@@ -689,7 +691,7 @@
 							<input type="checkbox" role="switch" bind:checked={rm.useNexusCredit} />
 							<span>
 								<span>{t('colony.hangar_nexus_credit')}</span>
-								<small class="hangar-nexus-credit-hint">{t('colony.hangar_nexus_credit_hint')}</small>
+								<small class="hangar-nexus-credit-hint"><ResText text={t('colony.hangar_nexus_credit_hint')} /></small>
 							</span>
 						</label>
 					{/if}
@@ -711,12 +713,8 @@
 							{#if cost}
 								<span class="hangar-ship-btn-meta">
 									<span class="hangar-ship-btn-chips">
-										<span class="res-chip res-Cr"
-											><span class="res-abbr">CR</span><span class="res-amount">{effectiveCost(type.id)}</span></span
-										>
-										<span class="res-chip res-Sol"
-											><span class="res-abbr">Sol</span><span class="res-amount">+{cost.delivery_ticks}</span></span
-										>
+										<Res res="Cr" amount={effectiveCost(type.id)} />
+										<Res res="Sol" amount="+{cost.delivery_ticks}" />
 									</span>
 								</span>
 							{/if}
