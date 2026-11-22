@@ -8,8 +8,6 @@ return [
     'deep_scan' => 'Sondieren',
     'invest_ap' => 'Ausbauen',
     'tile_colonists' => 'Braucht Kolonisten',
-    'building_needs_colonists' => ':count KOL',
-    'building_gives_colonists' => '+:count KOL',
     'levelup_cost_label' => 'Kosten:',
     'levelup_cost_suffix' => 'fällig mit dem ersten AP',
     'levelup_cost_already_paid' => 'bereits bezahlt',
@@ -811,7 +809,6 @@ return [
 
     // ── T30 Fundkarte ──────────────────────────────────────────────────────────
     'find_label' => 'Fund',
-    'find_value' => ':rg Rg',
     'find_salvage' => 'Bergen',
     'find_false_notice' => 'Fehlalarm – kein Ertrag',
     'find_reason_unscanned' => 'Signal unbekannt. Erst scannen.',

@@ -8,6 +8,7 @@
 </script>
 
 <script lang="ts">
+	import Res from '#lib/components/Res.svelte';
 	// Port of resources/views/partials/ap-upgrade-button.blade.php — ONE upgrade button with a
 	// segmented AP bar for the colony "Ausbauen" and the techtree knowledge level-up.
 	// Bar logic: public/js/ap-bar.js (window.NouronApBar), styles: public/css/ap-upgrade-button.css.
@@ -83,9 +84,7 @@
 	</span>
 	<span class="tile-action-btn__costs">
 		{#if rg > 0}
-			<span class="ap-chip ap-cost-chip rg-cost-chip" class:rg-cost-chip--short={rg > regolith} aria-hidden="true"
-				>{rg} Rg</span
-			>
+			<Res plain res="RG" amount={rg} class={rg > regolith ? 'cost-chip--short' : ''} aria-hidden="true" />
 		{/if}
 		<span class="ap-chip ap-cost-chip ap-chip--{chip}" aria-hidden="true">1 AP</span>
 	</span>

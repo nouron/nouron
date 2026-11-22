@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ResText from '#lib/components/ResText.svelte';
 	// Port of partials/sol-button.blade.php: AP check → confirm → POST /sol/next → animated
 	// Sol report (groups with counters) → optional phase success → phase progress → "Sol N starts".
 	import '#lib/styles/sol.css';
@@ -260,7 +261,7 @@
 												{#if line.from !== undefined && line.to !== undefined}
 													<span class="sol-report__counter">{counterValue(group, li)}</span>
 												{/if}
-												<span class="sol-report__detail">{lineDetail(line)}</span>
+												<span class="sol-report__detail"><ResText text={lineDetail(line)} /></span>
 											</span>
 										</li>
 									{/each}

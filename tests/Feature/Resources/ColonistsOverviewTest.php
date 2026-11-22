@@ -119,6 +119,7 @@ class ColonistsOverviewTest extends TestCase
         $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
 
         $this->assertStringNotContainsString('} KOL`', $page);
-        $this->assertStringContainsString("t('colony.building_needs_colonists', { count: b.supply_cost ?? 0 })", $page);
+        // Colonist need is drawn as the shared resource chip (icon + KOL), not as hand-built text.
+        $this->assertStringContainsString('amount={b.supply_cost ?? 0}', $page);
     }
 }

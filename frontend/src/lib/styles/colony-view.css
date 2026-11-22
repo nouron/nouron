@@ -884,6 +884,8 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
 .building-list-row--costs {
     justify-content: flex-start;
     flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6b6b7a);
 }
 
 .building-list-item:hover {
@@ -929,32 +931,8 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
     flex-shrink: 0;
 }
 
-.building-list-supply {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.72rem;
-    color: var(--color-text-secondary, #6b6b7a);
-    background: var(--color-surface, #f7f7f5);
-    border: 1px solid var(--color-border, #e8e8ec);
-    border-radius: var(--radius-pill);
-    padding: 0 0.4rem;
-}
 
-.building-list-cost {
-    font-size: 0.72rem;
-    color: #6b5a2a;
-    background: #fbf6e8;
-    border: 1px solid #e6d8a8;
-    border-radius: var(--radius-pill);
-    padding: 0 0.4rem;
-}
 
-.building-list-cost--compounds {
-    color: #2a5a6b;
-    background: #e8f3fb;
-    border-color: #a8cfe6;
-}
 
 /* Short hint under a build card's cost row (e.g. hangar: finds go by ship). */
 .building-list-notice {
@@ -1444,11 +1422,3 @@ dialog.discovery-dialog {
     }
 }
 
-/* Colonist icon in front of the building's KOL need/gain. */
-.building-list-supply::before {
-    content: '';
-    flex: none;
-    width: 1.5em;
-    height: 1.5em;
-    background: var(--icon-sup) center / contain no-repeat;
-}

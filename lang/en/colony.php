@@ -8,8 +8,6 @@ return [
     'deep_scan' => 'Probe',
     'invest_ap' => 'Invest AP',
     'tile_colonists' => 'Needs colonists',
-    'building_needs_colonists' => ':count COL',
-    'building_gives_colonists' => '+:count COL',
     'levelup_cost_label' => 'Cost:',
     'levelup_cost_suffix' => 'due with the first AP',
     'levelup_cost_already_paid' => 'already paid',
@@ -813,7 +811,6 @@ return [
 
     // ── T30 find card ──────────────────────────────────────────────────────────
     'find_label' => 'Find',
-    'find_value' => ':rg Rg',
     'find_salvage' => 'Salvage',
     'find_false_notice' => 'False alarm – no yield',
     'find_reason_unscanned' => 'Unknown signal. Scan it first.',

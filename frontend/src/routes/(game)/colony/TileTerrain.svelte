@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Res from '#lib/components/Res.svelte';
+	import ResText from '#lib/components/ResText.svelte';
 	// Port of resources/views/colony/partials/tile-terrain.blade.php: zone status, terrain,
 	// status chips, find card, resource bar. `built` drops the parts redundant on a built tile.
 	import { t } from '#lib/i18n.ts';
@@ -96,10 +98,10 @@
 				<dl class="tile-dl find-card__dl">
 					<div>
 						<dt>{t('colony.find_label')}</dt>
-						<dd>{t('colony.find_value', { rg: tile.find.rg })}</dd>
+						<dd><Res plain res="RG" amount={tile.find.rg} /></dd>
 					</div>
 				</dl>
-				<p class="find-card__reason">{tile.find.action?.text ?? ''}</p>
+				<p class="find-card__reason"><ResText text={tile.find.action?.text ?? ''} /></p>
 				{#if tile.find.action?.action === 'self_salvage'}
 					<div class="find-card__action">
 						<button type="button" class="tile-action-btn" onclick={() => onsalvage(tile)}>
