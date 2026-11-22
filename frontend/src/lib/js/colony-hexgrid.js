@@ -48,7 +48,22 @@ const TILE_STROKES = {
 
 // Illustrated ground textures (public/img/tiles/<tile_type>.webp, ADR 0001). Drawn over the
 // state fill with multiply blending, so the fill colour (buildable, target, ...) still reads.
-const TILE_TEXTURES = new Set(['terrain_empty', 'regolith_rich', 'terrain_hazard']);
+const TILE_TEXTURES = new Set([
+    'terrain_empty',
+    'terrain_hazard',
+    'terrain_impassable',
+    'regolith_rich',
+    'regolith_normal',
+    'regolith_poor',
+]);
+// Regolith tiles are `regolith_y{yield}_d{deposit}` (config/game.php); the texture follows the yield.
+const REGOLITH_TEXTURE_BY_YIELD = { 1: 'regolith_poor', 2: 'regolith_normal', 3: 'regolith_rich' };
+
+function tileTexture(tileType) {
+    const m = /^regolith_y(\d)/.exec(tileType);
+    const key = m ? REGOLITH_TEXTURE_BY_YIELD[m[1]] : tileType;
+    return TILE_TEXTURES.has(key) ? key : null;
+}
 
 const CC_COLOR = '#7ec87e';
 const CC_STROKE = '#2e7d32';
@@ -538,7 +553,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     g.appendChild(polygon);
 
     // Ground texture: explored tiles only (fog never reveals the tile type).
-    if (opts.tileTextureBase && tile.is_explored && !isImpassable && TILE_TEXTURES.has(tile.tile_type)) {
+    const texture = opts.tileTextureBase && tile.is_explored ? tileTexture(tile.tile_type) : null;
+    if (texture) {
         const texClipId = `tex-clip-${tile.q}-${tile.r}`;
         const texClip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
         texClip.setAttribute('id', texClipId);
@@ -547,7 +563,7 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         texClip.appendChild(texPoly);
         g.appendChild(texClip);
         const tex = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-        tex.setAttribute('href', `${opts.tileTextureBase}/${tile.tile_type}.webp`);
+        tex.setAttribute('href', `${opts.tileTextureBase}/${texture}.webp`);
         tex.setAttribute('x', cx - size);
         tex.setAttribute('y', cy - size);
         tex.setAttribute('width', size * 2);
@@ -722,10 +738,21 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         g.appendChild(body);
     }
 
-    // Resource indicator dot (top-right, blue)
+    // Regolith deposit marker (top-right): the regolith icon, a blue dot without icon base.
     if (tile.is_explored && tile.resource_max > 0) {
-        const dot = svgCircle(cx + size * 0.38, cy - size * 0.38, 4, '#2196f3', '#fff');
-        g.appendChild(dot);
+        if (opts.iconBase) {
+            const ico = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            const icoSize = size * 0.42;
+            ico.setAttribute('href', `${opts.iconBase}/res_regolith.webp`);
+            ico.setAttribute('x', cx + size * 0.38 - icoSize / 2);
+            ico.setAttribute('y', cy - size * 0.38 - icoSize / 2);
+            ico.setAttribute('width', icoSize);
+            ico.setAttribute('height', icoSize);
+            ico.setAttribute('pointer-events', 'none');
+            g.appendChild(ico);
+        } else {
+            g.appendChild(svgCircle(cx + size * 0.38, cy - size * 0.38, 4, '#2196f3', '#fff'));
+        }
     }
 
     // Harvester-relocation fallback badge (bottom-right, purple arrow). Deliberately

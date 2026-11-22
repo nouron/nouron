@@ -154,6 +154,7 @@
 			harvesterBuilding: harvesterMoveMode ? harvesterBuilding() : null,
 			tileYields: data.tileYields,
 			tileTextureBase: `${BACKEND_URL}/img/tiles`,
+			iconBase: `${BACKEND_URL}/img/icons`,
 			repairDisplayThreshold: data.repairDisplayThreshold,
 			damagedThresholdPct: data.damagedThresholdPct,
 			criticalThresholdPct: data.criticalThresholdPct,
@@ -1032,7 +1033,10 @@
 							{/if}
 
 							{#if (b.workplaces ?? 0) > 0}
-								<p class="tile-building-colonists">{t('colony.tile_colonists')}: {b.workplaces}</p>
+								<p class="tile-building-colonists">
+									<span>{t('colony.tile_colonists')}</span>
+									<span class="res-chip res-Sup"><span class="res-abbr">KOL</span><span class="res-amount">{b.workplaces}</span></span>
+								</p>
 							{/if}
 
 							{#if canLevelUp(b) && (b.levelup_cost ?? 0) > 0}

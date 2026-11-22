@@ -19,7 +19,9 @@
 /* ── Canvas wrap (left column) ───────────────────────────────────────────── */
 
 .hex-canvas-wrap {
-    background: #fafafa;
+    /* Faint drawn planet surface behind the map (--map-ground from the root layout). */
+    background: #fafafa var(--map-ground) repeat;
+    background-size: 320px;
     border-right: 1px solid var(--color-border);
     /* Fill the full height of the layout row so the border extends all the way down */
     align-self: stretch;
@@ -928,6 +930,9 @@ dialog.leveldown-dialog .leveldown-dialog__confirm:disabled {
 }
 
 .building-list-supply {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
     font-size: 0.72rem;
     color: var(--color-text-secondary, #6b6b7a);
     background: var(--color-surface, #f7f7f5);
@@ -1437,4 +1442,13 @@ dialog.discovery-dialog {
         align-items: center;
         z-index: 2;
     }
+}
+
+/* Colonist icon in front of the building's KOL need/gain. */
+.building-list-supply::before {
+    content: '';
+    flex: none;
+    width: 1.5em;
+    height: 1.5em;
+    background: var(--icon-sup) center / contain no-repeat;
 }

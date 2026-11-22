@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-22
+
+- Spielgrafiken (T62, Owner-Feedback): Icons vereinfacht (kräftige Umrisse, lesbar in Chipgröße), neu für Credits, Kolonisten und Vertrauen; sie stehen jetzt an jedem Ressourcen-Chip im Spiel und am Kolonisten-Bedarf der Gebäude. Regolith-Vorkommen auf der Karte zeigen das Regolith-Icon statt des blauen Punkts. Ruhigere, gröbere Bodentexturen für alle Geländearten (Regolith je Ertrag) und ein angedeuteter Planetenboden hinter der Karte. Neue Gebäudegrafiken Uplink-Station und Handelsposten.
+
 ## 2026-11-21
 
 - Spielgrafiken (T62): Ressourcen-Icons für Regolith, Organika und Werkstoffe in der Ressourcenleiste und gezeichnete Bodentexturen für freies Feld, reiches Regolith und Gefahrenzone auf der Kolonie-Karte (Zustandsfarben bleiben sichtbar). Erzeugt mit Higgsfield im Stil der Gebäudegrafiken, WebP nach ADR 0001 (`public/img/icons/`, `public/img/tiles/`).

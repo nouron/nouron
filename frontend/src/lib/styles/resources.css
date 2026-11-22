@@ -45,7 +45,8 @@
 .res-abbr {
     font-size: 0.7rem;
     font-weight: 700;
-    opacity: 0.65;
+    /* Faded text via colour, not opacity: opacity would also fade the icon drawn in ::before. */
+    color: color-mix(in srgb, currentColor 65%, transparent);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -299,15 +300,29 @@
     animation: res-chip-flash 0.5s ease-out;
 }
 
-/* ── Illustrated resource icon (ResourceBar, colony materials) ──────────── */
+/* ── Resource icons (public/img/icons via --icon-* from the root layout) ──
+ * Drawn in front of the abbreviation, so every res-chip in the game gets one. */
 
-.res-label {
+.res-Cr { --res-icon: var(--icon-cr); }
+.res-Sup { --res-icon: var(--icon-sup); }
+.res-Rg,
+.res-RG { --res-icon: var(--icon-rg); }
+.res-Co { --res-icon: var(--icon-co); }
+.res-Or { --res-icon: var(--icon-or); }
+.res-Tr,
+[class*='ap-chip--trust'] { --res-icon: var(--icon-tr); }
+
+.res-chip:is(.res-Cr, .res-Sup, .res-Rg, .res-RG, .res-Co, .res-Or, .res-Tr) .res-abbr,
+[class*='ap-chip--trust'] .ap-label {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
 }
-.res-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-    object-fit: contain;
+.res-chip:is(.res-Cr, .res-Sup, .res-Rg, .res-RG, .res-Co, .res-Or, .res-Tr) .res-abbr::before,
+[class*='ap-chip--trust'] .ap-label::before {
+    content: '';
+    flex: none;
+    width: 1.7em;
+    height: 1.7em;
+    background: var(--res-icon) center / contain no-repeat;
 }
