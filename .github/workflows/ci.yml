@@ -85,7 +85,7 @@ jobs:
         run: npm run build
 
   tests:
-    name: PHPUnit (${{ matrix.suite }} ${{ matrix.shard + 1 }}/2)
+    name: PHPUnit (${{ matrix.suite }} ${{ matrix.shard }}/2)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -99,7 +99,7 @@ jobs:
         # phpunit.xml keeps out of the default run because its full-run tests
         # are slow. Each is split over two runners (tools/ci-shard.sh).
         suite: [default, playtest]
-        shard: [0, 1]
+        shard: [1, 2]
     services:
       mysql:
         image: mysql:8.0
