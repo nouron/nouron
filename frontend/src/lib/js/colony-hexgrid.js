@@ -957,8 +957,8 @@ function getTileColor(tile) {
     if (tile.q === 0 && tile.r === 0) return CC_COLOR;
     if (hasActiveEvent(tile)) return EVENT_COLOR;
 
-    // Colony-zone terrain_empty is clearly lighter than exploration zone.
-    if (tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable') {
+    // Colony-zone terrain_empty is clearly lighter than exploration zone; hazard keeps its colour.
+    if (tile.is_colony_zone && tile.tile_type === 'terrain_empty') {
         return BUILDABLE_COLOR;
     }
 

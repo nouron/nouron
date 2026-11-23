@@ -631,6 +631,16 @@
 		['event', 'legend_event']
 	];
 	const swatchText: Record<string, string> = { zonefog: '+', explorefog: '?' };
+	// Legend swatches show the same scene as the map tile, over the same fill colour.
+	const swatchScene: Record<string, string> = {
+		buildable: 'terrain_empty_2',
+		soon: 'terrain_empty_3',
+		zonefog: 'fog',
+		explorefog: 'fog_2',
+		regolith: 'regolith_normal',
+		hazard: 'terrain_hazard',
+		impassable: 'terrain_impassable'
+	};
 
 	// The hint bar lives in the shell; redraw when it changes so the grid's hint highlight follows.
 	let lastHint: unknown = undefined;
@@ -706,7 +716,12 @@
 						<ul class="hex-legend__list">
 							{#each legend as [mod, label] (mod)}
 								<li class="hex-legend__item">
-									<span class="hex-legend__swatch hex-legend__swatch--{mod}">{swatchText[mod] ?? ''}</span>
+									<span
+										class="hex-legend__swatch hex-legend__swatch--{mod}"
+										class:hex-legend__swatch--scene={swatchScene[mod]}
+										style:background-image={swatchScene[mod] ? `url(${BACKEND_URL}/img/tiles/${swatchScene[mod]}.webp)` : undefined}
+										>{swatchText[mod] ?? ''}</span
+									>
 									<span>{t(`colony.${label}`)}</span>
 								</li>
 							{/each}

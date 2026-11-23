@@ -226,9 +226,17 @@
     );
 }
 
+.hex-legend__swatch--scene {
+    width: 1.6rem;
+    height: 1.6rem;
+    background-size: cover;
+    background-position: center;
+    background-blend-mode: multiply;
+}
+
 .hex-legend__swatch--regolith {
-    background: #7fb5dc;
-    border: 1px solid #5090c0;
+    background-color: #c8cdd6; /* map fallback fill: regolith_y*_d* tiles have no own colour */
+    border: 1px solid #a0a8b4;
 }
 
 /* Colors mirror the JS render constants (colony-hexgrid.js: CC_COLOR/TILE_COLORS/EVENT_COLOR)

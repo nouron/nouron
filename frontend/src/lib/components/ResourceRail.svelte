@@ -178,6 +178,7 @@
 
 	.rail-panel {
 		position: fixed;
+		z-index: 2; /* its popups open above the handle */
 		top: var(--rail-top);
 		left: calc(-1 * var(--rail-w) - 24px);
 		width: var(--rail-w);
@@ -256,6 +257,10 @@
 		font-size: 0.72rem;
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
+	}
+	/* Collapsed: a slim tab, so it hides little of the page below (the touch area stays 44 px). */
+	.rail:not(.rail--shown) .tab {
+		width: 20px;
 	}
 	.rail--shown .tab {
 		height: 44px;

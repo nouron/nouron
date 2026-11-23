@@ -30,6 +30,7 @@ return [
     'result_fail_abandoned' => 'The mission was abandoned.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Reached in Sol :current of :limit',
+    'result_objectives_title' => 'Phase objectives',
     'result_objective_fulfilled' => 'Fulfilled',
     'result_objective_open' => 'Not fulfilled',
     'result_btn_new_run' => 'Back to Mission Control',

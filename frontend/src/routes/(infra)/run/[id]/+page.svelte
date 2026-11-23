@@ -63,7 +63,9 @@
 		</div>
 
 		<div class="run-result__objectives">
-			<p class="run-result__obj-title">{t('run.phase1_complete')}</p>
+			<p class="run-result__obj-title">
+				{r.objectives.length && r.objectives.every((o) => o.done) ? t('run.phase1_complete') : t('run.result_objectives_title')}
+			</p>
 			<ul class="run-result__obj-list">
 				{#each r.objectives as o, i (i)}
 					<li class="run-result__obj-item">
