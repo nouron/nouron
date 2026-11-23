@@ -31,7 +31,8 @@ jobs:
           code=true
           if [ -n "$BASE_SHA" ]; then
             files=$(git diff --name-only "$BASE_SHA...HEAD")
-            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '\.md$'; then
+            # Here-string, not a pipe: grep -q closing a pipe early would count as failure under pipefail.
+            if [ -n "$files" ] && ! grep -qv '\.md$' <<< "$files"; then
               code=false
             fi
           fi
