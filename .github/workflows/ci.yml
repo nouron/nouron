@@ -85,7 +85,7 @@ jobs:
         run: npm run build
 
   tests:
-    name: PHPUnit (${{ matrix.suite }})
+    name: PHPUnit (${{ matrix.suite }} ${{ matrix.shard + 1 }}/2)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -97,8 +97,9 @@ jobs:
       matrix:
         # Default suites (feature + unit) and the PlaytestBot suite, which
         # phpunit.xml keeps out of the default run because its full-run tests
-        # are slow.
-        suite: ['laravel-feature,laravel-unit', 'playtest']
+        # are slow. Each is split over two runners (tools/ci-shard.sh).
+        suite: [default, playtest]
+        shard: [0, 1]
     services:
       mysql:
         image: mysql:8.0
@@ -132,13 +133,15 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
+      - name: Select test files
+        run: tools/ci-shard.sh '${{ matrix.suite }}' '${{ matrix.shard }}' 2
       - name: Run tests
         run: |
           # Public-repo runners have 4 vCPUs: the default suites run in parallel
           # (paratest, one database per worker). The playtest suite spawns its own
           # bot processes and stays serial.
           if [ '${{ matrix.suite }}' = 'playtest' ]; then
-            bin/phpunit --testsuite '${{ matrix.suite }}'
+            bin/phpunit --configuration phpunit.shard.xml --testsuite shard
           else
-            php artisan test --parallel --testsuite '${{ matrix.suite }}'
+            php artisan test --parallel --configuration=phpunit.shard.xml --testsuite shard
           fi
