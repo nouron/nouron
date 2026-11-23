@@ -106,9 +106,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: nouron
           MYSQL_DATABASE: nouron_test
         ports: ['3306:3306']
-        # Data directory in RAM: throwaway test data needs no disk writes.
         options: >-
-          --tmpfs /var/lib/mysql
           --health-cmd="mysqladmin ping -h 127.0.0.1 -pnouron"
           --health-interval=5s --health-timeout=5s --health-retries=20
     # phpunit.xml forces DB_CONNECTION=mysql and DB_DATABASE=nouron_test and only
@@ -127,6 +125,7 @@ jobs:
           php-version: '8.4'
           extensions: pdo_mysql
           coverage: none
+          ini-values: opcache.enable_cli=1, opcache.memory_consumption=256
       - name: Composer install
         uses: ramsey/composer-install@v3
       - name: Prepare environment
