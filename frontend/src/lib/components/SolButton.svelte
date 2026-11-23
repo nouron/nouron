@@ -414,16 +414,15 @@
 	@keyframes sol-ready {
 		0%,
 		100% {
-			box-shadow: 0 0 0 0 transparent;
+			opacity: 1;
 		}
 		50% {
-			box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 40%, transparent);
+			opacity: 0.78;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.btn-sol--ready {
 			animation: none;
-			box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 40%, transparent);
 		}
 	}
 	/* Phones: icon only (the Sol label sits right above it). */

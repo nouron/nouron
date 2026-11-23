@@ -38,13 +38,12 @@
 }
 
 /* ── Feel ────────────────────────────────────────────────────────────────────
- * Boxed buttons lift and ring; the :not() list names the unboxed ones (nav tiles, links, close crosses),
+ * Boxed buttons lift slightly, without a glow (owner 2026-11-23); the :not() list names the unboxed ones (nav tiles, links, close crosses),
  * which get their own cue further down.
  * `translate` (not `transform`) so buttons that are positioned with a transform keep their place. */
 :root :is(button, .btn-link, a[role="button"]) {
     transition:
         translate 0.14s var(--ease-out),
-        box-shadow 0.18s var(--ease-out),
         background-color var(--duration-fast),
         border-color var(--duration-fast),
         color var(--duration-fast),
@@ -54,13 +53,11 @@
 @media (hover: hover) {
     :root :is(button, .btn-link, a[role="button"]):not(:is(.tile, .plain, .menu-item, .link-btn, .preview-reason-link, .detail-cta-link, .logo, .infra-brand, .comm-tab, .sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .detail-x, .mobile-sheet__close, .hint-bar__dismiss)):hover:not(:disabled) {
         translate: 0 -1px;
-        box-shadow: var(--ring-hover), var(--lift-shadow);
     }
 }
 
 :root :is(button, .btn-link, a[role="button"]):not(:is(.tile, .plain, .menu-item, .link-btn, .preview-reason-link, .detail-cta-link, .logo, .infra-brand, .comm-tab, .sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .detail-x, .mobile-sheet__close, .hint-bar__dismiss)):active:not(:disabled) {
     translate: 0 1px;
-    box-shadow: var(--ring-press);
     transition-duration: var(--duration-press);
 }
 

@@ -91,6 +91,12 @@ const LOCKED_STROKE = '#6f7a90';
 const EVENT_COLOR = '#e8d89a';
 const EVENT_STROKE = '#b09a40';
 
+// Cut-out building art for the map (public/img/buildings/map/<slug>.webp).
+function buildingMapSlug(key) {
+    const name = key.replace(/^building_/, '');
+    return name === 'bar' ? 'cantina' : name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+}
+
 // Abbreviations shown on tiles with buildings
 const BUILDING_ABBR = {
     building_commandCenter: 'CC',
@@ -718,8 +724,23 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         return g;
     }
 
-    // CC label
-    if (isCC) {
+    // Building art, under every marker. Sites and buildings in transit stay faded until they stand.
+    const showBuildingArt = !!(building && opts.buildingImageBase && tile.is_explored);
+    if (showBuildingArt) {
+        const art = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        const artSize = size * 1.4;
+        art.setAttribute('href', `${opts.buildingImageBase}/${buildingMapSlug(building.building_key)}.webp`);
+        art.setAttribute('x', cx - artSize / 2);
+        art.setAttribute('y', cy - artSize / 2 - size * 0.1);
+        art.setAttribute('width', artSize);
+        art.setAttribute('height', artSize);
+        art.setAttribute('pointer-events', 'none');
+        if (building.level < 1 || building.in_transit) art.setAttribute('opacity', '0.55');
+        g.appendChild(art);
+    }
+
+    // CC label (with art, the CC gets the regular building badge below)
+    if (isCC && !showBuildingArt) {
         g.appendChild(svgText(cx, cy, 'CC', 10, '#2e7d32', 700));
     }
 
@@ -787,8 +808,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         g.appendChild(svgText(bx, by, '→', 7, '#fff', 700));
     }
 
-    // Building badge (center-bottom, skip CC — already labeled)
-    if (building && !isCC && tile.is_explored) {
+    // Building badge (center-bottom; a CC without art is already labeled)
+    if (building && (!isCC || showBuildingArt) && tile.is_explored) {
         const abbr = BUILDING_ABBR[building.building_key] ?? '?';
         const isBuilt = building.level > 0;
         const inTransit = !!building.in_transit;
