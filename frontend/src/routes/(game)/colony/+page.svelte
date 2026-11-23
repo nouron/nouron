@@ -166,6 +166,7 @@
 			tileYields: data.tileYields,
 			tileTextureBase: `${BACKEND_URL}/img/tiles`,
 			iconBase: `${BACKEND_URL}/img/icons`,
+			buildingImageBase: `${BACKEND_URL}/img/buildings/map`,
 			repairDisplayThreshold: data.repairDisplayThreshold,
 			damagedThresholdPct: data.damagedThresholdPct,
 			criticalThresholdPct: data.criticalThresholdPct,

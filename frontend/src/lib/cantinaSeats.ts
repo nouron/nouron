@@ -21,6 +21,9 @@ function poolsFor(f: Figure): Seat['kind'][][] {
 }
 const rank = (f: Figure) => (f.slug === 'bartender' ? 0 : f.slug === 'stranger' ? 1 : f.met ? 3 : 2);
 
+// Seats above each other: the larger phone cards would touch, so these pairs are filled last.
+const stacked = (a: Seat, b: Seat) => Math.abs(a.x - b.x) <= 4 && Math.abs(a.y - b.y) <= 30;
+
 const hash = (s: string) => [...s].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0, 7) >>> 0;
 
 /** figure key → seat. Stable while the cast stays the same; a new cast (next Sol) reshuffles. */
@@ -30,14 +33,19 @@ export function assignSeats(figures: Figure[]): Record<string, Seat> {
 	const out: Record<string, Seat> = {};
 	// Most constrained first, so the bartender and the stranger get their places.
 	for (const f of [...figures].sort((a, b) => rank(a) - rank(b))) {
-		for (const kinds of poolsFor(f)) {
-			const pool = free.filter((s) => kinds.includes(s.kind));
-			if (!pool.length) continue;
-			const seat = pool[hash(cast + f.key) % pool.length];
-			free.splice(free.indexOf(seat), 1);
-			out[f.key] = seat;
-			break;
-		}
+		const pick = (clearOnly: boolean) => {
+			for (const kinds of poolsFor(f)) {
+				const pool = free.filter(
+					(s) => kinds.includes(s.kind) && (!clearOnly || !Object.values(out).some((t) => stacked(s, t)))
+				);
+				if (pool.length) return pool[hash(cast + f.key) % pool.length];
+			}
+			return null;
+		};
+		const seat = pick(true) ?? pick(false);
+		if (!seat) continue;
+		free.splice(free.indexOf(seat), 1);
+		out[f.key] = seat;
 	}
 	return out;
 }

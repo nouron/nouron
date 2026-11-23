@@ -141,7 +141,7 @@
 .cantina-hotspot,
 .cantina-bartender {
     /* Centred on its seat (left/top inline); phones: fixed size, larger screens: scales with the picture. */
-    --card-w: clamp(80px, 10cqw, 150px);
+    --card-w: clamp(80px, 10.6cqw, 190px);
     position: absolute;
     width: var(--card-w);
     height: calc(var(--card-w) * 11 / 8);
@@ -151,7 +151,7 @@
 @media (max-width: 767px) {
     .cantina-hotspot,
     .cantina-bartender {
-        --card-w: 96px;
+        --card-w: 140px;
     }
 }
 

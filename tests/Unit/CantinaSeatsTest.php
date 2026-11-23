@@ -11,13 +11,14 @@ use PHPUnit\Framework\TestCase;
  */
 class CantinaSeatsTest extends TestCase
 {
-    // Largest card relative to the picture: 80px minimum on a 768px-wide scene (cantina.css).
-    private const CARD_W = 80 / 768 * 100;
+    // Largest card relative to the picture on larger screens: 10.6cqw (cantina.css).
+    private const CARD_W = 10.6;
 
     private const CARD_H = self::CARD_W * 11 / 8 * 16 / 9;
 
-    // Phones: 96px cards on a picture 4 screens wide, narrowest screen 320px.
-    private const PHONE_HALF = 48 / (4 * 320) * 100;
+    // Phones: 140px cards on a picture 4 screens wide, narrowest screen 320px. Stacked seats
+    // can touch there, so assignSeats() fills them last.
+    private const PHONE_HALF = 70 / (4 * 320) * 100;
 
     /** @return list<array{id: string, kind: string, x: float, y: float}> */
     private function seats(): array

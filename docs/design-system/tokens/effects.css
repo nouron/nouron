@@ -59,9 +59,6 @@
     --bevel-lg: 20px;
     --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); /* @kind other */
     --duration-press: 0.08s; /* @kind other */
-    --ring-hover: 0 0 0 3px rgba(140, 32, 48, 0.13);
-    --ring-press: 0 0 0 1px rgba(140, 32, 48, 0.45);
-    --lift-shadow: 0 5px 12px -6px rgba(26, 26, 30, 0.45);
 }
 @keyframes ds-line-draw {
     from {

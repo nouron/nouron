@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-23
+
+- Oberfläche (T62, Owner-Feedback): Gebäude stehen als freigestellte Grafik auf ihren Kartenfeldern (Baustellen blass). Das Leuchten am Rand von Buttons und Leisten ist entfernt. Cantina-Figuren sind größer, gestapelte Plätze werden zuletzt belegt.
+
 ## 2026-11-22
 
 - Ressourcen-Chips (T62, Owner-Wunsch): Ein gemeinsamer Chip (`Res.svelte`) ersetzt die handgebauten Chips und Kosten-Pillen (Baukosten, Reparatur, Kolonisten-Bedarf, Berater, Hangar, Cantina). Für wenig Platz gibt es die schlichte Form `plain` (nur Icon + Betrag, ohne Pille): Gebäudeliste, Kosten an Aktionsknöpfen und Beträge in Meldungen und Hinweistexten („300 Cr“, „12 RG“, über `ResText.svelte`).
