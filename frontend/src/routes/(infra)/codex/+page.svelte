@@ -2,7 +2,7 @@
 	// Port of resources/views/user/codex.blade.php (ADR 0006 stage 4e): what the player learned about each figure.
 	import { onMount } from 'svelte';
 	import { api, ApiError } from '#lib/stores/auth.ts';
-	import { t } from '#lib/i18n.ts';
+	import { characterRole, t } from '#lib/i18n.ts';
 
 	type Character = { slug: string; name: string | null; role: string | null; unlocked: number[]; max_entries: number };
 	let characters = $state<Character[]>([]);
@@ -27,7 +27,7 @@
 		<details>
 			<summary>
 				<strong>{c.name ?? t('colony.codex_locked_entry')}</strong>
-				{#if c.role}<small class="muted"> — {c.role}</small>{/if}
+				{#if c.role}<small class="muted"> — {characterRole(c.slug, c.role)}</small>{/if}
 				<span class="count">{c.unlocked.length} / {c.max_entries}</span>
 			</summary>
 			{#if c.unlocked.length === 0}

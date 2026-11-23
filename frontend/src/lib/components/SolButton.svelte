@@ -427,6 +427,10 @@
 	}
 	/* Phones: icon only (the Sol label sits right above it). */
 	@media (max-width: 599px) {
+		.btn-sol {
+			min-height: 34px;
+			min-width: 56px;
+		}
 		.btn-sol__label {
 			display: none;
 		}

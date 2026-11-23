@@ -75,6 +75,16 @@ class LobbyControllerTest extends TestCase
         $response->assertJsonPath('resultRunId', null);
     }
 
+    public function test_active_run_reports_the_same_sol_as_the_header(): void
+    {
+        $this->makeRun('active');
+
+        // current_tick 5 is Sol 6 for the player (BaseController::currentSol()).
+        $this->actingAs($this->user())->getJson(route('lobby'))
+            ->assertOk()
+            ->assertJsonPath('active.0.current_sol', 6);
+    }
+
     public function test_index_points_to_result_when_latest_run_just_ended(): void
     {
         $run = $this->makeRun('completed');

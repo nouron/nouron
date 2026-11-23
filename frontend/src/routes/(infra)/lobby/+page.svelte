@@ -13,6 +13,7 @@
 		status: string;
 		colony_name: string;
 		current_tick: number;
+		current_sol: number;
 		tick_limit: number;
 		supply_cap: number | null;
 		bypass: Record<string, boolean>;
@@ -130,7 +131,7 @@
 			<h2 class="lobby-section-heading">{t('lobby.active_runs')}</h2>
 			<div class="lobby-run-grid">
 				{#each d.active as run (run.id)}
-					{@const shown = Math.min(run.current_tick, run.tick_limit)}
+					{@const shown = run.current_sol}
 					<article class="lobby-run-card">
 						<header><h3>{run.colony_name}</h3></header>
 						<p class="lobby-sol-progress">{t('lobby.sol_progress', { current: shown, limit: run.tick_limit })}</p>

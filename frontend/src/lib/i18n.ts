@@ -26,3 +26,10 @@ export function t(key: string, replace: Record<string, string | number> = {}): s
 	for (const [name, v] of Object.entries(replace)) text = text.replaceAll(`:${name}`, String(v));
 	return text;
 }
+
+/** Translated role of a cantina figure; other labels (e.g. the merchant's "until Sol …") pass through. */
+export function characterRole(slug: string, fallback: string): string {
+	const key = `characters.role_${slug}`;
+	const text = t(key);
+	return text === key ? fallback : text;
+}

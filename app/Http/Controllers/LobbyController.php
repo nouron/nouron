@@ -55,6 +55,8 @@ class LobbyController extends Controller
             'status' => $r->status,
             'colony_name' => $r->colony->name ?? __('lobby.colony_unnamed'),
             'current_tick' => (int) $r->current_tick,
+            // Same player-facing Sol as the header (BaseController::currentSol()).
+            'current_sol' => min((int) ($r->settings['tick_limit'] ?? 100), max(1, (int) $r->current_tick + 1)),
             'tick_limit' => (int) ($r->settings['tick_limit'] ?? 100),
             'supply_cap' => $r->settings['supply_cap_max'] ?? null,
             'bypass' => is_array($r->settings['bypass'] ?? null) ? $r->settings['bypass'] : [],

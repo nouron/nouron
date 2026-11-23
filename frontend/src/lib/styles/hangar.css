@@ -1025,6 +1025,7 @@
 
 .hangar-mission-card-footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 0.5rem;
@@ -1041,11 +1042,17 @@
 .hangar-mission-gate-hint {
     font-size: 0.7rem;
     color: #b45309;
-    flex: 1;
+    flex: 1 1 100%;
 }
 
 .hangar-mission-start {
     flex-shrink: 0;
+    max-width: 100%;
+    margin-left: auto;
+}
+/* Blocked mission: hint on its own line, button full width below it. */
+.hangar-mission-gate-hint ~ .hangar-mission-start {
+    width: 100%;
 }
 
 /* ── Mobile: dots inside flex column, always visible ─────────────────────── */

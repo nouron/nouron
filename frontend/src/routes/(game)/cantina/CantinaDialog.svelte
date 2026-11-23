@@ -6,6 +6,7 @@
 	// Phones (all dialogs): compact header (thumbnail + name), interaction, then relationship.
 	import type { Snippet } from 'svelte';
 	import { BACKEND_URL } from '#lib/stores/auth.ts';
+	import { characterRole } from '#lib/i18n.ts';
 
 	let {
 		slug,
@@ -24,7 +25,7 @@
 	<div class="cantina-dialog__body">
 		<header class="cantina-dialog__head">
 			<h3 class="cantina-dialog__name">{name}</h3>
-			{#if role}<div class="cantina-dialog__role">{role}</div>{/if}
+			{#if role}<div class="cantina-dialog__role">{characterRole(slug, role)}</div>{/if}
 		</header>
 		<div class="cantina-dialog__columns">
 			<!-- DOM order = phone order: the interaction you tapped for first, relationship below. -->
