@@ -88,7 +88,7 @@ class TradeAdvantagePresenterTest extends TestCase
             [
                 ['key' => 'consul', 'label' => 'Konsul (Rang 2)', 'percent' => 20, 'percent_text' => '+20 %'],
                 ['key' => 'trading_post', 'label' => 'Handelsposten (Stufe I)', 'percent' => 12, 'percent_text' => '+12 %'],
-                ['key' => 'trade_knowledge', 'label' => 'Kenntnis Handel (Lv 3)', 'percent' => 8, 'percent_text' => '+8 %'],
+                ['key' => 'trade_knowledge', 'label' => 'Kenntnis Handel (Stufe 3)', 'percent' => 8, 'percent_text' => '+8 %'],
             ],
             array_map(fn (array $l) => array_intersect_key($l, array_flip(['key', 'label', 'percent', 'percent_text'])), $view['lines'])
         );
@@ -103,7 +103,7 @@ class TradeAdvantagePresenterTest extends TestCase
 
         $view = $this->presenter->forChannel(self::COLONY_ID, TradeAdvantageService::CHANNEL_BAR);
 
-        $this->assertSame('Konsul Rang 2 +20, Handelsposten +12, Handel Lv3 +8', $view['sources_text']);
+        $this->assertSame('Konsul Rang 2 +20, Handelsposten +12, Handel Stufe 3 +8', $view['sources_text']);
     }
 
     public function test_summary_is_the_one_line_the_cantina_header_shows_and_absent_without_advantage(): void
@@ -115,7 +115,7 @@ class TradeAdvantagePresenterTest extends TestCase
         $this->setTradingPostLevel(1);
         $this->setTradeLevel(3);
         $bar = $this->presenter->forChannel(self::COLONY_ID, TradeAdvantageService::CHANNEL_BAR);
-        $this->assertSame('Handelsvorteil +40 % (Konsul Rang 2 +20, Handelsposten +12, Handel Lv3 +8)', $bar['summary']);
+        $this->assertSame('Handelsvorteil +40 % (Konsul Rang 2 +20, Handelsposten +12, Handel Stufe 3 +8)', $bar['summary']);
     }
 
     public function test_price_channels_summary_speaks_of_a_price_advantage(): void
@@ -125,7 +125,7 @@ class TradeAdvantagePresenterTest extends TestCase
 
         $view = $this->presenter->forChannel(self::COLONY_ID, TradeAdvantageService::CHANNEL_MERCHANT);
 
-        $this->assertSame('Preisvorteil −20 % (Handelsposten −12, Handel Lv3 −8)', $view['summary']);
+        $this->assertSame('Preisvorteil −20 % (Handelsposten −12, Handel Stufe 3 −8)', $view['summary']);
     }
 
     public function test_inactive_sources_are_not_listed_as_lines(): void
@@ -187,7 +187,7 @@ class TradeAdvantagePresenterTest extends TestCase
         $this->assertSame(['trading_post', 'trade_knowledge'], array_column($view['lines'], 'key'));
         $this->assertSame('Handelsposten (Stufe II)', $view['lines'][0]['label']);
         $this->assertSame('−12 %', $view['lines'][0]['percent_text']);
-        $this->assertSame('Handelsposten −12, Handel Lv3 −8', $view['sources_text']);
+        $this->assertSame('Handelsposten −12, Handel Stufe 3 −8', $view['sources_text']);
         $this->assertSame([], $view['hints']);
     }
 

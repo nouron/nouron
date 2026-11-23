@@ -61,7 +61,7 @@
 			<dt>{t('settings.profile_email')}</dt>
 			<dd>{d.email}</dd>
 			<dt>{t('settings.profile_role')}</dt>
-			<dd>{d.role}</dd>
+			<dd>{t(`settings.role_${d.role}`)}</dd>
 			{#if d.registration}<dt>{t('settings.profile_registered')}</dt>
 				<dd>{new Date(d.registration).toLocaleDateString(currentLocale)}</dd>{/if}
 		</dl>
@@ -121,9 +121,8 @@
 		<section>
 			<h2><i class="bi bi-translate"></i> {t('settings.language')}</h2>
 			<form onsubmit={(e) => save('locale', { locale: d!.locale }, e).then((ok) => ok && useLocale(d!.locale))}>
-				<label
-					>{t('settings.language')}
-					<select bind:value={d.locale} aria-invalid={!!errors.locale}>
+				<label>
+					<select bind:value={d.locale} aria-label={t('settings.language')} aria-invalid={!!errors.locale}>
 						{#each d.supported_locales as code (code)}<option value={code}>{t(`settings.locale_${code}`)}</option>{/each}
 					</select>
 					{@render error('locale')}

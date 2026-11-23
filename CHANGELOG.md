@@ -2,6 +2,7 @@
 
 ## 2026-11-23
 
+- UI-Review, zweite Runde (T62): Einheitliche Begriffe (Stufe, Feld, Sole, „Run“ für den ganzen Lauf), Ressourcen überall mit Icon und `CR`/`RG`-Schreibweise. Handy: Hinweise zweizeilig mit Aufklappen, Lobby als Karten, kompakter Techtree, passende Navigation. Erstbesuch-Hinweise stehen oben im Inhalt, Koordinaten sind aus dem Spielertext raus, Handelsdialog ohne Null-Vorteil, Seitentitel für Kommandozentrale, Nexus-DB und Protokoll.
 - UI-Review (T62): Ergebnis-Seite meldet „Phase 1 abgeschlossen“ nur noch, wenn das stimmt; Lobby zeigt denselben Sol wie die Kopfzeile. Legende zeigt die echten Feldbilder, Gefahrenzonen bleiben auch in der Kolonie orange. Missionsknopf läuft nicht mehr aus der Karte, Popups liegen über dem Griff der Ressourcenleiste, „Sol beenden“ ist auf dem Handy größer, Figurenrollen sind übersetzt.
 - Oberfläche (T62, Owner-Feedback): Gebäude stehen als freigestellte Grafik auf ihren Kartenfeldern (Baustellen blass). Das Leuchten am Rand von Buttons und Leisten ist entfernt. Cantina-Figuren sind größer, gestapelte Plätze werden zuletzt belegt.
 

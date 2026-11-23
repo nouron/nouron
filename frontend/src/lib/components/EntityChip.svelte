@@ -2,6 +2,7 @@
 	// Port of resources/views/components/entity-chip.blade.php: inline pill with hover/tap tooltip.
 	import '#lib/styles/entity-chips.css';
 	import { t } from '#lib/i18n.ts';
+	import { BACKEND_URL } from '#lib/stores/auth.ts';
 
 	type Tooltip = { level?: number | null; description?: string; link?: string; link_label?: string; meta?: string };
 	let {
@@ -19,6 +20,15 @@
 		advisor: 'bi-person-badge',
 		research: 'bi-diagram-3'
 	};
+	const RES_ICONS: Record<string, string> = {
+		res_credits: 'credits',
+		res_supply: 'colonists',
+		res_regolith: 'regolith',
+		res_werkstoffe: 'compounds',
+		res_organika: 'organics',
+		res_trust: 'trust'
+	};
+	const resIcon = $derived(type === 'resource' ? RES_ICONS[entityKey] : undefined);
 	const hasLevel = $derived(tooltip.level !== undefined && tooltip.level !== null);
 	const hasTooltip = $derived(hasLevel || !!tooltip.description || !!tooltip.meta || !!tooltip.link);
 	let open = $state(false);
@@ -59,7 +69,10 @@
 			open = !open;
 		}
 	}}
-	><i class="bi {ICONS[type] ?? 'bi-circle'}" aria-hidden="true"></i>{label}{#if hasTooltip && open}<span
+	>{#if resIcon}<img class="entity-chip__res-icon" src="{BACKEND_URL}/img/icons/res_{resIcon}.webp" alt="" />{:else}<i
+			class="bi {ICONS[type] ?? 'bi-circle'}"
+			aria-hidden="true"
+		></i>{/if}{label}{#if hasTooltip && open}<span
 			class="entity-chip-tooltip"
 			{@attach place}
 			><span class="entity-chip-tooltip-name">{label}</span>{#if hasLevel}<span class="entity-chip-tooltip-row"

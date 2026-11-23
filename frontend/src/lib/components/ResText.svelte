@@ -10,4 +10,4 @@
 	const parts = $derived(text.split(AMOUNT));
 </script>
 
-{#each parts as part, i (i)}{#if i % 3 === 1}<Res plain res={KEY[parts[i + 1].toUpperCase()]} label={parts[i + 1]} amount={part} />{:else if i % 3 === 0}{part}{/if}{/each}
+{#each parts as part, i (i)}{#if i % 3 === 1}<Res plain res={KEY[parts[i + 1].toUpperCase()]} amount={part} />{:else if i % 3 === 0}{part}{/if}{/each}

@@ -247,3 +247,14 @@ html:root :is(.sol-modal-close, .hangar-dialog-close, .cantina-modal-close, .det
     outline-width: 1px;
     outline-offset: 0;
 }
+
+/* Heading of a content screen (same look as the Hangar and Advisors headers). */
+.screen-heading {
+    grid-column: 1 / -1;
+    margin: 0 0 0.25rem;
+    padding-bottom: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    border-bottom: 1px solid var(--color-border);
+}

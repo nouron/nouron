@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Res from '#lib/components/Res.svelte';
 	import ResText from '#lib/components/ResText.svelte';
 	// Port of resources/views/nexusdb/index.blade.php (ADR 0006 stage 4e): the core concepts in short.
 	import '#lib/styles/nexusdb.css';
@@ -70,7 +71,9 @@
 			.join(' + ') || t('nexusdb.building_cost_free');
 </script>
 
+{#if firstVisit}<FirstVisit screen="nexusdb" />{/if}
 <div class="nexusdb-page">
+	<h2 class="screen-heading">{t('colony.nav_nexusdb')}</h2>
 	<p class="nexusdb-intro">{t('nexusdb.page_subtitle')}</p>
 	<div class="nexusdb-tabs" role="tablist">
 		{#each TABS as k (k)}
@@ -131,7 +134,7 @@
 							<dd>{reqText(a.requires)}</dd>
 							{#if a.nexus_cost !== undefined}
 								<dt>{t('nexusdb.asset_nexus_cost')}</dt>
-								<dd>{a.nexus_cost} Cr</dd>
+								<dd><Res plain res="Cr" amount={a.nexus_cost} /></dd>
 								<dt>{t('nexusdb.asset_delivery')}</dt>
 								<dd>{t('nexusdb.asset_delivery_value', { count: a.delivery_sols ?? 0 })}</dd>
 							{/if}
@@ -184,4 +187,3 @@
 	{/if}
 </div>
 
-{#if firstVisit}<FirstVisit screen="nexusdb" />{/if}

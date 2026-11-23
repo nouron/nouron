@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ResText from '#lib/components/ResText.svelte';
 	import Res from '#lib/components/Res.svelte';
+	import ResText from '#lib/components/ResText.svelte';
 	// Port of resources/views/colony/hangar.blade.php + public/js/hangar.js (ADR 0006 stage 4c).
 	import '#lib/styles/hangar.css';
 	import '#lib/styles/dialogs.css';
@@ -274,7 +274,7 @@
 			const carry = tg.carry?.[mm.shipKey ?? ''] ? '' : ' — ' + t('missions.target_too_large');
 			return (
 				`(${tg.q}|${tg.r}) Ring ${tg.ring} · ${t('missions.target_find_yield', { total: tg.yield?.total ?? 0 })}` +
-				` · ${tg.ap_cost} AP · Or ${tg.organika} · ${t('missions.return_label', { sol: tg.return_sol ?? '' })}${carry}`
+				` · ${tg.ap_cost} AP · ${tg.organika} OR · ${t('missions.return_label', { sol: tg.return_sol ?? '' })}${carry}`
 			);
 		}
 		return `(${tg.q}|${tg.r}) — Ring ${tg.ring}`;
@@ -292,6 +292,9 @@
 	}
 
 	// A find flight shows the picked target's own costs, otherwise the catalog entry's.
+	const durationChip = (sols: number) =>
+		sols === 1 ? t('missions.chip_duration_one') : t('missions.chip_duration', { sols });
+
 	function costs(m: Mission) {
 		const tg = m.target_type === 'find_tile' && mm.selectedKey === m.key ? picked(m) : undefined;
 		const wear = m.wear?.[mm.shipKey ?? ''] ?? 0;
@@ -376,6 +379,7 @@
 
 {#if d}
 	{@const data = d}
+	{#if data.firstVisit}<FirstVisit screen="hangar" />{/if}
 	<div class="hangar-page" {@attach carousel.attach}>
 		<div class="hangar-header">
 			<h2>{t('colony.hangar_title')}</h2>
@@ -602,7 +606,7 @@
 												<div class="hangar-status-fill" style="width: {statusWidth(ship.status_points)}"></div>
 											</div>
 											<div class="hangar-stat-row">
-												<span class="hangar-stat-label">{t('colony.hangar_status')}</span>
+												<span class="hangar-stat-label">{t('colony.condition_label')}</span>
 												<span class="hangar-stat-value">{ship.status_points}/{data.maxShipStatus}</span>
 											</div>
 											<!-- Inactive (GDD §7): hangar below the ship class — no mission start -->
@@ -699,7 +703,7 @@
 						<label class="hangar-consul-ap-label">
 							<div class="form-row-label">
 								<span>{t('colony.hangar_consul_ap_title')}</span>
-								<strong>{rm.consulAp > 0 ? `−${rm.consulAp * data.consulApDiscount} Cr` : ''}</strong>
+								<strong><ResText text={rm.consulAp > 0 ? `−${rm.consulAp * data.consulApDiscount} CR` : ''} /></strong>
 							</div>
 							<input type="range" min="0" max={consulApSliderMax} bind:value={rm.consulAp} />
 						</label>
@@ -714,7 +718,7 @@
 								<span class="hangar-ship-btn-meta">
 									<span class="hangar-ship-btn-chips">
 										<Res res="Cr" amount={effectiveCost(type.id)} />
-										<Res res="Sol" amount="+{cost.delivery_ticks}" />
+										<span class="hangar-mission-chip">{durationChip(cost.delivery_ticks)}</span>
 									</span>
 								</span>
 							{/if}
@@ -760,7 +764,7 @@
 							<p class="hangar-mission-desc">{m.desc}</p>
 							<div class="hangar-mission-yield">
 								<span class="hangar-mission-yield-label">{t('missions.reward_label')}</span>
-								<strong class="hangar-mission-reward">{m.reward_label}</strong>
+								<strong class="hangar-mission-reward"><ResText text={m.reward_label} /></strong>
 								{#if m.family_scales && (m.family_level ?? 0) > 0}
 									<small class="hangar-mission-yield-note"
 										>{t('missions.family_yield_included', { pct: Math.round((m.family_level ?? 0) * data.yieldPerLevelPct) })}</small
@@ -769,9 +773,10 @@
 							</div>
 							<div class="hangar-mission-chips">
 								<span class="ap-chip ap-cost-chip ap-chip--nav">{c.ap_cost} AP</span>
-								{#if c.organika > 0}<span class="hangar-mission-chip">Or {c.organika}</span>{/if}
-								<span class="hangar-mission-chip">{t('missions.chip_duration', { sols: c.duration })}</span>
-								<span class="hangar-mission-chip">{t('missions.chip_wear')} −{c.wear}</span>
+								{#if c.organika > 0}<span class="hangar-mission-chip"><Res plain res="Or" amount={c.organika} /></span>{/if}
+								<span class="hangar-mission-chip">{durationChip(c.duration)}</span>
+								<!-- Other missions state the wear in the readiness line below. -->
+								{#if m.target_type === 'find_tile'}<span class="hangar-mission-chip">{t('missions.chip_wear')} −{c.wear}</span>{/if}
 							</div>
 							{#if m.target_type !== 'find_tile'}
 								<p class="hangar-mission-ready-line" class:hangar-mission-gate-hint={readiness(m.sol_distance)?.ready === false}>
@@ -850,7 +855,6 @@
 		</dialog>
 	</div>
 
-	{#if data.firstVisit}<FirstVisit screen="hangar" />{/if}
 {/if}
 
 <style>

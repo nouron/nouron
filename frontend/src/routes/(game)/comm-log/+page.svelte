@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Res from '#lib/components/Res.svelte';
 	// Port of resources/views/comm_log/index.blade.php (ADR 0006 stage 4e): Protokoll and Nexus-Funk tabs.
 	import '#lib/styles/comm_log.css';
 	import { page } from '$app/state';
@@ -54,6 +55,7 @@
 {#if loadError}<p class="error load-error" role="alert">{loadError}</p>{/if}
 
 <div class="comm-log-page">
+	<h2 class="screen-heading">{t('comm_log.page_title')}</h2>
 	<nav class="comm-tabs" aria-label={t('comm_log.page_title')}>
 		<a href="/comm-log" class="comm-tab" class:comm-tab-active={tab === 'log'}><i class="bi bi-journal-text"></i> {t('comm_log.tab_log')}</a>
 		<a href="/comm-log?tab=nexus" class="comm-tab" class:comm-tab-active={tab === 'nexus'}>
@@ -92,10 +94,11 @@
 							{#if s.type === 'text' && 'value' in s}
 								{s.value}
 							{:else if s.type === 'amount' && 'abbr' in s}
-								<span class={s.variant === 'ap' ? 'ap-chip ap-chip--neutral' : `res-chip res-${COLOR[s.abbr.toUpperCase()] ?? s.abbr}`}>
-									<span class="res-abbr">{s.abbr}</span>
-									<span class="res-amount">{s.value}</span>
-								</span>
+								{#if s.variant === 'ap'}
+									<span class="ap-chip ap-chip--neutral"><span class="res-abbr">{s.abbr}</span> <span class="res-amount">{s.value}</span></span>
+								{:else}
+									<Res plain res={COLOR[s.abbr.toUpperCase()] ?? s.abbr} amount={s.value} />
+								{/if}
 							{:else if 'key' in s}
 								<EntityChip type={s.type} entityKey={s.key} label={s.label} tooltip={s.tooltip ?? {}} />
 							{/if}

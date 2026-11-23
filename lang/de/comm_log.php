@@ -155,7 +155,7 @@ return [
         'merchant_visit' => 'Reisender Händler in der Nähe angekündigt.',
         'tile_explored' => 'Neuen Sektor erkundet.',
         'tile_deep_scanned' => 'Tiefen-Scan eines Sektors durchgeführt.',
-        'tile_deep_scanned_coords' => 'Tiefen-Scan von Sektor (:q/:r) durchgeführt.',
+        'tile_deep_scanned_coords' => 'Tiefen-Scan eines Sektors durchgeführt.',
         'tile_salvaged' => 'Bergungsarbeiten an einem Fund vorangetrieben.',
         'tile_salvaged_done' => 'Fund vollständig geborgen.',
         'colony_renamed' => 'Kolonie umbenannt.',

@@ -270,3 +270,9 @@ a.entity-chip:hover {
         bottom: calc(100% + 0.4rem);
     }
 }
+
+.entity-chip__res-icon {
+    width: 1.3em;
+    height: 1.3em;
+    flex: none;
+}

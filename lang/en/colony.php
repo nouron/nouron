@@ -57,7 +57,7 @@ return [
     'zone_unexplored' => 'Unexplored — explore (AP)',
     'terrain_label' => 'Terrain',
     'event_label' => 'Phenomenon',
-    'coords_label' => 'Coordinates',
+    'coords_label' => 'Location',
     'hint_regolith_target' => 'Target for Harvester relocation.',
     'regolith_tile' => 'Regolith deposit',
     'regolith_tile_detail' => 'Yield :yield · deposit :deposit',
@@ -133,6 +133,7 @@ return [
     'onboarding_hint_spend_ap_hangar' => 'There isn\'t enough Regolith for new construction right now. The Hangar has find flights, missions and ship maintenance waiting.',
     'onboarding_hint_spend_ap_blocked' => 'Nothing sensible left to build today — Regolith or the AP cap sets the limit. End the Sol; the Regolith keeps coming.',
     // Svelte frontend (ADR 0006): nav labels, formerly hardcoded in layouts/colony.blade.php
+    'hint_expand' => 'Show full hint',
     'nav_colony' => 'Colony',
     'nav_advisors' => 'Advisors',
     'nav_techtree' => 'Labor',
@@ -165,7 +166,7 @@ return [
     // ── Onboarding — Nexus Briefing (INNN, event_type = 'onboarding.nexus_briefing') ──
 
     'onboarding_nexus_briefing_title' => 'Concession activated — Colony :colony',
-    'onboarding_nexus_briefing_body' => 'Command Center and Harvester operational. Starting capital: 3,000 Cr — Nexus loan, repayment pending. Regolith reserve: 200 Rg. Colony viability under continuous assessment. Subsidies active until further notice.',
+    'onboarding_nexus_briefing_body' => 'Command Center and Harvester operational. Starting capital: 3,000 CR — Nexus loan, repayment pending. Regolith reserve: 200 RG. Colony viability under continuous assessment. Subsidies active until further notice.',
 
     // ── Onboarding — Inline trigger explanations ──────────────────────────────
 
@@ -258,7 +259,7 @@ return [
 
     // ── Build cost chips ──────────────────────────────────────────────────────
 
-    'cost_regolith' => ':amount Rg',
+    'cost_regolith' => ':amount RG',
     'cost_compounds' => ':amount Wk',
     'cost_label' => 'Cost',
 
@@ -267,11 +268,11 @@ return [
     'nexus_import_title' => 'Nexus Import',
     'nexus_import_hint' => 'Buy Compounds directly from the Nexus — always available, fixed price.',
     'nexus_import_amount' => 'Amount (Compounds)',
-    'nexus_import_price_each' => ':price Cr/unit',
+    'nexus_import_price_each' => ':price CR/unit',
     'nexus_import_price_sources' => 'Price advantage: :sources',
-    'nexus_import_total' => 'Total: :total Cr',
+    'nexus_import_total' => 'Total: :total CR',
     'nexus_import_confirm' => 'Import',
-    'nexus_import_success' => 'Imported :amount Compounds (:cost Cr).',
+    'nexus_import_success' => 'Imported :amount Compounds (:cost CR).',
     'nexus_import_uplink_required' => 'Uplink Station Lv1 required — it unlocks active Nexus requests.',
     'nexus_import_no_credits' => 'Not enough Credits for this import.',
     'nexus_import_error' => 'Import failed.',
@@ -283,7 +284,7 @@ return [
     'nexus_import_delayed_resource' => 'Resource',
     'nexus_import_delayed_amount' => 'Amount',
     'nexus_import_delayed_confirm' => 'Order',
-    'nexus_import_delayed_success' => ':amount units ordered — arriving in :ticks Sols (:cost Cr).',
+    'nexus_import_delayed_success' => ':amount units ordered — arriving in :ticks Sols (:cost CR).',
     'nexus_import_delayed_error' => 'Order failed.',
 
     // ── Colonist Stipend (GDD §14) ───────────────────────────────────────────
@@ -294,7 +295,7 @@ return [
     'stipend_tier_small' => 'Small',
     'stipend_tier_medium' => 'Medium',
     'stipend_tier_large' => 'Large',
-    'stipend_success' => 'Stipend paid (:cost Cr) — takes effect next Sol.',
+    'stipend_success' => 'Stipend paid (:cost CR) — takes effect next Sol.',
     'stipend_error' => 'Stipend failed.',
     'stipend_already_used' => 'A stipend has already been paid out this Sol.',
     'stipend_no_credits' => 'Not enough Credits for this stipend.',
@@ -366,12 +367,12 @@ return [
     'trade_price_advantage_line' => 'Price advantage :total (:sources)',
     'bar_offer_base_label' => 'Base offer (market value)',
     'bar_offer_base_label_credits' => 'Base offer',
-    'bar_offer_base_credits' => ':amount :resource for :price Cr',
+    'bar_offer_base_credits' => ':amount :resource for :price CR',
     'bar_offer_advantage_label' => 'Your trade advantage',
     'bar_offer_negotiation_label' => 'Negotiation bonus',
     'bar_offer_receive_label' => 'You receive',
     'bar_offer_plus_vs_base' => ':plus over base',
-    'bar_offer_price_stays' => 'The price stays at :price Cr, the advantage raises the amount.',
+    'bar_offer_price_stays' => 'The price stays at :price CR, the advantage raises the amount.',
     'bar_offer_accept_safe' => 'safe: :amount :resource (:plus)',
     'bar_offer_negotiate_win' => ':chance %: :amount :resource (:plus)',
     'bar_offer_negotiate_lose' => ':chance %: no deal, you keep :resource, the offer lapses, :ap AP spent.',
@@ -380,8 +381,8 @@ return [
     'bar_offer_chance_total_only' => 'Chance :total %',
     'bar_offer_negotiation_sum' => 'Negotiation bonus: +:percent % (:base base + :advantage advantage + :bonus bonus = :total :resource)',
     'bar_offer_negotiated_label' => 'Negotiated:',
-    'bar_offer_fixed_price_note' => 'Corvan buys :amount :resource for :credits Cr. Fixed price: trade advantage and negotiating do not apply to sale Credits.',
-    'merchant_price_base_title' => 'Base price :price Cr',
+    'bar_offer_fixed_price_note' => 'Corvan buys :amount :resource for :credits CR. Fixed price: trade advantage and negotiating do not apply to sale Credits.',
+    'merchant_price_base_title' => 'Base price :price CR',
     'bar_offer_reserve_floor' => 'The sale would drop the colony below its food reserve.',
 
     // ── Cantina encounter pool (GDD §12 channel 1, A35) ───────────────────────
@@ -603,7 +604,7 @@ return [
     // ── Nexus debt display ────────────────────────────────────────────────────
 
     'nexus_debt_label' => 'Nexus Credit',
-    'nexus_debt_format' => ':amount / 12,000 Cr',
+    'nexus_debt_format' => ':amount / 12,000 CR',
 
     // ── Hangar screen ─────────────────────────────────────────────────────────
 
@@ -650,11 +651,11 @@ return [
     'hangar_payment_method' => 'Payment',
     'hangar_standard_purchase' => 'Standard purchase',
     'hangar_nexus_credit' => 'Nexus credit',
-    'hangar_nexus_credit_hint' => '0 Cr now — Nexus debt increases',
+    'hangar_nexus_credit_hint' => '0 CR now — Nexus debt increases',
     'hangar_consul_ap_title' => 'Consul Negotiation',
     'hangar_consul_required' => 'An available Consul is required for a negotiation.',
-    'hangar_consul_ap_label' => 'Invest AP (saves :amount Cr)',
-    'hangar_consul_ap_hint' => ':ap AP → saves :saved Cr',
+    'hangar_consul_ap_label' => 'Invest AP (saves :amount CR)',
+    'hangar_consul_ap_hint' => ':ap AP → saves :saved CR',
     'hangar_delivery_pending' => 'Delivery pending',
     'hangar_arrival' => 'Arrival: Sol :tick',
     'hangar_pending_section' => 'Unassigned',
@@ -689,9 +690,9 @@ return [
     'sol_report_relay' => 'Relay fee (Uplink Station)',
     'sol_report_upkeep' => 'Advisor upkeep',
     'sol_report_advisor_hired' => 'Advisor hired',
-    'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
+    'sol_report_advisor_hired_detail' => ':name — -:cost CR',
     'sol_report_stipend' => 'Colonist Stipend',
-    'sol_report_stipend_detail' => '-:cost Cr — +:trust Trust',
+    'sol_report_stipend_detail' => '-:cost CR — +:trust Trust',
     'sol_report_event_storm' => 'Storm over the colony',
     'sol_report_storm_detail' => 'The maintenance condition of the installations decided it: :abgewehrt withstood, :beschaedigt damaged, :kritisch critical.',
     'sol_report_event_instability' => 'Geological instability',
@@ -817,14 +818,14 @@ return [
     'find_reason_false' => 'False alarm. The tile is free.',
     'find_reason_self' => 'Without a hangar the colony salvages on foot.',
     'find_reason_in_flight' => 'In flight. Back on Sol :sol.',
-    'find_reason_flight' => 'Find :total Rg · :ap AP · :organika Or · back Sol :sol',
+    'find_reason_flight' => 'Find :total RG · :ap AP · :organika OR · back Sol :sol',
     'find_reason_ship_busy' => 'Waiting: :ship back on Sol :sol.',
     'find_reason_needs_level' => 'Locked: needs a freighter – hangar level :level.',
     'find_reason_needs_freighter' => 'Locked: needs a freighter – order one from the Nexus.',
     'find_reason_ship_inactive' => 'Locked: :ship inactive – needs hangar level :level.',
     'find_reason_no_ship' => 'Waiting: no ship that can carry the find.',
-    'find_salvaged' => ':rg Rg salvaged',
-    'find_header' => 'Finds: :signals signals, :scanned scanned, :open Rg open',
+    'find_salvaged' => ':rg RG salvaged',
+    'find_header' => 'Signals: :signals · scanned: :scanned · open: :open RG',
     'find_help' => 'There are :total signals in this run; some are false alarms. A deep scan shows whether and how much there is to salvage. Without a hangar the colony salvages itself: one click, a few AP, the Regolith is in the stores at once. Once the hangar stands, ships fetch the finds: hardly any AP, but flight time and Organics. Large finds are too heavy for the drone and wait for a freighter.',
     'find_flight' => 'Salvage flight',
     'hangar_build_notice' => 'Afterwards only ships fetch the finds: a flight costs 1 AP and some Organics, the Regolith arrives after the flight time. Large finds need hangar level 2 and a freighter.',

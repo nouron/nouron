@@ -2,7 +2,7 @@
 
 return [
     'phase1_complete' => 'Phase 1 abgeschlossen — Der Grundaufbau steht. Nexus aktiviert die nächste Direktivenreihe.',
-    'run_completed' => 'Mission erfüllt — Die Expedition ist abgeschlossen. Die Kolonie besteht weiter, trotz allem.',
+    'run_completed' => 'Run erfolgreich — Die Expedition ist abgeschlossen. Die Kolonie besteht weiter, trotz allem.',
     'run_failed_trust' => 'Abberufung — Das Vertrauen der Kolonisten ist zerbröckelt. Die Führung wird abberufen.',
     'run_failed_time' => 'Zeitablauf — Die Konzessionslaufzeit ist verstrichen. Der Nexus zieht den Direktor zurück.',
     'run_failed_phase1_deadline' => 'Fristbruch — Phase 1 wurde nicht rechtzeitig abgeschlossen. Nexus zieht die Konzession mit sofortiger Wirkung.',
@@ -21,13 +21,13 @@ return [
     'run_failed_nexus_debt' => 'Insolvenz — Das Schuldenlimit wurde überschritten. Nexus entzieht die Konzession mit sofortiger Wirkung.',
 
     // Result screen
-    'result_title_completed' => 'Mission erfüllt',
-    'result_title_failed' => 'Mission gescheitert',
+    'result_title_completed' => 'Run erfolgreich',
+    'result_title_failed' => 'Run gescheitert',
     'result_fail_trust' => 'Die Kolonisten haben die Führung aufgegeben. Das Vertrauen ist zu weit gesunken.',
     'result_fail_time' => 'Die Konzessionslaufzeit ist verstrichen, ohne dass das Ziel erreicht wurde.',
     'result_fail_phase1_deadline' => 'Der Grundaufbau wurde nicht rechtzeitig abgeschlossen. Nexus hat die Reißleine gezogen.',
     'result_fail_nexus_debt' => 'Das Schuldenlimit wurde überschritten. Nexus hat die Konzession entzogen.',
-    'result_fail_abandoned' => 'Die Mission wurde abgebrochen.',
+    'result_fail_abandoned' => 'Der Run wurde abgebrochen.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Erreicht in Sol :current von :limit',
     'result_objectives_title' => 'Phasenziele',
@@ -37,7 +37,7 @@ return [
     'new_run_preparing' => 'Neuer Run wird vorbereitet — Feature kommt in Phase 4.',
 
     // New-run flow (Feature 2)
-    'new_run_started' => 'Neue Mission vorbereitet — die Kolonie wartet. Bereit, wenn du es bist.',
+    'new_run_started' => 'Neuer Run vorbereitet — die Kolonie wartet. Bereit, wenn du es bist.',
     'new_run_active_exists' => 'Du hast noch einen aktiven Run. Beende oder schließe diesen zuerst ab.',
     'new_run_no_colony' => 'Keine Kolonie für deinen Account gefunden. Bitte den Support kontaktieren.',
 ];

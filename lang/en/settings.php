@@ -14,6 +14,8 @@ return [
     'profile_display_name' => 'Display name',
     'profile_email' => 'E-mail',
     'profile_role' => 'Role',
+    'role_admin' => 'Administrator',
+    'role_player' => 'Player',
     'profile_registered' => 'Registered',
     'display_name_title' => 'Change display name',
     'password_title' => 'Change password',

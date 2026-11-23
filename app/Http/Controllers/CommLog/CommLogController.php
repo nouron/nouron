@@ -383,7 +383,7 @@ class CommLogController extends BaseController
                 $this->amountSeg('AP', $ap, 'ap'),
                 $this->seg(' in '),
                 $this->entitySeg('building', (string) $bKey, $name, $this->buildingTooltip($params, $intId, $newLevel)),
-                $this->seg(' investiert. Bau abgeschlossen — Level '.$newLevel.' erreicht.'),
+                $this->seg(' investiert. Bau abgeschlossen — Stufe '.$newLevel.' erreicht.'),
             ];
         }
 
@@ -525,10 +525,10 @@ class CommLogController extends BaseController
 
         if ($chipType === 'knowledge') {
             $prefix = 'Kenntnis ';
-            $suffix = $level !== null ? ' auf Level '.$level.' gestiegen.' : ' erworben.';
+            $suffix = $level !== null ? ' auf Stufe '.$level.' gestiegen.' : ' erworben.';
         } else {
             $prefix = 'Forschung ';
-            $suffix = $level !== null ? ' auf Level '.$level.' gestiegen.' : ' abgeschlossen.';
+            $suffix = $level !== null ? ' auf Stufe '.$level.' gestiegen.' : ' abgeschlossen.';
         }
 
         return [
@@ -609,7 +609,7 @@ class CommLogController extends BaseController
         $suffix = match ($tier) {
             'abgewehrt' => ' erfolgreich verteidigt — kein Schaden.',
             'beschaedigt' => ' beschädigt.',
-            'kritisch' => ' kritisch beschädigt — Level gesunken.',
+            'kritisch' => ' kritisch beschädigt — Stufe gesunken.',
             default => '.',
         };
 
@@ -653,7 +653,7 @@ class CommLogController extends BaseController
             : ' mangels Wartung gesunken.';
 
         return [
-            $this->seg('Level für '),
+            $this->seg('Stufe für '),
             $this->entitySeg($chipType, (string) $entityKey, $name, $tooltip),
             $this->seg($suffix),
         ];

@@ -160,7 +160,7 @@
 {#snippet ccChip(level: number)}
 	<div class="prereq-cc-chip">
 		<img class="prereq-cc-img" src="{BACKEND_URL}/img/buildings/command-center.webp" alt="CC" onerror={fallbackImg} />
-		<span class="prereq-cc-label">CC Lv{level}</span>
+		<span class="prereq-cc-label">CC Stufe {level}</span>
 	</div>
 {/snippet}
 
@@ -177,7 +177,7 @@
 		<h2>{t('advisors.ui_title')}</h2>
 		<span class="slot-badge">
 			{t('advisors.ui_slots')}: <strong>{slotInfo.used}/{slotInfo.max}</strong>
-			<span>(CC Lv{slotInfo.cc_level})</span>
+			<span>(CC Stufe {slotInfo.cc_level})</span>
 		</span>
 	</div>
 

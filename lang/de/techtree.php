@@ -111,9 +111,9 @@ return [
     // ── Detail dialog ─────────────────────────────────────────────────────────
     'detail_type' => 'Typ',
     'detail_status' => 'Status',
-    'detail_level' => 'Level',
+    'detail_level' => 'Stufe',
     'detail_required' => 'Voraussetzungen',
-    'detail_unlocks_next_level' => 'Schaltet ab nächstem Level frei',
+    'detail_unlocks_next_level' => 'Schaltet ab nächster Stufe frei',
     // Split of detail_unlocks_next_level into "current" vs "next" (Owner-
     // Fund 2026-09-02, techtree sidebar only) — detail_unlocks_next_level
     // above stays untouched, it's still used by the colony sidebar
@@ -126,7 +126,7 @@ return [
     'type_research' => 'Forschung',
     'type_ship' => 'Schiff',
     'type_personell' => 'Berater',
-    'toast_level_reached' => ':name: Level :level erreicht',
+    'toast_level_reached' => ':name: Stufe :level erreicht',
     'toast_invest_failed' => 'Investition fehlgeschlagen.',
 
     // ── UI ───────────────────────────────────────────────────────────────────
@@ -159,11 +159,11 @@ return [
     'detail_instance_level_uncapped' => 'Stufe :level',
     'detail_instance_construction' => 'Baustelle',
     'detail_instance_condition' => 'Zustand :sp / :max',
-    'detail_instance_tile_link' => 'Zum Tile',
+    'detail_instance_tile_link' => 'Zum Feld',
     'detail_count' => 'Anzahl',
     'detail_ap_invest' => 'AP investieren',
     'detail_colony_link' => 'Auf Kolonie bauen',
-    'detail_harvester_acquire_hint' => 'Harvester entstehen nicht im Baumenü: Eine weitere Anlage gibt es nur über Orins Angebot oder eine Bergungsmission. Danach platzierst du sie auf einem erkundeten Regolith-Tile.',
+    'detail_harvester_acquire_hint' => 'Harvester entstehen nicht im Baumenü: Eine weitere Anlage gibt es nur über Orins Angebot oder eine Bergungsmission. Danach platzierst du sie auf einem erkundeten Regolith-Feld.',
 
     // ── Fehlermeldungen (techtree.error_<code>, siehe TechtreeController::orderFailed)
     // Gelten für Gebäude, Kenntnisse und Schiffe gleichermaßen — bewusst ohne
@@ -182,7 +182,7 @@ return [
     'error_building_cc_gate' => 'Kommandozentrale zu niedrig für diese Ausbaustufe — Gebäudestufe braucht mindestens gleiche Kommandozentralen-Stufe.',
     'error_insufficient_ap' => 'Nicht genug AP verfügbar für diese Investition.',
     // Gebäude-Orders gehören ins Tile-Panel der Kolonieansicht (A43, GDD techtree §11.5)
-    'error_use_colony_view' => 'Errichten, Ausbauen, Reparieren und Rückbau laufen über das Tile-Panel in der Kolonieansicht.',
+    'error_use_colony_view' => 'Errichten, Ausbauen, Reparieren und Rückbau laufen über das Feld-Panel in der Kolonieansicht.',
     'error_not_placed' => 'Das Gebäude steht noch nicht auf der Karte — erst in der Kolonieansicht errichten.',
     'error_min_level' => 'Tiefer lässt sich dieses Gebäude nicht zurückbauen. Die Kommandozentrale bleibt immer mindestens auf Stufe 1.',
 
@@ -202,7 +202,7 @@ return [
     'legend_ship' => 'Schiffe',
     'legend_advisor' => 'Berater',
     'band_start' => 'Start',
-    'band_cc' => 'CC Lv :level',
+    'band_cc' => 'CC Stufe :level',
     'zoom_in' => 'Vergrößern',
     'zoom_out' => 'Verkleinern',
     'view_start' => 'Start',
