@@ -13,8 +13,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A PR that touches nothing but Markdown skips the checks below; pushes to master always run.
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          code=true
+          if [ -n "$BASE_SHA" ]; then
+            files=$(git diff --name-only "$BASE_SHA...HEAD")
+            # Here-string, not a pipe: grep -q closing a pipe early would count as failure under pipefail.
+            if [ -n "$files" ] && ! grep -qv '\.md$' <<< "$files"; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   lint:
-    name: Pint
+    name: Pint + Larastan
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,10 +52,42 @@ jobs:
           coverage: none
       - name: Composer install
         uses: ramsey/composer-install@v3
-      - run: bin/pint --test
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Pint
+        run: bin/pint --test
+      - name: Larastan
+        run: bin/phpstan analyse --memory-limit=2G --no-progress
+
+  frontend:
+    name: Frontend
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: npm ci
+        run: npm ci
+      - name: svelte-check
+        run: npm run check
+      - name: Build
+        run: npm run build
 
   tests:
     name: PHPUnit (${{ matrix.suite }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     # A hanging run must not burn runner minutes: playtest suite ~20 min on tuned local
     # MySQL, the CI service is untuned, so generous margin.
@@ -66,6 +125,7 @@ jobs:
           php-version: '8.4'
           extensions: pdo_mysql
           coverage: none
+          ini-values: opcache.enable_cli=1, opcache.memory_consumption=256
       - name: Composer install
         uses: ramsey/composer-install@v3
       - name: Prepare environment

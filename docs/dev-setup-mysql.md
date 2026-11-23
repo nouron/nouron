@@ -95,10 +95,12 @@ Stand 2026-10-27: Die Spalten `colony_tiles.salvage_ap_spent`/`salvage_tick` (T3
 ```bash
 bin/phpunit                                   # seriell, volle Suite
 bin/phpunit --testsuite=laravel-feature,laravel-unit   # schnelle Suite (während der Entwicklung)
-php artisan test --parallel --processes=8 --testsuite=laravel-feature,laravel-unit   # paratest, schnellste Variante (ca. 2,2 min)
+php artisan test --parallel --processes=6 --testsuite=laravel-feature,laravel-unit   # Standard während der Entwicklung (ca. 2:50 min)
 ```
 
 Jeder paratest-Worker migriert seine eigene Datenbank `nouron_test_test_N` (Grant `` `nouron\_test%` `` siehe oben). Ohne `--processes` startet paratest einen Worker pro Kern; auf dem Entwicklungsrechner (24 Kerne) war das durch die gleichzeitigen Migrationen langsamer als 4 Prozesse.
+
+Höchstens 6 Worker nutzen: `tools/uicheck/uicheck` belegt die Datenbanken mit Token 7 und 8, PHPUnit auf Wegwerf-DB Token 9.
 
 Gemessene Laufzeiten (WSL2, 24 Kerne), zur Einordnung (SQLite brauchte für die schnelle Suite ca. 1,5 min):
 
@@ -108,6 +110,7 @@ Gemessene Laufzeiten (WSL2, 24 Kerne), zur Einordnung (SQLite brauchte für die 
 | schnelle Suite seriell, mit Tuning (unter Last) | 10:58–11:36 min |
 | `--parallel` mit 24 Prozessen / `--processes=4` (vor dem Tuning) | 6:19 / 3:37 min |
 | `--parallel --processes=8 / 12 / 16` (mit Tuning, 2026-10-05) | 133 / 144 / 149 s |
+| `--parallel --processes=6` (2026-11-23, 2.544 Tests) | 2:49 min |
 | Playtest-Suite | ca. 20 min |
 
 Messung 2026-10-05 (mit Tuning, `--processes=8`): CPU-gebunden, nicht plattengebunden (iowait ca. 1 %, 64 % der Kerne idle). Mehr als 8 Worker bringen nichts; ein tmpfs-Datenverzeichnis ist deshalb nicht nötig. Die Beschleunigung kommt von der Parallelität (`--parallel`), nicht vom Speicher.
