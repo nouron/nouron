@@ -13,8 +13,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A PR that touches nothing but Markdown skips the checks below; pushes to master always run.
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          code=true
+          if [ -n "$BASE_SHA" ]; then
+            files=$(git diff --name-only "$BASE_SHA...HEAD")
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '\.md$'; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   lint:
-    name: Pint
+    name: Pint + Larastan
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -25,10 +51,42 @@ jobs:
           coverage: none
       - name: Composer install
         uses: ramsey/composer-install@v3
-      - run: bin/pint --test
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Pint
+        run: bin/pint --test
+      - name: Larastan
+        run: bin/phpstan analyse --memory-limit=2G --no-progress
+
+  frontend:
+    name: Frontend
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: npm ci
+        run: npm ci
+      - name: svelte-check
+        run: npm run check
+      - name: Build
+        run: npm run build
 
   tests:
     name: PHPUnit (${{ matrix.suite }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     # A hanging run must not burn runner minutes: playtest suite ~20 min on tuned local
     # MySQL, the CI service is untuned, so generous margin.
@@ -47,7 +105,9 @@ jobs:
           MYSQL_ROOT_PASSWORD: nouron
           MYSQL_DATABASE: nouron_test
         ports: ['3306:3306']
+        # Data directory in RAM: throwaway test data needs no disk writes.
         options: >-
+          --tmpfs /var/lib/mysql
           --health-cmd="mysqladmin ping -h 127.0.0.1 -pnouron"
           --health-interval=5s --health-timeout=5s --health-retries=20
     # phpunit.xml forces DB_CONNECTION=mysql and DB_DATABASE=nouron_test and only
