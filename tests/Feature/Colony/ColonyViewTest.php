@@ -170,7 +170,7 @@ class ColonyViewTest extends TestCase
         $infirmary = $buildings->firstWhere('building_id', 46);
 
         $this->assertNotNull($infirmary);
-        $this->assertSame([__('techtree.building_commandCenter').' Lv3'], $infirmary['required_list']);
+        $this->assertSame([__('techtree.building_commandCenter').' Stufe 3'], $infirmary['required_list']);
     }
 
     // Regression (Owner-Playtest 2026-09-04): resource_amount on the tile depletes

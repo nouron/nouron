@@ -19,7 +19,7 @@
 
 	type Char = { slug?: string; name?: string; role?: string; game_role?: string };
 	type Offer = { id: number; visit_id: number | null; expires_tick: number; get_resource_id: number; give_resource_id: number };
-	type Advantage = { total_text?: string; lines: { label: string; percent_text: string }[]; hints: string[]; summary?: string };
+	type Advantage = { total_percent?: number; total_text?: string; lines: { label: string; percent_text: string }[]; hints: string[]; summary?: string };
 	type Dialog = {
 		fixed_price: boolean;
 		fixed_price_note?: string;
@@ -575,16 +575,19 @@
 					<ResText text={dlg.credits_give ? (dlg.base_credits_text ?? '') : `${dlg.base_give} ${dlg.give_label} → ${dlg.base_get} ${dlg.get_label}`} />
 				</span>
 			</div>
-			<div class="offer-terms__row">
-				<span class="offer-terms__label">{t('colony.bar_offer_advantage_label')}</span>
-				<span class="offer-terms__value offer-terms__value--percent">{dlg.advantage.total_text}</span>
-			</div>
-			{#each dlg.advantage.lines as line, i (i)}
-				<div class="offer-terms__row offer-terms__row--source">
-					<span class="offer-terms__label">{line.label}</span>
-					<span class="offer-terms__value offer-terms__value--percent">{line.percent_text}</span>
+			<!-- No trade advantage: offer and price are all there is to say. -->
+			{#if dlg.advantage.total_percent !== 0}
+				<div class="offer-terms__row">
+					<span class="offer-terms__label">{t('colony.bar_offer_advantage_label')}</span>
+					<span class="offer-terms__value offer-terms__value--percent">{dlg.advantage.total_text}</span>
 				</div>
-			{/each}
+				{#each dlg.advantage.lines as line, i (i)}
+					<div class="offer-terms__row offer-terms__row--source">
+						<span class="offer-terms__label">{line.label}</span>
+						<span class="offer-terms__value offer-terms__value--percent">{line.percent_text}</span>
+					</div>
+				{/each}
+			{/if}
 			{#if dlg.negotiation_percent !== null && negotiated[id]}
 				<div class="offer-terms__row">
 					<span class="offer-terms__label">{t('colony.bar_offer_negotiation_label')}</span>
@@ -596,7 +599,7 @@
 					<span class="offer-terms__label">{t('colony.bar_offer_receive_label')}</span>
 					<span class="offer-terms__value">
 						{@render chip(o.offer.get_resource_id, dlg.amount_safe)}
-						<span class="offer-terms__plus">{t('colony.bar_offer_plus_vs_base', { plus: `+${dlg.plus_safe}` })}</span>
+						{#if dlg.plus_safe}<span class="offer-terms__plus">{t('colony.bar_offer_plus_vs_base', { plus: `+${dlg.plus_safe}` })}</span>{/if}
 					</span>
 				</div>
 			{/if}
@@ -647,7 +650,7 @@
 					<span class="ap-chip ap-cost-chip ap-chip--economy" class:cost-chip--short={apShort}>{acceptAp} AP</span>
 				</span>
 			</button>
-			{#if !dlg.fixed_price && !negotiated[id] && !resolved(id)}
+			{#if !dlg.fixed_price && !negotiated[id] && !resolved(id) && dlg.plus_safe}
 				<span class="offer-action__outcome"
 					>{t('colony.bar_offer_accept_safe', { amount: dlg.amount_safe, resource: dlg.get_label, plus: `+${dlg.plus_safe}` })}</span
 				>
@@ -837,6 +840,7 @@
 
 {#if d && scene}
 	{@const data = d}
+	{#if data.firstVisit}<FirstVisit screen="cantina" />{/if}
 	<div class="bar-page">
 		{#if data.barLevel < 1}
 			<p>{t('colony.bar_no_building')}</p>
@@ -1241,7 +1245,6 @@
 		{/if}
 	</div>
 
-	{#if data.firstVisit}<FirstVisit screen="cantina" />{/if}
 {/if}
 
 <style>

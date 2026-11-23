@@ -2,7 +2,7 @@
 
 return [
     'phase1_complete' => 'Phase 1 complete — the foundation phase is complete. Nexus activates the next set of directives.',
-    'run_completed' => 'Mission accomplished — the expedition is concluded. The colony endures, despite everything.',
+    'run_completed' => 'Run successful — the expedition is concluded. The colony endures, despite everything.',
     'run_failed_trust' => 'Recalled — the colonists\' trust has crumbled. Command is relieved.',
     'run_failed_time' => 'Time expired — the concession period has lapsed. The Nexus withdraws the Director.',
     'run_failed_phase1_deadline' => 'Deadline breach — Phase 1 was not completed in time. The Nexus terminates the concession with immediate effect.',
@@ -21,13 +21,13 @@ return [
     'run_failed_nexus_debt' => 'Insolvency — debt limit exceeded. Nexus revokes the concession with immediate effect.',
 
     // Result screen
-    'result_title_completed' => 'Mission accomplished',
-    'result_title_failed' => 'Mission failed',
+    'result_title_completed' => 'Run successful',
+    'result_title_failed' => 'Run failed',
     'result_fail_trust' => 'The colonists have lost faith in their leadership. Trust has fallen too far.',
     'result_fail_time' => 'The concession period has lapsed without the objective being reached.',
     'result_fail_phase1_deadline' => 'The foundation phase was not completed in time. The Nexus pulled the plug.',
     'result_fail_nexus_debt' => 'The debt limit was exceeded. Nexus revoked the concession.',
-    'result_fail_abandoned' => 'The mission was abandoned.',
+    'result_fail_abandoned' => 'The run was abandoned.',
     'result_score_label' => 'Score',
     'result_ticks_label' => 'Reached in Sol :current of :limit',
     'result_objectives_title' => 'Phase objectives',
@@ -37,7 +37,7 @@ return [
     'new_run_preparing' => 'New run being prepared — feature coming in Phase 4.',
 
     // New-run flow (Feature 2)
-    'new_run_started' => 'New mission prepared — the colony is waiting. Ready when you are.',
+    'new_run_started' => 'New run prepared — the colony is waiting. Ready when you are.',
     'new_run_active_exists' => 'You still have an active run. Complete or close it first.',
     'new_run_no_colony' => 'No colony found for your account. Please contact support.',
 ];

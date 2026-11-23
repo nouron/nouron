@@ -10,6 +10,7 @@
 	let completed = $state<Hint | null>(null);
 	let prev: Hint | null = null;
 	let timer: ReturnType<typeof setTimeout>;
+	let expanded = $state(false);
 
 	// When the active hint changes, show the old one briefly as "done" (✓) while the new one slides in.
 	$effect(() => {
@@ -19,6 +20,7 @@
 			clearTimeout(timer);
 			timer = setTimeout(() => (completed = null), 1000);
 		}
+		if ((hint?.key ?? null) !== (prev?.key ?? null)) expanded = false;
 		prev = hint;
 	});
 </script>
@@ -39,10 +41,17 @@
 	{/if}
 	{#if s.active_hint}
 		{#key s.active_hint.key}
-			<div class="hint-bar hint-bar--enter">
+			<div class="hint-bar hint-bar--enter" class:hint-bar--open={expanded}>
 				<span class="hint-bar__icon" aria-hidden="true" title={t('colony.hint_not_mandatory')}>!</span>
 				<a class="hint-bar__text hint-bar__link" href={s.active_hint.target_url} title={t('colony.hint_not_mandatory')}
 					><span class="hint-bar__marquee">{s.active_hint.text}</span></a
+				>
+				<button
+					class="hint-bar__more plain"
+					type="button"
+					aria-expanded={expanded}
+					aria-label={t('colony.hint_expand')}
+					onclick={() => (expanded = !expanded)}><i class="bi bi-chevron-down" aria-hidden="true"></i></button
 				>
 				<button
 					class="hint-bar__dismiss"

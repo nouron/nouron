@@ -538,6 +538,9 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(90vw, 26rem);
     background: rgba(255, 255, 255, 0.9);
     padding: 1rem 2rem;
     border-radius: 6px;

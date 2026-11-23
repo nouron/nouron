@@ -164,7 +164,7 @@
 		}
 		if (tech.status === 'built')
 			return tech.level > 0
-				? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}`
+				? `Stufe ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}`
 				: t('techtree.status_built');
 		return gate[tech.status] ?? tech.status;
 	}

@@ -47,7 +47,7 @@ return [
     'bonus_ap_cap_lab' => 'Lab cap: :n AP per knowledge and Sol',
     'bonus_ap_cap_training' => 'Training cap: :n AP per training and Sol',
     'bonus_mission_chance' => '+:n % mission success chance',
-    'bonus_ship_discount' => 'Ship negotiation: :n Cr discount per invested AP',
+    'bonus_ship_discount' => 'Ship negotiation: :n CR discount per invested AP',
     'bonus_merchant_forecast' => 'Merchant visit announced :n Sol ahead',
     'effect_trust' => ':n trust',
     'knowledge_col_effect' => 'Effect',

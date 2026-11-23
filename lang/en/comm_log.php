@@ -152,7 +152,7 @@ return [
         'merchant_visit' => 'Travelling Merchant announced nearby.',
         'tile_explored' => 'New sector explored.',
         'tile_deep_scanned' => 'Deep scan of a sector performed.',
-        'tile_deep_scanned_coords' => 'Deep scan of sector (:q/:r) performed.',
+        'tile_deep_scanned_coords' => 'Deep scan of a sector performed.',
         'tile_salvaged' => 'Salvage work on a find advanced.',
         'tile_salvaged_done' => 'Find fully salvaged.',
         'colony_renamed' => 'Colony renamed.',

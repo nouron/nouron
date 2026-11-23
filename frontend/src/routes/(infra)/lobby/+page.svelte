@@ -204,14 +204,14 @@
 					<tbody>
 						{#each d.finishedRuns as e (e.id)}
 							<tr>
-								<td>
+								<td data-label={t('lobby.highscore_col_mission')}>
 									{t('lobby.run_number', { id: e.id })}
 									{#if e.ended_at}<br /><small class="lobby-hs-meta">{t('lobby.highscore_ended', { date: e.ended_at })}</small>{/if}
 								</td>
-								<td><span class="lobby-status-pill lobby-status-pill--{pill(e.status)}">{statusLabel(e.status)}</span></td>
-								<td>{e.current_tick} / {e.tick_limit}</td>
-								<td>{e.completed_objectives}{e.total_objectives > 0 ? ` / ${e.total_objectives}` : ''}</td>
-								<td class="lobby-highscore-score"><strong>{e.score.toLocaleString('en-US')}</strong></td>
+								<td data-label={t('lobby.highscore_col_status')}><span class="lobby-status-pill lobby-status-pill--{pill(e.status)}">{statusLabel(e.status)}</span></td>
+								<td data-label={t('lobby.highscore_col_sol')}>{e.current_tick} / {e.tick_limit}</td>
+								<td data-label={t('lobby.highscore_col_tasks')}>{e.completed_objectives}{e.total_objectives > 0 ? ` / ${e.total_objectives}` : ''}</td>
+								<td class="lobby-highscore-score" data-label={t('lobby.highscore_col_score')}><strong>{e.score.toLocaleString('en-US')}</strong></td>
 							</tr>
 						{/each}
 					</tbody>

@@ -340,14 +340,14 @@ class TechtreeController extends BaseController
             return null;
         }
 
-        $desc = __('techtree.'.$reqBuilding['name'])." Lv{$reqLevel}";
+        $desc = __('techtree.'.$reqBuilding['name'])." Stufe {$reqLevel}";
 
         if (! empty($tech['required_building2_id'])) {
             $req2Id = (int) $tech['required_building2_id'];
             $req2Level = (int) ($tech['required_building2_level'] ?? 1);
             $req2Building = $techtree['building'][$req2Id] ?? null;
             if ($req2Building) {
-                $desc .= ' + '.__('techtree.'.$req2Building['name'])." Lv{$req2Level}";
+                $desc .= ' + '.__('techtree.'.$req2Building['name'])." Stufe {$req2Level}";
             }
         }
 
@@ -375,14 +375,14 @@ class TechtreeController extends BaseController
             return [];
         }
 
-        $parts = [__('techtree.'.$reqBuilding['name'])." Lv{$reqLevel}"];
+        $parts = [__('techtree.'.$reqBuilding['name'])." Stufe {$reqLevel}"];
 
         if (! empty($tech['required_building2_id'])) {
             $req2Id = (int) $tech['required_building2_id'];
             $req2Level = (int) ($tech['required_building2_level'] ?? 1);
             $req2Building = $techtree['building'][$req2Id] ?? null;
             if ($req2Building) {
-                $parts[] = __('techtree.'.$req2Building['name'])." Lv{$req2Level}";
+                $parts[] = __('techtree.'.$req2Building['name'])." Stufe {$req2Level}";
             }
         }
 

@@ -86,7 +86,7 @@
 		{/if}
 		<div class="tile-dl-coords">
 			<dt>{t('colony.coords_label')}</dt>
-			<dd>q={tile.q}, r={tile.r} (Ring {tile.ring})</dd>
+			<dd>Ring {tile.ring}</dd>
 		</div>
 	</dl>
 

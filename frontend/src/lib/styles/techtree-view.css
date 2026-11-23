@@ -139,6 +139,23 @@
     cursor: pointer;
     transition: background 0.15s ease;
 }
+@media (max-width: 720px) {
+    /* One slim row in the corner, so the first node stays visible. */
+    .techtree-controls {
+        top: 6px;
+        flex-direction: row;
+        gap: 4px;
+    }
+    .techtree-controls .tt-btn {
+        min-height: 34px;
+        padding: 0 0.5rem;
+        font-size: 0.74rem;
+    }
+    .techtree-controls .tt-btn--sq {
+        width: 34px;
+        padding: 0;
+    }
+}
 .tt-btn:hover {
     background: var(--tt-surface);
 }

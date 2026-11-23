@@ -10,11 +10,11 @@
 
 return [
     // Label prefix before the level number inside the tooltip ("Level 3")
-    'label_level' => 'Level',
+    'label_level' => 'Stufe',
 
     // Link row at the bottom of the tooltip when a detail URL is present
     'label_open_link' => 'Aufrufen',
 
     // Link row on building chips, deep-linking to the tile (A43)
-    'label_tile_link' => 'Zum Tile',
+    'label_tile_link' => 'Zum Feld',
 ];

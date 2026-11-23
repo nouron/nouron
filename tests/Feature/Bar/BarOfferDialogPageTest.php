@@ -163,7 +163,7 @@ class BarOfferDialogPageTest extends TestCase
         $this->assertSame([
             'Konsul (Rang 2) +20 %',
             'Handelsposten (Stufe I) +12 %',
-            'Kenntnis Handel (Lv 3) +8 %',
+            'Kenntnis Handel (Stufe 3) +8 %',
         ], $this->sourceLines($dialog));
         $this->assertSame(14, $dialog['amount_safe']);
         $this->assertSame(4, $dialog['plus_safe']);
@@ -308,7 +308,7 @@ class BarOfferDialogPageTest extends TestCase
         $dialog = $data['offerDialogs'][$id];
 
         $this->assertTrue($dialog['fixed_price']);
-        $this->assertSame('Corvan kauft 20 Organika für 700 Cr. Festpreis: Handelsvorteil und Verhandeln gelten nicht für Verkaufs-Credits.', $dialog['fixed_price_note']);
+        $this->assertSame('Corvan kauft 20 Organika für 700 CR. Festpreis: Handelsvorteil und Verhandeln gelten nicht für Verkaufs-Credits.', $dialog['fixed_price_note']);
         $this->assertFalse($dialog['can_negotiate']);
         $this->assertNull($dialog['chance']);
         $this->assertSame(700, $data['offerTerms'][$id]['get_amount']);
@@ -328,12 +328,12 @@ class BarOfferDialogPageTest extends TestCase
         $dialog = $this->dialog($id);
 
         $this->assertTrue($dialog['credits_give']);
-        $this->assertSame('Basisangebot 10 Werkstoffe für 1100 Cr', __('colony.bar_offer_base_label_credits').' '.$dialog['base_credits_text']);
+        $this->assertSame('Basisangebot 10 Werkstoffe für 1100 CR', __('colony.bar_offer_base_label_credits').' '.$dialog['base_credits_text']);
         $this->assertSame('+40 %', $dialog['advantage']['total_text']);
         $this->assertSame(14, $dialog['amount_safe']);
         $this->assertSame(4, $dialog['plus_safe']);
         $this->assertSame(1100, $dialog['give_amount']);
-        $this->assertSame('Der Preis bleibt bei 1100 Cr, der Vorteil erhöht die Menge.', $dialog['price_stays_text']);
+        $this->assertSame('Der Preis bleibt bei 1100 CR, der Vorteil erhöht die Menge.', $dialog['price_stays_text']);
         $this->assertSame('sicher: 14 Werkstoffe (+4)', $this->safeLine($dialog));
     }
 
@@ -346,7 +346,7 @@ class BarOfferDialogPageTest extends TestCase
 
         $data = $this->data();
 
-        $this->assertSame('Handelsvorteil +40 % (Konsul Rang 2 +20, Handelsposten +12, Handel Lv3 +8)', $data['tradeAdvantage']['summary']);
+        $this->assertSame('Handelsvorteil +40 % (Konsul Rang 2 +20, Handelsposten +12, Handel Stufe 3 +8)', $data['tradeAdvantage']['summary']);
         $this->assertStringContainsString('{#if data.tradeAdvantage?.summary}', $this->cantinaPage());
     }
 
@@ -377,7 +377,7 @@ class BarOfferDialogPageTest extends TestCase
 
         $data = $this->data();
 
-        $this->assertSame('Preisvorteil −20 % (Handelsposten −12, Handel Lv3 −8)', $data['merchantAdvantage']['summary']);
+        $this->assertSame('Preisvorteil −20 % (Handelsposten −12, Handel Stufe 3 −8)', $data['merchantAdvantage']['summary']);
         $this->assertSame(600, $data['merchantItems'][0]['cost_credits']);
         $this->assertSame(480, $data['merchantItems'][0]['price_credits'], '600 x 0.80 = the price the purchase charges');
     }

@@ -256,7 +256,7 @@ class BarOfferDialogPresenterTest extends TestCase
         $this->assertSame(700, $dialog['amount_safe']);
         $this->assertNull($dialog['amount_negotiated']);
         $this->assertStringContainsString(
-            'Corvan kauft 20 Organika für 700 Cr. Festpreis',
+            'Corvan kauft 20 Organika für 700 CR. Festpreis',
             $dialog['fixed_price_note']
         );
     }
@@ -279,7 +279,7 @@ class BarOfferDialogPresenterTest extends TestCase
         $this->assertTrue($dialog['credits_give']);
         $this->assertSame(14, $dialog['amount_safe']);
         $this->assertSame(1100, $dialog['give_amount'], 'the price never changes');
-        $this->assertSame('10 Werkstoffe für 1100 Cr', $dialog['base_credits_text']);
-        $this->assertSame('Der Preis bleibt bei 1100 Cr, der Vorteil erhöht die Menge.', $dialog['price_stays_text']);
+        $this->assertSame('10 Werkstoffe für 1100 CR', $dialog['base_credits_text']);
+        $this->assertSame('Der Preis bleibt bei 1100 CR, der Vorteil erhöht die Menge.', $dialog['price_stays_text']);
     }
 }

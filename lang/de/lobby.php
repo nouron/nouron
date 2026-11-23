@@ -3,17 +3,17 @@
 return [
     // Existing keys — kept as-is
     'colony_ready' => 'Kolonie bereit zum Start',
-    'start_button' => 'Mission starten',
+    'start_button' => 'Run starten',
     'run_not_started' => 'Dein Run ist noch nicht gestartet — klicke „Mission starten", um loszulegen.',
 
     // New keys for the rewritten lobby view
     'page_title' => 'Mission Control',
-    'page_subtitle' => 'Übersicht deiner laufenden und abgeschlossenen Missionen.',
-    'active_runs' => 'Aktive Missionen',
+    'page_subtitle' => 'Übersicht deiner laufenden und abgeschlossenen Runs.',
+    'active_runs' => 'Aktive Runs',
     'pending_runs' => 'Bereit zum Start',
-    'continue_button' => 'Mission fortsetzen',
-    'new_run_button' => 'Neue Mission starten',
-    'no_runs' => 'Keine Missionen vorhanden.',
+    'continue_button' => 'Run fortsetzen',
+    'new_run_button' => 'Neuen Run starten',
+    'no_runs' => 'Keine Runs vorhanden.',
     'sol_progress' => 'Sol :current / :limit',
     'started_at' => 'Gestartet',
     'status_completed' => 'Abgeschlossen',
@@ -22,25 +22,25 @@ return [
     'tick_limit' => 'Sol-Limit',
     'supply_cap' => 'Kolonisten-Kapazität',
     'bypass_active' => 'Bypass',
-    'run_number' => 'Mission #:id',
+    'run_number' => 'Run #:id',
     'colony_unnamed' => '(Unbenannt)',
 
     // Highscore table (Feature 1)
-    'highscore_title' => 'Vergangene Missionen',
-    'highscore_col_mission' => 'Mission',
+    'highscore_title' => 'Vergangene Runs',
+    'highscore_col_mission' => 'Run',
     'highscore_col_status' => 'Status',
     'highscore_col_sol' => 'Sol erreicht',
     'highscore_col_tasks' => 'Aufgaben',
     'highscore_col_score' => 'Score',
-    'highscore_no_runs' => 'Noch keine abgeschlossenen Missionen.',
+    'highscore_no_runs' => 'Noch keine abgeschlossenen Runs.',
     'highscore_ended' => 'Beendet: :date',
 
     // New run button (Feature 2)
 
     // Abandon run
-    'abandon_button' => 'Mission abbrechen',
-    'abandon_confirm' => 'Mission wirklich abbrechen? Der Run gilt dann als gescheitert und kann nicht fortgesetzt werden.',
-    'abandon_success' => 'Mission abgebrochen.',
+    'abandon_button' => 'Run abbrechen',
+    'abandon_confirm' => 'Run wirklich abbrechen? Er gilt dann als gescheitert und kann nicht fortgesetzt werden.',
+    'abandon_success' => 'Run abgebrochen.',
     'abandon_not_active' => 'Dieser Run ist nicht mehr aktiv.',
     'nav_runs' => 'Run-Übersicht',
 

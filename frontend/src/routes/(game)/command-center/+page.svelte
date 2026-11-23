@@ -164,6 +164,7 @@
 
 {#if d}
 	<div class="cc-dashboard">
+		<h2 class="screen-heading">{t('command_center.nav_label')}</h2>
 		<!-- Widget 1: phase goals -->
 		<article class="cc-card">
 			<h3 class="cc-card-title">{t('command_center.widget_phase_title')}</h3>

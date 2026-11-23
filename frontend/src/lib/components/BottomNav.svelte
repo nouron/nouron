@@ -250,6 +250,25 @@
 	.caret.flipped {
 		transform: rotate(180deg);
 	}
+	@media (max-width: 480px) {
+		.bottom-nav {
+			gap: 0;
+			padding-left: 2px;
+			padding-right: 2px;
+		}
+		/* Slots as wide as their label: "Datenarchiv" needs more than "Labor". */
+		.slot {
+			flex: 1 1 auto;
+		}
+		.tile {
+			min-width: 0;
+			padding: 2px 0;
+			font-size: 0.66rem;
+		}
+		.caret {
+			margin-left: 0.1em;
+		}
+	}
 	.badge {
 		position: absolute;
 		top: 2px;

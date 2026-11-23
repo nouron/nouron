@@ -1504,7 +1504,7 @@ class ColonyController extends BaseController
             return [];
         }
 
-        return [__('techtree.'.$reqName).' Lv'.($reqLevel ?? 1)];
+        return [__('techtree.'.$reqName).' Stufe '.($reqLevel ?? 1)];
     }
 
     private function hexDistance(int $q1, int $r1, int $q2, int $r2): int

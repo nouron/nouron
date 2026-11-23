@@ -120,34 +120,38 @@
     display: inline;
 }
 
-@media (max-width: 640px) {
-    /* One line only; long text scrolls slowly (marquee). */
-    .hint-bar__text {
-        overflow: hidden;
-        white-space: nowrap;
-    }
-    .hint-bar__marquee {
-        display: inline-block;
-        padding-left: 100%;
-        animation: hint-bar-marquee 18s linear infinite;
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .hint-bar__text {
-            white-space: normal;
-        }
-        .hint-bar__marquee {
-            animation: none;
-            padding-left: 0;
-        }
-    }
+/* Long hints on phones: two lines, the chevron opens the rest. */
+.hint-bar__more {
+    display: none;
 }
-
-@keyframes hint-bar-marquee {
-    from {
-        transform: translateX(0);
+@media (max-width: 640px) {
+    .hint-bar__text {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        min-width: 0;
     }
-    to {
-        transform: translateX(-100%);
+    .hint-bar--open .hint-bar__text {
+        display: block;
+    }
+    .hint-bar__more {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        min-height: 32px;
+        margin: 0;
+        padding: 0;
+        background: none;
+        border: 0;
+        color: inherit;
+        cursor: pointer;
+    }
+    .hint-bar--open .hint-bar__more .bi {
+        transform: rotate(180deg);
     }
 }
 
@@ -174,11 +178,7 @@
  * Deliberately neutral (anthracite/white), not the hint-bar's amber warning
  * color — this is a one-time explanation, not an action prompt. */
 .first-visit-popup {
-    position: fixed;
-    bottom: calc(var(--app-bottom-h) + 1.5rem);
-    right: 1.5rem;
-    z-index: 50;
-    max-width: 22rem;
+    margin: 0.75rem 1rem;
 }
 
 .first-visit-popup__card {

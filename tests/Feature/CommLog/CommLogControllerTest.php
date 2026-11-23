@@ -181,7 +181,7 @@ class CommLogControllerTest extends TestCase
         $this->assertSame('amount', $segments[0]['type']);
         $this->assertSame(10, $segments[0]['value']);
         $this->assertSame(4, $segments[2]['tooltip']['level']);
-        $this->assertStringContainsString('Level 4 erreicht', $segments[3]['value']);
+        $this->assertStringContainsString('Stufe 4 erreicht', $segments[3]['value']);
     }
 
     public function test_building_repaired_description(): void
@@ -237,7 +237,7 @@ class CommLogControllerTest extends TestCase
 
         $this->assertSame('knowledge', $segments[1]['type']);
         $this->assertStringContainsString('Kenntnis', $segments[0]['value']);
-        $this->assertStringContainsString('Level 2 gestiegen', $segments[2]['value']);
+        $this->assertStringContainsString('Stufe 2 gestiegen', $segments[2]['value']);
     }
 
     public function test_level_up_finished_falls_back_to_tech_id_lookup(): void

@@ -327,6 +327,44 @@ button.lobby-btn-danger-outline.outline:focus-visible {
     text-align: right !important;
     font-variant-numeric: tabular-nums;
 }
+@media (max-width: 600px) {
+    .lobby-highscore-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+    .lobby-highscore-table,
+    .lobby-highscore-table tbody,
+    .lobby-highscore-table tr,
+    .lobby-highscore-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .lobby-highscore-table tr {
+        margin-bottom: 0.6rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid var(--color-border, #e8e8ec);
+        border-radius: 6px;
+    }
+    .lobby-highscore-table td,
+    .lobby-highscore-table tbody tr:last-child td {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.3rem 0;
+        border-bottom: none;
+        text-align: right !important;
+    }
+    .lobby-highscore-table td::before {
+        content: attr(data-label);
+        flex: none;
+        font-size: 0.75rem;
+        color: var(--color-text-secondary, #6b6b7a);
+    }
+}
 .lobby-hs-meta {
     font-size: 0.78rem;
     color: var(--color-text-secondary, #6b6b7a);
