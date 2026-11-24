@@ -36,7 +36,9 @@ final class ResearchSource implements CandidateSource
             $id = $knowledge->id;
             $estimate = Valuers::research($b, $ctx, $id, $knowledge->level, $knowledge->ap_spend);
             // Review S3 I6: band 19 comes before scans and salvage — only research worth more per AP.
-            if ($estimate->net() / max(1, $estimate->apCost) < $minDensity) {
+            // An open research objective keeps the knowledge on offer even below the density:
+            // the objective is worth the AP as a whole, not per level step (M3 2026-11-24).
+            if ($estimate->net() / max(1, $estimate->apCost) < $minDensity && ! isset($estimate->terms['objective'])) {
                 continue;
             }
             $candidates[] = new Candidate(
