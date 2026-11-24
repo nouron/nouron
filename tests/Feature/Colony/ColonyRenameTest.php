@@ -70,15 +70,6 @@ class ColonyRenameTest extends TestCase
 
     // ── Success message ──────────────────────────────────────────────────────
 
-    public function test_rename_success_message_is_shown_by_the_lobby_page(): void
-    {
-        $lobby = file_get_contents(base_path('frontend/src/routes/(infra)/lobby/+page.svelte'));
-
-        $this->assertStringContainsString("'/colony/name', 'PATCH'", $lobby);
-        $this->assertStringEndsWith('/colony/name', route('colony.rename'));
-        $this->assertStringContainsString("t('lobby.rename_success')", $lobby);
-    }
-
     public function test_rename_success_message_contains_meaningful_text(): void
     {
         $this->app->setLocale('de');

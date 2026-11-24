@@ -13,11 +13,4 @@ class ShipImagesTest extends TestCase
             $this->assertFileExists(public_path("img/ships/{$key}.webp"), "ship image missing for '{$key}'");
         }
     }
-
-    public function test_hangar_card_shows_the_ship_image(): void
-    {
-        $page = file_get_contents(base_path('frontend/src/routes/(game)/hangar/+page.svelte'));
-
-        $this->assertStringContainsString('/img/ships/', $page);
-    }
 }

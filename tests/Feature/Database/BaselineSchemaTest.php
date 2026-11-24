@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Tests\Concerns\TestSchemaCache;
 use Tests\TestCase;
 
 /**
@@ -16,6 +17,13 @@ use Tests\TestCase;
 class BaselineSchemaTest extends TestCase
 {
     use RefreshDatabase;
+
+    // T63: the shared test fixtures are seeded once per process; this test needs empty tables.
+    protected function setUp(): void
+    {
+        parent::setUp();
+        TestSchemaCache::emptyTables();
+    }
 
     public function test_baseline_creates_all_tables_and_the_view_without_any_rows(): void
     {

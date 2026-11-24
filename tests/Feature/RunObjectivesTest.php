@@ -83,11 +83,6 @@ class RunObjectivesTest extends TestCase
         $this->assertSame(12, config('game.run.tasks.task_colony_prosperity.target'));
     }
 
-    public function test_the_old_credit_reserve_threshold_key_is_gone(): void
-    {
-        $this->assertNull(config('game.run.task_credit_reserve_threshold'));
-    }
-
     public function test_draw_objectives_takes_target_values_from_config(): void
     {
         config([

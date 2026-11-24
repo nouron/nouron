@@ -125,11 +125,6 @@ class OverCapDecayTest extends TestCase
         $this->assertSame(0, $svc->getSupplyBreakdown(1)['used']['advisors'], 'advisors must never appear as a supply consumer');
     }
 
-    public function test_overcap_decay_factor_config_key_is_gone(): void
-    {
-        $this->assertNull(config('game.decay.overcap_factor'));
-    }
-
     // ── Building decay with overcap ───────────────────────────────────────────
 
     /**

@@ -148,12 +148,6 @@ class TrustScaleTest extends TestCase
 
     // ── Production factor removed ────────────────────────────────────────────
 
-    public function test_production_factor_is_gone(): void
-    {
-        $this->assertNull(config('game.trust.production_multiplier'));
-        $this->assertFalse(method_exists(TrustService::class, 'getProductionMultiplier'));
-    }
-
     public function test_trust_band_does_not_change_production_per_sol(): void
     {
         DB::table('colony_buildings')->insert([

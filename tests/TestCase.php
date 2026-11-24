@@ -2,10 +2,12 @@
 
 namespace Tests;
 
+use Database\Seeders\TestSeeder;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\TestSchemaCache;
 
@@ -19,8 +21,19 @@ abstract class TestCase extends BaseTestCase
     {
         $firstRefresh = ! RefreshDatabaseState::$migrated
             && isset(array_flip(class_uses_recursive(static::class))[RefreshDatabase::class]);
-        if ($firstRefresh && TestSchemaCache::forCurrentConnection()->isCurrent()) {
-            TestSchemaCache::emptyTables();
+        // T63 experiment: seed the test fixtures once per process, committed, before the first
+        // test transaction; every test then rolls back to this state.
+        if ($firstRefresh) {
+            $cache = TestSchemaCache::forCurrentConnection();
+            if ($cache->isCurrent()) {
+                TestSchemaCache::emptyTables();
+            } else {
+                Artisan::call('migrate:fresh', ['--force' => true]);
+                $cache->remember();
+            }
+            TestSeeder::$baseline = false;
+            $this->app->make(TestSeeder::class)->run();
+            TestSeeder::$baseline = true;
             RefreshDatabaseState::$migrated = true;
             $firstRefresh = false;
         }
@@ -32,6 +45,20 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $uses;
+    }
+
+    /**
+     * For tests that commit their own data outside RefreshDatabase's transaction: bring the
+     * database back to the shared seeded state (DML only, no migrate:fresh), so the next test
+     * of this process can start from it.
+     */
+    protected static function restoreTestBaseline(): void
+    {
+        TestSchemaCache::emptyTables();
+        TestSeeder::$baseline = false;
+        app(TestSeeder::class)->run();
+        TestSeeder::$baseline = true;
+        RefreshDatabaseState::$migrated = true;
     }
 
     /**

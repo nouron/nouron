@@ -5,11 +5,19 @@ namespace Tests\Feature\Seeders;
 use Database\Seeders\ReferenceDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\TestSchemaCache;
 use Tests\TestCase;
 
 class ReferenceDataSeederTest extends TestCase
 {
     use RefreshDatabase;
+
+    // T63: the shared test fixtures are seeded once per process; this test needs empty tables.
+    protected function setUp(): void
+    {
+        parent::setUp();
+        TestSchemaCache::emptyTables();
+    }
 
     public function test_seeds_reference_data_without_any_player_data(): void
     {
