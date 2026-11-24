@@ -19,7 +19,10 @@ abstract class TestCase extends BaseTestCase
      */
     protected function setUpTraits()
     {
+        // game:playtest children (PLAYTEST_SHARED_DB) play in the shared playtest database and
+        // never use the test database: seeding it here from 24 processes at once deadlocks.
         $firstRefresh = ! RefreshDatabaseState::$migrated
+            && ! getenv('PLAYTEST_SHARED_DB')
             && isset(array_flip(class_uses_recursive(static::class))[RefreshDatabase::class]);
         // T63 experiment: seed the test fixtures once per process, committed, before the first
         // test transaction; every test then rolls back to this state.
