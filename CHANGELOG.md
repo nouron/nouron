@@ -2,6 +2,7 @@
 
 ## 2026-11-24
 
+- Tests (T63): Testdaten einmal pro Prozess statt vor jedem Test, Blockade- und Reset-Tests ohne komplettes Neumigrieren, 23 doppelte oder wertlose Tests entfernt. Schnelle Suite lokal 183 s → 75 s. Finale und Nexus-Funksprüche sagen „Auftrag erfüllt/gescheitert“.
 - CI: Die Playtest-Suite läuft nur noch, wenn sich die Bot-Logik ändert (Owner-Entscheidung). ROADMAP: T63 Testdaten schneller einspielen.
 
 ## 2026-11-23

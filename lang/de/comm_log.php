@@ -110,17 +110,17 @@ return [
                 'badge' => 'Erfolg',
             ],
             'run_failed_trust' => [
-                'title' => 'Mission gescheitert — Vertrauensverlust',
+                'title' => 'Auftrag gescheitert — Vertrauensverlust',
                 'body' => 'Nexus-Protokoll §3.1: Das Vertrauen der Kolonisten ist kritisch unter den Mindestwert gefallen. Die Konzession wird beendet.',
                 'badge' => 'Gescheitert',
             ],
             'run_failed_nexus_debt' => [
-                'title' => 'Mission gescheitert — Schulden-Protokoll',
+                'title' => 'Auftrag gescheitert — Schulden-Protokoll',
                 'body' => 'Nexus-Protokoll §15.2: Nexus-Schulden haben die Konzessionsgrenze überschritten. Die Mission wird zwangsbeendet.',
                 'badge' => 'Gescheitert',
             ],
             'run_failed_time' => [
-                'title' => 'Mission gescheitert — Zeitlimit',
+                'title' => 'Auftrag gescheitert — Zeitlimit',
                 'body' => 'Das Sol-Limit wurde erreicht ohne die erforderlichen Ziele abzuschließen. Nexus beendet die Konzession.',
                 'badge' => 'Gescheitert',
             ],
@@ -130,7 +130,7 @@ return [
                 'badge' => 'Warnung',
             ],
             'run_failed_phase1_deadline' => [
-                'title' => 'Mission gescheitert — Fristbruch Phase 1',
+                'title' => 'Auftrag gescheitert — Fristbruch Phase 1',
                 'body' => 'Nexus-Protokoll §4.3: Der Grundaufbau (Phase 1) wurde nicht innerhalb der Frist abgeschlossen. Die Konzession wird zwangsbeendet.',
                 'badge' => 'Gescheitert',
             ],

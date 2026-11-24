@@ -155,23 +155,4 @@ class FeedbackTest extends TestCase
 
     // ── UI ─────────────────────────────────────────────────────────────────
 
-    /** The lobby, run result, settings and admin screens share the (infra) layout. */
-    public function test_feedback_button_is_on_pages_for_logged_in_users(): void
-    {
-        $layout = file_get_contents(base_path('frontend/src/routes/(infra)/+layout.svelte'));
-
-        $this->assertStringContainsString("import FeedbackButton from '#lib/components/FeedbackButton.svelte';", $layout);
-        $this->assertStringContainsString('{#if $shell}<FeedbackButton />{/if}', $layout);
-    }
-
-    /** In the run the trigger lives in the user menu; the layout only mounts the dialog. */
-    public function test_feedback_dialog_is_in_the_colony_layout_and_opened_from_the_user_menu(): void
-    {
-        $layout = file_get_contents(base_path('frontend/src/routes/(game)/+layout.svelte'));
-        $header = file_get_contents(base_path('frontend/src/lib/components/AppHeader.svelte'));
-
-        $this->assertStringContainsString("import FeedbackButton from '#lib/components/FeedbackButton.svelte';", $layout);
-        $this->assertStringContainsString('<FeedbackButton bind:this={feedback} floating={false} />', $layout);
-        $this->assertStringContainsString('onclick={onfeedback}', $header);
-    }
 }

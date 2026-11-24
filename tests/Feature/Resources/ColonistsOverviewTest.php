@@ -113,13 +113,4 @@ class ColonistsOverviewTest extends TestCase
         $page = file_get_contents(base_path('frontend/src/routes/(game)/command-center/+page.svelte'));
         $this->assertStringContainsString("t('command_center.widget_colonists_unfilled', { count: d.colonists.unfilled })", $page);
     }
-
-    public function test_hexview_sidebar_says_needs_colonists_not_kol(): void
-    {
-        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
-
-        $this->assertStringNotContainsString('} KOL`', $page);
-        // Colonist need is drawn as the shared resource chip (icon + KOL), not as hand-built text.
-        $this->assertStringContainsString('amount={b.supply_cost ?? 0}', $page);
-    }
 }

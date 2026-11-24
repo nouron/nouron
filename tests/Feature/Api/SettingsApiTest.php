@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 /**
  * Profile and settings for the SvelteKit frontend (ADR 0006 stage 5b):
- * same actions as the Blade settings page, plus the user's language for API responses.
+ * the user's language for API responses. Profile, name, hints and password: UserControllerTest.
  */
 class SettingsApiTest extends TestCase
 {
@@ -37,38 +37,6 @@ class SettingsApiTest extends TestCase
     {
         $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/settings')->assertUnauthorized();
-    }
-
-    public function test_settings_return_profile_and_preferences(): void
-    {
-        DB::table('user_preferences')->where('user_id', self::USER_ID)->delete();
-
-        $this->getJson('/api/v1/settings')
-            ->assertOk()
-            ->assertJson([
-                'username' => 'Bart',
-                'onboarding_hints' => true,
-                'locale' => 'de',
-                'supported_locales' => config('app.supported_locales'),
-            ])
-            ->assertJsonStructure(['display_name', 'email', 'role', 'registration'])
-            ->assertJsonMissingPath('password');
-    }
-
-    public function test_update_display_name(): void
-    {
-        $this->patchJson('/api/v1/settings/name', ['display_name' => 'Bartholomew'])
-            ->assertOk()->assertJson(['ok' => true]);
-
-        $this->assertSame('Bartholomew', User::findOrFail(self::USER_ID)->display_name);
-        $this->patchJson('/api/v1/settings/name', ['display_name' => ''])->assertJsonValidationErrors('display_name');
-    }
-
-    public function test_update_onboarding_hints(): void
-    {
-        $this->patchJson('/api/v1/settings/onboarding', ['onboarding_hints' => false])->assertOk();
-
-        $this->assertSame(0, (int) $this->prefs()->onboarding_hints);
     }
 
     public function test_update_locale_and_answer_in_the_new_language(): void

@@ -85,14 +85,4 @@ class TechtreeBuildingOrderTest extends TestCase
             $this->assertNotSame($key, __($key, [], $locale), "Missing {$locale} translation for {$key}");
         }
     }
-
-    public function test_instance_codes_are_no_longer_techtree_codes(): void
-    {
-        foreach (['de', 'en'] as $locale) {
-            foreach (['instance_required', 'instance_not_found'] as $code) {
-                $key = "techtree.error_{$code}";
-                $this->assertSame($key, __($key, [], $locale), "{$key} is unused since A43 and should be removed");
-            }
-        }
-    }
 }

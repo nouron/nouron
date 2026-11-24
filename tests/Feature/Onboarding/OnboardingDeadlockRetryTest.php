@@ -7,11 +7,11 @@ use App\Services\EventService;
 use App\Services\OnboardingService;
 use Database\Seeders\ReferenceDataSeeder;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use PDOException;
+use Tests\Concerns\TestSchemaCache;
 use Tests\Concerns\UsesParallelTestDatabase;
 use Tests\TestCase;
 
@@ -21,9 +21,8 @@ use Tests\TestCase;
  * setupNewPlayer(). Both onboarding transactions must retry on a deadlock.
  *
  * Laravel only retries a TOP-LEVEL transaction (a nested one rethrows), so this
- * test cannot use RefreshDatabase's wrapping transaction: it migrates the test
- * database itself and marks it dirty afterwards, so the next RefreshDatabase
- * test re-migrates instead of seeing the committed rows.
+ * test cannot use RefreshDatabase's wrapping transaction: it empties the test
+ * database itself and restores the shared seeded state afterwards.
  */
 class OnboardingDeadlockRetryTest extends TestCase
 {
@@ -35,13 +34,20 @@ class OnboardingDeadlockRetryTest extends TestCase
     {
         parent::setUp();
         $this->useParallelTestDatabase();
-        $this->artisan('migrate:fresh');
+        // Empty the tables (DML) instead of migrate:fresh when the schema is current.
+        $schema = TestSchemaCache::forCurrentConnection();
+        if ($schema->isCurrent()) {
+            TestSchemaCache::emptyTables();
+        } else {
+            $this->artisan('migrate:fresh');
+            $schema->remember();
+        }
         app(ReferenceDataSeeder::class)->run();
     }
 
     protected function tearDown(): void
     {
-        RefreshDatabaseState::$migrated = false;
+        self::restoreTestBaseline();
         parent::tearDown();
     }
 

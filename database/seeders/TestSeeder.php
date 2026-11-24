@@ -18,8 +18,14 @@ use Illuminate\Support\Facades\DB;
  */
 class TestSeeder extends Seeder
 {
+    /** T63 experiment: true once the fixtures are committed for this process; later calls skip. */
+    public static bool $baseline = false;
+
     public function run(): void
     {
+        if (self::$baseline) {
+            return;
+        }
         $this->call(ReferenceDataSeeder::class);
 
         $lines = array_filter(

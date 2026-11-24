@@ -723,9 +723,9 @@ return [
     'sol_report_sol_counter' => 'Sol :sol von :limit',
 
     // Finale (Run-Ende)
-    'sol_report_finale_win_title' => 'Mission erfüllt',
+    'sol_report_finale_win_title' => 'Auftrag erfüllt',
     'sol_report_finale_win_body' => 'Die Kolonie steht. Gegen Verfall, Knappheit und alles was der Planet ihr entgegengeworfen hat — sie steht.',
-    'sol_report_finale_lose_title' => 'Mission gescheitert',
+    'sol_report_finale_lose_title' => 'Auftrag gescheitert',
     'sol_report_finale_lose_body' => 'Diese Kolonie hat nicht überlebt. Was bleibt, wird vermerkt und übergeben — und irgendwann beginnt von vorne, wer genug gelernt hat.',
 
     // UI-Steuertexte

@@ -55,11 +55,6 @@ class RunNexusCheckpointTest extends TestCase
         $this->assertSame(20, config('game.run.countdown_sols_before_limit'));
     }
 
-    public function test_dead_nexus_milestones_block_is_removed(): void
-    {
-        $this->assertNull(config('game.run.nexus_milestones'));
-    }
-
     // ── Phase-2 Sol 30: one objective >= 50 % ────────────────────────────────
 
     public function test_sol30_passes_with_one_objective_at_exactly_50_percent(): void

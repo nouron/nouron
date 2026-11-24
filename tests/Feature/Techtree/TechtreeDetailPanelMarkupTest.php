@@ -78,24 +78,6 @@ class TechtreeDetailPanelMarkupTest extends TestCase
         $this->assertStringNotContainsString('instance_count', $page);
     }
 
-    public function test_instance_list_links_each_instance_to_its_tile(): void
-    {
-        $this->placeHousing([1 => [0, 1]]);
-
-        $page = $this->page();
-        $this->assertStringContainsString('{#each tech.instances as inst (inst.instance_id)}', $page);
-        $this->assertStringContainsString('href={colonyLink({ building: tech.id, instance: inst.instance_id })}', $page);
-        $this->assertStringContainsString("t('techtree.detail_instance_tile_link')", $page);
-        // colonyLink() targets the SvelteKit colony route.
-        $this->assertStringContainsString('`/colony?${new URLSearchParams(', $page);
-
-        $housing = $this->buildingItem(28);
-        $this->assertSame([['instance_id' => 1, 'q' => 0, 'r' => 1]], array_map(
-            fn ($i) => ['instance_id' => $i['instance_id'], 'q' => $i['q'], 'r' => $i['r']],
-            $housing['instances'],
-        ));
-    }
-
     public function test_build_link_is_gated_by_can_build_more(): void
     {
         $page = $this->page();

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Console;
 
-use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Tests\Concerns\UsesParallelTestDatabase;
 use Tests\TestCase;
 
@@ -15,9 +14,9 @@ use Tests\TestCase;
  * inside RefreshDatabase's wrapping transaction (MySQL commits it implicitly) —
  * this command performs its own full reset per test.
  *
- * A reset leaves the test database migrated AND seeded, while RefreshDatabase
- * expects an empty schema once it has migrated. tearDown therefore marks the
- * database as not migrated, so the next RefreshDatabase test runs migrate:fresh.
+ * A reset leaves the test database migrated and seeded with the dev seeders;
+ * tearDown restores the shared test fixtures, so the next test of this process
+ * needs no migrate:fresh.
  */
 class DbResetTest extends TestCase
 {
@@ -31,7 +30,7 @@ class DbResetTest extends TestCase
 
     protected function tearDown(): void
     {
-        RefreshDatabaseState::$migrated = false;
+        self::restoreTestBaseline();
 
         parent::tearDown();
     }
@@ -44,19 +43,14 @@ class DbResetTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function test_confirmed_resets_and_seeds_the_database(): void
-    {
-        $this->artisan('db:reset')
-            ->expectsConfirmation('Are you sure?', 'yes')
-            ->expectsOutputToContain('Resetting database...')
-            ->expectsOutputToContain('Done. Database has been reset and seeded.')
-            ->assertExitCode(0);
-    }
-
-    public function test_force_flag_skips_confirmation(): void
+    // One real reset is enough (migrate:fresh --seed takes ~15 s): --force skips the
+    // confirmation that the abort test above covers, and the reset itself runs here.
+    public function test_force_flag_skips_confirmation_and_resets_and_seeds(): void
     {
         $this->artisan('db:reset', ['--force' => true])
             ->doesntExpectOutputToContain('This will DELETE all data')
+            ->expectsOutputToContain('Resetting database...')
+            ->expectsOutputToContain('Done. Database has been reset and seeded.')
             ->assertExitCode(0);
     }
 }

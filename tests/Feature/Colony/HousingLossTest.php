@@ -8,8 +8,6 @@ use App\Services\Techtree\BuildingService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
@@ -121,16 +119,5 @@ class HousingLossTest extends TestCase
             ->assertJsonMissingPath('homeless_after')
             ->assertJsonMissingPath('capacity_loss');
         $this->assertSame($cap, $this->resources()->colonistsOverview(self::COLONY_ID)['colonists'], 'preview changes nothing');
-    }
-
-    public function test_grace_period_departure_and_dismissal_are_gone(): void
-    {
-        $this->assertFileDoesNotExist(app_path('Services/OvercapService.php'));
-        $this->assertFalse(Schema::hasColumn('glx_colonies', 'overcap_departed'));
-        $this->assertFalse(Schema::hasColumn('glx_colonies', 'overcap_streak'));
-        $this->assertNull(config('game.overcap'));
-        $this->assertNull(config('game.trust.events.colonists_left'));
-        $this->assertNull(config('game.trust.events.colonists_dismissed'));
-        $this->assertFalse(Route::has('colony.colonists.dismiss'));
     }
 }

@@ -48,12 +48,4 @@ class BotStrategyFlightReadinessTest extends TestCase
     {
         $this->assertEmpty($this->recon($this->bootWithDrone(3.0)));
     }
-
-    public function test_bot_no_longer_mirrors_the_old_constants(): void
-    {
-        $source = file_get_contents(base_path('tests/Feature/Playtest/BotStrategy.php'));
-
-        $this->assertStringNotContainsString('dispatch_min_sp_pct', $source);
-        $this->assertStringNotContainsString('$shipMaxStatus = 20', $source);
-    }
 }

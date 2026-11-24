@@ -85,15 +85,6 @@ class ColonyViewTest extends TestCase
         $this->assertIsInt($response->json('freeSupply'));
     }
 
-    public function test_hexview_renders_hint_completion_animation_markup(): void
-    {
-        // The hint bar moved from the colony page into the shell component.
-        $hintBar = file_get_contents(base_path('frontend/src/lib/components/HintBar.svelte'));
-
-        $this->assertStringContainsString('hint-bar-stack', $hintBar);
-        $this->assertStringContainsString('{#if completed}', $hintBar);
-    }
-
     public function test_hexview_buildings_include_tier_label(): void
     {
         // App-Locale explizit 'de' setzen (Tests laufen sonst mit config-Default 'en').

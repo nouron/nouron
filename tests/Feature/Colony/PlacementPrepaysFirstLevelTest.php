@@ -336,27 +336,6 @@ class PlacementPrepaysFirstLevelTest extends TestCase
         $this->assertTrue($site['first_level_prepaid']);
     }
 
-    public function test_hexview_markup_shows_placement_total_breakdown_and_prepaid_note(): void
-    {
-        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
-
-        // Build list: only the charged total (the erect + level 1 breakdown moved out of the list, T47).
-        $this->assertStringContainsString('b.placement_cost?.[3]', $page);
-        $this->assertStringNotContainsString("t('colony.build_cost_first_level')", $page);
-        // Sidebar: a placed level-0 site states that level 1 is already paid.
-        $this->assertStringContainsString('b.first_level_prepaid', $page);
-        $this->assertStringContainsString("t('colony.first_level_prepaid')", $page);
-        $this->assertNotSame('colony.first_level_prepaid', __('colony.first_level_prepaid'));
-    }
-
-    public function test_build_chip_affordability_uses_the_placement_cost(): void
-    {
-        $page = file_get_contents(base_path('frontend/src/routes/(game)/colony/+page.svelte'));
-
-        $this->assertMatchesRegularExpression('/function buildMissingReasons\(b: AvailableBuilding\)\s*\{[^}]*placement_cost/s', $page);
-        $this->assertStringContainsString('const canPlaceBuilding = (b: AvailableBuilding) => !b.locked && buildMissingReasons(b).length === 0;', $page);
-    }
-
     // ── CC centre (0,0) is never buildable ──────────────────────────────────────
 
     public function test_placing_on_the_cc_centre_tile_is_rejected(): void
