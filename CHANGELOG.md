@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-24
+
+- CI: Die Playtest-Suite läuft nur noch, wenn sich die Bot-Logik ändert (Owner-Entscheidung). ROADMAP: T63 Testdaten schneller einspielen.
+
 ## 2026-11-23
 
 - CI: prüft jetzt auch das Frontend (`svelte-check`, Build) und Larastan, PHP-Opcache ist aktiv, PRs nur mit Markdown überspringen die Prüfungen. Lokaler Standard: paralleler Testlauf mit 6 Workern (2:49 statt gut 10 min).

@@ -20,23 +20,40 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ steps.diff.outputs.code }}
+      suites: ${{ steps.diff.outputs.suites }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # The PlaytestBot suite only runs when the bot itself changes (owner 2026-11-24):
+      # its code lives in tests/Feature/Playtest plus the playtest commands.
       - id: diff
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
           code=true
-          if [ -n "$BASE_SHA" ]; then
-            files=$(git diff --name-only "$BASE_SHA...HEAD")
-            # Here-string, not a pipe: grep -q closing a pipe early would count as failure under pipefail.
-            if [ -n "$files" ] && ! grep -qv '\.md$' <<< "$files"; then
+          bot=true
+          if [ -n "$PR_BASE" ]; then
+            files=$(git diff --name-only "$PR_BASE...HEAD")
+          elif [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != 0000000000000000000000000000000000000000 ]; then
+            files=$(git diff --name-only "$PUSH_BEFORE" HEAD)
+          else
+            files=unknown
+          fi
+          if [ "$files" != unknown ]; then
+            # Here-strings, not pipes: grep -q closing a pipe early would count as failure under pipefail.
+            if [ -n "$PR_BASE" ] && [ -n "$files" ] && ! grep -qv '\.md$' <<< "$files"; then
               code=false
             fi
+            if ! grep -qE '^(tests/Feature/Playtest/|app/Console/Commands/Playtest|app/Console/Support/Playtest|tools/bot-tests\.php|phpunit\.xml|\.github/workflows/)' <<< "$files"; then
+              bot=false
+            fi
           fi
+          suites='["laravel-feature,laravel-unit"]'
+          if [ "$bot" = true ]; then suites='["laravel-feature,laravel-unit","playtest"]'; fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "suites=$suites" >> "$GITHUB_OUTPUT"
 
   lint:
     name: Pint + Larastan
@@ -95,10 +112,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Default suites (feature + unit) and the PlaytestBot suite, which
-        # phpunit.xml keeps out of the default run because its full-run tests
-        # are slow.
-        suite: ['laravel-feature,laravel-unit', 'playtest']
+        # Default suites (feature + unit), plus the PlaytestBot suite when the bot changed
+        # (see the changes job); phpunit.xml keeps it out of the default run.
+        suite: ${{ fromJSON(needs.changes.outputs.suites) }}
     services:
       mysql:
         image: mysql:8.0
