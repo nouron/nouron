@@ -27,11 +27,11 @@ Alle Spiel-Grafiken (Icons, Portraits, Tiles, Schiffe, Gebäude, Ressourcen, For
 |---|---|---|
 | Ressourcen-Icons | 24×24 px | 48×48 px |
 | Gebäude-Icons (Sidebar) | 32×32 px | 64×64 px |
-| Gebäude-Icons (auf Tile) | 48×48 px | 96×96 px |
+| Gebäude auf Kartenfeld (Nachtrag 2026-11-23) | ca. 1,4× Feldgröße | 192×192 px, freigestellt (`buildings/map/`) |
 | Schiffs-Icons | 48×48 px | 96×96 px |
 | Schiffs-Bild (Hangar-Karte, Nachtrag 2026-11-17) | ca. 400×280 px | 800×560 px, weißer Hintergrund statt Transparenz (Owner-Entscheidung) |
 | Berater-Portraits | 128×128 px | 256×256 px |
-| Hex-Tile-Texturen | abhängig von SIZE-Konstante in `colony-hexgrid.js` | 2× SIZE berechnen |
+| Hex-Feld-Szenen (Nachtrag 2026-11-22) | ca. 2× Feldradius | 256×256 px, Varianten `<art>_2` … |
 
 ### CSS-Integration
 
@@ -53,10 +53,11 @@ Tiles sind SVG-Polygone in `colony-hexgrid.js`. Illustrierte Tile-Texturen werde
 ```
 public/img/
   icons/         -- Ressourcen-Icons, UI-Icons
-  buildings/     -- Gebäude-Icons (sidebar + tile-Variante)
+  buildings/     -- Gebäude-Illustrationen (1536 px, Detailansichten)
+  buildings/map/ -- freigestellte Gebäude für die Kartenfelder (192 px, aus den Illustrationen erzeugt)
   ships/         -- Schiffs-Icons
   advisors/      -- Berater-Portraits
-  tiles/         -- Hex-Tile-Texturen je Planetentyp
+  tiles/         -- Feld-Szenen je Geländeart mit Varianten (256 px), Nebel, Kartenhintergrund
 ```
 
 ## Konsequenzen
