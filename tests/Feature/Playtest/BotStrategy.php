@@ -1097,9 +1097,10 @@ class BotStrategy
      *
      * @param  list<array>  $buildings  rows from /colony/buildings/available
      * @param  array<int, int|string>  $placedCounts  building_id => placed instances
+     * @param  bool  $colonistsExhausted  every colonist is employed (Phase 2): housing is no longer capped
      * @return list<array>
      */
-    public static function orderPlacementCandidates(array $buildings, array $placedCounts, string $opening): array
+    public static function orderPlacementCandidates(array $buildings, array $placedCounts, string $opening, bool $colonistsExhausted = false): array
     {
         // Path-building gate (PathBuildingGateService, server rule 2026-10-14): the
         // build menu lists a gated path building as locked — placing it would only
@@ -1112,7 +1113,9 @@ class BotStrategy
         // Sol 70-90), so it would fill the colony-zone tiles long before trust
         // buildings ever compete. Capped Housing is hard-EXCLUDED from the
         // candidate list, reserving tiles for other building types.
-        $instanceCap = [28 => 2]; // housingComplex — the hangar is a single hall since B1 (T30 §13.2)
+        // M3 2026-11-24: once every colonist is employed, housing is what lets buildings level
+        // further ("Ingenieursleistung" stuck at 21–24 of 35 with two complexes).
+        $instanceCap = $colonistsExhausted ? [] : [28 => 2]; // housingComplex — the hangar is a single hall since B1 (T30 §13.2)
         $buildings = array_values(array_filter($buildings, function (array $building) use ($instanceCap, $placedCounts) {
             $id = (int) $building['building_id'];
             $cap = $instanceCap[$id] ?? null;
@@ -1211,6 +1214,9 @@ class BotStrategy
     /**
      * @return array{0: array, 1: object}|null [building row from availableBuildings(), tile row]
      */
+    /** Free colonists at or below which Phase-2 placement lifts the housing cap (M3 2026-11-24). */
+    private const COLONISTS_EXHAUSTED_BELOW = 2;
+
     private static function placeCandidate(BotSession $b, string $opening = 'auto'): ?array
     {
         // Heaviest rule in the set (one HTTP round-trip + one ResourcesService::check()
@@ -1227,14 +1233,15 @@ class BotStrategy
                 ->groupBy('building_id')
                 ->pluck('cnt', 'building_id');
 
-            $pathIds = self::pathBuildingOrder($opening);
-            $buildings = self::orderPlacementCandidates($buildings, $placedCounts->all(), $opening);
-
             // Real cap/possession logic lives in ResourcesService — supply is CC level +
             // Housing count + knowledge bonus, not the flat user_resources.supply seed
             // value, and build_cost can list more than just Regolith (e.g. compounds).
             $resourcesService = app(ResourcesService::class);
             $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
+
+            $pathIds = self::pathBuildingOrder($opening);
+            $colonistsExhausted = self::runPhase($b) >= 2 && $freeSupply <= self::COLONISTS_EXHAUSTED_BELOW;
+            $buildings = self::orderPlacementCandidates($buildings, $placedCounts->all(), $opening, $colonistsExhausted);
 
             // Rg-buffer: while a path building is still needed and unaffordable, don't
             // let a cheaper tier-2 (or already-placed bioFacility) candidate leak the

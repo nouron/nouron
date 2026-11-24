@@ -155,6 +155,13 @@ final class Valuers
         if ($trust > 0) {
             $terms['trust'] = $trust * $ctx->price('trust');
         }
+        // M3 2026-11-24: an open "Forschungsvorsprung" (target knowledges at min_level) gives
+        // every level step up to min_level a share of the objective, like engineering output.
+        $objective = $ctx->objectives['task_research_lead'] ?? null;
+        $minLevel = (int) config('game.run.tasks.task_research_lead.min_level', 5);
+        if ($objective !== null && $target <= $minLevel && (float) $w['w_objective'] > 0.0) {
+            $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target'] * $minLevel);
+        }
 
         return new Estimate($terms, $ap, 0, $cycleAp);
     }

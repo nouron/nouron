@@ -2,6 +2,7 @@
 
 ## 2026-11-24
 
+- Bot (Messung M3): Zielorientierte Profile forschen jetzt für „Forschungsvorsprung“ auch Kenntnisse ohne direkten Nutzen; sind alle Kolonisten beschäftigt, baut der Bot in Phase 2 mehr als zwei Wohnhabitate, damit Gebäude weiter wachsen können („Ingenieursleistung“).
 - Fix (T63-Folge): `game:playtest` mit vielen parallelen Bots brach seit #494 mit Datenbank-Blockaden ab; die Bot-Prozesse spielen die Testdaten nicht mehr ein, sie nutzen ohnehin die eigene Playtest-Datenbank.
 - Doku: ROADMAP-Prioritäten auf Stand 2026-11-24, erledigte UI-Umbau-Punkte und T59-Status nachgezogen; Design-System ohne Hover-Leuchten, `Res`/`ResText` in den Frontend-Konventionen, ADR 0001 mit Kartengrafiken, Glossar mit Auftrag und Mission.
 - Tests (T63): Testdaten einmal pro Prozess statt vor jedem Test, Blockade- und Reset-Tests ohne komplettes Neumigrieren, 23 doppelte oder wertlose Tests entfernt. Schnelle Suite lokal 183 s → 75 s. Finale und Nexus-Funksprüche sagen „Auftrag erfüllt/gescheitert“.

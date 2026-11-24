@@ -75,6 +75,30 @@ class ResearchSourceTest extends TestCase
         }
     }
 
+    public function test_an_open_research_lead_objective_makes_every_knowledge_worth_researching(): void
+    {
+        // M3 2026-11-24: research had no objective term, so even objective-driven profiles
+        // left trade, health & co. alone (no valued effect) while "Forschungsvorsprung" was open.
+        $bot = $this->bootWithLab(2);
+        DB::table('runs')->where('id', $bot->runId)->update(['phase' => 2, 'phase2_start_tick' => 1]);
+        DB::table('run_objectives')->insert([
+            'run_id' => $bot->runId,
+            'task_key' => 'task_research_lead',
+            'target_value' => (int) config('game.run.tasks.task_research_lead.target'),
+            'current_value' => 0,
+            'streak_value' => 0,
+            'completed_at' => null,
+        ]);
+
+        // Only objective-driven profiles weigh objectives (default: objectiveFocus 0).
+        $ctx = BotContext::capture($bot, BotProfile::named('focus'), withGoal: true);
+        $keys = array_map(fn (Candidate $c) => $c->key, (new ResearchSource(19))->candidates($bot, $ctx));
+        $this->assertNotContains('research:95', array_map(fn (Candidate $c) => $c->key, $this->candidates($bot)), 'default ignores objectives');
+
+        $this->assertContains('research:95', $keys, 'trade counts towards the objective');
+        $this->assertContains('research:94', $keys, 'health counts towards the objective');
+    }
+
     public function test_do_levels_up_when_ready_and_adds_otherwise(): void
     {
         $bot = $this->bootWithLab(2);
