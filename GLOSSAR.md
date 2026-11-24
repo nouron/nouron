@@ -61,6 +61,8 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 |---|---|---|
 | Sol | `tick` | Eine Spielrunde. Im Code heißt sie weiter „tick“. |
 | Run | `run` | Eine Partie mit Ziel und klarem Ende; genau ein aktiver Run. |
+| Auftrag | – | Was Nexus von der Kolonie in einem Run verlangt; der Run endet mit „Auftrag erfüllt“ oder „Auftrag gescheitert“. Im Menü heißt die Partie weiter „Run“. |
+| Mission | `mission` | Ein Einsatz eines Hangar-Schiffs (Erkundung, Bergung, Handel …), nie der ganze Run. |
 | Phase 1 „Grundaufbau“ | `phase` 1 | Endet mit den Pflichtgebäuden; harte Frist, sonst Run verloren (`phase1_deadline_sol`). |
 | Phase 2 | `phase` 2 | Beginnt mit dem Abschluss von Phase 1; zweites und drittes Pfadgebäude, CC-Ausbau. |
 
