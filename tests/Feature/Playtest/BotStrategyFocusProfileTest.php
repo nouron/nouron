@@ -10,7 +10,8 @@ use Tests\TestCase;
 /**
  * A45: the `focus` bot profile plays towards the drawn objectives, so the
  * calibration rule (GDD §15: targeted play reaches an objective around Sol
- * 70–85) can be measured. The `default` profile stays the generalist.
+ * 70–85) can be measured. `aimless` is the generalist; the casual `default`
+ * (objectiveFocus 0.3) runs the focus rules only on 3 of 10 Sols.
  *
  * Focus rules only fire while the matching objective is drawn and still open:
  *   focus_expedition_mission  — task_expedition_coverage: missions at a counted difficulty
@@ -40,13 +41,50 @@ class BotStrategyFocusProfileTest extends TestCase
         $this->assertSame(1.0, $profile->savingsAggressiveness);
     }
 
-    public function test_default_profile_has_no_objective_focus(): void
+    public function test_aimless_profile_has_no_objective_focus(): void
     {
-        $this->assertSame(0.0, BotProfile::named('default')->objectiveFocus);
-        $names = array_column(BotStrategy::default(), 'name');
+        $this->assertSame(0.0, BotProfile::named('aimless')->objectiveFocus);
+        $names = array_column(BotStrategy::default(BotProfile::named('aimless')), 'name');
 
         foreach (self::FOCUS_RULES as $rule) {
-            $this->assertNotContains($rule, $names, 'the default generalist must not get focus rules');
+            $this->assertNotContains($rule, $names, 'the aimless generalist must not get focus rules');
+        }
+        $this->assertSame(array_column(BotStrategy::default(), 'name'), $names, 'aimless = the rule list of the old default');
+    }
+
+    public function test_casual_default_gets_the_focus_rules(): void
+    {
+        $names = array_column(BotStrategy::default(BotProfile::named('default')), 'name');
+
+        foreach (self::FOCUS_RULES as $rule) {
+            $this->assertContains($rule, $names);
+        }
+    }
+
+    public function test_partial_focus_fires_only_on_active_sols(): void
+    {
+        $bot = $this->bootEngineeringCandidate();
+        $rule = $this->rule('focus_engineering_levelup', BotProfile::named('default'));
+
+        $firing = [];
+        foreach (range(1, 10) as $sol) {
+            $bot->sol = $sol;
+            if (! empty($rule['when']($bot))) {
+                $firing[] = $sol;
+            }
+        }
+
+        $this->assertSame([4, 7, 10], $firing, 'objectiveFocus 0.3: 3 of 10 Sols, evenly spread');
+    }
+
+    public function test_full_focus_fires_on_every_sol(): void
+    {
+        $bot = $this->bootEngineeringCandidate();
+        $rule = $this->rule('focus_engineering_levelup');
+
+        foreach (range(1, 10) as $sol) {
+            $bot->sol = $sol;
+            $this->assertNotEmpty($rule['when']($bot), "Sol {$sol}");
         }
     }
 
@@ -183,6 +221,18 @@ class BotStrategyFocusProfileTest extends TestCase
         ]);
     }
 
+    private function bootEngineeringCandidate(): BotSession
+    {
+        $bot = BotSession::boot($this, 1);
+        $this->drawObjective($bot, 'task_engineering_output');
+        $this->placeBuilding($bot, BuildingId::Housing->value, level: 2);
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)->update(['level' => 3]);
+        $this->setResource($bot, 3, 500);
+
+        return $bot;
+    }
+
     private function bootWithDockedDrone(): BotSession
     {
         $bot = BotSession::boot($this, 1);
@@ -267,9 +317,9 @@ class BotStrategyFocusProfileTest extends TestCase
     /**
      * @return array{name:string, when:callable, do:callable}
      */
-    private function rule(string $name): array
+    private function rule(string $name, ?BotProfile $profile = null): array
     {
-        foreach (BotStrategy::default(BotProfile::named('focus')) as $rule) {
+        foreach (BotStrategy::default($profile ?? BotProfile::named('focus')) as $rule) {
             if ($rule['name'] === $name) {
                 return $rule;
             }

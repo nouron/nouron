@@ -15,12 +15,37 @@ class BotProfileTest extends TestCase
         $this->assertSame(0.0, $profile->savingsAggressiveness);
     }
 
-    public function test_named_default_matches_default_constructor(): void
+    public function test_named_default_is_the_casual_player(): void
     {
+        // Spec 2026-11-26 (Teil A): `default` = "gelegentlich" — looks at the objectives now and then.
         $profile = BotProfile::named('default');
 
         $this->assertSame('default', $profile->name);
+        $this->assertSame(0.3, $profile->objectiveFocus);
         $this->assertSame(0.0, $profile->savingsAggressiveness);
+        // utility engine: the dial scales w_objective continuously (no Sol gating needed there).
+        $this->assertEqualsWithDelta(0.3 * BotProfile::named('focus')->weights()['w_objective'], $profile->weights()['w_objective'], 1e-9);
+    }
+
+    public function test_named_aimless_keeps_the_old_default_behaviour(): void
+    {
+        $profile = BotProfile::named('aimless');
+
+        $this->assertSame('aimless', $profile->name);
+        $this->assertSame(0.0, $profile->objectiveFocus);
+        $this->assertSame(0.0, $profile->savingsAggressiveness);
+        $this->assertFalse($profile->exploreOnlyWhenNeeded);
+    }
+
+    public function test_dial_active_on_sol_spreads_the_share_evenly_without_chance(): void
+    {
+        $active = fn (float $f): array => array_values(array_filter(range(1, 10), fn (int $sol) => BotProfile::dialActiveOnSol($f, $sol)));
+
+        $this->assertCount(3, $active(0.3));
+        $this->assertSame([4, 7, 10], $active(0.3), 'evenly spread, never clustered');
+        $this->assertSame(range(1, 10), $active(1.0));
+        $this->assertSame([], $active(0.0));
+        $this->assertCount(30, array_filter(range(1, 100), fn (int $sol) => BotProfile::dialActiveOnSol(0.3, $sol)));
     }
 
     public function test_named_thrifty_has_maximum_savings_aggressiveness(): void

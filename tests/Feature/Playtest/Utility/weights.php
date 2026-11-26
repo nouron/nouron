@@ -57,6 +57,7 @@ return [
     ],
     'profiles' => [
         'default' => [],
+        'aimless' => [],
         'thrifty' => [],
         'focus' => [],
         'eager' => [],

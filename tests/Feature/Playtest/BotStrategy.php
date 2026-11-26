@@ -455,8 +455,18 @@ class BotStrategy
         // research) — after the survival/economy rules, so they never starve
         // Phase 1 or the colony's food and repairs. Each rule only fires while
         // its objective is drawn and open.
+        // The strength of the dial decides on how many Sols the focus rules run
+        // (BotProfile::dialActiveOnSol, spec 2026-11-26): 0.3 = 3 of 10 Sols, 1.0 = every Sol.
+        // The wrapper sits in when(), so the utility engine's LegacyRuleSource follows it too.
+        $focus = $profile->objectiveFocus;
+        $focusRules = array_map(function (array $rule) use ($focus): array {
+            $when = $rule['when'];
+            $rule['when'] = fn (BotSession $b) => BotProfile::dialActiveOnSol($focus, $b->sol) ? $when($b) : null;
+
+            return $rule;
+        }, self::focusRules());
         $at = array_search('relocate_harvester', array_column($rules, 'name'), true);
-        array_splice($rules, $at === false ? count($rules) : (int) $at, 0, self::focusRules());
+        array_splice($rules, $at === false ? count($rules) : (int) $at, 0, $focusRules);
 
         return $rules;
     }

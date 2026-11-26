@@ -37,7 +37,7 @@ class BotStrategySelfSufficiencyTest extends TestCase
         $this->fakeOrganics(harvest: 64, need: 60);
 
         $this->assertSame(4, BotStrategy::ownHarvestRoom($bot, objectiveFocused: true));
-        $this->assertNull(BotStrategy::ownHarvestRoom($bot, objectiveFocused: false), 'default ignores objectives');
+        $this->assertNull(BotStrategy::ownHarvestRoom($bot, objectiveFocused: false), 'aimless ignores objectives');
 
         DB::table('run_objectives')->where('run_id', $bot->runId)->update(['completed_at' => 50]);
         $this->assertNull(BotStrategy::ownHarvestRoom($bot, objectiveFocused: true), 'a completed objective no longer binds');
@@ -77,14 +77,14 @@ class BotStrategySelfSufficiencyTest extends TestCase
         );
     }
 
-    public function test_default_profile_still_places_beyond_its_harvest(): void
+    public function test_aimless_profile_still_places_beyond_its_harvest(): void
     {
         $bot = $this->bootPhase2WithObjective();
         $this->placeBasics($bot);
         $this->setRegolith($bot, 5000);
         $this->fakeOrganics(harvest: 60, need: 60);
 
-        $pick = $this->rule(BotProfile::named('default'), 'place_building')['when']($bot);
+        $pick = $this->rule(BotProfile::named('aimless'), 'place_building')['when']($bot);
 
         $this->assertNotNull($pick);
         $this->assertGreaterThan(0, (int) $pick[0]['supply_cost']);
@@ -116,7 +116,7 @@ class BotStrategySelfSufficiencyTest extends TestCase
             (new UpgradeSource(17))->candidates($bot, BotContext::capture($bot, $profile, withGoal: true)),
         );
 
-        $this->assertContains('invest:31:1', $keys(BotProfile::named('default')), 'fixture: the lab level-up is on offer');
+        $this->assertContains('invest:31:1', $keys(BotProfile::named('aimless')), 'fixture: the lab level-up is on offer');
         $this->assertNotContains('invest:31:1', $keys(BotProfile::named('focus')));
         $this->assertContains('invest:41:1', $keys(BotProfile::named('focus')), 'the Agrardom raises the harvest');
     }
@@ -138,8 +138,8 @@ class BotStrategySelfSufficiencyTest extends TestCase
         $this->assertGreaterThan(0.0, Valuers::upgrade($bot, $ctx, $agrardom)->terms['objective'] ?? 0.0, 'Agrardom level-up');
         $this->assertGreaterThan(0.0, Valuers::research($bot, $ctx, 93, 0, 0)->terms['objective'] ?? 0.0, 'agronomy level');
 
-        $default = BotContext::capture($bot, BotProfile::named('default'), withGoal: true);
-        $this->assertArrayNotHasKey('objective', Valuers::upgrade($bot, $default, $agrardom)->terms);
+        $aimless = BotContext::capture($bot, BotProfile::named('aimless'), withGoal: true);
+        $this->assertArrayNotHasKey('objective', Valuers::upgrade($bot, $aimless, $agrardom)->terms);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

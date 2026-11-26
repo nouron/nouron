@@ -43,14 +43,14 @@ class BotStrategySeniorAdvisorsTest extends TestCase
         $this->assertNull($this->rule('focus', 'buy_merchant_item')['when']($bot), 'rank 2 -> 3 is the pending promotion');
     }
 
-    public function test_default_profile_and_closed_objective_keep_no_reserve(): void
+    public function test_aimless_profile_and_closed_objective_keep_no_reserve(): void
     {
         $bot = $this->boot(withObjective: true);
         $this->insertAdvisor($bot, rank: 1);
         $this->insertMerchantItem($bot, 100);
         $this->setCredits($bot, 100);
 
-        $this->assertNotNull($this->rule('default', 'buy_merchant_item')['when']($bot), 'default ignores objectives');
+        $this->assertNotNull($this->rule('aimless', 'buy_merchant_item')['when']($bot), 'aimless ignores objectives');
 
         DB::table('run_objectives')->where('run_id', $bot->runId)->update(['completed_at' => 40]);
         $this->assertNotNull($this->rule('focus', 'buy_merchant_item')['when']($bot), 'completed objective');
