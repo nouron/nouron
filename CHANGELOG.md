@@ -2,6 +2,7 @@
 
 ## 2026-11-26
 
+- Run-Ziele umgebaut (Spec 2026-11-25): Jede Ziehung hat mindestens ein mittel- und ein langfristiges Ziel; Forschungsvorsprung = Summe aller Kenntnisstufen (16), Expertenstab = Summe der Berater-Ränge (11), Selbstversorgung = eigene Ernte deckt den Bedarf von mindestens 55 Kolonisten ohne Hunger (35 Sole), Ingenieursleistung 32. Bot zieht mit (Forschungs-Anteil je Stufe, kein Bau über die eigene Ernte, Beförderungsreserve); Werte bis Messung M5 ungemessen.
 - Bot (T64): kauft in Phase 2 fehlende Werkstoffe bei Nexus, wenn nur sie für Krankenstation oder Leitstelle fehlen und die Credits über einer Reserve bleiben — sonst wären Gesundheit und Verteidigung für Bots nie erreichbar.
 - Kenntnisse (T64, Owner): Jede Kenntnis hängt an genau einem eigenen Gebäude (Konstruktion → Kommandozentrale, Kartografie → Hangar, Geologie → Harvester, Agronomie → Agrardom, Gesundheit → Krankenstation, Handel → Cantina, Verteidigung → Leitstelle); das Labor ist kein Tor mehr, sondern bringt Tempo und genaue Zahlen. Ohne Labor ist der Techtree erforschbar, mit Fortschritt in Worten; AP in eine Kenntnis ohne ihr Gebäude werden abgelehnt. Kenntnisse stehen im Techtree bei ihrem Gebäude, der Kenntnis-Hinweis wartet nicht mehr aufs Labor. GDD §4b/§8b/§10/§13, techtree.md und GLOSSAR nachgezogen; Spec-Entwürfe zu Run-Zielen und Siegbedingung abgelegt.
 

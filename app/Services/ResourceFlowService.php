@@ -62,6 +62,25 @@ class ResourceFlowService
     }
 
     /**
+     * Own Organika harvest per Sol (Agrardom + agronomy, after the staffing share — the
+     * same sources perSol() shows) and the colonists' Organika need (the Sol report's
+     * food line). Trade, missions, events and mission provisions are neither. Read by
+     * the "Selbstversorgung" objective (RunProgressService).
+     *
+     * @return array{harvest: int, need: int}
+     */
+    public function organicsBalance(int $colonyId): array
+    {
+        $tick = $this->tickService->getTickCount();
+        $multiplier = $this->resourcesService->staffingShare($colonyId);
+
+        return [
+            'harvest' => $this->agrardomYield($colonyId, $tick, $multiplier) + $this->agronomyBonus($colonyId, $multiplier),
+            'need' => $this->resourcesService->foodNeed($colonyId),
+        ];
+    }
+
+    /**
      * Credits per Sol, mirroring GameTick::generatePassiveCredits() (Nexus subsidy +
      * Uplink relay, only with a running CC) and deductAdvisorUpkeep(). The upkeep
      * clamp at an empty purse is ignored here — the shortfall goes to the Nexus debt.

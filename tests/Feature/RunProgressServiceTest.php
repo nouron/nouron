@@ -15,9 +15,9 @@ namespace Tests\Feature;
  *   - drawObjectives sets correct target values
  *
  * UPDATE OBJECTIVE PROGRESS
- *   (task_senior_advisors, task_expedition_coverage, task_engineering_output and
- *   all config-driven thresholds: see RunObjectivesTest — A45)
- *   - task_research_lead completes when 3 researches at level 5
+ *   (task_senior_advisors, task_research_lead, task_self_sufficiency: see
+ *   RunObjectivesRedesignTest; task_expedition_coverage, task_engineering_output and
+ *   the config-driven thresholds: see RunObjectivesTest — A45)
  *   - task_credit_reserve increments streak when credits above threshold
  *   - task_credit_reserve resets streak when credits below threshold
  *
@@ -32,11 +32,6 @@ namespace Tests\Feature;
  * SCORE
  *   - calculateScore returns 0 for failed run
  *   - calculateScore returns positive score for completed run with objectives
- *
- * TASK_SELBSTVERSORGUNG (streak)
- *   - streak increments when regolith > regolith_min AND organics > organics_min (supply ignored)
- *   - streak resets to 0 when regolith fails (<= 25)
- *   - completes (completed_at set) when streak reaches target_value (15)
  *
  * TASK_HANDELSPARTNER (counter)
  *   - completes when 5+ sold items from visits after run.started_at
@@ -155,17 +150,6 @@ class RunProgressServiceTest extends TestCase
     }
 
     /**
-     * Set supply for user 3 in user_resources (supply is user-level, not colony-level).
-     */
-    private function setSupply(int $amount): void
-    {
-        DB::table('user_resources')->updateOrInsert(
-            ['user_id' => $this->userId],
-            ['supply' => $amount]
-        );
-    }
-
-    /**
      * Create a minimal advisor assigned to colony 1.
      *
      * Each call draws the next personell_id from the pool so the unique
@@ -198,19 +182,6 @@ class RunProgressServiceTest extends TestCase
             'streak_value' => $streakValue,
             'completed_at' => null,
         ]);
-    }
-
-    /**
-     * Reset all colony_researches for colony 1 to level 0.
-     *
-     * Required for forschungsvorsprung tests because testdata already seeds
-     * several researches at high levels.
-     */
-    private function resetAllResearchLevels(): void
-    {
-        DB::table('colony_researches')
-            ->where('colony_id', $this->colonyId)
-            ->update(['level' => 0]);
     }
 
     // ── Phase-1 completion ────────────────────────────────────────────────────
@@ -395,65 +366,6 @@ class RunProgressServiceTest extends TestCase
                 "Target value mismatch for {$taskKey}"
             );
         }
-    }
-
-    // ── updateObjectiveProgress: task_senior_advisors ────────────────────────────
-
-    // ── updateObjectiveProgress: task_research_lead ────────────────────
-
-    public function test_task_research_lead_completes_when_3_researches_at_level_5(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_research_lead', 3);
-
-        // Reset all researches first — testdata has some already at level 19/17 etc.
-        $this->resetAllResearchLevels();
-
-        // Raise exactly 3 to level 5 (use knowledge IDs 90, 91, 92 (exist in researches))
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 90],
-            ['level' => 5]
-        );
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 91],
-            ['level' => 5]
-        );
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 92],
-            ['level' => 5]
-        );
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertNotNull($objective->completed_at, 'task_research_lead must complete when 3 researches are at level >= 5');
-        $this->assertEquals(3, $objective->current_value);
-    }
-
-    public function test_task_research_lead_does_not_complete_when_fewer_than_3_at_level_5(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_research_lead', 3);
-
-        // Reset all researches first so testdata high levels don't interfere
-        $this->resetAllResearchLevels();
-
-        // Only 2 researches at level 5
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 90],
-            ['level' => 5]
-        );
-        DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 91],
-            ['level' => 5]
-        );
-        // research_id=92 stays at level 0 after reset
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertNull($objective->completed_at, 'task_research_lead must not complete with only 2 qualifying researches');
-        $this->assertEquals(2, $objective->current_value);
     }
 
     // ── updateObjectiveProgress: task_credit_reserve ─────────────────────────
@@ -779,73 +691,6 @@ class RunProgressServiceTest extends TestCase
         );
     }
 
-    // ── task_self_sufficiency (streak) ────────────────────────────────────────
-
-    public function test_task_self_sufficiency_increments_streak_when_all_conditions_met(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 0);
-
-        $regolithMin = config('game.run.tasks.task_self_sufficiency.regolith_min');
-        $organicsMin = config('game.run.tasks.task_self_sufficiency.organics_min');
-
-        // regolith (resource_id=3) > regolith_min, organics (resource_id=5) >
-        // organics_min, supply > 0 — a discriminating margin, not just any
-        // passing value.
-        $this->setColonyResource(3, $regolithMin + 5);
-        $this->setColonyResource(5, $organicsMin + 5);
-        $this->setSupply(1);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment to 1 when all 3 conditions are met');
-        $this->assertEquals(1, $objective->current_value);
-        $this->assertNull($objective->completed_at, 'objective must not complete after only 1 streak tick');
-    }
-
-    public function test_task_self_sufficiency_resets_streak_when_regolith_fails(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        // Pre-load a streak of 7
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 7);
-
-        $regolithMin = config('game.run.tasks.task_self_sufficiency.regolith_min');
-        $organicsMin = config('game.run.tasks.task_self_sufficiency.organics_min');
-
-        // Regolith at exactly regolith_min — condition requires > regolith_min, so this fails.
-        $this->setColonyResource(3, $regolithMin);
-        $this->setColonyResource(5, $organicsMin);
-        $this->setSupply(1);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when regolith <= regolith_min');
-        $this->assertEquals(0, $objective->current_value);
-        $this->assertNull($objective->completed_at);
-    }
-
-    public function test_task_self_sufficiency_completes_when_streak_reaches_target(): void
-    {
-        $run = $this->makeRun(['current_tick' => 20, 'phase' => 2]);
-        // Pre-load streak at 7 — one passing tick should complete it (target=8)
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 7);
-
-        $regolithMin = config('game.run.tasks.task_self_sufficiency.regolith_min');
-        $organicsMin = config('game.run.tasks.task_self_sufficiency.organics_min');
-
-        $this->setColonyResource(3, $regolithMin + 50);
-        $this->setColonyResource(5, $organicsMin + 50);
-        $this->setSupply(5);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(8, $objective->streak_value, 'streak_value must reach 8');
-        $this->assertNotNull($objective->completed_at, 'task_self_sufficiency must be marked complete when streak reaches target_value');
-    }
-
     // ── task_expedition_coverage (counter) ──────────────────────────────────────
 
     // ── task_engineering_output (counter) ─────────────────────────────────────
@@ -1138,41 +983,6 @@ class RunProgressServiceTest extends TestCase
     }
 
     // ── Additional coverage (BUG-fixes & test-gaps) ───────────────────────────
-
-    /**
-     * user_resources.supply holds the supply CAP, which is > 0 for every colony
-     * with a Command Center — the old "supply > 0" condition never failed in
-     * play and was dropped (Owner 2026-09-30). Stocks alone decide the streak.
-     */
-    public function test_task_self_sufficiency_ignores_supply(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 5);
-
-        $this->setColonyResource(3, (int) config('game.run.tasks.task_self_sufficiency.regolith_min') + 10);
-        $this->setColonyResource(5, (int) config('game.run.tasks.task_self_sufficiency.organics_min') + 10);
-        $this->setSupply(0);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(6, $objective->streak_value, 'supply must not affect the self-sufficiency streak');
-    }
-
-    public function test_task_self_sufficiency_resets_streak_when_organics_fails(): void
-    {
-        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 5);
-
-        $this->setColonyResource(3, 60);
-        $this->setColonyResource(5, 75); // exactly 75 — requires > 75, so fails
-        $this->setSupply(1);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset when organics <= 75');
-    }
 
     public function test_task_credit_reserve_reads_credits_from_user_resources(): void
     {

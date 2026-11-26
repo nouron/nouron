@@ -79,6 +79,9 @@ final class Valuers
         if ($objective !== null && (float) $w['w_objective'] > 0.0) {
             $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target']);
         }
+        if ($id === self::BIO_FACILITY) {
+            $terms = self::selfSufficiencyTerm($ctx, $terms, (int) (config('buildings.bioFacility.max_level') ?? 3));
+        }
 
         return new Estimate($terms, $ap, $regolith, $cycleAp);
     }
@@ -155,15 +158,38 @@ final class Valuers
         if ($trust > 0) {
             $terms['trust'] = $trust * $ctx->price('trust');
         }
-        // M3 2026-11-24: an open "Forschungsvorsprung" (target knowledges at min_level) gives
-        // every level step up to min_level a share of the objective, like engineering output.
+        // Spec 2026-11-25 §3.1/§7: "Forschungsvorsprung" is the sum of all knowledge levels,
+        // so every level step is an equal share of the objective, like engineering output —
+        // cheap breadth steps are worth more per AP than deep ones.
         $objective = $ctx->objectives['task_research_lead'] ?? null;
-        $minLevel = (int) config('game.run.tasks.task_research_lead.min_level', 5);
-        if ($objective !== null && $target <= $minLevel && (float) $w['w_objective'] > 0.0) {
-            $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target'] * $minLevel);
+        if ($objective !== null && (float) $w['w_objective'] > 0.0) {
+            $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target']);
+        }
+
+        if ($researchId === self::AGRONOMY) {
+            $terms = self::selfSufficiencyTerm($ctx, $terms, ResearchService::maxKnowledgeLevel(self::AGRONOMY));
         }
 
         return new Estimate($terms, $ap, 0, $cycleAp);
+    }
+
+    /**
+     * Spec 2026-11-25 §7: while "Selbstversorgung" is open, the own harvest is what
+     * the objective needs — every Agrardom level and agronomy level carries an equal
+     * share of it (split over the steps of that source; weight split is an assumption).
+     *
+     * @param  array<string, float>  $terms
+     * @return array<string, float>
+     */
+    private static function selfSufficiencyTerm(BotContext $ctx, array $terms, int $steps): array
+    {
+        $w = (float) $ctx->weights['w_objective'];
+        if ($w <= 0.0 || ! isset($ctx->objectives['task_self_sufficiency'])) {
+            return $terms;
+        }
+        $terms['objective'] = ($terms['objective'] ?? 0.0) + $w / max(1, $steps) / 2;
+
+        return $terms;
     }
 
     public static function pathPlacement(BotSession $b, BotContext $ctx, int $buildingId): Estimate

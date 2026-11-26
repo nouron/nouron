@@ -14,6 +14,7 @@ use App\Services\HangarService;
 use App\Services\PathBuildingGateService;
 use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
+use App\Services\ResourceFlowService;
 use App\Services\ResourcesService;
 use App\Services\RunTaskCatalog;
 use App\Services\Techtree\BuildingService;
@@ -70,12 +71,12 @@ class BotStrategy
     private const COMPOUNDS_SCARCE_BELOW = 50;
 
     /**
-     * Whether the profile built by the last default() call keeps Regolith back
-     * for task_self_sufficiency (objective-focused profiles only). Static because
-     * the Regolith-spending helpers only receive the BotSession; every caller
-     * builds its rules via default() right before using them.
+     * Whether the profile built by the last default() call is objective-focused and
+     * therefore guards task_self_sufficiency (ownHarvestRoom()). Static because the
+     * candidate helpers only receive the BotSession; every caller builds its rules
+     * via default() right before using them.
      */
-    private static bool $holdsSelfSufficiencyReserve = false;
+    private static bool $objectiveFocused = false;
 
     /** savingsAggressiveness of the profile built by the last default() call (see spendableCredits()). */
     private static float $creditSavings = 0.0;
@@ -90,7 +91,7 @@ class BotStrategy
      */
     public static function default(BotProfile $profile = new BotProfile): array
     {
-        self::$holdsSelfSufficiencyReserve = $profile->objectiveFocus > 0.0;
+        self::$objectiveFocused = $profile->objectiveFocus > 0.0;
         self::$creditSavings = $profile->savingsAggressiveness;
 
         $rules = [
@@ -589,6 +590,7 @@ class BotStrategy
             ->select('cb.building_id', 'cb.instance_id', 'cb.level', 'cb.ap_spend', 'cb.tile_x', 'bld.supply_cost', 'bld.ap_for_levelup')
             ->get()
             ->reject(fn (object $row): bool => self::supplyGated($row) && $freeSupply < (int) $row->supply_cost)
+            ->reject(fn (object $row): bool => self::outgrowsOwnHarvest($b, (int) $row->building_id, self::levelupWorkplaces($row)))
             ->reject(fn (object $row): bool => self::ccGated($b, $row))
             ->reject(fn (object $row): bool => self::apCapped($b, (int) $row->building_id, (int) $row->instance_id))
             ->filter(function (object $row) use ($b, $ccReserve, $regolith): bool {
@@ -647,6 +649,9 @@ class BotStrategy
             if ((int) $building['supply_cost'] > $freeSupply) {
                 continue;
             }
+            if (self::outgrowsOwnHarvest($b, $id, (int) $building['supply_cost'])) {
+                continue;
+            }
 
             $tile = self::freeZoneTile($b);
 
@@ -666,7 +671,7 @@ class BotStrategy
     private static function merchantItemCandidate(BotSession $b): ?int
     {
         $tick = app(TickService::class)->getTickCount();
-        $credits = self::spendableCredits($b);
+        $credits = self::spendableCredits($b) - self::promotionReserve($b);
 
         $itemId = DB::table('merchant_items as mi')
             ->join('merchant_visits as mv', 'mv.id', '=', 'mi.visit_id')
@@ -1304,6 +1309,11 @@ class BotStrategy
 
                     continue;
                 }
+                if (self::outgrowsOwnHarvest($b, (int) $building['building_id'], (int) $building['supply_cost'])) {
+                    $reason ??= 'harvest';
+
+                    continue;
+                }
 
                 $tile = self::freeZoneTile($b);
 
@@ -1366,6 +1376,9 @@ class BotStrategy
 
         // Building level needs CC level (ColonyController::investBuilding() 'building_cc_gate').
         $rows = $rows->reject(fn (object $row): bool => self::ccGated($b, $row))->values();
+
+        // task_self_sufficiency (focused profiles): no workplaces beyond the own harvest.
+        $rows = $rows->reject(fn (object $row): bool => self::outgrowsOwnHarvest($b, (int) $row->building_id, self::levelupWorkplaces($row)))->values();
 
         // Per-Sol construction AP cap (game.build.ap_cap_per_sol): a building whose cap
         // is used up for this Sol is not offered — the AP spreads to the next one.
@@ -1721,28 +1734,57 @@ class BotStrategy
     }
 
     /**
-     * Regolith all non-repair spending must leave in stock: the largest of the CC
-     * research reserve (T17), the self-sufficiency reserve and the utility
-     * engine's savings goal (BotSession::$regolithHold, 0 for the legacy engine).
+     * Regolith all non-repair spending must leave in stock: the larger of the CC
+     * research reserve (T17) and the utility engine's savings goal
+     * (BotSession::$regolithHold, 0 for the legacy engine). The former
+     * self-sufficiency Regolith reserve is gone with the stock-based objective
+     * (spec 2026-11-25 §7) — see ownHarvestRoom().
      */
     private static function regolithReserve(BotSession $b, bool $withHold = true): int
     {
-        return max(self::ccResearchReserve($b), self::selfSufficiencyReserve($b), $withHold ? $b->regolithHold : 0);
+        return max(self::ccResearchReserve($b), $withHold ? $b->regolithHold : 0);
     }
 
     /**
-     * Baseline 2026-09-30: focus/eager spent Regolith down to ~100 in Phase 2 and
-     * never held the task_self_sufficiency streak (Regolith > regolith_min). While
-     * that objective is open, objective-focused profiles keep regolith_min plus a
-     * 10 % buffer against decay repairs. 0 when the rule doesn't apply.
+     * Workplaces (= Organika need, one per colonist) the colony may still add before
+     * it outgrows its own harvest: harvest − need from ResourceFlowService, the numbers
+     * task_self_sufficiency measures (spec 2026-11-25 §3.3/§7). Null when the rule
+     * doesn't apply — not objective-focused, or the objective is not drawn and open.
+     *
+     * @param  bool|null  $objectiveFocused  null = the profile of the last default() call
      */
-    private static function selfSufficiencyReserve(BotSession $b): int
+    public static function ownHarvestRoom(BotSession $b, ?bool $objectiveFocused = null): ?int
     {
-        if (! self::$holdsSelfSufficiencyReserve || ! self::hasActiveObjective($b, 'task_self_sufficiency')) {
-            return 0;
+        if (! ($objectiveFocused ?? self::$objectiveFocused) || ! self::hasActiveObjective($b, 'task_self_sufficiency')) {
+            return null;
         }
 
-        return (int) floor((int) config('game.run.tasks.task_self_sufficiency.regolith_min', 0) * 1.1) + 1;
+        $balance = app(ResourceFlowService::class)->organicsBalance($b->colonyId);
+
+        return $balance['harvest'] - $balance['need'];
+    }
+
+    /**
+     * Whether adding $workplaces workplaces of this building outgrows the own harvest
+     * (ownHarvestRoom()). The Agrardom (raises the harvest), housing and the Command
+     * Center (raise the colonists, not the workplaces) never do.
+     */
+    public static function outgrowsOwnHarvest(BotSession $b, int $buildingId, int $workplaces, ?bool $objectiveFocused = null): bool
+    {
+        if ($workplaces <= 0 || in_array($buildingId, [self::BIO_FACILITY, BuildingId::Housing->value, BuildingId::CommandCenter->value], true)) {
+            return false;
+        }
+
+        $room = self::ownHarvestRoom($b, $objectiveFocused);
+
+        // Each employed colonist eats 1 / supply_per_eater Organika (ResourcesService::foodNeed()).
+        return $room !== null && $workplaces / max(1, (int) config('game.food.supply_per_eater', 1)) > $room;
+    }
+
+    /** Workplaces a level-up of $row adds: none for the 0 -> 1 step reserved on placement. */
+    public static function levelupWorkplaces(object $row): int
+    {
+        return ResourcesService::reservesFirstLevel($row) ? 0 : (int) ($row->supply_cost ?? 0);
     }
 
     /** Whether spending $regolith leaves at least the reserve (regolithReserve()) in stock. */
@@ -2484,6 +2526,25 @@ class BotStrategy
         $threshold = (int) config('game.run.tasks.task_credit_reserve.threshold', 4000);
 
         return $credits - self::creditReserveBuffer($threshold, self::$creditSavings);
+    }
+
+    /**
+     * Credits an objective-focused profile keeps back from merchant buys while
+     * task_senior_advisors (sum of ranks) is open: the most expensive next promotion
+     * of an advisor below rank 3 (spec 2026-11-25 §7) — promotions are paid from it,
+     * so shopping never delays one. 0 when the rule doesn't apply.
+     */
+    private static function promotionReserve(BotSession $b): int
+    {
+        if (! self::$objectiveFocused || ! self::hasActiveObjective($b, 'task_senior_advisors')) {
+            return 0;
+        }
+
+        $costs = config('game.advisor.promotion_costs', [2 => 150, 3 => 250]);
+
+        return (int) DB::table('advisors')->where('colony_id', $b->colonyId)->where('rank', '<', 3)->pluck('rank')
+            ->map(fn ($rank): int => (int) ($costs[(int) $rank + 1] ?? 0))
+            ->max();
     }
 
     /**

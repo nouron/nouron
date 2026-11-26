@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 /**
  * A45 "Sieg-Timing / Ziele" — objective parameters from config('game.run.tasks'),
- * the new measurements for task_engineering_output / task_expedition_coverage /
- * task_senior_advisors, the best-streak record and the objective labels
+ * the measurements for task_engineering_output / task_expedition_coverage, the
+ * best-streak record and the objective labels
  * (displayed number = effective number).
  *
- * Nexus checkpoints and the countdown are covered in RunNexusCheckpointTest.
+ * Nexus checkpoints and the countdown are covered in RunNexusCheckpointTest; the
+ * 2026-11-25 redesign (draw rule, research lead, senior advisors, self-sufficiency)
+ * in RunObjectivesRedesignTest.
  */
 
 use App\Models\Advisor;
@@ -34,11 +36,6 @@ class RunObjectivesTest extends TestCase
     private const SHIP_DRONE = 85;
 
     private RunProgressService $service;
-
-    /** Personell IDs present in testdata — each advisor needs a distinct one. */
-    private array $personellPool = [35, 36, 89, 92, 93];
-
-    private int $personellCursor = 0;
 
     protected function setUp(): void
     {
@@ -68,17 +65,16 @@ class RunObjectivesTest extends TestCase
 
     public function test_owner_decided_task_values_are_in_config(): void
     {
-        $this->assertSame(4, config('game.run.tasks.task_senior_advisors.target'));
-        $this->assertSame(3, config('game.run.tasks.task_senior_advisors.min_rank'));
+        $this->assertSame(11, config('game.run.tasks.task_senior_advisors.target'));
         $this->assertSame(6000, config('game.run.tasks.task_credit_reserve.threshold'));
         $this->assertSame(20, config('game.run.tasks.task_credit_reserve.target'));
-        $this->assertSame(35, config('game.run.tasks.task_engineering_output.target'));
+        $this->assertSame(32, config('game.run.tasks.task_engineering_output.target'));
         $this->assertSame(10, config('game.run.tasks.task_expedition_coverage.target'));
         $this->assertSame('normal', config('game.run.tasks.task_expedition_coverage.min_difficulty'));
         // R1 (Owner 2026-10-01)
         $this->assertSame(35, config('game.run.tasks.task_self_sufficiency.target'));
         $this->assertSame(8, config('game.run.tasks.task_trade_volume.target'));
-        $this->assertSame(7, config('game.run.tasks.task_research_lead.target'));
+        $this->assertSame(16, config('game.run.tasks.task_research_lead.target'));
         $this->assertSame('content', config('game.run.tasks.task_colony_prosperity.min_band'));
         $this->assertSame(12, config('game.run.tasks.task_colony_prosperity.target'));
     }
@@ -121,55 +117,6 @@ class RunObjectivesTest extends TestCase
             );
             $run->delete();
         }
-    }
-
-    // ── task_senior_advisors ─────────────────────────────────────────────────
-
-    public function test_senior_advisors_completes_with_four_advisors_at_rank_three(): void
-    {
-        $run = $this->makeRun();
-        $objective = $this->makeObjective($run, 'task_senior_advisors', 4);
-        foreach (range(1, 4) as $i) {
-            $this->insertAdvisor(3);
-        }
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertSame(4, $objective->current_value);
-        $this->assertNotNull($objective->completed_at);
-    }
-
-    public function test_senior_advisors_counts_only_advisors_at_min_rank(): void
-    {
-        $run = $this->makeRun();
-        $objective = $this->makeObjective($run, 'task_senior_advisors', 4);
-        $this->insertAdvisor(3);
-        $this->insertAdvisor(3);
-        $this->insertAdvisor(3);
-        $this->insertAdvisor(2);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertSame(3, $objective->current_value, 'a rank-2 advisor does not count');
-        $this->assertNull($objective->completed_at);
-    }
-
-    public function test_senior_advisors_min_rank_comes_from_config(): void
-    {
-        config(['game.run.tasks.task_senior_advisors.min_rank' => 2]);
-        $run = $this->makeRun();
-        $objective = $this->makeObjective($run, 'task_senior_advisors', 2);
-        $this->insertAdvisor(2);
-        $this->insertAdvisor(2);
-        $this->insertAdvisor(1);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertSame(2, $objective->current_value);
-        $this->assertNotNull($objective->completed_at);
     }
 
     // ── task_engineering_output ──────────────────────────────────────────────
@@ -289,43 +236,6 @@ class RunObjectivesTest extends TestCase
         $this->assertSame(0, $objective->refresh()->streak_value, 'trust below the band resets the streak');
     }
 
-    public function test_research_lead_min_level_comes_from_config(): void
-    {
-        config(['game.run.tasks.task_research_lead.min_level' => 3]);
-        $run = $this->makeRun();
-        $objective = $this->makeObjective($run, 'task_research_lead', 2);
-        DB::table('colony_researches')->where('colony_id', self::COLONY_ID)->update(['level' => 0]);
-        DB::table('colony_researches')->updateOrInsert(['colony_id' => self::COLONY_ID, 'research_id' => 90], ['level' => 3]);
-        DB::table('colony_researches')->updateOrInsert(['colony_id' => self::COLONY_ID, 'research_id' => 91], ['level' => 3]);
-        DB::table('colony_researches')->updateOrInsert(['colony_id' => self::COLONY_ID, 'research_id' => 92], ['level' => 2]);
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertSame(2, $objective->current_value);
-        $this->assertNotNull($objective->completed_at);
-    }
-
-    public function test_self_sufficiency_thresholds_come_from_config(): void
-    {
-        config([
-            'game.run.tasks.task_self_sufficiency.regolith_min' => 5,
-            'game.run.tasks.task_self_sufficiency.organics_min' => 6,
-        ]);
-        $run = $this->makeRun();
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15);
-        $this->setColonyResource(3, 6);
-        $this->setColonyResource(5, 7);
-        DB::table('user_resources')->where('user_id', self::USER_ID)->update(['supply' => 1]);
-
-        $this->service->updateObjectiveProgress($run);
-        $this->assertSame(1, $objective->refresh()->streak_value);
-
-        $this->setColonyResource(5, 6);
-        $this->service->updateObjectiveProgress($run);
-        $this->assertSame(0, $objective->refresh()->streak_value, 'organics at the minimum breaks the streak');
-    }
-
     // ── Best streak ──────────────────────────────────────────────────────────
 
     public function test_best_streak_survives_a_streak_reset(): void
@@ -372,7 +282,6 @@ class RunObjectivesTest extends TestCase
         config([
             'game.run.tasks.task_credit_reserve.threshold' => 4321,
             'game.run.tasks.task_colony_prosperity.min_band' => 'euphoric',
-            'game.run.tasks.task_senior_advisors.min_rank' => 3,
         ]);
         $catalog = app(RunTaskCatalog::class);
 
@@ -382,9 +291,7 @@ class RunObjectivesTest extends TestCase
 
         $this->assertStringContainsString(__('trust.band_euphoric'), $catalog->label('task_colony_prosperity', 9));
 
-        $senior = $catalog->label('task_senior_advisors', 4);
-        $this->assertStringContainsString('4', $senior);
-        $this->assertStringContainsString('3', $senior);
+        $this->assertStringContainsString('11', $catalog->label('task_senior_advisors', 11));
 
         $this->assertStringContainsString('30', $catalog->label('task_engineering_output', 30));
         $this->assertStringContainsString(__('missions.difficulty_normal'), $catalog->label('task_expedition_coverage', 10));
@@ -475,17 +382,6 @@ class RunObjectivesTest extends TestCase
             'current_value' => $streak,
             'streak_value' => $streak,
             'completed_at' => null,
-        ]);
-    }
-
-    private function insertAdvisor(int $rank): void
-    {
-        Advisor::create([
-            'user_id' => self::USER_ID,
-            'personell_id' => $this->personellPool[$this->personellCursor++ % count($this->personellPool)],
-            'colony_id' => self::COLONY_ID,
-            'rank' => $rank,
-            'active_ticks' => 60,
         ]);
     }
 

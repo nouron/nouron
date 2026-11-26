@@ -697,8 +697,8 @@ class ResetPlayer extends Command
      *
      * Buildings: Agrardom Lv3, Sciencelab Lv2, Housing Lv3,
      *   Hangar Lv2, Cantina Lv2, SecurityHub Lv1. 45 Sols past Phase-2 entry.
-     * All 4 advisors present, all at the configured top rank
-     *   (run.tasks.task_senior_advisors.min_rank) — the "Expertenstab" objective.
+     * All 4 advisors present, their ranks adding up to
+     *   run.tasks.task_senior_advisors.target — the "Expertenstab" objective.
      * All colony-zone + Ring-2 tiles explored; Harvester on Ring-2 regolith.
      * Supply cap: CC 10 + Housing Lv3 × 8 + knowledge ~16 pts ≈ 50.
      * Werkstoffe: some merchant purchases (20 units).
@@ -734,13 +734,15 @@ class ResetPlayer extends Command
             'active_ticks' => 40, 'unavailable_until_tick' => null,
         ]);
 
-        // "Expertenstab" (A45): the whole staff at the configured top rank.
-        DB::table('advisors')
-            ->where('colony_id', $cid)
-            ->update([
-                'rank' => (int) config('game.run.tasks.task_senior_advisors.min_rank', 3),
-                'active_ticks' => 45,
-            ]);
+        // "Expertenstab" (spec 2026-11-25 §3.2): the ranks add up to the configured
+        // target, top-heavy — with 4 advisors and target 11: ranks 3, 3, 3, 2.
+        $remaining = (int) config('game.run.tasks.task_senior_advisors.target', 11);
+        $advisorIds = DB::table('advisors')->where('colony_id', $cid)->orderBy('id')->pluck('id')->all();
+        foreach ($advisorIds as $index => $advisorId) {
+            $rank = max(1, min(3, $remaining - (count($advisorIds) - $index - 1)));
+            $remaining -= $rank;
+            DB::table('advisors')->where('id', $advisorId)->update(['rank' => $rank, 'active_ticks' => 45]);
+        }
 
         // Cap: CC_flat(10) + Housing_Lv3(24) + knowledge(constr4=17+carto3=13+geo1=3+agro2=8+hlth1=3) = 78
         $this->setResources($colony, $run,

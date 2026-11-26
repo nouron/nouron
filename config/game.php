@@ -862,59 +862,62 @@ return [
         ],
 
         // Phase-2 objective parameters (GDD §15 Aufgabenpool, §18.4 Kalibrierregeln,
-        // docs/game-reference.md §18). Read by RunTaskCatalog / RunProgressService;
-        // the objective labels show exactly these values.
+        // docs/game-reference.md §18, spec docs/superpowers/specs/2026-11-25-run-ziele-umbau.md).
+        // Read by RunTaskCatalog / RunProgressService; the objective labels show exactly
+        // these values.
         //   category — combo blacklist: at most one 'economy' task per draw
+        //   horizon  — 'medium' (an activity or income, progress from Phase-2 start) or
+        //              'long' (maturity of the whole colony, late gates). Every draw holds
+        //              at least one of each (Owner 2026-11-24, RunProgressService::selectObjectives())
         //   type     — 'counter' (current state vs. target) or 'streak' (consecutive
         //              Sols; the best streak so far counts for the Nexus checkpoints)
         //   target   — completion value (count or streak length in Sols)
         // Calibration rule (Owner 2026-09-26): without targeted play at Sol ~90 at
-        // the earliest, with targeted play at Sol 70–85. Values marked PROVISIONAL
-        // are unverified until the next PlaytestBot batch (A45).
+        // the earliest, with targeted play at Sol 70–85 (medium in the front part,
+        // long in the back part of that corridor). Values from 2026-11-26 are
+        // proposals until measurement M5.
         'tasks' => [
-            // Owner decision 2026-09-26: 4 advisors at rank 3 (full staff at top rank).
-            // Promotion is already an active, credits-costing player decision
-            // (AdvisorService::promote(), A23) — the player can delay it, never
-            // accelerate it below rank_thresholds[2] (45 active Sols). Batch
-            // 2026-09-26: both profiles land at Sol 73-79 regardless of strategy,
-            // already inside the target corridor — no change needed (Owner
-            // 2026-09-27: no new acceleration mechanic, config-only).
-            'task_senior_advisors' => ['category' => 'personal', 'type' => 'counter', 'target' => 4, 'min_rank' => 3],
+            // Owner 2026-11-24 (spec §3.2): sum of the ranks of all advisors on the colony,
+            // temporarily withdrawn ones included, no acceleration mechanic. Rank 1 on
+            // hiring, 2 after 15, 3 after 45 active Sols; at most 4 advisors (max 12).
+            // 11 = three at rank 3 plus one at rank 2 — still needs the fourth slot.
+            'task_senior_advisors' => ['category' => 'personal', 'horizon' => 'long', 'type' => 'counter', 'target' => 11],
             // Owner decision 2026-10-01: 6000 Credits held for 20 Sols (was 4000/10).
             // Batch 2026-09-30 (rewards ×2, bots saving while the objective is open):
             // saving play builds ~110 Cr/Sol and hit 4000 around Sol 35, so 4000/10
             // completed at Sol 44–45, far ahead of the 70–85 corridor. 6000/20 projects
             // to roughly Sol 72–77 — sustained prosperity rather than a peak.
             // "Nexus-Vorschuss tilgen" becomes a separate pool objective (ROADMAP R21).
-            'task_credit_reserve' => ['category' => 'economy', 'type' => 'streak', 'target' => 20, 'threshold' => 6000],
+            'task_credit_reserve' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'streak', 'target' => 20, 'threshold' => 6000],
             // R1 (Owner 2026-10-01): confirmed by the batch 2026-10-01 — 8/8 completed
             // at Sol 82–95 for incidental and targeted play alike (old threshold 70
             // was unreachable). T59 (Owner 2026-11-14): trust at least in band
             // `min_band` for `target` Sols — the raw number is hidden from the player.
-            'task_colony_prosperity' => ['category' => 'diplomacy', 'type' => 'streak', 'target' => 12, 'min_band' => 'content'],
-            // R1 (Owner 2026-10-01): confirmed — targeted play reaches 7 knowledges at
-            // Lv5 around Sol 68, incidental play tops out at 6. `target` knowledges
-            // at level >= min_level.
-            'task_research_lead' => ['category' => 'research', 'type' => 'counter', 'target' => 7, 'min_level' => 5],
-            // R1 (Owner 2026-10-01): streak 45 → 35 Sols — 45 only completed at Sol
-            // ~96–97; 35 projects to ~86–87 (incidental and targeted). Regolith >
-            // regolith_min AND Organika > organics_min, held for `target` Sols. The
-            // former "supply > 0" check was dropped (Owner 2026-09-30) —
-            // user_resources.supply is the cap, never 0 with a Command Center.
-            'task_self_sufficiency' => ['category' => 'survival', 'type' => 'streak', 'target' => 35, 'regolith_min' => 150, 'organics_min' => 300],
+            'task_colony_prosperity' => ['category' => 'diplomacy', 'horizon' => 'long', 'type' => 'streak', 'target' => 12, 'min_band' => 'content'],
+            // Owner 2026-11-24 (spec §3.1): sum of the levels of all knowledges, however
+            // reached (own research or silent research). Breadth is cheaper per level,
+            // depth has the stronger effects. Owner 2026-11-26: one target for every
+            // opening — since #498 every knowledge hangs on its own building, the
+            // science lab is no gate any more. Re-measure in M5.
+            'task_research_lead' => ['category' => 'research', 'horizon' => 'medium', 'type' => 'counter', 'target' => 16],
+            // Owner 2026-11-24 (spec §3.3): "produce more than you eat". A Sol counts when
+            // the own harvest (Agrardom + agronomy, after the staffing share) covers the
+            // colonists' Organika need, that need is at least `min_fed` and nobody went
+            // hungry. Stock, trade, missions and events don't count. One Agrardom tops out
+            // at ~73 Organika per Sol, so 55 leaves a band of ~18 colonists.
+            'task_self_sufficiency' => ['category' => 'survival', 'horizon' => 'long', 'type' => 'streak', 'target' => 35, 'min_fed' => 55],
             // R1 (Owner 2026-10-01): stays 10 — targeted play completes at Sol 82–87.
             // Incidental play sometimes reaches it earlier because credit missions at
             // 'normal' count too. Successful missions at difficulty >= min_difficulty
             // (order: game.missions.difficulty.order).
-            'task_expedition_coverage' => ['category' => 'exploration', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal'],
-            // Owner decision 2026-09-30 (baseline batch 4 profiles × 8 seeds): targeted
-            // play hit 30 by Sol 48, far ahead of the 70–85 corridor; the curve then
-            // flattens (31 @ Sol 60, 35 @ Sol 70, 37 @ Sol 90), incidental play stays
-            // at 22–26. Sum of building levels, every instance with its own level.
-            'task_engineering_output' => ['category' => 'research', 'type' => 'counter', 'target' => 35],
+            'task_expedition_coverage' => ['category' => 'exploration', 'horizon' => 'medium', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal'],
+            // Sum of building levels, every instance with its own level. Spec §3.4
+            // (2026-11-25): 35 → 32 — M4 focus Labor Seed 5 reached 32 at Sol 80, incidental
+            // play ends at 24–33. Not lower: since #497 the bot builds more housing.
+            'task_engineering_output' => ['category' => 'research', 'horizon' => 'long', 'type' => 'counter', 'target' => 32],
             // R1 (Owner 2026-10-01): 7 → 8 — with 7 incidental play completed at Sol
             // 79–86, ahead of the ~90 rule. Purchased merchant items in this run.
-            'task_trade_volume' => ['category' => 'economy', 'type' => 'counter', 'target' => 8],
+            'task_trade_volume' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'counter', 'target' => 8],
         ],
 
         // Nexus checkpoints in PHASE-2 Sols (GDD §15 "2 von 3", §18.4). Each is

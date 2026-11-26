@@ -257,12 +257,10 @@ class ResetPlayerTest extends TestCase
             $this->assertSame($objective->target_value, $objective->current_value);
         }
 
-        // A45 "Expertenstab": the full staff at the configured top rank.
-        $seniorCount = DB::table('advisors')
-            ->where('colony_id', $run->colony_id)
-            ->where('rank', '>=', (int) config('game.run.tasks.task_senior_advisors.min_rank'))
-            ->count();
-        $this->assertSame((int) config('game.run.tasks.task_senior_advisors.target'), $seniorCount);
+        // "Expertenstab" (spec 2026-11-25 §3.2): the ranks add up to the configured target.
+        $ranks = DB::table('advisors')->where('colony_id', $run->colony_id)->orderBy('id')->pluck('rank')->map(fn ($r) => (int) $r)->all();
+        $this->assertSame((int) config('game.run.tasks.task_senior_advisors.target'), array_sum($ranks));
+        $this->assertSame([3, 3, 3, 2], $ranks, 'three advisors at rank 3, one at rank 2');
 
         // Streak objectives carry their record (best streak) as well.
         foreach ($objectives as $objective) {

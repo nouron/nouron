@@ -49,6 +49,10 @@ final class UpgradeSource implements CandidateSource
             if ($regolith > $ctx->regolith) {
                 continue;
             }
+            // task_self_sufficiency (spec 2026-11-25 §7): no workplaces beyond the own harvest.
+            if (BotStrategy::outgrowsOwnHarvest($b, (int) $row->building_id, BotStrategy::levelupWorkplaces($row), (float) $ctx->weights['w_objective'] > 0.0)) {
+                continue;
+            }
             $key = 'invest:'.$row->building_id.':'.$row->instance_id;
             $estimate = Valuers::upgrade($b, $ctx, $row);
             $opportunity = $ctx->opportunityCost($regolith, $key);
