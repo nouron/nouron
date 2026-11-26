@@ -29,13 +29,14 @@ class BotStrategyResearchBufferTest extends TestCase
         $this->assertNotNull($this->candidate($bot), 'research costs no Regolith, so low Regolith must not block it');
     }
 
-    public function test_no_candidate_when_sciencelab_missing(): void
+    public function test_research_goes_on_without_a_sciencelab(): void
     {
+        // One building per knowledge (2026-11-26): the lab adds pace, it is no gate.
         $bot = BotSession::boot($this, 1);
         DB::table('colony_buildings')->where('colony_id', $bot->colonyId)
             ->where('building_id', BuildingId::Sciencelab->value)->delete();
 
-        $this->assertNull($this->candidate($bot));
+        $this->assertNotNull($this->candidate($bot));
     }
 
     private function candidate(BotSession $bot): ?int

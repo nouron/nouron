@@ -1608,8 +1608,8 @@ class BotStrategy
     }
 
     /**
-     * Knowledge research could take right now, lowest id first: Sciencelab level
-     * met, below level 5, and not held back by the CC gate
+     * Knowledge research could take right now, lowest id first: its own building
+     * stands (one building per knowledge, 2026-11-26), below level 5, and not held back by the CC gate
      * (game.knowledge_cc_level_cap). cc_blocked = at least one knowledge is held
      * back only by that gate. Shared with the utility ResearchSource (S3).
      *
@@ -1621,10 +1621,6 @@ class BotStrategy
      */
     public static function researchableKnowledge(BotSession $b): array
     {
-        $sciencelabLevel = (int) (DB::table('colony_buildings')
-            ->where('colony_id', $b->colonyId)
-            ->where('building_id', BuildingId::Sciencelab->value)
-            ->value('level') ?? 0);
         $ccLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::CommandCenter->value)
@@ -1637,14 +1633,19 @@ class BotStrategy
             })
             ->where('r.purpose', 'knowledge')
             ->whereBetween('r.id', [90, 96])
-            ->where(fn ($q) => $q->whereNull('r.required_building_level')->orWhereRaw('? >= r.required_building_level', [$sciencelabLevel]))
             ->where(fn ($q) => $q->whereNull('cr.level')->orWhere('cr.level', '<', 5))
             ->orderBy('r.id')
             ->get(['r.id', 'cr.level', 'cr.ap_spend']);
 
         $eligible = [];
         $ccBlocked = false;
+        $research = app(ResearchService::class);
         foreach ($rows as $row) {
+            // M4 2026-11-24: a second required building (health: infirmary, defense: hangar
+            // Lv2) blocks every levelup — AP put in before it stands are lost.
+            if (! $research->checkRequiredBuildingsByEntityId($b->colonyId, (int) $row->id)) {
+                continue;
+            }
             $level = (int) ($row->level ?? 0);
             $requiredCc = $ccCaps[$level + 1] ?? null;
             if ($requiredCc === null || $ccLevel >= $requiredCc) {

@@ -4,7 +4,7 @@ return [
     // Existing keys — kept as-is
     'colony_ready' => 'Kolonie bereit zum Start',
     'start_button' => 'Run starten',
-    'run_not_started' => 'Dein Run ist noch nicht gestartet — klicke „Mission starten", um loszulegen.',
+    'run_not_started' => 'Dein Run ist noch nicht gestartet — klicke „Run starten", um loszulegen.',
 
     // New keys for the rewritten lobby view
     'page_title' => 'Mission Control',

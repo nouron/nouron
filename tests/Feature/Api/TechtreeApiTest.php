@@ -101,29 +101,31 @@ class TechtreeApiTest extends TestCase
         $this->assertSame($strip($full), $strip($preview));
     }
 
-    public function test_preview_knowledge_is_locked_and_stripped(): void
+    public function test_preview_knowledge_follows_its_building_and_hides_the_numbers(): void
     {
+        // Owner 2026-11-26: every knowledge hangs on exactly its own building; the lab only adds
+        // pace and exact numbers. Without a lab the tree shows what can be researched, as words.
         DB::table('colony_researches')->where('colony_id', self::COLONY_ID)->delete();
+        DB::table('colony_buildings')->where(['colony_id' => self::COLONY_ID, 'building_id' => 46])->update(['level' => 0]);
         $this->withoutLab();
 
-        $research = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->where('type', 'research');
-        $this->assertNotEmpty($research);
+        $research = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->where('type', 'research')->keyBy('id');
+        $cartography = $research[91];   // hangar stands
+        $health = $research[94];        // no infirmary
+
+        $this->assertSame('available', $cartography['status']);
+        $this->assertTrue($cartography['investable']);
+        $this->assertNotNull($cartography['description']);
+        $this->assertSame('locked', $health['status']);
+        $this->assertFalse($health['investable']);
+        $this->assertSame('building', $health['lock_reason']);
+        $this->assertNotSame([], $health['required_list']);
         foreach ($research as $item) {
-            $this->assertSame('locked', $item['status']);
-            $this->assertSame('sciencelab', $item['lock_reason']);
-            $this->assertNull($item['description']);
-            $this->assertSame('', $item['required_desc']);
-            $this->assertSame([], $item['required_list']);
-            $this->assertSame([], $item['unlocks_next_level']);
-            $this->assertSame([], $item['effects_current_level']);
-            $this->assertNull($item['max_level']);
-            $this->assertNull($item['ap_cap']);
-            $this->assertSame(0, $item['ap_spend']);
+            $this->assertSame(0, $item['ap_spend'], 'no AP numbers without a lab');
             $this->assertSame(0, $item['ap_for_levelup']);
-            $this->assertSame(0, $item['ap_available']);
-            $this->assertNull($item['rough_progress']);
-            $this->assertFalse($item['bonus_progress']);
-            $this->assertNotSame('', $item['name']);
+            $this->assertNull($item['ap_cap']);
+            $this->assertNull($item['max_level']);
+            $this->assertSame([], $item['unlocks_next_level']);
         }
     }
 
@@ -191,7 +193,7 @@ class TechtreeApiTest extends TestCase
         $item = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->first(fn ($i) => $i['type'] === 'research' && $i['id'] === 91);
         $this->assertSame(2, $item['level']);
         $this->assertSame('built', $item['status']);
-        $this->assertSame('sciencelab', $item['lock_reason']);
+        $this->assertNull($item['lock_reason'], 'a reached level is not locked');
     }
 
     public function test_preview_does_not_consume_first_visit(): void
@@ -203,20 +205,46 @@ class TechtreeApiTest extends TestCase
         $this->getJson('/api/v1/techtree')->assertOk()->assertJson(['preview' => false, 'first_visit' => true]);
     }
 
-    public function test_order_without_lab_answers_lab_required_and_changes_nothing(): void
+    public function test_order_without_lab_invests_in_a_knowledge_whose_building_stands(): void
     {
+        config(['game.knowledge_ap_cap_per_sol.base' => 1]); // the base cap without an analyst
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => 91],
             ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
         );
         $this->withoutLab();
 
-        $response = $this->postJson('/api/v1/techtree/research/91/order', ['order' => 'add', 'ap' => 1])
+        $this->postJson('/api/v1/techtree/research/91/order', ['order' => 'add', 'ap' => 1])
+            ->assertOk()
+            ->assertJson(['success' => true])
+            // Without a lab the answer keeps the words-only view: rough progress, no AP numbers,
+            // and a used-up daily cap is said instead of offering the button again.
+            ->assertJsonPath('tech.ap_spend', 0)
+            ->assertJsonPath('tech.ap_for_levelup', 0)
+            ->assertJsonPath('tech.bonus_progress', true)
+            ->assertJsonPath('tech.rough_progress', 1)
+            ->assertJsonPath('tech.cap_reached', true);
+        $this->assertSame(1, (int) DB::table('colony_researches')->where(['colony_id' => self::COLONY_ID, 'research_id' => 91])->value('ap_spend'));
+
+        $cartography = collect($this->items($this->getJson('/api/v1/techtree')->assertOk()))->first(fn ($i) => $i['type'] === 'research' && $i['id'] === 91);
+        $this->assertTrue($cartography['cap_reached']);
+    }
+
+    public function test_order_refuses_a_knowledge_without_its_building_and_changes_nothing(): void
+    {
+        // M4 2026-11-24: AP could be put into a knowledge whose building is missing and were lost.
+        DB::table('colony_buildings')->where(['colony_id' => self::COLONY_ID, 'building_id' => 46])->update(['level' => 0]);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 94],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
+        );
+        Sanctum::actingAs(User::find(self::USER_ID));
+
+        $response = $this->postJson('/api/v1/techtree/research/94/order', ['order' => 'add', 'ap' => 1])
             ->assertStatus(422)
-            ->assertJson(['success' => false, 'error' => 'lab_required']);
-        $this->assertNotSame('techtree.error_lab_required', $response->json('message'));
+            ->assertJson(['success' => false, 'error' => 'requires_building']);
         $this->assertNotSame('', $response->json('message'));
-        $this->assertSame(0, (int) DB::table('colony_researches')->where(['colony_id' => self::COLONY_ID, 'research_id' => 91])->value('ap_spend'));
+        $this->assertSame(0, (int) DB::table('colony_researches')->where(['colony_id' => self::COLONY_ID, 'research_id' => 94])->value('ap_spend'));
     }
 
     public function test_order_invests_ap_in_own_colony(): void

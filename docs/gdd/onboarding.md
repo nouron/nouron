@@ -95,7 +95,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 11 | `hint_hangar_path` | Pfadwahl offen, kein Hangar, bezahlbar | "Hangar noch nicht gebaut." | `/colony/view?build=44` | **Sol 2** (`hint_no_hangar_after_tick=1`) |
 | 12 | `hint_3` | **Zustandsbasiert:** Agrardom ≥ Lv1, CC < Lv2, CC-Ausbau noch nicht begonnen (`ap_spend=0` — sonst führt `hint_invest_site`) | "Der Agrardom steht — jetzt die Kommandozentrale auf Level 2 ausbauen." (Text nennt Koloniezone, Beraterslot 2 und die freigeschalteten Pfadgebäude) | Colony-Screen | Sol 3 als Floor (`hint_cc_upgrade_after_tick=2`) |
 | 13 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — AP nutzen." | Colony-Screen | nur Sol 1 |
-| 14 | `hint_4` | Analytik-Labor gebaut (sonst ist der Techtree gesperrt) und keine Kenntnis auf Level > 0 | "Noch keine Kenntnis auf Level 1 — im Techtree AP einer Kenntnis zuweisen." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
+| 14 | `hint_4` | Keine Kenntnis auf Level > 0 (⚠️ Code prüft noch zusätzlich „Analytik-Labor gebaut“ — Rest aus der Zeit des Labor-Tors; seit 2026-11-26 ist jede Kenntnis mit ihrem Gebäude erforschbar, Konstruktion also von Beginn an) | "Noch keine Kenntnis auf Level 1 — im Techtree AP einer Kenntnis zuweisen." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
 | 15 | `hint_5` | Vertrauen in der Stufe Unruhig oder tiefer (erste Stufe mit AP-Abzug, `hint_trust_threshold`) | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5`) |
 | 16 | `hint_spend_remaining_ap` | Mindestens ein **nutzbarer** AP-Pool ungenutzt (Forschung zählt nur mit gebautem Sciencelab, Wirtschaft nur mit gebauter Cantina, Navigation nur mit bezahlbarem Fog-Tile) — Pool mit den meisten Rest-AP gewinnt | "Noch AP übrig — investieren." | poolabhängig | — |
 | 17 | `hint_end_sol` | Fallback — greift nur wenn **kein nutzbarer AP-Pool** mehr übrig ist | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
@@ -195,7 +195,7 @@ Kacheln werden in drei Gruppen dargestellt, visuell getrennt durch einen Zwische
 
 **Tooltip bei gesperrten Kacheln:** Ein einzeiliger Hinweis direkt auf der Kachel (kein separates Modal): z.B. "Benötigt: CC Lv4" oder "Benötigt: Hangar". Der Tooltip erscheint nur on-hover — nicht dauerhaft als Text auf der Kachel.
 
-> **Designentscheidung:** Die Kacheln werden nicht dauerhaft verborgen oder ausgeblendet — der Spieler sieht immer den gesamten Techtree. "Jetzt verfügbar" herauszuheben ist weniger invasiv als Inhalte zu verstecken. Transparenz über das gesamte System ist ein Nouron-Merkmal. Das gilt auch vor dem Bau des Analytik-Labors: Der Techtree ist dann eine Vorschau (§11.4), kein gesperrter Menüpunkt.
+> **Designentscheidung:** Die Kacheln werden nicht dauerhaft verborgen oder ausgeblendet — der Spieler sieht immer den gesamten Techtree. "Jetzt verfügbar" herauszuheben ist weniger invasiv als Inhalte zu verstecken. Transparenz über das gesamte System ist ein Nouron-Merkmal. Das gilt auch vor dem Bau des Analytik-Labors: Der Techtree ist dann eine Vorschau mit groben Worten statt Zahlen (§11.4), aber erforschbar und kein gesperrter Menüpunkt.
 
 ---
 

@@ -80,6 +80,8 @@ class ResearchSourceTest extends TestCase
         // M3 2026-11-24: research had no objective term, so even objective-driven profiles
         // left trade, health & co. alone (no valued effect) while "Forschungsvorsprung" was open.
         $bot = $this->bootWithLab(2);
+        $this->placeAt($bot, BuildingId::Bar->value, 1);   // trade needs the Cantina
+        $this->placeAt($bot, 46, 1);                       // health needs an infirmary
         DB::table('runs')->where('id', $bot->runId)->update(['phase' => 2, 'phase2_start_tick' => 1]);
         DB::table('run_objectives')->insert([
             'run_id' => $bot->runId,
@@ -97,6 +99,31 @@ class ResearchSourceTest extends TestCase
 
         $this->assertContains('research:95', $keys, 'trade counts towards the objective');
         $this->assertContains('research:94', $keys, 'health counts towards the objective');
+    }
+
+    public function test_knowledge_without_its_second_building_is_not_offered(): void
+    {
+        // M4 2026-11-24: health (needs an infirmary) and defense (needs hangar Lv2) took AP
+        // although they could never level up; the levelup then failed 75-83 times per run
+        // with requires_building.
+        $bot = $this->bootWithLab(3);
+        $offered = fn () => array_column(BotStrategy::researchableKnowledge($bot)['eligible'], 'id');
+
+        $this->assertNotContains(94, $offered(), 'health needs an infirmary');
+        $this->assertNotContains(96, $offered(), 'defense needs hangar Lv2');
+
+        $this->placeAt($bot, 46, 1); // infirmary
+        $this->assertContains(94, $offered(), 'with an infirmary health is open');
+    }
+
+    public function test_without_a_lab_knowledge_opens_with_its_own_building(): void
+    {
+        // Owner 2026-11-26: the lab is no gate any more; cartography hangs on the hangar alone.
+        $bot = BotSession::boot($this, 1);
+        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', BuildingId::Sciencelab->value)->delete();
+        $this->placeAt($bot, BuildingId::Hangar->value, 1);
+
+        $this->assertContains(91, array_column(BotStrategy::researchableKnowledge($bot)['eligible'], 'id'));
     }
 
     public function test_do_levels_up_when_ready_and_adds_otherwise(): void

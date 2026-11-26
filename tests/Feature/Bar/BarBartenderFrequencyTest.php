@@ -24,7 +24,7 @@ class BarBartenderFrequencyTest extends TestCase
 
     private const USER_ID = 3;
 
-    private const KNOWLEDGE_ID = 96;
+    private const KNOWLEDGE_ID = 90; // construction — needs only the Command Center
 
     protected function setUp(): void
     {

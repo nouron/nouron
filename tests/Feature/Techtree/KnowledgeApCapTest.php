@@ -73,7 +73,7 @@ class KnowledgeApCapTest extends TestCase
     public function test_cap_is_per_knowledge(): void
     {
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 3);
-        $this->assertTrue($this->service->invest($this->colonyId, 93, 'add', 1));
+        $this->assertTrue($this->service->invest($this->colonyId, 91, 'add', 1)); // cartography: its hangar stands in the fixtures
     }
 
     public function test_cap_resets_with_next_sol(): void
@@ -120,7 +120,7 @@ class KnowledgeApCapTest extends TestCase
         $res->assertStatus(422)->assertJson(['success' => false, 'error' => 'knowledge_ap_cap']);
         $this->assertStringContainsString('3', $res->json('message'));
 
-        $res = $this->actingAs($bart)->postJson(route('techtree.order', ['type' => 'research', 'id' => 93]), ['order' => 'add', 'ap' => 1]);
+        $res = $this->actingAs($bart)->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'add', 'ap' => 1]);
         $res->assertOk()->assertJsonPath('tech.ap_cap', ['cap' => 3, 'spent' => 1, 'remaining' => 2]);
     }
 }

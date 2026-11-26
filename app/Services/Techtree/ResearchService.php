@@ -18,9 +18,6 @@ use Illuminate\Support\Facades\DB;
  */
 class ResearchService extends AbstractTechnologyService
 {
-    /** True while investBonus() levels a knowledge up: waives the lab prerequisite. */
-    private bool $silentResearch = false;
-
     public function __construct(
         TickService $tickService,
         ResourcesService $resourcesService,
@@ -112,6 +109,11 @@ class ResearchService extends AbstractTechnologyService
             return 'max_level';
         }
 
+        // M4 2026-11-24: AP put into a knowledge whose building is missing could never level up.
+        if ($this->isCappedKnowledge($entityId, $action) && ! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
+            return 'requires_building';
+        }
+
         if (! $bypassPoolCheck && $this->isCappedKnowledge($entityId, $action)
             && app(DailyApCapService::class)->wouldExceed($colonyId, self::capKey($entityId), $this->apCap($colonyId), abs($points))) {
             return 'knowledge_ap_cap';
@@ -130,7 +132,7 @@ class ResearchService extends AbstractTechnologyService
      * Inject earmarked bonus AP into a knowledge ("stille Forschung", spec
      * 2026-11-11-tomas-rat-rueckmeldung): bypasses the shared-colony-pool gate and the
      * per-Sol lab cap, and levels the knowledge up on its own whenever the threshold is
-     * reached — with or without a sciencelab.
+     * reached — with or without a sciencelab (no knowledge needs the lab since 2026-11-26).
      *
      * This is the official entry point for "bonus AP that never came out of the
      * player's shared AP pool" — Tomas' advice (BarService::talkToBartender()),
@@ -179,7 +181,7 @@ class ResearchService extends AbstractTechnologyService
                 $remaining -= $need;
 
                 if (! $this->silentLevelup($colonyId, $entityId)) {
-                    $reason = $this->withSilentResearch(fn () => $this->levelupBlocker($colonyId, $entityId)) ?? 'order_failed';
+                    $reason = $this->levelupBlocker($colonyId, $entityId) ?? 'order_failed';
                     break;
                 }
 
@@ -223,7 +225,7 @@ class ResearchService extends AbstractTechnologyService
         return match (true) {
             $level >= self::maxKnowledgeLevel($entityId) => 'max_level',
             $this->ccGateBlocks($colonyId, $level + 1) => 'knowledge_cc_gate',
-            ! $this->withSilentResearch(fn () => $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) => 'requires_building',
+            ! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId) => 'requires_building',
             ! $this->checkRequiredResourcesByEntityId($colonyId, $entityId) => 'insufficient_resources',
             ! $this->checkRequiredSupplyByEntityId($colonyId, $entityId) => 'insufficient_supply',
             default => null,
@@ -272,41 +274,9 @@ class ResearchService extends AbstractTechnologyService
         return null;
     }
 
-    /** The lab prerequisite is waived while a bonus levels a knowledge up (silent research). */
-    public function checkRequiredBuildingsByEntityId(int $colonyId, int $entityId): bool
-    {
-        if (! $this->silentResearch) {
-            return parent::checkRequiredBuildingsByEntityId($colonyId, $entityId);
-        }
-
-        $entity = DB::table($this->masterTable())->find($entityId);
-
-        return ! is_object($entity) || BuildingPrerequisites::met(
-            $entity,
-            fn (int $buildingId): int => $this->buildingLevel($colonyId, $buildingId),
-            waive: [BuildingId::Sciencelab->value],
-        );
-    }
-
     private function silentLevelup(int $colonyId, int $entityId): bool
     {
-        return $this->withSilentResearch(fn () => $this->levelup($colonyId, $entityId));
-    }
-
-    /**
-     * @template T
-     *
-     * @param  callable(): T  $callback
-     * @return T
-     */
-    private function withSilentResearch(callable $callback): mixed
-    {
-        $this->silentResearch = true;
-        try {
-            return $callback();
-        } finally {
-            $this->silentResearch = false;
-        }
+        return $this->levelup($colonyId, $entityId);
     }
 
     private function writeProgress(int $colonyId, int $entityId, int $level, int $apSpend): void

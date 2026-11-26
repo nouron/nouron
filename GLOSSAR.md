@@ -12,7 +12,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Wohnhabitat | `housingComplex` | Schafft Platz für Kolonisten (Supply-Kappe). Mehrere Instanzen möglich. Stufe 1 ist beim Start schon da. |
 | Harvester | `harvester` | Fördert Regolith auf seinem Tile. Es gibt nur einen; er wird in Sol 0 einmal verlegt. Die zweite Instanz ist vorerst gestrichen. |
 | Agrardom | `bioFacility` (ID 41) | Produziert Organika. Pflichtgebäude vor CC Lv2, gehört nicht zur Pfadwahl. |
-| Analytik-Labor („Labor“) | `sciencelab` (ID 31) | Pfadgebäude; mit Stufe 1 lassen sich Kenntnisse erforschen. Im Code und in Berichten nie „Sciencelab“ neben „Labor“ als zwei Dinge lesen. |
+| Analytik-Labor („Labor“) | `sciencelab` (ID 31) | Pfadgebäude ohne eigene Kenntnis und kein Tor zu Kenntnissen; bringt Tempo und Genauigkeit (Analytiker, Rabatt auf Kenntnis-Stufen, genaue Zahlen). Im Code und in Berichten nie „Sciencelab“ neben „Labor“ als zwei Dinge lesen. |
 | Hangar | `hangar` | Pfadgebäude; Schiffe, Missionen, Bergung. |
 | Cantina | `bar` | Pfadgebäude; Begegnungen, Handel, Anliegen. |
 | Cantina-Besetzung | `cantina_casts` | Die Figuren, die an einem Sol neben dem Barkeeper in der Cantina sitzen. |
@@ -49,7 +49,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Spielbegriff | Code-Schlüssel | Bedeutung |
 |---|---|---|
 | Baumeister | `engineer` | Fester erster Berater. Zahlt AP ein; sein Fach-Deckel hebt den Bau-Deckel. |
-| Analytiker | `scientist` | Forschung; kommt mit dem Labor, sein Fach-Deckel hebt den Labor-Deckel. |
+| Analytiker | `scientist` | Forschung; kommt mit dem Labor, sein Fach-Deckel hebt den Forschungs-Deckel jeder Kenntnis. |
 | Raumfahrer | `pilot` | Erkundung und Flüge; kommt mit dem Hangar, sein Fach-Deckel hebt den Training-Deckel. |
 | Konsul | `trader` | Handel; kommt mit der Cantina. |
 | Stratege | `strategist` | Zurückgestellt. |
@@ -63,6 +63,12 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Run | `run` | Eine Partie mit Ziel und klarem Ende; genau ein aktiver Run. |
 | Auftrag | – | Was Nexus von der Kolonie in einem Run verlangt; der Run endet mit „Auftrag erfüllt“ oder „Auftrag gescheitert“. Im Menü heißt die Partie weiter „Run“. |
 | Mission | `mission` | Ein Einsatz eines Hangar-Schiffs (Erkundung, Bergung, Handel …), nie der ganze Run. |
+| Aufgabe (Run-Ziel) | `run_objectives` / `run.tasks` | Eine der drei Nexus-Aufgaben, die beim Übergang in Phase 2 gezogen werden; zwei davon erfüllt heißt Sieg. |
+| Zeithorizont | `horizon` (`medium`/`long`) | Klasse einer Aufgabe: mittelfristig misst eine Tätigkeit oder ein Einkommen, langfristig den Reifegrad der ganzen Kolonie; jede Ziehung enthält beide *(Entwurf)*. |
+| Fokus-Aufgabe | – | Mittelfristige Aufgabe, die ein Fokus-Gebäude füttert: Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner *(Entwurf)*. |
+| Forschungsvorsprung | `task_research_lead` | Aufgabe: Stufen aller Kenntnisse zusammen über einer Schwelle. |
+| Expertenstab | `task_senior_advisors` | Aufgabe: Ränge aller Berater der Kolonie zusammen über einer Schwelle. |
+| Selbstversorgung | `task_self_sufficiency` | Aufgabe: Die eigene Agrardom-Ernte deckt viele Sole in Folge den Bedarf einer Kolonie ab Mindestgröße, ohne Hunger; Vorrat zählt nicht *(Entwurf)*. |
 | Phase 1 „Grundaufbau“ | `phase` 1 | Endet mit den Pflichtgebäuden; harte Frist, sonst Run verloren (`phase1_deadline_sol`). |
 | Phase 2 | `phase` 2 | Beginnt mit dem Abschluss von Phase 1; zweites und drittes Pfadgebäude, CC-Ausbau. |
 
@@ -75,11 +81,14 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Stufen-Gate | `building_cc_gate` | Eine Ausbaustufe braucht mindestens gleich hohe Kommandozentrale. |
 | Pfadwahl-Gate | `path_building_gate` | Platzierte Pfadgebäude müssen kleiner sein als CC-Stufe minus 1. |
 | **AP-Deckel** | `ap_cap` | Ein Ziel (Gebäude, Kenntnis, Missionsfamilie, Figur) nimmt pro Sol nur begrenzt AP auf: Grundwert plus Fach-Deckel des passenden Beraters. Zeit-Bremse ohne Eingriff ins Regolith-Einkommen. Reparieren, Platzieren und Belohnungs-AP sind ausgenommen. |
-| **Fach-Deckel** | `cap_bonus_per_rank` | Rang-Beitrag eines Fach-Beraters zum AP-Deckel seines Fachs (Baumeister → Bau, Analytiker → Labor, Raumfahrer → Training), getrennt von seinem Beitrag zum Pool. |
+| **Fach-Deckel** | `cap_bonus_per_rank` | Rang-Beitrag eines Fach-Beraters zum AP-Deckel seines Fachs (Baumeister → Bau, Analytiker → Forschung, Raumfahrer → Training), getrennt von seinem Beitrag zum Pool. |
 | Supply-Kappe | `supply_cap` | Obergrenze der Kolonisten: CC fest plus Wohnhabitat-Stufen. |
-| Kenntnis | `knowledge`/`research` | Erforschbarer Effekt (z. B. Baukunde, Kartographie, Geologie). „Forschung“ ist die Tätigkeit, „Kenntnis“ das Ergebnis. |
-| Labor-Vorschau | `preview` | Der Techtree („Labor“ im Menü) vor dem Bau des Analytik-Labors: gleiches Gitter, Kenntnisse gesperrt und ohne Zahlen, keine Forschung; erreichte Stufen genau, Bonus-Fortschritt nur grob in Worten. |
-| **Stille Forschung** | `investBonus` | Zweckgebundene Bonus-AP aus der Cantina (Tomas, Sarka, Deva, Lenn) lassen eine Kenntnis von selbst aufsteigen, auch ohne Labor; alle übrigen Sperren gelten. |
+| Kenntnis | `knowledge`/`research` | Erforschbarer Effekt, freigeschaltet von genau einem eigenen Gebäude, das sie verstärkt (z. B. Geologie am Harvester); „Forschung“ ist die Tätigkeit, „Kenntnis“ das Ergebnis. |
+| Grundkenntnis | – | Kenntnis an der Kommandozentrale oder einem Fokus-Gebäude (Konstruktion, Kartografie, Handel). |
+| Sockel-Kenntnis | – | Kenntnis an einem Produktionsgebäude aus Phase 1, offen für jede Eröffnung (Geologie, Agronomie). |
+| Fortgeschrittene Kenntnis | – | Kenntnis an einem späteren Gebäude (Gesundheit an der Krankenstation, Verteidigung an der Leitstelle). |
+| Labor-Vorschau | `preview` | Der Techtree („Labor“ im Menü) ohne Analytik-Labor: erforschbar, sobald das Gebäude der Kenntnis steht, aber Fortschritt nur grob in Worten und ohne Zahlen; erreichte Stufen und ihr Effekt genau. |
+| **Stille Forschung** | `investBonus` | Zweckgebundene Bonus-AP aus der Cantina (Tomas, Sarka, Deva, Lenn) lassen eine Kenntnis von selbst aufsteigen; es gelten dieselben Sperren wie für eigene Forschung. |
 | Hunger | `hunger_streak` | Organika reicht nicht; Vertrauens-Malus, der mit jeder Folge-Runde wächst. |
 | Signal / Tiefenscan / Bergung | – | Verstecktes Signal auf einem Feld, Scan zeigt den Inhalt, Bergung holt ihn. |
 | Nexus | `nexus_debt` | Die Fraktion hinter Subvention, Kredit und Schulden; „Nexus-DB“ im UI ist dagegen die Enzyklopädie. |

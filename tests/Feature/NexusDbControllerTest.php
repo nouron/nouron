@@ -123,7 +123,7 @@ class NexusDbControllerTest extends TestCase
         $this->assertSame(__('techtree.knowledge_geology'), $geology['label']);
         $this->assertNotSame('', $geology['description']);
         $this->assertSame(
-            [['label' => __('techtree.building_sciencelab'), 'level' => 2], ['label' => __('techtree.building_harvester'), 'level' => 1]],
+            [['label' => __('techtree.building_harvester'), 'level' => 1]], // one building per knowledge (2026-11-26)
             $geology['requires']
         );
         $this->assertSame(config('knowledge.geology.levelup_costs'), collect($geology['levels'])->pluck('ap', 'level')->all());

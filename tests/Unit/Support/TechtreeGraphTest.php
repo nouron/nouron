@@ -76,14 +76,14 @@ class TechtreeGraphTest extends TestCase
         }
     }
 
-    public function test_edges_are_derived_from_required_buildings_with_second_prerequisite_dashed(): void
+    public function test_edges_are_derived_from_the_required_building(): void
     {
         $edges = TechtreeGraph::edges($this->seedTechtree());
         $find = fn (string $from, string $to) => $this->edge($edges, $from, $to);
 
-        // cartography (research 91): sciencelab Lv1 solid + hangar Lv1 dashed
-        $this->assertFalse($find('building-31', 'research-91')['dashed']);
-        $this->assertTrue($find('building-44', 'research-91')['dashed']);
+        // cartography (research 91): only its hangar Lv1, solid (one building per knowledge, 2026-11-26)
+        $this->assertNull($find('building-31', 'research-91'));
+        $this->assertFalse($find('building-44', 'research-91')['dashed']);
         $this->assertSame(1, $find('building-44', 'research-91')['level']);
         // bioFacility needs harvester
         $this->assertNotNull($find('building-27', 'building-41'));
@@ -121,7 +121,7 @@ class TechtreeGraphTest extends TestCase
         $this->assertSame(1, $nodes['building-27']['ccLevel']);   // harvester: CC Lv1 direct
         $this->assertSame(1, $nodes['building-41']['ccLevel']);   // bioFacility via harvester
         $this->assertSame(2, $nodes['building-31']['ccLevel']);   // sciencelab: CC Lv2 direct
-        $this->assertSame(2, $nodes['research-90']['ccLevel']);   // construction via sciencelab
+        $this->assertSame(1, $nodes['research-90']['ccLevel']);   // construction via the Command Center itself (2026-11-26)
         $this->assertSame(2, $nodes['ship-85']['ccLevel']);       // drone via hangar
         $this->assertSame(5, $nodes['building-50']['ccLevel']);   // monument: CC Lv5 direct
     }
