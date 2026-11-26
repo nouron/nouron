@@ -263,6 +263,15 @@ class BotStrategy
                 ]),
             ],
             [
+                // M4 2026-11-24 / owner 2026-11-26: health and defense hang on the infirmary and the
+                // security hub, which need Werkstoffe the bot never had; buy the gap from Nexus.
+                'name' => 'import_compounds_for_building',
+                'when' => fn (BotSession $b) => self::compoundsImportCandidate($b),
+                'do' => fn (BotSession $b, int $amount) => $b->act('import_compounds_for_building', 'POST', '/colony/nexus/import-compounds', [
+                    'amount' => $amount,
+                ]),
+            ],
+            [
                 'name' => 'place_building',
                 'when' => fn (BotSession $b) => self::placeCandidate($b, $profile->opening),
                 'do' => function (BotSession $b, array $candidate) {
@@ -2376,6 +2385,62 @@ class BotStrategy
     }
 
     /** Shared with RunReport — the single source for this lookup. */
+    /** Buildings whose knowledge the bot can only reach with imported Werkstoffe (2026-11-26). */
+    private const COMPOUND_IMPORT_BUILDINGS = [53, 46]; // security hub (defense), infirmary (health)
+
+    /** Credits the bot keeps after a Werkstoffe import (upkeep, missions, promotions). */
+    private const COMPOUNDS_IMPORT_CREDIT_FLOOR = 3000;
+
+    /**
+     * Werkstoffe to buy from Nexus so that an unbuilt infirmary or security hub becomes
+     * placeable: Phase 2, Uplink-Station standing, every other cost (Regolith, colonists,
+     * Command Center level) already met, and the Credits stay above the floor afterwards.
+     * Null when nothing should be bought.
+     */
+    public static function compoundsImportCandidate(BotSession $b): ?int
+    {
+        if (self::runPhase($b) < 2) {
+            return null;
+        }
+        $levels = DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+            ->selectRaw('building_id, MAX(level) as level')->groupBy('building_id')->pluck('level', 'building_id');
+        if ((int) ($levels[BuildingId::UplinkStation->value] ?? 0) < 1) {
+            return null;
+        }
+        $compounds = self::compounds($b);
+        $price = (int) config('game.economy.compound_import_price', 165);
+        $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
+
+        foreach (self::COMPOUND_IMPORT_BUILDINGS as $buildingId) {
+            if (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', $buildingId)->whereNotNull('tile_x')->exists()) {
+                continue;
+            }
+            $row = DB::table('buildings')->where('id', $buildingId)->first(['required_building_id', 'required_building_level', 'supply_cost']);
+            if ($row === null || (int) ($levels[(int) $row->required_building_id] ?? 0) < (int) $row->required_building_level) {
+                continue;
+            }
+            if ($freeSupply < (int) $row->supply_cost) {
+                continue;
+            }
+            $cost = app(BuildingCostService::class)->placementCost($buildingId);
+            if (self::regolith($b) < (int) ($cost[self::RES_REGOLITH] ?? 0)) {
+                continue;
+            }
+            $shortfall = (int) ($cost[self::RES_COMPOUNDS] ?? 0) - $compounds;
+            if ($shortfall <= 0) {
+                continue;
+            }
+            $spend = $shortfall * $price + (int) ($cost[1] ?? 0);
+            if (self::spendableCredits($b) - $spend < self::COMPOUNDS_IMPORT_CREDIT_FLOOR) {
+                continue;
+            }
+
+            return $shortfall;
+        }
+
+        return null;
+    }
+
     public static function credits(BotSession $b): int
     {
         return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
