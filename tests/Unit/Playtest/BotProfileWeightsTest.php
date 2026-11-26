@@ -8,9 +8,9 @@ use Tests\Feature\Playtest\BotProfile;
 /** Spec 2.9: base weights plus what the profile dials and the opening derive. */
 class BotProfileWeightsTest extends TestCase
 {
-    public function test_default_profile_uses_the_base_weights(): void
+    public function test_aimless_profile_uses_the_base_weights(): void
     {
-        $w = BotProfile::named('default')->weights();
+        $w = BotProfile::named('aimless')->weights();
 
         $this->assertSame(0.95, $w['gamma']);
         $this->assertSame(40, $w['horizon_max']);

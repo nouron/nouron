@@ -92,10 +92,11 @@ class ResearchSourceTest extends TestCase
             'completed_at' => null,
         ]);
 
-        // Only objective-driven profiles weigh objectives (default: objectiveFocus 0).
+        // Only objective-driven profiles weigh objectives (aimless: objectiveFocus 0).
         $ctx = BotContext::capture($bot, BotProfile::named('focus'), withGoal: true);
         $keys = array_map(fn (Candidate $c) => $c->key, (new ResearchSource(19))->candidates($bot, $ctx));
-        $this->assertNotContains('research:95', array_map(fn (Candidate $c) => $c->key, $this->candidates($bot)), 'default ignores objectives');
+        $aimless = BotContext::capture($bot, BotProfile::named('aimless'), withGoal: true);
+        $this->assertNotContains('research:95', array_map(fn (Candidate $c) => $c->key, (new ResearchSource(19))->candidates($bot, $aimless)), 'aimless ignores objectives');
 
         $this->assertContains('research:95', $keys, 'trade counts towards the objective');
         $this->assertContains('research:94', $keys, 'health counts towards the objective');

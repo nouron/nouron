@@ -84,10 +84,28 @@ final class BotProfile
         return $w;
     }
 
+    /**
+     * Whether a dial with strength $f (0..1) is active on $sol: deterministic and evenly
+     * spread, f = 0.3 is active on 3 of every 10 Sols (4, 7, 10, ...), f = 1 on every Sol.
+     */
+    public static function dialActiveOnSol(float $f, int $sol): bool
+    {
+        $f = max(0.0, min(1.0, $f));
+        // Epsilon guards against float products like 10 * 0.3 landing just below an integer.
+        $steps = fn (int $s): float => floor($s * $f + 1e-9);
+
+        return $steps($sol) > $steps($sol - 1);
+    }
+
     public static function named(string $name): self
     {
         return match ($name) {
-            'default' => new self('default'),
+            // "gelegentlich" (spec 2026-11-26): looks at the objectives now and then — the focus
+            // rules run on 3 of 10 Sols (dialActiveOnSol), no savings brake. Meaning changed
+            // 2026-11-26: batches with `default` before that date played like `aimless`.
+            'default' => new self('default', objectiveFocus: 0.3),
+            // The old `default` (until 2026-11-26): ignores the objectives entirely.
+            'aimless' => new self('aimless'),
             'thrifty' => new self('thrifty', savingsAggressiveness: 1.0),
             'focus' => new self('focus', savingsAggressiveness: 1.0, objectiveFocus: 1.0),
             // The one combination of the two existing dials 'default'/'thrifty'/'focus'
