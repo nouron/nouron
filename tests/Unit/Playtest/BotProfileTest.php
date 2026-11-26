@@ -128,7 +128,13 @@ class BotProfileTest extends TestCase
         $this->assertSame('lean-explore', $lean->name);
         $this->assertTrue($lean->exploreOnlyWhenNeeded);
         $this->assertSame(0.0, $lean->savingsAggressiveness);
-        $this->assertSame(0.0, $lean->objectiveFocus);
+    }
+
+    /** Owner 2026-11-26: `lean-explore` is an offshoot of `default` and shares its objective focus. */
+    public function test_lean_explore_shares_the_objective_focus_of_default(): void
+    {
+        $this->assertSame(0.3, BotProfile::named('lean-explore')->objectiveFocus);
+        $this->assertSame(BotProfile::named('default')->objectiveFocus, BotProfile::named('lean-explore')->objectiveFocus);
     }
 
     public function test_with_opening_and_engine_keep_explore_only_when_needed(): void

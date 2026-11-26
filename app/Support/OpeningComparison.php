@@ -146,7 +146,7 @@ class OpeningComparison
 
     private const BUILD_RULES = [
         'place_building', 'place_agrardom', 'invest_production', 'invest_cc',
-        'relocate_harvester', 'focus_engineering_levelup', 'focus_trust_building',
+        'relocate_harvester', 'focus_engineering_levelup', 'focus_trust_building', 'place_knowledge_building',
     ];
 
     /** Thresholds from spec 2.1. */
