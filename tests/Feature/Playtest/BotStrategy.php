@@ -2520,8 +2520,9 @@ class BotStrategy
 
     /**
      * Infirmary / security hub passing every Phase-2 placement gate except Werkstoffe and
-     * Credits: build menu, Regolith (above the CC research reserve, but not held back by the
-     * utility savings goal), the path-building buffer, supply, own harvest and a free tile.
+     * Credits: Sciencelab, Hangar and Cantina standing (owner 2026-11-26: they always go first),
+     * build menu, Regolith (above the CC research reserve, but not held back by the utility
+     * savings goal), supply, own harvest and a free tile.
      * One source for placing and importing, so the bot never buys for a blocked placement.
      *
      * @return list<array{building_id: int, tile: object, shortfall: int}>
@@ -2529,7 +2530,8 @@ class BotStrategy
     private static function openKnowledgeSites(BotSession $b): array
     {
         return $b->remember('knowledge_sites', function () use ($b): array {
-            if (self::runPhase($b) < 2 || self::unplacedKnowledgeBuildings($b) === []) {
+            if (self::runPhase($b) < 2 || self::unplacedKnowledgeBuildings($b) === []
+                || self::cheapestPendingPathBuildingCost($b) !== null) {
                 return [];
             }
             $tile = self::freeZoneTile($b);
@@ -2542,12 +2544,6 @@ class BotStrategy
             $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
             $regolith = self::regolith($b);
             $ccReserve = self::regolithReserve($b, withHold: false);
-            $pathCost = DB::table('advisors')->where('colony_id', $b->colonyId)->count() < 3
-                ? self::cheapestPendingPathBuildingCost($b)
-                : null;
-            if ($pathCost !== null && $regolith < $pathCost) {
-                return [];
-            }
 
             $sites = [];
             foreach (self::unplacedKnowledgeBuildings($b) as $id) {

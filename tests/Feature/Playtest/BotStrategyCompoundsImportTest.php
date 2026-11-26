@@ -58,6 +58,10 @@ class BotStrategyCompoundsImportTest extends TestCase
         DB::table('user_resources')->where('user_id', $bot->userId)->update(['credits' => $credits, 'supply' => 1000]);
         DB::table('colony_resources')->updateOrInsert(['colony_id' => $bot->colonyId, 'resource_id' => 3], ['amount' => 500]);
         DB::table('colony_resources')->updateOrInsert(['colony_id' => $bot->colonyId, 'resource_id' => 4], ['amount' => $compounds]);
+        // The CC level is set directly, so the larger zone has to be opened by hand.
+        DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('ring', 2)->where('tile_type', 'like', 'terrain_%')
+            ->update(['is_colony_zone' => 1, 'tile_type' => 'terrain_plain', 'event_type' => null]);
+        $this->place($bot, [31, 44, 52]);
 
         return $bot;
     }
@@ -102,11 +106,16 @@ class BotStrategyCompoundsImportTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', BuildingId::CommandCenter->value)->update(['level' => 4]);
         DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->whereIn('building_id', [self::TEMPLE, self::MONUMENT])->delete();
         DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 3)->update(['amount' => 200]);
-        // The CC level is set directly, so the larger zone has to be opened by hand.
-        DB::table('colony_tiles')->where('colony_id', $bot->colonyId)->where('ring', 2)->where('tile_type', 'like', 'terrain_%')
-            ->update(['is_colony_zone' => 1, 'tile_type' => 'terrain_plain', 'event_type' => null]);
-        // Agrardom and all path buildings stand: neither the mandatory placement nor the path buffer interferes.
-        foreach ([41, 31, 44, 52] as $id) {
+        // The Agrardom stands too, so the mandatory placement does not interfere.
+        $this->place($bot, [41]);
+
+        return $bot;
+    }
+
+    /** @param list<int> $ids */
+    private function place(BotSession $bot, array $ids): void
+    {
+        foreach ($ids as $id) {
             DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $id)->delete();
             $tile = BotStrategy::freeZoneTile($bot);
             DB::table('colony_buildings')->insert([
@@ -114,8 +123,6 @@ class BotStrategyCompoundsImportTest extends TestCase
                 'level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => $tile->q, 'tile_y' => $tile->r,
             ]);
         }
-
-        return $bot;
     }
 
     private function isPlaced(BotSession $bot, int $buildingId): bool
@@ -232,16 +239,19 @@ class BotStrategyCompoundsImportTest extends TestCase
         $this->assertNull(($this->rule()['when'])($bot));
     }
 
-    public function test_does_not_buy_while_regolith_is_saved_for_a_path_building(): void
+    /** Owner 2026-11-26: Sciencelab, Hangar and Cantina always go first, however full the stores are. */
+    public function test_waits_until_all_three_path_buildings_stand(): void
     {
-        $bot = $this->boot(credits: 8000, compounds: 5);
-        DB::table('advisors')->where('colony_id', $bot->colonyId)->delete();
-        DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->whereIn('building_id', [31, 44, 52])->delete();
-        $path = min(array_map(fn (int $id): int => (int) app(BuildingCostService::class)->placementCost($id)[3], [31, 44, 52]));
-        $knowledge = (int) app(BuildingCostService::class)->placementCost(self::INFIRMARY)[3];
-        $this->assertLessThan($path, $knowledge, 'fixture: the infirmary is cheaper than every path building');
-        DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 3)->update(['amount' => $path - 1]);
+        foreach ([31, 44, 52] as $missing) {
+            $bot = $this->boot(credits: 8000, compounds: 25);
+            DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $missing)->delete();
 
-        $this->assertNull(($this->rule()['when'])($bot));
+            $this->assertNull(($this->rule('place_knowledge_building')['when'])($bot), "place without {$missing}");
+
+            DB::table('colony_resources')->where('colony_id', $bot->colonyId)->where('resource_id', 4)->update(['amount' => 5]);
+            $bot->log[] = ['rule' => 'test', 'ok' => true]; // drop memoized reads
+
+            $this->assertNull(($this->rule()['when'])($bot), "import without {$missing}");
+        }
     }
 }
