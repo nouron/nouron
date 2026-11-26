@@ -52,3 +52,34 @@ Messung in zwei Schritten, ein Hebel je Schritt: **M5a** nur „gelegentlich“ 
 1. Soll `default` als Name bleiben, mit neuer Bedeutung und `aimless` für das alte Verhalten? **Empfehlung: ja.**
 2. Soll Labor-Treue über den Ausbau des Labors wirken und nicht über Forschung jenseits der Deckel? **Empfehlung: ja.** Die Deckel sind Spielregel und bleiben unangetastet.
 3. Soll M5 in zwei Schritten laufen (M5a, dann M5b, je 24 Läufe pro Profil, Dauer vorher schätzen)? **Empfehlung: ja**, ein Hebel pro Messung.
+
+## Messhistorie
+
+### M5a (2026-11-26, gemessen)
+
+Batch `20261126_m5a`: master ad460944 (nach #501), Engine `utility`, `default` + `focus`, Labor/Hangar/Cantina, Seeds 1–8, ganzer Run. 48/48 Berichte (2 Läufe brachen im ersten Durchgang ab und liefen bei Wiederholung durch).
+
+- **Hypothese widerlegt.** Erwartet für `default`: 35–55 % Siege, Median Sol 85–95. Gemessen: `default` 22/24, `focus` 23/24, Median Sieg-Sol je 74.
+- Sieg je Eröffnung: `default` Cantina 8/8, Hangar 7/8, Labor 7/8; `focus` 8/8, 8/8, 7/8.
+- Ziele erfüllt (beide Profile zusammen, gezogen): Forschungsvorsprung 12/12, Expeditionen 23/24, Kreditreserve 10/12, Kolonieblüte 8/12, Handelspartner 17/24, Selbstversorgung 6/12, Ingenieursleistung 5/12, Expertenstab 14/36.
+- Expertenstab steckt in 18 von 24 Läufen je Profil (Seed-Auswahl, nur 8 verschiedene Ziehungen).
+- Krankenstation und Leitstelle: in 0/48 gebaut, Gesundheit und Verteidigung nie erforscht (M4: Verteidigung in 7 Läufen, damals ohne Leitstellen-Bindung). Import-Regel aus #499 griff 2-mal. In 3034 Phase-2-Solen waren grob alle drei Bedingungen (freie Kolonisten ≥ 8, Regolith ≥ 80, Credits über Reserve 3000) nur 8-mal gleichzeitig erfüllt; die Credit-Reserve scheiterte 2869-mal. Tempel (33/48) und Denkmal (15/48) verbrauchen die Werkstoffe.
+- AP je gespieltem Sol ab Sol 16 (M4 → M5a): Forschung stieg in allen Gruppen (1,0–1,7 → 2,0–2,3); Missions-Training sank, bei Cantina-Start stark (1,2–1,3 → 0,5); Gespräche bleiben niedrig (≤ 0,27).
+- Zuordnung: `focus` ist seit M4 unverändert und stieg von 10/23 auf 23/24; Ursache sind #498–#500, nicht das neue Profil. In `utility` wirkt der Ziel-Fokus nur über `w_objective` (45 bzw. 150); die Sol-Abstufung „3 von 10“ wurde nicht gemessen.
+- Offen (Owner): Das Erfolgsmaß von M5b („Siegquoten der Eröffnungen höchstens 15 Punkte auseinander“) ist bei 88–100 % nicht aussagekräftig.
+
+### Kontrollmessung `aimless` (2026-11-26, gemessen)
+
+Batch `20261126_m5a_aimless`: gleicher Stand und gleiche Seeds wie M5a, nur `aimless` (ignoriert die Ziele). 24/24 Berichte (3 wiederholt).
+
+- Siege 18/24 (Cantina 7/8, Labor 6/8, Hangar 5/8), Median Sieg-Sol 78. Zum Vergleich M5a: `default` 22/24, `focus` 23/24, Median 74.
+- Ziele erfüllt (gezogen): Expeditionen 11/12, Kolonieblüte 5/6, Kreditreserve 4/6, Handelspartner 8/12, Expertenstab 11/18, Ingenieursleistung 2/6, Forschungsvorsprung 1/6, Selbstversorgung 0/6.
+- Folgerung: Drei Viertel der Läufe gewinnen ohne jedes Zielspiel; das Owner-Ziel für ungezieltes Spiel ist rund 50 %.
+
+### M6 (2026-11-26, gemessen, nach Bot-Fix #502)
+
+Batch `20261126_m6`: master 8167b5cd, `utility`, `aimless`/`default`/`focus`, Labor/Hangar/Cantina, Seeds 1–8, 72/72 Berichte (3 wiederholt). Neue Ausgangsbasis für die Nacheichung.
+
+- Siege: `aimless` 18/24 (Median Sol 75), `default` 20/24 (73), `focus` 22/24 (74,5). Je Eröffnung zwischen 5/8 und 8/8.
+- Ziele erfüllt / gezogen (`aimless` · `default` · `focus`): Expeditionen 12/12 · 9/12 · 10/12; Handelspartner 9/12 · 10/12 · 8/12; Forschungsvorsprung 1/6 · 6/6 · 6/6; Ingenieursleistung 3/6 · 4/6 · 4/6; Kreditreserve 3/6 · 3/6 · 6/6; Kolonieblüte 2/6 · 3/6 · 1/6; Selbstversorgung 2/6 · 2/6 · 3/6; Expertenstab 9/18 · 7/18 · 8/18. Ein Lauf endet beim zweiten Ziel, das dritte bleibt zwangsläufig offen (kein Schwierigkeits-Ranking).
+- Leitstelle in 15/72, Krankenstation in 4/72 Läufen gebaut (M5a: 0/48); Gesundheit erforscht in 1, Verteidigung in 4 Läufen.
