@@ -67,7 +67,7 @@ class BotSession
 
     /**
      * Why place_building found no candidate, per Sol and reason (review S3 I4,
-     * diagnostic only): hold / reserve / path_buffer / resources / supply /
+     * diagnostic only): hold / reserve / path_buffer / knowledge_compounds / resources / supply /
      * no_tile / none_available — the reason of the highest-priority building.
      * Counted once per distinct state (the candidate search is memoized).
      *

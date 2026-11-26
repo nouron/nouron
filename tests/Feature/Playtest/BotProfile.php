@@ -113,8 +113,9 @@ final class BotProfile
             // without the credit-reserve brake (like 'default') — plays fast and loose
             // towards the goal instead of hoarding along the way.
             'eager' => new self('eager', savingsAggressiveness: 0.0, objectiveFocus: 1.0),
-            // Q19: 'default' that explores only when a harvester relocation needs it.
-            'lean-explore' => new self('lean-explore', exploreOnlyWhenNeeded: true),
+            // Q19: offshoot of 'default' (same objective focus) that explores only when a
+            // harvester relocation needs it. Without the focus until 2026-11-26.
+            'lean-explore' => new self('lean-explore', objectiveFocus: 0.3, exploreOnlyWhenNeeded: true),
             default => throw new \InvalidArgumentException("Unknown bot profile: {$name}"),
         };
     }

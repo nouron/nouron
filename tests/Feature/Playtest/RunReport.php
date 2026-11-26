@@ -39,6 +39,7 @@ class RunReport
         'invest_cc' => 'project',
         'invest_production' => 'project',
         'place_building' => 'project',
+        'place_knowledge_building' => 'project',
         'relocate_harvester' => 'project',
         'research_knowledge' => 'project',
         'explore_tile' => 'action',

@@ -11,6 +11,7 @@ use App\Services\BuildingCostService;
 use App\Services\CantinaPresenceService;
 use App\Services\ColonyTileService;
 use App\Services\HangarService;
+use App\Services\NexusImportService;
 use App\Services\PathBuildingGateService;
 use App\Services\PathDepthService;
 use App\Services\ProjectBonusService;
@@ -178,6 +179,27 @@ class BotStrategy
                 ]),
             ],
             [
+                // M5a 2026-11-26: health and defense hang on the infirmary and the security hub.
+                // Both sit above every Regolith spender (CC, building work): in the utility engine
+                // each rule is its own band, so whatever stands above them spends first.
+                'name' => 'place_knowledge_building',
+                'when' => fn (BotSession $b) => self::knowledgePlacementCandidate($b),
+                'do' => fn (BotSession $b, array $candidate) => $b->act('place_knowledge_building', 'POST', '/colony/building/place', [
+                    'building_id' => $candidate['building_id'],
+                    'q' => $candidate['tile']->q,
+                    'r' => $candidate['tile']->r,
+                ]),
+            ],
+            [
+                // M4 2026-11-24 / owner 2026-11-26: both need Werkstoffe the bot rarely has; buy the
+                // gap from Nexus. Same gates as the placement above, which takes the next decision.
+                'name' => 'import_compounds_for_building',
+                'when' => fn (BotSession $b) => self::compoundsImportCandidate($b),
+                'do' => fn (BotSession $b, int $amount) => $b->act('import_compounds_for_building', 'POST', '/colony/nexus/import-compounds', [
+                    'amount' => $amount,
+                ]),
+            ],
+            [
                 'name' => 'invest_cc',
                 // Phase 1: cap at Lv3 (the completion requirement) — investing further
                 // here competed with path-building Regolith and broke Phase-1 pacing
@@ -261,15 +283,6 @@ class BotStrategy
                 'do' => fn (BotSession $b, object $tile) => $b->act('explore_tile', 'POST', '/colony/tile/explore', [
                     'q' => $tile->q,
                     'r' => $tile->r,
-                ]),
-            ],
-            [
-                // M4 2026-11-24 / owner 2026-11-26: health and defense hang on the infirmary and the
-                // security hub, which need Werkstoffe the bot never had; buy the gap from Nexus.
-                'name' => 'import_compounds_for_building',
-                'when' => fn (BotSession $b) => self::compoundsImportCandidate($b),
-                'do' => fn (BotSession $b, int $amount) => $b->act('import_compounds_for_building', 'POST', '/colony/nexus/import-compounds', [
-                    'amount' => $amount,
                 ]),
             ],
             [
@@ -627,7 +640,7 @@ class BotStrategy
      */
     private static function trustBuildingCandidate(BotSession $b): ?array
     {
-        $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
+        $trustBuildingIds = [...self::KNOWLEDGE_BUILDINGS, ...self::PURE_TRUST_BUILDINGS];
 
         $placed = DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -637,7 +650,9 @@ class BotStrategy
             ->map(fn ($id): int => (int) $id)
             ->all();
 
-        $available = $b->peek('/colony/buildings/available')['body']['buildings'] ?? [];
+        $available = collect($b->peek('/colony/buildings/available')['body']['buildings'] ?? [])
+            ->sortBy(fn (array $building): int => in_array((int) $building['building_id'], self::KNOWLEDGE_BUILDINGS, true) ? 0 : 1)
+            ->all();
         $resourcesService = app(ResourcesService::class);
         $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
         $ccReserve = self::regolithReserve($b);
@@ -645,6 +660,9 @@ class BotStrategy
         foreach ($available as $building) {
             $id = (int) $building['building_id'];
             if (! in_array($id, $trustBuildingIds, true) || in_array($id, $placed, true)) {
+                continue;
+            }
+            if (self::spendsKnowledgeCompounds($b, $id)) {
                 continue;
             }
 
@@ -1164,8 +1182,9 @@ class BotStrategy
         //   key[0] = 0 for bioFacility (must be first — ramp gate),
         //             1 for the next unplaced path building of the opening's order,
         //             2 for the remaining unplaced path buildings (unlock advisor slots),
-        //             3 for trust buildings (infirmary/monument/temple/securityHub),
-        //             4 for everything else
+        //             3 for the knowledge buildings (securityHub/infirmary),
+        //             4 for the pure trust buildings (temple/monument),
+        //             5 for everything else
         //   key[1] = existing instance count (prefer new building types)
         $nextPathId = null;
         foreach ($pathIds as $pathId) {
@@ -1182,10 +1201,10 @@ class BotStrategy
         // theoretical with these built: ~45-55, see ROADMAP A37 write-up).
         // Prioritized above generic buildings, below path/bioFacility —
         // Trust is a real Phase-2 objective, not a nice-to-have.
-        $trustBuildingIds = [46, 50, 32, 53]; // infirmary, monument, temple, securityHub
-
-        usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $nextPathId, $bioFacilityId, $trustBuildingIds) {
-            $priority = function (array $building) use ($pathIds, $nextPathId, $bioFacilityId, $trustBuildingIds, $placedCounts): int {
+        // 2026-11-26: the infirmary and the security hub each carry a knowledge, so they go
+        // before the temple and the monument.
+        usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $nextPathId, $bioFacilityId) {
+            $priority = function (array $building) use ($pathIds, $nextPathId, $bioFacilityId, $placedCounts): int {
                 $id = (int) $building['building_id'];
                 // bioFacility is priority 0 only for its first (mandatory Ramp-Gate)
                 // instance — uncapped max_instances means it would otherwise always
@@ -1216,11 +1235,14 @@ class BotStrategy
                 if ($id === BuildingId::UplinkStation->value && ($placedCounts[$id] ?? 0) === 0) {
                     return 2;
                 }
-                if (in_array($id, $trustBuildingIds, true)) {
+                if (in_array($id, self::KNOWLEDGE_BUILDINGS, true)) {
                     return 3;
                 }
+                if (in_array($id, self::PURE_TRUST_BUILDINGS, true)) {
+                    return 4;
+                }
 
-                return 4;
+                return 5;
             };
 
             $pa = $priority($a);
@@ -1305,6 +1327,11 @@ class BotStrategy
                 if (! self::fitsAboveCcReserve($b, $reserve, $placementRegolith)) {
                     $reason ??= $b->regolithHold > 0 && self::fitsAboveCcReserve($b, self::regolithReserve($b, withHold: false), $placementRegolith)
                         ? 'hold' : 'reserve';
+
+                    continue;
+                }
+                if (self::spendsKnowledgeCompounds($b, (int) $building['building_id'])) {
+                    $reason ??= 'knowledge_compounds';
 
                     continue;
                 }
@@ -2436,63 +2463,139 @@ class BotStrategy
             ->whereBetween('bay', [1, $level])->count() < $level;
     }
 
-    /** Shared with RunReport — the single source for this lookup. */
-    /** Buildings whose knowledge the bot can only reach with imported Werkstoffe (2026-11-26). */
-    private const COMPOUND_IMPORT_BUILDINGS = [53, 46]; // security hub (defense), infirmary (health)
+    /** Buildings that each carry a knowledge the bot can only reach with imported Werkstoffe (2026-11-26). */
+    private const KNOWLEDGE_BUILDINGS = [53, 46]; // security hub (defense), infirmary (health)
 
-    /** Credits the bot keeps after a Werkstoffe import (upkeep, missions, promotions). */
-    private const COMPOUNDS_IMPORT_CREDIT_FLOOR = 3000;
+    private const PURE_TRUST_BUILDINGS = [32, 50]; // temple, monument
 
     /**
-     * Werkstoffe to buy from Nexus so that an unbuilt infirmary or security hub becomes
-     * placeable: Phase 2, Uplink-Station standing, every other cost (Regolith, colonists,
-     * Command Center level) already met, and the Credits stay above the floor afterwards.
-     * Null when nothing should be bought.
+     * Credits the bot keeps after a Werkstoffe import. 3000 until 2026-11-26, which left almost
+     * no Sol to buy in (M5a). 1000 covers about seven Sols of the highest upkeep (four rank-3
+     * advisors) and every promotion; an open task_credit_reserve keeps its own buffer on top.
      */
-    public static function compoundsImportCandidate(BotSession $b): ?int
+    private const COMPOUNDS_IMPORT_CREDIT_FLOOR = 1000;
+
+    /**
+     * Unbuilt infirmary or security hub that can be placed from the current stock.
+     *
+     * @return array{building_id: int, tile: object, shortfall: int}|null
+     */
+    private static function knowledgePlacementCandidate(BotSession $b): ?array
     {
-        if (self::runPhase($b) < 2) {
-            return null;
-        }
-        $levels = DB::table('colony_buildings')->where('colony_id', $b->colonyId)
-            ->selectRaw('building_id, MAX(level) as level')->groupBy('building_id')->pluck('level', 'building_id');
-        if ((int) ($levels[BuildingId::UplinkStation->value] ?? 0) < 1) {
-            return null;
-        }
-        $compounds = self::compounds($b);
-        $price = (int) config('game.economy.compound_import_price', 165);
-        $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
-
-        foreach (self::COMPOUND_IMPORT_BUILDINGS as $buildingId) {
-            if (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->where('building_id', $buildingId)->whereNotNull('tile_x')->exists()) {
-                continue;
+        $resourcesService = app(ResourcesService::class);
+        foreach (self::openKnowledgeSites($b) as $site) {
+            $costs = self::costList(self::buildingCosts()->placementCost($site['building_id']));
+            if ($site['shortfall'] === 0 && $resourcesService->check($costs, $b->colonyId)) {
+                return $site;
             }
-            $row = DB::table('buildings')->where('id', $buildingId)->first(['required_building_id', 'required_building_level', 'supply_cost']);
-            if ($row === null || (int) ($levels[(int) $row->required_building_id] ?? 0) < (int) $row->required_building_level) {
-                continue;
-            }
-            if ($freeSupply < (int) $row->supply_cost) {
-                continue;
-            }
-            $cost = app(BuildingCostService::class)->placementCost($buildingId);
-            if (self::regolith($b) < (int) ($cost[self::RES_REGOLITH] ?? 0)) {
-                continue;
-            }
-            $shortfall = (int) ($cost[self::RES_COMPOUNDS] ?? 0) - $compounds;
-            if ($shortfall <= 0) {
-                continue;
-            }
-            $spend = $shortfall * $price + (int) ($cost[1] ?? 0);
-            if (self::spendableCredits($b) - $spend < self::COMPOUNDS_IMPORT_CREDIT_FLOOR) {
-                continue;
-            }
-
-            return $shortfall;
         }
 
         return null;
     }
 
+    /**
+     * Werkstoffe to buy from Nexus so that an unbuilt infirmary or security hub becomes
+     * placeable: Uplink-Station standing, every placement gate already met (openKnowledgeSites())
+     * and the Credits stay above the floor afterwards. Null when nothing should be bought.
+     */
+    public static function compoundsImportCandidate(BotSession $b): ?int
+    {
+        $sites = array_filter(self::openKnowledgeSites($b), fn (array $site): bool => $site['shortfall'] > 0);
+        if ($sites === [] || ! DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+            ->where('building_id', BuildingId::UplinkStation->value)->where('level', '>=', 1)->exists()) {
+            return null;
+        }
+        $imports = app(NexusImportService::class);
+
+        foreach ($sites as $site) {
+            $creditCost = (int) (self::buildingCosts()->placementCost($site['building_id'])[self::RES_CREDITS] ?? 0);
+            $spend = $imports->totalCost($b->colonyId, self::RES_COMPOUNDS, $site['shortfall']) + $creditCost;
+            if (self::spendableCredits($b) - $spend >= self::COMPOUNDS_IMPORT_CREDIT_FLOOR) {
+                return $site['shortfall'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Infirmary / security hub passing every Phase-2 placement gate except Werkstoffe and
+     * Credits: build menu, Regolith (above the CC research reserve, but not held back by the
+     * utility savings goal), the path-building buffer, supply, own harvest and a free tile.
+     * One source for placing and importing, so the bot never buys for a blocked placement.
+     *
+     * @return list<array{building_id: int, tile: object, shortfall: int}>
+     */
+    private static function openKnowledgeSites(BotSession $b): array
+    {
+        return $b->remember('knowledge_sites', function () use ($b): array {
+            if (self::runPhase($b) < 2 || self::unplacedKnowledgeBuildings($b) === []) {
+                return [];
+            }
+            $tile = self::freeZoneTile($b);
+            if ($tile === null) {
+                return [];
+            }
+            $menu = collect($b->peek('/colony/buildings/available')['body']['buildings'] ?? [])
+                ->reject(fn (array $building): bool => $building['locked'] ?? false)
+                ->keyBy('building_id');
+            $freeSupply = app(ResourcesService::class)->getFreeSupply($b->colonyId);
+            $regolith = self::regolith($b);
+            $ccReserve = self::regolithReserve($b, withHold: false);
+            $pathCost = DB::table('advisors')->where('colony_id', $b->colonyId)->count() < 3
+                ? self::cheapestPendingPathBuildingCost($b)
+                : null;
+            if ($pathCost !== null && $regolith < $pathCost) {
+                return [];
+            }
+
+            $sites = [];
+            foreach (self::unplacedKnowledgeBuildings($b) as $id) {
+                $building = $menu->get($id);
+                $cost = self::buildingCosts()->placementCost($id);
+                $rg = (int) ($cost[self::RES_REGOLITH] ?? 0);
+                if ($building === null || $rg > $regolith || ! self::fitsAboveCcReserve($b, $ccReserve, $rg)
+                    || (int) $building['supply_cost'] > $freeSupply
+                    || self::outgrowsOwnHarvest($b, $id, (int) $building['supply_cost'])) {
+                    continue;
+                }
+                $shortfall = max(0, (int) ($cost[self::RES_COMPOUNDS] ?? 0) - self::compounds($b));
+                $sites[] = ['building_id' => $id, 'tile' => $tile, 'shortfall' => $shortfall];
+            }
+
+            return $sites;
+        });
+    }
+
+    /** @return list<int> knowledge buildings without a tile */
+    private static function unplacedKnowledgeBuildings(BotSession $b): array
+    {
+        $placed = DB::table('colony_buildings')->where('colony_id', $b->colonyId)
+            ->whereIn('building_id', self::KNOWLEDGE_BUILDINGS)->whereNotNull('tile_x')
+            ->pluck('building_id')->map(fn ($id): int => (int) $id)->all();
+
+        return array_values(array_diff(self::KNOWLEDGE_BUILDINGS, $placed));
+    }
+
+    /**
+     * Phase 2: temple and monument only get the Werkstoffe above what one still unbuilt
+     * knowledge building needs.
+     */
+    private static function spendsKnowledgeCompounds(BotSession $b, int $buildingId): bool
+    {
+        if (! in_array($buildingId, self::PURE_TRUST_BUILDINGS, true) || self::runPhase($b) < 2) {
+            return false;
+        }
+        $reserved = 0;
+        foreach (self::unplacedKnowledgeBuildings($b) as $id) {
+            $reserved = max($reserved, (int) (self::buildingCosts()->placementCost($id)[self::RES_COMPOUNDS] ?? 0));
+        }
+        $needed = (int) (self::buildingCosts()->placementCost($buildingId)[self::RES_COMPOUNDS] ?? 0);
+
+        return $reserved > 0 && self::compounds($b) - $needed < $reserved;
+    }
+
+    /** Shared with RunReport — the single source for this lookup. */
     public static function credits(BotSession $b): int
     {
         return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
