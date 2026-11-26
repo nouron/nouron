@@ -101,6 +101,27 @@ class ResearchSourceTest extends TestCase
         $this->assertContains('research:94', $keys, 'health counts towards the objective');
     }
 
+    public function test_every_knowledge_level_is_an_equal_share_of_the_research_lead_objective(): void
+    {
+        // Spec 2026-11-25 §3.1/§7: "Forschungsvorsprung" is the sum of all knowledge levels,
+        // so each level step is worth w_objective / target — cheap breadth gains per AP.
+        $bot = $this->bootWithLab(2);
+        DB::table('runs')->where('id', $bot->runId)->update(['phase' => 2, 'phase2_start_tick' => 1]);
+        DB::table('run_objectives')->insert([
+            'run_id' => $bot->runId,
+            'task_key' => 'task_research_lead',
+            'target_value' => 16,
+            'current_value' => 0,
+            'streak_value' => 0,
+            'completed_at' => null,
+        ]);
+        $ctx = BotContext::capture($bot, BotProfile::named('focus'), withGoal: true);
+        $share = (float) $ctx->weights['w_objective'] / 16;
+
+        $this->assertEqualsWithDelta($share, Valuers::research($bot, $ctx, 92, 0, 0)->terms['objective'] ?? 0.0, 1e-9, 'level 0 -> 1');
+        $this->assertEqualsWithDelta($share, Valuers::research($bot, $ctx, 90, 4, 0)->terms['objective'] ?? 0.0, 1e-9, 'level 4 -> 5');
+    }
+
     public function test_knowledge_without_its_second_building_is_not_offered(): void
     {
         // M4 2026-11-24: health (needs an infirmary) and defense (needs hangar Lv2) took AP

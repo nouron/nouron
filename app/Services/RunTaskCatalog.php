@@ -15,6 +15,10 @@ class RunTaskCatalog
 
     public const TYPE_STREAK = 'streak';
 
+    public const HORIZON_MEDIUM = 'medium';
+
+    public const HORIZON_LONG = 'long';
+
     /**
      * Full parameter set of one task, or [] for an unknown key.
      *
@@ -28,7 +32,7 @@ class RunTaskCatalog
     }
 
     /**
-     * One parameter of a task (e.g. 'threshold', 'min_rank').
+     * One parameter of a task (e.g. 'threshold', 'min_fed').
      */
     public function param(string $taskKey, string $name, mixed $default = null): mixed
     {
@@ -48,6 +52,17 @@ class RunTaskCatalog
         $category = $this->param($taskKey, 'category');
 
         return is_string($category) ? $category : null;
+    }
+
+    /**
+     * Time horizon of a task (spec 2026-11-25 §1): 'medium' or 'long', null for a
+     * missing or unknown value — such a task fills no minimum share of a draw.
+     */
+    public function horizon(string $taskKey): ?string
+    {
+        $horizon = $this->param($taskKey, 'horizon');
+
+        return in_array($horizon, [self::HORIZON_MEDIUM, self::HORIZON_LONG], true) ? $horizon : null;
     }
 
     public function isStreak(string $taskKey): bool
@@ -97,7 +112,7 @@ class RunTaskCatalog
         $replace = ['target' => $this->formatNumber($target ?? $this->target($taskKey))];
 
         foreach ($this->params($taskKey) as $name => $value) {
-            if (in_array($name, ['category', 'type', 'target'], true)) {
+            if (in_array($name, ['category', 'horizon', 'type', 'target'], true)) {
                 continue;
             }
             if (is_int($value)) {

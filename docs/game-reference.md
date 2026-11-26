@@ -684,31 +684,33 @@ Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für
 | **Sieg-Korridor** (Owner) | Sol 70–85 nur sehr guter Run + Glück; realistisch Sol 85–95 |
 
 ### Objectives (GDD §15)
-Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 zufällig gezogen (höchstens 1 aus der Kategorie `economy`). Sieg bei 2 von 3 erfüllten Aufgaben.
+Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 gezogen: mindestens eine mittelfristige und mindestens eine langfristige (`horizon`), höchstens eine aus der Kategorie `economy`. Gespeichert wird in der Rangfolge `crc32(seed|task_key)`, die erste ist von Anfang an sichtbar. Sieg bei 2 von 3 erfüllten Aufgaben. Herleitung: `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`.
 
-**Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85. Kein Mindest-Sol.
+**Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85 (mittelfristig vorn, langfristig hinten im Korridor). Kein Mindest-Sol.
 
-#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-10-01)
+#### Ist-Stand (Code, `config/game.php → run.tasks`, Stand 2026-11-26)
 
-**Kalibriert (A45/A45b/R1, Stand 2026-10-01).** Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen; alle Werte sind Owner-Entscheidungen auf Basis der Bot-Batches (Kalibrierregel: nebenbei frühestens ~Sol 90, gezielt Sol 70–85). Baseline-Batch 2026-09-30 (4 Profile × 8 Seeds) siehe ROADMAP R1.
+Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. Forschungsvorsprung, Expertenstab, Selbstversorgung und Ingenieursleistung sind seit 2026-11-26 neu definiert bzw. neu gesetzt und **ungemessen bis M5**; die übrigen vier sind Kontrollen (Stand R1, 2026-10-01).
 
-| Task | `category` | `type` | Messung | Parameter | Status |
-|---|---|---|---|---|---|
-| `task_senior_advisors` | personal | counter | Berater der Kolonie mit Rang ≥ `min_rank` | **`min_rank` 3, `target` 4** | Owner-Entscheidung |
-| `task_credit_reserve` | economy | streak | Credits ≥ `threshold` | **`threshold` 6000, `target` 20 Sole** | Owner-Entscheidung 2026-10-01 (vorher 4000/10: mit Belohnungen ×2 und Sparen schon an Sol 44–45 erfüllt) |
-| `task_colony_prosperity` | diplomacy | streak | Vertrauensstufe ≥ `min_band` | **`min_band` content (Zufrieden, ≥ 60), `target` 12 Sole** | T59 Owner 2026-11-14 (vorher Vertrauen > 40 auf alter Skala, 8/8 @82–95); neu ungemessen |
-| `task_research_lead` | research | counter | Kenntnisse auf Lv ≥ `min_level` | **`min_level` 5, `target` 7** | Owner 2026-10-01 bestätigt (gezielt ~Sol 68, nebenbei max. 6) |
-| `task_self_sufficiency` | survival | streak | Regolith > `regolith_min` **und** Organika > `organics_min` | **`regolith_min` 150, `organics_min` 300, `target` 35 Sole** | Owner 2026-10-01 (vorher 45 Sole, erst um Sol 96 erreicht) |
-| `task_expedition_coverage` | exploration | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` normal, `target` 10** | Owner 2026-10-01 bestätigt (gezielt @82–87) |
-| `task_engineering_output` | research | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 35** | Owner-Entscheidung 2026-09-30 (gezielt: 30 schon an Sol 48, 35 um Sol 70) |
-| `task_trade_volume` | economy | counter | gekaufte Händler-Items im Run | **`target` 8** | Owner 2026-10-01 (vorher 7, nebenbei schon @79–86) |
+| Task | `category` | `horizon` | `type` | Messung | Parameter | Status |
+|---|---|---|---|---|---|---|
+| `task_senior_advisors` | personal | long | counter | Summe der Ränge aller Berater der Kolonie (zeitweise abgezogene zählen mit, entlassene nicht) | **`target` 11** | Owner 2026-11-24 (vorher 4 Berater auf Rang ≥ 3); ungemessen |
+| `task_credit_reserve` | economy | medium | streak | Credits ≥ `threshold` | **`threshold` 6000, `target` 20 Sole** | Owner-Entscheidung 2026-10-01 (vorher 4000/10: mit Belohnungen ×2 und Sparen schon an Sol 44–45 erfüllt) |
+| `task_colony_prosperity` | diplomacy | long | streak | Vertrauensstufe ≥ `min_band` | **`min_band` content (Zufrieden, ≥ 60), `target` 12 Sole** | T59 Owner 2026-11-14 (vorher Vertrauen > 40 auf alter Skala, 8/8 @82–95); neu ungemessen |
+| `task_research_lead` | research | medium | counter | Summe der Stufen aller Kenntnisse (eigene und stille Forschung) | **`target` 16** (gleich für alle Eröffnungen) | Owner 2026-11-26 (vorher 7 Kenntnisse auf Lv ≥ 5); ungemessen |
+| `task_self_sufficiency` | survival | long | streak | eigene Ernte (Agrardom + Agronomie) ≥ Verpflegungsbedarf, Bedarf ≥ `min_fed`, kein Hunger | **`min_fed` 55, `target` 35 Sole** | Owner 2026-11-24 (vorher Regolith > 150 und Organika > 300); ungemessen |
+| `task_expedition_coverage` | exploration | medium | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` normal, `target` 10** | Owner 2026-10-01 bestätigt (gezielt @82–87) |
+| `task_engineering_output` | research | long | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 32** | Spec 2026-11-25 (vorher 35; M4 gezielt 32 um Sol 80); ungemessen |
+| `task_trade_volume` | economy | medium | counter | gekaufte Händler-Items im Run | **`target` 8** | Owner 2026-10-01 (vorher 7, nebenbei schon @79–86) |
 
 Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 
-Herleitung der Vorschläge für die neuen Messungen (Annahme, grob):
-- `task_engineering_output` 35: Zum Phase-1-Ende liegt die Summe bei ungefähr 10–15. Nebenbei gespielt bleibt sie bei 22–26 (Baseline 2026-09-30). Gezielter Ausbau erreicht 30 um Sol 48, danach flacht die Kurve ab (Level-Deckel, Supply): 35 um Sol 70.
-- `task_expedition_coverage` 10: Ab Hangar und erstem Schiff (frühe Phase 2) bleiben rund 50 Sole. Kurze Missionen dauern 2–4 Sole hin und zurück, die Grundchance bei „normal" liegt bei 70 %. Eine dauerhaft beschäftigte Drohne kommt damit auf etwa 10 Erfolge bis Sol ~75–80. Wer nur gelegentlich oder auf „leicht" schickt, bleibt deutlich darunter. Eine zweite Drohne beschleunigt stark. Das ist beim Bot-Batch zu prüfen.
-- `task_senior_advisors`: Rang 3 braucht 45 Rangpunkte (`advisor.rank_thresholds`). Der vierte Slot kommt erst mit CC Lv4. Ein spät eingestellter oder ausgetauschter Berater verhindert das Ziel praktisch.
+Herleitung (Annahme, grob; Details in der Spec §3):
+- `task_research_lead` 16: Breite ist je Stufe billiger als Tiefe. Seit #498 hängt jede Kenntnis an ihrem eigenen Gebäude, das Labor ist kein Tor mehr; deshalb ein Wert für alle Eröffnungen, in M5 nachzueichen.
+- `task_senior_advisors` 11: Rang 2 nach 15, Rang 3 nach 45 aktiven Solen (`advisor.rank_thresholds`), höchstens 4 Berater, also höchstens 12. 11 = drei auf Rang 3, einer auf Rang 2; braucht den vierten Platz (CC Lv4).
+- `task_self_sufficiency` 55/35: Ein Agrardom liefert höchstens 66 plus Agronomie 7, also ~73 Organika je Sol. `min_fed` 55 lässt ein Band von ~18 Kolonisten.
+- `task_engineering_output` 32: M4 gezielt 32 um Sol 80, nebenbei am Ende 24–33.
+- `task_expedition_coverage` 10: Ab Hangar und erstem Schiff (frühe Phase 2) bleiben rund 50 Sole. Kurze Missionen dauern 2–4 Sole hin und zurück, die Grundchance bei „normal" liegt bei 70 %. Eine dauerhaft beschäftigte Drohne kommt damit auf etwa 10 Erfolge bis Sol ~75–80.
 
 #### Nexus-Kontrollpunkte (Phase-2-Sol, nicht Gesamt-Sol)
 

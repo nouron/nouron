@@ -119,70 +119,15 @@ class RunProgressService
     // ── Objective drawing ────────────────────────────────────────────────────
 
     /**
-     * Draw 3 tasks from the configured task pool and insert RunObjective records.
-     *
-     * Combo-blacklist: no more than 1 economy task in a single draw set.
-     * Categories and targets come from config('game.run.tasks').
-     * If the full shuffled pool yields < 3 valid tasks, fill up with non-economy tasks.
-     *
-     * The draw order is derived from run.rng_seed, so two runs with the same seed get
-     * the same objectives — a prerequisite for comparing balance changes across runs.
-     *
-     * Ordering by a per-key hash rather than shuffle() is deliberate:
-     *  - Collection::shuffle() has taken no seed argument since Laravel 10 — passing one
-     *    is silently ignored and the draw stays random.
-     *  - A global mt_srand() would seed the draw, but also perturb every later roll in
-     *    the same request; mission loot rolls off rng_seed + mission_id (ADR 0003) and
-     *    must stay independent.
-     * seededOrderHash() is a pure function, so it touches no global RNG state at all.
+     * Draw 3 tasks from the configured task pool and insert RunObjective records
+     * (rule: selectObjectives()). Targets come from config('game.run.tasks').
      */
     public function drawObjectives(Run $run): void
     {
-        $pool = $this->tasks->pool();
-        $isEconomy = fn (string $taskKey): bool => $this->tasks->category($taskKey) === 'economy';
-
         $seed = (int) ($run->rng_seed ?? random_int(1, PHP_INT_MAX));
 
-        $shuffled = collect($pool)
-            ->sortBy(fn (string $taskKey): int => $this->seededOrderHash($seed, $taskKey))
-            ->values();
-
-        $selected = [];
-        $economyCount = 0;
-
-        foreach ($shuffled as $taskKey) {
-            if (count($selected) >= 3) {
-                break;
-            }
-
-            $economyTask = $isEconomy($taskKey);
-
-            if ($economyTask && $economyCount >= 1) {
-                // Combo-blacklist: skip second economy task
-                continue;
-            }
-
-            $selected[] = $taskKey;
-
-            if ($economyTask) {
-                $economyCount++;
-            }
-        }
-
-        // Fallback: if still < 3 tasks, fill with non-economy tasks not yet selected
-        if (count($selected) < 3) {
-            foreach ($shuffled as $taskKey) {
-                if (count($selected) >= 3) {
-                    break;
-                }
-                if (! in_array($taskKey, $selected, true) && ! $isEconomy($taskKey)) {
-                    $selected[] = $taskKey;
-                }
-            }
-        }
-
         $rows = [];
-        foreach ($selected as $taskKey) {
+        foreach ($this->selectObjectives($seed) as $taskKey) {
             $rows[] = [
                 'run_id' => $run->id,
                 'task_key' => $taskKey,
@@ -195,6 +140,75 @@ class RunProgressService
         }
 
         DB::table('run_objectives')->insert($rows);
+    }
+
+    /**
+     * The objectives a seed draws, in storage order (spec 2026-11-25 §2.2, Owner
+     * 2026-11-24 "at least one medium and one long objective"):
+     *  1. Rank the pool by crc32(seed|task_key) — the only source of randomness.
+     *  2. Take the first medium-horizon task of the ranking.
+     *  3. Take the first long-horizon task that keeps the combo rule.
+     *  4. Fill up to three with the first remaining tasks of any (or no) horizon
+     *     that keep the combo rule (never two 'economy' tasks).
+     * A missing horizon class just skips its step. The result keeps the ranking
+     * order, not the pick order — the first stored objective is the one shown
+     * from the start (GDD §18.1), so it is not always the medium one.
+     *
+     * Pure function of the seed and the config: two runs with the same seed get the
+     * same objectives whatever the opening or colony state — a prerequisite for
+     * comparing balance changes across runs. Ordering by a per-key hash rather than
+     * shuffle() is deliberate:
+     *  - Collection::shuffle() has taken no seed argument since Laravel 10 — passing one
+     *    is silently ignored and the draw stays random.
+     *  - A global mt_srand() would seed the draw, but also perturb every later roll in
+     *    the same request; mission loot rolls off rng_seed + mission_id (ADR 0003) and
+     *    must stay independent.
+     *
+     * @return list<string>
+     */
+    public function selectObjectives(int $seed): array
+    {
+        $ranked = collect($this->tasks->pool())
+            ->unique()
+            ->sortBy(fn (string $taskKey): int => $this->seededOrderHash($seed, $taskKey))
+            ->values()
+            ->all();
+
+        $selected = [];
+
+        foreach ([RunTaskCatalog::HORIZON_MEDIUM, RunTaskCatalog::HORIZON_LONG] as $horizon) {
+            foreach ($ranked as $taskKey) {
+                if ($this->tasks->horizon($taskKey) === $horizon && $this->fitsDraw($taskKey, $selected)) {
+                    $selected[] = $taskKey;
+                    break;
+                }
+            }
+        }
+
+        foreach ($ranked as $taskKey) {
+            if ($this->fitsDraw($taskKey, $selected)) {
+                $selected[] = $taskKey;
+            }
+        }
+
+        return array_values(array_filter($ranked, fn (string $taskKey): bool => in_array($taskKey, $selected, true)));
+    }
+
+    /**
+     * Whether $taskKey may join the draw: room left (3 objectives), not drawn yet,
+     * and the combo rule (at most one 'economy' task).
+     *
+     * @param  list<string>  $selected
+     */
+    private function fitsDraw(string $taskKey, array $selected): bool
+    {
+        if (count($selected) >= 3 || in_array($taskKey, $selected, true)) {
+            return false;
+        }
+
+        $isEconomy = fn (string $key): bool => $this->tasks->category($key) === 'economy';
+
+        return ! $isEconomy($taskKey) || collect($selected)->doesntContain($isEconomy);
     }
 
     // ── Objective progress update ────────────────────────────────────────────
@@ -224,18 +238,16 @@ class RunProgressService
     }
 
     /**
-     * Counter task: advisors on this colony at rank >= min_rank (Owner decision:
-     * 4 advisors at rank 3 — a full staff at top rank).
+     * Counter task: sum of the ranks of every advisor on this colony (Owner
+     * 2026-11-24, spec §3.2). Temporarily withdrawn advisors (Nexus sanction,
+     * cooldown) still count — a sanction must not visibly set the progress back;
+     * dismissed advisors (colony_id cleared) no longer do.
      */
     private function updateSeniorAdvisors(RunObjective $objective, Run $run): void
     {
-        $minRank = (int) $this->tasks->param('task_senior_advisors', 'min_rank', 3);
+        $rankSum = (int) Advisor::where('colony_id', $run->colony_id)->sum('rank');
 
-        $count = Advisor::where('colony_id', $run->colony_id)
-            ->where('rank', '>=', $minRank)
-            ->count();
-
-        $this->applyCounter($objective, $run, $count);
+        $this->applyCounter($objective, $run, $rankSum);
     }
 
     /**
@@ -265,41 +277,40 @@ class RunProgressService
     }
 
     /**
-     * Counter task: knowledges at level >= min_level.
+     * Counter task: sum of the levels of all knowledges (Owner 2026-11-24, spec
+     * §3.1), however they were reached — own research or silent research.
      */
     private function updateResearchLead(RunObjective $objective, Run $run): void
     {
-        $minLevel = (int) $this->tasks->param('task_research_lead', 'min_level', 5);
+        $levelSum = (int) DB::table('colony_researches as cr')
+            ->join('researches as r', 'r.id', '=', 'cr.research_id')
+            ->where('cr.colony_id', $run->colony_id)
+            ->where('r.purpose', 'knowledge')
+            ->sum('cr.level');
 
-        $count = (int) DB::table('colony_researches')
-            ->where('colony_id', $run->colony_id)
-            ->where('level', '>=', $minLevel)
-            ->count();
-
-        $this->applyCounter($objective, $run, $count);
+        $this->applyCounter($objective, $run, $levelSum);
     }
 
     /**
-     * Streak task: both conditions must hold simultaneously each sol —
-     * Regolith (resource_id=3) > regolith_min and Organika (resource_id=5) >
-     * organics_min. Either failure resets the streak to 0.
+     * Streak task "produce more than you eat" (Owner 2026-11-24, spec §3.3). The Sol
+     * counts when all three hold:
+     *  1. own harvest (Agrardom + agronomy, after the staffing share) >= the
+     *     colonists' Organika need — stock, trade, missions and events don't count,
+     *     mission provisions are no need;
+     *  2. that need is at least min_fed (no free ride for a tiny colony);
+     *  3. nobody went hungry this Sol (hunger_streak, set by the food step of the tick).
+     * Harvest and need come from ResourceFlowService::organicsBalance(), the numbers
+     * the resource bar and the Sol report show.
      */
     private function updateSelfSufficiency(RunObjective $objective, Run $run): void
     {
-        $regolith = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 3)
-            ->value('amount') ?? 0);
+        $balance = app(ResourceFlowService::class)->organicsBalance((int) $run->colony_id);
+        $minFed = (int) $this->tasks->param('task_self_sufficiency', 'min_fed', 55);
+        $hungry = (int) DB::table('glx_colonies')->where('id', $run->colony_id)->value('hunger_streak') > 0;
 
-        $organics = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 5)
-            ->value('amount') ?? 0);
+        $met = $balance['harvest'] >= $balance['need'] && $balance['need'] >= $minFed && ! $hungry;
 
-        $allMet = $regolith > (int) $this->tasks->param('task_self_sufficiency', 'regolith_min', 25)
-            && $organics > (int) $this->tasks->param('task_self_sufficiency', 'organics_min', 75);
-
-        $this->applyStreak($objective, $run, $allMet);
+        $this->applyStreak($objective, $run, $met);
     }
 
     /**
