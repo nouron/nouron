@@ -29,6 +29,10 @@
 	};
 	type Tech = {
 		id: number;
+		/** Knowledge only: its building stands and a level is still open (2026-11-26). */
+		investable?: boolean;
+		/** Without a lab: today's AP cap for this knowledge is used up. */
+		cap_reached?: boolean;
 		type: TechType;
 		name: string;
 		level: number;
@@ -126,7 +130,6 @@
 		);
 	}
 
-	const isPreviewKnowledge = (tech: Tech) => preview && tech.type === 'research' && tech.status === 'locked';
 	// Preview knowledge carrying cantina bonus progress: rough word + cantina mark instead of numbers.
 	const hasBonusProgress = (tech: Tech) =>
 		preview && tech.type === 'research' && !!tech.bonus_progress && !!tech.rough_progress_label;
@@ -138,7 +141,7 @@
 	}
 
 	function statusLabel(tech: Tech): string {
-		if (isPreviewKnowledge(tech)) return hasBonusProgress(tech) ? tech.rough_progress_label! : t('techtree.preview_lab_needed');
+		if (hasBonusProgress(tech) && tech.status !== 'built') return tech.rough_progress_label!;
 		const gate: Record<string, string> = {
 			available: t('techtree.status_available'),
 			locked: t('techtree.status_locked')
@@ -450,7 +453,7 @@
 					</div>
 				</div>
 			{/if}
-			{#if tech.description && !isPreviewKnowledge(tech)}
+			{#if tech.description}
 				<p class="building-detail-description">{tech.description}</p>
 			{/if}
 
@@ -496,32 +499,34 @@
 						<p class="detail-ap-hint">{acquireHint(tech)}</p>
 					{/if}
 				{:else if tech.type === 'research' && preview}
-					<!-- Reached level: exact, with its own effect (future levels and AP stay hidden). -->
-					{#if tech.level > 0}{@render effects(tech)}{/if}
+					<!-- Without a lab (2026-11-26): researchable with its own building, progress as words; the lab adds numbers. -->
+					{@render effects(tech)}
 					{#if hasBonusProgress(tech)}
 						<div class="detail-row preview-bonus" data-bonus-progress>
 							<span class="detail-row-label">{t('techtree.preview_bonus_label')}</span>
 							<span class="preview-bonus__value">
 								<span class="preview-bonus__mark" aria-hidden="true"><i class="bi bi-lightbulb"></i></span>
 								<strong>{tech.rough_progress_label}</strong>
-								<span class="preview-bonus__source">{t('techtree.preview_bonus_source')}</span>
 							</span>
 						</div>
 					{/if}
 					{#if tech.status === 'locked'}
-						{@const lab = labNode()}
 						<div class="preview-reason">
-							<p><strong>{t('techtree.preview_reason_label')}:</strong> {t('techtree.preview_reason_lab')}</p>
-							{#if lab && lab.status === 'locked' && lab.required_list?.length}
-								<p class="detail-ap-hint">
-									{t('techtree.preview_reason_lab_needs', { list: lab.required_list.join(', ') })}
-								</p>
-							{/if}
-							{#if lab}
-								<button type="button" class="detail-cta-link preview-reason-link" onclick={focusLab}
-									>{t('techtree.preview_to_lab')} &rarr;</button
-								>
-							{/if}
+							<p><strong>{t('techtree.preview_reason_label')}:</strong> {tech.required_list?.join(', ')}</p>
+						</div>
+					{:else if tech.investable}
+						<div class="detail-ap-section">
+							<button type="button" class="tile-action-btn" disabled={apAvailable <= 0 || tech.cap_reached} onclick={() => investAp(tech)}>
+								<span class="tile-action-btn__body">{t('techtree.detail_ap_invest')}</span>
+								<span class="tile-action-btn__costs"><span class="ap-chip ap-cost-chip ap-chip--research">1 AP</span></span>
+							</button>
+							{#if tech.cap_reached}<p class="detail-ap-hint">{t('techtree.preview_cap_reached')}</p>{/if}
+							<p class="detail-ap-hint">
+								{t('techtree.preview_lab_adds')}
+								{#if labNode()}<button type="button" class="detail-cta-link preview-reason-link" onclick={focusLab}
+										>{t('techtree.preview_to_lab')} &rarr;</button
+									>{/if}
+							</p>
 						</div>
 					{/if}
 				{:else if tech.type === 'research'}
@@ -655,10 +660,6 @@
 		background: var(--color-accent);
 		color: #ffffff;
 		font-size: 0.75rem;
-	}
-	.preview-bonus__source {
-		color: var(--color-text-secondary);
-		font-size: 0.85rem;
 	}
 	.preview-reason-link {
 		background: none;

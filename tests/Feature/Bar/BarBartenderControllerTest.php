@@ -28,7 +28,7 @@ class BarBartenderControllerTest extends TestCase
 
     private const USER_ID_BART = 3;
 
-    private const KNOWLEDGE_ID = 96; // defense
+    private const KNOWLEDGE_ID = 90; // construction — needs only the Command Center (knowledge per building, 2026-11-26)
 
     protected function setUp(): void
     {

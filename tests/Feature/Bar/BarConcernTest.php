@@ -61,7 +61,7 @@ class BarConcernTest extends TestCase
 
     private const RES_CREDITS = 1;
 
-    private const KNOWLEDGE_ID = 96; // defense — colony_researches level=0, ap_spend=0
+    private const KNOWLEDGE_ID = 90; // construction — needs only the Command Center (knowledge per building, 2026-11-26)
 
     private BarService $barService;
 

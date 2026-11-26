@@ -160,9 +160,9 @@ return [
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
-        // Gedeckelt auf 5 (2026-08-25) — Ausnahme von der max.-3-Regel: Lv1-3
-        // bleiben Kenntnis-Freischalt-Gates (unverändert, siehe researches-
-        // Migrationen), Lv4/5 bekommen einen Domänen-Effizienzbonus "Wissen"
+        // Gedeckelt auf 5 (2026-08-25) — Ausnahme von der max.-3-Regel. Seit
+        // 2026-11-26 schaltet das Labor keine Kenntnisse mehr frei (jede Kenntnis
+        // hängt an ihrem eigenen Gebäude); Lv4/5 bekommen einen Domänen-Effizienzbonus "Wissen"
         // (implementiert via ProjectBonusService::effectiveKnowledgeApForLevelup(),
         // siehe knowledge_ap_cost_reduction_per_lv unten).
         'max_level' => 5,

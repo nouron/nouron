@@ -15,7 +15,7 @@ Der Techtree hat genau zwei Aufgaben:
 1. **Übersicht:** Was gibt es, was ist freigeschaltet, was fehlt noch, und wie hängt alles zusammen?
 2. **Forschung:** Er ist der einzige Ort, an dem Kenntnisse aktiv erforscht werden (AP investieren, Stufe abschließen). Einzige Ausnahme ist die stille Forschung durch zweckgebundene Bonus-AP aus der Cantina (GDD §10), die ohne Zutun des Spielers aufsteigt.
 
-Der Techtree ist von Anfang an lesbar. Solange das Analytik-Labor nicht steht (erste Stufe fehlt), zeigt er eine **Vorschau** (§11.4): dasselbe Gitter, aber ohne Forschung und ohne die Zahlen der Kenntnisse; nur erreichte Stufen und grober Bonus-Fortschritt sind zu sehen. Das Labor schaltet die Forschung frei. Der Menüpunkt „Labor“ ist immer erreichbar, damit der Spieler vor der Wahl des ersten Fokus-Gebäudes sieht, was das Labor bringt.
+Der Techtree ist von Anfang an lesbar und erforschbar: Jede Kenntnis, deren Gebäude steht, nimmt AP an (GDD §10). Solange das Analytik-Labor nicht steht (erste Stufe fehlt), zeigt er eine **Vorschau** (§11.4): dasselbe Gitter und dieselbe Forschungsaktion, aber ohne die Zahlen der Kenntnisse; Fortschritt steht grob in Worten, erreichte Stufen und ihr Effekt genau. Das Labor bringt die Zahlen und das Tempo, nicht die Forschung. Der Menüpunkt „Labor“ ist immer erreichbar, damit der Spieler vor der Wahl des ersten Fokus-Gebäudes sieht, was das Labor bringt.
 
 Er ist **keine Verwaltungsansicht für Gebäude**. Jede Gebäude-Aktion — Errichten, Ausbauen, Reparieren, Rückbau — findet ausschließlich im Tile-Panel der Kolonieansicht statt (§11.4). Für Schiffe und Berater gilt dasselbe Prinzip: Der Techtree zeigt Voraussetzungen und Stand, gehandelt wird im Hangar-Screen (§8b) bzw. im Berater-Screen (§13).
 
@@ -53,21 +53,21 @@ Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Pr
 
 #### Kenntnisse
 
-Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus. Zusätzlich gelten funktionale Gebäude-Voraussetzungen je nach Kenntnis.
+Die 7 Kenntnisse sind das einzige Forschungssystem. Jede setzt genau ein eigenes Gebäude auf Stufe 1 voraus, das Analytik-Labor ist keine Voraussetzung (Owner 2026-11-26).
 
-| Key (intern) | Name (DE) | Voraussetzung | Max-Level |
-|---|---|---|---|
-| `construction` | Bautechnik | Analytik-Labor Lv 1 | 5 |
-| `agronomy` | Agronomie | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 | 5 |
-| `health` | Gesundheit | Analytik-Labor Lv 1 + Krankenstation Lv 1 | 5 |
-| `cartography` | Kartografie | Analytik-Labor Lv 1 + Hangar Lv 1 | 5 |
-| `geology` | Geologie | Analytik-Labor Lv 2 + Harvester Lv 1 | 5 |
-| `trade` | Handel & Logistik | Analytik-Labor Lv 2 + Bar Lv 1 | 5 |
-| `defense` | Verteidigung | Analytik-Labor Lv 3 + Hangar Lv 2 | 5 |
+| Key (intern) | Name (DE) | Voraussetzung | Klasse | Max-Level |
+|---|---|---|---|---|
+| `construction` | Bautechnik | Kommandozentrale Lv 1 | Grundkenntnis | 5 |
+| `cartography` | Kartografie | Hangar Lv 1 | Grundkenntnis | 5 |
+| `trade` | Handel & Logistik | Cantina Lv 1 | Grundkenntnis | 5 |
+| `geology` | Geologie | Harvester Lv 1 | Sockel | 5 |
+| `agronomy` | Agronomie | Agrardom Lv 1 | Sockel | 5 |
+| `health` | Gesundheit | Krankenstation Lv 1 | fortgeschritten | 5 |
+| `defense` | Verteidigung | Leitstelle Lv 1 | fortgeschritten | 5 |
 
-**Begründung:** Das Analytik-Labor als Gate für alle Kenntnisse stellt sicher, dass der Spieler zuerst eine Wissenschaftsbasis aufbaut, bevor er Spezialkenntnisse erschließt. Die zusätzlichen Gebäude-Voraussetzungen verknüpfen jede Kenntnis mit dem passenden Kolonieteil — Agronomie braucht eine Bio-Anlage, Kartografie einen Hangar, Verteidigung ein höheres Analytik-Labor und einen ausgebauten Hangar. Die Kenntnisse Lv4 und Lv5 sind zusätzlich durch das CC-Level gegattet (siehe §11.2 Regel 3).
+**Begründung:** Das Gebäude schaltet seine Kenntnis frei, die Kenntnis verstärkt ihr Gebäude (GDD §10). So ist jede Kenntnis an den Kolonieteil gebunden, den sie verbessert, und jede Eröffnung hat von Anfang an Kenntnisse, die sie erforschen kann. Das Labor ist ein Beschleuniger (Analytiker, Rabatt, genaue Zahlen), kein Tor. Die Kenntnisse Lv4 und Lv5 sind zusätzlich durch das CC-Level gegattet (siehe §11.2 Regel 3), nicht durch das Labor.
 
-> **Roguelike-Variabilität:** Pro Run steht nicht der vollständige Kenntnisbaum zur Verfügung — nur eine zufällig gezogene Teilmenge (z.B. 5 von 7). Details in §15 (Run-Struktur).
+> Alle 7 Kenntnisse stehen in jedem Run zur Verfügung (GDD §10); eine zufällige Teilmenge je Run ist verworfen.
 
 #### Schiffe
 
@@ -116,13 +116,13 @@ Einige Entitäten setzen nicht nur CC-Level, sondern ein konkretes Gebäude vora
 |---|---|
 | `bioFacility` | Harvester Lv 1 |
 | `bar` | Wohnhabitat Lv 1 |
-| `construction` (Kenntnis) | Analytik-Labor Lv 1 |
-| `agronomy` (Kenntnis) | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 |
-| `health` (Kenntnis) | Analytik-Labor Lv 1 + Krankenstation Lv 1 |
-| `cartography` (Kenntnis) | Analytik-Labor Lv 1 + Hangar Lv 1 |
-| `geology` (Kenntnis) | Analytik-Labor Lv 2 + Harvester Lv 1 |
-| `trade` (Kenntnis) | Analytik-Labor Lv 2 + Bar Lv 1 |
-| `defense` (Kenntnis) | Analytik-Labor Lv 3 + Hangar Lv 2 |
+| `construction` (Kenntnis) | Kommandozentrale Lv 1 |
+| `agronomy` (Kenntnis) | Agrardom Lv 1 |
+| `health` (Kenntnis) | Krankenstation Lv 1 |
+| `cartography` (Kenntnis) | Hangar Lv 1 |
+| `geology` (Kenntnis) | Harvester Lv 1 |
+| `trade` (Kenntnis) | Cantina Lv 1 |
+| `defense` (Kenntnis) | Leitstelle Lv 1 |
 | Drohne | Hangar Lv 1 |
 | Frachter | Hangar Lv 2 |
 | Korvette | Hangar Lv 3 |
@@ -152,7 +152,7 @@ Der Techtree ist in **5 Phasen** aufgeteilt, jede entspricht einem CC-Level-Meil
 **Pfeil-Quellen:**
 
 - Gebäude, Schiffe, Berater: Pfeil von `required_building_id`
-- Kenntnisse: Pfeil vom **sekundären Gebäude** (nicht vom Analytik-Labor). Ausnahme: `construction` hat kein sekundäres Gebäude — Pfeil vom Analytik-Labor. Bei phasen-übergreifenden Sekundär-Voraussetzungen wird auf das Analytik-Labor als Phasen-internen Anker zurückgegriffen.
+- Kenntnisse: Pfeil von ihrem **eigenen Gebäude** (`required_building_id`), nie vom Analytik-Labor; ein zweites Gebäude gibt es nicht. Ausnahme Konstruktion: Ihr Gebäude ist die Kommandozentrale, deren Stufe wie bei allen späteren Phasen der Phasen-Header nennt.
 
 **Vollständige Phasen-Grid-Koordinatentabelle** (row/col phasen-lokal, 1-indexiert):
 
@@ -201,7 +201,7 @@ Ein Klick auf eine Kachel öffnet das Detailpanel. Sein Inhalt hängt vom Entit�
 
 **Kenntnisse** — voll bedienbar. Beschreibung, Effekt je Stufe, Voraussetzungen (Gebäude, CC-Stufen-Cap nach Regel 3), Fortschritt der laufenden Stufe und die Forschungsaktion selbst (AP investieren, Stufe abschließen). Das ist die einzige Stelle im Spiel, an der aktiv geforscht wird; zweckgebundene Bonus-AP aus der Cantina tragen ein eigenes Zeichen am Fortschritt.
 
-**Vorschau ohne Analytik-Labor.** Steht das Labor nicht, ist die Ansicht eine Vorschau. Ein dauerhaftes Hinweisband sagt, dass es eine Vorschau ist und was fehlt; der Ton ist neutral und empfiehlt das Labor nicht, weil Labor, Hangar und Cantina gleichwertige Eröffnungen sind (§13). Alle Knoten und Kanten aller Phasen bleiben sichtbar (§16.4), auch spätere Phasen; Gebäude, Schiffe und Berater zeigen ihren echten Zustand. Kenntnisse erscheinen als gesperrt mit Name, Kurzbeschreibung und Voraussetzungsliste, aber ohne Effekte künftiger Stufen, AP-Kosten und Forschungsaktion. Hat eine Kenntnis durch stille Forschung (GDD §10) schon eine Stufe erreicht, stehen diese Stufe und ihr Effekt genau da; zweckgebundener Bonus-Fortschritt erscheint nur grob in Worten, mit dem Zeichen der Quelle (z. B. Tomas). Eine Kenntnis ohne Stufe und ohne Bonus-Fortschritt bleibt ohne Stufenzahl und Fortschritt. Im Detailpanel steht stattdessen der Grund „Voraussetzung: Analytik-Labor“ mit Sprung zum Labor-Knoten (fehlt dem Labor die CC-Stufe, nennt der Grund auch diese). Kein Fehlerbild beim Öffnen, kein gesperrter Menüpunkt. Mit der ersten Labor-Stufe wechselt die geöffnete Ansicht ohne Neuladen auf die Vollansicht; wird das Labor auf Stufe 0 zurückgebaut, fällt sie zurück, und erreichte Kenntnis-Stufen bleiben (Bestandsschutz, §11.5). Details und Akzeptanzkriterien: `docs/superpowers/specs/2026-11-06-labor-vorschau.md`, für stille Forschung und Bonus-Fortschritt `docs/superpowers/specs/2026-11-11-tomas-rat-rueckmeldung.md`.
+**Vorschau ohne Analytik-Labor.** Steht das Labor nicht, ist die Ansicht eine Vorschau, aber erforschbar (Owner 2026-11-26). Ein dauerhaftes Hinweisband sagt, dass Zahlen erst mit dem Labor kommen; der Ton ist neutral und empfiehlt das Labor nicht, weil Labor, Hangar und Cantina gleichwertige Eröffnungen sind (§13). Alle Knoten und Kanten aller Phasen bleiben sichtbar (§16.4), auch spätere Phasen; Gebäude, Schiffe und Berater zeigen ihren echten Zustand. Eine Kenntnis, deren Gebäude steht, nimmt AP an (Grund-Deckel, kein Analytiker); ihr Fortschritt steht nur grob in Worten, ohne AP-Zahlen, ohne Effekte künftiger Stufen und ohne Höchststufe. Erreichte Stufen und ihr Effekt stehen genau da, gleich ob durch eigene Forschung oder stille Forschung (GDD §10) erreicht; zweckgebundener Bonus-Fortschritt trägt das Zeichen der Quelle (z. B. Tomas). Fehlt das Gebäude, ist die Kenntnis gesperrt, und das Detailpanel nennt den Grund „Gebäude fehlt“ mit dem Gebäude der Kenntnis. Kein Fehlerbild beim Öffnen, kein gesperrter Menüpunkt. Mit der ersten Labor-Stufe wechselt die geöffnete Ansicht ohne Neuladen auf die Vollansicht mit Zahlen; wird das Labor auf Stufe 0 zurückgebaut, fällt sie zurück, und erreichte Kenntnis-Stufen bleiben (Bestandsschutz, §11.5). Details und Akzeptanzkriterien: `docs/superpowers/specs/2026-11-06-labor-vorschau.md`, für stille Forschung und Bonus-Fortschritt `docs/superpowers/specs/2026-11-11-tomas-rat-rueckmeldung.md`.
 
 **Gebäude** — nur lesend, mit Sprung in die Kolonie:
 

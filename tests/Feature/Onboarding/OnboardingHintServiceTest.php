@@ -1521,21 +1521,16 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('colony.onboarding_hint_spend_ap_construction', $this->spendHintTextKey());
     }
 
-    // ── Hint 4: "assign AP to a Kenntnis" only once the Techtree is usable ─────
+    // ── Hint 4: "assign AP to a Kenntnis" — the Techtree is usable without a lab (2026-11-26) ──
 
-    public function test_hint4_stays_silent_while_the_techtree_is_locked(): void
+    public function test_hint4_fires_without_a_sciencelab(): void
     {
+        // One building per knowledge: construction opens with the Command Center, so the
+        // player can research from the start and the hint must not wait for the lab.
         DB::table('colony_researches')->where('colony_id', $this->colonyId)->delete();
         DB::table('colony_buildings')->where('colony_id', $this->colonyId)->where('building_id', 31)->update(['level' => 0]);
 
-        $this->assertFalse($this->callCheckHint4(9), 'no Sciencelab -> Techtree locked -> no hint');
-
-        DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'building_id' => 31, 'instance_id' => 1],
-            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0]
-        );
-
-        $this->assertTrue($this->callCheckHint4(9), 'Sciencelab built -> hint fires');
+        $this->assertTrue($this->callCheckHint4(9), 'no Sciencelab, still researchable -> hint fires');
     }
 
     private function callCheckHint4(int $tick): bool

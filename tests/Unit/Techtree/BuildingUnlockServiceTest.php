@@ -47,11 +47,10 @@ class BuildingUnlockServiceTest extends TestCase
         $this->assertNotContains(__('techtree.ship_freighter'), $texts, 'freighter unlocks at level 2, not 3');
     }
 
-    public function test_hangar_level2_also_unlocks_the_defense_knowledge_via_secondary_requirement(): void
+    public function test_security_hub_level1_unlocks_the_defense_knowledge(): void
     {
-        // researches id=96 (knowledge_defense): required_building_id=31 (sciencelab) Lv3
-        // AND required_building2_id=44 (hangar) Lv2 — must be reachable via EITHER slot.
-        $unlocks = $this->service->unlocksAtLevel(44, 2);
+        // One building per knowledge (2026-11-26): defense hangs on the security hub.
+        $unlocks = $this->service->unlocksAtLevel(53, 1);
 
         $this->assertContains(__('techtree.knowledge_defense'), array_column($unlocks, 'text'));
     }

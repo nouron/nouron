@@ -24,7 +24,7 @@ class BarBartenderTest extends TestCase
 
     private const COLONY_ID = 1;   // Springfield — user_id = 3 (Bart)
 
-    private const KNOWLEDGE_ID = 96;   // defense — colony_researches level=0, ap_spend=0
+    private const KNOWLEDGE_ID = 90;   // construction — needs only the Command Center (knowledge per building, 2026-11-26)
 
     private BarService $barService;
 
@@ -259,9 +259,10 @@ class BarBartenderTest extends TestCase
     {
         $this->setRelationship(1);
         $threshold = $this->app->make(ResearchService::class)->knowledgeLevelupCost(self::COLONY_ID, self::KNOWLEDGE_ID);
-        DB::table('colony_researches')
-            ->where('colony_id', self::COLONY_ID)->where('research_id', self::KNOWLEDGE_ID)
-            ->update(['ap_spend' => $threshold - 1]);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => self::KNOWLEDGE_ID],
+            ['level' => 0, 'ap_spend' => $threshold - 1, 'status_points' => 10],
+        );
 
         $result = $this->barService->talkToBartender(self::COLONY_ID, self::KNOWLEDGE_ID, 10);
 

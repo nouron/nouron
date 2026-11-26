@@ -501,12 +501,12 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
-    public function test_required_desc_shows_dual_prerequisites(): void
+    public function test_required_desc_names_only_the_knowledges_own_building(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
-        // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
+        // knowledge_cartography (ID 91) needs only its hangar (one building per knowledge, 2026-11-26)
         $cartography = null;
         foreach ($pageData['phases'] as $phase) {
             $found = collect($phase['items'])->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
@@ -518,19 +518,19 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($cartography, 'knowledge_cartography (ID 91) must be in a phase');
         $this->assertNotNull($cartography['required_desc'], 'knowledge_cartography must have a required_desc');
-        $this->assertStringContainsString('+', $cartography['required_desc'],
-            'Dual prerequisites must be joined by "+"');
+        $this->assertStringNotContainsString('+', $cartography['required_desc'], 'no second prerequisite any more');
+        $this->assertStringContainsString(__('techtree.building_hangar'), $cartography['required_desc']);
     }
 
     // Owner-Playtest-Fund 2026-08-31 (follow-up): the detail panel now renders
     // prerequisites as a bullet list instead of one "Benötigt X + Y" line, so
     // the controller must expose the parts separately.
-    public function test_required_list_shows_dual_prerequisites_as_separate_parts(): void
+    public function test_required_list_shows_the_single_prerequisite(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
-        // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
+        // knowledge_cartography (ID 91) needs only its hangar (one building per knowledge, 2026-11-26)
         $cartography = null;
         foreach ($pageData['phases'] as $phase) {
             $found = collect($phase['items'])->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
@@ -541,7 +541,7 @@ class TechtreeControllerTest extends TestCase
         }
 
         $this->assertNotNull($cartography, 'knowledge_cartography (ID 91) must be in a phase');
-        $this->assertCount(2, $cartography['required_list']);
+        $this->assertCount(1, $cartography['required_list']);
         $this->assertStringNotContainsString('Benötigt', $cartography['required_list'][0],
             'bullet parts must not repeat the "Benötigt" prefix already implied by the heading');
     }
@@ -557,7 +557,7 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotNull($found, 'knowledge_cartography (ID 91) must be in phase 2');
     }
 
-    public function test_edges_include_hangar_arrow_and_mark_second_prerequisite_dashed(): void
+    public function test_edges_include_the_hangar_arrow_to_cartography(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
@@ -565,7 +565,7 @@ class TechtreeControllerTest extends TestCase
         $hangarEdges = array_values(array_filter($pageData['edges'], fn ($e) => $e['from'] === 'building-44' && $e['to'] === 'research-91'));
 
         $this->assertCount(1, $hangarEdges, 'hangar (ID 44) must gate cartography (ID 91)');
-        $this->assertTrue($hangarEdges[0]['dashed'], 'the second prerequisite is drawn dashed');
+        $this->assertFalse($hangarEdges[0]['dashed'], 'the only prerequisite is drawn solid');
     }
 
     public function test_every_edge_points_downwards_in_the_grid(): void
@@ -617,17 +617,17 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotNull($found, 'bar/cantina (building ID 52) must be in phase 2');
     }
 
-    public function test_knowledge_geology_is_in_phase3(): void
+    public function test_knowledge_geology_sits_next_to_its_harvester_in_band1(): void
     {
-        // Canvas techtree (2026-10-18): a band is a layout row group below the Command Center,
-        // not a gate — geology sits below its prerequisite sciencelab (band 2) in band 3.
+        // Canvas techtree: a band is a layout row group, not a gate. Since 2026-11-26 each
+        // knowledge sits next to its own building — geology by the harvester (band 1).
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->json();
 
-        $found = collect($pageData['phases'][3]['items'])
+        $found = collect($pageData['phases'][1]['items'])
             ->first(fn ($t) => $t['id'] === 92 && $t['type'] === 'research');
 
-        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3, below its prerequisite sciencelab');
+        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in band 1, next to the harvester');
     }
 
     // ── order('add'): auto-levelup in the same request (no page reload) ───────
@@ -714,10 +714,11 @@ class TechtreeControllerTest extends TestCase
         $geology = null;
         foreach ($phasesUpdate['phases'] as $phase) {
             $this->assertArrayHasKey('items', $phase);
-            $geology ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
+            $geology ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 96);
         }
 
-        $this->assertNotNull($geology, 'phases_update must include every node, e.g. geology (research id=92)');
+        // defense (96) needs the security hub, which the fixture colony lacks
+        $this->assertNotNull($geology, 'phases_update must include every node, e.g. defense (research id=96)');
         $this->assertSame('locked', $geology['status']);
     }
 
@@ -731,8 +732,8 @@ class TechtreeControllerTest extends TestCase
     {
         config(['game.bypass.ap_checks' => false, 'game.bypass.resource_costs' => true]);
 
-        // geology (research id 92): requires Analytik-Labor Lv2 (building 31) — colony 1
-        // only has it at Lv1, so levelup() will be blocked by 'requires_building'.
+        // construction (research id 90) at Lv3: Lv4 needs Command Center Lv4, colony 1 has
+        // Lv3 — AP still go in, the levelup is blocked by the CC gate.
         DB::table('advisors')->where('colony_id', $this->colonyIdBart)->where('personell_id', 36)->delete();
         DB::table('advisors')->insert([
             'user_id' => $this->userIdBart,
@@ -743,25 +744,25 @@ class TechtreeControllerTest extends TestCase
             'unavailable_until_tick' => null,
         ]);
 
-        $threshold = (int) config('knowledge.geology.levelup_costs.1');
+        $threshold = (int) config('knowledge.construction.levelup_costs.4');
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyIdBart, 'research_id' => 92],
-            ['level' => 0, 'ap_spend' => $threshold - 1, 'status_points' => 20]
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 90],
+            ['level' => 3, 'ap_spend' => $threshold - 1, 'status_points' => 20]
         );
 
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 92]), ['order' => 'add', 'ap' => 1]);
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 90]), ['order' => 'add', 'ap' => 1]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
         $response->assertJsonPath('leveled_up', false);
-        $response->assertJsonPath('levelup_blocked_reason', 'requires_building');
-        $response->assertJsonPath('tech.level', 0);
+        $response->assertJsonPath('levelup_blocked_reason', 'knowledge_cc_gate');
+        $response->assertJsonPath('tech.level', 3);
 
         // The AP was spent (capped at the threshold) — not silently lost, but not
-        // reinvestable either until the missing building is built.
+        // reinvestable either until the Command Center reaches Lv4.
         $this->assertSame($threshold, DB::table('colony_researches')
-            ->where('colony_id', $this->colonyIdBart)->where('research_id', 92)->value('ap_spend'));
+            ->where('colony_id', $this->colonyIdBart)->where('research_id', 90)->value('ap_spend'));
     }
 
     /** The fixture's hangar 1 sits on Lv3 (active corvette, T20); these tests need Lv1. */

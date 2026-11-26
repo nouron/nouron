@@ -190,7 +190,6 @@ return [
     'error_entity_not_found' => 'Unbekannte Entität.',
     'error_invalid_mode' => 'Ungültige Aktion.',
     'error_unknown_type' => 'Unbekannter Techtree-Typ.',
-    'error_lab_required' => 'Ohne Analytik-Labor lässt sich nicht forschen.',
     'error_unknown_order' => 'Unbekannte Order.',
     'error_order_failed' => 'Die Order konnte nicht ausgeführt werden.',
 
@@ -211,12 +210,10 @@ return [
     'columns_label' => 'Spalten',
     // Lab preview (no Analytics Lab yet): neutral notice, knowledge nodes show title only
     'preview_to_lab' => 'Zum Labor',
-    'preview_lab_needed' => 'Labor nötig',
+    'preview_lab_adds' => 'Das Analytik-Labor forscht schneller und zeigt die genauen Zahlen.',
+    'preview_cap_reached' => 'Für heute ausgeschöpft — morgen geht es weiter.',
     'preview_reason_label' => 'Voraussetzung',
-    'preview_reason_lab' => 'Analytik-Labor',
-    'preview_reason_lab_needs' => 'Das Analytik-Labor braucht noch: :list',
     // Labor-Vorschau: Bonus-Fortschritt aus der Cantina (stille Forschung, spec
     // 2026-11-11-tomas-rat-rueckmeldung Satz 33).
-    'preview_bonus_label' => 'Stille Forschung',
-    'preview_bonus_source' => 'aus Gesprächen in der Cantina',
+    'preview_bonus_label' => 'Fortschritt',
 ];

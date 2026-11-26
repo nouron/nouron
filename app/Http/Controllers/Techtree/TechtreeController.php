@@ -230,28 +230,28 @@ class TechtreeController extends BaseController
                     $item['bonus_progress'] = false;
                 }
 
+                if ($type === 'research') {
+                    // Owner 2026-11-26: a knowledge opens with its own building; the lab is no gate.
+                    $item['investable'] = $item['status'] !== 'locked'
+                        && ($item['max_level'] === null || $item['level'] < $item['max_level']);
+                }
+
                 if ($preview && $type === 'research') {
-                    // Preview shows title and position only; a reached level stays with its own
-                    // effect, and bonus progress shows as a rough word without AP numbers
-                    // (spec 2026-11-11-tomas-rat-rueckmeldung, sentence 26).
+                    // Without a lab the tree stays researchable, but as words: progress as a rough band,
+                    // no AP numbers, no future levels (exact numbers are the lab's part).
                     $rough = $this->researchService->roughProgressBand($item['ap_spend'], $item['ap_for_levelup']);
                     $item = [
                         ...$item,
-                        'status' => $item['level'] > 0 ? 'built' : 'locked',
-                        'description' => null,
-                        'required_desc' => '',
-                        'required_list' => [],
+                        'cap_reached' => $item['ap_cap'] !== null && $item['ap_cap']['remaining'] < 1,
                         'unlocks_next_level' => [],
-                        'effects_current_level' => $item['level'] > 0 ? $item['effects_current_level'] : [],
                         'rough_progress' => $rough,
                         'rough_progress_label' => $rough !== null ? __("knowledge.rough_progress_{$rough}") : null,
                         'bonus_progress' => $item['ap_spend'] > 0,
                         'max_level' => null,
                         'ap_spend' => 0,
                         'ap_for_levelup' => 0,
-                        'ap_available' => 0,
                         'ap_cap' => null,
-                        'lock_reason' => 'sciencelab',
+                        'lock_reason' => $item['status'] === 'locked' ? 'building' : null,
                     ];
                 }
 
@@ -428,10 +428,6 @@ class TechtreeController extends BaseController
             return $this->orderFailed('unknown_order', $order);
         }
 
-        if (! $this->sciencelabBuilt($colonyId)) {
-            return $this->orderFailed('lab_required', $order);
-        }
-
         $service = $this->researchService;
 
         // The UI batches quick clicks into one request (ap = click count). Invest what fits (AP pool,
@@ -485,7 +481,7 @@ class TechtreeController extends BaseController
             // tech elsewhere in the tree from 'locked' to 'available' (or update an
             // arrow's 'met' flag) — without this the graph only reflected that after
             // a full page reload. See buildPhases()/phasesUpdatePayload() docblocks.
-            'phases_update' => $this->phasesUpdatePayload($this->buildPhases($colonyId)),
+            'phases_update' => $this->phasesUpdatePayload($this->buildPhases($colonyId, ! $this->sciencelabBuilt($colonyId))),
         ]);
     }
 
@@ -514,7 +510,7 @@ class TechtreeController extends BaseController
             ? $this->researchService->knowledgeLevelupCost($colonyId, $id, (int) ($tech['ap_for_levelup'] ?? 0))
             : (int) ($tech['ap_for_levelup'] ?? 0);
 
-        return [
+        $state = [
             'id' => $id,
             'level' => (int) ($tech['level'] ?? 0),
             'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
@@ -522,6 +518,23 @@ class TechtreeController extends BaseController
             'ap_cap' => $type === 'research' ? $this->researchService->apCapState($colonyId, $id) : null,
             'status' => $this->computeStatus($tech, $techtree),
         ];
+
+        // Without a lab the answer stays in words, like the tree itself (2026-11-26).
+        if ($type === 'research' && ! $this->sciencelabBuilt($colonyId)) {
+            $rough = $this->researchService->roughProgressBand($state['ap_spend'], $apForLevelup);
+            $state = [
+                ...$state,
+                'cap_reached' => $state['ap_cap'] !== null && $state['ap_cap']['remaining'] < 1,
+                'rough_progress' => $rough,
+                'rough_progress_label' => $rough !== null ? __("knowledge.rough_progress_{$rough}") : null,
+                'bonus_progress' => $state['ap_spend'] > 0,
+                'ap_spend' => 0,
+                'ap_for_levelup' => 0,
+                'ap_cap' => null,
+            ];
+        }
+
+        return $state;
     }
 
     /** @param  array<string, int|string>  $replace  placeholders of the error text */

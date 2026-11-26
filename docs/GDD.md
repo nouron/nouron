@@ -582,12 +582,12 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 | Berater | Analytiker | Raumfahrer | Konsul |
 | Domäne (§13.1) | Wissen | Navigation | Wirtschaft |
 | Kernversprechen | *Einmal investieren, dauerhaft profitieren* | *Aktiv arbeiten, breit versorgen* | *Flexibel zukaufen, stabil bleiben* |
-| Schaltet frei | alle sieben Kenntnisse (§10) | Drohne, Frachter, Korvette + Außenmissionen (§8b) | Handelsangebote, Verhandlung (§12) |
+| Schaltet frei | Analytiker, Kenntnis-Rabatt, genaue Zahlen (Forschungsfortschritt, Effektwerte, Vertrauen) — keine eigene Kenntnis (§10) | Drohne, Frachter, Korvette + Außenmissionen (§8b) | Handelsangebote, Verhandlung (§12) |
 | Wirkt über | permanente Boni ohne laufende Kosten | wiederholbare Missionen mit laufendem Aufwand | Credits-Umwandlung nach Bedarf |
 | Bezahlt mit | AP im Voraus | AP + Organika + Verschleiß, laufend | Credits, laufend |
 | Risiko | langsamer Start, Ertrag kommt spät | Logistikaufwand jeden Sol, Schiffe verschleißen | Angebotslage ist nicht vollständig planbar |
 
-**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihre Wirkung liegt in den Kenntnis-Effekten (§10); Kenntnisse schaffen keinen Wohnraum, mehr Ausbautiefe kommt allein aus Wohnraum (§6). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
+**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Jede Kenntnis hängt an ihrem eigenen Gebäude und ist damit in jeder Eröffnung erforschbar; das Labor ist kein Tor, sondern bringt **Tempo und Genauigkeit**: den Analytiker (höherer AP-Deckel je Kenntnis und Sol), Rabatte auf Kenntnis-Stufen und die genauen Zahlen (Fortschritt in AP, Effektwerte, Vertrauenszahl, Prognosen). Ihre Wirkung liegt in den Kenntnis-Effekten (§10); Kenntnisse schaffen keinen Wohnraum, mehr Ausbautiefe kommt allein aus Wohnraum (§6). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos — und forscht in allen Kenntnissen schneller und planbarer als die anderen Eröffnungen.
 
 **Pfad B — Hangar.** Der Pfad der aktiven Versorgung. Schiffe erschließen den Missionskatalog (§8b) und damit die breiteste Ressourcenbasis im Spiel — Regolith (Bergungsflüge), Organika, Credits, Werkstoffe und Tile-Aufklärung kommen alle über Missionen. Der Preis ist dauerhafter Aufwand: jede Mission kostet AP und Proviant, Schiffe verschleißen und wollen repariert werden. Wer diesen Pfad zuerst geht, hat früh viele Hebel, muss sie aber jeden Sol bedienen.
 
@@ -599,25 +599,25 @@ Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seine
 
 > **Status: umgesetzt (T41), alle Werte Platzhalter** (`config/path_depth.php`, nicht gemessen). Umsetzungsplan und offene Fragen: `docs/superpowers/specs/2026-10-23-pfad-vertiefung.md`.
 
-Jedes Pfadgebäude bietet mehrere **Dinge**, und jedes Ding lässt sich in fünf Stufen vertiefen. Im Labor ist das längst so: sieben Kenntnisse, jede in Stufen erforschbar (§10). Cantina und Hangar bekommen dieselbe Bauart:
+Jedes Pfadgebäude bietet mehrere **Dinge**, und jedes Ding lässt sich in fünf Stufen vertiefen. Bei den Kenntnissen ist das längst so: sieben Kenntnisse, jede in Stufen erforschbar (§10); jede hängt an ihrem eigenen Gebäude, das Labor macht die Forschung schneller und genauer. Cantina und Hangar bekommen dieselbe Bauart:
 
-| | **Labor** | **Cantina** | **Hangar** |
+| | **Labor (Kenntnisse)** | **Cantina** | **Hangar** |
 |---|---|---|---|
 | Das Ding | Kenntnis | Figur | Missionstyp |
 | Fortschritts-Begriff | Kenntnis-Level | **Vertrautheit** | **Missionserfahrung** (Label-Vorschlag) |
 | Wie man aufsteigt | AP investieren (planbar) | AP investieren (planbar) | AP investieren (planbar) |
 | Was eine Stufe bringt | Kenntnis-Effekt (§10) | Fortschritt am Vertrautheitsbalken; mehr Zugang zur Figur (Dialog, Kodex, später Anliegen mit besserer Belohnung) ist Ausbau-Idee, in der ersten Version ohne Zusatzeffekt | höherer Ertrag der skalierbaren Belohnungen der Missionsfamilie (linear je Stufe) |
 
-**Das ist ein Strukturmodell, kein Bildschirm.** Der Spieler sieht nirgends ein gemeinsames Raster. Jede Oberfläche zeigt den Fortschritt in ihrer eigenen Form: das Labor im Techtree, die Cantina als Balken an der Figur, der Hangar als Balken am Missionstyp. Nur die Bauart ist gleich, damit der Spieler das Prinzip einmal lernt.
+**Das ist ein Strukturmodell, kein Bildschirm.** Der Spieler sieht nirgends ein gemeinsames Raster. Jede Oberfläche zeigt den Fortschritt in ihrer eigenen Form: die Kenntnisse im Techtree, die Cantina als Balken an der Figur, der Hangar als Balken am Missionstyp. Nur die Bauart ist gleich, damit der Spieler das Prinzip einmal lernt.
 
 **Warum das gut ist.**
 - *Parität (§4b):* Jedes Pfadgebäude bekommt eine eigene, dauerhafte Fortschrittsspur und damit eine eigene Antwort auf „Wohin investiere ich?“. Das bedient die Idee gleichwertiger Eröffnungen, ohne Labor-Forschung in Hangar oder Cantina zu kopieren.
 - *Breite gegen Tiefe* bleibt die Entscheidung überall: wenige Dinge tief oder viele flach.
 - *Verständlichkeit:* angezeigte Stufe = wirkende Stufe, die nächste Schwelle ist sichtbar.
 
-**Aufstieg überall per Investition.** Alle drei Pfadgebäude steigen durch AP-Investition, nicht durch Nutzung. Das gibt den Pfaden dieselbe, einmal erlernbare Regel und dem Hangar eine Senke für sonst ungenutzte AP. Version 1 kennt keinen Fortschritt aus der Ausführung: Der Hangar ist ein Training (Simulator, Übungsflüge ohne Einsatz), die Cantina Beziehungspflege (Zeit mit der Figur verbringen, erst nach dem ersten Treffen der Figur im Lauf). Das Labor funktioniert schon so.
+**Aufstieg überall per Investition.** Alle drei Pfadgebäude steigen durch AP-Investition, nicht durch Nutzung. Das gibt den Pfaden dieselbe, einmal erlernbare Regel und dem Hangar eine Senke für sonst ungenutzte AP. Version 1 kennt keinen Fortschritt aus der Ausführung: Der Hangar ist ein Training (Simulator, Übungsflüge ohne Einsatz), die Cantina Beziehungspflege (Zeit mit der Figur verbringen, erst nach dem ersten Treffen der Figur im Lauf). Kenntnisse funktionieren schon so.
 
-**Ausbau gegen Ausführung.** Der *Ausbau* (Stufenaufstieg) kostet nur AP aus dem einen gemeinsamen Pool, keine Rohstoffe, analog zur Kenntnis im Labor. Die *Ausführung* (Hangar-Mission: AP, Organika, Verschleiß; Cantina-Gespräch oder Handel: AP, beim Handel Rohstoffe) behält ihre Kosten. Die Stufe macht die Ausführung besser (z. B. Ertrag), nicht billiger oder anders bezahlt. Beide ziehen am selben AP-Pool und konkurrieren darum; das ist die Senke für Leerlauf-AP (Hangar-First). Kostenverlauf: Spec, Abschnitt 4b.
+**Ausbau gegen Ausführung.** Der *Ausbau* (Stufenaufstieg) kostet nur AP aus dem einen gemeinsamen Pool, keine Rohstoffe, analog zur Kenntnis. Die *Ausführung* (Hangar-Mission: AP, Organika, Verschleiß; Cantina-Gespräch oder Handel: AP, beim Handel Rohstoffe) behält ihre Kosten. Die Stufe macht die Ausführung besser (z. B. Ertrag), nicht billiger oder anders bezahlt. Beide ziehen am selben AP-Pool und konkurrieren darum; das ist die Senke für Leerlauf-AP (Hangar-First). Kostenverlauf: Spec, Abschnitt 4b.
 
 **Begriffe.** „Vertrauen“ bleibt allein die Kolonie-Stimmung (§14). Die Bindung an eine Figur heißt **Vertrautheit**, die Erfahrung mit einer Missionsfamilie **Missionserfahrung** (Vorschlag; Alternative „Training“) — sonst würde ein vierter „Level“ oder ein zweites „Vertrauen“ den Spieler verwirren. Der Balken an der Figur ist ein Vertrautheitsbalken.
 
@@ -628,7 +628,7 @@ Jedes Pfadgebäude bietet mehrere **Dinge**, und jedes Ding lässt sich in fünf
 
 **Sol-Limit.** Wie der Ausbau von Gebäuden hat auch das Training eine Obergrenze je Familie und Sol: einen kleinen Grundwert plus den **Fach-Deckel des Raumfahrers** je Rang (§13.2). Ohne Raumfahrer trainiert der Hangar langsam. So lässt sich keine Familie in einem einzigen Sol hochziehen; die Wahl zwischen Breite und Tiefe bleibt eine Frage von mehreren Sol. Das Training ist bewusst etwas teurer im Pool als eine reine Umrechnung, weil es die vorgesehene Senke für ungenutzte AP im Hangar-First-Start ist (Annahme, AP-Skala 2026-11-13 §11.2).
 
-**Gleiches Prinzip im Labor.** Auch das Labor nimmt je Kenntnis und Sol nur begrenzt AP auf: Grundwert plus **Fach-Deckel des Analytikers** je Rang (§13.2); zweckgebundene Bonus-AP wie die des Barkeepers sind ausgenommen. Ohne Analytiker forscht das Labor langsam, analog zu „ohne Baumeister baut man langsamer". Damit gilt in allen drei Pfaden dieselbe Regel: AP lassen sich nicht an einem Sol in eine einzige Sache kippen, und der Fach-Berater macht den Pfad schneller. Bau, Labor, Training und Gespräch nutzen denselben Sol-Zähler (`DailyApCapService`).
+**Gleiches Prinzip bei Kenntnissen.** Auch jede Kenntnis nimmt je Sol nur begrenzt AP auf: Grundwert plus **Fach-Deckel des Analytikers** je Rang (§13.2); zweckgebundene Bonus-AP wie die des Barkeepers sind ausgenommen. Der Analytiker kommt mit dem Labor; ohne ihn forscht die Kolonie mit dem Grund-Deckel langsam, analog zu „ohne Baumeister baut man langsamer". Damit gilt in allen drei Pfaden dieselbe Regel: AP lassen sich nicht an einem Sol in eine einzige Sache kippen, und der Fach-Berater macht den Pfad schneller. Bau, Forschung, Training und Gespräch nutzen denselben Sol-Zähler (`DailyApCapService`).
 
 **Grenzen (Absicht).**
 - **Kein zweiter Prozentbonus-Stapel.** Raumfahrer-Rang und Kenntnis-Level wirken schon auf Erfolgschance und Proviant (§8b). Die Familienstufe wirkt deshalb nur auf den Ertrag und bleibt klein; weitere Stufenwirkung soll bevorzugt *Neues* freischalten (Varianten, Dialoge, Zugang).
@@ -643,18 +643,22 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 | Grundbedürfnis | Sockel (alle) | Pfad A — Analytik | Pfad B — Hangar | Pfad C — Cantina |
 |---|---|---|---|---|
-| **Regolith** | 1 Harvester, Grundeinkommen pro Sol (§4c) | `geology` erhöht den Harvester-Ertrag | Bergungsflüge holen Regolith aus gescannten Funden | **kein dedizierter Wachstumshebel** — opportunistischer Credits→Regolith-Kauf als Sicherheitsnetz (§12), siehe „Pfad-C-Hebel" unten |
-| **Organika** | Agrardom | `agronomy` erhöht die Produktion mit jedem Level (glockenförmig) | Versorgungsfahrten liefern Organika | Ankauf über Bar-Angebote |
+| **Regolith** | 1 Harvester, Grundeinkommen pro Sol (§4c); `geology` (Kenntnis am Harvester) erhöht den Ertrag | `geology` schneller und billiger erforscht (Analytiker, Rabatt) | Bergungsflüge holen Regolith aus gescannten Funden | **kein dedizierter Wachstumshebel** — opportunistischer Credits→Regolith-Kauf als Sicherheitsnetz (§12), siehe „Pfad-C-Hebel" unten |
+| **Organika** | Agrardom; `agronomy` (Kenntnis am Agrardom) erhöht die Produktion mit jedem Level (glockenförmig) | `agronomy` schneller und billiger erforscht | Versorgungsfahrten liefern Organika | Ankauf über Bar-Angebote |
 | **Credits** | Relaisvergütung, Ratssubvention | ⚠️ Hebel offen | Botenflug / Konvoi-Begleitung | Cantina-Begegnungspool (§12) — Zufallsbegegnungen mit Credits-Ausgang, Bar-Level-skaliert statt Konsul-skaliert |
-| **Vertrauen** | Gebäude-Boni, Ereignisse | `health` + Krankenstation | `mission_aid_transport` (Vertrauens-Ereignis) | Cantina `trust_per_lv` + Handelserfolge |
+| **Vertrauen** | Gebäude-Boni, Ereignisse; `health` an der Krankenstation | `health` schneller erforscht; genaue Vertrauenszahl | `mission_aid_transport` (Vertrauens-Ereignis) | Cantina `trust_per_lv` + Handelserfolge |
 
 **Pfad A Credits-Hebel:** weiterhin offen (s. Tabelle). Kandidat: Kenntnis-Effekt, der Kosten senkt — passt besser zum Pfad-Charakter als eine zusätzliche Einnahmequelle (ROADMAP „Offene Pfad-Paritäts-Fragen"). **Pfad C Credits-Hebel:** geschlossen über den Cantina-Begegnungspool (§12) — bewusst nicht als verlässliche Dauereinnahme, sondern als unregelmäßige, teils charaktergebundene Zufallsbegegnung, damit der Pfad-Charakter „Flexibilität statt Verlässlichkeit" erhalten bleibt und keine bedingungslose, garantierte, dauerhafte Einnahme entsteht.
+
+**Kenntnisse gehören keinem Pfad (Owner 2026-11-26).** Jede Kenntnis hängt an ihrem eigenen Gebäude (§10): Hangar und Cantina bringen je eine Grundkenntnis mit (Kartografie, Handel), Geologie und Agronomie sind ab Phase 1 Teil des Sockels. Pfad A verliert damit seine exklusiven Hebel und wird zum Beschleuniger: Er hebt dieselben Kenntnisse schneller, billiger und mit genauen Zahlen.
+
+> ⚠️ BALANCE CONCERN: Mit dem Wegfall des Labor-Tors stehen `geology` und `agronomy` allen Eröffnungen offen; die Regolith-Herleitung in §13.7 rechnet `geology` noch als Hebel von Pfad A. Ob Labor-First als reiner Tempo- und Genauigkeits-Pfad gleichwertig bleibt, muss ein Bot-Batch je Eröffnung zeigen (Kenntnis-Stufen-Summe und Regolith je Sol); offene Variable: wie stark der Bot ohne Labor überhaupt forscht.
 
 > **Prüfregel für künftige Mechaniken:** Wird eine neue Ressource, Kosten- oder Bedarfsachse eingeführt, ist zu prüfen, ob alle drei Pfade sie bedienen können. Ist das nicht der Fall, ist entweder die Mechanik anzupassen oder den unterversorgten Pfaden ein Hebel zu geben — **nicht** die Ungleichheit hinzunehmen.
 
 ### Pfad-C-Hebel: Credits statt Regolith
 
-**Pfad C hat keinen dedizierten Regolith-Hebel.** Ein Organika→Regolith-Tausch als Pfad-C-Hebel ist ausgeschlossen — er würde das knappere gegen das häufigere Gut tauschen (Knappheitsordnung §3). Regolith-Zuflüsse neben dem Harvester kommen strukturell über Pfad A (`geology`) und Pfad B (Bergungsflüge); die Neuherleitung steht in §13.7 aus. Der Engpass, gegen den Pfad C als „Pfad der Flexibilität" antritt, ist Credits — und die Kolonie produziert strukturelle Organika-Überschüsse (§4a), die über diesen Hebel monetarisiert werden. Opportunistisch bleibt dem Spieler dennoch ein Nebenweg offen: Der Reisende Händler (Corvan) führt im Alltagsgeschäft auch Credits→Regolith-Kaufangebote, sodass eine Cantina-lastige Kolonie ihre Credits-Überschüsse bei Bedarf in Regolith umwandeln kann. Das ist kein struktureller Ersatz für A/B (Angebot ist unzuverlässig, an Losgröße und Kaufkraft gebunden) und ändert nichts an der Designabsicht — Pfad C bleibt ohne eigenen, planbaren Regolith-Wachstumshebel —, macht aber die Formulierung „trägt keinen Regolith-Hebel" zu absolut.
+**Pfad C hat keinen dedizierten Regolith-Hebel.** Ein Organika→Regolith-Tausch als Pfad-C-Hebel ist ausgeschlossen — er würde das knappere gegen das häufigere Gut tauschen (Knappheitsordnung §3). Regolith-Zuflüsse neben dem Harvester kommen strukturell über `geology` (Kenntnis am Harvester, offen für alle, mit Labor schneller) und Pfad B (Bergungsflüge); die Neuherleitung steht in §13.7 aus. Der Engpass, gegen den Pfad C als „Pfad der Flexibilität" antritt, ist Credits — und die Kolonie produziert strukturelle Organika-Überschüsse (§4a), die über diesen Hebel monetarisiert werden. Opportunistisch bleibt dem Spieler dennoch ein Nebenweg offen: Der Reisende Händler (Corvan) führt im Alltagsgeschäft auch Credits→Regolith-Kaufangebote, sodass eine Cantina-lastige Kolonie ihre Credits-Überschüsse bei Bedarf in Regolith umwandeln kann. Das ist kein struktureller Ersatz für A/B (Angebot ist unzuverlässig, an Losgröße und Kaufkraft gebunden) und ändert nichts an der Designabsicht — Pfad C bleibt ohne eigenen, planbaren Regolith-Wachstumshebel —, macht aber die Formulierung „trägt keinen Regolith-Hebel" zu absolut.
 
 **Mechanik: Organika-Verkauf als Angebotstyp des Reisenden Händlers.** Neben Kauf (Credits→Ressource) und Tausch (Ressource↔Ressource) gibt es den **Verkauf** (Organika→Credits), eng gefasst nur für Organika — Regolith- und Werkstoff-Verkauf bleiben außen vor, damit kein Umweg zur Regolith-Beschaffung entsteht.
 
@@ -697,7 +701,7 @@ Instanzen bedienen damit die **Breiten-Achse** (Bauplatz + Instandhaltung), Leve
 - **Ja** → Instanz. Die Kolonie hat mehrere Wohnhabitate, mehrere Kuppeln, mehrere Hallen.
 - **Nein, weil das Gebäude die Kolonie als Ganzes repräsentiert** → Level. Es gibt eine Kommandozentrale, eine Funkanlage, einen Handelsposten.
 
-Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes freischaltet** statt nur eine Zahl zu erhöhen — beim Analytik-Labor sind die Level die Kenntnis-Stufen, beim Hangar die Schiffsklassen.
+Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes freischaltet** statt nur eine Zahl zu erhöhen — beim Hangar sind die Level die Schiffsklassen, beim Analytik-Labor die Rabatte auf Kenntnis-Stufen.
 
 ### Zuordnung
 
@@ -708,7 +712,7 @@ Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes f
 | **Wohnhabitat** | Instanz (+ Level 1–3 je Instanz) | 6 | Mehrere Habitate; das Level je Instanz trägt den Wohnraum-Beitrag (§6). |
 | **Agrardom** | Level | Lv3 | Bleibt Level-Gebäude (Owner-Entscheidung F1). Er hat mit Level und `agronomy`-Kenntnis bereits zwei Wachstumshebel — eine dritte Achse (Instanz) wäre Redundanz ohne neue Entscheidung, und eine zusätzliche Instanz würde ein knappes Koloniefeld binden, das mit einzigartigen Gebäuden konkurriert. |
 | **Hangar** | Level (Klasse und Bucht) | Lv3 | Eine einzige Halle; die Stufe ist zugleich Schiffsklasse und Buchtenzahl — siehe unten. |
-| **Analytik-Labor** | Level | Lv5 | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Höhere Stufen haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt als fester AP-Abzug auf Lv3 und Lv5, §13.3). |
+| **Analytik-Labor** | Level | Lv5 | Stufe 1 bringt Analytiker-Slot und genaue Zahlen; einzelne höhere Stufen senken die AP-Kosten jeder Kenntnis-Stufe um einen festen Betrag (§13.3). Laborstufen schalten keine Kenntnisse frei (§10). ⚠️ Seit dem Wegfall der Freischalt-Rolle haben nicht alle Laborstufen einen eigenen Effekt — Deckel oder Stufenwirkung prüfen. |
 | **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
 | **Leitstelle** | Level | Lv3 | Eine pro Kolonie. |
 | **Handelsposten** | Level | Lv3 | Eine pro Kolonie. |
@@ -745,7 +749,7 @@ Ein Tile fördert **konstant zum Frischwert**, bis das Vorkommen aufgebraucht is
 
 **Sichtbarkeit für den Spieler.** Die Schleife funktioniert nur, wenn der Spieler *vor* dem Erschöpfen ein Ziel kennt. Dafür startet die Kolonie mit zwei vorerkundeten Ausweich-Vorkommen (Ring 3, „Nexus-Scout"-Fund) — ein garantiertes Gegensatzpaar aus hohem Ertrag/geringer Mächtigkeit und niedrigem Ertrag/großer Mächtigkeit, damit die erste Verlege-Entscheidung ein echter Tradeoff ist, nicht nur ein einzelnes bekanntes Ziel. Ein Onboarding-Hint warnt zusätzlich, sobald das Restvorkommen des aktiven Tiles unter die Schwelle `game.harvester.low_regolith_warning_pct` fällt, und erkundete, nicht erschöpfte Ausweich-Tiles sind auf der Hex-Karte markiert. Gegen Ertragssorgen („zu wenig Regolith bei Sol N") wird nicht an `fresh_yield`/`resource_max` gedreht, solange nicht mehrere Messpunkte über verschiedene Tile-Typen und Pfadwahlen vorliegen — das Umzugs-Timing ist der Hebel.
 
-> **Hinweis zur Geologie-Kenntnis:** `geology` (Harvester-Bonus, §13.7) ist nicht CC-gegatet — Gate ist Analytik-Labor Lv2 + Harvester Lv1, beides ab CC Lv2 erreichbar. Kolonien, die zuerst Hangar oder Cantina bauen, laufen entsprechend länger ohne Kenntnis-Boost auf dem Harvester; das ist Teil der Pfadwahl, kein Fehler.
+> **Hinweis zur Geologie-Kenntnis:** `geology` (Harvester-Bonus, §13.7) braucht nur den Harvester und ist damit ab Phase 1 in jeder Eröffnung erforschbar (Sockel-Kenntnis, §10). Die Pfadwahl entscheidet nur das Tempo: Mit Labor und Analytiker steigt Geologie schneller und billiger.
 
 **Playtest-Monitoring:** Umzugsfrequenz pro Run (mehrere, aber keine Routine) und Anteil der Sole mit Ertragserschöpfung (Ziel: niedrig).
 
@@ -1213,9 +1217,9 @@ Exakte Kosten (Navigation-AP, Organika-Proviant, Zusatzmaterialien), Distanzen, 
 
 **Schiffsrollen:** Drohne = Information (Tiles, Scans, Daten), Frachter = Güter, Korvette = Schutzdienste und Bergung. Nicht jede Mission steht jedem Schiff offen — das gibt der Akquise-Entscheidung (§8b Akquise-Pfade) strategisches Gewicht.
 
-**Gate-Schema — nur zwei Typen:** Eine Mission ist entweder an **eine Kenntnis mit Mindestlevel** gebunden oder an ein **Ziel-Tile** (Fund-/Ruinen-Tile — die Mission braucht physisch ein Ziel). Keine CC-Level- und keine Gebäude-Gates: Gebäude-Gates wären redundant (jede Kenntnis setzt das Analytik-Labor ohnehin voraus), CC-Gates wären eine dritte, schwer kommunizierbare Bedingungsart. Ungegatete Missionen und die Fund-Bergung stehen **immer** zur Verfügung — jedes Schiff hat ab dem ersten Sol sinnvolle Einsätze.
+**Gate-Schema — nur zwei Typen:** Eine Mission ist entweder an **eine Kenntnis mit Mindestlevel** gebunden oder an ein **Ziel-Tile** (Fund-/Ruinen-Tile — die Mission braucht physisch ein Ziel). Keine CC-Level- und keine Gebäude-Gates: Gebäude-Gates wären redundant (jede Kenntnis setzt ihr eigenes Gebäude ohnehin voraus, §10), CC-Gates wären eine dritte, schwer kommunizierbare Bedingungsart. Ungegatete Missionen und die Fund-Bergung stehen **immer** zur Verfügung — jedes Schiff hat ab dem ersten Sol sinnvolle Einsätze.
 
-**Pfadwahl-Interaktion (Hangar-first):** Wer den Hangar-Pfad vor dem Analytik-Labor wählt, hat noch keine Kenntnisforschung — die kenntnis-gebundenen Missionen erscheinen ausgegraut mit Bedingung. Das ist Absicht: Hangar-first heißt realistisch Drohne zuerst, und die Drohne ist mit 3 sofort verfügbaren Missionen am besten versorgt; der Frachter hat mit der Versorgungsfahrt eine wiederholbare, Organika-positive Kernmission. Die ausgegrauten Missionen sind die sichtbare Zugkraft, das Labor als zweites Pfadgebäude nachzuziehen — Pfade sind Sequenzierung, kein Ausschluss. ⚠️ Playtest-Beobachtungspunkt: Fühlt sich eine früh gekaufte Korvette vor dem Labor-Bau unterbeschäftigt an, ist der Hebel eine zweite ungegatete Korvetten-Mission (z.B. Umkreis-Patrouille auf „sofort" senken), nicht die Streichung der Gates.
+**Pfadwahl-Interaktion (Hangar-first):** Wer den Hangar zuerst baut, forscht Kartografie (Kenntnis des Hangars) und Konstruktion (Kenntnis der Kommandozentrale) ohne Labor, nur langsamer; die daran gebundenen Missionen öffnen sich mit der Kenntnis-Stufe. Missionen an Handel oder Verteidigung erscheinen ausgegraut mit Bedingung, bis Cantina bzw. Leitstelle stehen und die Kenntnis erforscht ist. Das ist Absicht: Hangar-first heißt realistisch Drohne zuerst, und die Drohne ist mit 3 sofort verfügbaren Missionen am besten versorgt; der Frachter hat mit der Versorgungsfahrt eine wiederholbare, Organika-positive Kernmission. Die ausgegrauten Missionen sind die sichtbare Zugkraft, die übrigen Gebäude nachzuziehen, und das Labor macht die Kenntnisse dahinter schneller — Pfade sind Sequenzierung, kein Ausschluss. ⚠️ Playtest-Beobachtungspunkt: Fühlt sich eine früh gekaufte Korvette ohne Verteidigungs-Kenntnis unterbeschäftigt an, ist der Hebel eine zweite ungegatete Korvetten-Mission (z.B. Umkreis-Patrouille auf „sofort" senken), nicht die Streichung der Gates.
 
 > **Idee (später konzipieren):** Bar-Begegnungen (Cantina-NPCs) können Missions-Varianten mit verbesserten Boni oder veränderten Parametern anbieten — als Alternative für den Pfad Hangar-first → Cantina-second (vor dem Labor). Ziel: verschiedene Spielweisen gleichwertig halten (Roguelike-Varianz). Noch nicht designt.
 
@@ -1332,7 +1336,7 @@ Ein Ereignis kündigt sich 1 Sol vorher als `colony_log`-Eintrag an (Kategorie �
 
 ## 10. Kenntnisse (ehem. Forschung)
 
-7 Wissensgebiete — kein akademisches Studium, sondern praktisches Kolonialwissen, das durch Analyse-AP (Analytiker-Berater) erarbeitet wird:
+7 Wissensgebiete — kein akademisches Studium, sondern praktisches Kolonialwissen, das mit AP aus dem gemeinsamen Pool erarbeitet wird:
 
 | Key | Name (DE) | Name (EN) |
 |-----|-----------|-----------|
@@ -1346,17 +1350,40 @@ Ein Ereignis kündigt sich 1 Sol vorher als `colony_log`-Eintrag an (Kategorie �
 
 **Alle 7 Kenntnisse sind in jedem Run verfügbar** — endgültiger Zustand, keine offene Design-Frage. Eine roguelike-typische Teilmengen-Auswahl pro Run wurde geprüft und verworfen: Bei nur 7 Kenntnissen wäre das Risiko zu hoch, dass ein Run ohne eine essentielle Kenntnis auskommen müsste. Die Roguelike-Varianz des Spiels trägt sich über andere Systeme (Startbedingungen, Encounter-Würfe, Bar-Angebote, Berater-Erfolgschancen), nicht über die Kenntnisverfügbarkeit.
 
+### Jede Kenntnis hat ihr Gebäude (Owner 2026-11-26)
+
+**Das Gebäude schaltet seine Kenntnis frei, die Kenntnis verstärkt ihr Gebäude.** Jede Kenntnis braucht genau ein Gebäude auf Stufe 1, und kein zweites; das Labor ist keine Voraussetzung. Steht das Gebäude, ist die Kenntnis erforschbar, mit oder ohne Labor.
+
+| Kenntnis | Gebäude | Klasse | verstärkt … |
+|---|---|---|---|
+| Konstruktion (`construction`) | Kommandozentrale | Grundkenntnis | große Ausbauschritte, praktisch die Kommandozentrale (Rabatt) |
+| Kartografie (`cartography`) | Hangar | Grundkenntnis | Missionen und Erkundung |
+| Handel (`trade`) | Cantina | Grundkenntnis | Handelskonditionen, Angebote, Verhandlung |
+| Geologie (`geology`) | Harvester | Sockel | Harvester-Ertrag, Schutz vor Instabilität |
+| Agronomie (`agronomy`) | Agrardom | Sockel | Agrardom-Produktion, Vertrauen |
+| Gesundheit (`health`) | Krankenstation | fortgeschritten | Schutz vor Ausbrüchen (neben der Krankenstation), Vertrauen |
+| Verteidigung (`defense`) | Leitstelle | fortgeschritten | Schutz vor Stürmen, Vertrauen |
+
+- **Grundkenntnisse** hängen an der Kommandozentrale oder an einem Fokus-Gebäude: Jede Eröffnung bringt so eine eigene Kenntnis mit (Hangar → Kartografie, Cantina → Handel), Konstruktion hat jede Kolonie.
+- **Sockel-Kenntnisse** hängen an den Produktionsgebäuden aus Phase 1 und stehen jeder Kolonie offen, unabhängig von der Pfadwahl.
+- **Fortgeschrittene Kenntnisse** hängen an späteren Gebäuden und kommen erst mit ihnen.
+- **Das Labor hat keine eigene Kenntnis.** Es bringt Tempo und Genauigkeit für alle sieben: den Analytiker (höherer AP-Deckel je Kenntnis und Sol), Rabatte auf Kenntnis-Stufen (§13.3) und die genauen Zahlen (siehe unten).
+- **AP ohne Gebäude werden abgelehnt.** Fehlt das Gebäude einer Kenntnis, nimmt sie keine AP an; der Grund lautet „Gebäude fehlt“. Kein AP verfällt still.
+- Wird das Gebäude zurückgebaut, bleiben erreichte Stufen erhalten (Bestandsschutz wie beim Labor-Rückbau, `docs/gdd/techtree.md` §11.5; Annahme, noch nicht vom Owner bestätigt); weitere Forschung wartet, bis es wieder steht.
+
+> **Offen (T61):** Verteidigung passt zur Leitstelle bisher nur thematisch; ihr Effekt wirkt nicht auf die Leitstelle selbst. Beim Umbau der Mittelspiel-Ereignisse prüfen, ob `defense` die Leitstelle verstärken soll.
+
 ### Level-Modell ohne Decay
 
 Kenntnisse verwenden das **Level-Modell (Lv1–5)** — identisch zu Gebäuden, aber **ohne Decay**. Einmal erforschtes Wissen bleibt permanent. Es gibt keinen SP-Verfall auf Kenntnissen — das wäre thematisch unlogisch (Wissen verfällt nicht). Die natürliche Begrenzung erfolgt über AP-Knappheit und Rundenstruktur.
 
-Jedes Level wird durch Investition von AP aus dem gemeinsamen Pool erarbeitet; der Analytiker-Rang wirkt über den Pool. AP-Kosten steigen mit dem Level (steigende Glockenform). Das Labor nimmt je Kenntnis und Sol nur begrenzt AP auf (§4b), und Stufe 4 und 5 setzen eine Kommandozentrale gleicher Stufe voraus (`game.knowledge_cc_level_cap`). Die strategische Entscheidung: Breite (viele Kenntnisse auf Lv2–3) vs. Tiefe (wenige Kenntnisse auf Lv4–5).
+Jedes Level wird durch Investition von AP aus dem gemeinsamen Pool erarbeitet; der Analytiker-Rang wirkt über den Pool und den Deckel. AP-Kosten steigen mit dem Level (steigende Glockenform). Jede Kenntnis nimmt je Sol nur begrenzt AP auf: ohne Labor den Grund-Deckel, mit Analytiker mehr (§4b, §13.2). Stufe 4 und 5 setzen eine Kommandozentrale gleicher Stufe voraus (`game.knowledge_cc_level_cap`), nicht zusätzlich das Labor. Die strategische Entscheidung: Breite (viele Kenntnisse auf Lv2–3) vs. Tiefe (wenige Kenntnisse auf Lv4–5).
 
 ### Stille Forschung
 
-Kenntnisse sind auch ohne Labor im Hintergrund aktiv. Neben der aktiven Forschung im Labor gibt es **zweckgebundene Bonus-AP** aus der Cantina: den Rat des Barkeepers und die Kenntnis-Schübe von Sarka, Deva und Lenn (§12). Sie stammen nicht aus dem gemeinsamen Pool und fallen nicht unter den Sol-Deckel des Labors. Erreichen sie die Schwelle einer Kenntnis, steigt diese **von selbst** eine Stufe auf, mit oder ohne Labor. Alle übrigen Sperren gelten weiter (Kommandozentrale-Stufe, Voraussetzungen, Höchststufe); eine gesperrte oder ausgereizte Kenntnis ist als Ziel nicht wählbar, damit keine Bonus-AP still verfallen. Aktives Forschen, also eigene AP investieren oder eine Stufe zurückbauen, bleibt dem Labor vorbehalten.
+Neben der eigenen Forschung gibt es **zweckgebundene Bonus-AP** aus der Cantina: den Rat des Barkeepers und die Kenntnis-Schübe von Sarka, Deva und Lenn (§12). Sie stammen nicht aus dem gemeinsamen Pool und fallen nicht unter den Sol-Deckel der Kenntnis. Erreichen sie die Schwelle einer Kenntnis, steigt diese **von selbst** eine Stufe auf. Es gelten dieselben Sperren wie für eigene Forschung (Gebäude der Kenntnis, Kommandozentrale-Stufe, Höchststufe); eine gesperrte oder ausgereizte Kenntnis ist als Ziel nicht wählbar, damit keine Bonus-AP still verfallen. Eine Sonderregel „ohne Labor“ braucht die stille Forschung nicht mehr, weil das Labor ohnehin kein Tor ist.
 
-**Was der Spieler ohne Labor sieht:** Den Fortschritt einer Kenntnis nur grob, in Worten statt Zahlen; erreichte Stufen und ihren Effekt dagegen genau, denn eine wirkende Stufe darf nicht versteckt sein (angezeigte Zahl = wirkende Zahl). Das Labor bringt die genaue Sicht und die eigene Forschung, nicht erst die Wirkung. So bleibt das Labor die schnelle, planbare Kenntnis-Quelle, und Kolonien ohne Labor haben trotzdem einen langsamen Weg zu Kenntnissen.
+**Was der Spieler ohne Labor sieht (Labor-Vorschau):** Der Techtree ist sichtbar und erforschbar; jede Kenntnis, deren Gebäude steht, nimmt AP an, mit dem Grund-Deckel. Den Fortschritt einer Kenntnis zeigt er nur grob, in Worten statt Zahlen, und ohne Effekte künftiger Stufen; erreichte Stufen und ihren Effekt dagegen genau, denn eine wirkende Stufe darf nicht versteckt sein (angezeigte Zahl = wirkende Zahl). Das Labor bringt die genaue Sicht (Fortschritt in AP, Effektwerte, Vertrauenszahl, Prognosen) und das höhere Tempo, nicht erst die Forschung. So bleibt das Labor die schnelle, planbare Kenntnis-Quelle, und jede Kolonie forscht trotzdem in den Kenntnissen ihrer Gebäude.
 
 > **Kosten-Kurve:** `levelup_costs` für Kenntnisse steigen mit jedem Level (progressive Kurve). Einzelne Level-Kosten sind in `config/knowledge.php` definiert. Das Design-Ziel: Kenntnisforschung soll mehrere Sole beanspruchen, auch früh im Run, um das System zu geben Breite vs. Tiefe Lebensfähigkeit auszulösen.
 > **Wichtig:** Diese Kostenkurve ist an `game.ap.base`/`advisor.ap_per_rank` gekoppelt — bei Änderung dort erneut gegen die AP/Sol-Rate prüfen, nicht isoliert betrachten.
@@ -1376,7 +1403,7 @@ Bereits implementierte Effekte (`config/knowledge.php`):
 - `trade` erhöht zusätzlich die Zahl gleichzeitig aktiver Cantina-Angebote (§12), siehe `bar_offer_boost_per_lv`.
 - `trade` erhöht außerdem die Erfolgschance der Cantina-Verhandlung (§12, A13, Kalibrierung offen) — die im Beschreibungstext der Kenntnis versprochene „Verhandlungsführung". Wirkt nur, wenn ein Konsul verhandelt.
 - `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
-- Analytik-Labor Lv4/5 senkt die AP-Kosten von Kenntnis-Levelups (§13.3) — kein Kenntnis-, sondern ein Gebäudeeffekt, hier der Vollständigkeit halber.
+- Höhere Stufen des Analytik-Labors senken die AP-Kosten von Kenntnis-Levelups (§13.3) — kein Kenntnis-, sondern ein Gebäudeeffekt, hier der Vollständigkeit halber.
 
 Nicht jede Kenntnis trägt zwingend einen mechanischen Effekt dieser Art — einen einheitlichen Beitrag zum Wohnraum gibt es nicht (§6). Welche Kenntnis welchen Effekt trägt und in welcher Höhe, ist ausschließlich in `config/knowledge.php` gepflegt; Lookup-Tabelle: `docs/game-reference.md#kenntnisse-7-levelup-kosten-effekte`.
 
@@ -1502,7 +1529,7 @@ Der Kodex ist damit reiner Zusatzwert für Spieler, die an der Welt und ihren Fi
 
 > Die Kodex-Einträge selbst (Anzahl je Figur, Texte) sind Content-Arbeit (`content-writer`, `lang/de/*.php`); die Persistenz läuft run-übergreifend über den Spieler-Account, nicht über die einzelne Kolonie.
 
-**Barkeeper (Dauer-Charakter):** Anders als Corvan und die übrigen Cantina-Figuren hat der Barkeeper keinen Zufallsspawn und kein Verfügbarkeitsfenster — er ist immer in der Cantina anwesend, sobald sie gebaut ist. Statt über Angebote wirkt er über seinen **Rat**: Der Spieler wählt eine Kenntnis, und Tomas zahlt zweckgebundene Bonus-AP in ihren Fortschritt ein — ein stiller Mitspieler, der den gemeinsamen AP-Pool nicht belastet und nicht unter den Sol-Deckel des Labors fällt. Ein Labor braucht es dafür nicht: Erreicht der Fortschritt die Schwelle, steigt die Kenntnis durch **stille Forschung** (§10) von selbst auf. Wählbar sind nur Kenntnisse, die aufsteigen könnten; gesperrte oder ausgereizte stehen als „wartet auf …“ mit Grund in der Auswahl, damit kein Rat ins Leere geht.
+**Barkeeper (Dauer-Charakter):** Anders als Corvan und die übrigen Cantina-Figuren hat der Barkeeper keinen Zufallsspawn und kein Verfügbarkeitsfenster — er ist immer in der Cantina anwesend, sobald sie gebaut ist. Statt über Angebote wirkt er über seinen **Rat**: Der Spieler wählt eine Kenntnis, und Tomas zahlt zweckgebundene Bonus-AP in ihren Fortschritt ein — ein stiller Mitspieler, der den gemeinsamen AP-Pool nicht belastet und nicht unter den Sol-Deckel der Kenntnis fällt. Erreicht der Fortschritt die Schwelle, steigt die Kenntnis durch **stille Forschung** (§10) von selbst auf. Wählbar sind nur Kenntnisse, die aufsteigen könnten, also deren Gebäude steht; gesperrte oder ausgereizte stehen als „wartet auf …“ mit Grund in der Auswahl, damit kein Rat ins Leere geht.
 
 **Besetzung pro Sol (T60, Owner 2026-11-20).** Neben dem Barkeeper sitzen pro Sol nur **ein bis drei** weitere Figuren in der Cantina; wie viele, entscheidet der Zufall jeden Sol neu. Der **Reisende Händler** hat Vorrang: Ist er zu Besuch, bekommt er immer einen Platz. Die übrigen Plätze verteilt reiner Zufall unter allen Figuren, die an diesem Sol etwas mitbringen (Gast-Angebote, Begegnung, Story-Figur, Anliegen, Information). Wer nicht dabei ist, hat an diesem Sol weder Angebote noch Gespräche. Die Besetzung steht für den ganzen Sol fest: Ist eine Figur erledigt, rückt niemand nach. Werte: `docs/game-reference.md`.
 
@@ -1510,9 +1537,9 @@ Der Kodex ist damit reiner Zusatzwert für Spieler, die an der Welt und ihren Fi
 
 Höchstens ein Rat je Sol. Ob er heute fällig ist, sieht der Spieler vorab: Tomas trägt am Tresen ein Zeichen, solange ein Rat offen ist; danach zeigt das Popup „Für heute ist alles gesagt“ mit dem heutigen Ergebnis, der Gesprächsknopf ist aus und nennt, wann er wieder Rat gibt. Beziehungspflege (das Gespräch, §4b) bleibt bedienbar.
 
-**Rückmeldung.** Jeder Rat meldet seine Wirkung an drei Stellen: als Ergebniszeile im Popup, als Eintrag im Protokoll und in der Labor-Vorschau bzw. im Techtree mit einem Tomas-Zeichen an der Kenntnis. Ohne Labor ist der Fortschritt dabei nur grob in Worten zu sehen, erreichte Stufen und ihr Effekt dagegen genau (§10, `docs/gdd/techtree.md` §11.4). Ein Aufstieg wird als Durchbruch hervorgehoben. Damit ist der Barkeeper kein weiterer Handelskanal, sondern ein dauerhaft verfügbarer, langsamer Kenntnis-Hebel, auch für Kolonien ohne Labor. Details und Annahmen: `docs/superpowers/specs/2026-11-11-tomas-rat-rueckmeldung.md`.
+**Rückmeldung.** Jeder Rat meldet seine Wirkung an drei Stellen: als Ergebniszeile im Popup, als Eintrag im Protokoll und in der Labor-Vorschau bzw. im Techtree mit einem Tomas-Zeichen an der Kenntnis. Ohne Labor ist der Fortschritt dabei nur grob in Worten zu sehen, erreichte Stufen und ihr Effekt dagegen genau (§10, `docs/gdd/techtree.md` §11.4). Ein Aufstieg wird als Durchbruch hervorgehoben. Damit ist der Barkeeper kein weiterer Handelskanal, sondern ein dauerhaft verfügbarer, langsamer Kenntnis-Hebel neben der eigenen Forschung. Details und Annahmen: `docs/superpowers/specs/2026-11-11-tomas-rat-rueckmeldung.md`.
 
-> ⚠️ BALANCE CONCERN: Über die Beziehungspflege lassen sich Pool-AP in deckelfreie Kenntnis-AP umtauschen, und stille Forschung macht daraus ohne Labor echte Kenntnis-Stufen. Ob Cantina-First damit dem Labor-First bei Kenntnissen zu nahe kommt, ist offen und wird gemessen, bevor Werte angefasst werden (Spec, §6).
+> ⚠️ BALANCE CONCERN: Über die Beziehungspflege lassen sich Pool-AP in deckelfreie Kenntnis-AP umtauschen. Seit jede Eröffnung ohne Labor forschen kann (§10), addiert sich das zur eigenen Forschung mit Grund-Deckel. Ob Cantina-First damit dem Labor-First bei Kenntnissen zu nahe kommt, ist offen und wird gemessen, bevor Werte angefasst werden (Spec, §6).
 
 **Bar-Level-Progression:**
 
@@ -1685,7 +1712,7 @@ Damit ist AP nicht primär ein Tagesbudget, sondern eine **Arbeitsrate**. Knapph
 
 **Parallelbau ist erlaubt und ausdrücklich gewollt.** Der Spieler darf beliebig viele Projekte gleichzeitig laufen lassen und pro Sol frei entscheiden, welche er füttert. Die Rate verteilt sich dann entsprechend — mehr Baustellen heißt nicht mehr Durchsatz, sondern längere Einzellaufzeiten (der Pool bleibt die Gesamtgrenze; wie viel ein einzelnes Ziel pro Sol aufnimmt, begrenzt zusätzlich der AP-Deckel, siehe unten). Das ist eine **bewusste Planungsentscheidung** des Spielers, kein Fehler: Er kann Fertigstellungen absichtlich auf denselben Sol legen. (Ob es dafür einen konkreten Spielvorteil geben soll — z. B. gebündelte Vertrauens- oder Milestone-Effekte — ist offen und soll sich aus Playtests ergeben.)
 
-**AP-Deckel pro Ziel und Sol (aktiv).** Der Pool bleibt ein einziger gemeinsamer Pool (13.1). Zusätzlich kann jedes **Ziel** eines Projekts — eine einzelne Gebäude-Instanz oder eine einzelne Kenntnis — pro Sol nur eine begrenzte Menge AP aufnehmen. Die Obergrenze setzt sich zusammen aus einem kleinen **Grundwert** plus dem **Fach-Deckel** des passenden Beraters je Rang (AP-Skala 2026-11-13 §11.1): für Gebäude der Baumeister, für Kenntnisse im Labor der Analytiker, für das Hangar-Training der Raumfahrer. Der Fach-Deckel ist ein eigener Rang-Wert, getrennt vom Pool-Beitrag des Beraters. Ein nicht verfügbarer Berater (z. B. durch Nexus-Sanktion gesperrt) trägt nichts bei. Der Konsul hat keinen Fach-Deckel: Seine Handlungen sind bereits durch Verfügbarkeit begrenzt (siehe unten), sein Rang wirkt auf die Qualität der Handlungen (§12). Cantina-Gespräche haben einen eigenen, festen Deckel je Figur und Sol (§4b).
+**AP-Deckel pro Ziel und Sol (aktiv).** Der Pool bleibt ein einziger gemeinsamer Pool (13.1). Zusätzlich kann jedes **Ziel** eines Projekts — eine einzelne Gebäude-Instanz oder eine einzelne Kenntnis — pro Sol nur eine begrenzte Menge AP aufnehmen. Die Obergrenze setzt sich zusammen aus einem kleinen **Grundwert** plus dem **Fach-Deckel** des passenden Beraters je Rang (AP-Skala 2026-11-13 §11.1): für Gebäude der Baumeister, für Kenntnisse der Analytiker (kommt mit dem Labor), für das Hangar-Training der Raumfahrer. Der Fach-Deckel ist ein eigener Rang-Wert, getrennt vom Pool-Beitrag des Beraters. Ein nicht verfügbarer Berater (z. B. durch Nexus-Sanktion gesperrt) trägt nichts bei. Der Konsul hat keinen Fach-Deckel: Seine Handlungen sind bereits durch Verfügbarkeit begrenzt (siehe unten), sein Rang wirkt auf die Qualität der Handlungen (§12). Cantina-Gespräche haben einen eigenen, festen Deckel je Figur und Sol (§4b).
 
 **Jeder Rang ist spürbar — genau eine sichtbare Zahl je Stufe.** Die Einstellung (Rang 1) bringt +1 auf den Pool und +1 auf den Fach-Deckel, Rang 2 einen weiteren Punkt Fach-Deckel, Rang 3 einen weiteren Punkt Pool. Weil der Grundwert des Deckels klein ist, verdoppelt bzw. verdreifacht der Fach-Berater das Tempo in seinem Fach: Ohne Baumeister baut man langsam, ohne Analytiker forscht man langsam. Damit ein Ausbau auch beim höchsten Bau-Deckel nie in einem Sol fertig wird, kosten Ausbaustufen mehr AP als der höchste Bau-Deckel.
 
@@ -1718,12 +1745,12 @@ Boni senken die **AP-Kosten von Projekten** oder heben ihren **Deckel je Sol** u
 | Analytik-Labor — Domänen-Effizienzbonus „Wissen" | alle Kenntnis-Levelups | AP-Abzug auf höheren Laborstufen | `config/buildings.php → sciencelab.knowledge_ap_cost_reduction_per_lv` |
 | Kenntnis `cartography` | lange Missionen; erste Erkundung je Sol | AP-Abzug ab einer Mindestentfernung; Häufigkeit (kostenlos) | `config/knowledge.php → cartography.mission_ap_reduction`, `free_explore_from_level` |
 | Uplink-Station | erster Tiefenscan je Sol | Häufigkeit (kostenlos) | `config/game.php → finds.free_scan_uplink_level` |
-| Berater-Rang | Bau, Labor, Training | Fach-Deckel (Tempo, 13.2), kein Kosten-Rabatt | `config/game.php → advisor.cap_bonus_per_rank` |
+| Berater-Rang | Bau, Forschung, Training | Fach-Deckel (Tempo, 13.2), kein Kosten-Rabatt | `config/game.php → advisor.cap_bonus_per_rank` |
 | Koloniereife (CC-Level) | — | **geplant** (ROADMAP Stufe 3) | — |
 
 **Bau-Projekt-Rabatt-Pool:** Bau ← `construction`, dazu die Cantina-Gutscheine. `trade` gehört nicht dazu: Handelsgeschick beschleunigt keinen Gebäudeausbau, die Kenntnis wirkt auf Handelskonditionen (§12). Weil gewöhnliche Ausbaustufen zu klein für dauerhafte Rabatte sind, ruht die Progressionsachse „Bau-Beschleunigung als Zeitgewinn" vor allem auf dem Fach-Deckel des Baumeisters; der `construction`-Rabatt macht die großen Kommandozentralen-Schritte billiger.
 
-**Analytik-Labor:** Gibt dem Laborausbau über die reinen Kenntnis-Gates hinaus einen eigenen Effekt — senkt die AP-Kosten für Kenntnis-Levelups, additiv und unabhängig vom Gebäude-Rabatt-Pool. Rührt an nichts, was pro Run gezogen wird (§10) — reine Effizienzsteigerung auf bereits freigeschaltete Kenntnisse.
+**Analytik-Labor:** Das Labor schaltet keine Kenntnisse frei (§10); sein Ausbau senkt die AP-Kosten für Kenntnis-Levelups, additiv und unabhängig vom Gebäude-Rabatt-Pool. Rührt an nichts, was pro Run gezogen wird (§10) — reine Effizienzsteigerung auf Kenntnisse, die ihr eigenes Gebäude schon freigeschaltet hat.
 
 **Boni gelten im Grundsatz für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit. Es ist zugleich der Grund, warum der Konsul keinen AP-Rabatt auf Handelsgeschäfte bekommt (§12): Sein Beitrag liegt auf der Qualität der Handlungen, nicht auf ihren Kosten. Die Ausnahme ist die `cartography`: Sie senkt nur die teuren, langen Missionen um einen AP und macht sonst die erste Erkundung je Sol kostenlos (Häufigkeit statt Rabatt).
 
@@ -1771,12 +1798,12 @@ Der Harvester hat **kein Level-Up** (`max_level = 1`) und genau eine Instanz. Er
 
 | | Quelle | Kostenprofil |
 |---|---|---|
-| **Sockel (alle Pfade)** | Harvester, 1 Instanz (§4c) | keine (passiv), Umzüge kosten AP |
-| **A — Analytik** | Kenntnis `geology` erhöht die Harvester-Ausbeute je Level (`game.geology_harvester_bonus_per_level`, kumulativ) | einmalig hoch (AP bis zum Ziellevel), danach null laufende Kosten |
+| **Sockel (alle Pfade)** | Harvester, 1 Instanz (§4c); Kenntnis `geology` am Harvester erhöht die Ausbeute je Level (`game.geology_harvester_bonus_per_level`, kumulativ) | Harvester passiv, Umzüge kosten AP; `geology` einmalig AP bis zum Ziellevel, danach null laufende Kosten |
+| **A — Analytik** | kein eigener Strom: Analytiker-Deckel und Kenntnis-Rabatt bringen `geology` schneller und billiger auf Höhe | wie Sockel, nur in weniger Solen |
 | **B — Hangar** | Bergungsflüge zu den gescannten Funden des Fundpools (§4a, §8b); die Versorgungsfahrt liefert nur Organika | laufend: Navigation-AP, Organika-Proviant, Verschleiß, Reparatur-AP |
 | **C — Cantina** | kein dedizierter Hebel — Pfad C liefert Credits (§4b „Pfad-C-Hebel"); opportunistischer Credits→Regolith-Kauf via Corvan möglich | — |
 
-Die Profile sind bewusst gegensätzlich: **Analytik** verbessert den Sockel selbst — teuer im Aufbau, danach dauerhaft geschenkt, keine Logistik. **Hangar** legt einen zweiten Strom daneben — billig im Einstieg, aber jeden Sol Aufwand. **Cantina** kauft zu und wandelt Überschuss in Credits — maximal flexibel, an Credits und Angebotslage gebunden. Ob A und B die Regolith-Lücke der Zielkolonie tatsächlich schließen, rechnet §13.7 nach.
+Die Profile sind bewusst gegensätzlich: **Analytik** bringt den Sockel schneller auf volle Höhe — die Geologie-Forschung steht jeder Kolonie offen, das Labor verkürzt sie, keine Logistik. **Hangar** legt einen zweiten Strom daneben — billig im Einstieg, aber jeden Sol Aufwand. **Cantina** kauft zu und wandelt Überschuss in Credits — maximal flexibel, an Credits und Angebotslage gebunden. Ob A und B die Regolith-Lücke der Zielkolonie tatsächlich schließen, rechnet §13.7 nach.
 
 **Cantina-Angebote:** Die Losgröße von Corvans Kaufangeboten ist an die Zahlungsfähigkeit der Kolonie gebunden (höchstens ein Anteil des Bestands), damit Angebote nicht regelmäßig an „Not enough resources" scheitern. *Offen:* Tauschrichtung der anonymen Gäste nach Bestand wählen statt würfeln (Give = größter Überschuss, Get = knappste Ressource) — der Zufall bliebe in Preisvarianz, Gästezahl und Gültigkeitsdauer erhalten (ROADMAP „Offene Pfad-Paritäts-Fragen").
 
@@ -1799,7 +1826,7 @@ Die AP-Struktur ist Owner-Entscheidung: Grundwert des gemeinsamen Pools (`config
 
 #### Ziel-Endzustand (solider Run zum Sieg-Zeitpunkt, Sol ~85–95)
 
-Der Sieg-Korridor ist in §18.4 festgelegt: Sol 70–85 nur bei einem sehr guten Run mit Glück, realistisch Sol 85–95. Ein typischer erfolgreicher Run erreicht zum Sieg-Zeitpunkt: die Mehrheit der Gebäudetypen (nicht alle), moderate Gebäude-Level und volle Berater-Slots, überwiegend auf mittlerem Rang (den höchsten Rang für alle erreicht nur, wer gezielt auf „Expertenstab" spielt), einige Kenntnisse auf mittlerem Level, ungefähr zwei Drittel der Bauplätze belegt. Ungenutzte Optionen sind Absicht: Der Spieler soll sehen, was offenblieb — kein Erreichen einer perfekten Optimalität, sondern ein befriedigender Zustand mit sichtbarem „hätte ich auch noch tun können".
+Der Sieg-Korridor ist in §18.4 festgelegt: Sol 70–85 nur bei einem sehr guten Run mit Glück, realistisch Sol 85–95. Ein typischer erfolgreicher Run erreicht zum Sieg-Zeitpunkt: die Mehrheit der Gebäudetypen (nicht alle), moderate Gebäude-Level und volle Berater-Slots, überwiegend auf mittlerem Rang (hohe Ränge für fast alle erreicht nur, wer gezielt auf „Expertenstab" spielt), einige Kenntnisse auf mittlerem Level, ungefähr zwei Drittel der Bauplätze belegt. Ungenutzte Optionen sind Absicht: Der Spieler soll sehen, was offenblieb — kein Erreichen einer perfekten Optimalität, sondern ein befriedigender Zustand mit sichtbarem „hätte ich auch noch tun können".
 
 #### AP-Grundwert und Berater-Beitrag
 
@@ -1914,7 +1941,7 @@ Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-E
 
 ### Rang-System
 
-Jeder Berater hat einen von drei Rängen. Der Rang bestimmt, wie stark der Berater den gemeinsamen AP-Pool erhöht (§13.1), wie hoch sein **Fach-Deckel** ist (13.2: Baumeister → Bau, Analytiker → Labor, Raumfahrer → Training; der Konsul hat keinen, sein Rang wirkt auf Verhandlung und Konditionen, §12) und wie hoch sein laufender Upkeep in Credits ist. Jeder Rang bringt genau eine sichtbare Zahl: Die Einstellung erhöht Pool und Fach-Deckel um je einen Punkt, Rang 2 den Fach-Deckel, Rang 3 den Pool. Der Pool-Beitrag ist unabhängig von der Domäne des Beraters.
+Jeder Berater hat einen von drei Rängen. Der Rang bestimmt, wie stark der Berater den gemeinsamen AP-Pool erhöht (§13.1), wie hoch sein **Fach-Deckel** ist (13.2: Baumeister → Bau, Analytiker → Forschung, Raumfahrer → Training; der Konsul hat keinen, sein Rang wirkt auf Verhandlung und Konditionen, §12) und wie hoch sein laufender Upkeep in Credits ist. Jeder Rang bringt genau eine sichtbare Zahl: Die Einstellung erhöht Pool und Fach-Deckel um je einen Punkt, Rang 2 den Fach-Deckel, Rang 3 den Pool. Der Pool-Beitrag ist unabhängig von der Domäne des Beraters.
 
 Exakte Werte (AP-Bonus je Rang, Fach-Deckel je Rang, Upkeep, Rang-Aufstiegs-Schwellen in aktiven Ticks, Beförderungskosten): siehe `config/game.php → advisor` und `docs/game-reference.md#5-berater-advisors-hire-kosten--ap-beiträge`.
 
@@ -2138,6 +2165,8 @@ A + B (1 Frachter) = 18,25 Rg/Sol  ≥  14,1 Rg/Sol benötigt
 ```
 
 Gemeinsam übersteigen A und B die benötigte Hebelhöhe um ~29 % — wenn beide im relevanten Zeitfenster aktiv sind, was am CC-Lv3/4-Timing der Pfadwahl hängt. Auch ein einzelner Hebel reicht nahe an die Zielgröße: Pfad A allein ≈ 85 % der Hebelhöhe (~94 % des Bedarfs — Restlücke innerhalb der G5-Toleranz); Pfad B mit einem Frachter ≈ 44 % (~76 % des Bedarfs), durch weitere Frachter aufstockbar — die „aktiv arbeiten, breit versorgen"-Identität aus §4b. Ein Run, der primär Pfad C verfolgt und A/B spät bekommt, läuft in der Zwischenzeit nahe am reinen Sockel — knapper, aber nicht tödlich (G1). Die Zahlen von `geology` und `mission_supply_run` tragen die Lücke; sie werden nicht angehoben.
+
+> ⚠️ BALANCE CONCERN: Diese Herleitung stammt aus der Zeit, als `geology` am Labor hing. Seit 2026-11-26 steht Geologie jeder Eröffnung am Harvester offen (§10); „Pfad A“ in den Tabellen oben heißt damit nur noch „früher und billiger erreicht“, und Hangar-/Cantina-First können denselben Hebel zusätzlich zu ihrem eigenen nutzen. Neu messen, nicht nachrechnen: Regolith je Sol und Geologie-Stufe je Eröffnung im nächsten Bot-Batch.
 
 **6. Guard-Rails gegen diese Baseline geprüft.**
 
@@ -2505,7 +2534,9 @@ Startet direkt nach Phase 1. Auftakt ist der Ausbau der Kommandozentrale auf Lv3
 
 ### Aufgabenpool
 
-8 Aufgabentypen bilden den Pool. Pro Run werden 3 zufällig gezogen, das reduziert das Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf, keine Flotten und keine Systemkarte, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+8 Aufgabentypen bilden den Pool. Pro Run werden 3 gezogen, das reduziert das Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf, keine Flotten und keine Systemkarte, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+
+> **Implementierungsstand:** Zeithorizont, Ziehungsregel, Forschungsvorsprung, Expertenstab und Selbstversorgung sind hier im Zielbild beschrieben (Owner-Entscheidungen 2026-11-24). Code und Config folgen per Spec `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`; bis dahin misst das Spiel noch die alten Fassungen.
 
 **Kalibrierregel:** Alle Aufgaben sind gleich schwer, gemessen an einer gemeinsamen Regel:
 - Wer **nicht** auf eine Aufgabe hinspielt, erreicht sie frühestens um Sol ~90 oder gar nicht.
@@ -2513,24 +2544,49 @@ Startet direkt nach Phase 1. Auftakt ist der Ausbau der Kommandozentrale auf Lv3
 
 Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwischen Runs entsteht über zwei Dinge: wie gut die gezogenen Aufgaben zum gewählten Pfad (§4b) passen, und wie die Karte ausfällt. Eine Aufgabe, die der PlaytestBot ohne gezielte Strategie deutlich vor Sol 90 „mitnimmt", ist zu leicht. Eine, die er auch gezielt nicht bis Sol 85 schafft, ist zu schwer.
 
-| Aufgabe (`task_key`) | Kategorie | Kernmechanik |
-|---|---|---|
-| Handelsnetz (`task_trade_volume`) | Wirtschaft | Abgeschlossene Transaktionen mit dem Reisenden Händler im laufenden Run über einer Schwelle |
-| Forschungsvorsprung (`task_research_lead`) | Forschung/Aufbau | Mindestens einige Kenntnisse auf Höchstlevel gebracht |
-| Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen mindestens in einer bestimmten Stufe (Zufrieden) für mehrere aufeinanderfolgende Sole — an die Stufe gekoppelt, weil der Spieler die Zahl nicht sieht |
-| Selbstversorgung (`task_self_sufficiency`) | Überleben | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen. Beide Bedingungen müssen gleichzeitig für mehrere aufeinanderfolgende Sole gelten, jeder einzelne Ausfall setzt die Serie zurück |
-| Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b, Bergungsflüge eingeschlossen) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
-| Ingenieursleistung (`task_engineering_output`) | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
-| Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole: anhaltender Wohlstand statt eines einmaligen Peaks |
-| Expertenstab (`task_senior_advisors`) | Personal | Eine volle Berater-Mannschaft, deren Mitglieder alle den höchsten Rang erreicht haben |
+#### Zeithorizont: mittelfristig und langfristig
 
-**Quelle der Wahrheit:** Alle Aufgaben-Parameter (Kategorie, Typ Zähler/Serie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks` und werden über `RunTaskCatalog` gelesen. Die Aufgaben-Beschriftung im UI wird aus denselben Werten gebaut, die angezeigte Zahl ist also die gemessene. Die aktuellen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
+Jede Aufgabe hat einen Zeithorizont. Er teilt den Korridor der Kalibrierregel auf, die Regel selbst bleibt:
 
-> **Implementierungsstand (A45, umgesetzt):** Alle Aufgaben-Parameter kommen aus `run.tasks`, nicht aus Konstanten in `RunProgressService`. `task_engineering_output` misst die Summe der Ausbaustufen, `task_expedition_coverage` erfolgreiche Missionen ab der Mindestschwierigkeit, und `task_senior_advisors` zählt Berater ab dem Mindestrang.
+- **Mittelfristig** sind die Aufgaben, die eine **Tätigkeit oder ein Einkommen** messen. Fortschritt ist ab Phase-2-Beginn ohne spätes Tor möglich; gezielt gespielt fallen sie im vorderen Teil des Korridors. Dazu gehören die drei **Fokus-Aufgaben**, je eine für jedes Fokus-Gebäude (Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner), und die neutrale Kreditreserve.
+- **Langfristig** sind die Aufgaben, die den **Reife- oder Ausbaugrad der ganzen Kolonie** messen. Sie brauchen späte Tore (Kommandozentrale-Stufe, Dienstzeit, volle Agrardom-Stufe, hohe Vertrauensstufe) und lange gehaltene Zustände; gezielt gespielt fallen sie im hinteren Teil des Korridors. Sie hängen an keinem Fokus-Gebäude.
+
+Die Zuordnung der Aufgaben zu den Zeithorizonten (Tabelle unten) und die Aufteilung des Korridors sind ein Vorschlag (Spec 2026-11-25 §1, Owner-Bestätigung offen).
+
+So passt der Sieg-Korridor (§18.4): Zwei mittelfristige Aufgaben in einer Ziehung ergeben den schnellen, glücklichen Sieg; eine mittelfristige und eine langfristige konkurrieren um denselben AP-Pool und ergeben den realistischen Sieg.
+
+#### Ziehungsregel
+
+Jede Ziehung enthält **mindestens eine mittelfristige und mindestens eine langfristige Aufgabe** (Owner-Entscheidung 2026-11-24) und **höchstens eine Wirtschafts-Aufgabe** (Kombo-Regel: Handelspartner und Kreditreserve nie zusammen).
+
+Ablauf in Worten:
+1. Der Pool wird aus dem Run-Seed in eine feste Rangfolge gebracht. Diese Rangfolge ist die einzige Zufallsquelle.
+2. Gewählt werden die erste mittelfristige Aufgabe der Rangfolge, dann die erste langfristige, die die Kombo-Regel nicht verletzt, dann die nächste noch freie Aufgabe gleich welcher Klasse, ebenfalls ohne Verstoß gegen die Kombo-Regel.
+3. Die drei Aufgaben erscheinen in ihrer Rangfolge, nicht in der Wahlreihenfolge. Die erste ist von Anfang an sichtbar (§18.1); sie ist also nicht immer die mittelfristige.
+4. Fehlt einer Klasse im Pool jede Aufgabe, wird ohne sie auf drei aufgefüllt. Zwei Wirtschafts-Aufgaben gibt es nie.
+
+Die Ziehung hängt nur am Run-Seed und an der Config, nicht an der Eröffnung oder am Zustand der Kolonie. Gleicher Seed heißt gleiche Aufgaben in allen drei Eröffnungen; das hält Balance-Messungen vergleichbar.
+
+#### Die Aufgaben
+
+| Aufgabe (`task_key`) | Zeithorizont | Kategorie | Kernmechanik |
+|---|---|---|---|
+| Handelspartner (`task_trade_volume`) | mittelfristig (Fokus Cantina) | Wirtschaft | Einkäufe beim Reisenden Händler im laufenden Run über einer Schwelle |
+| Expeditionen (`task_expedition_coverage`) | mittelfristig (Fokus Hangar) | Exploration/Navigation | Erfolgreich abgeschlossene Außenmissionen (§8b, Bergungsflüge eingeschlossen) ab Schwierigkeit „normal" über einer Schwelle. Leichte Missionen und Fehlschläge zählen nicht |
+| Forschungsvorsprung (`task_research_lead`) | mittelfristig (Fokus Labor) | Forschung/Aufbau | Summe der Stufen aller Kenntnisse über einer Schwelle, gleich ob im Labor oder durch stille Forschung erreicht. Breite ist je Stufe billiger, Tiefe bringt stärkere Effekte: Das Ziel trägt die Abwägung aus §10. Jede Kenntnis braucht ihr eigenes Gebäude, deshalb hängt die erreichbare Summe an den übrigen Gebäuden; ohne Labor forscht jede Eröffnung mit dem Grund-Deckel, mit Labor schneller und billiger. Vorschlag (Owner-Bestätigung offen): Zielwert je Eröffnung, höher mit dem Labor zuerst |
+| Kreditreserve (`task_credit_reserve`) | mittelfristig (neutral) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole: anhaltender Wohlstand statt eines einmaligen Peaks |
+| Expertenstab (`task_senior_advisors`) | langfristig | Personal | Summe der Ränge aller Berater der Kolonie über einer Schwelle. Zeitweise abgezogene Berater zählen mit, entlassene nicht. Keine Beschleunigung: Entscheidungen sind, wann eingestellt, wer gehalten und wann befördert wird |
+| Ingenieursleistung (`task_engineering_output`) | langfristig | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
+| Selbstversorgung (`task_self_sufficiency`) | langfristig | Überleben | Die Kolonie erzeugt mehr, als sie verbraucht: Die eigene Agrardom-Ernte deckt den Verpflegungsbedarf einer Kolonie ab einer Mindestgröße, ohne Hunger, für mehrere aufeinanderfolgende Sole. Zugekaufte oder mitgebrachte Organika zählen nicht zur Ernte, Missions-Proviant nicht zum Verbrauch, der Vorrat spielt keine Rolle. Jedes neue Gebäude bringt Arbeitsplätze und damit Bedarf: Das Ziel zieht gegen Wachstum |
+| Kolonieblüte (`task_colony_prosperity`) | langfristig | Diplomatie/Zivilaufbau | Vertrauen mindestens in einer bestimmten Stufe (Zufrieden) für mehrere aufeinanderfolgende Sole — an die Stufe gekoppelt, weil der Spieler die Zahl nicht sieht |
+
+**Quelle der Wahrheit:** Alle Aufgaben-Parameter (Zeithorizont, Kategorie, Typ Zähler/Serie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks` und werden über `RunTaskCatalog` gelesen. Die Aufgaben-Beschriftung im UI wird aus denselben Werten gebaut, die angezeigte Zahl ist also die gemessene. Die aktuellen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
+
+> **Offene Frage (Owner): frühe Fokus-Aufgaben.** Mit dem passenden Fokus-Gebäude fallen Handelspartner und Expeditionen auch ohne gezieltes Spiel weit vor dem Korridor, ohne das Fokus-Gebäude kaum. „Erst ab der Ziehung zählen" ist abgelehnt (in Phase 2 wären evtl. nicht genug Felder für Expeditionen offen). Optionen (Zielwert je Eröffnung, vorerfüllte Aufgaben nicht ziehen, Zähltempo begrenzen) in der Spec 2026-11-25 §6. Dieselbe Frage stellt sich für die Kreditreserve mit Cantina.
 
 > **Folgeschritt:** `task_credit_reserve` bleibt als Serie im Pool. Damit sie erreichbar wird, werden die Credit-Belohnungen von Außenmissionen und Ereignissen angehoben: Die Kreditreserve soll über aktives Spielen (Missionen, Ereignisse) entstehen, nicht über reines Sparen. „Nexus-Vorschuss tilgen" wird ein **zusätzliches** Ziel im Pool, sobald es eine Tilgungsmechanik für `nexus_debt` gibt (siehe Nexus-Schulden-Mechanik unten).
 
-> ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Die Kombo-Blacklist ist implementiert (höchstens 1 Wirtschafts-Aufgabe pro Ziehung; Kategorie je Aufgabe in `run.tasks`).
+> ⚠️ BALANCE CONCERN: Expertenstab bleibt auch als Rangsumme ein Zeitziel. Zwischen gezieltem und nicht gezieltem Spiel liegt vor allem der Einstellzeitpunkt der Berater; die Kalibrierregel („nicht gezielt frühestens Sol ~90") ist hier nur näherungsweise einzuhalten.
 
 ---
 
@@ -2727,7 +2783,7 @@ Jeder Run von Nouron hat ein klares, kommunizierbares Ende. Das Ende ist keine �
 
 **Entscheidung: 2 von 3 Phase-2-Objectives abgeschlossen (Kombinations-Modell)**
 
-Das Runziel ist von Anfang an Phase 2 kommunizierbar: "Schließen Sie 2 der folgenden 3 Aufgaben ab." Die Objectives werden beim Phase-2-Übergang gezogen. Das erste gezogene Ziel ist von Anfang an sichtbar; die übrigen bleiben verdeckt, bis ihr Fortschritt über null liegt (gestaffelte Enthüllung via §17.1 ab Phase 4). Der Übergang selbst zeigt im Sol-Bericht einen eigenen Erfolgsbildschirm („Phase 1 abgeschlossen“, mit den erreichten Grundaufbau-Punkten), danach den Phase-2-Dialog. Die Wahlfreiheit über welche zwei Objectives erfüllt werden, ist das zentrale Roguelike-Entscheidungsmoment eines Runs.
+Das Runziel ist von Anfang an Phase 2 kommunizierbar: "Schließen Sie 2 der folgenden 3 Aufgaben ab." Die Objectives werden beim Phase-2-Übergang gezogen, mindestens eines mittelfristig und eines langfristig (Ziehungsregel in §15 „Aufgabenpool"). Das erste gezogene Ziel ist von Anfang an sichtbar; die übrigen bleiben verdeckt, bis ihr Fortschritt über null liegt (gestaffelte Enthüllung via §17.1 ab Phase 4). Der Übergang selbst zeigt im Sol-Bericht einen eigenen Erfolgsbildschirm („Phase 1 abgeschlossen“, mit den erreichten Grundaufbau-Punkten), danach den Phase-2-Dialog. Die Wahlfreiheit über welche zwei Objectives erfüllt werden, ist das zentrale Roguelike-Entscheidungsmoment eines Runs.
 
 Warum kein Bau- oder Ressourcenmilestone (Optionen b/c) als Siegbedingung:
 - Objectives variieren je Run → variabler Spielverlauf → Roguelike-Charakter
@@ -2932,9 +2988,11 @@ Die Countdown-Meldung gehört nicht in diese Leiter. Sie hängt allein an der Ge
 - **Grundregel für jede Aufgabe (§15 Aufgabenpool):** Ohne gezieltes Spiel frühestens um Sol ~90 oder gar nicht, mit gezieltem Spiel um Sol 70–85. Gemessen wird mit dem PlaytestBot: einmal mit einer Strategie, die gezielt auf die Aufgabe spielt, einmal mit einer, die sie ignoriert. Beide Messungen brauchen eine ausreichend große Seed-Stichprobe.
 - **`task_expedition_coverage`** misst erfolgreiche Außenmissionen ab Schwierigkeit „normal". Eine Messung „alle Tiles der Kolonie-Zone erkundet“ taugt nicht: Sie hängt vor allem am CC-Ausbau (die letzte Zonen-Kachel wird erst mit einer späten CC-Stufe frei), nicht an Erkundungsentscheidungen, und ihr Zielwert läge am mathematischen Maximum. Leichte Missionen zählen nicht, sonst wird die Aufgabe über risikoarmes Routine-Dispatching nebenbei erfüllt.
 - **`task_engineering_output`** misst die Summe der Ausbaustufen aller Gebäude. Eine Messung über Status-Punkte wäre vom Verfall und von Reparaturen abhängig, für Spieler schwer nachvollziehbar und würde von Sol zu Sol schwanken.
-- **`task_senior_advisors`** verlangt eine volle Mannschaft auf höchstem Rang. Das setzt den letzten Berater-Slot (CC-Ausbau) und ausreichend Dienstzeit aller Berater voraus. Wer Berater spät einstellt oder austauscht, schafft es nicht nebenbei.
+- **`task_senior_advisors`** misst die Summe der Berater-Ränge. Der Zielwert ist so gesetzt, dass er den letzten Berater-Slot (CC-Ausbau) und lange Dienstzeit voraussetzt. Wer Berater spät einstellt oder austauscht, schafft es nicht nebenbei. Die frühere Fassung „volle Mannschaft auf höchstem Rang" fiel nach Stufen-Gate und AP-Skala praktisch nie (Owner-Entscheidung 2026-11-24, ohne Beschleunigungsmechanik).
+- **`task_research_lead`** misst die Summe der Kenntnisstufen. Die frühere Fassung „Kenntnisse auf Höchstlevel" verlangte faktisch den ganzen Baum auf Höchststufe und damit Breite und Tiefe zugleich.
+- **`task_self_sufficiency`** misst, ob die eigene Ernte den Bedarf einer Kolonie ab Mindestgröße deckt. Ohne die Mindestgröße wäre sie ein Selbstläufer (kleine Kolonien sind fast immer satt). Die frühere Fassung „Vorrat über Schwelle halten" belohnte Horten und wurde durch sinnvolles Bauen schlechter.
 - **Serien-Aufgaben** (`task_self_sufficiency`, `task_credit_reserve`, `task_colony_prosperity`) sind so gesetzt, dass normales Spielen sie nicht nebenbei erfüllt. Für die Nexus-Kontrollpunkte zählt bei ihnen die beste Serie bis jetzt.
-- **Vorläufig bis zum laufenden Kalibrier-Batch (Annahme, nicht final kalibriert):** die Zielwerte aller Aufgaben außer den Owner-Vorgaben für `task_senior_advisors` und `task_credit_reserve`. Für die beiden neuen Messungen (`task_expedition_coverage`, `task_engineering_output`) gibt es noch gar keine Bot-Daten. Für `task_colony_prosperity` kommt hinzu, dass die Trust-Ökonomie selbst noch nicht kalibriert ist.
+- **Vorläufig bis zur nächsten Kalibrier-Messung (Annahme, nicht final kalibriert):** alle Zielwerte. Für die drei umgebauten Aufgaben und die neu gesetzte Ingenieursleistung gibt es nur Herleitungen aus älteren Läufen (Spec 2026-11-25). Für `task_colony_prosperity` kommt hinzu, dass die Trust-Ökonomie selbst noch nicht kalibriert ist und T61 sie verschieben wird.
 - **`task_credit_reserve`** bleibt vorerst eine Serie (Schwelle und Serienlänge in `run.tasks`). Der Folgeschritt „Nexus-Vorschuss tilgen" wartet auf die Tilgungsmechanik (§15 Nexus-Schulden-Mechanik).
 
 **Credits-Ökonomie — Break-even-Regel:** Der Berater-Unterhalt (`advisor.upkeep`, steigend mit dem Rang) muss spätestens mit ausgebauter Uplink-Station tragbar sein, unabhängig davon, ob die Cantina gebaut wurde — die Cantina liefert kein dediziertes Dauereinkommen (§12 Kanal 1). Strukturelles Einkommen ist damit für alle drei Pfade gleich: `nexus_subsidy` (flat, bedingungslos) und die Relaisvergütung (`relay_bonus_per_uplink_level`). Herleitung mit vier Beratern (Werte `config/game.php`):
@@ -3000,7 +3058,9 @@ Die Nexus-DB ist die In-Game-Nachschlageseite des Spiels (Nav-Eintrag „Nexus-D
 | Run-Länge 100 Sole | §18.4 |
 | Sieg-Korridor: Sol 70–85 nur mit sehr gutem Run und Glück, realistisch Sol 85–95 | §18.4 |
 | Aufgaben-Kalibrierregel (ohne gezieltes Spiel frühestens Sol ~90, gezielt Sol 70–85; kein Mindest-Sol; „2 von 3" bei zufälliger Ziehung) | §15 |
-| Expertenstab = 4 Berater auf Rang 3 | §15, `run.tasks` |
+| Expertenstab = Summe der Berater-Ränge, ohne Beschleunigungsmechanik (2026-11-24, ersetzt „4 Berater auf Rang 3") | §15, `run.tasks` |
+| Ziehung: mindestens eine mittelfristige und eine langfristige Aufgabe je Run (2026-11-24) | §15 |
+| Forschungsvorsprung = Summe der Kenntnisstufen; Selbstversorgung = mehr erzeugen als verbrauchen (2026-11-24) | §15 |
 | Ein gemeinsamer AP-Pool | §13.1 |
 | Vier Beratertypen (Stratege zurückgestellt) | §13 |
 | Werkstoffe bleiben als Ressource | §3 |

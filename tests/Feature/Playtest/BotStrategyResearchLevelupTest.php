@@ -65,6 +65,8 @@ class BotStrategyResearchLevelupTest extends TestCase
     public function test_knowledge_with_todays_cap_used_up_is_skipped_for_the_next_one(): void
     {
         $bot = BotSession::boot($this, 1);
+        // Two knowledges open: construction needs only the lab, agronomy also an Agrardom.
+        $this->ensureBuilding($bot, BuildingId::BioFacility->value);
         $first = $this->researchCandidateId($bot);
         $this->assertNotNull($first, 'fixture needs an eligible research candidate');
         $cap = (int) app(ResearchService::class)->apCap($bot->colonyId);
@@ -88,6 +90,19 @@ class BotStrategyResearchLevelupTest extends TestCase
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private function ensureBuilding(BotSession $bot, int $buildingId): void
+    {
+        $placed = DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $buildingId)->exists();
+        if (! $placed) {
+            DB::table('colony_buildings')->insert([
+                'colony_id' => $bot->colonyId, 'building_id' => $buildingId, 'instance_id' => 1,
+                'level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => -2,
+            ]);
+        } else {
+            DB::table('colony_buildings')->where('colony_id', $bot->colonyId)->where('building_id', $buildingId)->where('level', '<', 1)->update(['level' => 1]);
+        }
+    }
 
     private function researchCandidateId(BotSession $bot): ?int
     {

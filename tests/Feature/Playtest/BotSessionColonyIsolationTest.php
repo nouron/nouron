@@ -29,9 +29,9 @@ class BotSessionColonyIsolationTest extends TestCase
 
         $bot2 = BotSession::boot($this, seed: 2);
         $this->assertNotSame($bot1->colonyId, $bot2->colonyId);
-        // Research orders need a built Analytics Lab (lab_required otherwise).
+        // Cartography (91) opens with its own building, the hangar (one building per knowledge, 2026-11-26).
         DB::table('colony_buildings')->updateOrInsert(
-            ['colony_id' => $bot2->colonyId, 'building_id' => BuildingId::Sciencelab->value, 'instance_id' => 1],
+            ['colony_id' => $bot2->colonyId, 'building_id' => BuildingId::Hangar->value, 'instance_id' => 1],
             ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => -1, 'tile_y' => 1]
         );
 
