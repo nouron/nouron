@@ -73,3 +73,9 @@ Dass A die Profile stärker **trennt**, wird nicht erwartet (§1). Bewertet wird
 1. Welche Option wird als M7 gemessen?
 2. Gilt „ungezielt ~50 %“ für `aimless`, und darf `default` (gelegentlich) näher an 70 % liegen?
 3. Bei A: Sind je Eröffnung verschiedene Zielzahlen auf der Aufgabenkarte in Ordnung?
+
+## 8. Owner-Entscheidung (2026-11-26)
+
+- Option **A**, nach der Vorprüfung ohne Bot (§6).
+- „Ungezielt rund 50 %“ gilt für `aimless`; `default` darf näher an 70 % liegen.
+- Zielzahlen dürfen je Eröffnung verschieden auf der Aufgabenkarte stehen, mit kurzem Erklärtext.
