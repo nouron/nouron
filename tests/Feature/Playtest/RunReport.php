@@ -6,7 +6,9 @@ use App\Enums\BuildingId;
 use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\ColonyTileService;
+use App\Services\PathDepthService;
 use App\Services\ResourcesService;
+use App\Services\RunTaskCatalog;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
 
@@ -310,6 +312,49 @@ class RunReport
     }
 
     /**
+     * Spec 2026-11-27 §6 step 0: the value of every opening objective and of the
+     * maintenance objective, whether or not the run drew it. Rules of objectives
+     * that do not exist yet follow that spec (assumptions).
+     *
+     * @return array{research_lead:int, research_breadth:int, expeditions:int, hangar_experience:int, trade:int, cantina_circle:int, maintenance_ok:bool}
+     */
+    private function objectiveMetrics(BotSession $bot): array
+    {
+        $colonyId = $bot->colonyId;
+        $knowledge = fn () => DB::table('colony_researches as cr')
+            ->join('researches as r', 'r.id', '=', 'cr.research_id')
+            ->where('cr.colony_id', $colonyId)
+            ->where('r.purpose', 'knowledge');
+        $paths = fn (string $kind) => DB::table('colony_path_levels')->where('colony_id', $colonyId)->where('kind', $kind);
+
+        return [
+            'research_lead' => (int) $knowledge()->sum('cr.level'),
+            'research_breadth' => (int) $knowledge()
+                ->whereNotIn('cr.research_id', [(int) config('knowledge.geology.id'), (int) config('knowledge.agronomy.id')])
+                ->sum('cr.level'),
+            'expeditions' => DB::table('colony_hangar_missions')
+                ->where('colony_id', $colonyId)->where('state', 'completed')->where('succeeded', 1)
+                ->whereIn('difficulty', app(RunTaskCatalog::class)->countedDifficulties())
+                ->count(),
+            'hangar_experience' => (int) $paths(PathDepthService::KIND_FAMILY)->sum('level'),
+            'trade' => DB::table('merchant_items')
+                ->join('merchant_visits', 'merchant_items.visit_id', '=', 'merchant_visits.id')
+                ->where('merchant_visits.colony_id', $colonyId)
+                ->where('merchant_items.sold', 1)
+                ->where('merchant_visits.created_at', '>=', Run::findOrFail($bot->runId)->started_at)
+                ->count(),
+            'cantina_circle' => (int) $paths(PathDepthService::KIND_CHARACTER)
+                ->orderByDesc('level')->limit(5)->pluck('level')
+                ->sum(fn ($level): int => min((int) $level, 4)),
+            'maintenance_ok' => DB::table('colony_buildings as cb')
+                ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+                ->where('cb.colony_id', $colonyId)->where('cb.level', '>=', 1)
+                ->whereRaw('cb.status_points < 0.7 * COALESCE(b.max_status_points, 20)')
+                ->doesntExist(),
+        ];
+    }
+
+    /**
      * Capture one Sol's state — call once per Sol, after the strategy has
      * acted but BEFORE nextSol() (locked_actionpoints still reflect that Sol).
      */
@@ -403,6 +448,7 @@ class RunReport
             'advisors' => DB::table('advisors')->where('colony_id', $colonyId)->count(),
             'regolith_sources' => $regolithSources,
             'find_waits' => $this->findWaits($colonyId),
+            'objective_metrics' => $this->objectiveMetrics($bot),
             'organics_sources' => $organics['sources'],
             'organics_consumption' => $organics['consumption'],
             'buildings' => $buildings,
@@ -612,6 +658,7 @@ class RunReport
                 'nexus_debt_final' => (int) ($run->nexus_debt ?? 0),
             ],
             'phase2_start_sol' => $this->phase2StartSol,
+            'victory_bypassed' => (bool) config('game.bypass.victory'),
             'objectives' => $objectives,
             'actions' => [
                 'attempted' => count($bot->log),

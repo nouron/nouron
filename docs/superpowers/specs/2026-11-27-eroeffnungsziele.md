@@ -183,3 +183,17 @@ Offene Bot-Variablen: Training und Gespräche als Restposten, Missionswahl, Hän
 ## 8. Messung vor Schritt 0: neuer Vergleichswert
 
 Schritt 0 ist zugleich die neue Vergleichsmessung. Sie enthält **zwei** Änderungen gegenüber M6: Der Bot repariert Schiffe (#504) und Bergungsflüge verschleißen (#505). Beide Wirkungen lassen sich nicht getrennt ablesen (Owner hat die gemeinsame Messung bestätigt). Die Hypothese wird vor der Freigabe des Laufs hier eingetragen. Nach dieser Messung dürfen die Rohberichte früherer Batches gelöscht werden.
+
+### 8.1 Hypothese der Vergleichsmessung (vor dem Lauf notiert, 2026-11-27)
+
+**Lauf:** 72 Runs wie M6 (`aimless`, `default`, `focus` × Labor, Hangar, Cantina × Seeds 1–8), Messmodus `GAME_BYPASS_VICTORY=true`, also jeder Run bis Sol 100 oder bis zu einer Niederlage. „Sieg“ heißt in der Auswertung: erster Sol mit zwei erfüllten gezogenen Aufgaben (alte Ziehung, alte Zielwerte). Alle Erwartungen sind **Annahmen**.
+
+| Größe | Erwartung | Widerlegt, wenn |
+|---|---|---|
+| Siege je Profil | höchstens 3 von 24 neben M6 (18 / 20 / 22) | Abweichung größer |
+| Median Sieg-Sol | Sol 70–80 je Profil | außerhalb |
+| Schiffsreparatur | `ship_repair_spent` > 0 in Runs mit Schiff; `focus_expedition_mission` wird ausgeführt | nie ausgeführt |
+| Expeditionen 24, Hangar-Runs | Median Sol 55–75 (`aimless`) | außerhalb |
+| Händlerkäufe 18, Cantina-Runs | in mindestens der Hälfte erreicht, Median Sol 65–80 | seltener oder außerhalb |
+| Fächervielfalt 11, Crews 20, Stammrunde 20, jeweils eigene Eröffnung | `aimless` erreicht sie vor Sol 90 höchstens in 2 von 8 Runs | öfter |
+| Wartungsstand (20 Sole in Folge) | offen, reine Erhebung | — |

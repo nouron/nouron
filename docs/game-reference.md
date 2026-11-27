@@ -433,6 +433,8 @@ freies Supply = Cap − Arbeitsplätze − Σ(Forschungsstufe × supply_cost)
 
 Bau-Gate: Platzieren und Ausbau n → n+1 (n ≥ 1) erfordern `freies Supply ≥ supply_cost`. Ausbau 0 → 1 wird nie geprüft (Reserve). Ausgenommen: CC, Wohnhabitat, erster Harvester (ungeprüft, reserviert aber). Bypass: `game.bypass.supply_checks`.
 
+Messmodus für Bot-Läufe: `game.bypass.victory` (Env `GAME_BYPASS_VICTORY`, Standard aus) — zwei erfüllte Aufgaben beenden den Run nicht; Berichte tragen dann `victory_bypassed`.
+
 ---
 
 ## 10a. Wohnraumverlust / Unterbesetzung (A14, Option A2)
