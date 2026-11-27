@@ -82,10 +82,10 @@ class RunObjectivesTest extends TestCase
     public function test_draw_objectives_takes_target_values_from_config(): void
     {
         config([
-            'game.run.task_pool' => ['task_research_lead', 'task_engineering_output', 'task_trade_volume'],
+            'game.run.task_pool' => ['task_research_lead', 'task_engineering_output', 'task_senior_advisors'],
             'game.run.tasks.task_research_lead.target' => 7,
             'game.run.tasks.task_engineering_output.target' => 41,
-            'game.run.tasks.task_trade_volume.target' => 2,
+            'game.run.tasks.task_senior_advisors.target' => 2,
         ]);
         $run = $this->makeRun();
 
@@ -93,7 +93,7 @@ class RunObjectivesTest extends TestCase
 
         $targets = array_map('intval', RunObjective::where('run_id', $run->id)->pluck('target_value', 'task_key')->all());
         ksort($targets);
-        $this->assertSame(['task_engineering_output' => 41, 'task_research_lead' => 7, 'task_trade_volume' => 2], $targets);
+        $this->assertSame(['task_engineering_output' => 41, 'task_research_lead' => 7, 'task_senior_advisors' => 2], $targets);
     }
 
     public function test_combo_blacklist_reads_categories_from_config(): void

@@ -686,7 +686,7 @@ Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für
 | **Sieg-Korridor** (Owner) | Sol 70–85 nur sehr guter Run + Glück; realistisch Sol 85–95 |
 
 ### Objectives (GDD §15)
-Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 gezogen: mindestens eine mittelfristige und mindestens eine langfristige (`horizon`), höchstens eine aus der Kategorie `economy`. Gespeichert wird in der Rangfolge `crc32(seed|task_key)`, die erste ist von Anfang an sichtbar. Sieg bei 2 von 3 erfüllten Aufgaben. Herleitung: `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`.
+Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 gezogen: genau eine der eigenen Eröffnung (`opening`: `sciencelab` → `task_research_lead`, `hangar` → `task_expedition_coverage`, `bar` → `task_trade_volume`; Eröffnung = zuerst platziertes Fokus-Gebäude ab Stufe 1) und zwei allgemeine, dabei mindestens eine mittelfristige und mindestens eine langfristige (`horizon`), höchstens eine aus der Kategorie `economy`. Gespeichert wird in der Rangfolge `crc32(seed|task_key)`, die erste ist von Anfang an sichtbar. Sieg bei 2 von 3 erfüllten Aufgaben. Herleitung: `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`.
 
 **Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85 (mittelfristig vorn, langfristig hinten im Korridor). Kein Mindest-Sol.
 

@@ -65,6 +65,14 @@ class RunTaskCatalog
         return in_array($horizon, [self::HORIZON_MEDIUM, self::HORIZON_LONG], true) ? $horizon : null;
     }
 
+    /** Opening the task belongs to ('sciencelab' | 'hangar' | 'bar'), null for a general task. */
+    public function opening(string $taskKey): ?string
+    {
+        $opening = $this->param($taskKey, 'opening');
+
+        return is_string($opening) ? $opening : null;
+    }
+
     public function isStreak(string $taskKey): bool
     {
         return $this->param($taskKey, 'type') === self::TYPE_STREAK;
@@ -112,7 +120,7 @@ class RunTaskCatalog
         $replace = ['target' => $this->formatNumber($target ?? $this->target($taskKey))];
 
         foreach ($this->params($taskKey) as $name => $value) {
-            if (in_array($name, ['category', 'horizon', 'type', 'target'], true)) {
+            if (in_array($name, ['category', 'horizon', 'type', 'target', 'opening'], true)) {
                 continue;
             }
             if (is_int($value)) {

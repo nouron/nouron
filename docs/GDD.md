@@ -2548,7 +2548,7 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 
 Jede Aufgabe hat einen Zeithorizont. Er teilt den Korridor der Kalibrierregel auf, die Regel selbst bleibt:
 
-- **Mittelfristig** sind die Aufgaben, die eine **Tätigkeit oder ein Einkommen** messen. Fortschritt ist ab Phase-2-Beginn ohne spätes Tor möglich; gezielt gespielt fallen sie im vorderen Teil des Korridors. Dazu gehören die drei **Fokus-Aufgaben**, je eine für jedes Fokus-Gebäude (Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner), und die neutrale Kreditreserve.
+- **Mittelfristig** sind die Aufgaben, die eine **Tätigkeit oder ein Einkommen** messen. Fortschritt ist ab Phase-2-Beginn ohne spätes Tor möglich; gezielt gespielt fallen sie im vorderen Teil des Korridors. Dazu gehören die drei **Fokus-Aufgaben**, je eine für jedes Fokus-Gebäude (Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner), die nur nach der passenden Eröffnung gezogen werden, und die neutrale Kreditreserve.
 - **Langfristig** sind die Aufgaben, die den **Reife- oder Ausbaugrad der ganzen Kolonie** messen. Sie brauchen späte Tore (Kommandozentrale-Stufe, Dienstzeit, volle Agrardom-Stufe, hohe Vertrauensstufe) und lange gehaltene Zustände; gezielt gespielt fallen sie im hinteren Teil des Korridors. Sie hängen an keinem Fokus-Gebäude.
 
 Die Zuordnung der Aufgaben zu den Zeithorizonten (Tabelle unten) und die Aufteilung des Korridors sind ein Vorschlag (Spec 2026-11-25 §1, Owner-Bestätigung offen).
@@ -2557,15 +2557,15 @@ So passt der Sieg-Korridor (§18.4): Zwei mittelfristige Aufgaben in einer Ziehu
 
 #### Ziehungsregel
 
-Jede Ziehung enthält **mindestens eine mittelfristige und mindestens eine langfristige Aufgabe** (Owner-Entscheidung 2026-11-24) und **höchstens eine Wirtschafts-Aufgabe** (Kombo-Regel: Handelspartner und Kreditreserve nie zusammen).
+Jede Ziehung enthält **genau eine Aufgabe der eigenen Eröffnung** und zwei allgemeine (Owner-Entscheidung 2026-11-27). Eröffnung ist das zuerst gebaute Fokus-Gebäude, das beim Übergang in Phase 2 steht (Labor, Hangar oder Cantina). Aufgaben anderer Eröffnungen werden nie gezogen. Außerdem gilt: **mindestens eine mittelfristige und mindestens eine langfristige Aufgabe** (Owner-Entscheidung 2026-11-24) und **höchstens eine Wirtschafts-Aufgabe** (Kombo-Regel).
 
 Ablauf in Worten:
 1. Der Pool wird aus dem Run-Seed in eine feste Rangfolge gebracht. Diese Rangfolge ist die einzige Zufallsquelle.
-2. Gewählt werden die erste mittelfristige Aufgabe der Rangfolge, dann die erste langfristige, die die Kombo-Regel nicht verletzt, dann die nächste noch freie Aufgabe gleich welcher Klasse, ebenfalls ohne Verstoß gegen die Kombo-Regel.
-3. Die drei Aufgaben erscheinen in ihrer Rangfolge, nicht in der Wahlreihenfolge. Die erste ist von Anfang an sichtbar (§18.1); sie ist also nicht immer die mittelfristige.
-4. Fehlt einer Klasse im Pool jede Aufgabe, wird ohne sie auf drei aufgefüllt. Zwei Wirtschafts-Aufgaben gibt es nie.
+2. Gewählt werden die erste Aufgabe der Rangfolge, die zur Eröffnung gehört, dann je eine allgemeine Aufgabe für jede noch fehlende Zeithorizont-Klasse, dann bei Bedarf die nächste freie allgemeine Aufgabe, jeweils ohne Verstoß gegen die Kombo-Regel.
+3. Die drei Aufgaben erscheinen in ihrer Rangfolge, nicht in der Wahlreihenfolge. Die erste ist von Anfang an sichtbar (§18.1); sie ist also nicht immer die Aufgabe der Eröffnung.
+4. Fehlt einer Klasse im allgemeinen Pool jede Aufgabe, wird ohne sie auf drei aufgefüllt. Zwei Wirtschafts-Aufgaben gibt es nie.
 
-Die Ziehung hängt nur am Run-Seed und an der Config, nicht an der Eröffnung oder am Zustand der Kolonie. Gleicher Seed heißt gleiche Aufgaben in allen drei Eröffnungen; das hält Balance-Messungen vergleichbar.
+Die Ziehung hängt am Run-Seed, an der Eröffnung und an der Config. Balance-Messungen vergleichen deshalb nur Runs derselben Eröffnung.
 
 #### Die Aufgaben
 
@@ -2582,7 +2582,7 @@ Die Ziehung hängt nur am Run-Seed und an der Config, nicht an der Eröffnung od
 
 **Quelle der Wahrheit:** Alle Aufgaben-Parameter (Zeithorizont, Kategorie, Typ Zähler/Serie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks` und werden über `RunTaskCatalog` gelesen. Die Aufgaben-Beschriftung im UI wird aus denselben Werten gebaut, die angezeigte Zahl ist also die gemessene. Die aktuellen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
 
-> **Offene Frage (Owner): frühe Fokus-Aufgaben.** Mit dem passenden Fokus-Gebäude fallen Handelspartner und Expeditionen auch ohne gezieltes Spiel weit vor dem Korridor, ohne das Fokus-Gebäude kaum. „Erst ab der Ziehung zählen" ist abgelehnt (in Phase 2 wären evtl. nicht genug Felder für Expeditionen offen). Optionen (Zielwert je Eröffnung, vorerfüllte Aufgaben nicht ziehen, Zähltempo begrenzen) in der Spec 2026-11-25 §6. Dieselbe Frage stellt sich für die Kreditreserve mit Cantina.
+> **Fokus-Aufgaben:** Je Eröffnung sind eine mittelfristige und eine langfristige eigene Aufgabe vorgesehen (Spec `docs/superpowers/specs/2026-11-27-eroeffnungsziele.md`). Umgesetzt sind bisher die mittelfristigen; die langfristigen und ihre Zielwerte folgen.
 
 > **Folgeschritt:** `task_credit_reserve` bleibt als Serie im Pool. Damit sie erreichbar wird, werden die Credit-Belohnungen von Außenmissionen und Ereignissen angehoben: Die Kreditreserve soll über aktives Spielen (Missionen, Ereignisse) entstehen, nicht über reines Sparen. „Nexus-Vorschuss tilgen" wird ein **zusätzliches** Ziel im Pool, sobald es eine Tilgungsmechanik für `nexus_debt` gibt (siehe Nexus-Schulden-Mechanik unten).
 
