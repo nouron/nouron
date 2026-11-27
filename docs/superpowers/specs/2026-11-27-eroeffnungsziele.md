@@ -321,3 +321,39 @@ Wie M8 (72 Runs, Messmodus bis Sol 100). Zwei Änderungen wirken auf den Verglei
 | Hangar `focus` (gezogen) | Korvette in mindestens der Hälfte der Runs; schwere Erfolge > 0; Einsatzbreite mindestens 7 | eines davon verfehlt |
 | Expeditionen 10, Hangar | `focus` (gezogen) höchstens die Hälfte erreicht: eine Korvette fliegt etwa alle 6 Sole, Erfolgschance „schwer“ 60 % plus Boni | mehr als die Hälfte (dann zu pessimistisch angenommen) |
 | `default`, Hangar | kauft die Korvette (wie `focus`), Siege der Hangar-Runs höchstens 2 neben M8 | größere Abweichung |
+
+### 9.6 Messung `20261127_m9` — Ergebnis (2026-11-27)
+
+72 von 72 Runs, Stand `72da40ad` (#515–#517), Messmodus bis Sol 100. Alle Zahlen **gemessen**.
+
+**Siege** (zwei gezogene Aufgaben bis Sol 100; in Klammern M8):
+
+| Profil | Siege | Median Sieg-Sol | Labor | Hangar | Cantina |
+|---|---|---|---|---|---|
+| `aimless` | 14/24 (14) | 87 (83,5) | 4/8 | 4/8 | 6/8 |
+| `default` | 20/24 (20) | 85 (87,5) | 7/8 | 6/8 | 7/8 |
+| `focus` | 24/24 (18) | 78,5 (82) | 8/8 | 8/8 | 8/8 |
+
+**Eröffnungsziele** (Runs der eigenen Eröffnung mit gezogenem Ziel; kleine Fallzahlen):
+
+| Ziel (Wert) | `aimless` | `focus` | Urteil |
+|---|---|---|---|
+| Forschungsvorsprung (16) | 0/2 | 2/2, Sol 69 | passt |
+| Fächervielfalt (11) | 0/6 | 6/6, Sol 84 | passt, eher spät |
+| Expeditionen (10, „schwer“) | 0/3 | 2/3, Sol 81 | passt |
+| Einsatzbreite (9) | 0/5 | 5/5, Sol 78 | passt |
+| Händlerkäufe (16) | 4/4, Sol 66 | 4/4, Sol 66 | ohne Zielspiel weiterhin zu leicht |
+| Stammrunde (16) | 0/4 | 4/4, Sol 69,5 | passt |
+
+`default` erreichte: Forschungsvorsprung 2/2 (Sol 69), Fächervielfalt 6/6 (86,5), Expeditionen 0/3, Einsatzbreite 4/5 (85), Händlerkäufe 4/4 (76,5), Stammrunde 3/4 (95).
+
+Nachgerechnet aus denselben Reports (gezogene Runs, 4 je Profil): Händlerkäufe 18: `aimless` Median Sol 76 / `focus` 76; 20: `aimless` 86 / `focus` 79.
+
+**Abgleich mit der Hypothese (§9.5):** erfüllt: höchstens eine wartende Drohne je Run, Stammrunde (beide Zeilen), Siege `aimless` Cantina unter 7/8, Labor und Hangar nicht unter M8, Hangar `focus` (Korvette in allen Runs, schwere Erfolge, Einsatzbreite immer 9), `default` Hangar (Korvette, 6/8 wie M8). **Widerlegt:** Händlerkäufe `aimless` (Median Sol 66 statt 70–90; gezielt 66 erfüllt), Expeditionen (`focus` 2 von 3, mehr als die Hälfte; die Annahme war zu pessimistisch).
+
+**Weitere Beobachtung:** Die allgemeine Aufgabe Kreditreserve fällt auch ohne Zielspiel früh (`aimless` 15 von 16 gezogenen Runs, Median je Eröffnung Sol 43–62).
+
+**Einschränkung:** Gegenüber M8 wirken Zielwerte und Bot-Änderungen gemeinsam; Unterschiede sind nicht einer Ursache allein zuzuordnen.
+
+**Offen (Owner):** Händlerkäufe auf 20; Kreditreserve; ob `default` mit 20/24 (Ziel etwa 70 %) Anlass für weitere Änderungen ist.
+
