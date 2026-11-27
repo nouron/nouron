@@ -195,7 +195,7 @@ Gerechnete Sol (Kosten ÷ Tagesmaximum, ohne Übertrag): Training Lv1–5 bei De
 | 2 | 1 | 1 | 1 | 2 Sol |
 | 3 | 2 | 1 | 2 | 4 Sol |
 
-Der Flug verschleißt das Schiff nicht (keine Rückkehr-Garantie nötig). Ertrag = Fundmenge (`finds.types.*.rg`, kein Faktor): klein 4, mittel 10, groß 18 Rg; die Zeilenstruktur (`base`, `total`) bleibt für spätere Zusätze. Tragkraft aus `ships.*.find_carry` (Tabelle oben). Kein Ertrag, wenn der Fund beim Eintreffen fehlt (`find_missing`) oder das Schiff den Fund nicht tragen kann; bei SP ≤ 0 unterwegs, Abbruch oder Rückruf bleibt der Fund bestehen und wieder Flugziel.
+Der Flug verschleißt das Schiff wie jede Mission (Rückkehr-Garantie gilt). Ertrag = Fundmenge (`finds.types.*.rg`, kein Faktor): klein 4, mittel 10, groß 18 Rg; die Zeilenstruktur (`base`, `total`) bleibt für spätere Zusätze. Tragkraft aus `ships.*.find_carry` (Tabelle oben). Kein Ertrag, wenn der Fund beim Eintreffen fehlt (`find_missing`) oder das Schiff den Fund nicht tragen kann; bei SP ≤ 0 unterwegs, Abbruch oder Rückruf bleibt der Fund bestehen und wieder Flugziel.
 
 **Katalog-Änderungen:** `mission_find_salvage` neu. `mission_prospecting_flight` und `mission_deep_survey` (Signalvermessung) gestrichen, Zieltyp `signal_tile` und Belohnung `deep_scan` entfallen. `mission_supply_run` zahlt nur noch Organika (kein Regolith).
 
@@ -659,7 +659,7 @@ Pool gesamt: 7 Signale, 40 Rg; der Ertrag ist bei Selbstbergung und Flug gleich 
 | Ertrag | Fundmenge (`types.*.rg`), kein Faktor |
 | AP je Flug `ap_cost` | 1 (unabhängig von Größe und Ring) |
 | Proviant `organika_per_sol` | 1 Organika je Sol Entfernung (Ring 2: 1, Ring 3: 2) |
-| Verschleiß | keiner (Bergungsflüge verschleißen das Schiff nicht; Rückkehr-Garantie entfällt) |
+| Verschleiß | wie jede Mission (`ships.*.wear_per_sol` je Sol unterwegs, Rückkehr-Garantie gilt) |
 | Mindest-Hallenstufe `min_hangar_level` | klein 1, mittel 1, groß 2 (muss zu `ships.*.find_carry` passen) |
 
 Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für alle Größen, mit Hangar nur Bergungsflug (strenge Ablösung, keine Koexistenz). Ablauf Selbstbergung: Signal (Fehlalarm nicht erkennbar) → Tiefenscan (enthüllt den Fund, Fehlalarm wird bebaubar) → Bergung über `ColonyTileService::salvageFind` (Route `colony.tile.salvage`, feste AP je Fundgröße, Regolith sofort, Kachel frei). Signal-Kacheln sind bis zum Scan nicht bebaubar (`tile_has_find`); ein echter Fund bleibt unbebaubar, bis er vollständig geborgen ist, ein gescannter Fehlalarm wird bebaubar. Bot: Regeln `deep_scan_signal_tile`, `invest_find` (nur ohne Hangar) und `dispatch_find_flight`. Messung: `RunReport` `regolith_sources.find` und `regolith_sources.find_flight`, `game:playtest-compare` K11/K12/K16/K17 (informativ).
