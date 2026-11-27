@@ -221,6 +221,16 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'repair_ship_for_flight',
+                // Ships wear in flight; without repair a worn ship stays docked for the
+                // rest of the run. Repairs once a full click fits, so no AP is wasted and
+                // every mission distance stays flyable.
+                'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.ship_repair.ap_per_click', 1)
+                    ? self::wornShip($b)
+                    : null,
+                'do' => fn (BotSession $b, object $ship) => $b->act('repair_ship_for_flight', 'POST', "/colony/hangar/{$ship->bay}/repair"),
+            ],
+            [
                 'name' => 'dispatch_find_flight',
                 // T30 §13.3: with a hangar, finds are salvaged by flight only. Ship, lock and
                 // wait reasons come from ColonyTileService::findAction() — the same source the
@@ -1834,6 +1844,19 @@ class BotStrategy
     private static function readyFor(object $ship, int $solDistance): bool
     {
         return HangarBays::flightReadiness((int) $ship->ship_id, (float) $ship->status_points, $solDistance)['ready'];
+    }
+
+    /** First docked, active ship that misses at least one full repair click. */
+    private static function wornShip(BotSession $b): ?object
+    {
+        return DB::table('colony_ships')
+            ->where('colony_id', $b->colonyId)
+            ->where('ship_state', 'docked')
+            ->whereNotNull('bay')
+            ->whereNotIn('id', app(HangarService::class)->inactiveShipRowIds($b->colonyId))
+            ->where('status_points', '<=', HangarBays::maxStatus() - (int) config('game.ship_repair.sp_per_click'))
+            ->orderBy('bay')
+            ->first();
     }
 
     private static function dispatchCandidate(BotSession $b): ?object
