@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- Bot (gezieltes Spiel): neue Regeln für Fächervielfalt, Einsatzbreite und Stammrunde; `aimless` unverändert. Wirkung ungemessen.
 - Expeditionen zählt nur noch schwere Missionen (vorher ab „normal“, jede Kurierfahrt zählte); der gezielte Bot fliegt sie vor den Credit-Missionen. Zielwert ungemessen.
 - Run-Ziele: Drei langfristige Eröffnungsziele neu — Fächervielfalt (Labor), Einsatzbreite (Hangar), Stammrunde (Cantina); Zielwerte vorläufig und ungemessen, Bot verfolgt sie noch nicht gezielt.
 - Run-Ziele: Jede Ziehung enthält genau eine Aufgabe der eigenen Eröffnung (Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner) und zwei allgemeine; Aufgaben anderer Eröffnungen werden nicht mehr gezogen (Spec 2026-11-27, Schritt 1; Zielwerte noch unverändert).

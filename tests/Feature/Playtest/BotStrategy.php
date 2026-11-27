@@ -491,7 +491,9 @@ class BotStrategy
         // The expedition rule goes in front of the credit missions: they would take
         // every docked ship first.
         foreach ($focusRules as $focusRule) {
-            $before = $focusRule['name'] === 'focus_expedition_mission' ? 'dispatch_credit_mission' : 'relocate_harvester';
+            $before = in_array($focusRule['name'], ['focus_expedition_mission', 'focus_mission_variety'], true)
+                ? 'dispatch_credit_mission'
+                : 'relocate_harvester';
             $at = array_search($before, array_column($rules, 'name'), true);
             array_splice($rules, $at === false ? count($rules) : (int) $at, 0, [$focusRule]);
         }
@@ -513,6 +515,25 @@ class BotStrategy
                 'do' => fn (BotSession $b, array $candidate) => $b->act('focus_expedition_mission', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
                     'mission_key' => $candidate['mission_key'],
                     'difficulty' => $candidate['difficulty'],
+                ]),
+            ],
+            [
+                'name' => 'focus_mission_variety',
+                'when' => fn (BotSession $b) => self::hasActiveObjective($b, 'task_mission_variety')
+                    ? self::newMissionKindCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, array $candidate) => $b->act('focus_mission_variety', 'POST', "/colony/hangar/{$candidate['ship']->bay}/dispatch", [
+                    'mission_key' => $candidate['mission_key'],
+                    'difficulty' => $candidate['difficulty'],
+                ]),
+            ],
+            [
+                'name' => 'focus_cantina_circle',
+                'when' => fn (BotSession $b) => self::hasActiveObjective($b, 'task_cantina_circle')
+                    ? self::cantinaCircleCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, array $c) => $b->act('focus_cantina_circle', 'POST', "/colony/path-depth/character/{$c['slug']}/invest", [
+                    'ap' => $c['ap'],
                 ]),
             ],
             [
@@ -598,6 +619,60 @@ class BotStrategy
             $ship = $ships->first(fn (object $ship): bool => in_array((int) $ship->ship_id, $shipIds, true) && self::readyFor($ship, (int) $mission['sol_distance']));
             if ($ship !== null) {
                 return ['ship' => $ship, 'mission_key' => (string) $missionKey, 'difficulty' => $difficulty];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * task_mission_variety: a mission kind that never succeeded yet and is not in
+     * flight, at its easiest difficulty (highest success chance).
+     *
+     * @return array{ship: object, mission_key: string, difficulty: string}|null
+     */
+    private static function newMissionKindCandidate(BotSession $b): ?array
+    {
+        $done = DB::table('colony_hangar_missions')
+            ->where('colony_id', $b->colonyId)
+            ->where(fn ($q) => $q->where('state', 'active')->orWhere(fn ($q) => $q->where('state', 'completed')->where('succeeded', 1)))
+            ->pluck('destination')
+            ->all();
+        $missions = collect(config('missions.catalog'))
+            ->reject(fn (array $m, string $key): bool => in_array($key, $done, true) || isset($m['requires']['target']) || isset($m['target_type']))
+            ->sortBy(fn (array $m): int => (int) $m['sol_distance'])
+            ->map(fn (array $m, string $key): array => [$key, $m['difficulties'][0]])
+            ->values()
+            ->all();
+
+        return self::firstFlyableMission($b, $missions);
+    }
+
+    /**
+     * task_cantina_circle sums the closest figures, each capped: talk to the closest
+     * present figure still below the cap, with the longest option that wastes nothing
+     * (presence limits more than AP).
+     *
+     * @return array{slug: string, ap: int}|null
+     */
+    private static function cantinaCircleCandidate(BotSession $b): ?array
+    {
+        if (self::barLevel($b) < 1 || self::availableAp($b) < 1) {
+            return null;
+        }
+        $cap = (int) app(RunTaskCatalog::class)->param('task_cantina_circle', 'level', 4);
+        $service = app(PathDepthService::class);
+        $present = array_filter(
+            app(CantinaPresenceService::class)->presentCharacters($b->colonyId, app(TickService::class)->getTickCount()),
+            fn (string $slug): bool => self::relationshipLevel($b, $slug) < $cap
+        );
+        usort($present, fn (string $x, string $y): int => [-self::relationshipLevel($b, $x), $x] <=> [-self::relationshipLevel($b, $y), $y]);
+        foreach ($present as $slug) {
+            $ap = collect($service->conversation($b->colonyId, $slug)['options'])
+                ->filter(fn (array $o): bool => $o['available'] && ! $o['capped'] && $o['wasted'] === 0 && $o['ap'] <= self::availableAp($b))
+                ->max('ap');
+            if ($ap !== null) {
+                return ['slug' => $slug, 'ap' => (int) $ap];
             }
         }
 

@@ -162,6 +162,12 @@ final class Valuers
         // so every level step is an equal share of the objective, like engineering output —
         // cheap breadth steps are worth more per AP than deep ones.
         $objective = $ctx->objectives['task_research_lead'] ?? null;
+        // Spec 2026-11-27: "Fächervielfalt" counts the same steps, without the excluded knowledges.
+        $breadth = $ctx->objectives['task_research_breadth'] ?? null;
+        $excluded = (array) config('game.run.tasks.task_research_breadth.excluded', []);
+        if ($breadth !== null && ! in_array(collect(config('knowledge'))->search($cfg), $excluded, true)) {
+            $objective = $breadth;
+        }
         if ($objective !== null && (float) $w['w_objective'] > 0.0) {
             $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target']);
         }
