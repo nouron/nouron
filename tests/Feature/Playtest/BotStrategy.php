@@ -2384,7 +2384,9 @@ class BotStrategy
             return null;
         }
 
-        return $credits >= $droneCost ? (int) config('ships.drone.id') : null;
+        // Measurement 20261127_m8: with a full hall the spare drone stayed pending, decayed and
+        // was bought again about every six Sols (up to ~2000 Credits per run).
+        return $credits >= $droneCost && self::hasFreeBayFor($b, 1) ? (int) config('ships.drone.id') : null;
     }
 
     /**

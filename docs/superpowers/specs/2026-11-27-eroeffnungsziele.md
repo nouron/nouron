@@ -305,18 +305,19 @@ Nachgerechnet aus denselben Reports (Schwelle: erster Sol, an dem der Wert errei
 
 - **Händlerkäufe 8 → 16** und **Stammrunde 20 → 16**. Forschungsvorsprung 16 und Fächervielfalt 11 bleiben. Händlerkäufe 16 fällt nach der Nachrechnung ohne Zielspiel weiterhin vor Sol 90 (um Sol 80).
 - **Bot-Nachrüstung Hangar** (#515). Befund aus den M8-Reports: Der Frachterkauf belegte alle drei Hallenplätze, direkte Forschung ging in Hangar-Runs ausschließlich in Geologie und Agronomie. Bei offenem Hangar-Ziel kauft der gezielte Bot jetzt die Korvette und bewertet die Kenntnisstufen, die Missionen freischalten. `aimless` unverändert.
-- **Beobachtet, nicht geändert:** Bei vollen Hallenplätzen kauft der Bot wiederholt eine Drohne, die ohne Platz verfällt (`aimless`/`focus`, Hangar: nach dem dritten Frachter etwa alle 6 Sole). Das kostet Credits in allen Profilen; Behebung verschiebt den Vergleichswert und braucht eine eigene Entscheidung.
+- **Drohnen-Nachkauf behoben** (Owner 2026-11-27, vor der Messung): Bei voller Halle kaufte der Bot wiederholt eine Drohne, die ohne Platz verfiel. Gezählt aus den M8-Reports (ungefähr, Käufe mit wartender Drohne am Sol-Ende): Hangar 21 von 24 Runs, etwa 1350–2060 Credits je Run; Labor 14 von 24, etwa 830–1050; Cantina 2 von 24 (nur `focus`). Jetzt nur noch mit freiem Platz. Das verschiebt den Vergleichswert **aller** Profile.
 
-### 9.5 Nächste Messung — Hypothese (vor dem Lauf notiert)
+### 9.5 Messung `20261127_m9` — Hypothese (vor dem Lauf notiert)
 
-Wie M8 (72 Runs, Messmodus bis Sol 100). Alle Erwartungen sind **Annahmen**; gezieltes Spiel nur in gezogenen Runs (kleine Fallzahlen).
+Wie M8 (72 Runs, Messmodus bis Sol 100). Zwei Änderungen wirken auf den Vergleich: neue Zielwerte (§9.4) und Bot-Änderungen (Hangar-Nachrüstung, kein Drohnen-Nachkauf). Deshalb sind Unterschiede zu M8 nicht einer Ursache allein zuzuordnen. Alle Erwartungen sind **Annahmen**; gezieltes Spiel nur in gezogenen Runs (kleine Fallzahlen).
 
 | Größe | Erwartung | Widerlegt, wenn |
 |---|---|---|
+| Drohnen ohne Platz | höchstens eine wartende Drohne je Run | wiederholte Nachkäufe |
 | Händlerkäufe 16, Cantina | gezielt Median Sol 60–75; `aimless` Median Sol 70–90 | außerhalb |
 | Stammrunde 16, Cantina | gezielt mindestens die Hälfte bis Sol 80; `aimless` vor Sol 90 höchstens 2 von 8 | eines davon verfehlt |
 | Siege `aimless`, Cantina | weniger als 7 von 8 | 7 oder mehr |
+| Siege `aimless`, Labor und Hangar | nicht weniger als M8 (4 bzw. 3 von 8): mehr Credits | weniger |
 | Hangar `focus` (gezogen) | Korvette in mindestens der Hälfte der Runs; schwere Erfolge > 0; Einsatzbreite mindestens 7 | eines davon verfehlt |
-| Expeditionen 10, Hangar | `focus` (gezogen) höchstens die Hälfte erreicht: eine Korvette fliegt etwa alle 6 Sole, Erfolgschance „schwer“ 60 % plus Boni | mehr als die Hälfte (dann zu optimistisch gerechnet) |
-| Siege `aimless`, Labor und Hangar | wie M8 (Abweichung höchstens 1 je Eröffnung, Bot unverändert) | größere Abweichung |
-
+| Expeditionen 10, Hangar | `focus` (gezogen) höchstens die Hälfte erreicht: eine Korvette fliegt etwa alle 6 Sole, Erfolgschance „schwer“ 60 % plus Boni | mehr als die Hälfte (dann zu pessimistisch angenommen) |
+| `default`, Hangar | kauft die Korvette (wie `focus`), Siege der Hangar-Runs höchstens 2 neben M8 | größere Abweichung |
