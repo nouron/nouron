@@ -70,7 +70,7 @@ class RunObjectivesTest extends TestCase
         $this->assertSame(20, config('game.run.tasks.task_credit_reserve.target'));
         $this->assertSame(32, config('game.run.tasks.task_engineering_output.target'));
         $this->assertSame(10, config('game.run.tasks.task_expedition_coverage.target'));
-        $this->assertSame('normal', config('game.run.tasks.task_expedition_coverage.min_difficulty'));
+        $this->assertSame('hard', config('game.run.tasks.task_expedition_coverage.min_difficulty'));
         // R1 (Owner 2026-10-01)
         $this->assertSame(35, config('game.run.tasks.task_self_sufficiency.target'));
         $this->assertSame(8, config('game.run.tasks.task_trade_volume.target'));
@@ -161,16 +161,16 @@ class RunObjectivesTest extends TestCase
 
     // ── task_expedition_coverage ─────────────────────────────────────────────
 
-    public function test_expedition_coverage_counts_successful_missions_at_normal_or_harder(): void
+    public function test_expedition_coverage_counts_only_successful_hard_missions(): void
     {
         $run = $this->makeRun();
         $objective = $this->makeObjective($run, 'task_expedition_coverage', 3);
-        $this->insertMission('normal', succeeded: true);
         $this->insertMission('hard', succeeded: true);
-        $this->insertMission('easy', succeeded: true);           // too easy
-        $this->insertMission('normal', succeeded: false);        // failed roll
+        $this->insertMission('hard', succeeded: true);
+        $this->insertMission('normal', succeeded: true);         // too easy
+        $this->insertMission('hard', succeeded: false);          // failed roll
         $this->insertMission('hard', succeeded: null, state: 'aborted');
-        $this->insertMission('normal', succeeded: null, state: 'active');
+        $this->insertMission('hard', succeeded: null, state: 'active');
 
         $this->service->updateObjectiveProgress($run);
 
@@ -184,7 +184,7 @@ class RunObjectivesTest extends TestCase
         $run = $this->makeRun();
         $objective = $this->makeObjective($run, 'task_expedition_coverage', 10);
         foreach (range(1, 10) as $i) {
-            $this->insertMission('normal', succeeded: true);
+            $this->insertMission('hard', succeeded: true);
         }
 
         $this->service->updateObjectiveProgress($run);
@@ -294,7 +294,7 @@ class RunObjectivesTest extends TestCase
         $this->assertStringContainsString('11', $catalog->label('task_senior_advisors', 11));
 
         $this->assertStringContainsString('30', $catalog->label('task_engineering_output', 30));
-        $this->assertStringContainsString(__('missions.difficulty_normal'), $catalog->label('task_expedition_coverage', 10));
+        $this->assertStringContainsString(__('missions.difficulty_hard'), $catalog->label('task_expedition_coverage', 10));
     }
 
     public function test_every_task_label_is_translated_without_leftover_placeholders(): void

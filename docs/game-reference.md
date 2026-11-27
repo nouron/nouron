@@ -188,7 +188,7 @@ Gerechnete Sol (Kosten ÷ Tagesmaximum, ohne Übertrag): Training Lv1–5 bei De
 
 **Rückkehr-Garantie** (`HangarBays::flightReadiness`, ersetzt `dispatch_min_sp_pct` = 25 %): Start nur, wenn `SP − wear_per_sol × 2 × sol_distance > 0`. Fehlercode `ship_too_worn`. Beispiel Drohne Ring 3 (Distanz 2): Verschleiß 6 SP, Start ab 7 SP, Rückkehr mit 1 SP. Gilt für alle Missionen.
 
-**Bergungsflug** (`mission_find_salvage`, `FindFlightService`): nur zu gescannten echten Funden, Schiff Drohne oder Frachter, kein Erfolgswurf (`roll` false), Schwierigkeit `normal` (zählt für `task_expedition_coverage`, nicht gegen `finds.max_open_projects`).
+**Bergungsflug** (`mission_find_salvage`, `FindFlightService`): nur zu gescannten echten Funden, Schiff Drohne oder Frachter, kein Erfolgswurf (`roll` false), Schwierigkeit `normal` (zählt seit 2026-11-27 nicht mehr für `task_expedition_coverage`, nicht gegen `finds.max_open_projects`).
 
 | Ring | Sol-Distanz (`sol_distance_by_ring`) | AP (pauschal, `finds.flight.ap_cost`) | Organika (1 je Sol, `finds.flight.organika_per_sol`) | Dauer (hin und zurück) |
 |---|---|---|---|---|
@@ -701,7 +701,7 @@ Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. 
 | `task_colony_prosperity` | diplomacy | long | streak | Vertrauensstufe ≥ `min_band` | **`min_band` content (Zufrieden, ≥ 60), `target` 12 Sole** | T59 Owner 2026-11-14 (vorher Vertrauen > 40 auf alter Skala, 8/8 @82–95); neu ungemessen |
 | `task_research_lead` | research | medium | counter | Summe der Stufen aller Kenntnisse (eigene und stille Forschung) | **`target` 16** (gleich für alle Eröffnungen) | Owner 2026-11-26 (vorher 7 Kenntnisse auf Lv ≥ 5); ungemessen |
 | `task_self_sufficiency` | survival | long | streak | eigene Ernte (Agrardom + Agronomie) ≥ Verpflegungsbedarf, Bedarf ≥ `min_fed`, kein Hunger | **`min_fed` 55, `target` 35 Sole** | Owner 2026-11-24 (vorher Regolith > 150 und Organika > 300); ungemessen |
-| `task_expedition_coverage` | exploration | medium | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` normal, `target` 10** | Owner 2026-10-01 bestätigt (gezielt @82–87) |
+| `task_expedition_coverage` | exploration | medium | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` hard, `target` 10** | Owner 2026-11-27: nur schwere Missionen; Zielwert seitdem ungemessen |
 | `task_engineering_output` | research | long | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 32** | Spec 2026-11-25 (vorher 35; M4 gezielt 32 um Sol 80); ungemessen |
 | `task_trade_volume` | economy | medium | counter | gekaufte Händler-Items im Run | **`target` 8** | Owner 2026-10-01 (vorher 7, nebenbei schon @79–86) |
 | `task_research_breadth` | research | long | counter | Summe der Kenntnisstufen ohne `excluded` (Geologie, Agronomie) | **`target` 11** | 2026-11-27, **Annahme**, ungemessen |
@@ -715,7 +715,7 @@ Herleitung (Annahme, grob; Details in der Spec §3):
 - `task_senior_advisors` 11: Rang 2 nach 15, Rang 3 nach 45 aktiven Solen (`advisor.rank_thresholds`), höchstens 4 Berater, also höchstens 12. 11 = drei auf Rang 3, einer auf Rang 2; braucht den vierten Platz (CC Lv4).
 - `task_self_sufficiency` 55/35: Ein Agrardom liefert höchstens 66 plus Agronomie 7, also ~73 Organika je Sol. `min_fed` 55 lässt ein Band von ~18 Kolonisten.
 - `task_engineering_output` 32: M4 gezielt 32 um Sol 80, nebenbei am Ende 24–33.
-- `task_expedition_coverage` 10: Ab Hangar und erstem Schiff (frühe Phase 2) bleiben rund 50 Sole. Kurze Missionen dauern 2–4 Sole hin und zurück, die Grundchance bei „normal" liegt bei 70 %. Eine dauerhaft beschäftigte Drohne kommt damit auf etwa 10 Erfolge bis Sol ~75–80.
+- `task_expedition_coverage` 10 (nur „schwer“, Owner 2026-11-27): Zielwert aus der früheren Zählung ab „normal“ übernommen und **ungemessen**; schwere Missionen verlangen meist eine Kenntnis oder die Korvette.
 
 #### Nexus-Kontrollpunkte (Phase-2-Sol, nicht Gesamt-Sol)
 

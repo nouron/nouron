@@ -11,7 +11,7 @@ return [
     'task_colony_prosperity' => 'Kolonieblüte: Vertrauen mindestens auf „:min_band“ halten, :target Sole in Folge',
     'task_research_lead' => 'Forschungsvorsprung: Stufen aller Kenntnisse zusammen mindestens :target',
     'task_self_sufficiency' => 'Selbstversorgung: mindestens :min_fed Kolonisten aus eigener Ernte satt, :target Sole in Folge',
-    'task_expedition_coverage' => 'Expeditionen: :target erfolgreiche Außenmissionen mit Schwierigkeit „:min_difficulty“ oder höher',
+    'task_expedition_coverage' => 'Expeditionen: :target erfolgreiche Außenmissionen mit mindestens Schwierigkeit „:min_difficulty“',
     'task_engineering_output' => 'Ingenieursleistung: Ausbaustufen aller Gebäude zusammen mindestens :target',
     'task_trade_volume' => 'Handelspartner: :target Einkäufe beim Reisenden Händler',
     'task_research_breadth' => 'Fächervielfalt: Kenntnisse außer Geologie und Agronomie zusammen mindestens Stufe :target',

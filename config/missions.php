@@ -60,7 +60,7 @@ return [
         // T30 §13.3: salvage flight to a SCANNED real find (no remote scan, E4). Distance
         // comes from the target's ring; no success roll (the find is known), wear only.
         // Yield = round(find rg × game.finds.flight.yield_factor), carry per ships.*.find_carry.
-        // Counts for task_expedition_coverage (difficulty normal), not for finds.max_open_projects.
+        // Does not count for task_expedition_coverage (hard missions only).
         'mission_find_salvage' => [
             'ships' => ['drone', 'freighter'],
             'sol_distance_by_ring' => [2 => 1, 3 => 2], // fallback max(1, ring − 1)
