@@ -300,3 +300,23 @@ Nachgerechnet aus denselben Reports (Schwelle: erster Sol, an dem der Wert errei
 **Abgleich mit der Hypothese (§9.2):** erfüllt: keine Abbrüche, Siege `aimless` 12–18, Forschungsvorsprung, Händlerkäufe zu leicht, Fächervielfalt, Stammrunde. Siege `focus` liegen wie erwartet nicht unter `aimless`, aber unter `default` (nicht vorhergesagt). **Widerlegt:** Expeditionen und Einsatzbreite (`focus` nie).
 
 **Ursache der Hangar-Lücke (belegt):** Der Bot kauft nie eine Korvette (`shipToRequest` kennt nur Drohne und Frachter; alle 8 `aimless`- und `focus`-Hangar-Runs besitzen nur diese beiden). Schwere Missionen von Drohne und Frachter verlangen Kenntnisse, die der Bot nach Hangar-Eröffnung meist nicht hat (Konstruktion in 3 bzw. 2 von 8 Runs, Handel in keinem).
+
+### 9.4 Entscheidungen nach M8 (Owner 2026-11-27)
+
+- **Händlerkäufe 8 → 16** und **Stammrunde 20 → 16**. Forschungsvorsprung 16 und Fächervielfalt 11 bleiben. Händlerkäufe 16 fällt nach der Nachrechnung ohne Zielspiel weiterhin vor Sol 90 (um Sol 80).
+- **Bot-Nachrüstung Hangar** (#515). Befund aus den M8-Reports: Der Frachterkauf belegte alle drei Hallenplätze, direkte Forschung ging in Hangar-Runs ausschließlich in Geologie und Agronomie. Bei offenem Hangar-Ziel kauft der gezielte Bot jetzt die Korvette und bewertet die Kenntnisstufen, die Missionen freischalten. `aimless` unverändert.
+- **Beobachtet, nicht geändert:** Bei vollen Hallenplätzen kauft der Bot wiederholt eine Drohne, die ohne Platz verfällt (`aimless`/`focus`, Hangar: nach dem dritten Frachter etwa alle 6 Sole). Das kostet Credits in allen Profilen; Behebung verschiebt den Vergleichswert und braucht eine eigene Entscheidung.
+
+### 9.5 Nächste Messung — Hypothese (vor dem Lauf notiert)
+
+Wie M8 (72 Runs, Messmodus bis Sol 100). Alle Erwartungen sind **Annahmen**; gezieltes Spiel nur in gezogenen Runs (kleine Fallzahlen).
+
+| Größe | Erwartung | Widerlegt, wenn |
+|---|---|---|
+| Händlerkäufe 16, Cantina | gezielt Median Sol 60–75; `aimless` Median Sol 70–90 | außerhalb |
+| Stammrunde 16, Cantina | gezielt mindestens die Hälfte bis Sol 80; `aimless` vor Sol 90 höchstens 2 von 8 | eines davon verfehlt |
+| Siege `aimless`, Cantina | weniger als 7 von 8 | 7 oder mehr |
+| Hangar `focus` (gezogen) | Korvette in mindestens der Hälfte der Runs; schwere Erfolge > 0; Einsatzbreite mindestens 7 | eines davon verfehlt |
+| Expeditionen 10, Hangar | `focus` (gezogen) höchstens die Hälfte erreicht: eine Korvette fliegt etwa alle 6 Sole, Erfolgschance „schwer“ 60 % plus Boni | mehr als die Hälfte (dann zu optimistisch gerechnet) |
+| Siege `aimless`, Labor und Hangar | wie M8 (Abweichung höchstens 1 je Eröffnung, Bot unverändert) | größere Abweichung |
+

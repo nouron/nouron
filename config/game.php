@@ -925,7 +925,7 @@ return [
             'task_engineering_output' => ['category' => 'research', 'horizon' => 'long', 'type' => 'counter', 'target' => 32],
             // R1 (Owner 2026-10-01): 7 → 8 — with 7 incidental play completed at Sol
             // 79–86, ahead of the ~90 rule. Purchased merchant items in this run.
-            'task_trade_volume' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'counter', 'target' => 8, 'opening' => 'bar'],
+            'task_trade_volume' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'counter', 'target' => 16, 'opening' => 'bar'],
             // Long-horizon opening objectives (spec 2026-11-27). All targets are
             // assumptions until the bot plays them and a batch measures them.
             // Sum of knowledge levels without the two every colony raises anyway.
@@ -934,7 +934,7 @@ return [
             'task_mission_variety' => ['category' => 'exploration', 'horizon' => 'long', 'type' => 'counter', 'target' => 9, 'opening' => 'hangar'],
             // Relationship levels of the `count` closest figures, each capped at `level`.
             // Not 'economy': that would lock the credit reserve out of cantina draws.
-            'task_cantina_circle' => ['category' => 'social', 'horizon' => 'long', 'type' => 'counter', 'target' => 20, 'count' => 5, 'level' => 4, 'opening' => 'bar'],
+            'task_cantina_circle' => ['category' => 'social', 'horizon' => 'long', 'type' => 'counter', 'target' => 16, 'count' => 5, 'level' => 4, 'opening' => 'bar'],
         ],
 
         // Nexus checkpoints in PHASE-2 Sols (GDD §15 "2 von 3", §18.4). Each is

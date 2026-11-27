@@ -100,7 +100,7 @@ class RunOpeningLongObjectivesTest extends TestCase
         $this->assertStringContainsString('11', $catalog->label('task_research_breadth'));
         $this->assertStringContainsString('9', $catalog->label('task_mission_variety'));
         $label = $catalog->label('task_cantina_circle');
-        foreach (['20', '5', '4'] as $number) {
+        foreach (['16', '5', '4'] as $number) {
             $this->assertStringContainsString($number, $label);
         }
         foreach (['task_research_breadth', 'task_mission_variety', 'task_cantina_circle'] as $key) {
