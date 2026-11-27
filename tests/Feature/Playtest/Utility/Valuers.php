@@ -7,6 +7,7 @@ use App\Enums\BuildingId;
 use App\Services\BuildingCostService;
 use App\Services\ColonyTileService;
 use App\Services\ResourcesService;
+use App\Services\RunTaskCatalog;
 use App\Services\Techtree\ResearchService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -168,6 +169,7 @@ final class Valuers
         if ($breadth !== null && ! in_array(collect(config('knowledge'))->search($cfg), $excluded, true)) {
             $objective = $breadth;
         }
+        $objective ??= self::missionGateObjective($ctx, (string) collect(config('knowledge'))->search($cfg), $target);
         if ($objective !== null && (float) $w['w_objective'] > 0.0) {
             $terms['objective'] = (float) $w['w_objective'] / max(1, $objective['target']);
         }
@@ -177,6 +179,30 @@ final class Valuers
         }
 
         return new Estimate($terms, $ap, 0, $cycleAp);
+    }
+
+    /**
+     * The open hangar objective that a level step of this knowledge serves: some mission
+     * without a target (and, for the expeditions, with a counted difficulty) needs this
+     * level or a higher one.
+     *
+     * @return array{target: int}|null
+     */
+    private static function missionGateObjective(BotContext $ctx, string $knowledge, int $level): ?array
+    {
+        $variety = $ctx->objectives['task_mission_variety'] ?? null;
+        $objective = $variety ?? $ctx->objectives['task_expedition_coverage'] ?? null;
+        if ($objective === null) {
+            return null;
+        }
+        $counted = $variety === null ? app(RunTaskCatalog::class)->countedDifficulties() : null;
+        $opens = collect(config('missions.catalog'))->contains(
+            fn (array $m): bool => ! isset($m['requires']['target']) && ! isset($m['target_type'])
+                && ($counted === null || array_intersect($counted, $m['difficulties']) !== [])
+                && (int) ($m['requires']['knowledge'][$knowledge] ?? 0) >= $level
+        );
+
+        return $opens ? $objective : null;
     }
 
     /**

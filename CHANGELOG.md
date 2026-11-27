@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- Bot (gezieltes Spiel): kauft bei offenem Hangar-Ziel eine Korvette statt weiterer Frachter und erforscht die Kenntnisse, die Missionen freischalten; Wirkung ungemessen.
 - Bot (gezieltes Spiel): neue Regeln für Fächervielfalt, Einsatzbreite und Stammrunde; `aimless` unverändert. Wirkung ungemessen.
 - Expeditionen zählt nur noch schwere Missionen (vorher ab „normal“, jede Kurierfahrt zählte); der gezielte Bot fliegt sie vor den Credit-Missionen. Zielwert ungemessen.
 - Run-Ziele: Drei langfristige Eröffnungsziele neu — Fächervielfalt (Labor), Einsatzbreite (Hangar), Stammrunde (Cantina); Zielwerte vorläufig und ungemessen, Bot verfolgt sie noch nicht gezielt.

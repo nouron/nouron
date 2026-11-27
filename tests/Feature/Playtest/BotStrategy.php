@@ -2349,6 +2349,19 @@ class BotStrategy
             return null;
         }
 
+        // Measurement 20261127_m8: freighters took every bay, so the corvette never came. While
+        // one is wanted, the first freighter is the only other purchase.
+        if (self::wantsCorvette($b)) {
+            $corvette = config('ships.corvette');
+            if ($credits >= (int) $corvette['nexus_cost'] && self::hasFreeBayFor($b, 3)) {
+                return (int) $corvette['id'];
+            }
+            if (DB::table('colony_ships')->where('colony_id', $b->colonyId)
+                ->where('ship_id', (int) config('ships.freighter.id'))->exists()) {
+                return null;
+            }
+        }
+
         $freighterCost = (int) config('ships.freighter.nexus_cost', 0);
         if ($credits >= $freighterCost && self::hasFreeBayFor($b, 2)) {
             return (int) config('ships.freighter.id');
@@ -2547,6 +2560,20 @@ class BotStrategy
             ->orderBy('ct.q')
             ->orderBy('ct.r')
             ->first();
+    }
+
+    /**
+     * A focused profile with an open hangar objective, a hall that carries the corvette and
+     * none owned yet. Not tied to the focus dial's active Sols: a freighter bought on an idle
+     * Sol would take the bay for good.
+     */
+    private static function wantsCorvette(BotSession $b): bool
+    {
+        return self::$objectiveFocused
+            && self::hangarLevel($b) >= HangarBays::requiredLevel((int) config('ships.corvette.id'))
+            && (self::hasActiveObjective($b, 'task_expedition_coverage') || self::hasActiveObjective($b, 'task_mission_variety'))
+            && ! DB::table('colony_ships')->where('colony_id', $b->colonyId)
+                ->where('ship_id', (int) config('ships.corvette.id'))->exists();
     }
 
     private static function hasAnyShip(BotSession $b): bool
