@@ -107,6 +107,17 @@ class BotStrategyHangarObjectivesTest extends TestCase
         $this->assertArrayNotHasKey('objective', Valuers::research($bot, $ctx, self::TRADE, 0, 0)->terms);
     }
 
+    public function test_buys_no_drone_without_a_free_bay(): void
+    {
+        $full = $this->bootHangar(level: 2, ships: [self::FREIGHTER => 1, self::CORVETTE => 2], credits: 5000);
+        foreach (['aimless', 'focus'] as $profile) {
+            $this->assertNull($this->shipWanted($full, $profile), $profile);
+        }
+
+        $room = $this->bootHangar(level: 2, ships: [self::FREIGHTER => 1], credits: 400);
+        $this->assertSame(self::DRONE, $this->shipWanted($room, 'aimless'), 'a free bay and too few Credits for a freighter');
+    }
+
     private function shipWanted(BotSession $bot, string $profile): ?int
     {
         $rules = array_column(BotStrategy::default(BotProfile::named($profile)), null, 'name');

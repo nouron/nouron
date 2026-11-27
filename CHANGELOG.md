@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- Bot: kauft keine Drohne mehr ohne freien Hallenplatz (die Drohnen verfielen und wurden immer neu gekauft); verschiebt den Vergleichswert aller Profile.
 - Run-Ziele nach Messung `20261127_m8` (Owner): Händlerkäufe 8 → 16, Stammrunde 20 → 16; neuer Wert ungemessen.
 - Bot (gezieltes Spiel): kauft bei offenem Hangar-Ziel eine Korvette statt weiterer Frachter und erforscht die Kenntnisse, die Missionen freischalten; Wirkung ungemessen.
 - Bot (gezieltes Spiel): neue Regeln für Fächervielfalt, Einsatzbreite und Stammrunde; `aimless` unverändert. Wirkung ungemessen.
