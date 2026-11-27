@@ -1,5 +1,7 @@
 # Nacheichung der Run-Schwierigkeit: Hebel-Optionen (2026-11-26)
 
+**Änderung 2026-11-27 (Owner):** Option A wird in dieser Form nicht umgesetzt. Statt Zielwerten je Eröffnung kommen eigene Ziele je Eröffnung: `2026-11-27-eroeffnungsziele.md`.
+
 **Status:** Vorschlag zur Owner-Wahl. Keine Config, kein Code geändert. Danach wird **eine** Änderung gemessen (Messung **M7**; die in Spec 2026-11-25 §9 „M6“ genannte Fokus-Messung rückt damit nach, der Name M6 ist vergeben).
 
 ## 1. Ausgangslage (gemessen M6, `storage/logs/playtest/20261126_m6/`, 72 Läufe)
