@@ -31,6 +31,30 @@ class PathBuildingGateService
         BuildingId::Bar->value => 'trader',
     ];
 
+    /** Opening keys used by config('game.run.tasks.*.opening'). */
+    public const OPENING_KEYS = [
+        BuildingId::Sciencelab->value => 'sciencelab',
+        BuildingId::Hangar->value => 'hangar',
+        BuildingId::Bar->value => 'bar',
+    ];
+
+    /**
+     * The colony's opening: its first placed path building that stands at level >= 1
+     * (tie: lower building id), or null without one.
+     */
+    public function opening(int $colonyId): ?string
+    {
+        $buildingId = DB::table('colony_buildings')
+            ->whereIn('building_id', self::PATH_BUILDING_IDS)
+            ->where('colony_id', $colonyId)
+            ->where('level', '>=', 1)
+            ->orderByRaw('placed_at_tick IS NULL, placed_at_tick')
+            ->orderBy('building_id')
+            ->value('building_id');
+
+        return $buildingId === null ? null : self::OPENING_KEYS[(int) $buildingId];
+    }
+
     public static function isPathBuilding(int $buildingId): bool
     {
         return in_array($buildingId, self::PATH_BUILDING_IDS, true);

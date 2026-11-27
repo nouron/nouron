@@ -19,6 +19,7 @@ use App\Models\Advisor;
 use App\Models\Run;
 use App\Models\RunObjective;
 use App\Services\AdvisorService;
+use App\Services\PathBuildingGateService;
 use App\Services\ResourceFlowService;
 use App\Services\ResourcesService;
 use App\Services\RunProgressService;
@@ -147,14 +148,13 @@ class RunObjectivesRedesignTest extends TestCase
         $this->assertArrayHasKey(2, $shapes, '2 medium + 1 long must occur');
     }
 
-    public function test_same_seed_draws_the_same_objectives_regardless_of_colony_state(): void
+    public function test_same_seed_and_opening_draw_the_same_objectives_regardless_of_colony_state(): void
     {
         $first = $this->makeRun(['rng_seed' => 777]);
         $this->service->drawObjectives($first);
         $keysFirst = RunObjective::where('run_id', $first->id)->orderBy('id')->pluck('task_key')->all();
 
-        // Different colony state: other buildings, other knowledges, a science lab gone.
-        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 31)->delete();
+        // Different colony state, same opening: other knowledges, one more advisor.
         DB::table('colony_researches')->where('colony_id', self::COLONY_ID)->update(['level' => 4]);
         $this->insertAdvisor(3);
 
@@ -163,7 +163,7 @@ class RunObjectivesRedesignTest extends TestCase
         $keysSecond = RunObjective::where('run_id', $second->id)->orderBy('id')->pluck('task_key')->all();
 
         $this->assertSame($keysFirst, $keysSecond);
-        $this->assertSame($this->service->selectObjectives(777), $keysSecond);
+        $this->assertSame($this->service->selectObjectives(777, app(PathBuildingGateService::class)->opening(self::COLONY_ID)), $keysSecond);
     }
 
     public function test_stored_order_is_the_seed_rank_not_the_pick_order(): void

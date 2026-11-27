@@ -871,6 +871,9 @@ return [
         //   horizon  — 'medium' (an activity or income, progress from Phase-2 start) or
         //              'long' (maturity of the whole colony, late gates). Every draw holds
         //              at least one of each (Owner 2026-11-24, RunProgressService::selectObjectives())
+        //   opening  — optional 'sciencelab' | 'hangar' | 'bar': drawn only after that
+        //              opening (first path building); every draw holds exactly one such
+        //              task and two general ones (spec 2026-11-27)
         //   type     — 'counter' (current state vs. target) or 'streak' (consecutive
         //              Sols; the best streak so far counts for the Nexus checkpoints)
         //   target   — completion value (count or streak length in Sols)
@@ -901,7 +904,7 @@ return [
             // depth has the stronger effects. Owner 2026-11-26: one target for every
             // opening — since #498 every knowledge hangs on its own building, the
             // science lab is no gate any more. Re-measure in M5.
-            'task_research_lead' => ['category' => 'research', 'horizon' => 'medium', 'type' => 'counter', 'target' => 16],
+            'task_research_lead' => ['category' => 'research', 'horizon' => 'medium', 'type' => 'counter', 'target' => 16, 'opening' => 'sciencelab'],
             // Owner 2026-11-24 (spec §3.3): "produce more than you eat". A Sol counts when
             // the own harvest (Agrardom + agronomy, after the staffing share) covers the
             // colonists' Organika need, that need is at least `min_fed` and nobody went
@@ -912,14 +915,14 @@ return [
             // Incidental play sometimes reaches it earlier because credit missions at
             // 'normal' count too. Successful missions at difficulty >= min_difficulty
             // (order: game.missions.difficulty.order).
-            'task_expedition_coverage' => ['category' => 'exploration', 'horizon' => 'medium', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal'],
+            'task_expedition_coverage' => ['category' => 'exploration', 'horizon' => 'medium', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal', 'opening' => 'hangar'],
             // Sum of building levels, every instance with its own level. Spec §3.4
             // (2026-11-25): 35 → 32 — M4 focus Labor Seed 5 reached 32 at Sol 80, incidental
             // play ends at 24–33. Not lower: since #497 the bot builds more housing.
             'task_engineering_output' => ['category' => 'research', 'horizon' => 'long', 'type' => 'counter', 'target' => 32],
             // R1 (Owner 2026-10-01): 7 → 8 — with 7 incidental play completed at Sol
             // 79–86, ahead of the ~90 rule. Purchased merchant items in this run.
-            'task_trade_volume' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'counter', 'target' => 8],
+            'task_trade_volume' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'counter', 'target' => 8, 'opening' => 'bar'],
         ],
 
         // Nexus checkpoints in PHASE-2 Sols (GDD §15 "2 von 3", §18.4). Each is

@@ -65,7 +65,7 @@ Eine Sache, ein Name. Die Spalte **Spielbegriff** ist der Name im UI und in alle
 | Mission | `mission` | Ein Einsatz eines Hangar-Schiffs (Erkundung, Bergung, Handel …), nie der ganze Run. |
 | Aufgabe (Run-Ziel) | `run_objectives` / `run.tasks` | Eine der drei Nexus-Aufgaben, die beim Übergang in Phase 2 gezogen werden; zwei davon erfüllt heißt Sieg. |
 | Zeithorizont | `horizon` (`medium`/`long`) | Klasse einer Aufgabe: mittelfristig misst eine Tätigkeit oder ein Einkommen, langfristig den Reifegrad der ganzen Kolonie; jede Ziehung enthält beide **. |
-| Fokus-Aufgabe | – | Mittelfristige Aufgabe, die ein Fokus-Gebäude füttert: Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner **. |
+| Fokus-Aufgabe | `opening` | Aufgabe einer Eröffnung, nur nach dem passenden ersten Fokus-Gebäude gezogen, genau eine je Run: Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner **. |
 | Forschungsvorsprung | `task_research_lead` | Aufgabe: Stufen aller Kenntnisse zusammen über einer Schwelle. |
 | Expertenstab | `task_senior_advisors` | Aufgabe: Ränge aller Berater der Kolonie zusammen über einer Schwelle. |
 | Selbstversorgung | `task_self_sufficiency` | Aufgabe: Die eigene Agrardom-Ernte deckt viele Sole in Folge den Bedarf einer Kolonie ab Mindestgröße, ohne Hunger; Vorrat zählt nicht **. |

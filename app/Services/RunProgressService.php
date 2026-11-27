@@ -24,7 +24,10 @@ use Illuminate\Support\Facades\DB;
  */
 class RunProgressService
 {
-    public function __construct(private readonly RunTaskCatalog $tasks) {}
+    public function __construct(
+        private readonly RunTaskCatalog $tasks,
+        private readonly PathBuildingGateService $pathBuildings,
+    ) {}
 
     // ── Phase-1 completion check ─────────────────────────────────────────────
 
@@ -127,7 +130,8 @@ class RunProgressService
         $seed = (int) ($run->rng_seed ?? random_int(1, PHP_INT_MAX));
 
         $rows = [];
-        foreach ($this->selectObjectives($seed) as $taskKey) {
+        $opening = $this->pathBuildings->opening((int) $run->colony_id);
+        foreach ($this->selectObjectives($seed, $opening) as $taskKey) {
             $rows[] = [
                 'run_id' => $run->id,
                 'task_key' => $taskKey,
@@ -143,20 +147,21 @@ class RunProgressService
     }
 
     /**
-     * The objectives a seed draws, in storage order (spec 2026-11-25 §2.2, Owner
-     * 2026-11-24 "at least one medium and one long objective"):
+     * The objectives a seed draws for an opening, in storage order (spec 2026-11-27 §2.3,
+     * horizon rule Owner 2026-11-24):
      *  1. Rank the pool by crc32(seed|task_key) — the only source of randomness.
-     *  2. Take the first medium-horizon task of the ranking.
-     *  3. Take the first long-horizon task that keeps the combo rule.
-     *  4. Fill up to three with the first remaining tasks of any (or no) horizon
-     *     that keep the combo rule (never two 'economy' tasks).
-     * A missing horizon class just skips its step. The result keeps the ranking
-     * order, not the pick order — the first stored objective is the one shown
-     * from the start (GDD §18.1), so it is not always the medium one.
+     *  2. Take the first task of the ranking that belongs to this opening. Tasks of
+     *     other openings, and further tasks of this one, are never drawn.
+     *  3. For each horizon not covered yet (medium, long), take the first general task
+     *     of it that keeps the combo rule.
+     *  4. Fill up to three with the first remaining general tasks of any (or no)
+     *     horizon that keep the combo rule (never two 'economy' tasks).
+     * A missing horizon class just skips its step. Without an opening (null) the whole
+     * pool is treated as general. The result keeps the ranking order, not the pick
+     * order — the first stored objective is the one shown from the start (GDD §18.1).
      *
-     * Pure function of the seed and the config: two runs with the same seed get the
-     * same objectives whatever the opening or colony state — a prerequisite for
-     * comparing balance changes across runs. Ordering by a per-key hash rather than
+     * Pure function of seed, opening and config — a prerequisite for comparing balance
+     * changes across runs of the same opening. Ordering by a per-key hash rather than
      * shuffle() is deliberate:
      *  - Collection::shuffle() has taken no seed argument since Laravel 10 — passing one
      *    is silently ignored and the draw stays random.
@@ -166,18 +171,27 @@ class RunProgressService
      *
      * @return list<string>
      */
-    public function selectObjectives(int $seed): array
+    public function selectObjectives(int $seed, ?string $opening = null): array
     {
         $ranked = collect($this->tasks->pool())
             ->unique()
             ->sortBy(fn (string $taskKey): int => $this->seededOrderHash($seed, $taskKey))
-            ->values()
-            ->all();
+            ->values();
 
         $selected = [];
+        $candidates = $ranked;
+
+        if ($opening !== null) {
+            $own = $ranked->first(fn (string $taskKey): bool => $this->tasks->opening($taskKey) === $opening);
+            $selected = $own === null ? [] : [$own];
+            $candidates = $ranked->filter(fn (string $taskKey): bool => $this->tasks->opening($taskKey) === null);
+        }
 
         foreach ([RunTaskCatalog::HORIZON_MEDIUM, RunTaskCatalog::HORIZON_LONG] as $horizon) {
-            foreach ($ranked as $taskKey) {
+            if (collect($selected)->contains(fn (string $taskKey): bool => $this->tasks->horizon($taskKey) === $horizon)) {
+                continue;
+            }
+            foreach ($candidates as $taskKey) {
                 if ($this->tasks->horizon($taskKey) === $horizon && $this->fitsDraw($taskKey, $selected)) {
                     $selected[] = $taskKey;
                     break;
@@ -185,13 +199,13 @@ class RunProgressService
             }
         }
 
-        foreach ($ranked as $taskKey) {
+        foreach ($candidates as $taskKey) {
             if ($this->fitsDraw($taskKey, $selected)) {
                 $selected[] = $taskKey;
             }
         }
 
-        return array_values(array_filter($ranked, fn (string $taskKey): bool => in_array($taskKey, $selected, true)));
+        return array_values(array_filter($ranked->all(), fn (string $taskKey): bool => in_array($taskKey, $selected, true)));
     }
 
     /**

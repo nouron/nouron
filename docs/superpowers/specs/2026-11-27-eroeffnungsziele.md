@@ -15,6 +15,10 @@
 7. Als Eröffnung zählt das früheste platzierte Pfadgebäude mit mindestens Stufe 1 beim Phasenwechsel.
 8. Eingespielte Crews und Stammrunde bleiben, mit Abbruchregel (§6). Expeditionen 24 und Händlerkäufe 18 sind vorläufige Annahmen bis zur Messung.
 
+9. (nach Messung M7) Zuerst rüstet der Bot nach, danach werden Zielwerte festgelegt. Expeditionen zählt künftig nur Schwierigkeit „schwer“. Langfristiges Hangar-Ziel ist **Einsatzbreite** (verschiedene Missionsarten mindestens einmal erfolgreich; Startwert 9 von 12, **Annahme**); es ersetzt Eingespielte Crews und die Alternative Schwere Einsätze.
+
+**Reihenfolge der Umsetzung:** (1) Ziehungsregel mit den drei bestehenden Fokus-Aufgaben; (2) neue Ziele und Wartungsstand mit vorläufigen Werten; (3) Bot verfolgt jedes Ziel gezielt, Expeditionen auf „schwer“; `aimless` bleibt unverändert; (4) Messung und Zielwerte.
+
 Weiter gültig: mindestens ein mittel- und ein langfristiges Ziel, höchstens ein `economy`-Ziel, Sieg bei 2 von 3, keine Zielwahl durch den Spieler, erstes gespeichertes Ziel ab Phase-2-Start sichtbar. Kalibrierung: ohne Zielspiel frühestens ~Sol 90, gezielt Sol 70–85; `aimless` ~50 % Siege, `default` bis ~70 %.
 
 Spielbegriff im UI: **Fokus-Aufgabe** (Glossar, Bedeutung wird angepasst); die Aufgabenkarte zeigt dazu das Fokus-Gebäude. Texte nennen weder „Pfad“ noch „Schwerpunkt“.
