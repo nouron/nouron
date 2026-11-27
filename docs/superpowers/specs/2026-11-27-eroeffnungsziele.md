@@ -263,3 +263,40 @@ Alle drei Pfadgebäude stehen am Ende in jedem Run. Expeditionen liegen nach Lab
 
 **Anwendung der Abbruchregel (§6):** Eingespielte Crews fällt nebenbei und ohne Abstand zwischen den Profilen. Es gilt die Alternative **Schwere Einsätze** (10 erfolgreiche Missionen der Schwierigkeit „schwer“, **Annahme**, ungemessen: Der Bot fliegt keine schweren Missionen).
 
+
+### 9.2 Messung `20261127_m8` — Hypothese (vor dem Lauf notiert)
+
+**Lauf:** wie M7 (72 Runs, Messmodus bis Sol 100). Änderungen gegenüber M7: neue Ziehung (ein Eröffnungsziel), drei neue Langzeitziele, Expeditionen nur „schwer“, neue Fokus-Regeln, `READ COMMITTED`. Zielwerte vorläufig. Gezieltes Spiel ist nur in Runs bewertbar, in denen das Ziel gezogen wurde (je Eröffnung etwa die Hälfte, also kleine Fallzahlen). Alle Erwartungen sind **Annahmen**.
+
+| Größe | Erwartung | Widerlegt, wenn |
+|---|---|---|
+| Abbrüche durch Deadlocks | keine | mindestens ein Abbruch durch Deadlock |
+| Siege `aimless` | 12–18 von 24 | außerhalb |
+| Siege `focus` | nicht weniger als `aimless` | weniger |
+| Expeditionen 10 „schwer“, Hangar | `aimless` vor Sol 90 höchstens 2 von 8; `focus` (gezogen) mindestens die Hälfte bis Sol 85 | eines davon verfehlt |
+| Forschungsvorsprung 16, Labor | `aimless` höchstens 1 von 8; `focus` (gezogen) mindestens die Hälfte | eines davon verfehlt |
+| Händlerkäufe 8, Cantina | beide Profile im Median bis Sol 65 (zu leicht) | Median später |
+| Fächervielfalt 11, Einsatzbreite 9, Stammrunde 20, jeweils eigene Eröffnung | `aimless` vor Sol 90 höchstens 1 von 8; `focus` (gezogen) mindestens einmal erreicht | `aimless` öfter, oder `focus` nie (dann vermutlich unerreichbar) |
+
+### 9.3 Messung `20261127_m8` — Ergebnis (2026-11-27)
+
+72 von 72 Runs im ersten Durchgang, **keine Abbrüche** (ein Lauf mit 24 parallelen Bots; erster Beleg für `READ COMMITTED`). Alle Zahlen **gemessen**.
+
+**Siege** (zwei gezogene Aufgaben bis Sol 100): `aimless` 14/24 (Median Sieg-Sol 83,5), `default` 20/24 (87,5), `focus` 18/24 (82). Je Eröffnung `aimless`: Labor 4/8, Hangar 3/8, Cantina 7/8.
+
+**Eröffnungsziele** (Runs der eigenen Eröffnung; „gezielt“ = `focus`, Ziel gezogen, kleine Fallzahlen):
+
+| Ziel (Wert) | ohne Zielspiel | gezielt | Urteil |
+|---|---|---|---|
+| Forschungsvorsprung (16) | 0/8, an Sol 90 Stand 10 | 2/2, Sol 69 | passt |
+| Fächervielfalt (11) | 0/8, an Sol 90 Stand 0 | 6/6, Sol 84 | passt, eher spät |
+| Händlerkäufe (8) | 4/4 (gezogen), Sol 36,5 | 4/4, Sol 42 | viel zu leicht |
+| Stammrunde (20) | 0/8, an Sol 90 Stand 9 | 2/4, Sol 72,5 | erreichbar, eher zu hoch |
+| Expeditionen (10, „schwer“) | 0 schwere Erfolge in allen Hangar-Runs | 0/3 | Bot-Lücke |
+| Einsatzbreite (9) | höchstens 4 | höchstens 5 | Bot-Lücke |
+
+Nachgerechnet aus denselben Reports (Schwelle: erster Sol, an dem der Wert erreicht war; gezogene Runs, 4 je Profil): Händlerkäufe 14 `aimless` Sol 73 / `focus` Sol 59; 16: 80 (3/4) / 66. Stammrunde 16: `aimless` 0/4 / `focus` Sol 67; `default` 89 (3/4).
+
+**Abgleich mit der Hypothese (§9.2):** erfüllt: keine Abbrüche, Siege `aimless` 12–18, Forschungsvorsprung, Händlerkäufe zu leicht, Fächervielfalt, Stammrunde. Siege `focus` liegen wie erwartet nicht unter `aimless`, aber unter `default` (nicht vorhergesagt). **Widerlegt:** Expeditionen und Einsatzbreite (`focus` nie).
+
+**Ursache der Hangar-Lücke (belegt):** Der Bot kauft nie eine Korvette (`shipToRequest` kennt nur Drohne und Frachter; alle 8 `aimless`- und `focus`-Hangar-Runs besitzen nur diese beiden). Schwere Missionen von Drohne und Frachter verlangen Kenntnisse, die der Bot nach Hangar-Eröffnung meist nicht hat (Konstruktion in 3 bzw. 2 von 8 Runs, Handel in keinem).
