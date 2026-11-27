@@ -286,9 +286,11 @@ class ColonyTileService
                 : ['action' => 'wait', 'reason' => 'no_ship'];
         }
 
-        // Salvage flights do not wear ships, so any docked carrier is ready.
+        // "Ready" = docked and the return guarantee holds for this tile's ring distance.
+        $solDistance = $this->findFlightService->solDistance((int) $tile->ring);
         $ready = $active
-            ->filter(fn ($s) => $s->ship_state === 'docked')
+            ->filter(fn ($s) => $s->ship_state === 'docked'
+                && HangarBays::flightReadiness((int) $s->ship_id, (float) $s->status_points, $solDistance)['ready'])
             ->sortBy([
                 fn ($a, $b) => HangarBays::requiredLevel((int) $a->ship_id) <=> HangarBays::requiredLevel((int) $b->ship_id),
                 fn ($a, $b) => (int) $a->bay <=> (int) $b->bay,
@@ -303,10 +305,21 @@ class ColonyTileService
                 'yield' => $this->findFlightService->findFlightYield($colonyId, $type)];
         }
 
-        $busy = $active->first();
+        $busy = $active->first(fn ($s) => $s->ship_state !== 'docked');
+        if ($busy !== null) {
+            return ['action' => 'wait', 'reason' => 'ship_busy', 'ship_key' => HangarBays::shipKey((int) $busy->ship_id),
+                'return_sol' => $this->shipBackSol($colonyId, $busy)];
+        }
 
-        return ['action' => 'wait', 'reason' => 'ship_busy', 'ship_key' => HangarBays::shipKey((int) $busy->ship_id),
-            'return_sol' => $this->shipBackSol($colonyId, $busy)];
+        // Docked but worn: the smallest class first.
+        $worn = $active->sortBy([
+            fn ($a, $b) => HangarBays::requiredLevel((int) $a->ship_id) <=> HangarBays::requiredLevel((int) $b->ship_id),
+            fn ($a, $b) => (int) $a->bay <=> (int) $b->bay,
+        ])->first();
+        $readiness = HangarBays::flightReadiness((int) $worn->ship_id, (float) $worn->status_points, $solDistance);
+
+        return ['action' => 'wait', 'reason' => 'ship_worn', 'ship_key' => HangarBays::shipKey((int) $worn->ship_id),
+            'bay' => (int) $worn->bay, 'repair_ap' => $readiness['repair_ap']];
     }
 
     private function hangarLevel(int $colonyId): int
@@ -566,7 +579,7 @@ class ColonyTileService
             'ship' => $ship,
             'level' => $a['needs_level'] ?? '',
             'total' => $a['yield']['total'] ?? '',
-            'ap' => $a['costs']['ap_cost'] ?? '',
+            'ap' => $a['costs']['ap_cost'] ?? $a['repair_ap'] ?? '',
             'organika' => $a['costs']['organika'] ?? '',
         ]);
 

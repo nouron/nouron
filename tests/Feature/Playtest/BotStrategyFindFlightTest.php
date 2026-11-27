@@ -88,13 +88,14 @@ class BotStrategyFindFlightTest extends TestCase
         $this->assertSame((int) $tile->id, (int) $this->rule('deep_scan_signal_tile')['when']($bot)->id);
     }
 
-    public function test_worn_drone_flies_without_repair(): void
+    public function test_worn_drone_is_repaired_before_the_find_flight(): void
     {
         $bot = $this->bootWithHangar(1);
         $this->makeFind($bot, 'find_medium', ring: 3);
         DB::table('colony_ships')->where('colony_id', $bot->colonyId)->where('bay', 0)->update(['status_points' => 1]);
 
-        $this->assertNotEmpty($this->rule('dispatch_find_flight')['when']($bot), 'salvage flights do not wear ships');
+        $this->assertEmpty($this->rule('dispatch_find_flight')['when']($bot), 'a worn ship cannot fly');
+        $this->assertNotEmpty($this->rule('repair_ship_for_flight')['when']($bot));
     }
 
     public function test_flight_keeps_organika_at_or_above_the_food_need(): void

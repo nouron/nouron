@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-27
+
+- Bergungsflüge verschleißen das Schiff wie jede Mission, die Rückkehr-Garantie gilt; die Fundkarte nennt bei abgenutztem Schiff die nötige Reparatur (Owner, ersetzt die Ausnahme vom 2026-10-13).
+- Bot: repariert abgenutzte Schiffe wieder (#504) — vorher blieben sie nach Missionen im Hangar liegen; Batches davor sind mit späteren nicht direkt vergleichbar.
+
 ## 2026-11-26
 
 - Bot (Messung M5a, Nachbesserung): Krankenstation und Leitstelle gehen jetzt vor Tempel und Denkmal (auch bei den Werkstoffen); Zukauf und Bau haben dieselben Bedingungen und stehen vor CC-Ausbau und Gebäude-Stufen (ab drei Beratern auch vor noch fehlenden Pfadgebäuden), das Sparziel der Utility-Engine hält sie nicht mehr auf, Credit-Reserve beim Zukauf 1000. Wirkung in Bot-Läufen noch ungemessen.

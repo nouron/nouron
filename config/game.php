@@ -60,7 +60,7 @@ return [
         // (AP scale 2026-11-13 §6: frequency instead of a discount on a 1-AP action).
         'free_scan_uplink_level' => 2,
         // T30 §13.3: salvage flight (mission_find_salvage). Yield = the find's Rg (no factor);
-        // flat ap_cost per flight, Organika per Sol of distance, no ship wear (Owner 2026-10-13).
+        // flat ap_cost per flight, Organika per Sol of distance, ship wear like every flight (Owner 2026-11-27).
         // min_hangar_level = lowest hall level whose ship class carries the find (drone 1,
         // freighter 2) — shown as the lock reason on the find card; must match
         // ships.*.find_carry (tests/Unit/FindFlightConfigTest).

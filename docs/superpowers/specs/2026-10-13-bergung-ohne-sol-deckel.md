@@ -1,5 +1,7 @@
 # Fund-Bergung ohne Sol-Deckel (Entscheidungsvorlage)
 
+**Änderung 2026-11-27 (Owner):** Die Ausnahme „Bergungsflüge verschleißen nicht“ ist gestrichen. Bergungsflüge verschleißen wie jede Mission, die Rückkehr-Garantie gilt; 1 AP je Flug bleibt.
+
 **Stand:** 2026-10-13, Fassung 2 (nach Owner-Entscheid) · **Autor:** game-designer (Analyse + Vorschlag, kein Code, keine Config-Änderung) · **Bezug:** T30 Spec `2026-10-05-t30-gleichwertige-eroeffnungen.md` §9, §11, §13 · Pläne `2026-10-09-t30-pool-v1-fundpool.md`, `2026-10-11-t30-schritt3-hangar-b1-bergungsflug.md`
 
 **Owner-Wunsch (2026-10-13, sinngemäß):** Die Bergung in Pool v1 ist falsch umgesetzt. Ein mittlerer Fund braucht heute mindestens 4 Sole. Gewollt ist: Sondieren (2 AP) zeigt den Fund, dann eine Bergung mit deutlich weniger AP und **ohne Sol-Deckel**. Die Idee „Sockel/Deckel pro Sol" könnte eventuell bei Gebäudebau und Forschung greifen.

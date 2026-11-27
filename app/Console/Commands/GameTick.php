@@ -15,7 +15,6 @@ use App\Services\BarService;
 use App\Services\CharacterCodexService;
 use App\Services\EncounterService;
 use App\Services\EventService;
-use App\Services\FindFlightService;
 use App\Services\HangarService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
@@ -379,8 +378,7 @@ class GameTick extends Command
 
         foreach ($missions as $mission) {
             $shipKey = $shipKeyById[(int) $mission->ship_id] ?? null;
-            // Salvage flights stay in the near field and do not wear the ship (Owner 2026-10-13).
-            $wear = $mission->destination === FindFlightService::MISSION_KEY ? 0.0 : (float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0);
+            $wear = (float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0);
             $newSp = (float) $mission->status_points - $wear;
 
             $colony = Colony::find($mission->colony_id);

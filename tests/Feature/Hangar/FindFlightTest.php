@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Concerns\CreatesForeignColony;
 use Tests\TestCase;
 
-/** T30 §13.3: salvage flight to a scanned find — distance from ring, no roll, flat 1 AP, no wear, yield = find Rg. */
+/** T30 §13.3: salvage flight to a scanned find — distance from ring, no roll, flat 1 AP, wear like every flight, yield = find Rg. */
 class FindFlightTest extends TestCase
 {
     use CreatesForeignColony;
@@ -187,19 +187,26 @@ class FindFlightTest extends TestCase
         $this->assertSame(['find_type' => 'find_medium', 'find_regolith' => 10], $rewards);
     }
 
-    public function test_salvage_flight_does_not_wear_the_ship_and_needs_no_repair(): void
+    public function test_salvage_flight_wears_the_ship_like_every_flight(): void
     {
-        $this->ship(self::DRONE, 0, 1.0);   // far below any old return guarantee
+        $this->ship(self::DRONE, 0);
         $this->find(3, 3, 'find_medium');
-        $rg = $this->regolith();
         $this->fly(0, 3);
         foreach ([101, 102, 103, 104] as $tick) {
             Artisan::call('game:tick', ['--run' => 1, '--tick' => $tick]);
         }
 
-        $this->assertSame(1.0, (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('status_points'));
-        $this->assertSame('docked', DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('ship_state'));
-        $this->assertSame($rg + 10, $this->regolith());
+        $expected = 20 - 4 * (float) config('ships.drone.wear_per_sol');
+        $this->assertSame($expected, (float) DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->where('bay', 0)->value('status_points'));
+    }
+
+    public function test_worn_ship_cannot_start_a_salvage_flight(): void
+    {
+        $wear = HangarBays::flightReadiness(self::DRONE, 20, 2)['wear'];
+        $this->ship(self::DRONE, 0, $wear);
+        $this->find(3, 3, 'find_medium');
+
+        $this->assertRejected('ship_too_worn', fn () => $this->fly(0, 3));
     }
 
     public function test_flight_still_pays_after_the_hall_was_demolished(): void
