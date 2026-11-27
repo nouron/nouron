@@ -18,6 +18,8 @@ return [
         'ap_checks' => (bool) env('GAME_BYPASS_AP', false),
         'resource_costs' => (bool) env('GAME_BYPASS_RESOURCES', false),
         'supply_checks' => (bool) env('GAME_BYPASS_SUPPLY', false),
+        // Bot measurements only: two completed objectives do not end the run.
+        'victory' => (bool) env('GAME_BYPASS_VICTORY', false),
     ],
 
     // @deprecated — use individual game.bypass.* flags instead.

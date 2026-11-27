@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- Messerfassung für die Eröffnungsziele (Spec 2026-11-27, Schritt 0): Bot-Berichte führen je Sol die Messgrößen aller sechs Eröffnungsziele und des Wartungsstands; neuer Messmodus `GAME_BYPASS_VICTORY` ohne Run-Ende durch Sieg.
 - Bergungsflüge verschleißen das Schiff wie jede Mission, die Rückkehr-Garantie gilt; die Fundkarte nennt bei abgenutztem Schiff die nötige Reparatur (Owner, ersetzt die Ausnahme vom 2026-10-13).
 - Bot: repariert abgenutzte Schiffe wieder (#504) — vorher blieben sie nach Missionen im Hangar liegen; Batches davor sind mit späteren nicht direkt vergleichbar.
 
