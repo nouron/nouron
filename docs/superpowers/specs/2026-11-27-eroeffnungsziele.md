@@ -349,11 +349,13 @@ Wie M8 (72 Runs, Messmodus bis Sol 100). Zwei Änderungen wirken auf den Verglei
 
 Nachgerechnet aus denselben Reports (gezogene Runs, 4 je Profil): Händlerkäufe 18: `aimless` Median Sol 76 / `focus` 76; 20: `aimless` 86 / `focus` 79.
 
-**Abgleich mit der Hypothese (§9.5):** erfüllt: höchstens eine wartende Drohne je Run, Stammrunde (beide Zeilen), Siege `aimless` Cantina unter 7/8, Labor und Hangar nicht unter M8, Hangar `focus` (Korvette in allen Runs, schwere Erfolge, Einsatzbreite immer 9), `default` Hangar (Korvette, 6/8 wie M8). **Widerlegt:** Händlerkäufe `aimless` (Median Sol 66 statt 70–90; gezielt 66 erfüllt), Expeditionen (`focus` 2 von 3, mehr als die Hälfte; die Annahme war zu pessimistisch).
+**Abgleich mit der Hypothese (§9.5):** erfüllt: höchstens eine wartende Drohne je Run, Stammrunde (beide Zeilen), Siege `aimless` Cantina unter 7/8, Labor und Hangar nicht unter M8, Hangar `focus` (Korvette in allen Runs, schwere Erfolge, Einsatzbreite 9 in allen 5 Runs, in denen sie gezogen war), `default` Hangar (Korvette, 6/8 wie M8). **Widerlegt:** Händlerkäufe `aimless` (Median Sol 66 statt 70–90; gezielt 66 erfüllt), Expeditionen (`focus` 2 von 3, mehr als die Hälfte; die Annahme war zu pessimistisch).
 
 **Weitere Beobachtung:** Die allgemeine Aufgabe Kreditreserve fällt auch ohne Zielspiel früh (`aimless` 15 von 16 gezogenen Runs, Median je Eröffnung Sol 43–62).
 
 **Einschränkung:** Gegenüber M8 wirken Zielwerte und Bot-Änderungen gemeinsam; Unterschiede sind nicht einer Ursache allein zuzuordnen.
 
-**Offen (Owner):** Händlerkäufe auf 20; Kreditreserve; ob `default` mit 20/24 (Ziel etwa 70 %) Anlass für weitere Änderungen ist.
+**Befund Händlerkäufe:** Die Bot-Regel `buy_merchant_item` gilt für alle Profile und kauft jedes bezahlbare Angebot, billigstes zuerst (ausdrücklich auf diese Aufgabe ausgelegt). Auch `aimless` spielt das Ziel also gezielt; der fehlende Abstand zwischen den Profilen ist deshalb eine Eigenschaft des Bots, keine belegte Balance-Aussage.
+
+**Offen (Owner):** Händlerkäufe — (a) Kaufverhalten des Bots ohne Zielspiel zurücknehmen und neu messen, (b) anderes mittelfristiges Cantina-Ziel (§6), (c) Wert 20 mit dünnem Abstand (`aimless` 86 / `focus` 79); Kreditreserve; ob `default` mit 20/24 (Ziel etwa 70 %) Anlass für weitere Änderungen ist.
 
