@@ -19,7 +19,7 @@
 
 **Reihenfolge der Umsetzung:** (1) Ziehungsregel mit den drei bestehenden Fokus-Aufgaben; (2) neue Ziele und Wartungsstand mit vorläufigen Werten; (3) Bot verfolgt jedes Ziel gezielt, Expeditionen auf „schwer“; `aimless` bleibt unverändert; (4) Messung und Zielwerte.
 
-**Stand:** (1) und (2) umgesetzt. Schlüssel: `task_research_breadth`, `task_mission_variety`, `task_cantina_circle`. Wartungsstand ist nicht im Pool (M7: Serie im Median 3 Sole).
+**Stand:** (1) bis (3) umgesetzt; offen ist (4), die Messung. Bekannte Grenze: Der Bot erforscht nicht gezielt die Kenntnisse, die schwere Missionen oder weitere Missionsarten freischalten. Schlüssel: `task_research_breadth`, `task_mission_variety`, `task_cantina_circle`. Wartungsstand ist nicht im Pool (M7: Serie im Median 3 Sole).
 
 Weiter gültig: mindestens ein mittel- und ein langfristiges Ziel, höchstens ein `economy`-Ziel, Sieg bei 2 von 3, keine Zielwahl durch den Spieler, erstes gespeichertes Ziel ab Phase-2-Start sichtbar. Kalibrierung: ohne Zielspiel frühestens ~Sol 90, gezielt Sol 70–85; `aimless` ~50 % Siege, `default` bis ~70 %.
 
