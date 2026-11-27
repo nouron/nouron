@@ -50,7 +50,6 @@ return [
     'select_target' => 'Select target',
     'chip_duration' => 'Duration: :sols Sols',
     'chip_duration_one' => 'Duration: 1 Sol',
-    'chip_wear' => 'Wear',
     'return_label' => 'Return: Sol :sol',
     'start_button' => 'Start mission',
 

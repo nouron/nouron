@@ -50,7 +50,6 @@ return [
     'select_target' => 'Ziel wählen',
     'chip_duration' => 'Dauer: :sols Sole',
     'chip_duration_one' => 'Dauer: 1 Sol',
-    'chip_wear' => 'Verschleiß',
     'return_label' => 'Rückkehr: Sol :sol',
     'start_button' => 'Mission starten',
 

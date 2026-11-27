@@ -56,7 +56,6 @@
 		ap_cost: number;
 		organika: number;
 		duration: number;
-		wear?: Record<string, number>;
 		sol_distance?: number;
 		target_type?: 'knowledge' | 'find_tile' | 'tile' | null;
 		targets?: Target[];
@@ -297,13 +296,15 @@
 
 	function costs(m: Mission) {
 		const tg = m.target_type === 'find_tile' && mm.selectedKey === m.key ? picked(m) : undefined;
-		const wear = m.wear?.[mm.shipKey ?? ''] ?? 0;
 		return tg
-			? { ap_cost: tg.ap_cost ?? 0, organika: tg.organika ?? 0, duration: tg.duration ?? 0, wear: readiness(tg.sol_distance)?.wear ?? wear }
-			: { ap_cost: m.ap_cost, organika: m.organika, duration: m.duration, wear };
+			? { ap_cost: tg.ap_cost ?? 0, organika: tg.organika ?? 0, duration: tg.duration ?? 0 }
+			: { ap_cost: m.ap_cost, organika: m.organika, duration: m.duration };
 	}
 
-	const blockedByWear = (m: Mission) => m.target_type !== 'find_tile' && readiness(m.sol_distance)?.ready === false;
+	// A find flight is judged by the picked target's distance, the header only names the nearest find.
+	const flightDistance = (m: Mission) =>
+		(m.target_type === 'find_tile' && mm.selectedKey === m.key ? picked(m)?.sol_distance : undefined) ?? m.sol_distance;
+	const blockedByWear = (m: Mission) => readiness(flightDistance(m))?.ready === false;
 	const pickedDisabled = (m: Mission) => (m.target_type === 'find_tile' && picked(m) ? targetDisabled(m, picked(m)!) : false);
 	function shortfall(m: Mission): string | null {
 		const tg = m.target_type === 'find_tile' ? picked(m) : undefined;
@@ -775,14 +776,10 @@
 								<span class="ap-chip ap-cost-chip ap-chip--nav">{c.ap_cost} AP</span>
 								{#if c.organika > 0}<span class="hangar-mission-chip"><Res plain res="Or" amount={c.organika} /></span>{/if}
 								<span class="hangar-mission-chip">{durationChip(c.duration)}</span>
-								<!-- Other missions state the wear in the readiness line below. -->
-								{#if m.target_type === 'find_tile'}<span class="hangar-mission-chip">{t('missions.chip_wear')} −{c.wear}</span>{/if}
 							</div>
-							{#if m.target_type !== 'find_tile'}
-								<p class="hangar-mission-ready-line" class:hangar-mission-gate-hint={readiness(m.sol_distance)?.ready === false}>
-									{readinessLine(m.sol_distance)}
-								</p>
-							{/if}
+							<p class="hangar-mission-ready-line" class:hangar-mission-gate-hint={blockedByWear(m)}>
+								{readinessLine(flightDistance(m))}
+							</p>
 
 							{#if needsTarget(m) && sel}
 								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->

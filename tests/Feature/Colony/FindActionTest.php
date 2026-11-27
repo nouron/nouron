@@ -110,9 +110,10 @@ class FindActionTest extends TestCase
             'destination' => 'mission_recon_flight', 'sol_distance' => 1, 'dispatch_tick' => 100, 'state' => 'active']);
         $this->assertSame(102, $this->assertAction('wait', 'ship_busy', $this->find('find_small'))['return_sol']);
 
-        // A docked carrier is always ready: salvage flights do not wear ships.
+        // A worn carrier waits for repair, with the AP the repair costs.
         DB::table('colony_ships')->where('colony_id', self::COLONY_ID)->update(['ship_state' => 'docked', 'status_points' => 1]);
-        $this->assertAction('flight', 'flight', $this->find('find_small'));
+        $worn = $this->assertAction('wait', 'ship_worn', $this->find('find_small'));
+        $this->assertSame([0, 1], [$worn['bay'], $worn['repair_ap']]);
     }
 
     public function test_locked_reasons_for_large_finds(): void

@@ -680,9 +680,8 @@ class HangarService
 
             // T30 §13.x/7: return guarantee instead of the 25 % floor — a ship never
             // starts a flight it cannot come back from.
-            // Salvage flights do not wear the ship, so the guarantee is moot for them.
             $readiness = HangarBays::flightReadiness((int) $ship->ship_id, (float) $ship->status_points, $solDistance);
-            if ($targetType !== 'find_tile' && ! $readiness['ready']) {
+            if (! $readiness['ready']) {
                 throw $this->ruleError('ship_too_worn', 'missions.error_ship_too_worn', [
                     'current' => (float) $ship->status_points, 'wear' => $readiness['wear'], 'ap' => $readiness['repair_ap'],
                 ]);
@@ -780,6 +779,7 @@ class HangarService
             'false' => throw $this->ruleError('invalid_target', 'missions.error_invalid_target'),
             'in_flight' => throw $this->ruleError('find_in_flight', 'missions.error_find_in_flight'),
             'self' => throw $this->ruleError('find_self_salvage', 'missions.error_find_self_salvage'),
+            // 'ship_worn' falls through: dispatchShip() checks the chosen ship's return guarantee.
             default => null,
         };
         if (! $this->findFlightService->canCarry($shipKey, $tile->event_type)) {
@@ -858,12 +858,10 @@ class HangarService
 
     /**
      * Mission catalog enriched for the dispatch UI: localized texts, computed
-     * costs (incl. knowledge scaling), wear forecast per allowed ship type,
-     * availability state and pickable targets.
+     * costs (incl. knowledge scaling), availability state and pickable targets.
      */
     public function getMissionCatalogFor(int $colonyId): array
     {
-        $shipsConfig = config('ships');
         $pathDepth = app(PathDepthService::class);
 
         // Same for every mission this call — compute once, not per catalog entry.
@@ -917,11 +915,6 @@ class HangarService
                 $availability = 'missing_organika';
             }
 
-            $wear = [];
-            foreach ($mission['ships'] as $shipKey) {
-                $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
-            }
-
             // T30 §13.3: roll === false (salvage flight) — no success roll, no difficulty scaling.
             $rolls = ($mission['roll'] ?? true) !== false;
             $difficultyOptions = [];
@@ -951,7 +944,6 @@ class HangarService
                 'ap_available' => $availableAp,
                 'organika' => $organikaCost,
                 'organika_available' => $availableOrganika,
-                'wear' => $wear,
                 'availability' => $availability,
                 'gate' => $gateInfo,
                 'target_type' => $targetType,
