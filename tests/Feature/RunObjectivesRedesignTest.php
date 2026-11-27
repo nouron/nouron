@@ -84,6 +84,9 @@ class RunObjectivesRedesignTest extends TestCase
             'task_expedition_coverage' => 'medium',
             'task_engineering_output' => 'long',
             'task_trade_volume' => 'medium',
+            'task_research_breadth' => 'long',
+            'task_mission_variety' => 'long',
+            'task_cantina_circle' => 'long',
         ], $horizons);
 
         $this->assertSame(16, config('game.run.tasks.task_research_lead.target'));

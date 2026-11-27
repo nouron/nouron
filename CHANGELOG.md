@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- Run-Ziele: Drei langfristige Eröffnungsziele neu — Fächervielfalt (Labor), Einsatzbreite (Hangar), Stammrunde (Cantina); Zielwerte vorläufig und ungemessen, Bot verfolgt sie noch nicht gezielt.
 - Run-Ziele: Jede Ziehung enthält genau eine Aufgabe der eigenen Eröffnung (Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner) und zwei allgemeine; Aufgaben anderer Eröffnungen werden nicht mehr gezogen (Spec 2026-11-27, Schritt 1; Zielwerte noch unverändert).
 - Datenbank: Das Spiel läuft jetzt mit `READ COMMITTED` statt MySQL-Standard `REPEATABLE READ`, damit sich parallele Kolonien (Bot-Läufe, gleichzeitige Spieler) nicht mehr über Lückensperren blockieren (ADR 0005, Nachtrag).
 - Messerfassung für die Eröffnungsziele (Spec 2026-11-27, Schritt 0): Bot-Berichte führen je Sol die Messgrößen aller sechs Eröffnungsziele und des Wartungsstands; neuer Messmodus `GAME_BYPASS_VICTORY` ohne Run-Ende durch Sieg.

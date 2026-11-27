@@ -53,6 +53,7 @@ class RunReportObjectiveMetricsTest extends TestCase
         $metrics = $this->metrics($bot);
 
         $this->assertSame(2, $metrics['expeditions']);
+        $this->assertSame(1, $metrics['mission_variety']);
         $this->assertSame(2, $metrics['trade']);
     }
 
