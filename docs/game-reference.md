@@ -703,10 +703,10 @@ Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. 
 | `task_self_sufficiency` | survival | long | streak | eigene Ernte (Agrardom + Agronomie) ≥ Verpflegungsbedarf, Bedarf ≥ `min_fed`, kein Hunger | **`min_fed` 55, `target` 35 Sole** | Owner 2026-11-24 (vorher Regolith > 150 und Organika > 300); ungemessen |
 | `task_expedition_coverage` | exploration | medium | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` hard, `target` 10** | Owner 2026-11-27: nur schwere Missionen; Zielwert seitdem ungemessen |
 | `task_engineering_output` | research | long | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 32** | Spec 2026-11-25 (vorher 35; M4 gezielt 32 um Sol 80); ungemessen |
-| `task_trade_volume` | economy | medium | counter | gekaufte Händler-Items im Run | **`target` 8** | Owner 2026-10-01 (vorher 7, nebenbei schon @79–86) |
+| `task_trade_volume` | economy | medium | counter | gekaufte Händler-Items im Run | **`target` 16** | Owner 2026-11-27 (vorher 8: M8 schon um Sol 37–42); ungemessen |
 | `task_research_breadth` | research | long | counter | Summe der Kenntnisstufen ohne `excluded` (Geologie, Agronomie) | **`target` 11** | 2026-11-27, **Annahme**, ungemessen |
 | `task_mission_variety` | exploration | long | counter | verschiedene Missionsarten (Katalogschlüssel) mindestens einmal erfolgreich, jede Schwierigkeit | **`target` 9** (von 12) | Owner 2026-11-27, Wert **Annahme**, ungemessen |
-| `task_cantina_circle` | social | long | counter | Beziehungsstufen der `count` engsten Figuren, je höchstens `level` | **`count` 5, `level` 4, `target` 20** | 2026-11-27, **Annahme**, ungemessen (M7: nie nebenbei erreicht, Erreichbarkeit offen) |
+| `task_cantina_circle` | social | long | counter | Beziehungsstufen der `count` engsten Figuren, je höchstens `level` | **`count` 5, `level` 4, `target` 16** | Owner 2026-11-27 (vorher 20: M8 gezielt nur 2 von 4); ungemessen |
 
 Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 

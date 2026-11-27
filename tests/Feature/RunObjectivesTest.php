@@ -73,7 +73,8 @@ class RunObjectivesTest extends TestCase
         $this->assertSame('hard', config('game.run.tasks.task_expedition_coverage.min_difficulty'));
         // R1 (Owner 2026-10-01)
         $this->assertSame(35, config('game.run.tasks.task_self_sufficiency.target'));
-        $this->assertSame(8, config('game.run.tasks.task_trade_volume.target'));
+        $this->assertSame(16, config('game.run.tasks.task_trade_volume.target'));
+        $this->assertSame(16, config('game.run.tasks.task_cantina_circle.target'));
         $this->assertSame(16, config('game.run.tasks.task_research_lead.target'));
         $this->assertSame('content', config('game.run.tasks.task_colony_prosperity.min_band'));
         $this->assertSame(12, config('game.run.tasks.task_colony_prosperity.target'));
