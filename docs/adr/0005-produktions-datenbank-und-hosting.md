@@ -138,3 +138,12 @@ Begründung:
 ## Nachtrag 2026-10-25: Lokale Umgebung frei
 
 Die lokale Umgebung ist nicht mehr auf WSL und natives MySQL festgelegt (mehrere Entwicklungsrechner, künftig weitere Entwickler). Verbindlich sind nur PHP ≥ 8.2 (CI 8.4) und MySQL 8.0 sowie Datenbanken, User und Regeln aus `docs/dev-setup-mysql.md`; ob MySQL nativ oder im Container läuft, entscheidet jeder selbst.
+
+## Nachtrag 2026-11-27: Isolationsstufe READ COMMITTED
+
+**Befund (gemessen, Batch `20261127_m7`):** 9 von 72 parallelen Bot-Läufen (Concurrency 24) brachen mit HTTP 500 ab; das Fehlerprotokoll zeigt Deadlocks (SQLSTATE 40001 / 1213) bei Löschen und Einfügen verschiedener Kolonien (`bar_offers`, `bar_encounters`, `bar_concerns`, `colony_ships`) trotz passender Indizes. **Deutung (Annahme):** Lückensperren unter `REPEATABLE READ`.
+
+**Entscheidung (Owner):** Die Spielverbindung läuft mit `READ COMMITTED` (`config/database.php`, `isolation_level`), in allen Umgebungen. Binärlog muss zeilenbasiert sein (MySQL-8-Standard). **Offen:** Format der Laravel-Cloud-Datenbank vor dem ersten Deploy prüfen (nicht verifiziert).
+
+**Folgen:** Sperrende Lesezugriffe auf vorhandene Zeilen wirken wie bisher. Sperren auf noch nicht vorhandene Zeilen entfallen; „prüfen, dann einfügen“ muss durch eindeutige Indizes abgesichert sein (betrifft die Abstellfläche im Hangar: `colony_ships` hat `UNIQUE(colony_id, bay)`). Zweimaliges Lesen innerhalb einer Transaktion kann zwischenzeitlich bestätigte Änderungen sehen. Deadlocks sind damit seltener, nicht ausgeschlossen.
+
