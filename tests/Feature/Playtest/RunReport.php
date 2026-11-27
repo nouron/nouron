@@ -316,7 +316,7 @@ class RunReport
      * maintenance objective, whether or not the run drew it. Rules of objectives
      * that do not exist yet follow that spec (assumptions).
      *
-     * @return array{research_lead:int, research_breadth:int, expeditions:int, hangar_experience:int, trade:int, cantina_circle:int, maintenance_ok:bool}
+     * @return array{research_lead:int, research_breadth:int, expeditions:int, mission_variety:int, hangar_experience:int, trade:int, cantina_circle:int, maintenance_ok:bool}
      */
     private function objectiveMetrics(BotSession $bot): array
     {
@@ -336,6 +336,9 @@ class RunReport
                 ->where('colony_id', $colonyId)->where('state', 'completed')->where('succeeded', 1)
                 ->whereIn('difficulty', app(RunTaskCatalog::class)->countedDifficulties())
                 ->count(),
+            'mission_variety' => DB::table('colony_hangar_missions')
+                ->where('colony_id', $colonyId)->where('state', 'completed')->where('succeeded', 1)
+                ->distinct()->count('destination'),
             'hangar_experience' => (int) $paths(PathDepthService::KIND_FAMILY)->sum('level'),
             'trade' => DB::table('merchant_items')
                 ->join('merchant_visits', 'merchant_items.visit_id', '=', 'merchant_visits.id')

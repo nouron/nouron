@@ -861,6 +861,9 @@ return [
             'task_expedition_coverage',
             'task_engineering_output',
             'task_trade_volume',
+            'task_research_breadth',
+            'task_mission_variety',
+            'task_cantina_circle',
         ],
 
         // Phase-2 objective parameters (GDD §15 Aufgabenpool, §18.4 Kalibrierregeln,
@@ -923,6 +926,15 @@ return [
             // R1 (Owner 2026-10-01): 7 → 8 — with 7 incidental play completed at Sol
             // 79–86, ahead of the ~90 rule. Purchased merchant items in this run.
             'task_trade_volume' => ['category' => 'economy', 'horizon' => 'medium', 'type' => 'counter', 'target' => 8, 'opening' => 'bar'],
+            // Long-horizon opening objectives (spec 2026-11-27). All targets are
+            // assumptions until the bot plays them and a batch measures them.
+            // Sum of knowledge levels without the two every colony raises anyway.
+            'task_research_breadth' => ['category' => 'research', 'horizon' => 'long', 'type' => 'counter', 'target' => 11, 'excluded' => ['geology', 'agronomy'], 'opening' => 'sciencelab'],
+            // Mission types (catalog keys) flown successfully at least once, any difficulty.
+            'task_mission_variety' => ['category' => 'exploration', 'horizon' => 'long', 'type' => 'counter', 'target' => 9, 'opening' => 'hangar'],
+            // Relationship levels of the `count` closest figures, each capped at `level`.
+            // Not 'economy': that would lock the credit reserve out of cantina draws.
+            'task_cantina_circle' => ['category' => 'social', 'horizon' => 'long', 'type' => 'counter', 'target' => 20, 'count' => 5, 'level' => 4, 'opening' => 'bar'],
         ],
 
         // Nexus checkpoints in PHASE-2 Sols (GDD §15 "2 von 3", §18.4). Each is

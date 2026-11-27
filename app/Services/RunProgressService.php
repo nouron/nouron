@@ -246,6 +246,9 @@ class RunProgressService
                 'task_expedition_coverage' => $this->updateExpeditionCoverage($objective, $run),
                 'task_engineering_output' => $this->updateEngineeringOutput($objective, $run),
                 'task_trade_volume' => $this->updateTradeVolume($objective, $run),
+                'task_research_breadth' => $this->updateResearchBreadth($objective, $run),
+                'task_mission_variety' => $this->updateMissionVariety($objective, $run),
+                'task_cantina_circle' => $this->updateCantinaCircle($objective, $run),
                 default => null,
             };
         }
@@ -373,6 +376,51 @@ class RunProgressService
             ->count();
 
         $this->applyCounter($objective, $run, $count);
+    }
+
+    /** Counter task: knowledge levels without the configured base knowledges. */
+    private function updateResearchBreadth(RunObjective $objective, Run $run): void
+    {
+        $excluded = array_map(
+            fn (string $key): int => (int) config("knowledge.{$key}.id"),
+            (array) $this->tasks->param('task_research_breadth', 'excluded', [])
+        );
+        $levelSum = (int) DB::table('colony_researches as cr')
+            ->join('researches as r', 'r.id', '=', 'cr.research_id')
+            ->where('cr.colony_id', $run->colony_id)
+            ->where('r.purpose', 'knowledge')
+            ->whereNotIn('cr.research_id', $excluded)
+            ->sum('cr.level');
+
+        $this->applyCounter($objective, $run, $levelSum);
+    }
+
+    /** Counter task: distinct mission types flown successfully. */
+    private function updateMissionVariety(RunObjective $objective, Run $run): void
+    {
+        $count = DB::table('colony_hangar_missions')
+            ->where('colony_id', $run->colony_id)
+            ->where('state', 'completed')
+            ->where('succeeded', 1)
+            ->distinct()
+            ->count('destination');
+
+        $this->applyCounter($objective, $run, $count);
+    }
+
+    /** Counter task: relationship levels of the closest figures, each capped. */
+    private function updateCantinaCircle(RunObjective $objective, Run $run): void
+    {
+        $cap = (int) $this->tasks->param('task_cantina_circle', 'level', 4);
+        $sum = (int) DB::table('colony_path_levels')
+            ->where('colony_id', $run->colony_id)
+            ->where('kind', PathDepthService::KIND_CHARACTER)
+            ->orderByDesc('level')
+            ->limit((int) $this->tasks->param('task_cantina_circle', 'count', 5))
+            ->pluck('level')
+            ->sum(fn ($level): int => min((int) $level, $cap));
+
+        $this->applyCounter($objective, $run, $sum);
     }
 
     /**

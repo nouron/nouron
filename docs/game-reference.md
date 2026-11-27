@@ -686,7 +686,7 @@ Ablösungsregel (Details und Grundtabelle in 7b): ohne Hangar Selbstbergung für
 | **Sieg-Korridor** (Owner) | Sol 70–85 nur sehr guter Run + Glück; realistisch Sol 85–95 |
 
 ### Objectives (GDD §15)
-Der Pool umfasst 8 Aufgabentypen, pro Run werden 3 gezogen: genau eine der eigenen Eröffnung (`opening`: `sciencelab` → `task_research_lead`, `hangar` → `task_expedition_coverage`, `bar` → `task_trade_volume`; Eröffnung = zuerst platziertes Fokus-Gebäude ab Stufe 1) und zwei allgemeine, dabei mindestens eine mittelfristige und mindestens eine langfristige (`horizon`), höchstens eine aus der Kategorie `economy`. Gespeichert wird in der Rangfolge `crc32(seed|task_key)`, die erste ist von Anfang an sichtbar. Sieg bei 2 von 3 erfüllten Aufgaben. Herleitung: `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`.
+Der Pool umfasst 11 Aufgabentypen, pro Run werden 3 gezogen: genau eine der eigenen Eröffnung (`opening`: `sciencelab` → `task_research_lead`, `hangar` → `task_expedition_coverage`, `bar` → `task_trade_volume`, dazu langfristig `task_research_breadth` / `task_mission_variety` / `task_cantina_circle`; Eröffnung = zuerst platziertes Fokus-Gebäude ab Stufe 1) und zwei allgemeine, dabei mindestens eine mittelfristige und mindestens eine langfristige (`horizon`), höchstens eine aus der Kategorie `economy`. Gespeichert wird in der Rangfolge `crc32(seed|task_key)`, die erste ist von Anfang an sichtbar. Sieg bei 2 von 3 erfüllten Aufgaben. Herleitung: `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`.
 
 **Kalibrierregel (Owner 2026-09-26):** Ohne gezieltes Spiel frühestens Sol ~90 oder gar nicht; gezielt Sol 70–85 (mittelfristig vorn, langfristig hinten im Korridor). Kein Mindest-Sol.
 
@@ -704,6 +704,9 @@ Alle Parameter liegen in `run.tasks` und werden über `RunTaskCatalog` gelesen. 
 | `task_expedition_coverage` | exploration | medium | counter | erfolgreiche Außenmissionen mit Schwierigkeit ≥ `min_difficulty` (Reihenfolge: `missions.difficulty.order`) | **`min_difficulty` normal, `target` 10** | Owner 2026-10-01 bestätigt (gezielt @82–87) |
 | `task_engineering_output` | research | long | counter | Summe der Ausbaustufen (`level`) aller `colony_buildings`, jede Instanz einzeln | **`target` 32** | Spec 2026-11-25 (vorher 35; M4 gezielt 32 um Sol 80); ungemessen |
 | `task_trade_volume` | economy | medium | counter | gekaufte Händler-Items im Run | **`target` 8** | Owner 2026-10-01 (vorher 7, nebenbei schon @79–86) |
+| `task_research_breadth` | research | long | counter | Summe der Kenntnisstufen ohne `excluded` (Geologie, Agronomie) | **`target` 11** | 2026-11-27, **Annahme**, ungemessen |
+| `task_mission_variety` | exploration | long | counter | verschiedene Missionsarten (Katalogschlüssel) mindestens einmal erfolgreich, jede Schwierigkeit | **`target` 9** (von 12) | Owner 2026-11-27, Wert **Annahme**, ungemessen |
+| `task_cantina_circle` | social | long | counter | Beziehungsstufen der `count` engsten Figuren, je höchstens `level` | **`count` 5, `level` 4, `target` 20** | 2026-11-27, **Annahme**, ungemessen (M7: nie nebenbei erreicht, Erreichbarkeit offen) |
 
 Vergleiche: `>` bzw. `≥` wie in der Spalte „Messung" (entspricht `RunProgressService`). Bei `streak`-Tasks speichert `run_objectives.best_streak_value` die beste Serie im Run. Sie zählt für die Nexus-Kontrollpunkte als Fortschritt, erfüllt wird der Task aber erst mit einer Serie der Länge `target`.
 

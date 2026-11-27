@@ -23,9 +23,9 @@ class RunObjectiveOpeningDrawTest extends TestCase
     private const COLONY_ID = 1;
 
     private const OPENING_TASKS = [
-        'sciencelab' => 'task_research_lead',
-        'hangar' => 'task_expedition_coverage',
-        'bar' => 'task_trade_volume',
+        'sciencelab' => ['task_research_lead', 'task_research_breadth'],
+        'hangar' => ['task_expedition_coverage', 'task_mission_variety'],
+        'bar' => ['task_trade_volume', 'task_cantina_circle'],
     ];
 
     private RunProgressService $service;
@@ -47,7 +47,9 @@ class RunObjectiveOpeningDrawTest extends TestCase
                 $label = "{$opening} seed {$seed}: ".implode(',', $keys);
 
                 $this->assertCount(3, array_unique($keys), $label);
-                $this->assertSame([$own], array_values(array_intersect($keys, self::OPENING_TASKS)), $label);
+                $drawnOpening = array_values(array_intersect($keys, array_merge(...array_values(self::OPENING_TASKS))));
+                $this->assertCount(1, $drawnOpening, $label);
+                $this->assertContains($drawnOpening[0], $own, $label);
                 $horizons = array_map(fn (string $k): ?string => $catalog->horizon($k), $keys);
                 $this->assertContains('medium', $horizons, $label);
                 $this->assertContains('long', $horizons, $label);
@@ -56,21 +58,18 @@ class RunObjectiveOpeningDrawTest extends TestCase
         }
     }
 
-    public function test_an_opening_with_two_objectives_draws_one_of_them_by_seed(): void
+    public function test_the_seed_decides_between_the_two_objectives_of_an_opening(): void
     {
-        config(['game.run.tasks.task_self_sufficiency.opening' => 'hangar']);
+        foreach (self::OPENING_TASKS as $opening => $own) {
+            $drawn = [];
+            foreach (range(1, 100) as $seed) {
+                foreach (array_intersect($this->service->selectObjectives($seed, $opening), $own) as $key) {
+                    $drawn[$key] = true;
+                }
+            }
 
-        $drawn = [];
-        foreach (range(1, 100) as $seed) {
-            $own = array_values(array_intersect(
-                $this->service->selectObjectives($seed, 'hangar'),
-                ['task_expedition_coverage', 'task_self_sufficiency']
-            ));
-            $this->assertCount(1, $own, "seed {$seed}");
-            $drawn[$own[0]] = true;
+            $this->assertCount(2, $drawn, $opening);
         }
-
-        $this->assertCount(2, $drawn);
     }
 
     public function test_the_first_placed_path_building_decides_the_opening(): void
@@ -109,8 +108,8 @@ class RunObjectiveOpeningDrawTest extends TestCase
             $this->service->drawObjectives($run);
             $keys = RunObjective::where('run_id', $run->id)->pluck('task_key')->all();
 
-            $this->assertContains('task_trade_volume', $keys, "seed {$seed}");
-            $this->assertEmpty(array_intersect($keys, ['task_research_lead', 'task_expedition_coverage']), "seed {$seed}");
+            $this->assertCount(1, array_intersect($keys, self::OPENING_TASKS['bar']), "seed {$seed}");
+            $this->assertEmpty(array_intersect($keys, [...self::OPENING_TASKS['sciencelab'], ...self::OPENING_TASKS['hangar']]), "seed {$seed}");
             $run->update(['status' => 'failed']);
         }
     }

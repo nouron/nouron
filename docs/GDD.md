@@ -2534,7 +2534,7 @@ Startet direkt nach Phase 1. Auftakt ist der Ausbau der Kommandozentrale auf Lv3
 
 ### Aufgabenpool
 
-8 Aufgabentypen bilden den Pool. Pro Run werden 3 gezogen, das reduziert das Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf, keine Flotten und keine Systemkarte, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+11 Aufgabentypen bilden den Pool. Pro Run werden 3 gezogen, das reduziert das Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf, keine Flotten und keine Systemkarte, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
 
 > **Implementierungsstand:** Zeithorizont, Ziehungsregel, Forschungsvorsprung, Expertenstab und Selbstversorgung sind hier im Zielbild beschrieben (Owner-Entscheidungen 2026-11-24). Code und Config folgen per Spec `docs/superpowers/specs/2026-11-25-run-ziele-umbau.md`; bis dahin misst das Spiel noch die alten Fassungen.
 
@@ -2549,7 +2549,7 @@ Es gibt keinen Mindest-Sol, ab dem eine Aufgabe erst zählt. Die Varianz zwische
 Jede Aufgabe hat einen Zeithorizont. Er teilt den Korridor der Kalibrierregel auf, die Regel selbst bleibt:
 
 - **Mittelfristig** sind die Aufgaben, die eine **Tätigkeit oder ein Einkommen** messen. Fortschritt ist ab Phase-2-Beginn ohne spätes Tor möglich; gezielt gespielt fallen sie im vorderen Teil des Korridors. Dazu gehören die drei **Fokus-Aufgaben**, je eine für jedes Fokus-Gebäude (Labor → Forschungsvorsprung, Hangar → Expeditionen, Cantina → Handelspartner), die nur nach der passenden Eröffnung gezogen werden, und die neutrale Kreditreserve.
-- **Langfristig** sind die Aufgaben, die den **Reife- oder Ausbaugrad der ganzen Kolonie** messen. Sie brauchen späte Tore (Kommandozentrale-Stufe, Dienstzeit, volle Agrardom-Stufe, hohe Vertrauensstufe) und lange gehaltene Zustände; gezielt gespielt fallen sie im hinteren Teil des Korridors. Sie hängen an keinem Fokus-Gebäude.
+- **Langfristig** sind die Aufgaben, die den **Reife- oder Ausbaugrad der ganzen Kolonie** messen. Sie brauchen späte Tore (Kommandozentrale-Stufe, Dienstzeit, volle Agrardom-Stufe, hohe Vertrauensstufe) und lange gehaltene Zustände; gezielt gespielt fallen sie im hinteren Teil des Korridors. Allgemeine langfristige Aufgaben hängen an keinem Fokus-Gebäude; dazu kommt je Eröffnung eine eigene langfristige Aufgabe.
 
 Die Zuordnung der Aufgaben zu den Zeithorizonten (Tabelle unten) und die Aufteilung des Korridors sind ein Vorschlag (Spec 2026-11-25 §1, Owner-Bestätigung offen).
 
@@ -2579,10 +2579,13 @@ Die Ziehung hängt am Run-Seed, an der Eröffnung und an der Config. Balance-Mes
 | Ingenieursleistung (`task_engineering_output`) | langfristig | Forschung/Aufbau | Summe der Ausbaustufen aller Gebäude der Kolonie über einer Schwelle. Jede Instanz zählt mit ihrer Ausbaustufe, so zählen Breite (mehr Instanzen) und Tiefe (höhere Stufen) gleich |
 | Selbstversorgung (`task_self_sufficiency`) | langfristig | Überleben | Die Kolonie erzeugt mehr, als sie verbraucht: Die eigene Agrardom-Ernte deckt den Verpflegungsbedarf einer Kolonie ab einer Mindestgröße, ohne Hunger, für mehrere aufeinanderfolgende Sole. Zugekaufte oder mitgebrachte Organika zählen nicht zur Ernte, Missions-Proviant nicht zum Verbrauch, der Vorrat spielt keine Rolle. Jedes neue Gebäude bringt Arbeitsplätze und damit Bedarf: Das Ziel zieht gegen Wachstum |
 | Kolonieblüte (`task_colony_prosperity`) | langfristig | Diplomatie/Zivilaufbau | Vertrauen mindestens in einer bestimmten Stufe (Zufrieden) für mehrere aufeinanderfolgende Sole — an die Stufe gekoppelt, weil der Spieler die Zahl nicht sieht |
+| Fächervielfalt (`task_research_breadth`) | langfristig (Fokus Labor) | Forschung/Aufbau | Summe der Kenntnisstufen ohne Geologie und Agronomie, die jede Kolonie ohnehin vorantreibt: verlangt mehrere Gebäude und breite Forschung |
+| Einsatzbreite (`task_mission_variety`) | langfristig (Fokus Hangar) | Exploration/Navigation | Verschiedene Missionsarten mindestens einmal erfolgreich: verlangt mehrere Schiffstypen und Kenntnisse, Wiederholen bringt nichts |
+| Stammrunde (`task_cantina_circle`) | langfristig (Fokus Cantina) | Soziales | Summe der Beziehungsstufen der engsten Figuren, je Figur gedeckelt: verlangt regelmäßige Gespräche mit mehreren Menschen |
 
 **Quelle der Wahrheit:** Alle Aufgaben-Parameter (Zeithorizont, Kategorie, Typ Zähler/Serie, Zielwert, Schwellen, Serienlänge) liegen in `config/game.php → run.tasks` und werden über `RunTaskCatalog` gelesen. Die Aufgaben-Beschriftung im UI wird aus denselben Werten gebaut, die angezeigte Zahl ist also die gemessene. Die aktuellen Werte stehen in `docs/game-reference.md#18-run-struktur` und sind vorläufig bis zur Kalibrierung. Die Kalibrier-Historie steht in §18.4.
 
-> **Fokus-Aufgaben:** Je Eröffnung sind eine mittelfristige und eine langfristige eigene Aufgabe vorgesehen (Spec `docs/superpowers/specs/2026-11-27-eroeffnungsziele.md`). Umgesetzt sind bisher die mittelfristigen; die langfristigen und ihre Zielwerte folgen.
+> **Fokus-Aufgaben:** Je Eröffnung sind eine mittelfristige und eine langfristige eigene Aufgabe vorgesehen (Spec `docs/superpowers/specs/2026-11-27-eroeffnungsziele.md`). Beide sind umgesetzt; die Zielwerte der langfristigen sind vorläufig und ungemessen.
 
 > **Folgeschritt:** `task_credit_reserve` bleibt als Serie im Pool. Damit sie erreichbar wird, werden die Credit-Belohnungen von Außenmissionen und Ereignissen angehoben: Die Kreditreserve soll über aktives Spielen (Missionen, Ereignisse) entstehen, nicht über reines Sparen. „Nexus-Vorschuss tilgen" wird ein **zusätzliches** Ziel im Pool, sobald es eine Tilgungsmechanik für `nexus_debt` gibt (siehe Nexus-Schulden-Mechanik unten).
 
