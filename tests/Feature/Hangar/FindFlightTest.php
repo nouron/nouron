@@ -182,7 +182,7 @@ class FindFlightTest extends TestCase
         $this->assertSame([null, 0, 0], [$tile->event_type, (int) $tile->is_deep_scanned, 0]);
         $mission = DB::table('colony_hangar_missions')->where('colony_id', self::COLONY_ID)->first();
         $this->assertSame(['completed', 1, 'normal'], [$mission->state, (int) $mission->succeeded, $mission->difficulty]);
-        $this->assertContains('normal', app(RunTaskCatalog::class)->countedDifficulties(), 'E9: counts for task_expedition_coverage');
+        $this->assertNotContains('normal', app(RunTaskCatalog::class)->countedDifficulties(), 'Owner 2026-11-27: only hard missions count for task_expedition_coverage');
         $rewards = json_decode(DB::table('colony_log')->where('event', 'hangar.mission_completed')->where('tick', 102)->value('parameters'), true)['rewards'];
         $this->assertSame(['find_type' => 'find_medium', 'find_regolith' => 10], $rewards);
     }

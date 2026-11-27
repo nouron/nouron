@@ -11,7 +11,7 @@ return [
     'task_colony_prosperity' => 'Colony Prosperity: keep Trust at ":min_band" or better for :target Sols in a row',
     'task_research_lead' => 'Research Lead: combined levels of all knowledge fields at least :target',
     'task_self_sufficiency' => 'Self-Sufficiency: at least :min_fed colonists fed from your own harvest for :target Sols in a row',
-    'task_expedition_coverage' => 'Expeditions: :target successful outside missions at difficulty ":min_difficulty" or higher',
+    'task_expedition_coverage' => 'Expeditions: :target successful outside missions at difficulty ":min_difficulty" at least',
     'task_engineering_output' => 'Engineering Output: combined upgrade levels of all buildings at least :target',
     'task_trade_volume' => 'Trade Partner: :target purchases from the Travelling Merchant',
     'task_research_breadth' => 'Broad Expertise: knowledges other than Geology and Agronomy at a combined level of at least :target',

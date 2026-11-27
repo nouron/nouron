@@ -26,6 +26,8 @@ class BotStrategyFocusProfileTest extends TestCase
 
     private const SHIP_DRONE = 85;
 
+    private const SHIP_CORVETTE = 37;
+
     private const MONUMENT = 50;
 
     private const FOCUS_RULES = ['focus_expedition_mission', 'focus_engineering_levelup', 'focus_trust_building'];
@@ -103,28 +105,35 @@ class BotStrategyFocusProfileTest extends TestCase
 
     public function test_expedition_focus_sends_a_mission_at_a_counted_difficulty(): void
     {
-        $bot = $this->bootWithDockedDrone();
+        $bot = $this->bootWithDockedShip(self::SHIP_CORVETTE);
         $this->drawObjective($bot, 'task_expedition_coverage');
 
         $candidate = $this->rule('focus_expedition_mission')['when']($bot);
 
         $this->assertNotEmpty($candidate);
-        $this->assertSame('normal', $candidate['difficulty']);
+        $this->assertSame('hard', $candidate['difficulty']);
         $mission = config("missions.catalog.{$candidate['mission_key']}");
-        $this->assertContains('drone', $mission['ships']);
+        $this->assertContains('corvette', $mission['ships']);
         $this->assertArrayNotHasKey('target', $mission['requires'] ?? []);
     }
 
     public function test_expedition_focus_dispatch_succeeds_against_the_server(): void
     {
-        $bot = $this->bootWithDockedDrone();
+        $bot = $this->bootWithDockedShip(self::SHIP_CORVETTE);
         $this->drawObjective($bot, 'task_expedition_coverage');
         $rule = $this->rule('focus_expedition_mission');
 
         $res = $rule['do']($bot, $rule['when']($bot));
 
         $this->assertTrue($res['ok'], json_encode($res['body']));
-        $this->assertSame('normal', DB::table('colony_hangar_missions')->where('colony_id', $bot->colonyId)->value('difficulty'));
+        $this->assertSame('hard', DB::table('colony_hangar_missions')->where('colony_id', $bot->colonyId)->value('difficulty'));
+    }
+
+    public function test_expedition_focus_takes_the_ship_before_the_credit_missions(): void
+    {
+        $names = array_column(BotStrategy::default(BotProfile::named('focus')), 'name');
+
+        $this->assertLessThan(array_search('dispatch_credit_mission', $names, true), array_search('focus_expedition_mission', $names, true));
     }
 
     public function test_expedition_focus_is_idle_without_the_objective(): void
@@ -235,6 +244,11 @@ class BotStrategyFocusProfileTest extends TestCase
 
     private function bootWithDockedDrone(): BotSession
     {
+        return $this->bootWithDockedShip(self::SHIP_DRONE);
+    }
+
+    private function bootWithDockedShip(int $shipId): BotSession
+    {
         $bot = BotSession::boot($this, 1);
 
         DB::table('colony_ships')->where('colony_id', $bot->colonyId)->delete();
@@ -244,7 +258,7 @@ class BotStrategyFocusProfileTest extends TestCase
             'colony_id' => $bot->colonyId,
             'building_id' => BuildingId::Hangar->value,
             'instance_id' => 1,
-            'level' => 2,
+            'level' => 3,
             'status_points' => 20,
             'ap_spend' => 0,
             'tile_x' => -1,
@@ -252,7 +266,7 @@ class BotStrategyFocusProfileTest extends TestCase
         ]);
         DB::table('colony_ships')->insert([
             'colony_id' => $bot->colonyId,
-            'ship_id' => self::SHIP_DRONE,
+            'ship_id' => $shipId,
             'level' => 1,
             'status_points' => 20,
             'ap_spend' => 0,

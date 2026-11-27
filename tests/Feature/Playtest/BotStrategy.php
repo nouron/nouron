@@ -488,8 +488,13 @@ class BotStrategy
 
             return $rule;
         }, self::focusRules());
-        $at = array_search('relocate_harvester', array_column($rules, 'name'), true);
-        array_splice($rules, $at === false ? count($rules) : (int) $at, 0, $focusRules);
+        // The expedition rule goes in front of the credit missions: they would take
+        // every docked ship first.
+        foreach ($focusRules as $focusRule) {
+            $before = $focusRule['name'] === 'focus_expedition_mission' ? 'dispatch_credit_mission' : 'relocate_harvester';
+            $at = array_search($before, array_column($rules, 'name'), true);
+            array_splice($rules, $at === false ? count($rules) : (int) $at, 0, [$focusRule]);
+        }
 
         return $rules;
     }

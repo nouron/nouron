@@ -914,11 +914,11 @@ return [
             // hungry. Stock, trade, missions and events don't count. One Agrardom tops out
             // at ~73 Organika per Sol, so 55 leaves a band of ~18 colonists.
             'task_self_sufficiency' => ['category' => 'survival', 'horizon' => 'long', 'type' => 'streak', 'target' => 35, 'min_fed' => 55],
-            // R1 (Owner 2026-10-01): stays 10 — targeted play completes at Sol 82–87.
-            // Incidental play sometimes reaches it earlier because credit missions at
-            // 'normal' count too. Successful missions at difficulty >= min_difficulty
-            // (order: game.missions.difficulty.order).
-            'task_expedition_coverage' => ['category' => 'exploration', 'horizon' => 'medium', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'normal', 'opening' => 'hangar'],
+            // Owner 2026-11-27: only hard missions count (before: 'normal', so every
+            // courier run counted — M7: reached around Sol 50 without targeted play).
+            // Successful missions at difficulty >= min_difficulty
+            // (order: game.missions.difficulty.order). Target unmeasured since the change.
+            'task_expedition_coverage' => ['category' => 'exploration', 'horizon' => 'medium', 'type' => 'counter', 'target' => 10, 'min_difficulty' => 'hard', 'opening' => 'hangar'],
             // Sum of building levels, every instance with its own level. Spec §3.4
             // (2026-11-25): 35 → 32 — M4 focus Labor Seed 5 reached 32 at Sol 80, incidental
             // play ends at 24–33. Not lower: since #497 the bot builds more housing.
