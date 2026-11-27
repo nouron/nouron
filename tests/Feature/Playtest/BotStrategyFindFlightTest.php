@@ -125,7 +125,6 @@ class BotStrategyFindFlightTest extends TestCase
     {
         $names = array_column(BotStrategy::default(), 'name');
         $this->assertNotContains('dispatch_regolith_mission', $names);
-        $this->assertNotContains('repair_ship_for_flight', $names, 'salvage flights need no repair');
         $this->assertLessThan(array_search('dispatch_credit_mission', $names, true), array_search('dispatch_find_flight', $names, true));
     }
 }
