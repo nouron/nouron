@@ -197,3 +197,63 @@ Schritt 0 ist zugleich die neue Vergleichsmessung. Sie enthält **zwei** Änderu
 | Händlerkäufe 18, Cantina-Runs | in mindestens der Hälfte erreicht, Median Sol 65–80 | seltener oder außerhalb |
 | Fächervielfalt 11, Crews 20, Stammrunde 20, jeweils eigene Eröffnung | `aimless` erreicht sie vor Sol 90 höchstens in 2 von 8 Runs | öfter |
 | Wartungsstand (20 Sole in Folge) | offen, reine Erhebung | — |
+
+## 9. Messhistorie
+
+### 9.1 Vergleichsmessung `20261127_m7` (2026-11-27)
+
+72 Runs wie M6, Messmodus ohne Sieg-Ende, alle bis Sol 100. Enthält #504 (Bot repariert Schiffe) und #505 (Bergungsflüge verschleißen) gemeinsam. 9 Runs brachen zuerst mit Datenbank-Deadlocks ab und wurden mit demselben Batch-Namen nachgeholt. Alle Zahlen **gemessen**.
+
+**Siege** (zwei gezogene Aufgaben erfüllt, alte Ziehung und Zielwerte):
+
+| Profil | M6 | M7 | Median Sieg-Sol M7 |
+|---|---|---|---|
+| `aimless` | 18/24 | 23/24 | 74 |
+| `default` | 20/24 | 22/24 | 75 |
+| `focus` | 22/24 | 23/24 | 78 |
+
+**Neue Zielwerte, jeweils nur Runs der eigenen Eröffnung** (erreicht von 8, in Klammern Median Sol):
+
+| Messgröße (Wert) | Eröffnung | `aimless` | `default` | `focus` |
+|---|---|---|---|---|
+| Forschungsvorsprung (16) | Labor | 0 | 2 (70) | 2 (72,5) |
+| Fächervielfalt (11) | Labor | 0 | 0 | 0 |
+| Expeditionen (24) | Hangar | 8 (49,5) | 8 (50) | 8 (51,5) |
+| Eingespielte Crews (20) | Hangar | 8 (82) | 8 (83) | 7 (83) |
+| Händlerkäufe (18) | Cantina | 7 (80) | 7 (85) | 6 (83) |
+| Stammrunde (20) | Cantina | 0 | 0 | 0 |
+
+Wartungsstand (20 Sole in Folge): in keinem der 72 Runs erreicht, längste Serie im Median 3 Sole. Welches Gebäude die Serie bricht, ist nicht geprüft.
+
+**Eröffnungen, `aimless`, Median an Sol 90:**
+
+| Messgröße | Labor | Hangar | Cantina |
+|---|---|---|---|
+| Expeditionen | 51 | 45 | 30,5 |
+| Händlerkäufe | 16 | 9,5 | 21 |
+| Forschungsvorsprung | 10 | 10 | 17 |
+
+Alle drei Pfadgebäude stehen am Ende in jedem Run. Expeditionen liegen nach Labor höher als nach Hangar.
+
+**Abgleich mit der Hypothese (§8.1):**
+
+| Erwartung | Ergebnis |
+|---|---|
+| Siege höchstens 3 neben M6 | **widerlegt** (`aimless` +5) |
+| Median Sieg-Sol 70–80 | erfüllt |
+| Schiffsreparatur findet statt | erfüllt (alle Runs) |
+| `focus_expedition_mission` wird ausgeführt | **widerlegt** (0 Runs) |
+| Expeditionen 24, Hangar, Median 55–75 | **widerlegt** (49,5; 36 fällt um Sol 61) |
+| Händlerkäufe 18, Cantina | erfüllt, am oberen Rand (7/8, Median 80) |
+| Crews 20 selten vor Sol 90 | **widerlegt** (`aimless` 8/8) |
+| Fächervielfalt, Stammrunde selten vor Sol 90 | erfüllt (nie), Erreichbarkeit offen |
+
+**Befunde zum Bot** (Einschränkung aller Werte):
+
+- `focus_expedition_mission` ist nicht kaputt, sondern überflüssig: Die Regel `dispatch_credit_mission` steht davor und fliegt ausschließlich Missionen der Schwierigkeit „normal“, die bereits zählen. Die frühere Annahme, die fehlende Reparatur sei der Grund, war falsch oder unvollständig. Damit zählt auch jede Kurierfahrt für Expeditionen.
+- Direkte Forschung geht bei `aimless` fast nur in Geologie und Agronomie (Labor und Hangar: ausschließlich). Die höheren Kenntnisstufen nach Cantina-Eröffnung kommen offenbar über die Cantina (Annahme; Handel steigt ohne direkten Forschungsauftrag). Forschungsvorsprung und Fächervielfalt messen deshalb vor allem die Vorlieben des Bots.
+- Für die neuen Ziele gibt es noch keine Bot-Regeln; die `focus`-Werte dazu sind ungezielt.
+- Wo gezieltes Spiel nicht schneller ist (Expeditionen, Händlerkäufe), trennt kein Zielwert „ohne Ziel ab Sol 90“ von „gezielt Sol 70–85“.
+
+**Anwendung der Abbruchregel (§6):** Eingespielte Crews fällt nebenbei und ohne Abstand zwischen den Profilen. Es gilt die Alternative **Schwere Einsätze** (10 erfolgreiche Missionen der Schwierigkeit „schwer“, **Annahme**, ungemessen: Der Bot fliegt keine schweren Missionen).
+
